@@ -3,12 +3,42 @@ import { Button } from "./components/Button";
 import { TemplateCard } from "./components/TemplateCard";
 
 const templateDecks = [
-  { title: "80er & 90er Pop", cards: "50 Karten" },
-  { title: "Rock Klassiker", cards: "100 Karten" },
-  { title: "Charts 2000-2020", cards: "60 Karten" },
-  { title: "Eurovision", cards: "40 Karten" },
-  { title: "Hip-Hop Hall of Fame", cards: "50 Karten" },
-  { title: "Kindergeburtstag", cards: "30 Karten" },
+  {
+    title: "80er & 90er Pop",
+    cards: "50 Karten",
+    prompt:
+      "Erstelle mir ein Deck mit 50 Karten zu den größten Pop-Hits der 80er und 90er Jahre.",
+  },
+  {
+    title: "Rock Klassiker",
+    cards: "100 Karten",
+    prompt:
+      "Erstelle mir ein Deck mit 100 Karten zu den zeitlosen Rock-Klassikern aller Jahrzehnte.",
+  },
+  {
+    title: "Charts 2000-2020",
+    cards: "60 Karten",
+    prompt:
+      "Erstelle mir ein Deck mit 60 Karten zu den größten Chart-Hits von 2000 bis 2020.",
+  },
+  {
+    title: "Eurovision",
+    cards: "40 Karten",
+    prompt:
+      "Erstelle mir ein Deck mit 40 Karten zu unvergesslichen Eurovision Song Contest Beiträgen.",
+  },
+  {
+    title: "Hip-Hop Hall of Fame",
+    cards: "50 Karten",
+    prompt:
+      "Erstelle mir ein Deck mit 50 Karten zu den legendärsten Hip-Hop-Songs und Künstlern aller Zeiten.",
+  },
+  {
+    title: "Kindergeburtstag",
+    cards: "30 Karten",
+    prompt:
+      "Erstelle mir ein Deck mit 30 Karten zu fröhlichen, kinderfreundlichen Liedern für einen Kindergeburtstag.",
+  },
 ];
 
 const MAX_LENGTH = 500;
@@ -17,8 +47,8 @@ export const App = () => {
   const [prompt, setPrompt] = useState("");
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#2D2D44_0%,_#1A1A2E_45%,_#16213E_100%)] text-[var(--beatline-text)]">
-      <main className="mx-auto flex w-full max-w-5xl flex-col px-6 pb-10 pt-18 sm:px-10 sm:pt-24">
+    <div className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_#2D2D44_0%,_#1A1A2E_45%,_#16213E_100%)] text-[var(--beatline-text)]">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 py-16 sm:px-10">
         <p className="text-center text-xs font-semibold uppercase tracking-[0.24em] text-[var(--beatline-muted)]">
           Neues Karten-Deck
         </p>
@@ -54,7 +84,12 @@ export const App = () => {
         </p>
         <section className="mx-auto mt-5 grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {templateDecks.map((deck) => (
-            <TemplateCard key={deck.title} title={deck.title} cards={deck.cards} />
+            <TemplateCard
+              key={deck.title}
+              title={deck.title}
+              cards={deck.cards}
+              onClick={() => setPrompt(deck.prompt)}
+            />
           ))}
         </section>
 

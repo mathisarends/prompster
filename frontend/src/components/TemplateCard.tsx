@@ -6,7 +6,7 @@ interface TemplateCardProps {
 
 export const TemplateCard = ({ title, cards, onClick }: TemplateCardProps) => (
   <button
-    className="group rounded-xl border border-[var(--beatline-border)] bg-[var(--beatline-surface)]/65 p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--beatline-gold-dark)] hover:bg-[color:var(--beatline-highlight)]"
+    className="group cursor-pointer rounded-xl border border-[var(--beatline-border)] bg-[var(--beatline-surface)]/65 p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--beatline-gold-dark)] hover:bg-[color:var(--beatline-highlight)]"
     type="button"
     onClick={onClick}
   >
