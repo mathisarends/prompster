@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Self
 
+from agent.llm import create_llm
 from agentory import Agent, Inject, Tools
 from spotifyify import PagingPlaylistTrack, Spotifyify, SpotifyScope, Track
 
@@ -25,16 +26,14 @@ from agent.views import (
     PlaylistTracksMutationParams,
     SearchParams,
 )
-from prompster.export import DeckRenderer, TrackCard
-from prompster.llm import create_llm, default_model_key
+from agent.export import DeckRenderer, TrackCard
 
 _SYSTEM_PROMPT = (Path(__file__).parent / "system_prompt.md").read_text(
     encoding="utf-8"
 )
 
-
 class HitsterAgent:
-    def __init__(self, model: str | None = None) -> None:
+    def __init__(self) -> None:
         self._instructions = _SYSTEM_PROMPT
         self._tools = Tools()
         self._spotify_open = False
@@ -52,7 +51,7 @@ class HitsterAgent:
         self._agent = Agent(
             instructions=self._instructions,
             tools=self._tools,
-            llm=create_llm(model or default_model_key()),
+            llm=create_llm(),
             injectables=[self._spotify, self._deck_renderer],
         )
 
