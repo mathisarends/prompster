@@ -1,7 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../components/Button";
-import { TemplateCard } from "../components/TemplateCard";
+import {
+  ArrowRight,
+  CalendarRange,
+  FolderOpen,
+  Import,
+  Sparkles,
+  Waves,
+} from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 
 const templateDecks = [
   {
@@ -56,51 +68,112 @@ export const HomePage = () => {
     setPrompt(templatePrompt);
   };
 
-  return (
-    <div className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_#2D2D44_0%,_#1A1A2E_45%,_#16213E_100%)] text-[var(--beatline-text)]">
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 py-16 sm:px-10">
-        <p className="text-center text-xs font-semibold uppercase tracking-[0.24em] text-[var(--beatline-muted)]">
-          Neues Karten-Deck
-        </p>
-        <h1 className="mx-auto mt-6 max-w-5xl text-center text-4xl font-bold tracking-tight text-[var(--beatline-text)] sm:text-6xl">
-          Welche Musik soll dein Deck haben?
-        </h1>
-        <p className="mx-auto mt-7 max-w-2xl text-center text-lg leading-relaxed text-[var(--beatline-muted)]">
-          Beschreib dein Wunsch-Deck in einem Satz. Der Bot stellt Rückfragen
-          und baut die Karten Schritt für Schritt mit dir auf.
-        </p>
+  const isPromptEmpty = prompt.trim().length === 0;
 
-        <section className="mx-auto mt-12 w-full rounded-2xl border border-[var(--beatline-border)] bg-[var(--beatline-surface)]/85 p-4 shadow-[0_16px_60px_rgba(0,0,0,0.35)] backdrop-blur-sm sm:p-5">
-          <div className="rounded-xl border border-[var(--beatline-border)] bg-[var(--beatline-bg)] p-4 sm:p-5">
-            <textarea
-              className="h-24 w-full resize-none bg-transparent text-base leading-relaxed text-[var(--beatline-text)] outline-none placeholder:text-[var(--beatline-subtle)]"
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_10%_5%,_hsl(141_78%_26%)_0%,_transparent_40%),radial-gradient(circle_at_88%_8%,_hsl(154_66%_20%)_0%,_transparent_34%),linear-gradient(165deg,_hsl(222_46%_8%)_0%,_hsl(222_52%_5%)_100%)] text-foreground">
+      <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col justify-center px-4 py-10 sm:px-8 sm:py-14">
+        <section className="space-y-8">
+          <div className="space-y-4 text-center sm:space-y-5">
+            <Badge
+              variant="secondary"
+              className="mx-auto w-fit gap-1 px-2.5 py-1"
+            >
+              <Sparkles className="size-3.5" />
+              Neues Karten-Deck
+            </Badge>
+            <h1 className="mx-auto max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
+              Welche Musik soll dein Deck haben?
+            </h1>
+            <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-lg">
+              Beschreib dein Wunsch-Deck in einem Satz. Der Agent fragt gezielt
+              nach und erstellt daraus Schritt fur Schritt dein Deck.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-border/60 bg-card/55 p-4 backdrop-blur-md sm:p-5">
+            <Textarea
+              className="min-h-30 resize-none border-none bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
               maxLength={MAX_LENGTH}
-              placeholder='z.B. „Hip-Hop Klassiker der 90er für 60 Karten" oder „Eurovision Hits 2000-2020"'
+              placeholder='z.B. "Hip-Hop Klassiker der 90er fur 60 Karten" oder "Eurovision Hits 2000-2020"'
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
             />
 
-            <div className="mt-4 flex items-center justify-end gap-4">
-              <span className="text-xs font-medium text-[var(--beatline-subtle)]">
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Badge variant="outline" className="gap-1.5 px-2.5 py-1">
+                <Waves className="size-3.5" />
+                Spotify
+              </Badge>
+              <Badge variant="outline" className="px-2.5 py-1">
+                Sprache: DE
+              </Badge>
+              <Badge variant="outline" className="gap-1.5 px-2.5 py-1">
+                <CalendarRange className="size-3.5" />
+                Zeitraum
+              </Badge>
+            </div>
+
+            <Separator className="my-3" />
+
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-muted-foreground">
                 {prompt.length} / {MAX_LENGTH}
-              </span>
-              <Button onClick={startChat}>Chat starten →</Button>
+              </p>
+              <Button onClick={startChat} disabled={isPromptEmpty}>
+                Chat starten
+                <ArrowRight className="size-4" />
+              </Button>
             </div>
           </div>
-        </section>
 
-        <p className="mt-11 text-center text-xs font-semibold uppercase tracking-[0.22em] text-[var(--beatline-muted)]">
-          Oder starte mit einer Vorlage
-        </p>
-        <section className="mx-auto mt-5 grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {templateDecks.map((deck) => (
-            <TemplateCard
-              key={deck.title}
-              title={deck.title}
-              cards={deck.cards}
-              onClick={() => chooseTemplate(deck.prompt)}
-            />
-          ))}
+          <div className="space-y-3">
+            <p className="text-center text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+              Oder starte mit einer Vorlage
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {templateDecks.map((deck) => (
+                <Card
+                  key={deck.title}
+                  size="sm"
+                  role="button"
+                  tabIndex={0}
+                  className="cursor-pointer border border-border/65 bg-card/62 p-4 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:bg-card/85"
+                  onClick={() => chooseTemplate(deck.prompt)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      chooseTemplate(deck.prompt);
+                    }
+                  }}
+                >
+                  <p className="text-base leading-tight font-semibold">
+                    {deck.title}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {deck.cards}
+                  </p>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+            >
+              <FolderOpen className="size-4 text-primary" />
+              Vorhandenes Deck offnen
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+            >
+              <Import className="size-4 text-primary" />
+              Aus Spotify-Playlist importieren
+            </button>
+          </div>
         </section>
       </main>
     </div>

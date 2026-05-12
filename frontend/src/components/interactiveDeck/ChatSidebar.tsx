@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Mic, Paperclip, Plus } from "lucide-react";
+import { ArrowUp, Mic, Paperclip } from "lucide-react";
 import { Button } from "../Button";
 
 type ChatRole = "user" | "assistant";
