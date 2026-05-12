@@ -1,3 +1,7 @@
+import { useState } from "react";
+import { Button } from "./components/Button";
+import { TemplateCard } from "./components/TemplateCard";
+
 const templateDecks = [
   { title: "80er & 90er Pop", cards: "50 Karten" },
   { title: "Rock Klassiker", cards: "100 Karten" },
@@ -7,7 +11,11 @@ const templateDecks = [
   { title: "Kindergeburtstag", cards: "30 Karten" },
 ];
 
+const MAX_LENGTH = 500;
+
 export const App = () => {
+  const [prompt, setPrompt] = useState("");
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#2D2D44_0%,_#1A1A2E_45%,_#16213E_100%)] text-[var(--beatline-text)]">
       <main className="mx-auto flex w-full max-w-5xl flex-col px-6 pb-10 pt-18 sm:px-10 sm:pt-24">
@@ -26,22 +34,17 @@ export const App = () => {
           <div className="rounded-xl border border-[var(--beatline-border)] bg-[var(--beatline-bg)] p-4 sm:p-5">
             <textarea
               className="h-24 w-full resize-none bg-transparent text-base leading-relaxed text-[var(--beatline-text)] outline-none placeholder:text-[var(--beatline-subtle)]"
-              maxLength={500}
+              maxLength={MAX_LENGTH}
               placeholder='z.B. „Hip-Hop Klassiker der 90er für 60 Karten" oder „Eurovision Hits 2000-2020"'
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
             />
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <div className="ml-auto flex items-center gap-4">
-                <span className="text-xs font-medium text-[var(--beatline-subtle)]">
-                  0 / 500
-                </span>
-                <button
-                  className="rounded-lg border border-[var(--beatline-gold-dark)] bg-[var(--beatline-gold)] px-4 py-2 text-sm font-semibold text-[#2D2D44] transition-colors hover:bg-[var(--beatline-gold-dark)]"
-                  type="button"
-                >
-                  Chat starten →
-                </button>
-              </div>
+            <div className="mt-4 flex items-center justify-end gap-4">
+              <span className="text-xs font-medium text-[var(--beatline-subtle)]">
+                {prompt.length} / {MAX_LENGTH}
+              </span>
+              <Button>Chat starten →</Button>
             </div>
           </div>
         </section>
@@ -51,34 +54,13 @@ export const App = () => {
         </p>
         <section className="mx-auto mt-5 grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {templateDecks.map((deck) => (
-            <button
-              className="group rounded-xl border border-[var(--beatline-border)] bg-[var(--beatline-surface)]/65 p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--beatline-gold-dark)] hover:bg-[color:var(--beatline-highlight)]"
-              key={deck.title}
-              type="button"
-            >
-              <p className="text-lg font-semibold text-[var(--beatline-text)] transition-colors group-hover:text-[var(--beatline-gold)]">
-                {deck.title}
-              </p>
-              <p className="mt-1 text-sm text-[var(--beatline-muted)]">
-                {deck.cards}
-              </p>
-            </button>
+            <TemplateCard key={deck.title} title={deck.title} cards={deck.cards} />
           ))}
         </section>
 
         <footer className="mx-auto mt-14 flex flex-wrap items-center justify-center gap-8 text-sm text-[var(--beatline-muted)]">
-          <button
-            className="transition-colors hover:text-[var(--beatline-gold)]"
-            type="button"
-          >
-            Vorhandenes Deck öffnen
-          </button>
-          <button
-            className="transition-colors hover:text-[var(--beatline-gold)]"
-            type="button"
-          >
-            Aus Spotify-Playlist importieren
-          </button>
+          <Button variant="ghost">Vorhandenes Deck öffnen</Button>
+          <Button variant="ghost">Aus Spotify-Playlist importieren</Button>
         </footer>
       </main>
     </div>
