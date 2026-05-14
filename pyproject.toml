@@ -12,5 +12,4 @@ dependencies = [
 members = [
     "backend",
     "cli",
-    "agent",
 ]
