@@ -2,13 +2,13 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from .aggregate import ChatAggregate
+from .chat import Chat
 
 
 class ChatRepository(Protocol):
-    async def get_by_id(self, *, chat_id: UUID) -> ChatAggregate: ...
+    async def get_by_id(self, *, chat_id: UUID) -> Chat: ...
 
-    async def create(self, *, chat: ChatAggregate) -> ChatAggregate: ...
+    async def create(self, *, chat: Chat) -> Chat: ...
 
     async def update(
         self,
@@ -17,6 +17,6 @@ class ChatRepository(Protocol):
         title: str | None,
         system_prompt: str | None,
         updated_at: datetime,
-    ) -> ChatAggregate: ...
+    ) -> Chat: ...
 
     async def delete(self, *, chat_id: UUID) -> None: ...

@@ -1,9 +1,9 @@
-from .aggregate import ChatAggregate
+from .chat import Chat
 from .exceptions import ChatNotFoundError
 from .ports import ChatRepository
 
 __all__ = [
-    "ChatAggregate",
+    "Chat",
     "ChatNotFoundError",
     "ChatRepository",
 ]
