@@ -1,15 +1,15 @@
 from datetime import datetime
 from uuid import UUID
 
-from backend.features.chat.domain.views import ChatMessage, MessageRole, ToolCall
+from backend.features.session.domain.views import MessageRole, SessionMessage, ToolCall
 from backend.shared.ddd import Aggregate
 
 
-class Chat(Aggregate):
+class Session(Aggregate):
     def __init__(
         self,
         title: str,
-        messages: list[ChatMessage],
+        messages: list[SessionMessage],
         system_prompt: str | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
@@ -19,24 +19,24 @@ class Chat(Aggregate):
         self.messages = messages
         self.system_prompt = system_prompt
 
-    def add_user_message(self, content: str) -> ChatMessage:
+    def add_user_message(self, content: str) -> SessionMessage:
         self._assert_no_pending_tool_calls()
-        message = ChatMessage(role=MessageRole.USER, content=content)
+        message = SessionMessage(role=MessageRole.USER, content=content)
         self.messages.append(message)
         return message
 
     def add_assistant_message(
         self, content: str, tool_calls: list[ToolCall] | None = None
-    ) -> ChatMessage:
-        message = ChatMessage(
+    ) -> SessionMessage:
+        message = SessionMessage(
             role=MessageRole.ASSISTANT, content=content, tool_calls=tool_calls
         )
         self.messages.append(message)
         return message
 
-    def add_tool_result(self, tool_call_id: str, content: str) -> ChatMessage:
+    def add_tool_result(self, tool_call_id: str, content: str) -> SessionMessage:
         self._assert_has_pending_tool_call(tool_call_id)
-        message = ChatMessage(
+        message = SessionMessage(
             role=MessageRole.TOOL, content=content, tool_call_id=tool_call_id
         )
         self.messages.append(message)

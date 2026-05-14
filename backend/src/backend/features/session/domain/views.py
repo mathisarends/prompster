@@ -1,9 +1,9 @@
 from datetime import datetime
 from enum import StrEnum
 from typing import Self
+from uuid import UUID
 
 from backend.shared.ddd import Entity
-from sqlalchemy import UUID
 
 
 class MessageRole(StrEnum):
@@ -37,7 +37,7 @@ class ToolCall:
         )
 
 
-class ChatMessage(Entity):
+class SessionMessage(Entity):
     def __init__(
         self,
         role: MessageRole,

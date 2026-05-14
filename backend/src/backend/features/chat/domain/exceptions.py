@@ -1,2 +1,0 @@
-class ChatNotFoundError(Exception):
-    pass
