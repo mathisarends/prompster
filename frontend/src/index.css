@@ -6,6 +6,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@layer base {
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+}
+
 :root {
   --background: hsl(222 47% 7%);
   --foreground: hsl(0 0% 96%);
