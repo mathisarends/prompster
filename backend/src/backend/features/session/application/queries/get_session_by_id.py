@@ -1,13 +1,6 @@
 from uuid import UUID
 
-from backend.features.session.application.exceptions import (
-    SessionNotFoundApplicationError,
-)
-from backend.features.session.domain import (
-    Session,
-    SessionNotFoundError,
-    SessionRepository,
-)
+from backend.features.session.domain import Session, SessionRepository
 
 
 class GetSessionByIdHandler:
@@ -15,9 +8,4 @@ class GetSessionByIdHandler:
         self._session_repository = session_repository
 
     async def handle(self, *, session_id: UUID) -> Session:
-        try:
-            session = await self._session_repository.get_by_id(session_id=session_id)
-        except SessionNotFoundError as exc:
-            raise SessionNotFoundApplicationError from exc
-
-        return session
+        return await self._session_repository.get_by_id(session_id=session_id)

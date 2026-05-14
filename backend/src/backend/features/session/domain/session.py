@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Self
 from uuid import UUID
 
 from backend.features.session.domain.views import MessageRole, SessionMessage, ToolCall
@@ -18,6 +19,22 @@ class Session(Aggregate):
         self.title = title
         self.messages = messages
         self.system_prompt = system_prompt
+
+    @classmethod
+    def create_with_initial_prompt(
+        cls,
+        *,
+        title: str,
+        initial_prompt: str,
+        system_prompt: str | None = None,
+    ) -> Self:
+        session = cls(
+            title=title,
+            messages=[],
+            system_prompt=system_prompt,
+        )
+        session.add_user_message(content=initial_prompt)
+        return session
 
     def add_user_message(self, content: str) -> SessionMessage:
         self._assert_no_pending_tool_calls()

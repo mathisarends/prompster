@@ -1,10 +1,6 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from backend.features.session.application.exceptions import (
-    SessionNotFoundApplicationError,
-    SessionUpdateValidationError,
-)
 from backend.features.session.domain.exceptions import SessionNotFoundError
 
 
@@ -15,7 +11,7 @@ def _exception_detail(exc: Exception, *, fallback: str) -> str:
 
 async def _session_not_found_handler(
     _: Request,
-    exc: SessionNotFoundApplicationError | SessionNotFoundError,
+    exc: SessionNotFoundError,
 ) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
@@ -23,20 +19,13 @@ async def _session_not_found_handler(
     )
 
 
-async def _session_validation_handler(
-    _: Request, exc: SessionUpdateValidationError
-) -> JSONResponse:
+async def _bad_request_handler(_: Request, exc: ValueError) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
-        content={
-            "detail": _exception_detail(exc, fallback="Invalid session update payload")
-        },
+        content={"detail": _exception_detail(exc, fallback="Bad request")},
     )
 
 
 def register_session_exception_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(
-        SessionNotFoundApplicationError, _session_not_found_handler
-    )
     app.add_exception_handler(SessionNotFoundError, _session_not_found_handler)
-    app.add_exception_handler(SessionUpdateValidationError, _session_validation_handler)
+    app.add_exception_handler(ValueError, _bad_request_handler)

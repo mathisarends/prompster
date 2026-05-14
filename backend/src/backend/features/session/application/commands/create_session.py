@@ -1,25 +1,31 @@
-from datetime import UTC, datetime
-from uuid import uuid4
-
+from backend.features.session.application.ports.title_generator import (
+    SessionTitleGenerator,
+)
 from backend.features.session.domain import Session, SessionRepository
 
 
 class CreateSessionHandler:
-    def __init__(self, session_repository: SessionRepository) -> None:
+    def __init__(
+        self,
+        session_repository: SessionRepository,
+        title_generator: SessionTitleGenerator,
+    ) -> None:
         self._session_repository = session_repository
+        self._title_generator = title_generator
 
     async def handle(
         self,
         *,
-        title: str,
+        initial_prompt: str,
         system_prompt: str | None = None,
     ) -> Session:
-        now = datetime.now(UTC)
-        session = Session(
-            id=uuid4(),
+        generated_title = await self._title_generator.generate(
+            initial_prompt=initial_prompt
+        )
+        title = (generated_title.strip() or "New Session")[:120]
+        session = Session.create_with_initial_prompt(
             title=title,
-            messages=[],
+            initial_prompt=initial_prompt,
             system_prompt=system_prompt,
-            created_time=now,
         )
         return await self._session_repository.create(session=session)

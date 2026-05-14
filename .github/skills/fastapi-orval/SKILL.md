@@ -6,11 +6,11 @@ description: >
   that will be consumed by a TypeScript/Angular frontend via orval, openapi-typescript,
   or any OpenAPI-based client generator. Triggers on phrases like "FastAPI route", "orval",
   "OpenAPI client", "typed API", "generate client", or whenever writing new FastAPI endpoints
-  for a frontend that uses generated clients. Always use Dishka (FromDishka / inject) instead
+    for a frontend that uses generated clients. Always use Dishka (FromDishka only, no @inject) instead
   of FastAPI Depends() for services.
 ---
 
-# FastAPI Routes for Orval (Dishka DI)
+# FastAPI Routes for Orval (Dishka DI, No @inject)
 
 Orval generates TypeScript clients from OpenAPI schemas. For clean generation every route needs:
 
@@ -19,7 +19,7 @@ Orval generates TypeScript clients from OpenAPI schemas. For clean generation ev
 - Typed path/query/body params with Pydantic models
 - Correct status codes declared
 
-DI is handled by **Dishka** — never use `Depends()` for services.
+DI is handled by **Dishka** — use `FromDishka[...]` parameters directly and never use `Depends()`.
 
 ---
 
@@ -29,7 +29,8 @@ DI is handled by **Dishka** — never use `Depends()` for services.
 2. **Never return `dict`** — always a typed Pydantic response model.
 3. **Always declare `responses`** for non-200 codes orval needs to know about.
 4. **One router per domain** — keeps generated TS hooks namespaced cleanly.
-5. **Services via `FromDishka`** — path/query/body params stay as plain annotations; only injected services use `FromDishka`.
+5. **Services via `FromDishka` only** — no `@inject` decorator on route functions.
+6. **No `summary=` in route decorators** — keep OpenAPI stable and avoid noisy diffs.
 
 ---
 

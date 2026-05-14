@@ -1,16 +1,15 @@
 from .commands import (
     CreateSessionHandler,
     DeleteSessionHandler,
+    SendMessageHandler,
     UpdateSessionHandler,
 )
-from .exceptions import SessionNotFoundApplicationError, SessionUpdateValidationError
 from .queries import GetSessionByIdHandler
 
 __all__ = [
-    "SessionNotFoundApplicationError",
-    "SessionUpdateValidationError",
     "CreateSessionHandler",
     "DeleteSessionHandler",
     "GetSessionByIdHandler",
+    "SendMessageHandler",
     "UpdateSessionHandler",
 ]
