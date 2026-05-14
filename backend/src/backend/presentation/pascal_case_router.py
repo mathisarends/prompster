@@ -10,9 +10,6 @@ class PascalCaseRouter(APIRouter):
 
     Example:
         If a response model uses PascalCase aliases, the API will return fields in PascalCase.
-
-    Inheritance:
-        APIRouter (from FastAPI)
     """
 
     def add_api_route(self, *args, **kwargs):

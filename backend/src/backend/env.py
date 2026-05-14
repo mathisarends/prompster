@@ -16,9 +16,10 @@ class EnvSettings(BaseSettings):
         populate_by_name=True,
     )
 
-    env: _EnvironmentMode = _EnvironmentMode.LOCAL
+    env: _EnvironmentMode = _EnvironmentMode.DEV
 
-    allowed_origins: set[str] = []
+    allowed_origins: set[str] = set()
+    registration_disabled: bool = False
 
     @property
     def is_dev(self) -> bool:

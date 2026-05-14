@@ -1,5 +1,7 @@
 import logging
 
+from backend.features.auth.presentation import auth_router
+from backend.features.session.presentation import router as session_router
 from backend.presentation import PascalCaseRouter, LoggingMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,6 +46,8 @@ def _create_app() -> FastAPI:
     _setup_middleware(app)
 
     api_v1_router = PascalCaseRouter(prefix="/api/v1")
+    api_v1_router.include_router(auth_router)
+    api_v1_router.include_router(session_router)
     app.include_router(api_v1_router)
 
     logger.info("Application ready!")

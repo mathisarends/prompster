@@ -1,0 +1,48 @@
+from enum import StrEnum
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class _JwtAlgorithm(StrEnum):
+    HS256 = "HS256"
+    RS256 = "RS256"
+
+
+class _CookieSameSite(StrEnum):
+    STRICT = "strict"
+    LAX = "lax"
+    NONE = "none"
+
+
+class AuthSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        populate_by_name=True,
+    )
+
+    frontend_base_url: str = "http://localhost:5173"
+
+    jwt_secret: str = "dev-secret-change-me"
+    jwt_algorithm: _JwtAlgorithm = _JwtAlgorithm.HS256
+    jwt_access_token_expire_minutes: int = 60 * 24
+    jwt_refresh_token_expire_days: int = 7
+
+    access_token_cookie_name: str = "access_token"
+    jwt_refresh_token_cookie_name: str = "refresh_token"
+
+    cookie_samesite_dev: _CookieSameSite = _CookieSameSite.LAX
+    cookie_samesite_prod: _CookieSameSite = _CookieSameSite.STRICT
+
+    @field_validator("frontend_base_url")
+    @classmethod
+    def validate_frontend_url(cls, v: str) -> str:
+        if not v.startswith(("http://", "https://")):
+            raise ValueError("Frontend URL must start with http:// or https://")
+        return v.rstrip("/")
+
+    @property
+    def allowed_origins(self) -> list[str]:
+        return [self.frontend_base_url]
