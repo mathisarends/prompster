@@ -27,6 +27,7 @@ type ChatInputBoxProps = {
   showAttachmentButton?: boolean;
   onOpenFileDialog?: () => void;
   sendButtonAriaLabel?: string;
+  focusOnTyping?: boolean;
 };
 
 const formatSize = (bytes: number) => {
@@ -34,6 +35,37 @@ const formatSize = (bytes: number) => {
     return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   }
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const isEditableElement = (element: EventTarget | null) => {
+  if (!(element instanceof HTMLElement)) return false;
+
+  return (
+    element.isContentEditable ||
+    element.closest("input, textarea, select, [contenteditable='true']") !== null
+  );
+};
+
+const isVisible = (element: HTMLElement) => {
+  const rect = element.getBoundingClientRect();
+  const style = window.getComputedStyle(element);
+
+  return (
+    rect.width > 0 &&
+    rect.height > 0 &&
+    style.display !== "none" &&
+    style.visibility !== "hidden"
+  );
+};
+
+const isTextEntryKey = (event: KeyboardEvent) => {
+  return (
+    event.key.length === 1 &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.altKey &&
+    !event.isComposing
+  );
 };
 
 export const ChatInputBox = ({
@@ -49,10 +81,12 @@ export const ChatInputBox = ({
   showAttachmentButton = true,
   onOpenFileDialog,
   sendButtonAriaLabel = "Nachricht senden",
+  focusOnTyping = true,
 }: ChatInputBoxProps) => {
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const fileInputId = useId();
   const attachmentsRef = useRef<ChatAttachment[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     attachmentsRef.current = attachments;
@@ -65,6 +99,36 @@ export const ChatInputBox = ({
       });
     };
   }, []);
+
+  useEffect(() => {
+    if (!focusOnTyping) return;
+
+    const focusChatInputOnTyping = (event: KeyboardEvent) => {
+      const textarea = textareaRef.current;
+      const dialogOpen = document.querySelector(
+        "[data-slot='dialog-content'][data-open]",
+      );
+
+      if (
+        !textarea ||
+        event.defaultPrevented ||
+        document.activeElement === textarea ||
+        dialogOpen ||
+        !isTextEntryKey(event) ||
+        !isVisible(textarea) ||
+        isEditableElement(event.target)
+      ) {
+        return;
+      }
+
+      textarea.focus();
+    };
+
+    window.addEventListener("keydown", focusChatInputOnTyping);
+    return () => {
+      window.removeEventListener("keydown", focusChatInputOnTyping);
+    };
+  }, [focusOnTyping]);
 
   const addFiles = (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
@@ -184,6 +248,7 @@ export const ChatInputBox = ({
       )}
 
       <Textarea
+        ref={textareaRef}
         rows={rows}
         value={value}
         onChange={(e) => onChange(e.target.value)}
