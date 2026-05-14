@@ -1,6 +1,9 @@
 import logging
 
-from backend.features.auth.presentation import auth_router
+from backend.features.auth.presentation import (
+    auth_router,
+    register_auth_exception_handlers,
+)
 from backend.features.session.presentation import router as session_router
 from backend.presentation import PascalCaseRouter, LoggingMiddleware
 from fastapi import FastAPI
@@ -44,6 +47,7 @@ def _create_app() -> FastAPI:
     )
 
     _setup_middleware(app)
+    register_auth_exception_handlers(app)
 
     api_v1_router = PascalCaseRouter(prefix="/api/v1")
     api_v1_router.include_router(auth_router)

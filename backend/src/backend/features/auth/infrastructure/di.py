@@ -14,7 +14,7 @@ from backend.features.auth.infrastructure.orm import (
     InMemoryRefreshSessionRepository,
 )
 from backend.features.auth.infrastructure.security import (
-    PBKDF2PasswordHasher,
+    Argon2PasswordHasher,
     RandomTokenGenerator,
 )
 from backend.features.auth.presentation.cookies import AuthCookies
@@ -30,8 +30,8 @@ class AuthProvider(Provider):
         return AuthSettings()
 
     @provide(scope=Scope.APP)
-    def provide_password_hasher(self, auth_settings: AuthSettings) -> PasswordHasher:
-        return PBKDF2PasswordHasher(pepper=auth_settings.jwt_secret)
+    def provide_password_hasher(self) -> PasswordHasher:
+        return Argon2PasswordHasher()
 
     @provide(scope=Scope.APP)
     def provide_token_generator(self) -> TokenGenerator:

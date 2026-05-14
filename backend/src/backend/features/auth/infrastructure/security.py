@@ -1,40 +1,28 @@
-import hashlib
-import hmac
 import secrets
 from uuid import UUID
 
 from backend.features.auth.application.ports import PasswordHasher, TokenGenerator
 
+from argon2 import PasswordHasher as Argon2Hasher
+from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
 
-class PBKDF2PasswordHasher(PasswordHasher):
-    _ITERATIONS = 200_000
 
-    def __init__(self, *, pepper: str) -> None:
-        self._pepper = pepper.encode("utf-8")
+class Argon2PasswordHasher(PasswordHasher):
+    def __init__(self) -> None:
+        self._hasher = Argon2Hasher(
+            time_cost=3,
+            memory_cost=65536,
+            parallelism=2,
+        )
 
     def hash_password(self, *, plain_password: str) -> str:
-        salt = secrets.token_hex(16)
-        digest = hashlib.pbkdf2_hmac(
-            "sha256",
-            plain_password.encode("utf-8"),
-            salt.encode("utf-8") + self._pepper,
-            self._ITERATIONS,
-        )
-        return f"{salt}${digest.hex()}"
+        return self._hasher.hash(plain_password)
 
     def verify_password(self, *, plain_password: str, password_hash: str) -> bool:
         try:
-            salt, expected_digest = password_hash.split("$", maxsplit=1)
-        except ValueError:
+            return self._hasher.verify(password_hash, plain_password)
+        except (VerifyMismatchError, VerificationError, InvalidHashError):
             return False
-
-        candidate_digest = hashlib.pbkdf2_hmac(
-            "sha256",
-            plain_password.encode("utf-8"),
-            salt.encode("utf-8") + self._pepper,
-            self._ITERATIONS,
-        ).hex()
-        return hmac.compare_digest(candidate_digest, expected_digest)
 
 
 class RandomTokenGenerator(TokenGenerator):

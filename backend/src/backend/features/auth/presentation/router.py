@@ -3,13 +3,9 @@ from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from backend.env import EnvSettings
 from backend.features.auth.application import (
-    InvalidCredentialsException,
     LoginUserHandler,
     RefreshSessionHandler,
     RegisterUserHandler,
-    SessionExpiredException,
-    SessionInvalidException,
-    UserAlreadyExistsException,
 )
 from backend.features.auth.infrastructure import AuthSettings
 from backend.features.auth.presentation.cookies import AuthCookies
@@ -44,15 +40,7 @@ async def login(
     handler: FromDishka[LoginUserHandler],
     auth_cookies: FromDishka[AuthCookies],
 ) -> None:
-    try:
-        auth_session = await handler.handle(
-            email=request.email, password=request.password
-        )
-    except InvalidCredentialsException as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(exc),
-        ) from exc
+    auth_session = await handler.handle(email=request.email, password=request.password)
 
     auth_cookies.set(response, auth_session)
 
@@ -77,17 +65,11 @@ async def register(
     if env_config.registration_disabled:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    try:
-        auth_session = await handler.handle(
-            name=request.name,
-            email=request.email,
-            password=request.password,
-        )
-    except UserAlreadyExistsException as exc:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(exc),
-        ) from exc
+    auth_session = await handler.handle(
+        name=request.name,
+        email=request.email,
+        password=request.password,
+    )
 
     auth_cookies.set(response, auth_session)
 
@@ -128,12 +110,6 @@ async def refresh(
             detail="Refresh token required",
         )
 
-    try:
-        new_session = await handler.handle(refresh_token=token)
-    except (SessionExpiredException, SessionInvalidException) as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(exc),
-        ) from exc
+    new_session = await handler.handle(refresh_token=token)
 
     auth_cookies.set(response, new_session)
