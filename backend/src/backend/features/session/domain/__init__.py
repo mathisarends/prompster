@@ -1,5 +1,5 @@
 from .exceptions import SessionNotFoundError
-from .ports import SessionRepository
+from .repository import SessionRepository
 from .session import Session
 
 __all__ = [

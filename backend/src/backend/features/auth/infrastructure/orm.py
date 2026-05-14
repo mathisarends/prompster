@@ -3,8 +3,6 @@ from uuid import UUID
 from backend.features.auth.domain import (
     AuthUser,
     AuthUserRepository,
-    RefreshSession,
-    RefreshSessionRepository,
 )
 
 
@@ -31,17 +29,3 @@ class InMemoryAuthUserRepository(AuthUserRepository):
         self._users_by_id[user.id] = user
         self._user_ids_by_email[normalized_email] = user.id
         return user
-
-
-class InMemoryRefreshSessionRepository(RefreshSessionRepository):
-    def __init__(self) -> None:
-        self._sessions_by_token: dict[str, RefreshSession] = {}
-
-    async def get_by_token(self, *, token: str) -> RefreshSession | None:
-        return self._sessions_by_token.get(token)
-
-    async def save(self, *, refresh_session: RefreshSession) -> None:
-        self._sessions_by_token[refresh_session.token] = refresh_session
-
-    async def delete(self, *, token: str) -> None:
-        self._sessions_by_token.pop(token, None)
