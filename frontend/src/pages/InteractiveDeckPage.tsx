@@ -1,13 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowUp,
-  FileText,
   LayoutGrid,
   ListMusic,
-  Mic,
-  Paperclip,
   Play,
   Search,
   Sparkles,
@@ -25,9 +22,8 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import { ChatInputBox } from "@/components/chat-input-box";
 import { cn } from "@/lib/utils";
 import { mockTracks, type PlaylistTrack } from "@/lib/mockTracks";
 
@@ -50,29 +46,6 @@ type ChatMessage = {
   text: string;
 };
 
-type ChatAttachment = {
-  id: string;
-  name: string;
-  size: number;
-  type?: string;
-  previewUrl?: string;
-};
-
-const formatDuration = (seconds: number) => {
-  const mins = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0");
-  const secs = (seconds % 60).toString().padStart(2, "0");
-  return `${mins}:${secs}`;
-};
-
-const formatSize = (bytes: number) => {
-  if (bytes < 1024 * 1024) {
-    return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  }
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
-
 export const InteractiveDeckPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -81,12 +54,6 @@ export const InteractiveDeckPage = () => {
   const [tracks, setTracks] = useState(mockTracks);
   const [query, setQuery] = useState("");
   const [chatInput, setChatInput] = useState("");
-  const [isMicActive, setIsMicActive] = useState(false);
-  const [recordingSeconds, setRecordingSeconds] = useState(7);
-  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const attachmentsRef = useRef<ChatAttachment[]>([]);
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     const seedAttachments = state?.attachments ?? [];
@@ -118,65 +85,6 @@ export const InteractiveDeckPage = () => {
     ];
   });
 
-  useEffect(() => {
-    if (!isMicActive) {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      setRecordingSeconds((prev) => prev + 1);
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, [isMicActive]);
-
-  useEffect(() => {
-    attachmentsRef.current = attachments;
-  }, [attachments]);
-
-  useEffect(() => {
-    return () => {
-      attachmentsRef.current.forEach((file) => {
-        if (file.previewUrl) {
-          URL.revokeObjectURL(file.previewUrl);
-        }
-      });
-    };
-  }, []);
-
-  const addFiles = (fileList: FileList | null) => {
-    if (!fileList || fileList.length === 0) {
-      return;
-    }
-
-    const nextAttachments = Array.from(fileList).map((file) => ({
-      id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
-      name: file.name,
-      size: file.size,
-      type: file.type || undefined,
-      previewUrl: file.type.startsWith("image/")
-        ? URL.createObjectURL(file)
-        : undefined,
-    }));
-
-    setAttachments((prev) => [...prev, ...nextAttachments]);
-  };
-
-  useEffect(() => {
-    const onPaste = (event: ClipboardEvent) => {
-      const fileList = event.clipboardData?.files;
-      if (!fileList || fileList.length === 0) {
-        return;
-      }
-
-      event.preventDefault();
-      addFiles(fileList);
-    };
-
-    window.addEventListener("paste", onPaste);
-    return () => window.removeEventListener("paste", onPaste);
-  }, []);
-
   const filteredTracks = useMemo(() => {
     const normalized = query.trim().toLowerCase();
 
@@ -195,25 +103,13 @@ export const InteractiveDeckPage = () => {
     setTracks((prev) => prev.filter((track) => track.id !== trackId));
   };
 
-  const removeAttachment = (id: string) => {
-    setAttachments((prev) => {
-      const target = prev.find((item) => item.id === id);
-      if (target?.previewUrl) {
-        URL.revokeObjectURL(target.previewUrl);
-      }
-      return prev.filter((item) => item.id !== id);
-    });
-  };
-
-  const sendChatMessage = () => {
-    const trimmed = chatInput.trim();
-    if (!trimmed && attachments.length === 0) {
-      return;
-    }
-
+  const sendChatMessage = (
+    text: string,
+    attachments: Array<{ name: string }>,
+  ) => {
     const attachmentSuffix =
       attachments.length > 0
-        ? ` [${attachments.length} Datei(en): ${attachments.map((file) => file.name).join(", ")}]`
+        ? ` [${attachments.length} Datei(en): ${attachments.map((f) => f.name).join(", ")}]`
         : "";
 
     setMessages((prev) => [
@@ -221,7 +117,7 @@ export const InteractiveDeckPage = () => {
       {
         id: `user-${crypto.randomUUID()}`,
         role: "user",
-        text: `${trimmed || "Datei gesendet"}${attachmentSuffix}`,
+        text: `${text || "Datei gesendet"}${attachmentSuffix}`,
       },
       {
         id: `assistant-${crypto.randomUUID()}`,
@@ -229,46 +125,6 @@ export const InteractiveDeckPage = () => {
         text: "Verstanden. Ich aktualisiere jetzt die Vorschlage fur dein Deck.",
       },
     ]);
-
-    setChatInput("");
-    setAttachments((prev) => {
-      prev.forEach((file) => {
-        if (file.previewUrl) {
-          URL.revokeObjectURL(file.previewUrl);
-        }
-      });
-      return [];
-    });
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
-  };
-
-  const startVoiceRecording = () => {
-    setRecordingSeconds(0);
-    setIsMicActive(true);
-  };
-
-  const cancelVoiceRecording = () => {
-    setIsMicActive(false);
-    setRecordingSeconds(0);
-  };
-
-  const sendVoiceRecording = () => {
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `voice-${crypto.randomUUID()}`,
-        role: "user",
-        text: `Sprachnachricht gesendet (${formatDuration(recordingSeconds)})`,
-      },
-      {
-        id: `assistant-voice-${crypto.randomUUID()}`,
-        role: "assistant",
-        text: "Audio ist angekommen. Ich ubernehme die Anpassung fur die Songliste.",
-      },
-    ]);
-    cancelVoiceRecording();
   };
 
   const renderMessageBubble = (message: ChatMessage) => (
@@ -493,139 +349,14 @@ export const InteractiveDeckPage = () => {
         </ScrollArea>
 
         <div className="border-t border-border/60 p-3 sm:p-4">
-          {!isMicActive ? (
-            <div className="overflow-hidden rounded-xl border border-border/70 bg-background/70">
-              {attachments.length > 0 ? (
-                <div className="overflow-x-auto px-2 pt-2">
-                  <div className="flex w-max gap-2 pb-2 pr-1">
-                    {attachments.map((file) => (
-                      <div
-                        key={file.id}
-                        className="relative w-44 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-background/65"
-                      >
-                        {file.previewUrl ? (
-                          <img
-                            src={file.previewUrl}
-                            alt={`Vorschau von ${file.name}`}
-                            className="h-24 w-full object-cover"
-                          />
-                        ) : (
-                          <div className="grid h-24 place-items-center bg-muted/45 text-muted-foreground">
-                            <FileText className="size-7" />
-                          </div>
-                        )}
-                        <div className="space-y-0.5 p-2">
-                          <p className="max-h-8 overflow-hidden break-words text-xs font-medium leading-tight text-foreground">
-                            {file.name}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {formatSize(file.size)}
-                          </p>
-                        </div>
-                        <Button
-                          size="icon-xs"
-                          variant="ghost"
-                          className="absolute right-1 top-1 bg-background/85 hover:bg-background"
-                          onClick={() => removeAttachment(file.id)}
-                          aria-label={`${file.name} entfernen`}
-                        >
-                          <X className="size-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              <Textarea
-                ref={textareaRef}
-                rows={1}
-                value={chatInput}
-                onChange={(event) => setChatInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    sendChatMessage();
-                  }
-                }}
-                placeholder="Antworte oder frag..."
-                className="max-h-40 min-h-[42px] resize-none border-0 bg-transparent px-3 py-3 shadow-none focus-visible:ring-0"
-              />
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(event) => {
-                  addFiles(event.target.files);
-                  event.currentTarget.value = "";
-                }}
-              />
-
-              <Separator />
-              <div className="flex items-center justify-between px-2 py-2">
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  onClick={() => fileInputRef.current?.click()}
-                  aria-label="Datei anhangen"
-                >
-                  <Paperclip className="size-4" />
-                </Button>
-                {chatInput.trim() ? (
-                  <Button size="sm" onClick={sendChatMessage}>
-                    Senden
-                  </Button>
-                ) : (
-                  <Button
-                    size="icon-sm"
-                    variant="outline"
-                    onClick={startVoiceRecording}
-                    aria-label="Sprachnachricht aufnehmen"
-                  >
-                    <Mic className="size-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-xl border border-border/70 bg-background/85 p-2.5">
-              <div className="flex items-center gap-2">
-                <Button
-                  size="icon-sm"
-                  variant="outline"
-                  aria-label="Mikrofon aktiv"
-                >
-                  <Mic className="size-4" />
-                </Button>
-                <div className="flex flex-1 items-end gap-1 px-1">
-                  {[8, 14, 11, 17, 9, 16, 12, 18, 10, 15, 9, 14].map(
-                    (height, idx) => (
-                      <span
-                        key={idx}
-                        className="w-1 rounded-full bg-foreground/70"
-                        style={{ height }}
-                      />
-                    ),
-                  )}
-                </div>
-                <span className="min-w-11 text-right text-sm font-medium text-muted-foreground">
-                  {formatDuration(recordingSeconds)}
-                </span>
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  onClick={cancelVoiceRecording}
-                >
-                  <X className="size-4" />
-                </Button>
-                <Button size="icon-sm" onClick={sendVoiceRecording}>
-                  <ArrowUp className="size-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+          <ChatInputBox
+            value={chatInput}
+            onChange={setChatInput}
+            onSubmit={sendChatMessage}
+            placeholder="Antworte oder frag..."
+            textareaClassName="max-h-40"
+            rows={1}
+          />
         </div>
       </aside>
     </Card>

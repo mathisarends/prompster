@@ -1,23 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, FileText, Plus, Sparkles, X } from "lucide-react";
+import { FileText, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { ChatInputBox, type ChatAttachment } from "@/components/chat-input-box";
 import { NavigationSidebar } from "@/components/navigation-sidebar";
 import type { ChatHistoryEntry } from "@/lib/mockChats";
 import { cn } from "@/lib/utils";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-
-type DraftAttachment = {
-  id: string;
-  name: string;
-  size: number;
-  type?: string;
-  previewUrl?: string;
-};
 
 const formatSize = (bytes: number) => {
   if (bytes < 1024 * 1024) {
@@ -33,75 +24,9 @@ export const HomePage = () => {
     true,
   );
   const [activeChatId, setActiveChatId] = useState<string | undefined>();
-  const [attachments, setAttachments] = useState<DraftAttachment[]>([]);
   const [previewAttachment, setPreviewAttachment] =
-    useState<DraftAttachment | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const attachmentsRef = useRef<DraftAttachment[]>([]);
+    useState<ChatAttachment | null>(null);
   const navigate = useNavigate();
-
-  const addFiles = (fileList: FileList | null) => {
-    if (!fileList || fileList.length === 0) {
-      return;
-    }
-
-    const nextFiles = Array.from(fileList).map((file) => ({
-      id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
-      name: file.name,
-      size: file.size,
-      type: file.type || undefined,
-      previewUrl: file.type.startsWith("image/")
-        ? URL.createObjectURL(file)
-        : undefined,
-    }));
-
-    setAttachments((prev) => [...prev, ...nextFiles]);
-  };
-
-  useEffect(() => {
-    attachmentsRef.current = attachments;
-  }, [attachments]);
-
-  useEffect(() => {
-    return () => {
-      attachmentsRef.current.forEach((file) => {
-        if (file.previewUrl) {
-          URL.revokeObjectURL(file.previewUrl);
-        }
-      });
-    };
-  }, []);
-
-  useEffect(() => {
-    const onPaste = (event: ClipboardEvent) => {
-      const fileList = event.clipboardData?.files;
-      if (!fileList || fileList.length === 0) {
-        return;
-      }
-
-      event.preventDefault();
-      addFiles(fileList);
-    };
-
-    window.addEventListener("paste", onPaste);
-    return () => window.removeEventListener("paste", onPaste);
-  }, []);
-
-  const startChat = () => {
-    navigate("/deck/mock", { state: { prompt, attachments } });
-  };
-
-  const removeAttachment = (id: string) => {
-    setAttachments((prev) => {
-      const target = prev.find((item) => item.id === id);
-      if (target?.previewUrl) {
-        URL.revokeObjectURL(target.previewUrl);
-      }
-      return prev.filter((item) => item.id !== id);
-    });
-  };
-
-  const canStartChat = prompt.trim().length > 0 || attachments.length > 0;
 
   const handleSelectChat = (chat: ChatHistoryEntry) => {
     setActiveChatId(chat.id);
@@ -143,92 +68,18 @@ export const HomePage = () => {
             </div>
 
             <div className="space-y-2">
-              <div className="rounded-2xl bg-card/55 p-4 backdrop-blur-md sm:p-5">
-                {attachments.length > 0 ? (
-                  <div className="mb-3 overflow-x-auto pb-1">
-                    <div className="flex w-max gap-2 pr-1">
-                      {attachments.map((file) => (
-                        <div
-                          key={file.id}
-                          className="relative w-44 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-background/60 cursor-pointer"
-                          onClick={() => setPreviewAttachment(file)}
-                        >
-                          {file.previewUrl ? (
-                            <img
-                              src={file.previewUrl}
-                              alt={`Vorschau von ${file.name}`}
-                              className="h-24 w-full object-cover"
-                            />
-                          ) : (
-                            <div className="grid h-24 place-items-center bg-muted/45 text-muted-foreground">
-                              <FileText className="size-7" />
-                            </div>
-                          )}
-                          <div className="space-y-0.5 p-2">
-                            <p className="max-h-8 overflow-hidden break-words text-xs font-medium leading-tight text-foreground">
-                              {file.name}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {formatSize(file.size)}
-                            </p>
-                          </div>
-                          <Button
-                            size="icon-xs"
-                            variant="ghost"
-                            className="absolute right-1 top-1 bg-background/85 hover:bg-background"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeAttachment(file.id);
-                            }}
-                            aria-label={`${file.name} entfernen`}
-                          >
-                            <X className="size-3" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                <Textarea
-                  className="min-h-17.5 resize-none border-none bg-transparent p-0 text-base md:text-base shadow-none focus-visible:ring-0"
-                  placeholder='z.B. "Hip-Hop Klassiker der 90er fur 60 Karten" oder "Eurovision Hits 2000-2020"'
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      if (canStartChat) startChat();
-                    }
-                  }}
-                />
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={(event) => {
-                    addFiles(event.target.files);
-                    event.currentTarget.value = "";
-                  }}
-                />
-
-                <div className="flex items-center justify-between gap-3">
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    onClick={() => fileInputRef.current?.click()}
-                    aria-label="Datei anhangen"
-                  >
-                    <Plus className="size-4" />
-                  </Button>
-                  <Button onClick={startChat} disabled={!canStartChat}>
-                    Chat starten
-                    <ArrowRight className="size-4" />
-                  </Button>
-                </div>
-              </div>
+              <ChatInputBox
+                value={prompt}
+                onChange={setPrompt}
+                onSubmit={(text, attachments) =>
+                  navigate("/deck/mock", {
+                    state: { prompt: text, attachments },
+                  })
+                }
+                placeholder='z.B. "Hip-Hop Klassiker der 90er fur 60 Karten" oder "Eurovision Hits 2000-2020"'
+                sendButtonAriaLabel="Chat starten"
+                onAttachmentClick={setPreviewAttachment}
+              />
             </div>
           </section>
         </div>

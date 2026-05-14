@@ -21,19 +21,19 @@ export const NavigationSidebar = ({
   activeChatId,
 }: NavigationSidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [shouldFocusSearch, setShouldFocusSearch] = useState(false);
+  const shouldFocusSearchRef = useRef(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open && shouldFocusSearch) {
+    if (open && shouldFocusSearchRef.current) {
       searchInputRef.current?.focus();
-      setShouldFocusSearch(false);
+      shouldFocusSearchRef.current = false;
     }
-  }, [open, shouldFocusSearch]);
+  }, [open]);
 
   const handleSearchIconClick = () => {
     if (!open) onToggle();
-    setShouldFocusSearch(true);
+    shouldFocusSearchRef.current = true;
   };
 
   const visibleChats = useMemo(() => {
