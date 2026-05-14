@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { PrompsterLogo } from "@/components/prompster-logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -322,17 +322,11 @@ export const InteractiveDeckPage = () => {
     <Card className="h-full rounded-none border-0 bg-card/60 py-0 shadow-none ring-0">
       <aside className="flex h-full min-h-0 flex-col">
         <div className="flex items-center justify-between border-b border-border/60 px-3 py-3 sm:px-4">
-          <div className="flex items-center gap-2.5">
-            <Avatar className="size-8 rounded-md border border-border/70 bg-background/80">
-              <AvatarFallback className="rounded-md text-xs font-semibold">
-                P
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-semibold text-foreground">Prompster</p>
-              <p className="text-xs text-muted-foreground">Deck Assistant</p>
-            </div>
-          </div>
+          <PrompsterLogo
+            className="gap-2.5"
+            titleClassName="text-sm text-foreground"
+            subtitle="Deck Assistant"
+          />
           <Badge
             variant="secondary"
             className="h-6 gap-1 px-2 text-[11px] uppercase tracking-[0.08em]"

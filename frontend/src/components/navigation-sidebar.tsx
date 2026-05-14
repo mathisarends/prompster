@@ -4,6 +4,7 @@ import { PanelLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PrompsterLogo } from "@/components/prompster-logo";
 import { cn } from "@/lib/utils";
 import { mockChats, type ChatHistoryEntry } from "@/lib/mockChats";
 
@@ -54,16 +55,7 @@ export const NavigationSidebar = ({
     >
       {open ? (
         <div className="flex items-center justify-between gap-2 px-3 py-3">
-          <div className="flex items-center gap-3">
-            <div className="grid size-9 place-items-center rounded-xl bg-sidebar-accent text-sidebar-accent-foreground text-lg font-bold">
-              P
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-base font-semibold tracking-tight">
-                Prompster
-              </p>
-            </div>
-          </div>
+          <PrompsterLogo />
           <Button
             size="icon-sm"
             variant="ghost"
