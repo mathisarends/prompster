@@ -86,6 +86,7 @@ source = { editable = "backend" }
 dependencies = [
     { name = "dishka" },
     { name = "fastapi" },
+    { name = "py-llmify", extra = ["openai"] },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "sqlmodel" },
@@ -95,6 +96,7 @@ dependencies = [
 requires-dist = [
     { name = "dishka", specifier = ">=1.10.1" },
     { name = "fastapi", specifier = ">=0.136.1" },
+    { name = "py-llmify", extras = ["openai"], specifier = ">=0.3.0" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
     { name = "sqlmodel", specifier = ">=0.0.38" },
