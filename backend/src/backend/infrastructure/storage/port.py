@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from collections import abc
 
 from backend.infrastructure.storage.views import (
     ContentType,
