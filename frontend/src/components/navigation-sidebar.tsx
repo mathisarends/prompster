@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { PanelLeft, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PrompsterLogo } from "@/components/prompster-logo";
+import { SearchBar } from "@/components/search-bar";
 import { cn } from "@/lib/utils";
 import { mockChats, type ChatHistoryEntry } from "@/lib/mockChats";
+import { PrompsterLogo } from "./prompster-logo";
 
 type NavigationSidebarProps = {
   open: boolean;
@@ -91,16 +91,12 @@ export const NavigationSidebar = ({
 
       <div className="space-y-2 px-3 pb-3">
         {open ? (
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              ref={searchInputRef}
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Chats durchsuchen"
-              className="h-9 border-sidebar-border/70 bg-sidebar-accent/35 pl-8 text-sm text-sidebar-foreground placeholder:text-muted-foreground"
-            />
-          </div>
+          <SearchBar
+            inputRef={searchInputRef}
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Chats durchsuchen"
+          />
         ) : (
           <div className="h-0" />
         )}

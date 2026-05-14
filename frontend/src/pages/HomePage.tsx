@@ -34,7 +34,7 @@ export const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_10%_5%,_hsl(141_78%_26%)_0%,_transparent_40%),radial-gradient(circle_at_88%_8%,_hsl(154_50%_16%)_0%,_transparent_22%),linear-gradient(165deg,_hsl(222_46%_8%)_0%,_hsl(222_52%_5%)_100%)] text-foreground">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_8%_0%,_hsl(141_52%_24%_/_0.12)_0%,_transparent_34%),radial-gradient(circle_at_94%_0%,_hsl(214_62%_24%_/_0.1)_0%,_transparent_24%),linear-gradient(165deg,_hsl(222_46%_8%)_0%,_hsl(222_52%_5%)_100%)] text-foreground">
       <NavigationSidebar
         open={sidebarOpen}
         onToggle={() => setSidebarOpen((prev) => !prev)}
@@ -44,7 +44,7 @@ export const HomePage = () => {
 
       <main
         className={cn(
-          "flex min-h-screen flex-col justify-center px-4 py-10 transition-[padding] duration-300 ease-out sm:px-8 sm:py-14",
+          "flex min-h-screen flex-col justify-start px-4 pb-10 pt-8 transition-[padding] duration-300 ease-out sm:px-8 sm:pb-14 sm:pt-10 lg:pt-12",
           sidebarOpen ? "sm:pl-80" : "sm:pl-24",
         )}
       >

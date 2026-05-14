@@ -35,7 +35,12 @@ export const PrompsterLogo = ({
           Prompster
         </p>
         {subtitle ? (
-          <p className={cn("truncate text-xs text-muted-foreground", subtitleClassName)}>
+          <p
+            className={cn(
+              "truncate text-xs text-muted-foreground",
+              subtitleClassName,
+            )}
+          >
             {subtitle}
           </p>
         ) : null}

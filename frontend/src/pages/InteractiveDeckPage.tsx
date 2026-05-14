@@ -6,16 +6,13 @@ import {
   LayoutGrid,
   ListMusic,
   Play,
-  Search,
   Sparkles,
   X,
 } from "lucide-react";
 
-import { PrompsterLogo } from "@/components/prompster-logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -24,8 +21,10 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChatInputBox } from "@/components/chat-input-box";
+import { SearchBar } from "@/components/search-bar";
 import { cn } from "@/lib/utils";
 import { mockTracks, type PlaylistTrack } from "@/lib/mockTracks";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 type LocationState = {
   prompt?: string;
@@ -54,6 +53,10 @@ export const InteractiveDeckPage = () => {
   const [tracks, setTracks] = useState(mockTracks);
   const [query, setQuery] = useState("");
   const [chatInput, setChatInput] = useState("");
+  const [panelLayout, setPanelLayout] = useLocalStorage<Record<string, number>>(
+    "prompster.deck.panel-layout",
+    { chat: 50, deck: 50 },
+  );
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     const seedAttachments = state?.attachments ?? [];
@@ -131,10 +134,10 @@ export const InteractiveDeckPage = () => {
     <div
       key={message.id}
       className={cn(
-        "max-w-[92%] rounded-lg border px-3 py-2 text-sm leading-relaxed",
+        "text-sm leading-relaxed",
         message.role === "user"
-          ? "ml-auto border-primary/40 bg-primary/15 text-foreground"
-          : "border-border/70 bg-background/80 text-muted-foreground",
+          ? "ml-auto max-w-[86%] rounded-2xl bg-white/10 px-4 py-3 text-foreground"
+          : "max-w-[92%] px-1 py-1.5 text-muted-foreground",
       )}
     >
       {message.text}
@@ -145,16 +148,16 @@ export const InteractiveDeckPage = () => {
     <div
       key={track.id}
       className={cn(
-        "group grid grid-cols-[52px_minmax(0,1fr)_70px_95px_44px] items-center rounded-md border border-transparent px-3 py-2 transition-colors",
-        index === 0 ? "bg-muted/70" : "hover:bg-muted/45",
+        "group grid grid-cols-[44px_minmax(0,1fr)_72px_104px_40px] items-center rounded-xl px-3 py-2.5 transition-colors",
+        index === 0 ? "bg-emerald-500/10" : "hover:bg-white/[0.04]",
       )}
     >
-      <div className="relative grid place-items-center text-sm tabular-nums text-muted-foreground">
+      <div className="relative grid place-items-center text-xs tabular-nums text-muted-foreground">
         <span className="group-hover:hidden">{index + 1}</span>
         <Button
           size="icon-xs"
           variant="ghost"
-          className="absolute hidden group-hover:inline-flex"
+          className="absolute hidden text-foreground group-hover:inline-flex"
           aria-label={`${track.title} abspielen`}
         >
           <Play className="size-3.5 fill-current" />
@@ -163,7 +166,7 @@ export const InteractiveDeckPage = () => {
 
       <div className="flex min-w-0 items-center gap-3">
         <div
-          className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-md border border-border/75 text-[11px] font-semibold uppercase text-white"
+          className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-lg bg-white/[0.035] text-[11px] font-semibold uppercase text-white shadow-sm"
           style={{
             backgroundImage: `linear-gradient(140deg, ${track.coverFrom}, ${track.coverTo})`,
           }}
@@ -182,24 +185,27 @@ export const InteractiveDeckPage = () => {
           <span>{track.artist.slice(0, 2)}</span>
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">
+          <p className="truncate text-sm font-semibold leading-tight text-foreground">
             {track.title}
           </p>
-          <p className="truncate text-sm text-muted-foreground">
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {track.artist}
           </p>
         </div>
       </div>
 
-      <span className="text-sm text-foreground">{track.year}</span>
-      <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+      <span className="text-xs font-medium tabular-nums text-foreground/80">
+        {track.year}
+      </span>
+      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
         {track.genre}
       </span>
 
       <div className="flex items-center justify-end">
         <Button
           size="icon-xs"
-          variant="outline"
+          variant="ghost"
+          className="text-muted-foreground hover:text-foreground"
           aria-label={`${track.title} entfernen`}
           onClick={() => removeTrack(track.id)}
         >
@@ -210,25 +216,26 @@ export const InteractiveDeckPage = () => {
   );
 
   const rightPanel = (
-    <Card className="h-full rounded-none border-0 bg-card/55 py-0 shadow-none ring-0 md:rounded-none">
+    <Card className="h-full rounded-none border-0 bg-[hsl(222_36%_7%)] py-0 shadow-none ring-0 md:rounded-none">
       <div className="flex h-full min-h-0 flex-col">
-        <div className="border-b border-border/60 px-3 py-2 sm:px-4">
+        <div className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-5 sm:py-5">
           <Tabs
             value={activeView}
             onValueChange={(value) => setActiveView(value as DeckViewMode)}
+            className="flex min-h-0 flex-1 flex-col"
           >
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-3">
               <TabsList variant="line" className="h-auto p-0">
                 <TabsTrigger
                   value="playlist"
-                  className="gap-1.5 rounded-none px-1.5 py-2 text-sm"
+                  className="gap-1.5 rounded-none px-1.5 py-2 text-sm font-semibold"
                 >
                   <ListMusic className="size-4" />
                   Liste
                 </TabsTrigger>
                 <TabsTrigger
                   value="cards"
-                  className="gap-1.5 rounded-none px-1.5 py-2 text-sm"
+                  className="gap-1.5 rounded-none px-1.5 py-2 text-sm font-semibold"
                 >
                   <LayoutGrid className="size-4" />
                   Karten
@@ -236,7 +243,7 @@ export const InteractiveDeckPage = () => {
               </TabsList>
               <Badge
                 variant="outline"
-                className="h-6 px-2 text-[11px] uppercase tracking-[0.12em]"
+                className="h-7 rounded-full border-transparent bg-white/[0.045] px-2.5 text-[11px] uppercase tracking-[0.1em] text-muted-foreground"
               >
                 {filteredTracks.length} / 50 Songs
               </Badge>
@@ -244,19 +251,16 @@ export const InteractiveDeckPage = () => {
 
             <TabsContent
               value="playlist"
-              className="mt-2 flex min-h-0 flex-1 flex-col"
+              className="mt-3 flex min-h-0 flex-1 flex-col"
             >
-              <div className="relative mb-2 px-0 sm:mb-3">
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  className="pl-9"
-                  placeholder="Playlist durchsuchen: Titel, Artist, Jahr, Genre..."
-                />
-              </div>
+              <SearchBar
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Playlist durchsuchen: Titel, Artist, Jahr, Genre..."
+                containerClassName="mb-4 px-0"
+              />
 
-              <div className="grid grid-cols-[52px_minmax(0,1fr)_70px_95px_44px] items-center px-1 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              <div className="grid grid-cols-[44px_minmax(0,1fr)_72px_104px_40px] items-center px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
                 <span className="justify-self-center">#</span>
                 <span>Titel</span>
                 <span>Jahr</span>
@@ -265,7 +269,7 @@ export const InteractiveDeckPage = () => {
               </div>
 
               <ScrollArea className="min-h-0 flex-1 pr-2">
-                <div className="space-y-1 pb-3">
+                <div className="space-y-1.5 pb-3">
                   {filteredTracks.map(renderTrackRow)}
                 </div>
                 {filteredTracks.length === 0 ? (
@@ -276,16 +280,16 @@ export const InteractiveDeckPage = () => {
               </ScrollArea>
             </TabsContent>
 
-            <TabsContent value="cards" className="mt-2 min-h-0 flex-1">
+            <TabsContent value="cards" className="mt-3 min-h-0 flex-1">
               <ScrollArea className="h-full pr-2">
                 <div className="grid grid-cols-2 gap-3 pb-3 sm:grid-cols-3">
                   {Array.from({ length: 6 }).map((_, idx) => (
                     <Card
                       key={`card-placeholder-${idx}`}
                       size="sm"
-                      className="gap-3 border border-border/70 bg-background/65 p-3"
+                      className="gap-3 border-0 bg-white/[0.035] p-3 shadow-none"
                     >
-                      <div className="h-24 rounded-md border border-dashed border-border/70 bg-muted/45" />
+                      <div className="h-24 rounded-md bg-white/[0.045]" />
                       <div>
                         <p className="text-sm font-semibold">
                           Kartenansicht Platzhalter
@@ -302,13 +306,9 @@ export const InteractiveDeckPage = () => {
           </Tabs>
         </div>
 
-        <div className="mt-auto border-t border-border/60 p-3 sm:p-4">
+        <div className="mt-auto px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
           <div className="flex flex-wrap items-center justify-end gap-2.5">
-            <Button variant="outline" onClick={() => navigate("/")}>
-              <ArrowLeft className="size-4" />
-              Zuruck zur Startseite
-            </Button>
-            <Button>
+            <Button className="rounded-full bg-primary px-4 hover:bg-primary/85">
               Karten exportieren
               <ArrowUp className="size-4" />
             </Button>
@@ -319,35 +319,40 @@ export const InteractiveDeckPage = () => {
   );
 
   const leftPanel = (
-    <Card className="h-full rounded-none border-0 bg-card/60 py-0 shadow-none ring-0">
+    <Card className="h-full rounded-none border-0 bg-[hsl(222_36%_7%)] py-0 shadow-none ring-0">
       <aside className="flex h-full min-h-0 flex-col">
-        <div className="flex items-center justify-between border-b border-border/60 px-3 py-3 sm:px-4">
-          <PrompsterLogo
-            className="gap-2.5"
-            titleClassName="text-sm text-foreground"
-            subtitle="Deck Assistant"
-          />
+        <div className="flex items-center justify-between px-4 py-4 sm:px-5 sm:py-5">
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            aria-label="Zuruck zur Startseite"
+            className="rounded-full bg-white/[0.06] text-foreground hover:bg-white/[0.1]"
+          >
+            <ArrowLeft className="size-4" />
+          </Button>
           <Badge
             variant="secondary"
-            className="h-6 gap-1 px-2 text-[11px] uppercase tracking-[0.08em]"
+            className="h-6 rounded-full border-transparent bg-white/[0.08] px-2 text-[11px] uppercase tracking-[0.08em]"
           >
             <Sparkles className="size-3" />
             Live
           </Badge>
         </div>
 
-        <ScrollArea className="min-h-0 flex-1 p-3 sm:p-4">
-          <div className="space-y-3 pr-1">
+        <ScrollArea className="min-h-0 flex-1 px-4 pb-4 sm:px-5 sm:pb-5">
+          <div className="space-y-4 pr-1">
             {messages.map(renderMessageBubble)}
           </div>
         </ScrollArea>
 
-        <div className="border-t border-border/60 p-3 sm:p-4">
+        <div className="px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
           <ChatInputBox
             value={chatInput}
             onChange={setChatInput}
             onSubmit={sendChatMessage}
             placeholder="Antworte oder frag..."
+            className="rounded-3xl border-transparent bg-[hsl(222_30%_10%)] p-4 shadow-none"
             textareaClassName="max-h-40"
             rows={1}
           />
@@ -357,7 +362,7 @@ export const InteractiveDeckPage = () => {
   );
 
   return (
-    <div className="h-dvh overflow-hidden bg-[radial-gradient(circle_at_14%_6%,_hsl(146_78%_22%)_0%,_transparent_40%),radial-gradient(circle_at_88%_0%,_hsl(201_82%_18%)_0%,_transparent_34%),linear-gradient(160deg,_hsl(222_48%_8%)_0%,_hsl(221_57%_5%)_100%)] text-foreground">
+    <div className="h-dvh overflow-hidden bg-[linear-gradient(165deg,_hsl(222_42%_8%)_0%,_hsl(222_48%_5%)_100%)] text-foreground">
       <div className="mx-auto h-full w-full p-0">
         <div className="flex h-full min-h-0 flex-col md:hidden">
           <div className="h-[52dvh] min-h-[300px]">{leftPanel}</div>
@@ -367,16 +372,30 @@ export const InteractiveDeckPage = () => {
         <div className="hidden h-full min-h-0 md:block">
           <ResizablePanelGroup
             orientation="horizontal"
-            className="border border-border/65 bg-background/35 backdrop-blur-md"
+            className="h-full bg-transparent"
+            defaultLayout={panelLayout}
+            onLayoutChanged={setPanelLayout}
           >
-            <ResizablePanel defaultSize="32%" minSize="320px" maxSize="52%">
+            <ResizablePanel
+              id="chat"
+              defaultSize={panelLayout.chat ?? 50}
+              minSize={32}
+              maxSize={68}
+            >
               {leftPanel}
             </ResizablePanel>
             <ResizableHandle
               withHandle
-              className="w-2 cursor-col-resize bg-transparent hover:bg-border/70 data-[separator=active]:bg-primary/40"
+              className="w-px cursor-col-resize bg-white/5 hover:bg-white/10 data-[separator=active]:bg-primary/35"
             />
-            <ResizablePanel defaultSize="68%">{rightPanel}</ResizablePanel>
+            <ResizablePanel
+              id="deck"
+              defaultSize={panelLayout.deck ?? 50}
+              minSize={32}
+              maxSize={68}
+            >
+              {rightPanel}
+            </ResizablePanel>
           </ResizablePanelGroup>
         </div>
       </div>
