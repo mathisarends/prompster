@@ -11,6 +11,7 @@ RUN pip install uv
 
 COPY pyproject.toml uv.lock* ./
 COPY backend/pyproject.toml backend/README.md* backend/
+COPY backend/src backend/src
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --package backend
