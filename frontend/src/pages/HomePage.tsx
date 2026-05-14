@@ -1,14 +1,10 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FileText, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChatInputBox, type ChatAttachment } from "@/components/chat-input-box";
-import { NavigationSidebar } from "@/components/navigation-sidebar";
-import type { ChatHistoryEntry } from "@/lib/mockChats";
-import { cn } from "@/lib/utils";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const formatSize = (bytes: number) => {
   if (bytes < 1024 * 1024) {
@@ -19,36 +15,21 @@ const formatSize = (bytes: number) => {
 
 export const HomePage = () => {
   const [prompt, setPrompt] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useLocalStorage(
-    "prompster.sidebar.open",
-    true,
-  );
-  const [activeChatId, setActiveChatId] = useState<string | undefined>();
   const [previewAttachment, setPreviewAttachment] =
     useState<ChatAttachment | null>(null);
+  const location = useLocation();
   const navigate = useNavigate();
 
-  const handleSelectChat = (chat: ChatHistoryEntry) => {
-    setActiveChatId(chat.id);
-    navigate("/deck/mock", { state: { prompt: chat.title } });
-  };
+  useEffect(() => {
+    if (location.state && "newChatAt" in location.state) {
+      setPrompt("");
+    }
+  }, [location.state]);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_8%_0%,_hsl(141_52%_24%_/_0.12)_0%,_transparent_34%),radial-gradient(circle_at_94%_0%,_hsl(214_62%_24%_/_0.1)_0%,_transparent_24%),linear-gradient(165deg,_hsl(222_46%_8%)_0%,_hsl(222_52%_5%)_100%)] text-foreground">
-      <NavigationSidebar
-        open={sidebarOpen}
-        onToggle={() => setSidebarOpen((prev) => !prev)}
-        onSelectChat={handleSelectChat}
-        activeChatId={activeChatId}
-      />
-
-      <main
-        className={cn(
-          "flex min-h-screen flex-col justify-start px-4 pb-10 pt-8 transition-[padding] duration-300 ease-out sm:px-8 sm:pb-14 sm:pt-10 lg:pt-12",
-          sidebarOpen ? "sm:pl-80" : "sm:pl-24",
-        )}
-      >
-        <div className="mx-auto w-full max-w-4xl">
+    <div className="home-page-background min-h-screen text-foreground">
+      <main className="relative z-10 flex min-h-screen flex-col justify-center px-4 py-10 sm:px-8 sm:py-14">
+        <div className="mx-auto w-full max-w-4xl -translate-y-6 sm:-translate-y-8">
           <section className="space-y-8">
             <div className="space-y-4 text-center sm:space-y-5">
               <Badge

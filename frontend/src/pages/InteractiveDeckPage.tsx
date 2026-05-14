@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  ArrowUp,
   LayoutGrid,
   ListMusic,
   Play,
@@ -96,7 +95,7 @@ export const InteractiveDeckPage = () => {
     }
 
     return tracks.filter((track) =>
-      `${track.title} ${track.artist} ${track.year} ${track.genre}`
+      `${track.title} ${track.artist} ${track.year}`
         .toLowerCase()
         .includes(normalized),
     );
@@ -148,7 +147,7 @@ export const InteractiveDeckPage = () => {
     <div
       key={track.id}
       className={cn(
-        "group grid grid-cols-[44px_minmax(0,1fr)_72px_104px_40px] items-center rounded-xl px-3 py-2.5 transition-colors",
+        "group grid grid-cols-[44px_minmax(0,1fr)_72px_40px] items-center rounded-xl px-3 py-2.5 transition-colors",
         index === 0 ? "bg-emerald-500/10" : "hover:bg-white/[0.04]",
       )}
     >
@@ -165,24 +164,13 @@ export const InteractiveDeckPage = () => {
       </div>
 
       <div className="flex min-w-0 items-center gap-3">
-        <div
-          className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-lg bg-white/[0.035] text-[11px] font-semibold uppercase text-white shadow-sm"
-          style={{
-            backgroundImage: `linear-gradient(140deg, ${track.coverFrom}, ${track.coverTo})`,
-          }}
-        >
-          {track.coverUrl ? (
-            <img
-              src={track.coverUrl}
-              alt={`${track.title} Cover`}
-              className="absolute inset-0 h-full w-full object-cover"
-              loading="lazy"
-              onError={(event) => {
-                event.currentTarget.style.display = "none";
-              }}
-            />
-          ) : null}
-          <span>{track.artist.slice(0, 2)}</span>
+        <div className="h-10 w-10 overflow-hidden rounded-lg bg-white/[0.06] shadow-sm">
+          <img
+            src={track.coverUrl}
+            alt={`${track.title} Cover`}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold leading-tight text-foreground">
@@ -196,9 +184,6 @@ export const InteractiveDeckPage = () => {
 
       <span className="text-xs font-medium tabular-nums text-foreground/80">
         {track.year}
-      </span>
-      <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-        {track.genre}
       </span>
 
       <div className="flex items-center justify-end">
@@ -260,11 +245,10 @@ export const InteractiveDeckPage = () => {
                 containerClassName="mb-4 px-0"
               />
 
-              <div className="grid grid-cols-[44px_minmax(0,1fr)_72px_104px_40px] items-center px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
+              <div className="grid grid-cols-[44px_minmax(0,1fr)_72px_40px] items-center px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/70">
                 <span className="justify-self-center">#</span>
                 <span>Titel</span>
                 <span>Jahr</span>
-                <span>Genre</span>
                 <span />
               </div>
 
@@ -304,15 +288,6 @@ export const InteractiveDeckPage = () => {
               </ScrollArea>
             </TabsContent>
           </Tabs>
-        </div>
-
-        <div className="mt-auto px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
-          <div className="flex flex-wrap items-center justify-end gap-2.5">
-            <Button className="rounded-full bg-primary px-4 hover:bg-primary/85">
-              Karten exportieren
-              <ArrowUp className="size-4" />
-            </Button>
-          </div>
         </div>
       </div>
     </Card>
