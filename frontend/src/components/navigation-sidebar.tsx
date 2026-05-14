@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { MessageCircle, PanelLeft, Plus, Search, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { MessageCircle, PanelLeft, Plus, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
+import { ChatSearchDialog } from "@/components/chat-search-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { mockChats, type ChatHistoryEntry } from "@/lib/mockChats";
@@ -23,23 +23,26 @@ export const NavigationSidebar = ({
   onSelectChat,
   activeChatId,
 }: NavigationSidebarProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (searchOpen) {
-      searchInputRef.current?.focus();
-    }
-  }, [searchOpen]);
+    const handleGlobalSearchShortcut = (event: KeyboardEvent) => {
+      const isSearchShortcut =
+        (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
 
-  const visibleChats = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) {
-      return mockChats;
-    }
-    return mockChats.filter((chat) => chat.title.toLowerCase().includes(query));
-  }, [searchQuery]);
+      if (!isSearchShortcut) {
+        return;
+      }
+
+      event.preventDefault();
+      setSearchOpen((previous) => !previous);
+    };
+
+    window.addEventListener("keydown", handleGlobalSearchShortcut);
+    return () => {
+      window.removeEventListener("keydown", handleGlobalSearchShortcut);
+    };
+  }, []);
 
   const selectChat = (chat: ChatHistoryEntry) => {
     onSelectChat(chat);
@@ -56,27 +59,9 @@ export const NavigationSidebar = ({
         )}
       >
         {open ? (
-          <div className="flex items-center justify-between gap-2 px-3 py-3">
-            <PrompsterLogo />
-            <div className="flex items-center gap-1">
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                onClick={onNewChat}
-                aria-label="Neuen Chat starten"
-                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              >
-                <Plus className="size-4" />
-              </Button>
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                onClick={() => setSearchOpen(true)}
-                aria-label="Suche oeffnen"
-                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              >
-                <Search className="size-4" />
-              </Button>
+          <div className="space-y-4 px-3 py-3">
+            <div className="flex items-center justify-between gap-2">
+              <PrompsterLogo />
               <Button
                 size="icon-sm"
                 variant="ghost"
@@ -86,6 +71,25 @@ export const NavigationSidebar = ({
               >
                 <PanelLeft className="size-4 transition-transform" />
               </Button>
+            </div>
+
+            <div className="space-y-1">
+              <button
+                type="button"
+                onClick={onNewChat}
+                className="flex h-10 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <Plus className="size-5 shrink-0" />
+                <span>Neuer Chat</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                className="flex h-10 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <Search className="size-5 shrink-0" />
+                <span>Suchen</span>
+              </button>
             </div>
           </div>
         ) : (
@@ -177,60 +181,12 @@ export const NavigationSidebar = ({
         </div>
       </aside>
 
-      <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent className="top-10 max-h-[min(42rem,calc(100vh-5rem))] max-w-4xl overflow-hidden rounded-2xl border-white/15 bg-sidebar/95 p-0 shadow-2xl backdrop-blur-xl">
-          <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-4">
-            <Search className="size-5 shrink-0 text-muted-foreground" />
-            <input
-              ref={searchInputRef}
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Chats und Projekte durchsuchen"
-              className="h-10 min-w-0 flex-1 bg-transparent text-base text-sidebar-foreground outline-none placeholder:text-muted-foreground"
-            />
-            <DialogClose
-              aria-label="Suche schliessen"
-              className="grid size-9 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            >
-              <X className="size-5" />
-            </DialogClose>
-          </div>
-
-          <ScrollArea className="h-[min(32rem,calc(100vh-11rem))]">
-            <div className="p-3">
-              {visibleChats.length > 0 ? (
-                <ul className="space-y-1">
-                  {visibleChats.map((chat) => (
-                    <li key={chat.id}>
-                      <button
-                        type="button"
-                        onClick={() => selectChat(chat)}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-sidebar-accent/70",
-                          chat.id === activeChatId &&
-                            "bg-sidebar-accent text-sidebar-accent-foreground",
-                        )}
-                      >
-                        <MessageCircle className="size-5 shrink-0 text-muted-foreground" />
-                        <span className="min-w-0 flex-1 truncate text-base font-medium">
-                          {chat.title}
-                        </span>
-                        <span className="shrink-0 text-sm text-muted-foreground">
-                          {chat.group}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-                  Keine Chats fuer diese Suche.
-                </p>
-              )}
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
+      <ChatSearchDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onSelectChat={onSelectChat}
+        activeChatId={activeChatId}
+      />
     </>
   );
 };
