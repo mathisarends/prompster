@@ -1,115 +1,57 @@
-# import logging
-# from typing import Annotated
-# from uuid import UUID
+from typing import Annotated
+from uuid import UUID
 
-# from fastapi import (
-#     Depends,
-#     HTTPException,
-#     Request,
-#     WebSocket,
-#     WebSocketException,
-#     status,
-# )
+from fastapi import Depends, HTTPException, WebSocket, WebSocketException, status
+from starlette.requests import HTTPConnection
 
-# from backend.features.auth.application.schemas import TokenPayload
-# from backend.features.auth.infrastructure import AuthConfig
-# from backend.features.auth.infrastructure.jwt import JwtTokenIssuer
-# from backend.features.user.domain.views import UserRole
-
-# logger = logging.getLogger(__name__)
+from backend.features.auth.application.ports import TokenIssuer
+from backend.features.auth.application.schemas import TokenPayload, TokenType
+from backend.features.auth.infrastructure.auth_settings import AuthSettings
+from backend.features.auth.infrastructure.jwt_token_issuer import JwtTokenIssuer
 
 
-# def _get_jwt_config() -> AuthConfig:
-#     return AuthConfig()
+def _get_auth_settings() -> AuthSettings:
+    return AuthSettings()
 
 
-# def _get_token_service(
-#     jwt_config: Annotated[AuthConfig, Depends(_get_jwt_config)],
-# ) -> JwtTokenIssuer:
-#     return JwtTokenIssuer(config=jwt_config)
+def _get_jwt_token_issuer(
+    auth_settings: Annotated[AuthSettings, Depends(_get_auth_settings)],
+) -> TokenIssuer:
+    return JwtTokenIssuer(auth_settings=auth_settings)
 
 
-# async def _get_authenticated_token_payload(
-#     request: Request,
-#     jwt_config: Annotated[AuthConfig, Depends(_get_jwt_config)],
-#     token_service: Annotated[JwtTokenIssuer, Depends(_get_token_service)],
-# ) -> TokenPayload:
-#     token = request.cookies.get(jwt_config.access_token_cookie_name)
-#     if not token:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
-#         )
+def _get_token_payload(
+    conn: HTTPConnection,
+    auth_settings: Annotated[AuthSettings, Depends(_get_auth_settings)],
+    token_issuer: Annotated[TokenIssuer, Depends(_get_jwt_token_issuer)],
+) -> TokenPayload:
+    token = conn.cookies.get(auth_settings.access_token_cookie_name)
+    if not token:
+        _raise(conn, "Authentication required")
 
-#     return token_service.validate(token)
-
-
-# async def _get_authenticated_token_payload_for_websocket(
-#     websocket: WebSocket,
-#     jwt_config: Annotated[AuthConfig, Depends(_get_jwt_config)],
-#     token_service: Annotated[JwtTokenIssuer, Depends(_get_token_service)],
-# ) -> TokenPayload:
-#     token = websocket.cookies.get(jwt_config.access_token_cookie_name)
-#     logger.debug(
-#         "WebSocket auth: cookie_name=%s token_present=%s",
-#         jwt_config.access_token_cookie_name,
-#         bool(token),
-#     )
-#     if not token:
-#         logger.warning(
-#             "WebSocket rejected – no access token cookie (cookie_name=%s, path=%s)",
-#             jwt_config.access_token_cookie_name,
-#             websocket.url.path,
-#         )
-#         raise WebSocketException(
-#             code=status.WS_1008_POLICY_VIOLATION, reason="Access token required"
-#         )
-
-#     try:
-#         return token_service.validate(token)
-#     except Exception as exc:
-#         logger.warning(
-#             "WebSocket rejected – token validation failed (path=%s): %s",
-#             websocket.url.path,
-#             exc,
-#         )
-#         raise WebSocketException(
-#             code=status.WS_1008_POLICY_VIOLATION, reason="Invalid or expired token"
-#         ) from exc
+    try:
+        return token_issuer.validate(token, expected_type=TokenType.ACCESS)
+    except Exception as exc:
+        _raise(conn, "Invalid or expired token", exc)
 
 
-# async def _get_authenticated_user_id(
-#     payload: Annotated[TokenPayload, Depends(_get_authenticated_token_payload)],
-# ) -> UUID:
-#     return payload.user_id
+def _raise(conn: HTTPConnection, detail: str, exc: Exception | None = None) -> None:
+    if isinstance(conn, WebSocket):
+        raise WebSocketException(
+            code=status.WS_1008_POLICY_VIOLATION,
+            reason=detail,
+        ) from exc
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+    ) from exc
 
 
-# async def _get_authenticated_user_role(
-#     payload: Annotated[TokenPayload, Depends(_get_authenticated_token_payload)],
-# ) -> UserRole:
-#     return payload.role
+def _get_authenticated_user_id(
+    payload: Annotated[TokenPayload, Depends(_get_token_payload)],
+) -> UUID:
+    return payload.user_id
 
 
-# async def _get_authenticated_user_id_for_websocket(
-#     payload: Annotated[
-#         TokenPayload, Depends(_get_authenticated_token_payload_for_websocket)
-#     ],
-# ) -> UUID:
-#     return payload.user_id
-
-
-# async def _get_authenticated_user_role_for_websocket(
-#     payload: Annotated[
-#         TokenPayload, Depends(_get_authenticated_token_payload_for_websocket)
-#     ],
-# ) -> UserRole:
-#     return payload.role
-
-
-# AuthenticatedUserId = Annotated[UUID, Depends(_get_authenticated_user_id)]
-# AuthenticatedUserRole = Annotated[UserRole, Depends(_get_authenticated_user_role)]
-# AuthenticatedUserIdForWebsocket = Annotated[
-#     UUID, Depends(_get_authenticated_user_id_for_websocket)
-# ]
-# AuthenticatedUserRoleForWebsocket = Annotated[
-#     UserRole, Depends(_get_authenticated_user_role_for_websocket)
-# ]
+AuthenticatedUserId = Annotated[UUID, Depends(_get_authenticated_user_id)]

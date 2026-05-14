@@ -6,17 +6,12 @@ from backend.features.auth.application import (
     RefreshSessionHandler,
     RegisterUserHandler,
 )
-from backend.features.auth.application.ports import PasswordHasher, TokenGenerator
-from backend.features.auth.domain import AuthUserRepository, RefreshSessionRepository
+from backend.features.auth.application.ports import PasswordHasher, TokenIssuer
+from backend.features.auth.domain import AuthUserRepository
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
-from backend.features.auth.infrastructure.orm import (
-    InMemoryAuthUserRepository,
-    InMemoryRefreshSessionRepository,
-)
-from backend.features.auth.infrastructure.security import (
-    Argon2PasswordHasher,
-    RandomTokenGenerator,
-)
+from backend.features.auth.infrastructure.jwt_token_issuer import JwtTokenIssuer
+from backend.features.auth.infrastructure.orm import InMemoryAuthUserRepository
+from backend.features.auth.infrastructure.hasher import Argon2PasswordHasher
 from backend.features.auth.presentation.cookies import AuthCookies
 
 
@@ -34,64 +29,51 @@ class AuthProvider(Provider):
         return Argon2PasswordHasher()
 
     @provide(scope=Scope.APP)
-    def provide_token_generator(self) -> TokenGenerator:
-        return RandomTokenGenerator()
+    def provide_token_issuer(
+        self,
+        auth_settings: AuthSettings,
+    ) -> TokenIssuer:
+        return JwtTokenIssuer(auth_settings=auth_settings)
 
     @provide(scope=Scope.APP)
     def provide_user_repository(self) -> AuthUserRepository:
         return InMemoryAuthUserRepository()
 
-    @provide(scope=Scope.APP)
-    def provide_refresh_session_repository(self) -> RefreshSessionRepository:
-        return InMemoryRefreshSessionRepository()
-
     @provide(scope=Scope.REQUEST)
     def provide_register_user_handler(
         self,
         user_repository: AuthUserRepository,
-        refresh_session_repository: RefreshSessionRepository,
         password_hasher: PasswordHasher,
-        token_generator: TokenGenerator,
-        auth_settings: AuthSettings,
+        token_issuer: TokenIssuer,
     ) -> RegisterUserHandler:
         return RegisterUserHandler(
             user_repository=user_repository,
-            refresh_session_repository=refresh_session_repository,
             password_hasher=password_hasher,
-            token_generator=token_generator,
-            refresh_token_expire_days=auth_settings.jwt_refresh_token_expire_days,
+            token_issuer=token_issuer,
         )
 
     @provide(scope=Scope.REQUEST)
     def provide_login_user_handler(
         self,
         user_repository: AuthUserRepository,
-        refresh_session_repository: RefreshSessionRepository,
         password_hasher: PasswordHasher,
-        token_generator: TokenGenerator,
-        auth_settings: AuthSettings,
+        token_issuer: TokenIssuer,
     ) -> LoginUserHandler:
         return LoginUserHandler(
             user_repository=user_repository,
-            refresh_session_repository=refresh_session_repository,
             password_hasher=password_hasher,
-            token_generator=token_generator,
-            refresh_token_expire_days=auth_settings.jwt_refresh_token_expire_days,
+            token_issuer=token_issuer,
         )
 
     @provide(scope=Scope.REQUEST)
     def provide_refresh_session_handler(
         self,
         user_repository: AuthUserRepository,
-        refresh_session_repository: RefreshSessionRepository,
-        token_generator: TokenGenerator,
-        auth_settings: AuthSettings,
+        token_issuer: TokenIssuer,
     ) -> RefreshSessionHandler:
         return RefreshSessionHandler(
             user_repository=user_repository,
-            refresh_session_repository=refresh_session_repository,
-            token_generator=token_generator,
-            refresh_token_expire_days=auth_settings.jwt_refresh_token_expire_days,
+            token_issuer=token_issuer,
         )
 
     @provide(scope=Scope.REQUEST)

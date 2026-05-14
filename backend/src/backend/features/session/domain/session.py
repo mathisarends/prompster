@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Self
 from uuid import UUID
 
+from backend.features.session.domain.exceptions import SessionAccessDeniedError
 from backend.features.session.domain.views import MessageRole, SessionMessage, ToolCall
 from backend.shared.ddd import Aggregate
 
@@ -11,6 +12,7 @@ class Session(Aggregate):
         self,
         title: str,
         messages: list[SessionMessage],
+        owner_id: UUID,
         system_prompt: str | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
@@ -18,6 +20,7 @@ class Session(Aggregate):
         super().__init__(id=id, created_time=created_time)
         self.title = title
         self.messages = messages
+        self.owner_id = owner_id
         self.system_prompt = system_prompt
 
     @classmethod
@@ -26,11 +29,13 @@ class Session(Aggregate):
         *,
         title: str,
         initial_prompt: str,
+        owner_id: UUID,
         system_prompt: str | None = None,
     ) -> Self:
         session = cls(
             title=title,
             messages=[],
+            owner_id=owner_id,
             system_prompt=system_prompt,
         )
         session.add_user_message(content=initial_prompt)
@@ -58,6 +63,12 @@ class Session(Aggregate):
         )
         self.messages.append(message)
         return message
+
+    def has_access(self, user_id: UUID) -> None:
+        if self.owner_id != user_id:
+            raise SessionAccessDeniedError(
+                f"User {user_id} does not have access to session {self.id}."
+            )
 
     # TODO: add method for building more context:
 

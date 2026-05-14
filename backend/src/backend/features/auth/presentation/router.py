@@ -1,5 +1,5 @@
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi import APIRouter, Response, status
 
 from backend.env import EnvSettings
 from backend.features.auth.application import (
@@ -7,7 +7,7 @@ from backend.features.auth.application import (
     RefreshSessionHandler,
     RegisterUserHandler,
 )
-from backend.features.auth.infrastructure import AuthSettings
+from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.schemas import (
     EmailPasswordRequest,
@@ -41,7 +41,6 @@ async def login(
     auth_cookies: FromDishka[AuthCookies],
 ) -> None:
     auth_session = await handler.handle(email=request.email, password=request.password)
-
     auth_cookies.set(response, auth_session)
 
 
@@ -60,11 +59,7 @@ async def register(
     response: Response,
     handler: FromDishka[RegisterUserHandler],
     auth_cookies: FromDishka[AuthCookies],
-    env_config: FromDishka[EnvSettings],
 ) -> None:
-    if env_config.registration_disabled:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
     auth_session = await handler.handle(
         name=request.name,
         email=request.email,
@@ -97,19 +92,11 @@ async def logout(
     },
 )
 async def refresh(
-    request: Request,
+    authenticated_user_id: AuthenticatedUserId,
     response: Response,
     handler: FromDishka[RefreshSessionHandler],
     auth_cookies: FromDishka[AuthCookies],
-    auth_settings: FromDishka[AuthSettings],
 ) -> None:
-    token = request.cookies.get(auth_settings.jwt_refresh_token_cookie_name)
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token required",
-        )
-
-    new_session = await handler.handle(refresh_token=token)
+    new_session = await handler.handle(user_id=authenticated_user_id)
 
     auth_cookies.set(response, new_session)

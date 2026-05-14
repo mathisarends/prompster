@@ -20,6 +20,7 @@ type NavigationSidebarProps = {
   open: boolean;
   onToggle: () => void;
   onNewChat: () => void;
+  onNewChatNewTab?: () => void;
   onSelectChat: (chat: ChatHistoryEntry) => void;
   onLogout?: () => void;
   activeChatId?: string;
@@ -29,6 +30,7 @@ export const NavigationSidebar = ({
   open,
   onToggle,
   onNewChat,
+  onNewChatNewTab,
   onSelectChat,
   onLogout,
   activeChatId,
@@ -82,7 +84,14 @@ export const NavigationSidebar = ({
             <div className="space-y-1">
               <button
                 type="button"
-                onClick={onNewChat}
+                onClick={(e) => {
+                  if ((e.ctrlKey || e.metaKey) && onNewChatNewTab) {
+                    e.preventDefault();
+                    onNewChatNewTab();
+                  } else {
+                    onNewChat();
+                  }
+                }}
                 className="flex h-10 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
                 <Plus className="size-5 shrink-0" />
@@ -112,7 +121,14 @@ export const NavigationSidebar = ({
             <Button
               size="icon-sm"
               variant="ghost"
-              onClick={onNewChat}
+              onClick={(e) => {
+                if ((e.ctrlKey || e.metaKey) && onNewChatNewTab) {
+                  e.preventDefault();
+                  onNewChatNewTab();
+                } else {
+                  onNewChat();
+                }
+              }}
               aria-label="Neuen Chat starten"
               className="rounded-full bg-sidebar-accent hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground"
             >

@@ -27,12 +27,17 @@ const AppLayout = () => {
     navigate("/new", { state: { newChatAt: Date.now() } });
   };
 
+  const handleNewChatNewTab = () => {
+    window.open("/new", "_blank");
+  };
+
   return (
     <div className="relative min-h-screen">
       <NavigationSidebar
         open={sidebarOpen}
         onToggle={() => setSidebarOpen((prev) => !prev)}
         onNewChat={handleNewChat}
+        onNewChatNewTab={handleNewChatNewTab}
         onSelectChat={handleSelectChat}
         activeChatId={activeChatId}
       />

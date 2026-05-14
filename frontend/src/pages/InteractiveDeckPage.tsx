@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
   ArrowLeft,
   LayoutGrid,
@@ -48,6 +49,9 @@ export const InteractiveDeckPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state as LocationState | null) ?? null;
+
+  useDocumentTitle(state?.prompt?.trim() ?? "Deck");
+
   const [activeView, setActiveView] = useState<DeckViewMode>("playlist");
   const [tracks, setTracks] = useState(mockTracks);
   const [query, setQuery] = useState("");

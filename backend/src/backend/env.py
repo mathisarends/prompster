@@ -19,7 +19,6 @@ class EnvSettings(BaseSettings):
     env: _EnvironmentMode = _EnvironmentMode.DEV
 
     allowed_origins: set[str] = set()
-    registration_disabled: bool = False
 
     @property
     def is_dev(self) -> bool:
