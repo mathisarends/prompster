@@ -2,6 +2,7 @@ from uuid import UUID
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Response, status
+from fastapi.responses import StreamingResponse
 
 from backend.features.session.application import (
     CreateSessionHandler,
@@ -10,13 +11,9 @@ from backend.features.session.application import (
     SendMessageHandler,
     UpdateSessionHandler,
 )
-from backend.features.session.presentation.mapper import (
-    to_message_response,
-    to_session_response,
-)
+from backend.features.session.presentation.mapper import to_session_response
 from backend.features.session.presentation.schemas import (
     ErrorResponse,
-    MessageResponse,
     SendMessageRequest,
     SessionCreateRequest,
     SessionResponse,
@@ -60,10 +57,10 @@ async def create_session(
 
 @router.post(
     "/{session_id}/messages",
-    response_model=MessageResponse,
     status_code=status.HTTP_201_CREATED,
     operation_id="send_message",
     responses={
+        status.HTTP_201_CREATED: {"content": {"text/plain": {}}},
         status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
         status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
     },
@@ -72,9 +69,11 @@ async def send_message(
     session_id: UUID,
     body: SendMessageRequest,
     handler: FromDishka[SendMessageHandler],
-) -> MessageResponse:
-    message = await handler.handle(session_id=session_id, content=body.content)
-    return to_message_response(message)
+) -> StreamingResponse:
+    return StreamingResponse(
+        handler.stream_response(session_id=session_id, content=body.content),
+        media_type="text/plain; charset=utf-8",
+    )
 
 
 @router.patch(

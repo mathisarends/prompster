@@ -63,8 +63,9 @@ class SessionProvider(Provider):
     def provide_send_message_handler(
         self,
         session_repository: SessionRepository,
+        llm: ChatOpenAI,
     ) -> SendMessageHandler:
-        return SendMessageHandler(session_repository=session_repository)
+        return SendMessageHandler(session_repository=session_repository, llm=llm)
 
     @provide(scope=Scope.REQUEST)
     def provide_delete_session_handler(
