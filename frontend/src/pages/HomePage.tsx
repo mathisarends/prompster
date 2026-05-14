@@ -1,58 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowRight,
-  CalendarRange,
-  FolderOpen,
-  Import,
-  Sparkles,
-  Waves,
-} from "lucide-react";
+import { ArrowRight, FolderOpen, Import, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-
-const templateDecks = [
-  {
-    title: "80er & 90er Pop",
-    cards: "50 Karten",
-    prompt:
-      "Erstelle mir ein Deck mit 50 Karten zu den größten Pop-Hits der 80er und 90er Jahre.",
-  },
-  {
-    title: "Rock Klassiker",
-    cards: "100 Karten",
-    prompt:
-      "Erstelle mir ein Deck mit 100 Karten zu den zeitlosen Rock-Klassikern aller Jahrzehnte.",
-  },
-  {
-    title: "Charts 2000-2020",
-    cards: "60 Karten",
-    prompt:
-      "Erstelle mir ein Deck mit 60 Karten zu den größten Chart-Hits von 2000 bis 2020.",
-  },
-  {
-    title: "Eurovision",
-    cards: "40 Karten",
-    prompt:
-      "Erstelle mir ein Deck mit 40 Karten zu unvergesslichen Eurovision Song Contest Beiträgen.",
-  },
-  {
-    title: "Hip-Hop Hall of Fame",
-    cards: "50 Karten",
-    prompt:
-      "Erstelle mir ein Deck mit 50 Karten zu den legendärsten Hip-Hop-Songs und Künstlern aller Zeiten.",
-  },
-  {
-    title: "Kindergeburtstag",
-    cards: "30 Karten",
-    prompt:
-      "Erstelle mir ein Deck mit 30 Karten zu fröhlichen, kinderfreundlichen Liedern für einen Kindergeburtstag.",
-  },
-];
 
 const MAX_LENGTH = 500;
 
@@ -62,10 +15,6 @@ export const HomePage = () => {
 
   const startChat = () => {
     navigate("/deck/mock", { state: { prompt } });
-  };
-
-  const chooseTemplate = (templatePrompt: string) => {
-    setPrompt(templatePrompt);
   };
 
   const isPromptEmpty = prompt.trim().length === 0;
@@ -100,20 +49,6 @@ export const HomePage = () => {
               onChange={(e) => setPrompt(e.target.value)}
             />
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge variant="outline" className="gap-1.5 px-2.5 py-1">
-                <Waves className="size-3.5" />
-                Spotify
-              </Badge>
-              <Badge variant="outline" className="px-2.5 py-1">
-                Sprache: DE
-              </Badge>
-              <Badge variant="outline" className="gap-1.5 px-2.5 py-1">
-                <CalendarRange className="size-3.5" />
-                Zeitraum
-              </Badge>
-            </div>
-
             <Separator className="my-3" />
 
             <div className="flex items-center justify-between gap-3">
@@ -124,37 +59,6 @@ export const HomePage = () => {
                 Chat starten
                 <ArrowRight className="size-4" />
               </Button>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-center text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
-              Oder starte mit einer Vorlage
-            </p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {templateDecks.map((deck) => (
-                <Card
-                  key={deck.title}
-                  size="sm"
-                  role="button"
-                  tabIndex={0}
-                  className="cursor-pointer border border-border/65 bg-card/62 p-4 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:bg-card/85"
-                  onClick={() => chooseTemplate(deck.prompt)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      chooseTemplate(deck.prompt);
-                    }
-                  }}
-                >
-                  <p className="text-base leading-tight font-semibold">
-                    {deck.title}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {deck.cards}
-                  </p>
-                </Card>
-              ))}
             </div>
           </div>
 

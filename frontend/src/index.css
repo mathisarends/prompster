@@ -7,16 +7,6 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --beatline-bg: #1a1a2e;
-  --beatline-bg-dark: #16213e;
-  --beatline-surface: #2d2d44;
-  --beatline-gold: #e6b84f;
-  --beatline-gold-dark: #c49a3c;
-  --beatline-text: #f5f0e8;
-  --beatline-muted: #b8b0a0;
-  --beatline-subtle: #6b6560;
-  --beatline-border: #3d3d5c;
-  --beatline-highlight: #e6b84f1a;
   --background: hsl(222 47% 7%);
   --foreground: hsl(0 0% 96%);
   --card: hsl(222 34% 11%);
@@ -64,8 +54,8 @@ body,
 body {
   margin: 0;
   font-family: "Space Grotesk", sans-serif;
-  background-color: var(--beatline-bg-dark);
-  color: var(--beatline-text);
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
 @theme inline {
