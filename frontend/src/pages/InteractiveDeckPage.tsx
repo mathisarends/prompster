@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowUp,
+  FileText,
   LayoutGrid,
   ListMusic,
   Mic,
@@ -32,6 +33,12 @@ import { mockTracks, type PlaylistTrack } from "@/lib/mockTracks";
 
 type LocationState = {
   prompt?: string;
+  attachments?: Array<{
+    name: string;
+    size: number;
+    type?: string;
+    previewUrl?: string;
+  }>;
 };
 
 type DeckViewMode = "playlist" | "cards";
@@ -47,6 +54,8 @@ type ChatAttachment = {
   id: string;
   name: string;
   size: number;
+  type?: string;
+  previewUrl?: string;
 };
 
 const formatDuration = (seconds: number) => {
@@ -76,10 +85,23 @@ export const InteractiveDeckPage = () => {
   const [recordingSeconds, setRecordingSeconds] = useState(7);
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachmentsRef = useRef<ChatAttachment[]>([]);
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    const seedAttachments = state?.attachments ?? [];
+    const trimmedPrompt = state?.prompt?.trim();
     const seedPrompt =
-      state?.prompt?.trim() || "Lass uns ein 80er/90er Pop Deck bauen.";
+      trimmedPrompt ||
+      (seedAttachments.length > 0
+        ? "Datei(en) angehangt"
+        : "Lass uns ein 80er/90er Pop Deck bauen.");
+    const attachmentSuffix =
+      seedAttachments.length > 0
+        ? ` [${seedAttachments.length} Datei(en): ${seedAttachments
+            .map((file) => file.name)
+            .join(", ")}]`
+        : "";
 
     return [
       {
@@ -87,7 +109,7 @@ export const InteractiveDeckPage = () => {
         role: "assistant",
         text: "Top, ich erstelle mit dir jetzt Schritt fur Schritt ein Deck.",
       },
-      { id: "user-1", role: "user", text: seedPrompt },
+      { id: "user-1", role: "user", text: `${seedPrompt}${attachmentSuffix}` },
       {
         id: "assistant-2",
         role: "assistant",
@@ -109,6 +131,38 @@ export const InteractiveDeckPage = () => {
   }, [isMicActive]);
 
   useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
+
+  useEffect(() => {
+    return () => {
+      attachmentsRef.current.forEach((file) => {
+        if (file.previewUrl) {
+          URL.revokeObjectURL(file.previewUrl);
+        }
+      });
+    };
+  }, []);
+
+  const addFiles = (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) {
+      return;
+    }
+
+    const nextAttachments = Array.from(fileList).map((file) => ({
+      id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
+      name: file.name,
+      size: file.size,
+      type: file.type || undefined,
+      previewUrl: file.type.startsWith("image/")
+        ? URL.createObjectURL(file)
+        : undefined,
+    }));
+
+    setAttachments((prev) => [...prev, ...nextAttachments]);
+  };
+
+  useEffect(() => {
     const onPaste = (event: ClipboardEvent) => {
       const fileList = event.clipboardData?.files;
       if (!fileList || fileList.length === 0) {
@@ -116,13 +170,7 @@ export const InteractiveDeckPage = () => {
       }
 
       event.preventDefault();
-      const nextAttachments = Array.from(fileList).map((file) => ({
-        id: `${file.name}-${file.size}-${crypto.randomUUID()}`,
-        name: file.name,
-        size: file.size,
-      }));
-
-      setAttachments((prev) => [...prev, ...nextAttachments]);
+      addFiles(fileList);
     };
 
     window.addEventListener("paste", onPaste);
@@ -148,7 +196,13 @@ export const InteractiveDeckPage = () => {
   };
 
   const removeAttachment = (id: string) => {
-    setAttachments((prev) => prev.filter((item) => item.id !== id));
+    setAttachments((prev) => {
+      const target = prev.find((item) => item.id === id);
+      if (target?.previewUrl) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+      return prev.filter((item) => item.id !== id);
+    });
   };
 
   const sendChatMessage = () => {
@@ -177,7 +231,14 @@ export const InteractiveDeckPage = () => {
     ]);
 
     setChatInput("");
-    setAttachments([]);
+    setAttachments((prev) => {
+      prev.forEach((file) => {
+        if (file.previewUrl) {
+          URL.revokeObjectURL(file.previewUrl);
+        }
+      });
+      return [];
+    });
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
@@ -432,34 +493,50 @@ export const InteractiveDeckPage = () => {
         </ScrollArea>
 
         <div className="border-t border-border/60 p-3 sm:p-4">
-          {attachments.length > 0 ? (
-            <div className="mb-3 flex flex-wrap gap-2">
-              {attachments.map((file) => (
-                <Badge
-                  key={file.id}
-                  variant="outline"
-                  className="h-auto max-w-full gap-1.5 rounded-full py-1"
-                >
-                  <span className="max-w-28 truncate">{file.name}</span>
-                  <span className="text-muted-foreground">
-                    {formatSize(file.size)}
-                  </span>
-                  <Button
-                    size="icon-xs"
-                    variant="ghost"
-                    className="-mr-1"
-                    onClick={() => removeAttachment(file.id)}
-                    aria-label={`${file.name} entfernen`}
-                  >
-                    <X className="size-3" />
-                  </Button>
-                </Badge>
-              ))}
-            </div>
-          ) : null}
-
           {!isMicActive ? (
             <div className="overflow-hidden rounded-xl border border-border/70 bg-background/70">
+              {attachments.length > 0 ? (
+                <div className="overflow-x-auto px-2 pt-2">
+                  <div className="flex w-max gap-2 pb-2 pr-1">
+                    {attachments.map((file) => (
+                      <div
+                        key={file.id}
+                        className="relative w-44 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-background/65"
+                      >
+                        {file.previewUrl ? (
+                          <img
+                            src={file.previewUrl}
+                            alt={`Vorschau von ${file.name}`}
+                            className="h-24 w-full object-cover"
+                          />
+                        ) : (
+                          <div className="grid h-24 place-items-center bg-muted/45 text-muted-foreground">
+                            <FileText className="size-7" />
+                          </div>
+                        )}
+                        <div className="space-y-0.5 p-2">
+                          <p className="max-h-8 overflow-hidden break-words text-xs font-medium leading-tight text-foreground">
+                            {file.name}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {formatSize(file.size)}
+                          </p>
+                        </div>
+                        <Button
+                          size="icon-xs"
+                          variant="ghost"
+                          className="absolute right-1 top-1 bg-background/85 hover:bg-background"
+                          onClick={() => removeAttachment(file.id)}
+                          aria-label={`${file.name} entfernen`}
+                        >
+                          <X className="size-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               <Textarea
                 ref={textareaRef}
                 rows={1}
@@ -474,11 +551,24 @@ export const InteractiveDeckPage = () => {
                 placeholder="Antworte oder frag..."
                 className="max-h-40 min-h-[42px] resize-none border-0 bg-transparent px-3 py-3 shadow-none focus-visible:ring-0"
               />
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(event) => {
+                  addFiles(event.target.files);
+                  event.currentTarget.value = "";
+                }}
+              />
+
               <Separator />
               <div className="flex items-center justify-between px-2 py-2">
                 <Button
                   size="icon-sm"
                   variant="ghost"
+                  onClick={() => fileInputRef.current?.click()}
                   aria-label="Datei anhangen"
                 >
                   <Paperclip className="size-4" />
