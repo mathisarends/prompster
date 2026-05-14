@@ -1,8 +1,16 @@
-import { useEffect, useState } from "react";
-import { MessageCircle, PanelLeft, Plus, Search } from "lucide-react";
+import { useState } from "react";
+import { LogOut, MessageCircle, PanelLeft, Plus, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ChatSearchDialog } from "@/components/chat-search-dialog";
+import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { mockChats, type ChatHistoryEntry } from "@/lib/mockChats";
@@ -13,6 +21,7 @@ type NavigationSidebarProps = {
   onToggle: () => void;
   onNewChat: () => void;
   onSelectChat: (chat: ChatHistoryEntry) => void;
+  onLogout?: () => void;
   activeChatId?: string;
 };
 
@@ -21,28 +30,25 @@ export const NavigationSidebar = ({
   onToggle,
   onNewChat,
   onSelectChat,
+  onLogout,
   activeChatId,
 }: NavigationSidebarProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
 
-  useEffect(() => {
-    const handleGlobalSearchShortcut = (event: KeyboardEvent) => {
-      const isSearchShortcut =
-        (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k";
+  useKeyboardShortcut({ ctrlOrMeta: true, key: "k" }, () => {
+    setSearchOpen((previous) => !previous);
+  });
 
-      if (!isSearchShortcut) {
-        return;
-      }
+  useKeyboardShortcut(
+    { ctrlOrMeta: true, code: "Period", ignoreInEditable: true },
+    () => {
+      onToggle();
+    },
+  );
 
-      event.preventDefault();
-      setSearchOpen((previous) => !previous);
-    };
-
-    window.addEventListener("keydown", handleGlobalSearchShortcut);
-    return () => {
-      window.removeEventListener("keydown", handleGlobalSearchShortcut);
-    };
-  }, []);
+  useKeyboardShortcut({ ctrlOrMeta: true, shiftKey: true, key: "o" }, () => {
+    onNewChat();
+  });
 
   const selectChat = (chat: ChatHistoryEntry) => {
     onSelectChat(chat);
@@ -159,25 +165,49 @@ export const NavigationSidebar = ({
         )}
 
         <div className="border-t border-sidebar-border px-1 py-3">
-          {open ? (
-            <div className="flex items-center gap-2.5 px-2">
-              <div className="grid size-9 place-items-center rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
-                MA
+          <DropdownMenu>
+            {open ? (
+              <DropdownMenuTrigger
+                aria-label="Profilmenue oeffnen"
+                className="flex h-12 w-full items-center gap-2.5 rounded-md px-2 text-left transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+              >
+                <Avatar className="bg-sidebar-accent" size="default">
+                  <AvatarFallback className="bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
+                    MA
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">Mathis Arends</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    Free Plan
+                  </p>
+                </div>
+              </DropdownMenuTrigger>
+            ) : (
+              <div className="grid place-items-center">
+                <DropdownMenuTrigger
+                  aria-label="Profilmenue oeffnen"
+                  className="grid size-9 place-items-center rounded-md transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                >
+                  <Avatar className="bg-sidebar-accent" size="default">
+                    <AvatarFallback className="bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
+                      MA
+                    </AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">Mathis Arends</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  Free Plan
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="grid place-items-center">
-              <div className="grid size-8 place-items-center rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
-                MA
-              </div>
-            </div>
-          )}
+            )}
+            <DropdownMenuContent
+              align={open ? "start" : "center"}
+              side="top"
+              sideOffset={8}
+            >
+              <DropdownMenuItem onClick={onLogout}>
+                <LogOut />
+                <span>Abmelden</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </aside>
 

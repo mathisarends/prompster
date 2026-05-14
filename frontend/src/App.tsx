@@ -24,7 +24,7 @@ const AppLayout = () => {
 
   const handleNewChat = () => {
     setActiveChatId(undefined);
-    navigate("/deck/new", { state: { newChatAt: Date.now() } });
+    navigate("/new", { state: { newChatAt: Date.now() } });
   };
 
   return (
@@ -54,7 +54,6 @@ export const App = () => {
     <Routes>
       <Route element={<AppLayout />}>
         <Route path="/new" element={<HomePage />} />
-        <Route path="/deck/new" element={<HomePage />} />
         <Route path="/deck/mock" element={<InteractiveDeckPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/new" replace />} />

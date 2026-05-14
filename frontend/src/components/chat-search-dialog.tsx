@@ -1,13 +1,8 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MessageCircle, Search, X } from "lucide-react";
 
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
+import { useListKeyboardNavigation } from "@/hooks/useKeyboardShortcut";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { mockChats, type ChatHistoryEntry } from "@/lib/mockChats";
@@ -26,7 +21,6 @@ export const ChatSearchDialog = ({
   activeChatId,
 }: ChatSearchDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [highlightedIndex, setHighlightedIndex] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -42,30 +36,29 @@ export const ChatSearchDialog = ({
     return mockChats.filter((chat) => chat.title.toLowerCase().includes(query));
   }, [searchQuery]);
 
-  useEffect(() => {
-    if (!open) {
-      return;
+  const selectChat = (chat: ChatHistoryEntry) => {
+    onSelectChat(chat);
+    onOpenChange(false);
+  };
+
+  const getInitialHighlightIndex = useCallback(() => {
+    if (!activeChatId) {
+      return 0;
     }
 
-    let frameId = 0;
+    return visibleChats.findIndex((chat) => chat.id === activeChatId);
+  }, [activeChatId, visibleChats]);
 
-    if (visibleChats.length === 0) {
-      frameId = requestAnimationFrame(() => setHighlightedIndex(-1));
-      return;
-    }
-
-    const activeIndex = activeChatId
-      ? visibleChats.findIndex((chat) => chat.id === activeChatId)
-      : -1;
-
-    frameId = requestAnimationFrame(() =>
-      setHighlightedIndex(activeIndex >= 0 ? activeIndex : 0),
-    );
-
-    return () => {
-      cancelAnimationFrame(frameId);
-    };
-  }, [open, visibleChats, activeChatId]);
+  const {
+    highlightedIndex,
+    setHighlightedIndex,
+    onKeyDown: handleSearchInputKeyDown,
+  } = useListKeyboardNavigation<ChatHistoryEntry, HTMLInputElement>({
+    items: visibleChats,
+    open,
+    onConfirm: selectChat,
+    getInitialIndex: getInitialHighlightIndex,
+  });
 
   useEffect(() => {
     if (highlightedIndex < 0) {
@@ -73,43 +66,6 @@ export const ChatSearchDialog = ({
     }
     itemRefs.current[highlightedIndex]?.scrollIntoView({ block: "nearest" });
   }, [highlightedIndex]);
-
-  const selectChat = (chat: ChatHistoryEntry) => {
-    onSelectChat(chat);
-    onOpenChange(false);
-  };
-
-  const handleSearchInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.nativeEvent.isComposing || visibleChats.length === 0) {
-      return;
-    }
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setHighlightedIndex((previous) =>
-        previous < 0 ? 0 : (previous + 1) % visibleChats.length,
-      );
-      return;
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      setHighlightedIndex((previous) =>
-        previous < 0
-          ? visibleChats.length - 1
-          : (previous - 1 + visibleChats.length) % visibleChats.length,
-      );
-      return;
-    }
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      const selectedChat = visibleChats[highlightedIndex];
-      if (selectedChat) {
-        selectChat(selectedChat);
-      }
-    }
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -296,24 +296,7 @@ export const InteractiveDeckPage = () => {
   const leftPanel = (
     <Card className="h-full rounded-none border-0 bg-[hsl(222_36%_7%)] py-0 shadow-none ring-0">
       <aside className="flex h-full min-h-0 flex-col">
-        <div className="flex items-center justify-between px-4 py-4 sm:px-5 sm:py-5">
-          <Button
-            size="icon-sm"
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            aria-label="Zuruck zur Startseite"
-            className="rounded-full bg-white/[0.06] text-foreground hover:bg-white/[0.1]"
-          >
-            <ArrowLeft className="size-4" />
-          </Button>
-          <Badge
-            variant="secondary"
-            className="h-6 rounded-full border-transparent bg-white/[0.08] px-2 text-[11px] uppercase tracking-[0.08em]"
-          >
-            <Sparkles className="size-3" />
-            Live
-          </Badge>
-        </div>
+        <div className="flex items-center justify-between px-4 py-4 sm:px-5 sm:py-5"></div>
 
         <ScrollArea className="min-h-0 flex-1 px-4 pb-4 sm:px-5 sm:pb-5">
           <div className="space-y-4 pr-1">
@@ -353,9 +336,9 @@ export const InteractiveDeckPage = () => {
           >
             <ResizablePanel
               id="chat"
-              defaultSize={panelLayout.chat ?? 50}
-              minSize={32}
-              maxSize={68}
+              defaultSize={`${panelLayout.chat ?? 50}`}
+              minSize="32"
+              maxSize="68"
             >
               {leftPanel}
             </ResizablePanel>
@@ -365,9 +348,9 @@ export const InteractiveDeckPage = () => {
             />
             <ResizablePanel
               id="deck"
-              defaultSize={panelLayout.deck ?? 50}
-              minSize={32}
-              maxSize={68}
+              defaultSize={`${panelLayout.deck ?? 50}`}
+              minSize="32"
+              maxSize="68"
             >
               {rightPanel}
             </ResizablePanel>
