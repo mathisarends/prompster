@@ -1,68 +1,18 @@
-import { useCallback, useState } from "react";
+import { useCallback, useReducer, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 
 import { AssistantChatMessage } from "@/components/assistant-chat-message";
 import { ChatInputBox } from "@/components/chat-input-box";
-import {
-  FollowUpQuestionFlow,
-  type FollowUpQuestionOption,
-} from "@/components/follow-up-question-flow";
+import { FollowUpQuestionFlow } from "@/components/follow-up-question-flow";
 import { UserChatMessage } from "@/components/user-chat-message";
 import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
 
-type ChatRole = "assistant" | "user";
-
-type ChatMessage = {
-  id: string;
-  role: ChatRole;
-  text: string;
-};
-
-type FollowUpStepConfig = {
-  id: string;
-  question: string;
-  options: FollowUpQuestionOption[];
-};
-
-const followUpSteps: FollowUpStepConfig[] = [
-  {
-    id: "category",
-    question: "Was steht heute an?",
-    options: [
-      { id: "work", label: "Vizro / Arbeit" },
-      { id: "university", label: "Uni-Aufgabe" },
-      { id: "open-source", label: "Open-Source-Projekt" },
-      { id: "other", label: "Etwas anderes" },
-    ],
-  },
-  {
-    id: "project",
-    question: "Welches Open-Source-Projekt?",
-    options: [
-      { id: "notionary", label: "notionary" },
-      { id: "rtvoice", label: "rtvoice" },
-      { id: "agentory", label: "agentory" },
-      { id: "hueify", label: "hueify / cdpify / anderes" },
-    ],
-  },
-  {
-    id: "output",
-    question: "Welches Format brauchst du?",
-    options: [
-      { id: "deck", label: "Karten-Deck" },
-      { id: "summary", label: "Zusammenfassung" },
-      { id: "outline", label: "Outline" },
-      { id: "draft", label: "Erstentwurf" },
-    ],
-  },
-];
-
-const createFirstFollowUpMessage = (): ChatMessage => ({
-  id: `assistant-${crypto.randomUUID()}`,
-  role: "assistant",
-  text: "Verstanden. Ich brauche noch kurz Kontext, damit ich die nächsten Rückfragen passend stellen kann.",
-});
+import {
+  chatReducer,
+  createInitialChatState,
+  followUpSteps,
+} from "./chat-page.state";
 
 const getInitialPrompt = (state: unknown) => {
   if (!state || typeof state !== "object" || !("initialPrompt" in state)) {
@@ -80,132 +30,46 @@ export const ChatPage = () => {
   const location = useLocation();
   const initialPrompt = getInitialPrompt(location.state);
   const [prompt, setPrompt] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    if (!initialPrompt) return [];
-
-    return [
-      {
-        id: `user-${crypto.randomUUID()}`,
-        role: "user",
-        text: initialPrompt,
-      },
-      createFirstFollowUpMessage(),
-    ];
-  });
-  const [showFollowUp, setShowFollowUp] = useState(
-    () => initialPrompt !== undefined,
+  const [state, dispatch] = useReducer(
+    chatReducer,
+    initialPrompt,
+    createInitialChatState,
   );
-  const [followUpStepIndex, setFollowUpStepIndex] = useState(0);
-  const [stepAnswers, setStepAnswers] = useState<Record<string, string>>({});
+  const { messages, followUp } = state;
   const messagesEndRef = useAutoScrollToBottom<HTMLDivElement>(messages.length);
 
   const sendMessage = useCallback(
-    (text: string) => {
-      const shouldAskFollowUp = messages.length === 0;
-
-      setMessages((currentMessages) => {
-        const userMessage: ChatMessage = {
-          id: `user-${crypto.randomUUID()}`,
-          role: "user",
-          text,
-        };
-
-        const assistantMessage: ChatMessage = {
-          id: `assistant-${crypto.randomUUID()}`,
-          role: "assistant",
-          text:
-            currentMessages.length === 0
-              ? createFirstFollowUpMessage().text
-              : "Alles klar. Ich nehme das mit auf und verfeinere den Deck-Plan weiter.",
-        };
-
-        return [...currentMessages, userMessage, assistantMessage];
-      });
-
-      if (shouldAskFollowUp) {
-        setShowFollowUp(true);
-        setFollowUpStepIndex(0);
-        setStepAnswers({});
-      }
-    },
-    [messages.length],
+    (text: string) => dispatch({ type: "send-message", text }),
+    [],
   );
-
-  const finalizeFollowUp = useCallback((answers: Record<string, string>) => {
-    const summary = followUpSteps
-      .map((step) => answers[step.id])
-      .filter(Boolean)
-      .join(" · ");
-
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      {
-        id: `user-${crypto.randomUUID()}`,
-        role: "user",
-        text: summary || "(keine Auswahl)",
-      },
-      {
-        id: `assistant-${crypto.randomUUID()}`,
-        role: "assistant",
-        text: "Danke, ich nehme die Einordnung mit und gehe an den Plan.",
-      },
-    ]);
-    setShowFollowUp(false);
-    setFollowUpStepIndex(0);
-    setStepAnswers({});
-  }, []);
-
   const answerFollowUp = useCallback(
-    (answer: string) => {
-      const currentStep = followUpSteps[followUpStepIndex];
-      if (!currentStep) return;
-
-      const nextAnswers = { ...stepAnswers, [currentStep.id]: answer };
-      setStepAnswers(nextAnswers);
-
-      if (followUpStepIndex < followUpSteps.length - 1) {
-        setFollowUpStepIndex(followUpStepIndex + 1);
-        return;
-      }
-
-      finalizeFollowUp(nextAnswers);
-    },
-    [finalizeFollowUp, followUpStepIndex, stepAnswers],
+    (answer: string) => dispatch({ type: "answer-follow-up", answer }),
+    [],
+  );
+  const skipFollowUp = useCallback(
+    () => dispatch({ type: "skip-follow-up" }),
+    [],
+  );
+  const dismissFollowUp = useCallback(
+    () => dispatch({ type: "dismiss-follow-up" }),
+    [],
+  );
+  const goToPrevStep = useCallback(
+    () => dispatch({ type: "go-to-prev-step" }),
+    [],
+  );
+  const goToNextStep = useCallback(
+    () => dispatch({ type: "go-to-next-step" }),
+    [],
   );
 
-  const skipFollowUp = useCallback(() => {
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      {
-        id: `assistant-${crypto.randomUUID()}`,
-        role: "assistant",
-        text: "Alles klar, ich mache ohne diese Einordnung weiter.",
-      },
-    ]);
-    setShowFollowUp(false);
-    setFollowUpStepIndex(0);
-    setStepAnswers({});
-  }, []);
-
-  const dismissFollowUp = useCallback(() => {
-    setShowFollowUp(false);
-    setFollowUpStepIndex(0);
-    setStepAnswers({});
-  }, []);
-
-  const goToPrevStep = useCallback(() => {
-    setFollowUpStepIndex((index) => Math.max(0, index - 1));
-  }, []);
-
-  const goToNextStep = useCallback(() => {
-    setFollowUpStepIndex((index) =>
-      Math.min(followUpSteps.length - 1, index + 1),
-    );
-  }, []);
-
-  const currentStep = followUpSteps[followUpStepIndex];
-  const isFirstStep = followUpStepIndex === 0;
-  const isLastStep = followUpStepIndex === followUpSteps.length - 1;
+  const isFollowUpActive = followUp.status === "active";
+  const currentStepIndex = isFollowUpActive ? followUp.stepIndex : 0;
+  const currentStep = isFollowUpActive
+    ? followUpSteps[currentStepIndex]
+    : undefined;
+  const isFirstStep = currentStepIndex === 0;
+  const isLastStep = currentStepIndex === followUpSteps.length - 1;
 
   return (
     <div className="chat-page-background flex min-h-dvh flex-col text-foreground">
@@ -233,7 +97,7 @@ export const ChatPage = () => {
 
       <div className="sticky bottom-0 z-10 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-6 sm:px-8 sm:pb-3">
         <div className="mx-auto w-full max-w-4xl">
-          {showFollowUp && currentStep && (
+          {currentStep && (
             <div className="mb-3">
               <FollowUpQuestionFlow
                 key={currentStep.id}
@@ -243,7 +107,7 @@ export const ChatPage = () => {
                 onSkip={skipFollowUp}
                 onDismiss={dismissFollowUp}
                 step={{
-                  current: followUpStepIndex + 1,
+                  current: currentStepIndex + 1,
                   total: followUpSteps.length,
                   onPrev: isFirstStep ? undefined : goToPrevStep,
                   onNext: isLastStep ? undefined : goToNextStep,
