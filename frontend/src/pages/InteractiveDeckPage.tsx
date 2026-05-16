@@ -26,12 +26,6 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 type LocationState = {
   prompt?: string;
-  attachments?: Array<{
-    name: string;
-    size: number;
-    type?: string;
-    previewUrl?: string;
-  }>;
 };
 
 type DeckViewMode = "playlist" | "cards";
@@ -59,19 +53,8 @@ export const InteractiveDeckPage = () => {
   );
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    const seedAttachments = state?.attachments ?? [];
-    const trimmedPrompt = state?.prompt?.trim();
     const seedPrompt =
-      trimmedPrompt ||
-      (seedAttachments.length > 0
-        ? "Datei(en) angehangt"
-        : "Lass uns ein 80er/90er Pop Deck bauen.");
-    const attachmentSuffix =
-      seedAttachments.length > 0
-        ? ` [${seedAttachments.length} Datei(en): ${seedAttachments
-            .map((file) => file.name)
-            .join(", ")}]`
-        : "";
+      state?.prompt?.trim() ?? "Lass uns ein 80er/90er Pop Deck bauen.";
 
     return [
       {
@@ -79,7 +62,7 @@ export const InteractiveDeckPage = () => {
         role: "assistant",
         text: "Top, ich erstelle mit dir jetzt Schritt fur Schritt ein Deck.",
       },
-      { id: "user-1", role: "user", text: `${seedPrompt}${attachmentSuffix}` },
+      { id: "user-1", role: "user", text: seedPrompt },
       {
         id: "assistant-2",
         role: "assistant",
@@ -106,21 +89,13 @@ export const InteractiveDeckPage = () => {
     setTracks((prev) => prev.filter((track) => track.id !== trackId));
   };
 
-  const sendChatMessage = (
-    text: string,
-    attachments: Array<{ name: string }>,
-  ) => {
-    const attachmentSuffix =
-      attachments.length > 0
-        ? ` [${attachments.length} Datei(en): ${attachments.map((f) => f.name).join(", ")}]`
-        : "";
-
+  const sendChatMessage = (text: string) => {
     setMessages((prev) => [
       ...prev,
       {
         id: `user-${crypto.randomUUID()}`,
         role: "user",
-        text: `${text || "Datei gesendet"}${attachmentSuffix}`,
+        text,
       },
       {
         id: `assistant-${crypto.randomUUID()}`,

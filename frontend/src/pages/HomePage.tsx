@@ -1,19 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { FileText, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ChatInputBox, type ChatAttachment } from "@/components/chat-input-box";
+import { ChatInputBox } from "@/components/chat-input-box";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-
-const formatSize = (bytes: number) => {
-  if (bytes < 1024 * 1024) {
-    return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  }
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
 
 type ChatRole = "assistant" | "user";
 
@@ -23,19 +15,9 @@ type ChatMessage = {
   text: string;
 };
 
-const buildAttachmentSuffix = (attachments: ChatAttachment[]) => {
-  if (attachments.length === 0) return "";
-
-  return ` [${attachments.length} Datei(en): ${attachments
-    .map((file) => file.name)
-    .join(", ")}]`;
-};
-
 export const HomePage = () => {
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [previewAttachment, setPreviewAttachment] =
-    useState<ChatAttachment | null>(null);
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasChatStarted = messages.length > 0;
@@ -53,16 +35,12 @@ export const HomePage = () => {
     messagesEndRef.current?.scrollIntoView({ block: "end" });
   }, [hasChatStarted, messages]);
 
-  const sendMessage = (text: string, attachments: ChatAttachment[]) => {
-    const messageText =
-      text || (attachments.length > 0 ? "Datei(en) angehangt" : "");
-    const attachmentSuffix = buildAttachmentSuffix(attachments);
-
+  const sendMessage = (text: string) => {
     setMessages((currentMessages) => {
       const userMessage: ChatMessage = {
         id: `user-${crypto.randomUUID()}`,
         role: "user",
-        text: `${messageText}${attachmentSuffix}`,
+        text,
       };
 
       const assistantMessage: ChatMessage = {
@@ -127,7 +105,6 @@ export const HomePage = () => {
                 onSubmit={sendMessage}
                 placeholder='z.B. "Hip-Hop Klassiker der 90er fur 60 Karten" oder "Eurovision Hits 2000-2020"'
                 sendButtonAriaLabel="Chat starten"
-                onAttachmentClick={setPreviewAttachment}
               />
             </section>
           </div>
@@ -157,7 +134,6 @@ export const HomePage = () => {
                 onSubmit={sendMessage}
                 placeholder="Antworte oder frag..."
                 sendButtonAriaLabel="Nachricht senden"
-                onAttachmentClick={setPreviewAttachment}
                 className="rounded-3xl border border-border/50 bg-card/70 p-4 shadow-2xl shadow-black/20"
                 textareaClassName="max-h-40"
                 rows={1}
@@ -167,32 +143,6 @@ export const HomePage = () => {
         )}
       </main>
 
-      <Dialog
-        open={!!previewAttachment}
-        onOpenChange={(open) => !open && setPreviewAttachment(null)}
-      >
-        <DialogContent className="max-w-3xl p-0 overflow-hidden rounded-2xl bg-card/90 backdrop-blur-md border-border/60">
-          {previewAttachment?.previewUrl ? (
-            <img
-              src={previewAttachment.previewUrl}
-              alt={previewAttachment.name}
-              className="w-full max-h-[80vh] object-contain"
-            />
-          ) : (
-            <div className="grid h-64 place-items-center text-muted-foreground">
-              <FileText className="size-16" />
-            </div>
-          )}
-          <div className="px-5 py-3 border-t border-border/50">
-            <p className="text-sm font-medium text-foreground">
-              {previewAttachment?.name}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {previewAttachment ? formatSize(previewAttachment.size) : ""}
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
