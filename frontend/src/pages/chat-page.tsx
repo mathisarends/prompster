@@ -3,8 +3,7 @@ import { useCallback, useEffect, useReducer, useState } from "react";
 import { ChatPageHeader } from "../components/chat-page-header";
 import { AssistantChatMessage } from "@/components/assistant-chat-message";
 import { ChatInputBox } from "@/components/chat-input-box";
-import { ChatWorkspacePanel } from "@/components/chat-workspace-panel";
-import { DeckPlaylist } from "@/components/deck-playlist";
+import { DeckWorkspaceView } from "@/components/deck-workspace-view";
 import {
   FollowUpQuestionFlow,
   type FollowUpQuestionOption,
@@ -210,8 +209,6 @@ export const ChatPage = () => {
             value={prompt}
             onChange={setPrompt}
             onSubmit={sendMessage}
-            disclaimerText="Prompster ist eine KI und kann Fehler machen. Bitte überprüfe die Antworten."
-            showDisclaimer
             placeholder="Deine Antwort ..."
             sendButtonAriaLabel="Nachricht senden"
             className="rounded-3xl border border-border/50 bg-card/70 p-4 shadow-2xl shadow-black/20"
@@ -224,9 +221,7 @@ export const ChatPage = () => {
   );
 
   const workspacePanelContent = workspacePanel.status === "open" && (
-    <ChatWorkspacePanel onClose={closeWorkspacePanel}>
-      <DeckPlaylist />
-    </ChatWorkspacePanel>
+    <DeckWorkspaceView onClose={closeWorkspacePanel} />
   );
 
   return (

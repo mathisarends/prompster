@@ -2,30 +2,43 @@ import type { ReactNode } from "react";
 import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type ChatWorkspacePanelProps = {
   children: ReactNode;
   onClose: () => void;
+  header?: ReactNode;
+  contentClassName?: string;
 };
 
 export const ChatWorkspacePanel = ({
   children,
   onClose,
+  header,
+  contentClassName,
 }: ChatWorkspacePanelProps) => {
   return (
     <section className="relative flex h-full min-h-0 flex-col bg-[hsl(222_36%_7%)] text-foreground shadow-2xl shadow-black/30">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        onClick={onClose}
-        aria-label="Arbeitsfläche schließen"
-        className="absolute right-5 top-4 z-10 shrink-0 text-muted-foreground hover:bg-white/10 hover:text-foreground"
-      >
-        <X className="size-4" />
-      </Button>
+      <div className="flex shrink-0 items-center justify-between gap-3 px-5 pt-1.5 pb-3">
+        <div className="flex min-w-0 flex-1 items-center">{header}</div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={onClose}
+          aria-label="Arbeitsfläche schließen"
+          className="shrink-0 text-muted-foreground hover:bg-white/10 hover:text-foreground"
+        >
+          <X className="size-4" />
+        </Button>
+      </div>
 
-      <div className="prompster-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-5 pt-4">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col px-5 pb-5",
+          contentClassName,
+        )}
+      >
         {children}
       </div>
     </section>
