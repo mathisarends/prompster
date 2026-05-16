@@ -222,10 +222,7 @@ export const ChatPage = () => {
   );
 
   const workspacePanelContent = workspacePanel.status === "open" && (
-    <ChatWorkspacePanel
-      title={workspacePanel.title}
-      onClose={closeWorkspacePanel}
-    >
+    <ChatWorkspacePanel onClose={closeWorkspacePanel}>
       <div className="relative flex min-h-[260px] flex-1 overflow-hidden rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_30%_10%,rgba(16,185,129,0.18),transparent_34%),linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.025))] p-5">
         <div className="absolute right-8 top-8 h-28 w-28 rounded-full bg-emerald-400/10 blur-3xl" />
         <div className="relative z-10 flex max-w-md flex-col justify-between gap-8">

@@ -128,7 +128,7 @@ export const ChatSearchDialog = ({
               </ul>
             ) : (
               <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-                Keine Chats fuer diese Suche.
+                Keine Chats für diese Suche.
               </p>
             )}
           </div>

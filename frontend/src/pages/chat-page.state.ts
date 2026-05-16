@@ -25,7 +25,6 @@ export type WorkspacePanelState =
   | {
       status: "open";
       kind: "deck-preview";
-      title: string;
       description: string;
     };
 
@@ -71,8 +70,56 @@ const FOLLOW_UP_DONE_TEXT =
 const FOLLOW_UP_SKIPPED_TEXT =
   "Alles klar, ich mache ohne diese Einordnung weiter.";
 
+const FOLLOW_UP_CONTINUATION_TEXTS = [
+  `## Kontext erfasst ✓
+
+Ich habe deine Eingabe verarbeitet. Hier ein kurzer Überblick, was als Nächstes passiert:
+
+- **Analyse** des Themas anhand deiner Antworten
+- **Strukturierung** in logische Abschnitte
+- **Generierung** eines ersten Deck-Entwurfs
+
+> Der Entwurf erscheint sobald alle Schritte abgeschlossen sind.`,
+
+  `Alles klar, ich arbeite daran weiter.
+
+Hier ein Beispiel, wie ein Python-Snippet in deinem Deck aussehen könnte:
+
+\`\`\`python
+def generate_slide(title: str, bullets: list[str]) -> dict:
+    return {
+        "title": title,
+        "content": bullets,
+    }
+\`\`\`
+
+Inline-Code wie \`generate_slide()\` wird ebenfalls korrekt gerendert.`,
+
+  `Notiert. Ein paar **wichtige Punkte** zum aktuellen Stand:
+
+| Schritt | Status |
+|---|---|
+| Kontext aufnehmen | ✅ Erledigt |
+| Struktur planen | 🔄 Läuft |
+| Deck generieren | ⏳ Ausstehend |
+
+Ich melde mich, sobald der erste Entwurf fertig ist.`,
+
+  `Verstanden. Ich verfeinere den Plan entsprechend.
+
+Zur Erinnerung – du hast bisher folgende Präferenzen angegeben:
+
+1. **Format:** Karten-Deck
+2. **Fokus:** Technische Tiefe
+3. **Stil:** Prägnant, keine Füllsätze
+
+*Diese Einstellungen fließen direkt in die Generierung ein.*`,
+];
+
 const FOLLOW_UP_CONTINUATION_TEXT =
-  "Alles klar. Ich nehme das mit auf und verfeinere den Deck-Plan weiter.";
+  FOLLOW_UP_CONTINUATION_TEXTS[
+    Math.floor(Math.random() * FOLLOW_UP_CONTINUATION_TEXTS.length)
+  ];
 
 const WORKSPACE_PANEL_OPEN_TEXT =
   "Ich habe rechts eine Arbeitsfläche geöffnet. Dort kann später der Tool-Output erscheinen.";
@@ -152,7 +199,6 @@ const createActiveFollowUpState = (): FollowUpState => ({
 const createDeckWorkspacePanelState = (): WorkspacePanelState => ({
   status: "open",
   kind: "deck-preview",
-  title: "Deck-Arbeitsfläche",
   description:
     "Platzhalter für den späteren Tool-Output. Noch ohne Playlist-Content.",
 });
