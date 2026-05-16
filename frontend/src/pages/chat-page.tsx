@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 
+import { AssistantChatMessage } from "@/components/assistant-chat-message";
 import { ChatInputBox } from "@/components/chat-input-box";
 import {
-  FollowUpQuestionCard,
+  FollowUpQuestionFlow,
   type FollowUpQuestionOption,
-} from "@/components/follow-up-question-card";
+} from "@/components/follow-up-question-flow";
+import { UserChatMessage } from "@/components/user-chat-message";
+import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
 
 type ChatRole = "assistant" | "user";
 
@@ -94,7 +97,7 @@ export const ChatPage = () => {
   );
   const [followUpStepIndex, setFollowUpStepIndex] = useState(0);
   const [stepAnswers, setStepAnswers] = useState<Record<string, string>>({});
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useAutoScrollToBottom<HTMLDivElement>(messages.length);
 
   const sendMessage = useCallback(
     (text: string) => {
@@ -153,7 +156,7 @@ export const ChatPage = () => {
   }, []);
 
   const answerFollowUp = useCallback(
-    (answer: string, _option?: FollowUpQuestionOption) => {
+    (answer: string) => {
       const currentStep = followUpSteps[followUpStepIndex];
       if (!currentStep) return;
 
@@ -200,38 +203,6 @@ export const ChatPage = () => {
     );
   }, []);
 
-  useEffect(() => {
-    if (messages.length === 0) return;
-    messagesEndRef.current?.scrollIntoView({ block: "end" });
-  }, [messages]);
-
-  const renderMessage = (message: ChatMessage) => {
-    if (message.role === "user") {
-      return (
-        <div
-          key={message.id}
-          className="ml-auto max-w-[82%] rounded-2xl bg-white/10 px-4 py-3 text-sm leading-relaxed text-foreground sm:text-base"
-        >
-          {message.text}
-        </div>
-      );
-    }
-
-    return (
-      <div
-        key={message.id}
-        className="flex max-w-[82%] flex-col gap-1.5 px-1 py-2"
-      >
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground/80">
-          Prompster
-        </span>
-        <div className="text-sm leading-relaxed text-muted-foreground sm:text-base">
-          {message.text}
-        </div>
-      </div>
-    );
-  };
-
   const currentStep = followUpSteps[followUpStepIndex];
   const isFirstStep = followUpStepIndex === 0;
   const isLastStep = followUpStepIndex === followUpSteps.length - 1;
@@ -248,7 +219,13 @@ export const ChatPage = () => {
       <main className="relative z-10 flex flex-1 flex-col px-4 pt-14 sm:px-8">
         <div className="mx-auto flex w-full max-w-4xl flex-col">
           <div className="flex flex-col gap-4 px-1 pt-1 sm:px-2">
-            {messages.map(renderMessage)}
+            {messages.map((message) =>
+              message.role === "user" ? (
+                <UserChatMessage key={message.id} text={message.text} />
+              ) : (
+                <AssistantChatMessage key={message.id} text={message.text} />
+              ),
+            )}
             <div ref={messagesEndRef} />
           </div>
         </div>
@@ -258,7 +235,7 @@ export const ChatPage = () => {
         <div className="mx-auto w-full max-w-4xl">
           {showFollowUp && currentStep && (
             <div className="mb-3">
-              <FollowUpQuestionCard
+              <FollowUpQuestionFlow
                 key={currentStep.id}
                 question={currentStep.question}
                 options={currentStep.options}

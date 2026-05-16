@@ -26,7 +26,7 @@ export type FollowUpQuestionStep = {
   onNext?: () => void;
 };
 
-type FollowUpQuestionCardProps = {
+type FollowUpQuestionFlowProps = {
   question: string;
   options: FollowUpQuestionOption[];
   value?: string;
@@ -43,7 +43,7 @@ type FollowUpQuestionCardProps = {
   onDismiss?: () => void;
 };
 
-export const FollowUpQuestionCard = ({
+export const FollowUpQuestionFlow = ({
   question,
   options,
   value,
@@ -58,7 +58,7 @@ export const FollowUpQuestionCard = ({
   onAnswer,
   onSkip,
   onDismiss,
-}: FollowUpQuestionCardProps) => {
+}: FollowUpQuestionFlowProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [internalValue, setInternalValue] = useState("");
   const answerValue = value ?? internalValue;
@@ -144,7 +144,9 @@ export const FollowUpQuestionCard = ({
               size="icon-xs"
               onClick={step?.onNext}
               disabled={
-                disabled || !step?.onNext || (step?.current ?? 0) >= (step?.total ?? 0)
+                disabled ||
+                !step?.onNext ||
+                (step?.current ?? 0) >= (step?.total ?? 0)
               }
               aria-label="Nächste Frage"
               className="text-muted-foreground hover:bg-white/10 hover:text-foreground"
