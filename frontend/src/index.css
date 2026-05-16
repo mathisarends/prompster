@@ -98,6 +98,29 @@ body {
   color: var(--foreground);
 }
 
+.prompster-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(0 0% 100% / 0.16) transparent;
+}
+
+.prompster-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.prompster-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.prompster-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: hsl(0 0% 100% / 0.14);
+}
+
+.prompster-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 100% / 0.24);
+}
+
 .home-page-background {
   position: relative;
   overflow: hidden;

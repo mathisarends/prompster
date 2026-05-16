@@ -79,7 +79,10 @@ export const FollowUpQuestionFlow = ({
     if (!trimmedAnswer || disabled) return;
 
     onAnswer(trimmedAnswer);
-    setAnswerValue("");
+
+    if (value === undefined) {
+      setInternalValue("");
+    }
   };
 
   const selectOption = (option: FollowUpQuestionOption) => {

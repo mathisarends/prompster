@@ -1,17 +1,33 @@
-import { useCallback, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 
+import { ChatPageHeader } from "../components/chat-page-header";
 import { AssistantChatMessage } from "@/components/assistant-chat-message";
 import { ChatInputBox } from "@/components/chat-input-box";
-import { FollowUpQuestionFlow } from "@/components/follow-up-question-flow";
+import { ChatWorkspacePanel } from "@/components/chat-workspace-panel";
+import {
+  FollowUpQuestionFlow,
+  type FollowUpQuestionOption,
+} from "@/components/follow-up-question-flow";
+import { Button } from "@/components/ui/button";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import { UserChatMessage } from "@/components/user-chat-message";
 import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { cn } from "@/lib/utils";
 
 import {
+  ChatActionType,
   chatReducer,
   createInitialChatState,
-  followUpSteps,
+  getActiveFollowUpStep,
+  getFollowUpDraftValue,
+  getFollowUpStepStatus,
 } from "./chat-page.state";
 
 const getInitialPrompt = (state: unknown) => {
@@ -26,62 +42,108 @@ const getInitialPrompt = (state: unknown) => {
   return trimmedPrompt.length > 0 ? trimmedPrompt : undefined;
 };
 
+const getCanUseResizableLayout = () => {
+  if (typeof window === "undefined") return false;
+
+  return window.matchMedia("(min-width: 768px)").matches;
+};
+
 export const ChatPage = () => {
   const location = useLocation();
   const initialPrompt = getInitialPrompt(location.state);
   const [prompt, setPrompt] = useState("");
+  const [workspacePanelLayout, setWorkspacePanelLayout] = useLocalStorage<
+    Record<string, number>
+  >("prompster.chat.workspace-layout", { chat: 50, workspace: 50 });
+  const [canUseResizableLayout, setCanUseResizableLayout] = useState(
+    getCanUseResizableLayout,
+  );
   const [state, dispatch] = useReducer(
     chatReducer,
     initialPrompt,
     createInitialChatState,
   );
-  const { messages, followUp } = state;
+  const { messages, followUp, workspacePanel } = state;
   const messagesEndRef = useAutoScrollToBottom<HTMLDivElement>(messages.length);
+  const currentStep = getActiveFollowUpStep(followUp);
+  const currentAnswer = getFollowUpDraftValue(followUp);
+  const { currentStepIndex, totalSteps, isFirstStep, isLastStep } =
+    getFollowUpStepStatus(followUp);
+  const isWorkspacePanelOpen = workspacePanel.status === "open";
 
   const sendMessage = useCallback(
-    (text: string) => dispatch({ type: "send-message", text }),
+    (text: string) => dispatch({ type: ChatActionType.SendMessage, text }),
     [],
   );
   const answerFollowUp = useCallback(
-    (answer: string) => dispatch({ type: "answer-follow-up", answer }),
+    (answer: string, option?: FollowUpQuestionOption) =>
+      dispatch({ type: ChatActionType.AnswerFollowUp, answer, option }),
     [],
   );
+  const updateFollowUpDraft = useCallback(
+    (value: string) => {
+      if (!currentStep) return;
+
+      dispatch({
+        type: ChatActionType.UpdateFollowUpDraft,
+        stepId: currentStep.id,
+        value,
+      });
+    },
+    [currentStep],
+  );
   const skipFollowUp = useCallback(
-    () => dispatch({ type: "skip-follow-up" }),
+    () => dispatch({ type: ChatActionType.SkipFollowUp }),
     [],
   );
   const dismissFollowUp = useCallback(
-    () => dispatch({ type: "dismiss-follow-up" }),
+    () => dispatch({ type: ChatActionType.DismissFollowUp }),
     [],
   );
   const goToPrevStep = useCallback(
-    () => dispatch({ type: "go-to-prev-step" }),
+    () => dispatch({ type: ChatActionType.GoToPrevStep }),
     [],
   );
   const goToNextStep = useCallback(
-    () => dispatch({ type: "go-to-next-step" }),
+    () => dispatch({ type: ChatActionType.GoToNextStep }),
+    [],
+  );
+  const openWorkspacePanel = useCallback(
+    () => dispatch({ type: ChatActionType.OpenWorkspacePanel }),
+    [],
+  );
+  const closeWorkspacePanel = useCallback(
+    () => dispatch({ type: ChatActionType.CloseWorkspacePanel }),
     [],
   );
 
-  const isFollowUpActive = followUp.status === "active";
-  const currentStepIndex = isFollowUpActive ? followUp.stepIndex : 0;
-  const currentStep = isFollowUpActive
-    ? followUpSteps[currentStepIndex]
-    : undefined;
-  const isFirstStep = currentStepIndex === 0;
-  const isLastStep = currentStepIndex === followUpSteps.length - 1;
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+    const updateLayoutMode = (event: MediaQueryListEvent) => {
+      setCanUseResizableLayout(event.matches);
+    };
 
-  return (
-    <div className="chat-page-background flex min-h-dvh flex-col text-foreground">
-      <header className="fixed inset-x-0 top-0 z-20 flex h-14 px-20 items-center justify-start bg-background/80 backdrop-blur-md">
-        <span className="inline-flex items-center gap-2.5 text-sm font-semibold text-foreground/85">
-          <Sparkles className="size-3.5" />
-          Neues Karten-Deck
-        </span>
-      </header>
+    mediaQuery.addEventListener("change", updateLayoutMode);
 
-      <main className="relative z-10 flex flex-1 flex-col px-4 pt-14 sm:px-8">
-        <div className="mx-auto flex w-full max-w-4xl flex-col">
+    return () => {
+      mediaQuery.removeEventListener("change", updateLayoutMode);
+    };
+  }, []);
+
+  const shouldUseResizableLayout =
+    isWorkspacePanelOpen && canUseResizableLayout;
+
+  const chatPanelContent = (
+    <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+      <ChatPageHeader />
+
+      <main className="prompster-scrollbar min-h-0 flex-1 overflow-y-auto px-4 sm:px-8">
+        <div
+          className={cn(
+            "mx-auto flex w-full flex-col transition-[max-width] duration-500 ease-out",
+            isWorkspacePanelOpen ? "max-w-3xl" : "max-w-4xl",
+          )}
+        >
           <div className="flex flex-col gap-4 px-1 pt-1 sm:px-2">
             {messages.map((message) =>
               message.role === "user" ? (
@@ -95,20 +157,46 @@ export const ChatPage = () => {
         </div>
       </main>
 
-      <div className="sticky bottom-0 z-10 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-6 sm:px-8 sm:pb-3">
-        <div className="mx-auto w-full max-w-4xl">
+      <div className="shrink-0 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-6 sm:px-8 sm:pb-3">
+        <div
+          className={cn(
+            "mx-auto w-full transition-[max-width] duration-500 ease-out",
+            isWorkspacePanelOpen ? "max-w-3xl" : "max-w-4xl",
+          )}
+        >
+          {!isWorkspacePanelOpen && (
+            <div className="mb-3 flex flex-col gap-3 rounded-3xl border border-white/10 bg-card/60 px-4 py-3 text-sm text-muted-foreground shadow-xl shadow-black/10 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                Prototyp-Test: Sende <span className="font-mono">/deck</span>,{" "}
+                <span className="font-mono">/split</span> oder öffne die
+                Arbeitsfläche direkt.
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={openWorkspacePanel}
+                className="shrink-0 border-white/15 bg-transparent hover:bg-white/10"
+              >
+                Split-Screen testen
+              </Button>
+            </div>
+          )}
+
           {currentStep && (
             <div className="mb-3">
               <FollowUpQuestionFlow
                 key={currentStep.id}
                 question={currentStep.question}
                 options={currentStep.options}
+                value={currentAnswer}
+                onValueChange={updateFollowUpDraft}
                 onAnswer={answerFollowUp}
                 onSkip={skipFollowUp}
                 onDismiss={dismissFollowUp}
                 step={{
                   current: currentStepIndex + 1,
-                  total: followUpSteps.length,
+                  total: totalSteps,
                   onPrev: isFirstStep ? undefined : goToPrevStep,
                   onNext: isLastStep ? undefined : goToNextStep,
                 }}
@@ -129,6 +217,95 @@ export const ChatPage = () => {
             rows={1}
           />
         </div>
+      </div>
+    </section>
+  );
+
+  const workspacePanelContent = workspacePanel.status === "open" && (
+    <ChatWorkspacePanel
+      title={workspacePanel.title}
+      onClose={closeWorkspacePanel}
+    >
+      <div className="relative flex min-h-[260px] flex-1 overflow-hidden rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_30%_10%,rgba(16,185,129,0.18),transparent_34%),linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.025))] p-5">
+        <div className="absolute right-8 top-8 h-28 w-28 rounded-full bg-emerald-400/10 blur-3xl" />
+        <div className="relative z-10 flex max-w-md flex-col justify-between gap-8">
+          <div>
+            <div className="grid size-10 place-items-center rounded-2xl bg-emerald-400/15 text-emerald-200 ring-1 ring-emerald-300/20">
+              <Sparkles className="size-4" />
+            </div>
+            <h3 className="mt-5 text-xl font-semibold tracking-tight">
+              Arbeitsbereich bereit
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              {workspacePanel.description}
+            </p>
+          </div>
+
+          <div className="grid gap-3 text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              Später kann hier ein Deck, eine Playlist, ein Canvas oder ein
+              anderes Tool-Ergebnis gerendert werden.
+            </div>
+            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.025] p-4">
+              Der Chat bleibt links aktiv, während diese Fläche rechts als
+              Kontextbereich geöffnet bleibt.
+            </div>
+          </div>
+        </div>
+      </div>
+    </ChatWorkspacePanel>
+  );
+
+  return (
+    <div className="chat-page-background flex h-dvh overflow-hidden text-foreground">
+      <div className="relative z-10 min-h-0 flex-1">
+        {shouldUseResizableLayout ? (
+          <ResizablePanelGroup
+            orientation="horizontal"
+            className="h-full bg-transparent"
+            defaultLayout={workspacePanelLayout}
+            onLayoutChanged={setWorkspacePanelLayout}
+          >
+            <ResizablePanel
+              id="chat"
+              defaultSize={`${workspacePanelLayout.chat ?? 50}`}
+              minSize="36"
+              maxSize="68"
+            >
+              {chatPanelContent}
+            </ResizablePanel>
+            <ResizableHandle
+              withHandle
+              className="w-px cursor-col-resize bg-white/5 hover:bg-white/10 data-[separator=active]:bg-primary/35"
+            />
+            <ResizablePanel
+              id="workspace"
+              defaultSize={`${workspacePanelLayout.workspace ?? 50}`}
+              minSize="32"
+              maxSize="64"
+            >
+              <div className="h-full animate-in slide-in-from-right-6 duration-500">
+                {workspacePanelContent}
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        ) : (
+          <div className="relative flex h-full min-h-0">
+            {chatPanelContent}
+
+            <aside
+              className={cn(
+                "absolute inset-y-0 right-0 z-30 h-full w-full max-w-xl overflow-hidden border-l border-white/10 bg-[hsl(222_36%_7%)] transition-[transform,opacity] duration-500 ease-out",
+                isWorkspacePanelOpen
+                  ? "translate-x-0 opacity-100"
+                  : "pointer-events-none translate-x-full opacity-0",
+              )}
+              aria-hidden={!isWorkspacePanelOpen}
+            >
+              {workspacePanelContent}
+            </aside>
+          </div>
+        )}
       </div>
     </div>
   );
