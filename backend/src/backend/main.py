@@ -7,7 +7,10 @@ from backend.features.auth.presentation import (
     register_auth_exception_handlers,
 )
 from backend.features.auth.infrastructure.di import AuthProvider
-from backend.features.session.presentation import router as session_router
+from backend.features.session.presentation import (
+    register_session_exception_handlers,
+    router as session_router,
+)
 from backend.features.session.infrastructure.di import SessionProvider
 from backend.presentation import PascalCaseRouter, LoggingMiddleware
 from fastapi import FastAPI
@@ -52,6 +55,7 @@ def _create_app() -> FastAPI:
 
     _setup_middleware(app)
     register_auth_exception_handlers(app)
+    register_session_exception_handlers(app)
 
     container = make_async_container(
         AuthProvider(),

@@ -1,7 +1,6 @@
 from collections.abc import AsyncIterator
-from uuid import UUID
 
-from backend.features.session.domain import SessionRepository
+from backend.features.session.domain import Session
 from backend.features.session.domain.views import MessageRole
 from llmify import AssistantMessage, ChatOpenAI, SystemMessage, UserMessage, Message
 
@@ -9,19 +8,16 @@ from llmify import AssistantMessage, ChatOpenAI, SystemMessage, UserMessage, Mes
 class SendMessageHandler:
     def __init__(
         self,
-        session_repository: SessionRepository,
         llm: ChatOpenAI,
     ) -> None:
-        self._session_repository = session_repository
         self._llm = llm
 
     async def stream_response(
         self,
         *,
-        session_id: UUID,
+        session: Session,
         content: str,
     ) -> AsyncIterator[str]:
-        session = await self._session_repository.get_by_id(session_id=session_id)
         session.add_user_message(content=content)
 
         chunks: list[str] = []
@@ -34,7 +30,7 @@ class SendMessageHandler:
         if completion := "".join(chunks).strip():
             session.add_assistant_message(content=completion)
 
-    def _build_context(self, session) -> list[Message]:
+    def _build_context(self, session: Session) -> list[Message]:
         messages: list[Message] = []
 
         if session.system_prompt:

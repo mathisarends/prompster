@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from backend.features.session.domain import Session, SessionRepository
 
 
@@ -10,12 +8,12 @@ class UpdateSessionHandler:
     async def handle(
         self,
         *,
-        session_id: UUID,
+        session: Session,
         title: str | None = None,
         system_prompt: str | None = None,
     ) -> Session:
         return await self._session_repository.update(
-            session_id=session_id,
+            session_id=session.id,
             title=title,
             system_prompt=system_prompt,
         )

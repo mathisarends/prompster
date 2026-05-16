@@ -27,8 +27,8 @@ export const HomePage = () => {
   }, [location.state]);
 
   return (
-    <div className="home-page-background min-h-screen text-foreground">
-      <main className="relative z-10 flex min-h-screen flex-col justify-center px-4 py-10 sm:px-8 sm:py-14">
+    <div className="home-page-background min-h-dvh text-foreground">
+      <main className="relative z-10 flex min-h-dvh flex-col justify-center px-4 py-10 sm:px-8 sm:py-14">
         <div className="mx-auto w-full max-w-4xl -translate-y-6 sm:-translate-y-8">
           <section className="space-y-8">
             <div className="space-y-4 text-center sm:space-y-5">

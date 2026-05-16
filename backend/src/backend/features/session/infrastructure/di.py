@@ -48,9 +48,8 @@ class SessionProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def provide_get_session_by_id_handler(
         self,
-        session_repository: SessionRepository,
     ) -> GetSessionByIdHandler:
-        return GetSessionByIdHandler(session_repository=session_repository)
+        return GetSessionByIdHandler()
 
     @provide(scope=Scope.REQUEST)
     def provide_update_session_handler(
@@ -62,10 +61,9 @@ class SessionProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def provide_send_message_handler(
         self,
-        session_repository: SessionRepository,
         llm: ChatOpenAI,
     ) -> SendMessageHandler:
-        return SendMessageHandler(session_repository=session_repository, llm=llm)
+        return SendMessageHandler(llm=llm)
 
     @provide(scope=Scope.REQUEST)
     def provide_delete_session_handler(

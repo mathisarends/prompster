@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
@@ -16,6 +18,7 @@ class CreateSessionHandler:
     async def handle(
         self,
         *,
+        owner_id: UUID,
         initial_prompt: str,
         system_prompt: str | None = None,
     ) -> Session:
@@ -26,6 +29,7 @@ class CreateSessionHandler:
         session = Session.create_with_initial_prompt(
             title=title,
             initial_prompt=initial_prompt,
+            owner_id=owner_id,
             system_prompt=system_prompt,
         )
         return await self._session_repository.create(session=session)
