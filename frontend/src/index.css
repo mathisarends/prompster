@@ -135,6 +135,24 @@ body {
   opacity: 1;
 }
 
+.chat-page-background::after {
+  content: "";
+  position: fixed;
+  bottom: -8rem;
+  right: -6rem;
+  width: min(28rem, 42vw);
+  height: min(22rem, 34vw);
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 70% 70%,
+    hsl(258 72% 62% / 0.06) 0%,
+    hsl(230 68% 52% / 0.03) 45%,
+    transparent 68%
+  );
+  filter: blur(100px);
+  z-index: 0;
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: "Inter Variable", sans-serif;

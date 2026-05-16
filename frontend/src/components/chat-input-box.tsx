@@ -1,8 +1,6 @@
 import { type MouseEvent, useEffect, useRef, useState } from "react";
-import { ArrowUp } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { SendButton } from "@/components/send-button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
@@ -14,9 +12,10 @@ type ChatInputBoxProps = {
   className?: string;
   textareaClassName?: string;
   rows?: number;
-  showSeparator?: boolean;
   sendButtonAriaLabel?: string;
   focusOnTyping?: boolean;
+  showDisclaimer?: boolean;
+  disclaimerText?: string;
 };
 
 const isEditableElement = (element: EventTarget | null) => {
@@ -69,9 +68,10 @@ export const ChatInputBox = ({
   className,
   textareaClassName,
   rows,
-  showSeparator = false,
   sendButtonAriaLabel = "Nachricht senden",
   focusOnTyping = true,
+  showDisclaimer = false,
+  disclaimerText = "Prompster ist eine KI und kann Fehler machen. Bitte überprüfe die Antworten.",
 }: ChatInputBoxProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputContentRef = useRef<HTMLDivElement>(null);
@@ -116,9 +116,7 @@ export const ChatInputBox = ({
     onChange("");
   };
 
-  const focusTextareaFromContainer = (
-    event: MouseEvent<HTMLDivElement>,
-  ) => {
+  const focusTextareaFromContainer = (event: MouseEvent<HTMLDivElement>) => {
     if (isInteractiveElement(event.target)) return;
 
     textareaRef.current?.focus();
@@ -155,68 +153,70 @@ export const ChatInputBox = ({
   }, [placeholder, value]);
 
   return (
-    <div
-      onClick={focusTextareaFromContainer}
-      className={cn(
-        "overflow-hidden rounded-2xl bg-card/55 px-5 py-3.5 backdrop-blur-md sm:p4",
-        className,
-      )}
-    >
+    <div className="flex flex-col">
       <div
-        ref={inputContentRef}
+        onClick={focusTextareaFromContainer}
         className={cn(
-          isSingleLine
-            ? "relative flex items-center gap-3"
-            : "relative flex flex-col gap-3",
+          "overflow-hidden rounded-2xl bg-card/55 px-5 py-3.5 backdrop-blur-md sm:p4 cursor-text",
+          className,
         )}
       >
         <div
-          ref={textMirrorRef}
-          aria-hidden="true"
-          className="pointer-events-none absolute -z-10 whitespace-pre-wrap break-words p-0 text-base opacity-0 md:text-base"
-        >
-          {(value || placeholder || " ").endsWith("\n")
-            ? `${value || placeholder || " "}\n `
-            : value || placeholder || " "}
-        </div>
-
-        <Textarea
-          ref={textareaRef}
-          rows={rows ?? 1}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              submit();
-            }
-          }}
-          placeholder={placeholder}
+          ref={inputContentRef}
           className={cn(
-            "max-h-40 min-h-9 flex-1 resize-none border-none bg-transparent p-0 pt-0.5 text-base shadow-none focus-visible:ring-0 md:text-base",
-            !isSingleLine && "min-h-15",
-            textareaClassName,
-          )}
-        />
-
-        {showSeparator && <Separator />}
-
-        <div
-          className={cn(
-            "flex items-center",
-            isSingleLine ? "shrink-0" : "justify-end",
+            isSingleLine
+              ? "relative flex items-center gap-3"
+              : "relative flex flex-col gap-3",
           )}
         >
-          <Button
-            size="icon"
-            onClick={submit}
-            disabled={!value.trim()}
-            aria-label={sendButtonAriaLabel}
+          <div
+            ref={textMirrorRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute -z-10 whitespace-pre-wrap break-words p-0 text-base opacity-0 md:text-base"
           >
-            <ArrowUp className="size-4 text-white" />
-          </Button>
+            {(value || placeholder || " ").endsWith("\n")
+              ? `${value || placeholder || " "}\n `
+              : value || placeholder || " "}
+          </div>
+
+          <Textarea
+            ref={textareaRef}
+            rows={rows ?? 1}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                submit();
+              }
+            }}
+            placeholder={placeholder}
+            className={cn(
+              "max-h-40 min-h-9 flex-1 resize-none border-none bg-transparent p-0 pt-0.5 text-base shadow-none focus-visible:ring-0 md:text-base",
+              !isSingleLine && "min-h-15",
+              textareaClassName,
+            )}
+          />
+
+          <div
+            className={cn(
+              "flex items-center",
+              isSingleLine ? "shrink-0" : "justify-end",
+            )}
+          >
+            <SendButton
+              onClick={submit}
+              disabled={!value.trim()}
+              ariaLabel={sendButtonAriaLabel}
+            />
+          </div>
         </div>
       </div>
+      {showDisclaimer && (
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          {disclaimerText}
+        </p>
+      )}
     </div>
   );
 };

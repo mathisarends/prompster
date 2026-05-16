@@ -112,6 +112,7 @@ type UseListKeyboardNavigationOptions<T> = {
   open: boolean;
   onConfirm: (item: T) => void;
   getInitialIndex?: () => number;
+  global?: boolean;
 };
 
 export const useListKeyboardNavigation = <
@@ -122,6 +123,7 @@ export const useListKeyboardNavigation = <
   open,
   onConfirm,
   getInitialIndex,
+  global = false,
 }: UseListKeyboardNavigationOptions<T>) => {
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
@@ -146,22 +148,22 @@ export const useListKeyboardNavigation = <
     };
   }, [getInitialIndex, items, open]);
 
-  const onKeyDown = useCallback(
-    (event: KeyboardEvent<TElement>) => {
-      if (event.nativeEvent.isComposing || items.length === 0) {
+  const handleNavigationKey = useCallback(
+    (key: string, isComposing: boolean, preventDefault: () => void) => {
+      if (isComposing || items.length === 0) {
         return;
       }
 
-      if (event.key === "ArrowDown") {
-        event.preventDefault();
+      if (key === "ArrowDown") {
+        preventDefault();
         setHighlightedIndex((previous) =>
           previous < 0 ? 0 : (previous + 1) % items.length,
         );
         return;
       }
 
-      if (event.key === "ArrowUp") {
-        event.preventDefault();
+      if (key === "ArrowUp") {
+        preventDefault();
         setHighlightedIndex((previous) =>
           previous < 0
             ? items.length - 1
@@ -170,8 +172,8 @@ export const useListKeyboardNavigation = <
         return;
       }
 
-      if (event.key === "Enter") {
-        event.preventDefault();
+      if (key === "Enter") {
+        preventDefault();
         const selectedItem = items[highlightedIndex];
         if (selectedItem) {
           onConfirm(selectedItem);
@@ -180,6 +182,36 @@ export const useListKeyboardNavigation = <
     },
     [highlightedIndex, items, onConfirm],
   );
+
+  const onKeyDown = useCallback(
+    (event: KeyboardEvent<TElement>) => {
+      handleNavigationKey(event.key, event.nativeEvent.isComposing, () =>
+        event.preventDefault(),
+      );
+    },
+    [handleNavigationKey],
+  );
+
+  useEffect(() => {
+    if (!global || !open) {
+      return;
+    }
+
+    const handleGlobalKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (isEditableTarget(event.target)) {
+        return;
+      }
+
+      handleNavigationKey(event.key, event.isComposing, () =>
+        event.preventDefault(),
+      );
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleGlobalKeyDown);
+    };
+  }, [global, handleNavigationKey, open]);
 
   return {
     highlightedIndex,

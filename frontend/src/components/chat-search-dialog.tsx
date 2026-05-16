@@ -14,6 +14,12 @@ type ChatSearchDialogProps = {
   activeChatId?: string;
 };
 
+const ShortcutKey = ({ label }: { label: string }) => (
+  <kbd className="min-w-5 rounded border border-sidebar-border bg-sidebar-accent px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none text-sidebar-accent-foreground">
+    {label}
+  </kbd>
+);
+
 export const ChatSearchDialog = ({
   open,
   onOpenChange,
@@ -70,7 +76,7 @@ export const ChatSearchDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="top-20 max-h-[min(42rem,calc(100vh-7rem))] max-w-4xl overflow-hidden rounded-2xl border-white/15 bg-sidebar/95 p-0 shadow-2xl backdrop-blur-xl">
-        <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-4">
+        <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-3">
           <Search className="size-5 shrink-0 text-muted-foreground" />
           <input
             ref={searchInputRef}
@@ -127,6 +133,29 @@ export const ChatSearchDialog = ({
             )}
           </div>
         </ScrollArea>
+
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-sidebar-border px-5 py-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span>Auswählen</span>
+            <span className="flex items-center gap-1">
+              <ShortcutKey label="ArrowUp" />
+              <ShortcutKey label="ArrowDown" />
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span>Öffnen</span>
+            <ShortcutKey label="Enter" />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span>Menü öffnen</span>
+            <span className="flex items-center gap-1">
+              <ShortcutKey label="Ctrl" />
+              <ShortcutKey label="K" />
+            </span>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
