@@ -24,10 +24,13 @@ import {
   ChatActionType,
   chatReducer,
   createInitialChatState,
+  findMessageWithRunningToolCall,
   getActiveFollowUpStep,
   getFollowUpDraftValue,
   getFollowUpStepStatus,
 } from "./chat-page.state";
+
+const TOOL_CALL_STEP_DURATION_MS = 1400;
 
 const getCanUseResizableLayout = () => {
   if (typeof window === "undefined") return false;
@@ -97,6 +100,20 @@ export const ChatPage = () => {
     () => dispatch({ type: ChatActionType.CloseWorkspacePanel }),
     [],
   );
+
+  useEffect(() => {
+    const messageWithRunningTool = findMessageWithRunningToolCall(messages);
+    if (!messageWithRunningTool) return;
+
+    const timeoutId = window.setTimeout(() => {
+      dispatch({
+        type: ChatActionType.AdvanceToolCalls,
+        messageId: messageWithRunningTool.id,
+      });
+    }, TOOL_CALL_STEP_DURATION_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [messages]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 768px)");

@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+export type ToolCallStatus = "pending" | "running" | "completed";
 
 export type ToolCallItem = {
   id: string;
   text: string;
-  details?: string[];
+  status?: ToolCallStatus;
 };
 
 type ToolCallAccordionProps = {
@@ -14,99 +16,114 @@ type ToolCallAccordionProps = {
   defaultOpen?: boolean;
 };
 
+const getStatus = (call: ToolCallItem): ToolCallStatus =>
+  call.status ?? "completed";
+
+const HeaderIcon = ({ status }: { status: ToolCallStatus }) => {
+  if (status === "running") {
+    return (
+      <span className="relative flex size-[18px] shrink-0 items-center justify-center">
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 animate-ping rounded-full bg-primary/20 opacity-70"
+        />
+        <Loader2 className="relative size-[18px] animate-spin text-primary" />
+      </span>
+    );
+  }
+
+  return (
+    <span className="flex size-[18px] shrink-0 items-center justify-center rounded-full border border-primary/60 bg-primary/[0.07]">
+      <Check className="size-[11px] text-primary" strokeWidth={3} />
+    </span>
+  );
+};
+
+const ChildMarker = ({ status }: { status: ToolCallStatus }) =>
+  status === "running" ? (
+    <Loader2 className="size-3 shrink-0 animate-spin text-primary" />
+  ) : (
+    <Check
+      className="size-3 shrink-0 text-primary/70"
+      strokeWidth={3}
+    />
+  );
+
 export const ToolCallAccordion = ({
   calls,
   className,
   defaultOpen = false,
 }: ToolCallAccordionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const [openCallIds, setOpenCallIds] = useState<Set<string>>(() => new Set());
 
   if (calls.length === 0) return null;
 
-  const toggleCall = (id: string) => {
-    setOpenCallIds((currentIds) => {
-      const nextIds = new Set(currentIds);
+  const visibleCalls = calls.filter((call) => getStatus(call) !== "pending");
+  const runningCall = calls.find((call) => getStatus(call) === "running");
+  const isRunning = Boolean(runningCall);
 
-      if (nextIds.has(id)) {
-        nextIds.delete(id);
-      } else {
-        nextIds.add(id);
-      }
+  if (visibleCalls.length === 0) return null;
 
-      return nextIds;
-    });
-  };
+  const headerLabel = isRunning
+    ? runningCall!.text
+    : `${calls.length} ${
+        calls.length === 1 ? "Tool verwendet" : "Tools verwendet"
+      }`;
 
   return (
     <section
-      className={cn("mt-2 text-sm text-muted-foreground", className)}
-      aria-label="Ausgeführte Tools"
+      className={cn("mt-3 text-sm", className)}
+      aria-label="Tool-Aufrufe"
     >
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        className="inline-flex items-center gap-1.5 text-left text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="group flex w-full items-center gap-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
         aria-expanded={isOpen}
       >
-        <span>
-          {calls.length} {calls.length === 1 ? "Tool-Aufruf" : "Tool-Aufrufe"}
+        <HeaderIcon status={isRunning ? "running" : "completed"} />
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate text-sm leading-6",
+            isRunning
+              ? "font-medium text-foreground"
+              : "text-muted-foreground group-hover:text-foreground/90",
+          )}
+        >
+          {headerLabel}
         </span>
         <ChevronDown
           className={cn(
-            "size-3.5 shrink-0 transition-transform duration-200",
+            "size-4 shrink-0 text-muted-foreground/70 transition-transform duration-200",
             isOpen && "rotate-180",
           )}
         />
       </button>
 
       {isOpen && (
-        <div className="mt-2 space-y-1">
-          {calls.map((call) => {
-            const isCallOpen = openCallIds.has(call.id);
-            const hasDetails = Boolean(call.details && call.details.length > 0);
+        <ul className="ml-[8px] mt-2.5 space-y-2 border-l border-white/10 pl-5">
+          {visibleCalls.map((call) => {
+            const status = getStatus(call);
 
             return (
-              <div key={call.id} className="pl-1">
-                <button
-                  type="button"
-                  onClick={() => hasDetails && toggleCall(call.id)}
+              <li key={call.id} className="flex items-start gap-2">
+                <span className="mt-[5px]">
+                  <ChildMarker status={status} />
+                </span>
+                <span
                   className={cn(
-                    "inline-flex min-h-6 items-start gap-2 text-left text-sm leading-6 text-foreground/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-                    hasDetails && "hover:text-foreground",
+                    "min-w-0 flex-1 break-words text-xs leading-5",
+                    status === "running"
+                      ? "font-medium text-foreground/90"
+                      : "text-muted-foreground",
                   )}
-                  aria-expanded={hasDetails ? isCallOpen : undefined}
                 >
-                  <span className="mt-[2px] text-muted-foreground">-</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block break-words">{call.text}</span>
-                  </span>
-                  {hasDetails && (
-                    <ChevronDown
-                      className={cn(
-                        "mt-1 size-3.5 shrink-0 text-muted-foreground transition-transform duration-200",
-                        isCallOpen && "rotate-180",
-                      )}
-                    />
-                  )}
-                </button>
-
-                {isCallOpen && hasDetails && (
-                  <div className="ml-4 mt-1 space-y-1 border-l border-white/10 pl-3">
-                    {call.details?.map((detail) => (
-                      <p
-                        key={`${call.id}-${detail}`}
-                        className="break-words text-xs leading-5 text-muted-foreground"
-                      >
-                        {detail}
-                      </p>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  {call.text}
+                </span>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </section>
   );

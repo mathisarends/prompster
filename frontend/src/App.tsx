@@ -8,7 +8,6 @@ import {
   useParams,
 } from "react-router-dom";
 import { PanelLeft } from "lucide-react";
-import { InteractiveDeckPage } from "./pages/interactive-deck-page";
 import { HomePage } from "./pages/home-page";
 import { ChatPage } from "./pages/chat-page";
 import { NavigationSidebar } from "@/components/navigation-sidebar";
@@ -108,7 +107,6 @@ export const App = () => {
       <Route element={<AppLayout />}>
         <Route path="/new" element={<HomePageRoute />} />
         <Route path="/chat/:chatId" element={<ChatPageRoute />} />
-        <Route path="/deck/mock" element={<InteractiveDeckPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/new" replace />} />
     </Routes>

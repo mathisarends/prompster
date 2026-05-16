@@ -132,24 +132,22 @@ const EXAMPLE_TOOL_CALLS: ToolCallItem[] = [
   {
     id: "workspace-search",
     text: "Durchsuche Artists und Alben.",
-    details: [
-      'Suche nach "Bravo Hits 2012".',
-      "Filtere auf exakte Titel- und Artist-Treffer.",
-    ],
+    status: "running",
   },
   {
     id: "read-chat-state",
     text: "Lese vorhandene Trefferliste und normalisiere Namen.",
-    details: [
-      "Bereinige Sonderzeichen und Dubletten.",
-      "Ordne Treffer nach Relevanz.",
-    ],
+    status: "pending",
   },
   {
     id: "draft-ui",
     text: "Erstelle Ergebnisvorschlag aus den besten Kandidaten.",
+    status: "pending",
   },
 ];
+
+const createExampleToolCalls = (): ToolCallItem[] =>
+  EXAMPLE_TOOL_CALLS.map((call) => ({ ...call }));
 
 export type FollowUpState =
   | { status: "inactive" }
@@ -176,6 +174,7 @@ export const ChatActionType = {
   DismissFollowUp: "dismiss-follow-up",
   OpenWorkspacePanel: "open-workspace-panel",
   CloseWorkspacePanel: "close-workspace-panel",
+  AdvanceToolCalls: "advance-tool-calls",
 } as const;
 export type ChatActionType =
   (typeof ChatActionType)[keyof typeof ChatActionType];
@@ -197,7 +196,8 @@ export type ChatAction =
   | { type: typeof ChatActionType.SkipFollowUp }
   | { type: typeof ChatActionType.DismissFollowUp }
   | { type: typeof ChatActionType.OpenWorkspacePanel }
-  | { type: typeof ChatActionType.CloseWorkspacePanel };
+  | { type: typeof ChatActionType.CloseWorkspacePanel }
+  | { type: typeof ChatActionType.AdvanceToolCalls; messageId: string };
 
 const INACTIVE_FOLLOW_UP: FollowUpState = { status: "inactive" };
 const CLOSED_WORKSPACE_PANEL: WorkspacePanelState = { status: "closed" };
@@ -301,7 +301,7 @@ export const createInitialChatState = (
   return {
     messages: [
       createUserMessage(initialUserMessage),
-      createAssistantMessage(FIRST_FOLLOW_UP_TEXT, EXAMPLE_TOOL_CALLS),
+      createAssistantMessage(FIRST_FOLLOW_UP_TEXT, createExampleToolCalls()),
     ],
     followUp: createActiveFollowUpState(),
     workspacePanel: CLOSED_WORKSPACE_PANEL,
@@ -337,7 +337,7 @@ export const chatReducer = (
           createUserMessage(action.text),
           createAssistantMessage(
             assistantText,
-            isFirstMessage ? EXAMPLE_TOOL_CALLS : undefined,
+            isFirstMessage ? createExampleToolCalls() : undefined,
           ),
         ],
         followUp: isFirstMessage ? createActiveFollowUpState() : state.followUp,
@@ -462,5 +462,38 @@ export const chatReducer = (
     case ChatActionType.CloseWorkspacePanel: {
       return { ...state, workspacePanel: CLOSED_WORKSPACE_PANEL };
     }
+
+    case ChatActionType.AdvanceToolCalls: {
+      const nextMessages = state.messages.map((message) => {
+        if (message.id !== action.messageId || !message.toolCalls) {
+          return message;
+        }
+
+        const runningIndex = message.toolCalls.findIndex(
+          (call) => call.status === "running",
+        );
+        if (runningIndex === -1) return message;
+
+        const nextToolCalls = message.toolCalls.map((call, index) => {
+          if (index === runningIndex) return { ...call, status: "completed" as const };
+          if (
+            index === runningIndex + 1 &&
+            call.status === "pending"
+          ) {
+            return { ...call, status: "running" as const };
+          }
+          return call;
+        });
+
+        return { ...message, toolCalls: nextToolCalls };
+      });
+
+      return { ...state, messages: nextMessages };
+    }
   }
 };
+
+export const findMessageWithRunningToolCall = (messages: ChatMessage[]) =>
+  messages.find((message) =>
+    message.toolCalls?.some((call) => call.status === "running"),
+  );
