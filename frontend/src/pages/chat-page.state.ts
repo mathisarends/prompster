@@ -1,4 +1,5 @@
 import type { FollowUpQuestionOption } from "@/components/follow-up-question-flow";
+import type { ToolCallItem } from "@/components/tool-call-accordion";
 
 export type ChatRole = "assistant" | "user";
 
@@ -6,6 +7,7 @@ export type ChatMessage = {
   id: string;
   role: ChatRole;
   text: string;
+  toolCalls?: ToolCallItem[];
 };
 
 export type FollowUpStepConfig = {
@@ -126,6 +128,29 @@ const WORKSPACE_PANEL_OPEN_TEXT =
 
 const WORKSPACE_PANEL_TEST_TRIGGERS = ["/deck", "/split", "/workspace"];
 
+const EXAMPLE_TOOL_CALLS: ToolCallItem[] = [
+  {
+    id: "workspace-search",
+    text: "Durchsuche Artists und Alben.",
+    details: [
+      'Suche nach "Bravo Hits 2012".',
+      "Filtere auf exakte Titel- und Artist-Treffer.",
+    ],
+  },
+  {
+    id: "read-chat-state",
+    text: "Lese vorhandene Trefferliste und normalisiere Namen.",
+    details: [
+      "Bereinige Sonderzeichen und Dubletten.",
+      "Ordne Treffer nach Relevanz.",
+    ],
+  },
+  {
+    id: "draft-ui",
+    text: "Erstelle Ergebnisvorschlag aus den besten Kandidaten.",
+  },
+];
+
 export type FollowUpState =
   | { status: "inactive" }
   | {
@@ -183,10 +208,14 @@ const createUserMessage = (text: string): ChatMessage => ({
   text,
 });
 
-const createAssistantMessage = (text: string): ChatMessage => ({
+const createAssistantMessage = (
+  text: string,
+  toolCalls?: ToolCallItem[],
+): ChatMessage => ({
   id: `assistant-${crypto.randomUUID()}`,
   role: "assistant",
   text,
+  toolCalls,
 });
 
 const createActiveFollowUpState = (): FollowUpState => ({
@@ -272,7 +301,7 @@ export const createInitialChatState = (
   return {
     messages: [
       createUserMessage(initialPrompt),
-      createAssistantMessage(FIRST_FOLLOW_UP_TEXT),
+      createAssistantMessage(FIRST_FOLLOW_UP_TEXT, EXAMPLE_TOOL_CALLS),
     ],
     followUp: createActiveFollowUpState(),
     workspacePanel: CLOSED_WORKSPACE_PANEL,
@@ -306,7 +335,10 @@ export const chatReducer = (
         messages: [
           ...state.messages,
           createUserMessage(action.text),
-          createAssistantMessage(assistantText),
+          createAssistantMessage(
+            assistantText,
+            isFirstMessage ? EXAMPLE_TOOL_CALLS : undefined,
+          ),
         ],
         followUp: isFirstMessage ? createActiveFollowUpState() : state.followUp,
         workspacePanel: state.workspacePanel,

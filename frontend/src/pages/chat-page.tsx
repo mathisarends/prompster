@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Sparkles } from "lucide-react";
 
 import { ChatPageHeader } from "../components/chat-page-header";
 import { AssistantChatMessage } from "@/components/assistant-chat-message";
 import { ChatInputBox } from "@/components/chat-input-box";
 import { ChatWorkspacePanel } from "@/components/chat-workspace-panel";
+import { DeckPlaylist } from "@/components/deck-playlist";
 import {
   FollowUpQuestionFlow,
   type FollowUpQuestionOption,
@@ -149,7 +149,11 @@ export const ChatPage = () => {
               message.role === "user" ? (
                 <UserChatMessage key={message.id} text={message.text} />
               ) : (
-                <AssistantChatMessage key={message.id} text={message.text} />
+                <AssistantChatMessage
+                  key={message.id}
+                  text={message.text}
+                  toolCalls={message.toolCalls}
+                />
               ),
             )}
             <div ref={messagesEndRef} />
@@ -223,33 +227,7 @@ export const ChatPage = () => {
 
   const workspacePanelContent = workspacePanel.status === "open" && (
     <ChatWorkspacePanel onClose={closeWorkspacePanel}>
-      <div className="relative flex min-h-[260px] flex-1 overflow-hidden rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_30%_10%,rgba(16,185,129,0.18),transparent_34%),linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.025))] p-5">
-        <div className="absolute right-8 top-8 h-28 w-28 rounded-full bg-emerald-400/10 blur-3xl" />
-        <div className="relative z-10 flex max-w-md flex-col justify-between gap-8">
-          <div>
-            <div className="grid size-10 place-items-center rounded-2xl bg-emerald-400/15 text-emerald-200 ring-1 ring-emerald-300/20">
-              <Sparkles className="size-4" />
-            </div>
-            <h3 className="mt-5 text-xl font-semibold tracking-tight">
-              Arbeitsbereich bereit
-            </h3>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              {workspacePanel.description}
-            </p>
-          </div>
-
-          <div className="grid gap-3 text-sm text-muted-foreground">
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              Später kann hier ein Deck, eine Playlist, ein Canvas oder ein
-              anderes Tool-Ergebnis gerendert werden.
-            </div>
-            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.025] p-4">
-              Der Chat bleibt links aktiv, während diese Fläche rechts als
-              Kontextbereich geöffnet bleibt.
-            </div>
-          </div>
-        </div>
-      </div>
+      <DeckPlaylist />
     </ChatWorkspacePanel>
   );
 
