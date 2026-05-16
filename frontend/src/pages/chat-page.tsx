@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
-import { useLocation } from "react-router-dom";
 
 import { ChatPageHeader } from "../components/chat-page-header";
 import { AssistantChatMessage } from "@/components/assistant-chat-message";
@@ -30,18 +29,6 @@ import {
   getFollowUpStepStatus,
 } from "./chat-page.state";
 
-const getInitialPrompt = (state: unknown) => {
-  if (!state || typeof state !== "object" || !("initialPrompt" in state)) {
-    return undefined;
-  }
-
-  const initialPrompt = (state as { initialPrompt?: unknown }).initialPrompt;
-  if (typeof initialPrompt !== "string") return undefined;
-
-  const trimmedPrompt = initialPrompt.trim();
-  return trimmedPrompt.length > 0 ? trimmedPrompt : undefined;
-};
-
 const getCanUseResizableLayout = () => {
   if (typeof window === "undefined") return false;
 
@@ -49,8 +36,6 @@ const getCanUseResizableLayout = () => {
 };
 
 export const ChatPage = () => {
-  const location = useLocation();
-  const initialPrompt = getInitialPrompt(location.state);
   const [prompt, setPrompt] = useState("");
   const [workspacePanelLayout, setWorkspacePanelLayout] = useLocalStorage<
     Record<string, number>
@@ -58,11 +43,7 @@ export const ChatPage = () => {
   const [canUseResizableLayout, setCanUseResizableLayout] = useState(
     getCanUseResizableLayout,
   );
-  const [state, dispatch] = useReducer(
-    chatReducer,
-    initialPrompt,
-    createInitialChatState,
-  );
+  const [state, dispatch] = useReducer(chatReducer, "", createInitialChatState);
   const { messages, followUp, workspacePanel } = state;
   const messagesEndRef = useAutoScrollToBottom<HTMLDivElement>(messages.length);
   const currentStep = getActiveFollowUpStep(followUp);

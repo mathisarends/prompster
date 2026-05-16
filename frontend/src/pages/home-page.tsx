@@ -9,9 +9,9 @@ export const HomePage = () => {
   const [prompt, setPrompt] = useState("");
   const navigate = useNavigate();
 
-  const startChat = (text: string) => {
+  const startChat = () => {
     const chatId = crypto.randomUUID();
-    navigate(`/chat/${chatId}`, { state: { initialPrompt: text } });
+    navigate(`/chat/${chatId}`);
   };
 
   return (

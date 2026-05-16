@@ -288,9 +288,9 @@ const createFollowUpRetrospectiveText = (
 };
 
 export const createInitialChatState = (
-  initialPrompt: string | undefined,
+  initialUserMessage: string | undefined,
 ): ChatState => {
-  if (!initialPrompt) {
+  if (!initialUserMessage) {
     return {
       messages: [],
       followUp: INACTIVE_FOLLOW_UP,
@@ -300,7 +300,7 @@ export const createInitialChatState = (
 
   return {
     messages: [
-      createUserMessage(initialPrompt),
+      createUserMessage(initialUserMessage),
       createAssistantMessage(FIRST_FOLLOW_UP_TEXT, EXAMPLE_TOOL_CALLS),
     ],
     followUp: createActiveFollowUpState(),
