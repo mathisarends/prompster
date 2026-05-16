@@ -1,12 +1,10 @@
 import { useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
-  ArrowLeft,
   LayoutGrid,
   ListMusic,
   Play,
-  Sparkles,
   X,
 } from "lucide-react";
 
@@ -46,7 +44,6 @@ type ChatMessage = {
 };
 
 export const InteractiveDeckPage = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state as LocationState | null) ?? null;
 
