@@ -285,7 +285,7 @@ export const InteractiveDeckPage = () => {
             value={chatInput}
             onChange={setChatInput}
             onSubmit={sendChatMessage}
-            placeholder="Antworte oder frag..."
+            placeholder="Antworte oder stell eine Frage"
             className="rounded-3xl border-transparent bg-[hsl(222_30%_10%)] p-4 shadow-none"
             textareaClassName="max-h-40"
             rows={1}

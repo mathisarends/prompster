@@ -1,7 +1,16 @@
-import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
+import {
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import { PanelLeft } from "lucide-react";
-import { InteractiveDeckPage } from "./pages/InteractiveDeckPage";
-import { HomePage } from "./pages/HomePage";
+import { InteractiveDeckPage } from "./pages/interactive-deck-page";
+import { HomePage } from "./pages/home-page";
+import { ChatPage } from "./pages/chat-page";
 import { NavigationSidebar } from "@/components/navigation-sidebar";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useViewport } from "@/hooks/useViewport";
@@ -78,11 +87,27 @@ const AppLayout = () => {
   );
 };
 
+const ChatPageRoute = () => {
+  const { chatId } = useParams();
+  return <ChatPage key={chatId} />;
+};
+
+const HomePageRoute = () => {
+  const location = useLocation();
+  const state = location.state as { newChatAt?: number } | null;
+  const homePageKey = state?.newChatAt
+    ? `new-${state.newChatAt}`
+    : "home-default";
+
+  return <HomePage key={homePageKey} />;
+};
+
 export const App = () => {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route path="/new" element={<HomePage />} />
+        <Route path="/new" element={<HomePageRoute />} />
+        <Route path="/chat/:chatId" element={<ChatPageRoute />} />
         <Route path="/deck/mock" element={<InteractiveDeckPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/new" replace />} />

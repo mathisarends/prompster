@@ -58,6 +58,39 @@ body,
   min-height: 100%;
 }
 
+html {
+  direction: rtl;
+  background-color: var(--background);
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(0 0% 100% / 0.3) transparent;
+}
+
+body {
+  direction: ltr;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 6px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: hsl(0 0% 100% / 0.18);
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 100% / 0.32);
+}
+
 body {
   margin: 0;
   font-family: "Space Grotesk", sans-serif;
@@ -91,14 +124,13 @@ body {
   width: min(42rem, 64vw);
   height: min(34rem, 54vw);
   pointer-events: none;
-  background:
-    radial-gradient(
-      ellipse at 72% 28%,
-      hsl(142 78% 47% / 0.32) 0%,
-      hsl(166 78% 38% / 0.2) 28%,
-      hsl(193 72% 38% / 0.1) 52%,
-      transparent 76%
-    );
+  background: radial-gradient(
+    ellipse at 72% 28%,
+    hsl(142 78% 47% / 0.32) 0%,
+    hsl(166 78% 38% / 0.2) 28%,
+    hsl(193 72% 38% / 0.1) 52%,
+    transparent 76%
+  );
   filter: blur(52px);
   opacity: 1;
 }

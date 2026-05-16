@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,9 @@ export const ChatInputBox = ({
   focusOnTyping = true,
 }: ChatInputBoxProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputContentRef = useRef<HTMLDivElement>(null);
+  const textMirrorRef = useRef<HTMLDivElement>(null);
+  const [isSingleLine, setIsSingleLine] = useState(true);
 
   useEffect(() => {
     if (!focusOnTyping) return;
@@ -103,42 +106,97 @@ export const ChatInputBox = ({
     onChange("");
   };
 
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    const inputContent = inputContentRef.current;
+    const textMirror = textMirrorRef.current;
+    if (!textarea || !inputContent || !textMirror) return;
+
+    const measureSingleLine = () => {
+      const styles = window.getComputedStyle(textarea);
+      const inlineTextareaWidth = Math.max(inputContent.clientWidth - 48, 0);
+      textMirror.style.width = `${inlineTextareaWidth}px`;
+
+      const lineHeight =
+        Number.parseFloat(styles.lineHeight) ||
+        Number.parseFloat(styles.fontSize) * 1.2;
+      const singleLineHeight = Math.ceil(lineHeight);
+      const nextIsSingleLine = textMirror.scrollHeight <= singleLineHeight + 1;
+
+      setIsSingleLine(nextIsSingleLine);
+    };
+
+    measureSingleLine();
+
+    const resizeObserver = new ResizeObserver(measureSingleLine);
+    resizeObserver.observe(inputContent);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [placeholder, value]);
+
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl bg-card/55 p-4 backdrop-blur-md sm:p-5",
+        "overflow-hidden rounded-2xl bg-card/55 px-5 py-3.5 backdrop-blur-md sm:p4",
         className,
       )}
     >
-      <Textarea
-        ref={textareaRef}
-        rows={rows}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            submit();
-          }
-        }}
-        placeholder={placeholder}
+      <div
+        ref={inputContentRef}
         className={cn(
-          "min-h-15 resize-none border-none bg-transparent p-0 text-base shadow-none focus-visible:ring-0 md:text-base",
-          textareaClassName,
+          isSingleLine
+            ? "relative flex items-center gap-3"
+            : "relative flex flex-col gap-3",
         )}
-      />
-
-      {showSeparator && <Separator />}
-
-      <div className="flex items-center justify-end">
-        <Button
-          size="icon"
-          onClick={submit}
-          disabled={!value.trim()}
-          aria-label={sendButtonAriaLabel}
+      >
+        <div
+          ref={textMirrorRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute -z-10 whitespace-pre-wrap break-words p-0 text-base opacity-0 md:text-base"
         >
-          <ArrowUp className="size-4 text-white" />
-        </Button>
+          {(value || placeholder || " ").endsWith("\n")
+            ? `${value || placeholder || " "}\n `
+            : value || placeholder || " "}
+        </div>
+
+        <Textarea
+          ref={textareaRef}
+          rows={rows ?? 1}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              submit();
+            }
+          }}
+          placeholder={placeholder}
+          className={cn(
+            "max-h-40 min-h-9 flex-1 resize-none border-none bg-transparent p-0 pt-0.5 text-base shadow-none focus-visible:ring-0 md:text-base",
+            !isSingleLine && "min-h-15",
+            textareaClassName,
+          )}
+        />
+
+        {showSeparator && <Separator />}
+
+        <div
+          className={cn(
+            "flex items-center",
+            isSingleLine ? "shrink-0" : "justify-end",
+          )}
+        >
+          <Button
+            size="icon"
+            onClick={submit}
+            disabled={!value.trim()}
+            aria-label={sendButtonAriaLabel}
+          >
+            <ArrowUp className="size-4 text-white" />
+          </Button>
+        </div>
       </div>
     </div>
   );
