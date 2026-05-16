@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { type MouseEvent, useEffect, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,16 @@ const isTextEntryKey = (event: KeyboardEvent) => {
     !event.metaKey &&
     !event.altKey &&
     !event.isComposing
+  );
+};
+
+const isInteractiveElement = (element: EventTarget | null) => {
+  if (!(element instanceof HTMLElement)) return false;
+
+  return (
+    element.closest(
+      "button, a, input, textarea, select, [role='button'], [contenteditable='true']",
+    ) !== null
   );
 };
 
@@ -106,6 +116,14 @@ export const ChatInputBox = ({
     onChange("");
   };
 
+  const focusTextareaFromContainer = (
+    event: MouseEvent<HTMLDivElement>,
+  ) => {
+    if (isInteractiveElement(event.target)) return;
+
+    textareaRef.current?.focus();
+  };
+
   useEffect(() => {
     const textarea = textareaRef.current;
     const inputContent = inputContentRef.current;
@@ -138,6 +156,7 @@ export const ChatInputBox = ({
 
   return (
     <div
+      onClick={focusTextareaFromContainer}
       className={cn(
         "overflow-hidden rounded-2xl bg-card/55 px-5 py-3.5 backdrop-blur-md sm:p4",
         className,

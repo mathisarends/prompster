@@ -88,7 +88,7 @@ export const ChatPage = () => {
   );
 
   return (
-    <div className="min-h-dvh bg-background text-foreground">
+    <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <header className="fixed inset-x-0 top-0 z-20 flex h-14 items-center justify-center bg-background/80 backdrop-blur-md">
         <span className="inline-flex items-center gap-2.5 text-sm font-semibold text-foreground/85">
           <Sparkles className="size-3.5" />
@@ -96,7 +96,7 @@ export const ChatPage = () => {
         </span>
       </header>
 
-      <main className="relative z-10 flex flex-col px-4 pb-40 pt-14 sm:px-8 sm:pb-44">
+      <main className="relative z-10 flex flex-1 flex-col px-4 pt-14 sm:px-8">
         <div className="mx-auto flex w-full max-w-4xl flex-col">
           <div className="flex flex-col gap-4 px-1 pt-8 sm:px-2">
             {messages.map(renderMessage)}
@@ -105,15 +105,15 @@ export const ChatPage = () => {
         </div>
       </main>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background via-background/85 to-transparent pt-6">
-        <div className="mx-auto w-full max-w-4xl px-4 pb-4 sm:px-8 sm:pb-6">
+      <div className="sticky bottom-0 z-10 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-6 sm:px-8 sm:pb-6">
+        <div className="mx-auto w-full max-w-4xl">
           <ChatInputBox
             value={prompt}
             onChange={setPrompt}
             onSubmit={sendMessage}
             placeholder="Deine Antwort ..."
             sendButtonAriaLabel="Nachricht senden"
-            className="pointer-events-auto rounded-3xl border border-border/50 bg-card/70 p-4 shadow-2xl shadow-black/20"
+            className="rounded-3xl border border-border/50 bg-card/70 p-4 shadow-2xl shadow-black/20"
             textareaClassName="max-h-40"
             rows={1}
           />
