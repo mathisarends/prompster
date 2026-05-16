@@ -3,17 +3,19 @@ from uuid import UUID
 
 from backend.features.auth.application.schemas import (
     AuthSession,
+    GoogleIdentity,
     TokenPayload,
     TokenType,
 )
 
 
-class PasswordHasher(ABC):
+class GoogleOAuthProvider(ABC):
     @abstractmethod
-    def hash(self, password: str) -> str: ...
-
-    @abstractmethod
-    def verify(self, password: str, hashed: str) -> bool: ...
+    async def exchange_code_for_identity(
+        self,
+        *,
+        authorization_code: str,
+    ) -> GoogleIdentity: ...
 
 
 class TokenIssuer(ABC):

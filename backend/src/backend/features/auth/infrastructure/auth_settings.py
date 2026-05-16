@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from pydantic import field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,6 +13,52 @@ class _CookieSameSite(StrEnum):
     STRICT = "strict"
     LAX = "lax"
     NONE = "none"
+
+
+class GoogleAuthSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        populate_by_name=True,
+    )
+
+    client_id: str = Field(
+        default="",
+        validation_alias=AliasChoices("GOOGLE_CLIENT_ID", "google_client_id"),
+    )
+    client_secret: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "GOOGLE_CLIENT_SECRET",
+            "google_client_secret",
+        ),
+    )
+    redirect_uri: str = Field(
+        default="",
+        validation_alias=AliasChoices("GOOGLE_REDIRECT_URI", "google_redirect_uri"),
+    )
+    token_endpoint: str = Field(
+        default="https://oauth2.googleapis.com/token",
+        validation_alias=AliasChoices(
+            "GOOGLE_TOKEN_ENDPOINT",
+            "google_token_endpoint",
+        ),
+    )
+    userinfo_endpoint: str = Field(
+        default="https://openidconnect.googleapis.com/v1/userinfo",
+        validation_alias=AliasChoices(
+            "GOOGLE_USERINFO_ENDPOINT",
+            "google_userinfo_endpoint",
+        ),
+    )
+
+    @field_validator("redirect_uri", "token_endpoint", "userinfo_endpoint")
+    @classmethod
+    def validate_google_urls(cls, v: str) -> str:
+        if v and not v.startswith(("http://", "https://")):
+            raise ValueError("Google URLs must start with http:// or https://")
+        return v.rstrip("/") if v else v
 
 
 class AuthSettings(BaseSettings):

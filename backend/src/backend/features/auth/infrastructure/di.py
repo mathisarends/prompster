@@ -1,17 +1,20 @@
 from dishka import Provider, Scope, provide
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.env import EnvSettings
 from backend.features.auth.application import (
-    LoginUserHandler,
+    GoogleCallbackHandler,
     RefreshSessionHandler,
-    RegisterUserHandler,
 )
-from backend.features.auth.application.ports import PasswordHasher, TokenIssuer
-from backend.features.auth.domain import AuthUserRepository
-from backend.features.auth.infrastructure.auth_settings import AuthSettings
+from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
+from backend.features.auth.infrastructure.auth_settings import (
+    AuthSettings,
+    GoogleAuthSettings,
+)
+from backend.features.auth.infrastructure.google_oauth_client import GoogleOAuthClient
 from backend.features.auth.infrastructure.jwt_token_issuer import JwtTokenIssuer
-from backend.features.auth.infrastructure.orm import InMemoryAuthUserRepository
-from backend.features.auth.infrastructure.hasher import Argon2PasswordHasher
+from backend.features.auth.infrastructure.orm import SqlUserRepository
+from backend.features.user.domain import UserRepository
 from backend.features.auth.presentation.cookies import AuthCookies
 
 
@@ -25,8 +28,8 @@ class AuthProvider(Provider):
         return AuthSettings()
 
     @provide(scope=Scope.APP)
-    def provide_password_hasher(self) -> PasswordHasher:
-        return Argon2PasswordHasher()
+    def provide_google_auth_settings(self) -> GoogleAuthSettings:
+        return GoogleAuthSettings()
 
     @provide(scope=Scope.APP)
     def provide_token_issuer(
@@ -36,39 +39,33 @@ class AuthProvider(Provider):
         return JwtTokenIssuer(auth_settings=auth_settings)
 
     @provide(scope=Scope.APP)
-    def provide_user_repository(self) -> AuthUserRepository:
-        return InMemoryAuthUserRepository()
+    def provide_google_oauth_provider(
+        self,
+        google_auth_settings: GoogleAuthSettings,
+    ) -> GoogleOAuthProvider:
+        return GoogleOAuthClient(google_auth_settings=google_auth_settings)
 
     @provide(scope=Scope.REQUEST)
-    def provide_register_user_handler(
-        self,
-        user_repository: AuthUserRepository,
-        password_hasher: PasswordHasher,
-        token_issuer: TokenIssuer,
-    ) -> RegisterUserHandler:
-        return RegisterUserHandler(
-            user_repository=user_repository,
-            password_hasher=password_hasher,
-            token_issuer=token_issuer,
-        )
+    def provide_user_repository(self, session: AsyncSession) -> UserRepository:
+        return SqlUserRepository(session=session)
 
     @provide(scope=Scope.REQUEST)
-    def provide_login_user_handler(
+    def provide_google_callback_handler(
         self,
-        user_repository: AuthUserRepository,
-        password_hasher: PasswordHasher,
+        user_repository: UserRepository,
+        google_oauth_provider: GoogleOAuthProvider,
         token_issuer: TokenIssuer,
-    ) -> LoginUserHandler:
-        return LoginUserHandler(
+    ) -> GoogleCallbackHandler:
+        return GoogleCallbackHandler(
             user_repository=user_repository,
-            password_hasher=password_hasher,
+            google_oauth_provider=google_oauth_provider,
             token_issuer=token_issuer,
         )
 
     @provide(scope=Scope.REQUEST)
     def provide_refresh_session_handler(
         self,
-        user_repository: AuthUserRepository,
+        user_repository: UserRepository,
         token_issuer: TokenIssuer,
     ) -> RefreshSessionHandler:
         return RefreshSessionHandler(

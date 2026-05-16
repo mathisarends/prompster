@@ -5,7 +5,6 @@ from backend.features.auth.application import (
     InvalidCredentialsException,
     SessionExpiredException,
     SessionInvalidException,
-    UserAlreadyExistsException,
 )
 
 
@@ -29,16 +28,6 @@ async def _invalid_credentials_handler(
     )
 
 
-async def _user_already_exists_handler(
-    _: Request,
-    exc: UserAlreadyExistsException,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_409_CONFLICT,
-        content={"detail": _exception_detail(exc, fallback="Conflict")},
-    )
-
-
 async def _refresh_session_invalid_handler(
     _: Request,
     exc: SessionExpiredException | SessionInvalidException,
@@ -58,10 +47,6 @@ def register_auth_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(
         InvalidCredentialsException,
         _invalid_credentials_handler,
-    )
-    app.add_exception_handler(
-        UserAlreadyExistsException,
-        _user_already_exists_handler,
     )
     app.add_exception_handler(
         SessionExpiredException,

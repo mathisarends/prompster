@@ -1,9 +1,7 @@
-from .login_user import LoginUserHandler
+from .google_callback import GoogleCallbackHandler
 from .refresh_session import RefreshSessionHandler
-from .register_user import RegisterUserHandler
 
 __all__ = [
-    "LoginUserHandler",
+    "GoogleCallbackHandler",
     "RefreshSessionHandler",
-    "RegisterUserHandler",
 ]

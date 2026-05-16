@@ -3,13 +3,13 @@ from uuid import UUID
 from backend.features.auth.application.exceptions import SessionInvalidException
 from backend.features.auth.application.ports import TokenIssuer
 from backend.features.auth.application.schemas import AuthSession
-from backend.features.auth.domain import AuthUserRepository
+from backend.features.user.domain import UserRepository
 
 
 class RefreshSessionHandler:
     def __init__(
         self,
-        user_repository: AuthUserRepository,
+        user_repository: UserRepository,
         token_issuer: TokenIssuer,
     ) -> None:
         self._user_repository = user_repository

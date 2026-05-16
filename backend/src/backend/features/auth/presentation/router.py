@@ -1,18 +1,12 @@
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Query, Response, status
 
-from backend.env import EnvSettings
 from backend.features.auth.application import (
-    LoginUserHandler,
+    GoogleCallbackHandler,
     RefreshSessionHandler,
-    RegisterUserHandler,
 )
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.cookies import AuthCookies
-from backend.features.auth.presentation.schemas import (
-    EmailPasswordRequest,
-    RegisterRequest,
-)
 from backend.presentation.errors import ErrorDto
 
 auth_router = APIRouter(
@@ -23,49 +17,25 @@ auth_router = APIRouter(
 
 _error_responses = {
     401: {"model": ErrorDto, "description": "Invalid or expired credentials"},
-    409: {"model": ErrorDto, "description": "Conflict"},
 }
 
 
-@auth_router.post(
-    "/login",
+@auth_router.get(
+    "/google/callback",
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
-    operation_id="login",
+    operation_id="google_callback",
     responses={401: _error_responses[401]},
 )
-async def login(
-    request: EmailPasswordRequest,
+async def google_callback(
     response: Response,
-    handler: FromDishka[LoginUserHandler],
+    handler: FromDishka[GoogleCallbackHandler],
     auth_cookies: FromDishka[AuthCookies],
-) -> None:
-    auth_session = await handler.handle(email=request.email, password=request.password)
-    auth_cookies.set(response, auth_session)
-
-
-@auth_router.post(
-    "/register",
-    status_code=status.HTTP_201_CREATED,
-    response_class=Response,
-    operation_id="register",
-    responses={
-        404: {"description": "Registration disabled"},
-        409: _error_responses[409],
-    },
-)
-async def register(
-    request: RegisterRequest,
-    response: Response,
-    handler: FromDishka[RegisterUserHandler],
-    auth_cookies: FromDishka[AuthCookies],
+    code: str = Query(min_length=1, max_length=4096),
 ) -> None:
     auth_session = await handler.handle(
-        name=request.name,
-        email=request.email,
-        password=request.password,
+        authorization_code=code,
     )
-
     auth_cookies.set(response, auth_session)
 
 

@@ -10,9 +10,11 @@ class User(Aggregate):
         *,
         name: str,
         email: str,
+        google_subject: str,
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> None:
         super().__init__(id=id, created_time=created_time)
         self.name = name
         self.email = email
+        self.google_subject = google_subject

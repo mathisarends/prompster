@@ -1,31 +1,49 @@
 from uuid import UUID
 
-from backend.features.auth.domain import (
-    AuthUser,
-    AuthUserRepository,
-)
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import Field
+
+from backend.features.user.domain import User, UserRepository
+from backend.infrastructure.database.orm import DatabaseEntity
+from backend.infrastructure.database.repository import Repository
 
 
-class InMemoryAuthUserRepository(AuthUserRepository):
-    def __init__(self) -> None:
-        self._users_by_id: dict[UUID, AuthUser] = {}
-        self._user_ids_by_email: dict[str, UUID] = {}
+class UserEntity(DatabaseEntity, table=True):
+    __tablename__ = "users"
 
-    async def get_by_id(self, *, user_id: UUID) -> AuthUser | None:
-        return self._users_by_id.get(user_id)
+    name: str
+    email: str = Field(index=True, unique=True)
+    google_subject: str = Field(index=True, unique=True)
 
-    async def get_by_email(self, *, email: str) -> AuthUser | None:
+
+class SqlUserRepository(Repository[UserEntity, User], UserRepository):
+    def __init__(self, session: AsyncSession) -> None:
+        super().__init__(session=session, model=UserEntity)
+
+    def _to_domain(self, orm: UserEntity) -> User:
+        return User(
+            id=orm.id,
+            name=orm.name,
+            email=orm.email,
+            google_subject=orm.google_subject,
+            created_time=orm.created_at,
+        )
+
+    def _to_orm(self, domain: User) -> UserEntity:
+        return UserEntity(
+            id=domain.id,
+            name=domain.name,
+            email=domain.email,
+            google_subject=domain.google_subject,
+            created_at=domain.created_at,
+        )
+
+    async def get_by_id(self, *, user_id: UUID) -> User | None:
+        return await self.find_by_id(user_id)
+
+    async def get_by_email(self, *, email: str) -> User | None:
         normalized_email = email.strip().lower()
-        user_id = self._user_ids_by_email.get(normalized_email)
-        if user_id is None:
-            return None
-        return self._users_by_id.get(user_id)
+        return await self.find_by(email=normalized_email)
 
-    async def create(self, *, user: AuthUser) -> AuthUser:
-        normalized_email = user.email.strip().lower()
-        if normalized_email in self._user_ids_by_email:
-            raise ValueError("User already exists")
-
-        self._users_by_id[user.id] = user
-        self._user_ids_by_email[normalized_email] = user.id
-        return user
+    async def create(self, *, user: User) -> User:
+        return await self.save(user)

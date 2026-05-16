@@ -12,6 +12,9 @@ from backend.features.session.presentation import (
     router as session_router,
 )
 from backend.features.session.infrastructure.di import SessionProvider
+from backend.features.user.presentation import user_router
+from backend.features.user.infrastructure.di import UserProvider
+from backend.infrastructure.di.database_provider import DatabaseProvider
 from backend.presentation import PascalCaseRouter, LoggingMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -58,8 +61,10 @@ def _create_app() -> FastAPI:
     register_session_exception_handlers(app)
 
     container = make_async_container(
+        DatabaseProvider(),
         AuthProvider(),
         SessionProvider(),
+        UserProvider(),
     )
     setup_dishka(container, app)
     app.state.dishka_container = container
@@ -67,6 +72,7 @@ def _create_app() -> FastAPI:
     api_v1_router = PascalCaseRouter(prefix="/api/v1")
     api_v1_router.include_router(auth_router)
     api_v1_router.include_router(session_router)
+    api_v1_router.include_router(user_router)
     app.include_router(api_v1_router)
 
     logger.info("Application ready!")
