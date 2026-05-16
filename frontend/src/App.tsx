@@ -10,13 +10,14 @@ import {
 import { PanelLeft } from "lucide-react";
 import { HomePage } from "./pages/home-page";
 import { ChatPage } from "./pages/chat-page";
+import { LandingPage } from "./pages/landing-page";
 import { NavigationSidebar } from "@/components/navigation-sidebar";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useViewport } from "@/hooks/useViewport";
 import { type ChatHistoryEntry } from "@/lib/mockChats";
 import { cn } from "@/lib/utils";
 
-const AppLayout = () => {
+const AppLayout = ({ onLogout }: { onLogout: () => void }) => {
   const navigate = useNavigate();
   const { isMobile } = useViewport();
   const [sidebarOpen, setSidebarOpen] = useLocalStorage(
@@ -52,6 +53,7 @@ const AppLayout = () => {
         onNewChat={handleNewChat}
         onNewChatNewTab={handleNewChatNewTab}
         onSelectChat={handleSelectChat}
+        onLogout={onLogout}
         activeChatId={activeChatId}
       />
 
@@ -86,6 +88,20 @@ const AppLayout = () => {
   );
 };
 
+const AuthenticatedAppRoute = ({
+  isSignedIn,
+  onLogout,
+}: {
+  isSignedIn: boolean;
+  onLogout: () => void;
+}) => {
+  if (!isSignedIn) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <AppLayout onLogout={onLogout} />;
+};
+
 const ChatPageRoute = () => {
   const { chatId } = useParams();
   return <ChatPage key={chatId} />;
@@ -102,13 +118,52 @@ const HomePageRoute = () => {
 };
 
 export const App = () => {
+  const navigate = useNavigate();
+  const [isGoogleSignedIn, setIsGoogleSignedIn] = useLocalStorage(
+    "prompster.auth.google",
+    false,
+  );
+
+  const handleMockGoogleSignIn = () => {
+    setIsGoogleSignedIn(true);
+    navigate("/new", { replace: true });
+  };
+
+  const handleLogout = () => {
+    setIsGoogleSignedIn(false);
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("prompster.spotify.connected");
+    }
+    navigate("/", { replace: true });
+  };
+
   return (
     <Routes>
-      <Route element={<AppLayout />}>
+      <Route
+        path="/"
+        element={
+          isGoogleSignedIn ? (
+            <Navigate to="/new" replace />
+          ) : (
+            <LandingPage onSignIn={handleMockGoogleSignIn} />
+          )
+        }
+      />
+      <Route
+        element={
+          <AuthenticatedAppRoute
+            isSignedIn={isGoogleSignedIn}
+            onLogout={handleLogout}
+          />
+        }
+      >
         <Route path="/new" element={<HomePageRoute />} />
         <Route path="/chat/:chatId" element={<ChatPageRoute />} />
       </Route>
-      <Route path="*" element={<Navigate to="/new" replace />} />
+      <Route
+        path="*"
+        element={<Navigate to={isGoogleSignedIn ? "/new" : "/"} replace />}
+      />
     </Routes>
   );
 };

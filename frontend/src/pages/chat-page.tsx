@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import { ChatPageHeader } from "../components/chat-page-header";
 import { AssistantChatMessage } from "@/components/assistant-chat-message";
@@ -14,6 +15,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { SpotifyConnectDialog } from "@/components/spotify-connect-dialog";
 import { UserChatMessage } from "@/components/user-chat-message";
 import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -38,14 +40,25 @@ const getCanUseResizableLayout = () => {
 };
 
 export const ChatPage = () => {
+  const location = useLocation();
+  const routeState = location.state as { prompt?: string } | null;
+  const initialPrompt = routeState?.prompt;
   const [prompt, setPrompt] = useState("");
   const [workspacePanelLayout, setWorkspacePanelLayout] = useLocalStorage<
     Record<string, number>
   >("prompster.chat.workspace-layout", { chat: 50, workspace: 50 });
+  const [spotifyConnected, setSpotifyConnected] = useLocalStorage(
+    "prompster.spotify.connected",
+    false,
+  );
   const [canUseResizableLayout, setCanUseResizableLayout] = useState(
     getCanUseResizableLayout,
   );
-  const [state, dispatch] = useReducer(chatReducer, "", createInitialChatState);
+  const [state, dispatch] = useReducer(
+    chatReducer,
+    initialPrompt,
+    createInitialChatState,
+  );
   const { messages, followUp, workspacePanel } = state;
   const messagesEndRef = useAutoScrollToBottom<HTMLDivElement>(messages.length);
   const currentStep = getActiveFollowUpStep(followUp);
@@ -275,6 +288,10 @@ export const ChatPage = () => {
           </div>
         )}
       </div>
+      <SpotifyConnectDialog
+        open={!spotifyConnected}
+        onConnect={() => setSpotifyConnected(true)}
+      />
     </div>
   );
 };
