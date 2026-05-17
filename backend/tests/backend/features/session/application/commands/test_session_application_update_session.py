@@ -19,6 +19,9 @@ class _SessionRepositoryStub(SessionRepository):
     async def create(self, session: Session) -> Session:
         raise AssertionError("create is not used in UpdateSessionHandler tests")
 
+    async def save(self, *, session: Session) -> Session:
+        raise AssertionError("save is not used in UpdateSessionHandler tests")
+
     async def update(self, session_id: UUID, title: str | None) -> Session:
         self.received_session_id = session_id
         self.received_title = title

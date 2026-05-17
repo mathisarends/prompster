@@ -179,6 +179,14 @@ class Session(Aggregate):
         group = self._require_pending_follow_up_group()
         return group.skip(question_id)
 
+    def require_pending_follow_up_group(self) -> FollowUpQuestionGroup:
+        group = self._find_pending_follow_up_group()
+        if group is None:
+            raise NoPendingFollowUpGroupError(
+                f"Session {self.id} has no pending follow-up question group."
+            )
+        return group
+
     def has_access(self, user_id: UUID) -> None:
         if self.owner_id != user_id:
             raise SessionAccessDeniedError(
@@ -201,12 +209,7 @@ class Session(Aggregate):
         return None
 
     def _require_pending_follow_up_group(self) -> FollowUpQuestionGroup:
-        group = self._find_pending_follow_up_group()
-        if group is None:
-            raise NoPendingFollowUpGroupError(
-                f"Session {self.id} has no pending follow-up question group."
-            )
-        return group
+        return self.require_pending_follow_up_group()
 
     def _find_pending_follow_up_group(self) -> FollowUpQuestionGroup | None:
         for message in reversed(self._messages):

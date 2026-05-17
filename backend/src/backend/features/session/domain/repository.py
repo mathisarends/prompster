@@ -8,8 +8,11 @@ class SessionRepository(ABC):
     @abstractmethod
     async def get_by_id(self, session_id: UUID) -> Session: ...
 
+    async def create(self, *, session: Session) -> Session:
+        return await self.save(session=session)
+
     @abstractmethod
-    async def create(self, session: Session) -> Session: ...
+    async def save(self, *, session: Session) -> Session: ...
 
     @abstractmethod
     async def update(

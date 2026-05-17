@@ -1,8 +1,26 @@
 from .commands import (
+    AddPlaylistTrackHandler,
+    AnswerFollowUpWithOptionHandler,
+    AnswerFollowUpWithTextHandler,
+    AppendUserMessageHandler,
     CreateSessionHandler,
+    CreateSessionResult,
     DeleteSessionHandler,
+    PersistSessionHandler,
+    RemovePlaylistTrackHandler,
     SendMessageHandler,
+    SkipFollowUpHandler,
     UpdateSessionHandler,
+)
+from .events import (
+    SessionEvent,
+    SessionFollowUpAnswered,
+    SessionFollowUpSkipped,
+    SessionPlaylistSet,
+    SessionPlaylistTrackAdded,
+    SessionPlaylistTrackRemoved,
+    SessionTitleGenerated,
+    SessionUserMessageAppended,
 )
 from .queries import (
     GetSessionByIdHandler,
@@ -12,12 +30,28 @@ from .queries import (
 )
 
 __all__ = [
+    "AddPlaylistTrackHandler",
+    "AnswerFollowUpWithOptionHandler",
+    "AnswerFollowUpWithTextHandler",
+    "AppendUserMessageHandler",
     "CreateSessionHandler",
+    "CreateSessionResult",
     "DeleteSessionHandler",
     "GetSessionByIdHandler",
     "ListSessionsHandler",
+    "PersistSessionHandler",
+    "RemovePlaylistTrackHandler",
     "SearchSessionsHandler",
     "SearchSpotifyTracksHandler",
     "SendMessageHandler",
+    "SessionEvent",
+    "SessionFollowUpAnswered",
+    "SessionFollowUpSkipped",
+    "SessionPlaylistSet",
+    "SessionPlaylistTrackAdded",
+    "SessionPlaylistTrackRemoved",
+    "SessionTitleGenerated",
+    "SessionUserMessageAppended",
+    "SkipFollowUpHandler",
     "UpdateSessionHandler",
 ]

@@ -83,14 +83,15 @@ class SessionSnapshotPayload(_WsEvent):
     playlist: PlaylistPayload | None = None
 
 
-# --------------------------------------------------------------------- #
-# Server -> Client events
-# --------------------------------------------------------------------- #
-
-
 class SessionSnapshotEvent(_WsEvent):
     type: Literal["session.snapshot"] = "session.snapshot"
     session: SessionSnapshotPayload
+
+
+class SessionTitleGeneratedEvent(_WsEvent):
+    type: Literal["session.title_generated"] = "session.title_generated"
+    session_id: UUID
+    title: str
 
 
 class UserMessageAppendedEvent(_WsEvent):
@@ -197,6 +198,7 @@ class ErrorEvent(_WsEvent):
 ServerEvent = Annotated[
     Union[
         SessionSnapshotEvent,
+        SessionTitleGeneratedEvent,
         UserMessageAppendedEvent,
         AssistantMessageStartedEvent,
         AssistantMessageChunkEvent,
@@ -217,11 +219,6 @@ ServerEvent = Annotated[
     ],
     Field(discriminator="type"),
 ]
-
-
-# --------------------------------------------------------------------- #
-# Client -> Server commands
-# --------------------------------------------------------------------- #
 
 
 class SendMessageCommand(_WsEvent):
@@ -278,19 +275,8 @@ ClientEvent = Annotated[
 ]
 
 
-# --------------------------------------------------------------------- #
-# Schema catalog (for OpenAPI / frontend codegen)
-# --------------------------------------------------------------------- #
-
-
 class WebSocketEventCatalog(BaseModel):
-    """Catalog of all WebSocket event shapes.
-
-    This model only exists so that the OpenAPI schema produced by the
-    schema endpoint references every variant of [ClientEvent] and
-    [ServerEvent]. The frontend type generator can then emit matching
-    TypeScript types for both directions of the socket.
-    """
+    """References every event shape for OpenAPI client generation."""
 
     client_event: ClientEvent | None = Field(
         default=None,

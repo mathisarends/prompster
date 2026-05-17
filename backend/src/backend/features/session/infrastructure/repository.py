@@ -74,9 +74,6 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
             raise SessionNotFoundError
         return self._to_domain(session)
 
-    async def create(self, *, session: Session) -> Session:
-        return await self.save(session)
-
     async def update(
         self,
         *,
@@ -86,35 +83,35 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
         session = await self.get_by_id(session_id=session_id)
         if title is not None:
             session.title = title
-        return await self.save(session)
+        return await self.save(session=session)
 
     async def delete(self, *, session_id: UUID) -> None:
         deleted = await self.delete_by_id(session_id)
         if not deleted:
             raise SessionNotFoundError
 
-    async def save(self, domain: Session) -> Session:
-        orm = await self.session.scalar(self._detail_query(session_id=domain.id))
+    async def save(self, *, session: Session) -> Session:
+        orm = await self.session.scalar(self._detail_query(session_id=session.id))
         if orm is None:
-            orm = SessionEntity(id=domain.id)
+            orm = SessionEntity(id=session.id)
             self.session.add(orm)
 
-        orm.title = domain.title
-        orm.owner_id = domain.owner_id
-        orm.created_at = domain.created_at
-        orm.last_activity_at = self._resolve_last_activity_at(domain)
+        orm.title = session.title
+        orm.owner_id = session.owner_id
+        orm.created_at = session.created_at
+        orm.last_activity_at = self._resolve_last_activity_at(session)
 
-        session_id = orm.id or domain.id
+        session_id = orm.id or session.id
         orm.messages = [
             self._to_orm_message(
                 message=message,
                 session_id=session_id,
                 position=index,
             )
-            for index, message in enumerate(domain.messages)
+            for index, message in enumerate(session.messages)
         ]
         orm.playlist = self._to_orm_playlist(
-            domain_playlist=domain.playlist,
+            domain_playlist=session.playlist,
             session_id=session_id,
         )
 

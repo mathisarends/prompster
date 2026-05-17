@@ -8,7 +8,7 @@ from backend.features.session.domain import (
     ToolCall,
     ToolCallGroup,
 )
-from backend.features.session.presentation.ws_events import (
+from backend.features.session.presentation.ws.events import (
     FollowUpOptionPayload,
     FollowUpQuestionGroupPayload,
     FollowUpQuestionPayload,

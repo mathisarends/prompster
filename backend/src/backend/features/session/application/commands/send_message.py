@@ -28,7 +28,7 @@ class SendMessageHandler:
 
         if should_append_user_message:
             session.add_user_message(content=content)
-            await self._session_repository.create(session=session)
+            await self._session_repository.save(session=session)
 
         chunks: list[str] = []
         async for chunk in self._llm.stream(self._build_context(session)):
@@ -39,7 +39,7 @@ class SendMessageHandler:
 
         if completion := "".join(chunks).strip():
             session.add_assistant_message(content=completion)
-            await self._session_repository.create(session=session)
+            await self._session_repository.save(session=session)
 
     def _build_context(self, session: Session) -> list[Message]:
         messages: list[Message] = []

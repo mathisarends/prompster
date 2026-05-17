@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 from backend.features.session.application.commands.create_session import (
     CreateSessionHandler,
 )
+from backend.features.session.application.events import SessionTitleGenerated
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
@@ -17,7 +18,7 @@ class _SessionRepositoryStub(SessionRepository):
     async def get_by_id(self, session_id: UUID) -> Session:
         raise AssertionError("get_by_id is not used in CreateSessionHandler tests")
 
-    async def create(self, session: Session) -> Session:
+    async def save(self, *, session: Session) -> Session:
         self.created_session = session
         return session
 
@@ -48,9 +49,10 @@ class TestCreateSessionHandler:
             session_repository=repository, title_generator=generator
         )
 
-        created = asyncio.run(
+        result = asyncio.run(
             handler.handle(owner_id=owner_id, initial_prompt=initial_prompt)
         )
+        created = result.session
 
         assert created is repository.created_session
         assert created.title == "A" * 120
@@ -59,6 +61,9 @@ class TestCreateSessionHandler:
         assert created.messages[0].role == MessageRole.USER
         assert created.messages[0].content == initial_prompt
         assert generator.received_initial_prompt == initial_prompt
+        assert result.events == (
+            SessionTitleGenerated(session_id=created.id, title="A" * 120),
+        )
 
     def test_handle_falls_back_to_new_session_for_blank_generated_title(self) -> None:
         repository = _SessionRepositoryStub()
@@ -67,6 +72,12 @@ class TestCreateSessionHandler:
             session_repository=repository, title_generator=generator
         )
 
-        created = asyncio.run(handler.handle(owner_id=uuid4(), initial_prompt="prompt"))
+        result = asyncio.run(handler.handle(owner_id=uuid4(), initial_prompt="prompt"))
 
-        assert created.title == "New Session"
+        assert result.session.title == "New Session"
+        assert result.events == (
+            SessionTitleGenerated(
+                session_id=result.session.id,
+                title="New Session",
+            ),
+        )

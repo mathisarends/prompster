@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Query, Response, status
 from fastapi.responses import StreamingResponse
@@ -13,7 +15,6 @@ from backend.features.session.application import (
     SendMessageHandler,
     UpdateSessionHandler,
 )
-from backend.features.session.presentation.dependencies import AuthorizedSession
 from backend.features.session.presentation.mapper import (
     to_session_response,
     to_session_summary_response,
@@ -100,10 +101,14 @@ async def search_spotify_tracks(
     responses=_auth_errors | _not_found,
 )
 async def get_session_by_id(
-    session: AuthorizedSession,
+    session_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
     handler: FromDishka[GetSessionByIdHandler],
 ) -> SessionResponse:
-    session = await handler.handle(session=session)
+    session = await handler.handle(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+    )
     return to_session_response(session)
 
 
@@ -119,11 +124,11 @@ async def create_session(
     body: SessionCreateRequest,
     handler: FromDishka[CreateSessionHandler],
 ) -> SessionResponse:
-    session = await handler.handle(
+    result = await handler.handle(
         owner_id=authenticated_user_id,
         initial_prompt=body.initial_prompt,
     )
-    return to_session_response(session)
+    return to_session_response(result.session)
 
 
 @router.post(
@@ -138,10 +143,16 @@ async def create_session(
     },
 )
 async def send_message(
-    session: AuthorizedSession,
+    session_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
     body: SendMessageRequest,
+    get_handler: FromDishka[GetSessionByIdHandler],
     handler: FromDishka[SendMessageHandler],
 ) -> StreamingResponse:
+    session = await get_handler.handle(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+    )
     return StreamingResponse(
         handler.stream_response(session=session, content=body.content),
         media_type="text/plain; charset=utf-8",
@@ -156,10 +167,16 @@ async def send_message(
     responses=_auth_errors | _bad_request | _not_found,
 )
 async def update_session(
-    session: AuthorizedSession,
+    session_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
     body: SessionUpdateRequest,
+    get_handler: FromDishka[GetSessionByIdHandler],
     handler: FromDishka[UpdateSessionHandler],
 ) -> SessionResponse:
+    session = await get_handler.handle(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+    )
     session = await handler.handle(
         session=session,
         title=body.title,
@@ -174,8 +191,14 @@ async def update_session(
     responses=_auth_errors | _not_found,
 )
 async def delete_session(
-    session: AuthorizedSession,
+    session_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    get_handler: FromDishka[GetSessionByIdHandler],
     handler: FromDishka[DeleteSessionHandler],
 ) -> Response:
+    session = await get_handler.handle(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+    )
     await handler.handle(session=session)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

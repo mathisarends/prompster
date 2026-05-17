@@ -13,13 +13,13 @@ from backend.features.session.domain import MessageRole, Session, SessionReposit
 
 class _SessionRepositoryStub(SessionRepository):
     def __init__(self) -> None:
-        self.created_sessions: list[Session] = []
+        self.saved_sessions: list[Session] = []
 
     async def get_by_id(self, session_id: UUID) -> Session:
         raise AssertionError("get_by_id is not used in SendMessageHandler tests")
 
-    async def create(self, session: Session) -> Session:
-        self.created_sessions.append(session)
+    async def save(self, *, session: Session) -> Session:
+        self.saved_sessions.append(session)
         return session
 
     async def update(self, session_id: UUID, title: str | None) -> Session:
@@ -65,7 +65,7 @@ class TestSendMessageHandler:
         ]
         assert session.messages[0].content == "Hi"
         assert session.messages[1].content == "Hallo Welt"
-        assert len(repository.created_sessions) == 2
+        assert len(repository.saved_sessions) == 2
         assert len(llm.contexts) == 1
         assert len(llm.contexts[0]) == 1
         assert isinstance(llm.contexts[0][0], UserMessage)
@@ -92,7 +92,7 @@ class TestSendMessageHandler:
             MessageRole.USER,
             MessageRole.ASSISTANT,
         ]
-        assert len(repository.created_sessions) == 1
+        assert len(repository.saved_sessions) == 1
 
     def test_stream_response_ignores_empty_chunks_and_skips_blank_completion(
         self,
@@ -111,4 +111,4 @@ class TestSendMessageHandler:
 
         assert yielded == ["   ", "\n"]
         assert [message.role for message in session.messages] == [MessageRole.USER]
-        assert len(repository.created_sessions) == 1
+        assert len(repository.saved_sessions) == 1
