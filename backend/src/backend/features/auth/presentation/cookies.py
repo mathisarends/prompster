@@ -66,17 +66,17 @@ class AuthCookies:
             same_site="lax",
         )
 
-    def pop_oauth_state(self, request: Request, response: Response) -> str | None:
+    def read_oauth_state(self, request: Request) -> str | None:
         signed_state = request.cookies.get(self._auth_settings.oauth_state_cookie_name)
+        if not signed_state:
+            return None
+        return self._decode_signed_oauth_state(signed_state=signed_state)
+
+    def clear_oauth_state(self, response: Response) -> None:
         self._delete_cookie(
             response=response,
             key=self._auth_settings.oauth_state_cookie_name,
         )
-
-        if not signed_state:
-            return None
-
-        return self._decode_signed_oauth_state(signed_state=signed_state)
 
     def _set_cookie(
         self,

@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { getMe } from "@/api/generated/user-api";
 import { AXIOS_INSTANCE } from "@/api/http-client";
 import { Sparkles } from "lucide-react";
 
@@ -11,70 +9,81 @@ type LandingPageProps = {
   onSignIn: () => void;
 };
 
+const OAUTH_MESSAGE_TYPE = "prompster-google-oauth";
+
+type OAuthPopupMessage = {
+  type: typeof OAUTH_MESSAGE_TYPE;
+  status: "success" | "error";
+  reason?: string;
+};
+
+const isOAuthPopupMessage = (data: unknown): data is OAuthPopupMessage => {
+  if (typeof data !== "object" || data === null) return false;
+  const candidate = data as { type?: unknown; status?: unknown };
+  return (
+    candidate.type === OAUTH_MESSAGE_TYPE &&
+    (candidate.status === "success" || candidate.status === "error")
+  );
+};
+
+const resolveBackendOrigin = (): string => {
+  const baseUrl =
+    AXIOS_INSTANCE.defaults.baseURL ??
+    `${window.location.protocol}//${window.location.hostname}:8000`;
+  return new URL(baseUrl, window.location.origin).origin;
+};
+
 export const LandingPage = ({ onSignIn }: LandingPageProps) => {
-  const [email, setEmail] = useState("");
   const [isGoogleOAuthLoading, setIsGoogleOAuthLoading] = useState(false);
+  const [oauthError, setOAuthError] = useState<string | null>(null);
   const oauthPopupRef = useRef<Window | null>(null);
-  const oauthPollTimeoutRef = useRef<number | null>(null);
-  const oauthPollAttemptRef = useRef(0);
+  const popupClosedCheckRef = useRef<number | null>(null);
 
-  const submitEmail = () => {
-    if (!email.trim()) return;
-    onSignIn();
-  };
-
-  const clearOAuthPolling = () => {
-    if (oauthPollTimeoutRef.current !== null) {
-      window.clearTimeout(oauthPollTimeoutRef.current);
-      oauthPollTimeoutRef.current = null;
+  const stopPopupClosedCheck = () => {
+    if (popupClosedCheckRef.current !== null) {
+      window.clearInterval(popupClosedCheckRef.current);
+      popupClosedCheckRef.current = null;
     }
   };
 
-  const stopOAuthFlow = () => {
-    clearOAuthPolling();
-    oauthPopupRef.current = null;
-    oauthPollAttemptRef.current = 0;
-    setIsGoogleOAuthLoading(false);
-  };
+  useEffect(() => {
+    const backendOrigin = resolveBackendOrigin();
 
-  const pollOAuthCompletion = () => {
-    const oauthPopup = oauthPopupRef.current;
-    if (!oauthPopup || oauthPopup.closed) {
-      stopOAuthFlow();
-      return;
-    }
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== backendOrigin) return;
+      if (!isOAuthPopupMessage(event.data)) return;
 
-    if (oauthPollAttemptRef.current >= 180) {
-      oauthPopup.close();
-      stopOAuthFlow();
-      return;
-    }
+      stopPopupClosedCheck();
+      oauthPopupRef.current?.close();
+      oauthPopupRef.current = null;
+      setIsGoogleOAuthLoading(false);
 
-    void getMe()
-      .then(() => {
-        oauthPopup.close();
-        stopOAuthFlow();
+      if (event.data.status === "success") {
+        setOAuthError(null);
         onSignIn();
-      })
-      .catch(() => {
-        oauthPollAttemptRef.current += 1;
-        oauthPollTimeoutRef.current = window.setTimeout(
-          pollOAuthCompletion,
-          1000,
+      } else {
+        setOAuthError(
+          event.data.reason === "access_denied"
+            ? "Google-Anmeldung abgebrochen."
+            : "Google-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
         );
-      });
-  };
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      stopPopupClosedCheck();
+    };
+  }, [onSignIn]);
 
   const handleGoogleSignIn = () => {
-    if (isGoogleOAuthLoading) {
-      return;
-    }
+    if (isGoogleOAuthLoading) return;
 
-    const baseUrl =
-      AXIOS_INSTANCE.defaults.baseURL ??
-      `${window.location.protocol}//${window.location.hostname}:8000`;
-    const googleLoginUrl = new URL("/api/v1/auth/google/login", baseUrl)
-      .toString();
+    const googleLoginUrl = new URL(
+      "/api/v1/auth/google/login",
+      resolveBackendOrigin(),
+    ).toString();
     const oauthPopup = window.open(
       googleLoginUrl,
       "prompster-google-oauth",
@@ -87,16 +96,18 @@ export const LandingPage = ({ onSignIn }: LandingPageProps) => {
     }
 
     oauthPopupRef.current = oauthPopup;
+    setOAuthError(null);
     setIsGoogleOAuthLoading(true);
-    clearOAuthPolling();
-    pollOAuthCompletion();
-  };
 
-  useEffect(() => {
-    return () => {
-      clearOAuthPolling();
-    };
-  }, []);
+    stopPopupClosedCheck();
+    popupClosedCheckRef.current = window.setInterval(() => {
+      if (oauthPopupRef.current?.closed) {
+        stopPopupClosedCheck();
+        oauthPopupRef.current = null;
+        setIsGoogleOAuthLoading(false);
+      }
+    }, 500);
+  };
 
   return (
     <div className="home-page-background min-h-dvh text-foreground">
@@ -112,7 +123,7 @@ export const LandingPage = ({ onSignIn }: LandingPageProps) => {
                 Prompster
               </Badge>
               <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-                Willkommen zurück
+                Willkommen zurueck
               </h1>
               <p className="mx-auto max-w-sm text-sm text-muted-foreground sm:text-base">
                 Melde dich an, um deine Karten-Decks zu erstellen.
@@ -134,52 +145,12 @@ export const LandingPage = ({ onSignIn }: LandingPageProps) => {
                   ? "Google-Anmeldung laeuft..."
                   : "Mit Google fortfahren"}
               </Button>
-
-              <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                <span className="h-px flex-1 bg-border" />
-                oder
-                <span className="h-px flex-1 bg-border" />
-              </div>
-
-              <form
-                className="space-y-3"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  submitEmail();
-                }}
-              >
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="E-Mail"
-                  className="h-10"
-                />
-                <Input
-                  type="password"
-                  placeholder="Passwort"
-                  className="h-10"
-                />
-                <Button
-                  type="submit"
-                  disabled={!email.trim()}
-                  className="h-10 w-full"
-                >
-                  Anmelden
-                </Button>
-              </form>
+              {oauthError ? (
+                <p className="text-center text-sm text-destructive">
+                  {oauthError}
+                </p>
+              ) : null}
             </div>
-
-            <p className="text-center text-xs text-muted-foreground">
-              Noch kein Konto?{" "}
-              <button
-                type="button"
-                onClick={onSignIn}
-                className="font-medium text-foreground underline-offset-4 hover:underline"
-              >
-                Registrieren
-              </button>
-            </p>
           </section>
         </div>
       </main>

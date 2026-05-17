@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { LogOut, MessageCircle, PanelLeft, Plus, Search } from "lucide-react";
+import { useGetMe } from "@/api/generated/user-api";
 
 import { Button } from "@/components/ui/button";
 import { ChatSearchDialog } from "@/components/chat-search-dialog";
@@ -36,6 +37,13 @@ export const NavigationSidebar = ({
   activeChatId,
 }: NavigationSidebarProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
+  const { data: user } = useGetMe();
+  const initials = user?.name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) ?? "";
 
   useKeyboardShortcut({ ctrlOrMeta: true, key: "k" }, () => {
     setSearchOpen((previous) => !previous);
@@ -192,11 +200,11 @@ export const NavigationSidebar = ({
               >
                 <Avatar className="bg-sidebar-accent" size="default">
                   <AvatarFallback className="bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
-                    MA
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">Mathis Arends</p>
+                  <p className="truncate text-sm font-medium">{user?.name}</p>
                 </div>
               </DropdownMenuTrigger>
             ) : (
@@ -207,7 +215,7 @@ export const NavigationSidebar = ({
                 >
                   <Avatar className="bg-sidebar-accent" size="default">
                     <AvatarFallback className="bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
-                      MA
+                      {initials}
                     </AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
