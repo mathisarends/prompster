@@ -8,8 +8,8 @@
 
 export interface SendMessageRequest {
   /**
-     * @minLength 1
-     * @maxLength 4000
-     */
+   * @minLength 1
+   * @maxLength 4000
+   */
   content: string;
 }

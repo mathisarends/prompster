@@ -13,11 +13,8 @@ import { HomePage } from "./pages/home-page";
 import { ChatPage } from "./pages/chat-page";
 import { LandingPage } from "./pages/landing-page";
 import { NavigationSidebar } from "@/components/navigation-sidebar";
-import {
-  fetchCurrentUser,
-  logoutAuthSession,
-  refreshAuthSession,
-} from "@/api/auth";
+import { logout, refresh } from "@/api/generated/auth-api";
+import { getMe } from "@/api/generated/user-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useViewport } from "@/hooks/useViewport";
 import { type ChatHistoryEntry } from "@/lib/mockChats";
@@ -131,13 +128,13 @@ export const App = () => {
 
   const resolveAuthSession = useCallback(async () => {
     try {
-      await fetchCurrentUser();
+      await getMe();
       setIsGoogleSignedIn(true);
       return true;
     } catch {
       try {
-        await refreshAuthSession();
-        await fetchCurrentUser();
+        await refresh();
+        await getMe();
         setIsGoogleSignedIn(true);
         return true;
       } catch {
@@ -160,7 +157,7 @@ export const App = () => {
 
   const handleLogout = useCallback(async () => {
     try {
-      await logoutAuthSession();
+      await logout();
     } finally {
       setIsGoogleSignedIn(false);
       if (typeof window !== "undefined") {

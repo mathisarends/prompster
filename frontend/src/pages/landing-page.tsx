@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchCurrentUser, getGoogleOAuthLoginUrl } from "@/api/auth";
+import { getMe } from "@/api/generated/user-api";
+import { AXIOS_INSTANCE } from "@/api/http-client";
 import { Sparkles } from "lucide-react";
 
 type LandingPageProps = {
@@ -49,7 +50,7 @@ export const LandingPage = ({ onSignIn }: LandingPageProps) => {
       return;
     }
 
-    void fetchCurrentUser()
+    void getMe()
       .then(() => {
         oauthPopup.close();
         stopOAuthFlow();
@@ -69,7 +70,11 @@ export const LandingPage = ({ onSignIn }: LandingPageProps) => {
       return;
     }
 
-    const googleLoginUrl = getGoogleOAuthLoginUrl();
+    const baseUrl =
+      AXIOS_INSTANCE.defaults.baseURL ??
+      `${window.location.protocol}//${window.location.hostname}:8000`;
+    const googleLoginUrl = new URL("/api/v1/auth/google/login", baseUrl)
+      .toString();
     const oauthPopup = window.open(
       googleLoginUrl,
       "prompster-google-oauth",

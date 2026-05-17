@@ -5,6 +5,9 @@ export default defineConfig({
     input: {
       target: "./openapi.json",
     },
+    hooks: {
+      afterAllFilesWrite: "npm run postprocess:api",
+    },
     output: {
       mode: "tags-split",
       target: "src/api/generated",
@@ -12,6 +15,7 @@ export default defineConfig({
       client: "react-query",
       httpClient: "axios",
       clean: true,
+      formatter: "prettier",
       override: {
         mutator: {
           path: "./src/api/http-client.ts",

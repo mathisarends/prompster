@@ -5,7 +5,7 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { SpotifyTrackResponse } from './spotifyTrackResponse';
+import type { SpotifyTrackResponse } from "./spotifyTrackResponse";
 
 export interface SpotifyTrackSearchResponse {
   items: SpotifyTrackResponse[];

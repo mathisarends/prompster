@@ -8,8 +8,8 @@
 
 export interface SessionUpdateRequest {
   /**
-     * @minLength 1
-     * @maxLength 120
-     */
+   * @minLength 1
+   * @maxLength 120
+   */
   title: string;
 }

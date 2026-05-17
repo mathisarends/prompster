@@ -197,9 +197,6 @@ export const NavigationSidebar = ({
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">Mathis Arends</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    Free Plan
-                  </p>
                 </div>
               </DropdownMenuTrigger>
             ) : (

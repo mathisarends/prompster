@@ -7,15 +7,15 @@
  */
 
 export type SearchSpotifyTracksParams = {
-/**
- * Search query
- * @minLength 1
- * @maxLength 200
- */
-query: string;
-/**
- * @minimum 1
- * @maximum 50
- */
-limit?: number;
+  /**
+   * Search query
+   * @minLength 1
+   * @maxLength 200
+   */
+  query: string;
+  /**
+   * @minimum 1
+   * @maximum 50
+   */
+  limit?: number;
 };
