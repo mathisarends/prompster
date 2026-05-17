@@ -21,7 +21,7 @@ class AuthCookies:
         self._set_cookie(
             response=response,
             key=self._auth_settings.access_token_cookie_name,
-            value=auth_session.jwt_token,
+            value=auth_session.access_token,
             max_age=self._auth_settings.jwt_access_token_expire_minutes
             * self._SECONDS_PER_MINUTE,
         )

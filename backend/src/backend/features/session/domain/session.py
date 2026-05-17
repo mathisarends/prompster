@@ -13,7 +13,6 @@ class Session(Aggregate):
         title: str,
         messages: list[SessionMessage],
         owner_id: UUID,
-        system_prompt: str | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> None:
@@ -21,7 +20,6 @@ class Session(Aggregate):
         self.title = title
         self.messages = messages
         self.owner_id = owner_id
-        self.system_prompt = system_prompt
 
     @classmethod
     def create_with_initial_prompt(
@@ -30,13 +28,11 @@ class Session(Aggregate):
         title: str,
         initial_prompt: str,
         owner_id: UUID,
-        system_prompt: str | None = None,
     ) -> Self:
         session = cls(
             title=title,
             messages=[],
             owner_id=owner_id,
-            system_prompt=system_prompt,
         )
         session.add_user_message(content=initial_prompt)
         return session

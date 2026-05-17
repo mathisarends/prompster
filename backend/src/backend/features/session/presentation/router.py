@@ -68,7 +68,6 @@ async def create_session(
     session = await handler.handle(
         owner_id=authenticated_user_id,
         initial_prompt=body.initial_prompt,
-        system_prompt=body.system_prompt,
     )
     return to_session_response(session)
 
@@ -120,7 +119,6 @@ async def update_session(
     session = await handler.handle(
         session=session,
         title=body.title,
-        system_prompt=body.system_prompt,
     )
     return to_session_response(session)
 

@@ -26,6 +26,7 @@ _error_responses = {
     response_model=None,
     operation_id="google_callback",
     responses={401: _error_responses[401]},
+    include_in_schema=False,
 )
 async def google_callback(
     response: Response,

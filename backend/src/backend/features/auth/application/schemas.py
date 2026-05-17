@@ -6,7 +6,7 @@ from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 
 class AuthSession(BaseModel):
-    jwt_token: str
+    access_token: str
     refresh_token: str
 
 

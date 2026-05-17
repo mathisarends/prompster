@@ -10,10 +10,8 @@ class UpdateSessionHandler:
         *,
         session: Session,
         title: str | None = None,
-        system_prompt: str | None = None,
     ) -> Session:
         return await self._session_repository.update(
             session_id=session.id,
             title=title,
-            system_prompt=system_prompt,
         )

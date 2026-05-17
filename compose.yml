@@ -10,7 +10,7 @@ services:
       RELOAD: ${RELOAD:-false}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-["http://localhost:5173"]}
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
-      DB_URI: ${DB_URI:-postgresql+asyncpg://prompster:prompster@postgres:5432/prompster}
+      DB_URI: ${DB_URI:-postgresql+asyncpg://${POSTGRES_USER:-prompster}:${POSTGRES_PASSWORD:-prompster}@postgres:5432/${POSTGRES_DB:-prompster}}
       STORAGE_BUCKET_NAME: ${STORAGE_BUCKET_NAME:-prompster}
       MINIO_ENDPOINT_URL: ${MINIO_ENDPOINT_URL:-http://minio:9000}
       MINIO_PUBLIC_ENDPOINT_URL: ${MINIO_PUBLIC_ENDPOINT_URL:-http://localhost:9000}
@@ -20,12 +20,40 @@ services:
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       minio:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: prompster-migrate
+    restart: on-failure
+    environment:
+      DB_URI: ${DB_URI:-postgresql+asyncpg://${POSTGRES_USER:-prompster}:${POSTGRES_PASSWORD:-prompster}@postgres:5432/${POSTGRES_DB:-prompster}}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -c
+      - |
+        attempts=0
+        until alembic -c /app/backend/alembic.ini upgrade head; do
+          attempts=$$((attempts + 1))
+          if [ "$$attempts" -ge 20 ]; then
+            echo "Migration failed after $$attempts attempts."
+            exit 1
+          fi
+          echo "Migration attempt $$attempts failed. Retrying in 3s..."
+          sleep 3
+        done
 
   postgres:
     image: postgres:16-alpine

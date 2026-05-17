@@ -43,7 +43,7 @@ class JwtTokenIssuer(TokenIssuer):
             token_type=TokenType.REFRESH,
         )
 
-        return AuthSession(jwt_token=access_token, refresh_token=refresh_token)
+        return AuthSession(access_token=access_token, refresh_token=refresh_token)
 
     def validate(
         self,

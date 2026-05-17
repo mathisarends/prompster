@@ -1,4 +1,5 @@
 from dishka import Provider, Scope, provide
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.features.session.application import (
     CreateSessionHandler,
@@ -14,7 +15,7 @@ from backend.features.session.domain import SessionRepository
 from backend.features.session.infrastructure.impl.title_generator import (
     LLMSessionTitleGenerator,
 )
-from backend.features.session.infrastructure.orm import InMemorySessionRepository
+from backend.features.session.infrastructure.orm import SqlSessionRepository
 from llmify import ChatOpenAI
 
 
@@ -30,9 +31,9 @@ class SessionProvider(Provider):
     ) -> SessionTitleGenerator:
         return LLMSessionTitleGenerator(llm=llm)
 
-    @provide(scope=Scope.APP)
-    def provide_session_repository(self) -> SessionRepository:
-        return InMemorySessionRepository()
+    @provide(scope=Scope.REQUEST)
+    def provide_session_repository(self, session: AsyncSession) -> SessionRepository:
+        return SqlSessionRepository(session=session)
 
     @provide(scope=Scope.REQUEST)
     def provide_create_session_handler(
@@ -62,8 +63,12 @@ class SessionProvider(Provider):
     def provide_send_message_handler(
         self,
         llm: ChatOpenAI,
+        session_repository: SessionRepository,
     ) -> SendMessageHandler:
-        return SendMessageHandler(llm=llm)
+        return SendMessageHandler(
+            llm=llm,
+            session_repository=session_repository,
+        )
 
     @provide(scope=Scope.REQUEST)
     def provide_delete_session_handler(

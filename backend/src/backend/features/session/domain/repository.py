@@ -16,7 +16,6 @@ class SessionRepository(ABC):
         self,
         session_id: UUID,
         title: str | None,
-        system_prompt: str | None,
     ) -> Session: ...
 
     @abstractmethod

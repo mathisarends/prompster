@@ -20,7 +20,6 @@ class CreateSessionHandler:
         *,
         owner_id: UUID,
         initial_prompt: str,
-        system_prompt: str | None = None,
     ) -> Session:
         generated_title = await self._title_generator.generate(
             initial_prompt=initial_prompt
@@ -30,6 +29,5 @@ class CreateSessionHandler:
             title=title,
             initial_prompt=initial_prompt,
             owner_id=owner_id,
-            system_prompt=system_prompt,
         )
         return await self._session_repository.create(session=session)

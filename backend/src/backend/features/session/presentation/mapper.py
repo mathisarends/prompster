@@ -10,7 +10,6 @@ def to_session_response(session: Session) -> SessionResponse:
     return SessionResponse(
         id=session.id,
         title=session.title,
-        system_prompt=session.system_prompt,
         created_at=session.created_at,
     )
 
