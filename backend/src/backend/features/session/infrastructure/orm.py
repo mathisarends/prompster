@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from uuid import UUID
 
@@ -7,11 +6,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from backend.features.session.domain import (
+    MessageRole,
+    Playlist,
+    PlaylistTrack,
     Session,
+    SessionMessage,
     SessionNotFoundError,
     SessionRepository,
+    ToolCall,
+    ToolCallGroup,
+    ToolCallState,
+    ToolFunction,
 )
-from backend.features.session.domain.views import MessageRole, SessionMessage, ToolCall
 from backend.infrastructure.database.orm import DatabaseEntity
 from backend.infrastructure.database.repository import Repository
 
@@ -25,6 +31,10 @@ class SessionEntity(DatabaseEntity, table=True):
         default_factory=list,
         sa_column=Column(JSON, nullable=False),
     )
+    playlist: dict[str, object] | None = Field(
+        default=None,
+        sa_column=Column(JSON, nullable=True),
+    )
 
 
 class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository):
@@ -37,6 +47,7 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
             title=orm.title,
             messages=[self._to_domain_message(message) for message in orm.messages],
             owner_id=orm.owner_id,
+            playlist=self._to_domain_playlist(orm.playlist),
             created_time=orm.created_at,
         )
 
@@ -46,6 +57,7 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
             title=domain.title,
             messages=[self._to_orm_message(message) for message in domain.messages],
             owner_id=domain.owner_id,
+            playlist=self._to_orm_playlist(domain.playlist),
             created_at=domain.created_at,
         )
 
@@ -79,57 +91,65 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
             "id": str(message.id),
             "role": message.role.value,
             "content": message.content,
-            "tool_call_id": message.tool_call_id,
             "created_at": message.created_at.isoformat(),
-            "tool_calls": (
-                [self._to_orm_tool_call(tool_call) for tool_call in message.tool_calls]
-                if message.tool_calls
+            "tool_call_group": (
+                self._to_orm_tool_call_group(message.tool_call_group)
+                if message.tool_call_group is not None
                 else None
             ),
         }
 
     def _to_domain_message(self, payload: dict[str, object]) -> SessionMessage:
-        tool_calls_payload = payload.get("tool_calls")
-        tool_calls: list[ToolCall] | None = None
-
-        if isinstance(tool_calls_payload, list):
-            parsed_tool_calls = [
-                self._to_domain_tool_call(item)
-                for item in tool_calls_payload
-                if isinstance(item, dict)
-            ]
-            if parsed_tool_calls:
-                tool_calls = parsed_tool_calls
-
-        created_at = payload.get("created_at")
-        created_time = (
-            datetime.fromisoformat(created_at) if isinstance(created_at, str) else None
+        group_payload = payload.get("tool_call_group")
+        tool_call_group = (
+            self._to_domain_tool_call_group(group_payload)
+            if isinstance(group_payload, dict)
+            else None
         )
-
-        message_id = payload.get("id")
-        message_uuid = UUID(message_id) if isinstance(message_id, str) else None
 
         return SessionMessage(
-            id=message_uuid,
+            id=_parse_uuid(payload.get("id")),
             role=MessageRole(payload["role"]),
             content=str(payload.get("content", "")),
-            tool_calls=tool_calls,
-            tool_call_id=(
-                str(payload["tool_call_id"])
-                if payload.get("tool_call_id") is not None
-                else None
-            ),
-            created_time=created_time,
+            tool_call_group=tool_call_group,
+            created_time=_parse_datetime(payload.get("created_at")),
         )
 
-    def _to_orm_tool_call(self, tool_call: ToolCall) -> dict[str, object]:
+    def _to_orm_tool_call_group(self, group: ToolCallGroup) -> dict[str, object]:
         return {
-            "id": tool_call.id,
-            "type": tool_call.type,
+            "id": str(group.id),
+            "created_at": group.created_at.isoformat(),
+            "calls": [self._to_orm_tool_call(call) for call in group.calls],
+        }
+
+    def _to_domain_tool_call_group(self, payload: dict[str, object]) -> ToolCallGroup:
+        calls_payload = payload.get("calls")
+        calls = (
+            [
+                self._to_domain_tool_call(item)
+                for item in calls_payload
+                if isinstance(item, dict)
+            ]
+            if isinstance(calls_payload, list)
+            else []
+        )
+
+        return ToolCallGroup(
+            id=_parse_uuid(payload.get("id")),
+            calls=calls,
+            created_time=_parse_datetime(payload.get("created_at")),
+        )
+
+    def _to_orm_tool_call(self, call: ToolCall) -> dict[str, object]:
+        return {
+            "id": call.id,
             "function": {
-                "name": tool_call.function.name,
-                "arguments": json.dumps(tool_call.function.arguments),
+                "name": call.function.name,
+                "arguments": call.function.arguments,
             },
+            "state": call.state.value,
+            "result": call.result,
+            "error": call.error,
         }
 
     def _to_domain_tool_call(self, payload: dict[str, object]) -> ToolCall:
@@ -138,15 +158,90 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
             function_payload = {}
 
         arguments = function_payload.get("arguments")
-        if not isinstance(arguments, str):
-            arguments = json.dumps(arguments if arguments is not None else {})
+        if not isinstance(arguments, dict):
+            arguments = {}
 
-        return ToolCall.from_dict(
-            {
-                "id": str(payload.get("id", "")),
-                "function": {
-                    "name": str(function_payload.get("name", "")),
-                    "arguments": arguments,
-                },
-            }
+        state_value = payload.get("state", ToolCallState.PENDING.value)
+        result = payload.get("result")
+        error = payload.get("error")
+
+        return ToolCall(
+            id=str(payload.get("id", "")),
+            function=ToolFunction(
+                name=str(function_payload.get("name", "")),
+                arguments=arguments,
+            ),
+            state=ToolCallState(state_value),
+            result=str(result) if isinstance(result, str) else None,
+            error=str(error) if isinstance(error, str) else None,
         )
+
+    def _to_orm_playlist(self, playlist: Playlist | None) -> dict[str, object] | None:
+        if playlist is None:
+            return None
+        return {
+            "id": str(playlist.id),
+            "name": playlist.name,
+            "created_at": playlist.created_at.isoformat(),
+            "tracks": [self._to_orm_track(track) for track in playlist.tracks],
+        }
+
+    def _to_domain_playlist(self, payload: dict[str, object] | None) -> Playlist | None:
+        if not payload:
+            return None
+
+        tracks_payload = payload.get("tracks")
+        tracks = (
+            [
+                self._to_domain_track(item)
+                for item in tracks_payload
+                if isinstance(item, dict)
+            ]
+            if isinstance(tracks_payload, list)
+            else []
+        )
+
+        name = payload.get("name")
+
+        return Playlist(
+            id=_parse_uuid(payload.get("id")),
+            name=str(name) if isinstance(name, str) else None,
+            tracks=tracks,
+            created_time=_parse_datetime(payload.get("created_at")),
+        )
+
+    def _to_orm_track(self, track: PlaylistTrack) -> dict[str, object]:
+        return {
+            "id": str(track.id),
+            "title": track.title,
+            "artist": track.artist,
+            "year": track.year,
+            "cover_url": track.cover_url,
+            "created_at": track.created_at.isoformat(),
+        }
+
+    def _to_domain_track(self, payload: dict[str, object]) -> PlaylistTrack:
+        year = payload.get("year")
+
+        return PlaylistTrack(
+            id=_parse_uuid(payload.get("id")),
+            title=str(payload.get("title", "")),
+            artist=str(payload.get("artist", "")),
+            year=int(year)
+            if isinstance(year, (int, str)) and str(year).isdigit()
+            else None,
+            cover_url=(
+                str(payload["cover_url"])
+                if payload.get("cover_url") is not None
+                else None
+            ),
+            created_time=_parse_datetime(payload.get("created_at")),
+        )
+
+
+def _parse_uuid(value: object) -> UUID | None:
+    return UUID(value) if isinstance(value, str) else None
+
+
+def _parse_datetime(value: object) -> datetime | None:
+    return datetime.fromisoformat(value) if isinstance(value, str) else None

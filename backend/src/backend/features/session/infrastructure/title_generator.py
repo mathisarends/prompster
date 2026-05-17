@@ -1,11 +1,11 @@
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
-from llmify import ChatOpenAI, SystemMessage, UserMessage
+from llmify import ChatModel, SystemMessage, UserMessage
 
 
 class LLMSessionTitleGenerator(SessionTitleGenerator):
-    def __init__(self, llm: ChatOpenAI) -> None:
+    def __init__(self, llm: ChatModel) -> None:
         self._llm = llm
 
     async def generate(self, initial_prompt: str) -> str:

@@ -12,7 +12,7 @@ from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
 from backend.features.session.domain import SessionRepository
-from backend.features.session.infrastructure.impl.title_generator import (
+from backend.features.session.infrastructure.title_generator import (
     LLMSessionTitleGenerator,
 )
 from backend.features.session.infrastructure.orm import SqlSessionRepository
