@@ -30,3 +30,14 @@ class TestUserDomainUser:
 
         assert user.id == user_id
         assert user.created_at == created_time
+
+    def test_user_generates_aggregate_identity_by_default(self) -> None:
+        user = User(
+            name="Mathis",
+            email="mathis@example.com",
+            google_subject="google-subject-1",
+        )
+
+        assert isinstance(user.id, UUID)
+        assert user.created_at.tzinfo is not None
+        assert user.created_at.utcoffset() == timezone.utc.utcoffset(None)

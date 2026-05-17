@@ -6,7 +6,6 @@ import type { SessionSummaryResponse } from "@/api/generated/model";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { useListKeyboardNavigation } from "@/hooks/useKeyboardShortcut";
 import {
-  formatSessionTimestamp,
   toSessionHistoryEntries,
   type SessionHistoryEntry,
 } from "@/components/session-history-utils";
@@ -174,9 +173,6 @@ export const ChatSearchDialog = ({
                         {session.group}
                       </p>
                     </div>
-                    <span className="shrink-0 text-sm text-muted-foreground">
-                      {formatSessionTimestamp(session.last_activity_at)}
-                    </span>
                   </button>
                 </li>
               ))}

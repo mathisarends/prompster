@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 import pytest
@@ -51,6 +52,30 @@ def make_pending_follow_up(question: str = "Welches Genre?") -> FollowUpQuestion
 
 
 class TestSessionDomainSession:
+    def test_session_generates_aggregate_identity_by_default(
+        self, owner_id: UUID
+    ) -> None:
+        created = Session(title="Roadtrip", messages=[], owner_id=owner_id)
+
+        assert isinstance(created.id, UUID)
+        assert created.created_at.tzinfo is not None
+        assert created.created_at.utcoffset() == timezone.utc.utcoffset(None)
+
+    def test_session_keeps_explicit_aggregate_identity(self, owner_id: UUID) -> None:
+        session_id = uuid4()
+        created_time = datetime(2026, 7, 7, tzinfo=timezone.utc)
+
+        created = Session(
+            title="Roadtrip",
+            messages=[],
+            owner_id=owner_id,
+            id=session_id,
+            created_time=created_time,
+        )
+
+        assert created.id == session_id
+        assert created.created_at == created_time
+
     def test_create_with_initial_prompt_adds_first_user_message(
         self, owner_id: UUID
     ) -> None:

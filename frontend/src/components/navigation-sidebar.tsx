@@ -23,10 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  formatSessionTimestamp,
-  groupSessionHistoryEntries,
-} from "@/components/session-history-utils";
+import { groupSessionHistoryEntries } from "@/components/session-history-utils";
 import { cn } from "@/lib/utils";
 import { PrompsterLogo } from "./prompster-logo";
 
@@ -219,11 +216,6 @@ export const NavigationSidebar = ({
                                 <MessageCircle className="size-4 shrink-0" />
                                 <span className="min-w-0 flex-1 truncate">
                                   {session.title}
-                                </span>
-                                <span className="shrink-0 text-[11px] text-muted-foreground">
-                                  {formatSessionTimestamp(
-                                    session.last_activity_at,
-                                  )}
                                 </span>
                               </button>
                             </li>
