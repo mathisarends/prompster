@@ -10,6 +10,7 @@ from backend.features.auth.infrastructure.di import AuthProvider
 from backend.features.session.presentation import (
     register_session_exception_handlers,
     router as session_router,
+    ws_router as session_ws_router,
 )
 from backend.features.session.infrastructure.di import SessionProvider
 from backend.features.user.presentation import user_router
@@ -72,6 +73,7 @@ def _create_app() -> FastAPI:
     api_v1_router = PascalCaseRouter(prefix="/api/v1")
     api_v1_router.include_router(auth_router)
     api_v1_router.include_router(session_router)
+    api_v1_router.include_router(session_ws_router)
     api_v1_router.include_router(user_router)
     app.include_router(api_v1_router)
 

@@ -1,0 +1,246 @@
+import asyncio
+from uuid import UUID, uuid4
+
+import pytest
+
+from backend.features.auth.application.commands.google_callback import (
+    GoogleCallbackHandler,
+)
+from backend.features.auth.application.exceptions import InvalidCredentialsException
+from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
+from backend.features.auth.application.schemas import (
+    AuthSession,
+    GoogleIdentity,
+    TokenPayload,
+    TokenType,
+)
+from backend.features.user.domain import User, UserRepository
+
+
+class _UserRepositoryStub(UserRepository):
+    def __init__(self, *, existing_user: User | None = None) -> None:
+        self._existing_user = existing_user
+        self.last_email_lookup: str | None = None
+        self.created_user: User | None = None
+
+    async def get_by_id(self, *, user_id: UUID) -> User | None:
+        return None
+
+    async def get_by_email(self, *, email: str) -> User | None:
+        self.last_email_lookup = email
+        return self._existing_user
+
+    async def create(self, *, user: User) -> User:
+        self.created_user = user
+        self._existing_user = user
+        return user
+
+
+class _GoogleOAuthProviderStub(GoogleOAuthProvider):
+    def __init__(
+        self,
+        *,
+        identity: GoogleIdentity | None = None,
+        exchange_error: Exception | None = None,
+    ) -> None:
+        self._identity = identity
+        self._exchange_error = exchange_error
+        self.received_authorization_code: str | None = None
+
+    def build_authorization_url(self, *, state: str) -> str:
+        return f"https://example.com/auth?state={state}"
+
+    async def exchange_code_for_identity(
+        self,
+        *,
+        authorization_code: str,
+    ) -> GoogleIdentity:
+        self.received_authorization_code = authorization_code
+        if self._exchange_error is not None:
+            raise self._exchange_error
+        assert self._identity is not None
+        return self._identity
+
+
+class _TokenIssuerStub(TokenIssuer):
+    def __init__(self, session: AuthSession) -> None:
+        self._session = session
+        self.received_user_id: UUID | None = None
+
+    def create_session(self, user_id: UUID) -> AuthSession:
+        self.received_user_id = user_id
+        return self._session
+
+    def validate(
+        self,
+        token: str,
+        expected_type: TokenType = TokenType.ACCESS,
+    ) -> TokenPayload:
+        raise AssertionError("validate is not used in GoogleCallbackHandler tests")
+
+
+class TestGoogleCallbackHandler:
+    def test_handle_raises_for_missing_expected_state(self) -> None:
+        repository = _UserRepositoryStub()
+        provider = _GoogleOAuthProviderStub()
+        issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
+        handler = GoogleCallbackHandler(repository, provider, issuer)
+
+        with pytest.raises(
+            InvalidCredentialsException, match="Invalid or missing OAuth state"
+        ):
+            asyncio.run(
+                handler.handle(
+                    authorization_code="code-1",
+                    oauth_state="state-1",
+                    expected_oauth_state=None,
+                )
+            )
+
+    def test_handle_raises_for_mismatched_expected_state(self) -> None:
+        repository = _UserRepositoryStub()
+        provider = _GoogleOAuthProviderStub()
+        issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
+        handler = GoogleCallbackHandler(repository, provider, issuer)
+
+        with pytest.raises(
+            InvalidCredentialsException, match="Invalid or missing OAuth state"
+        ):
+            asyncio.run(
+                handler.handle(
+                    authorization_code="code-1",
+                    oauth_state="state-1",
+                    expected_oauth_state="state-2",
+                )
+            )
+
+    def test_handle_raises_for_invalid_google_authorization_code(self) -> None:
+        repository = _UserRepositoryStub()
+        provider = _GoogleOAuthProviderStub(exchange_error=ValueError("invalid code"))
+        issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
+        handler = GoogleCallbackHandler(repository, provider, issuer)
+
+        with pytest.raises(
+            InvalidCredentialsException, match="Invalid Google authorization code"
+        ):
+            asyncio.run(
+                handler.handle(
+                    authorization_code="code-1",
+                    oauth_state="state-1",
+                    expected_oauth_state="state-1",
+                )
+            )
+
+    def test_handle_raises_for_unverified_google_email(self) -> None:
+        identity = GoogleIdentity(
+            subject="google-sub-1",
+            email="mathis@example.com",
+            email_verified=False,
+        )
+        repository = _UserRepositoryStub()
+        provider = _GoogleOAuthProviderStub(identity=identity)
+        issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
+        handler = GoogleCallbackHandler(repository, provider, issuer)
+
+        with pytest.raises(InvalidCredentialsException, match="email is not verified"):
+            asyncio.run(
+                handler.handle(
+                    authorization_code="code-1",
+                    oauth_state="state-1",
+                    expected_oauth_state="state-1",
+                )
+            )
+
+    def test_handle_creates_user_when_missing_and_returns_session(self) -> None:
+        identity = GoogleIdentity(
+            subject="google-sub-1",
+            email="  NewUser@Example.com  ",
+            name="   ",
+            email_verified=True,
+        )
+        expected_session = AuthSession(
+            access_token="access-1", refresh_token="refresh-1"
+        )
+        repository = _UserRepositoryStub(existing_user=None)
+        provider = _GoogleOAuthProviderStub(identity=identity)
+        issuer = _TokenIssuerStub(expected_session)
+        handler = GoogleCallbackHandler(repository, provider, issuer)
+
+        result = asyncio.run(
+            handler.handle(
+                authorization_code="code-1",
+                oauth_state="state-1",
+                expected_oauth_state="state-1",
+            )
+        )
+
+        assert result == expected_session
+        assert repository.last_email_lookup == "newuser@example.com"
+        assert repository.created_user is not None
+        assert repository.created_user.email == "newuser@example.com"
+        assert repository.created_user.name == "newuser"
+        assert repository.created_user.google_subject == "google-sub-1"
+        assert issuer.received_user_id == repository.created_user.id
+
+    def test_handle_raises_when_existing_user_has_different_google_subject(
+        self,
+    ) -> None:
+        existing_user = User(
+            name="Mathis",
+            email="mathis@example.com",
+            google_subject="google-sub-old",
+            id=uuid4(),
+        )
+        identity = GoogleIdentity(
+            subject="google-sub-new",
+            email="mathis@example.com",
+            name="Mathis",
+            email_verified=True,
+        )
+        repository = _UserRepositoryStub(existing_user=existing_user)
+        provider = _GoogleOAuthProviderStub(identity=identity)
+        issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
+        handler = GoogleCallbackHandler(repository, provider, issuer)
+
+        with pytest.raises(InvalidCredentialsException, match="does not match user"):
+            asyncio.run(
+                handler.handle(
+                    authorization_code="code-1",
+                    oauth_state="state-1",
+                    expected_oauth_state="state-1",
+                )
+            )
+
+    def test_handle_returns_session_for_existing_matching_user(self) -> None:
+        existing_user = User(
+            name="Mathis",
+            email="mathis@example.com",
+            google_subject="google-sub-1",
+            id=uuid4(),
+        )
+        identity = GoogleIdentity(
+            subject="google-sub-1",
+            email="  mathis@example.com ",
+            name="Mathis",
+            email_verified=True,
+        )
+        expected_session = AuthSession(
+            access_token="access-2", refresh_token="refresh-2"
+        )
+        repository = _UserRepositoryStub(existing_user=existing_user)
+        provider = _GoogleOAuthProviderStub(identity=identity)
+        issuer = _TokenIssuerStub(expected_session)
+        handler = GoogleCallbackHandler(repository, provider, issuer)
+
+        result = asyncio.run(
+            handler.handle(
+                authorization_code="code-1",
+                oauth_state="state-1",
+                expected_oauth_state="state-1",
+            )
+        )
+
+        assert result == expected_session
+        assert repository.created_user is None
+        assert repository.last_email_lookup == "mathis@example.com"
+        assert issuer.received_user_id == existing_user.id

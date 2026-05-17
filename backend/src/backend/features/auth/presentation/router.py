@@ -1,5 +1,3 @@
-import json
-
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -11,40 +9,10 @@ from backend.features.auth.application import (
 )
 from backend.features.auth.application.exceptions import InvalidCredentialsException
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
-from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.cookies import AuthCookies
+from backend.features.auth.presentation.dependencies import AuthenticatedUserId
+from backend.features.auth.presentation.oauth_popup import OAuthPopupResponse
 from backend.presentation.errors import ErrorDto
-
-_OAUTH_POPUP_MESSAGE_TYPE = "prompster-google-oauth"
-
-
-def _build_oauth_popup_html(
-    *,
-    target_origin: str,
-    status_value: str,
-    reason_value: str | None = None,
-) -> str:
-    payload = {"type": _OAUTH_POPUP_MESSAGE_TYPE, "status": status_value}
-    if reason_value is not None:
-        payload["reason"] = reason_value
-
-    payload_js = json.dumps(payload)
-    target_origin_js = json.dumps(target_origin)
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>Google sign-in</title></head>
-<body>
-<script>
-  (function () {{
-    if (window.opener) {{
-      try {{ window.opener.postMessage({payload_js}, {target_origin_js}); }} catch (e) {{}}
-    }}
-    window.close();
-  }})();
-</script>
-</body>
-</html>"""
-
 
 auth_router = APIRouter(
     route_class=DishkaRoute,
@@ -104,40 +72,28 @@ async def google_callback(
     state: str = Query(min_length=1, max_length=4096),
     error: str | None = Query(default=None, min_length=1, max_length=256),
 ) -> HTMLResponse:
+    target_origin = auth_settings.frontend_base_url
     expected_oauth_state = auth_cookies.read_oauth_state(request=request)
 
     if error is not None or code is None:
-        response = HTMLResponse(
-            content=_build_oauth_popup_html(
-                target_origin=auth_settings.frontend_base_url,
-                status_value="error",
-                reason_value=error or "missing_code",
+        response = OAuthPopupResponse.error(
+            target_origin=target_origin,
+            reason=error or "missing_code",
+        )
+    else:
+        try:
+            auth_session = await handler.handle(
+                authorization_code=code,
+                oauth_state=state,
+                expected_oauth_state=expected_oauth_state,
             )
-        )
-        auth_cookies.clear_oauth_state(response)
-        return response
-
-    try:
-        auth_session = await handler.handle(
-            authorization_code=code,
-            oauth_state=state,
-            expected_oauth_state=expected_oauth_state,
-        )
-        response = HTMLResponse(
-            content=_build_oauth_popup_html(
-                target_origin=auth_settings.frontend_base_url,
-                status_value="success",
+            response = OAuthPopupResponse.success(target_origin=target_origin)
+            auth_cookies.set(response, auth_session)
+        except InvalidCredentialsException:
+            response = OAuthPopupResponse.error(
+                target_origin=target_origin,
+                reason="invalid_credentials",
             )
-        )
-        auth_cookies.set(response, auth_session)
-    except InvalidCredentialsException:
-        response = HTMLResponse(
-            content=_build_oauth_popup_html(
-                target_origin=auth_settings.frontend_base_url,
-                status_value="error",
-                reason_value="invalid_credentials",
-            )
-        )
 
     auth_cookies.clear_oauth_state(response)
     return response
