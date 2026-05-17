@@ -1,11 +1,9 @@
-from uuid import UUID
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import Field
-
 from backend.features.user.domain import User, UserRepository
 from backend.infrastructure.database.orm import DatabaseEntity
 from backend.infrastructure.database.repository import Repository
+
+from sqlmodel import Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class UserEntity(DatabaseEntity, table=True):

@@ -1,3 +1,4 @@
+from backend.features.user.infrastructure.repository import SqlUserRepository
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +15,6 @@ from backend.features.auth.infrastructure.auth_settings import (
 )
 from backend.features.auth.infrastructure.google_oauth_client import GoogleOAuthClient
 from backend.features.auth.infrastructure.jwt_token_issuer import JwtTokenIssuer
-from backend.features.auth.infrastructure.orm import SqlUserRepository
 from backend.features.user.domain import UserRepository
 from backend.features.auth.presentation.cookies import AuthCookies
 

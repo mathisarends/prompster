@@ -1,6 +1,13 @@
-from backend.env import LLMCredentials
+from collections.abc import AsyncGenerator
+
 from dishka import Provider, Scope, provide
+from llmify import ChatOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
+from spotifyify import SpotifyCredentials, Spotifyify
+from spotifyify.cache_handler import MemoryCacheHandler
+
+from backend.env import LLMCredentials
+from backend.features.session.infrastructure.repository import SqlSessionRepository
 
 from backend.features.session.application import (
     CreateSessionHandler,
@@ -23,7 +30,7 @@ from backend.features.session.application.ports.title_generator import (
 )
 from backend.features.session.domain import SessionRepository
 from backend.features.session.infrastructure.spotify_track_search import (
-    MockSpotifyTrackSearch,
+    SpotifyifyTrackSearch,
 )
 from backend.features.session.infrastructure.session_summary_query import (
     SqlSessionSummaryQuery,
@@ -31,8 +38,6 @@ from backend.features.session.infrastructure.session_summary_query import (
 from backend.features.session.infrastructure.title_generator import (
     LLMSessionTitleGenerator,
 )
-from backend.features.session.infrastructure.orm import SqlSessionRepository
-from llmify import ChatOpenAI
 
 
 class SessionProvider(Provider):
@@ -120,8 +125,26 @@ class SessionProvider(Provider):
         return DeleteSessionHandler(session_repository=session_repository)
 
     @provide(scope=Scope.APP)
-    def provide_spotify_track_search(self) -> SpotifyTrackSearch:
-        return MockSpotifyTrackSearch()
+    def spotify_credentials(self) -> SpotifyCredentials:
+        return SpotifyCredentials()
+
+    @provide(scope=Scope.APP)
+    async def spotify(
+        self,
+        credentials: SpotifyCredentials,
+    ) -> AsyncGenerator[Spotifyify, None]:
+        spotify = Spotifyify(
+            credentials=credentials,
+            cache_handler=MemoryCacheHandler(),
+        )
+        try:
+            yield spotify
+        finally:
+            await spotify.close()
+
+    @provide(scope=Scope.APP)
+    def provide_spotify_track_search(self, spotify: Spotifyify) -> SpotifyTrackSearch:
+        return SpotifyifyTrackSearch(spotify=spotify)
 
     @provide(scope=Scope.REQUEST)
     def provide_search_spotify_tracks_handler(
