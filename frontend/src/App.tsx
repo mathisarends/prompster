@@ -15,9 +15,9 @@ import { LandingPage } from "./pages/landing-page";
 import { NavigationSidebar } from "@/components/navigation-sidebar";
 import { logout, refresh } from "@/api/generated/auth-api";
 import { getMe } from "@/api/generated/user-api";
+import type { SessionSummaryResponse } from "@/api/generated/model";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useViewport } from "@/hooks/useViewport";
-import { type ChatHistoryEntry } from "@/lib/mockChats";
 import { cn } from "@/lib/utils";
 
 const AppLayout = ({ onLogout }: { onLogout: () => void }) => {
@@ -32,10 +32,10 @@ const AppLayout = ({ onLogout }: { onLogout: () => void }) => {
     undefined,
   );
 
-  const handleSelectChat = (chat: ChatHistoryEntry) => {
-    setActiveChatId(chat.id);
+  const handleSelectChat = (session: SessionSummaryResponse) => {
+    setActiveChatId(session.id);
     if (isMobile) setSidebarOpen(false);
-    navigate("/deck/mock", { state: { prompt: chat.title } });
+    navigate(`/chat/${session.id}`);
   };
 
   const handleNewChat = () => {

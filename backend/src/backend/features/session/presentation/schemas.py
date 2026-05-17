@@ -22,6 +22,19 @@ class SessionResponse(BaseModel):
     created_at: datetime
 
 
+class SessionSummaryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    title: str
+    created_at: datetime
+    last_activity_at: datetime
+
+
+class SessionSummaryListResponse(BaseModel):
+    items: list[SessionSummaryResponse]
+
+
 class SendMessageRequest(BaseModel):
     content: str = Field(min_length=1, max_length=4000)
 

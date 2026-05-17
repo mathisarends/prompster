@@ -7,13 +7,16 @@ from backend.features.session.application import (
     CreateSessionHandler,
     DeleteSessionHandler,
     GetSessionByIdHandler,
+    ListSessionsHandler,
     SearchSpotifyTracksHandler,
+    SearchSessionsHandler,
     SendMessageHandler,
     UpdateSessionHandler,
 )
 from backend.features.session.presentation.dependencies import AuthorizedSession
 from backend.features.session.presentation.mapper import (
     to_session_response,
+    to_session_summary_response,
     to_spotify_track_response,
 )
 from backend.features.session.presentation.schemas import (
@@ -21,6 +24,7 @@ from backend.features.session.presentation.schemas import (
     SendMessageRequest,
     SessionCreateRequest,
     SessionResponse,
+    SessionSummaryListResponse,
     SessionUpdateRequest,
     SpotifyTrackSearchResponse,
 )
@@ -36,6 +40,40 @@ _bad_request = {status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse}}
 
 
 @router.get(
+    "",
+    response_model=SessionSummaryListResponse,
+    status_code=status.HTTP_200_OK,
+    operation_id="list_sessions",
+    responses=_auth_errors,
+)
+async def list_sessions(
+    authenticated_user_id: AuthenticatedUserId,
+    list_handler: FromDishka[ListSessionsHandler],
+    search_handler: FromDishka[SearchSessionsHandler],
+    q: str | None = Query(default=None, min_length=1, max_length=120),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> SessionSummaryListResponse:
+    if q and q.strip():
+        items = await search_handler.handle(
+            owner_id=authenticated_user_id,
+            query=q,
+            limit=limit,
+            offset=offset,
+        )
+    else:
+        items = await list_handler.handle(
+            owner_id=authenticated_user_id,
+            limit=limit,
+            offset=offset,
+        )
+
+    return SessionSummaryListResponse(
+        items=[to_session_summary_response(item) for item in items],
+    )
+
+
+@router.get(
     "/spotify-tracks",
     response_model=SpotifyTrackSearchResponse,
     status_code=status.HTTP_200_OK,
@@ -43,7 +81,7 @@ _bad_request = {status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse}}
     responses=_auth_errors,
 )
 async def search_spotify_tracks(
-    _authenticated_user_id: AuthenticatedUserId,
+    _authenticated_user_id: AuthenticatedUserId,  # keep to ensure authentication
     handler: FromDishka[SearchSpotifyTracksHandler],
     query: str = Query(min_length=1, max_length=200, description="Search query"),
     limit: int = Query(default=20, ge=1, le=50),

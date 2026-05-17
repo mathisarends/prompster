@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ChevronsUpDown,
   LogOut,
@@ -7,6 +7,8 @@ import {
   Plus,
   Search,
 } from "lucide-react";
+import { useListSessions } from "@/api/generated/session-api";
+import type { SessionSummaryResponse } from "@/api/generated/model";
 import { useGetMe } from "@/api/generated/user-api";
 
 import { Button } from "@/components/ui/button";
@@ -20,8 +22,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  formatSessionTimestamp,
+  groupSessionHistoryEntries,
+} from "@/components/session-history-utils";
 import { cn } from "@/lib/utils";
-import { mockChats, type ChatHistoryEntry } from "@/lib/mockChats";
 import { PrompsterLogo } from "./prompster-logo";
 
 type NavigationSidebarProps = {
@@ -29,7 +34,7 @@ type NavigationSidebarProps = {
   onToggle: () => void;
   onNewChat: () => void;
   onNewChatNewTab?: () => void;
-  onSelectChat: (chat: ChatHistoryEntry) => void;
+  onSelectChat: (session: SessionSummaryResponse) => void;
   onLogout?: () => void;
   activeChatId?: string;
 };
@@ -45,6 +50,16 @@ export const NavigationSidebar = ({
 }: NavigationSidebarProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const { data: user } = useGetMe();
+  const { data: sessionsData, isLoading: isLoadingSessions } = useListSessions({
+    limit: 200,
+    offset: 0,
+  });
+
+  const sessionGroups = useMemo(
+    () => groupSessionHistoryEntries(sessionsData?.items ?? []),
+    [sessionsData?.items],
+  );
+
   const initials =
     user?.name
       .split(" ")
@@ -68,8 +83,8 @@ export const NavigationSidebar = ({
     onNewChat();
   });
 
-  const selectChat = (chat: ChatHistoryEntry) => {
-    onSelectChat(chat);
+  const selectChat = (session: SessionSummaryResponse) => {
+    onSelectChat(session);
     setSearchOpen(false);
   };
 
@@ -171,28 +186,54 @@ export const NavigationSidebar = ({
               <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
                 Verlauf
               </p>
-              <ul className="space-y-0.5">
-                {mockChats.map((chat) => {
-                  const isActive = chat.id === activeChatId;
-                  return (
-                    <li key={chat.id}>
-                      <button
-                        type="button"
-                        onClick={() => selectChat(chat)}
-                        className={cn(
-                          "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                          isActive
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                        )}
-                      >
-                        <MessageCircle className="size-4 shrink-0" />
-                        <span className="truncate">{chat.title}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              {isLoadingSessions ? (
+                <p className="px-2 py-3 text-xs text-muted-foreground">
+                  Lade Verlauf...
+                </p>
+              ) : sessionGroups.length === 0 ? (
+                <p className="px-2 py-3 text-xs text-muted-foreground">
+                  Noch keine Sessions vorhanden.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {sessionGroups.map((group) => (
+                    <div key={group.group} className="space-y-0.5">
+                      <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
+                        {group.group}
+                      </p>
+                      <ul className="space-y-0.5">
+                        {group.items.map((session) => {
+                          const isActive = session.id === activeChatId;
+                          return (
+                            <li key={session.id}>
+                              <button
+                                type="button"
+                                onClick={() => selectChat(session)}
+                                className={cn(
+                                  "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+                                  isActive
+                                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                                )}
+                              >
+                                <MessageCircle className="size-4 shrink-0" />
+                                <span className="min-w-0 flex-1 truncate">
+                                  {session.title}
+                                </span>
+                                <span className="shrink-0 text-[11px] text-muted-foreground">
+                                  {formatSessionTimestamp(
+                                    session.last_activity_at,
+                                  )}
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </ScrollArea>
         ) : (

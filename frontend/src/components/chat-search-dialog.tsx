@@ -1,16 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MessageCircle, Search, X } from "lucide-react";
+import { useListSessions } from "@/api/generated/session-api";
+import type { SessionSummaryResponse } from "@/api/generated/model";
 
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { useListKeyboardNavigation } from "@/hooks/useKeyboardShortcut";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  formatSessionTimestamp,
+  toSessionHistoryEntries,
+  type SessionHistoryEntry,
+} from "@/components/session-history-utils";
 import { cn } from "@/lib/utils";
-import { mockChats, type ChatHistoryEntry } from "@/lib/mockChats";
 
 type ChatSearchDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectChat: (chat: ChatHistoryEntry) => void;
+  onSelectChat: (session: SessionSummaryResponse) => void;
   activeChatId?: string;
 };
 
@@ -27,6 +33,7 @@ export const ChatSearchDialog = ({
   activeChatId,
 }: ChatSearchDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -36,14 +43,36 @@ export const ChatSearchDialog = ({
     }
   }, [open]);
 
-  const visibleChats = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return mockChats;
-    return mockChats.filter((chat) => chat.title.toLowerCase().includes(query));
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedQuery(searchQuery.trim());
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
   }, [searchQuery]);
 
-  const selectChat = (chat: ChatHistoryEntry) => {
-    onSelectChat(chat);
+  const { data: sessionsData, isFetching: isFetchingSessions } =
+    useListSessions(
+      {
+        q: debouncedQuery.length > 0 ? debouncedQuery : null,
+        limit: 50,
+        offset: 0,
+      },
+      {
+        query: {
+          enabled: open,
+        },
+      },
+    );
+
+  const visibleChats = useMemo(() => {
+    return toSessionHistoryEntries(sessionsData?.items ?? []);
+  }, [sessionsData?.items]);
+
+  const selectChat = (session: SessionSummaryResponse) => {
+    onSelectChat(session);
     onOpenChange(false);
   };
 
@@ -59,7 +88,7 @@ export const ChatSearchDialog = ({
     highlightedIndex,
     setHighlightedIndex,
     onKeyDown: handleSearchInputKeyDown,
-  } = useListKeyboardNavigation<ChatHistoryEntry, HTMLInputElement>({
+  } = useListKeyboardNavigation<SessionHistoryEntry, HTMLInputElement>({
     items: visibleChats,
     open,
     onConfirm: selectChat,
@@ -98,29 +127,34 @@ export const ChatSearchDialog = ({
           <div className="p-3">
             {visibleChats.length > 0 ? (
               <ul className="space-y-1">
-                {visibleChats.map((chat, index) => (
-                  <li key={chat.id}>
+                {visibleChats.map((session, index) => (
+                  <li key={session.id}>
                     <button
                       ref={(element) => {
                         itemRefs.current[index] = element;
                       }}
                       type="button"
-                      onClick={() => selectChat(chat)}
+                      onClick={() => selectChat(session)}
                       onMouseEnter={() => setHighlightedIndex(index)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-sidebar-accent/70",
                         index === highlightedIndex &&
                           "bg-sidebar-accent/80 text-sidebar-accent-foreground",
-                        chat.id === activeChatId &&
+                        session.id === activeChatId &&
                           "bg-sidebar-accent text-sidebar-accent-foreground",
                       )}
                     >
                       <MessageCircle className="size-5 shrink-0 text-muted-foreground" />
-                      <span className="min-w-0 flex-1 truncate text-base font-medium">
-                        {chat.title}
-                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-base font-medium">
+                          {session.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {session.group}
+                        </p>
+                      </div>
                       <span className="shrink-0 text-sm text-muted-foreground">
-                        {chat.group}
+                        {formatSessionTimestamp(session.last_activity_at)}
                       </span>
                     </button>
                   </li>
@@ -128,7 +162,9 @@ export const ChatSearchDialog = ({
               </ul>
             ) : (
               <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-                Keine Chats für diese Suche.
+                {isFetchingSessions
+                  ? "Suche läuft..."
+                  : "Keine Sessions für diese Suche."}
               </p>
             )}
           </div>

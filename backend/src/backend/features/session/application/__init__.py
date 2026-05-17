@@ -4,12 +4,19 @@ from .commands import (
     SendMessageHandler,
     UpdateSessionHandler,
 )
-from .queries import GetSessionByIdHandler, SearchSpotifyTracksHandler
+from .queries import (
+    GetSessionByIdHandler,
+    ListSessionsHandler,
+    SearchSessionsHandler,
+    SearchSpotifyTracksHandler,
+)
 
 __all__ = [
     "CreateSessionHandler",
     "DeleteSessionHandler",
     "GetSessionByIdHandler",
+    "ListSessionsHandler",
+    "SearchSessionsHandler",
     "SearchSpotifyTracksHandler",
     "SendMessageHandler",
     "UpdateSessionHandler",

@@ -5,9 +5,14 @@ from backend.features.session.application import (
     CreateSessionHandler,
     DeleteSessionHandler,
     GetSessionByIdHandler,
+    ListSessionsHandler,
     SearchSpotifyTracksHandler,
+    SearchSessionsHandler,
     SendMessageHandler,
     UpdateSessionHandler,
+)
+from backend.features.session.application.ports.session_summary_query import (
+    SessionSummaryQuery,
 )
 from backend.features.session.application.ports.spotify_track_search import (
     SpotifyTrackSearch,
@@ -18,6 +23,9 @@ from backend.features.session.application.ports.title_generator import (
 from backend.features.session.domain import SessionRepository
 from backend.features.session.infrastructure.spotify_track_search import (
     MockSpotifyTrackSearch,
+)
+from backend.features.session.infrastructure.session_summary_query import (
+    SqlSessionSummaryQuery,
 )
 from backend.features.session.infrastructure.title_generator import (
     LLMSessionTitleGenerator,
@@ -43,6 +51,13 @@ class SessionProvider(Provider):
         return SqlSessionRepository(session=session)
 
     @provide(scope=Scope.REQUEST)
+    def provide_session_summary_query(
+        self,
+        session: AsyncSession,
+    ) -> SessionSummaryQuery:
+        return SqlSessionSummaryQuery(session=session)
+
+    @provide(scope=Scope.REQUEST)
     def provide_create_session_handler(
         self,
         session_repository: SessionRepository,
@@ -58,6 +73,20 @@ class SessionProvider(Provider):
         self,
     ) -> GetSessionByIdHandler:
         return GetSessionByIdHandler()
+
+    @provide(scope=Scope.REQUEST)
+    def provide_list_sessions_handler(
+        self,
+        session_summary_query: SessionSummaryQuery,
+    ) -> ListSessionsHandler:
+        return ListSessionsHandler(session_summary_query=session_summary_query)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_search_sessions_handler(
+        self,
+        session_summary_query: SessionSummaryQuery,
+    ) -> SearchSessionsHandler:
+        return SearchSessionsHandler(session_summary_query=session_summary_query)
 
     @provide(scope=Scope.REQUEST)
     def provide_update_session_handler(

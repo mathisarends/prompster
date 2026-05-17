@@ -1,10 +1,14 @@
 from backend.features.session.application.ports.spotify_track_search import (
     SpotifyTrack,
 )
+from backend.features.session.application.ports.session_summary_query import (
+    SessionSummary,
+)
 from backend.features.session.domain import Session, SessionMessage
 from backend.features.session.presentation.schemas import (
     MessageResponse,
     SessionResponse,
+    SessionSummaryResponse,
     SpotifyTrackResponse,
 )
 
@@ -23,6 +27,15 @@ def to_message_response(message: SessionMessage) -> MessageResponse:
         role=message.role,
         content=message.content,
         created_at=message.created_at,
+    )
+
+
+def to_session_summary_response(session: SessionSummary) -> SessionSummaryResponse:
+    return SessionSummaryResponse(
+        id=session.id,
+        title=session.title,
+        created_at=session.created_at,
+        last_activity_at=session.last_activity_at,
     )
 
 

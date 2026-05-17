@@ -1,9 +1,11 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import JSON, Column
+from sqlalchemy import JSON, Column, DateTime, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import Field
+from sqlalchemy.orm import selectinload
+from sqlmodel import Field, Relationship
 
 from backend.features.session.domain import (
     FollowUpOption,
@@ -31,14 +33,70 @@ class SessionEntity(DatabaseEntity, table=True):
 
     title: str
     owner_id: UUID = Field(index=True)
-    messages: list[dict[str, object]] = Field(
-        default_factory=list,
-        sa_column=Column(JSON, nullable=False),
+    last_activity_at: datetime = Field(sa_type=DateTime(timezone=True))
+
+    messages: list["SessionMessageEntity"] = Relationship(
+        back_populates="session",
+        sa_relationship_kwargs={
+            "cascade": "all, delete-orphan",
+            "order_by": "SessionMessageEntity.position",
+        },
     )
-    playlist: dict[str, object] | None = Field(
+    playlist: Optional["SessionPlaylistEntity"] = Relationship(
+        back_populates="session",
+        sa_relationship_kwargs={
+            "cascade": "all, delete-orphan",
+            "uselist": False,
+        },
+    )
+
+
+class SessionMessageEntity(DatabaseEntity, table=True):
+    __tablename__ = "session_messages"
+
+    session_id: UUID = Field(foreign_key="sessions.id")
+    position: int
+    role: str
+    content: str
+    tool_call_group: dict[str, object] | None = Field(
         default=None,
         sa_column=Column(JSON, nullable=True),
     )
+    follow_up_group: dict[str, object] | None = Field(
+        default=None,
+        sa_column=Column(JSON, nullable=True),
+    )
+
+    session: SessionEntity = Relationship(back_populates="messages")
+
+
+class SessionPlaylistEntity(DatabaseEntity, table=True):
+    __tablename__ = "session_playlists"
+
+    session_id: UUID = Field(foreign_key="sessions.id", unique=True)
+    name: str | None = None
+
+    session: SessionEntity = Relationship(back_populates="playlist")
+    tracks: list["PlaylistTrackEntity"] = Relationship(
+        back_populates="playlist",
+        sa_relationship_kwargs={
+            "cascade": "all, delete-orphan",
+            "order_by": "PlaylistTrackEntity.position",
+        },
+    )
+
+
+class PlaylistTrackEntity(DatabaseEntity, table=True):
+    __tablename__ = "playlist_tracks"
+
+    playlist_id: UUID = Field(foreign_key="session_playlists.id")
+    position: int
+    title: str
+    artist: str
+    year: int | None = None
+    cover_url: str | None = None
+
+    playlist: SessionPlaylistEntity = Relationship(back_populates="tracks")
 
 
 class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository):
@@ -46,30 +104,43 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
         super().__init__(session=session, model=SessionEntity)
 
     def _to_domain(self, orm: SessionEntity) -> Session:
+        messages = sorted(orm.messages, key=lambda item: item.position)
         return Session(
             id=orm.id,
             title=orm.title,
-            messages=[self._to_domain_message(message) for message in orm.messages],
+            messages=[self._to_domain_message(message) for message in messages],
             owner_id=orm.owner_id,
             playlist=self._to_domain_playlist(orm.playlist),
             created_time=orm.created_at,
         )
 
     def _to_orm(self, domain: Session) -> SessionEntity:
-        return SessionEntity(
+        orm = SessionEntity(
             id=domain.id,
             title=domain.title,
-            messages=[self._to_orm_message(message) for message in domain.messages],
             owner_id=domain.owner_id,
-            playlist=self._to_orm_playlist(domain.playlist),
             created_at=domain.created_at,
+            last_activity_at=self._resolve_last_activity_at(domain),
         )
+        orm.messages = [
+            self._to_orm_message(
+                message=message,
+                session_id=domain.id,
+                position=index,
+            )
+            for index, message in enumerate(domain.messages)
+        ]
+        orm.playlist = self._to_orm_playlist(
+            domain_playlist=domain.playlist,
+            session_id=domain.id,
+        )
+        return orm
 
     async def get_by_id(self, *, session_id: UUID) -> Session:
-        session = await self.find_by_id(session_id)
+        session = await self.session.scalar(self._detail_query(session_id=session_id))
         if session is None:
             raise SessionNotFoundError
-        return session
+        return self._to_domain(session)
 
     async def create(self, *, session: Session) -> Session:
         return await self.save(session)
@@ -90,46 +161,101 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
         if not deleted:
             raise SessionNotFoundError
 
-    def _to_orm_message(self, message: SessionMessage) -> dict[str, object]:
-        return {
-            "id": str(message.id),
-            "role": message.role.value,
-            "content": message.content,
-            "created_at": message.created_at.isoformat(),
-            "tool_call_group": (
+    async def save(self, domain: Session) -> Session:
+        orm = await self.session.scalar(self._detail_query(session_id=domain.id))
+        if orm is None:
+            orm = SessionEntity(id=domain.id)
+            self.session.add(orm)
+
+        orm.title = domain.title
+        orm.owner_id = domain.owner_id
+        orm.created_at = domain.created_at
+        orm.last_activity_at = self._resolve_last_activity_at(domain)
+
+        session_id = orm.id or domain.id
+        orm.messages = [
+            self._to_orm_message(
+                message=message,
+                session_id=session_id,
+                position=index,
+            )
+            for index, message in enumerate(domain.messages)
+        ]
+        orm.playlist = self._to_orm_playlist(
+            domain_playlist=domain.playlist,
+            session_id=session_id,
+        )
+
+        await self.session.flush()
+        return self._to_domain(orm)
+
+    def _detail_query(self, *, session_id: UUID):
+        return (
+            select(SessionEntity)
+            .where(SessionEntity.id == session_id)
+            .options(
+                selectinload(SessionEntity.messages),
+                selectinload(SessionEntity.playlist).selectinload(
+                    SessionPlaylistEntity.tracks
+                ),
+            )
+        )
+
+    def _resolve_last_activity_at(self, session: Session) -> datetime:
+        if not session.messages:
+            return session.created_at
+
+        latest_message_created_at = max(
+            message.created_at for message in session.messages
+        )
+        return max(session.created_at, latest_message_created_at)
+
+    def _to_orm_message(
+        self,
+        *,
+        message: SessionMessage,
+        session_id: UUID,
+        position: int,
+    ) -> SessionMessageEntity:
+        return SessionMessageEntity(
+            id=message.id,
+            session_id=session_id,
+            position=position,
+            role=message.role.value,
+            content=message.content,
+            tool_call_group=(
                 self._to_orm_tool_call_group(message.tool_call_group)
                 if message.tool_call_group is not None
                 else None
             ),
-            "follow_up_group": (
+            follow_up_group=(
                 self._to_orm_follow_up_group(message.follow_up_group)
                 if message.follow_up_group is not None
                 else None
             ),
-        }
+            created_at=message.created_at,
+        )
 
-    def _to_domain_message(self, payload: dict[str, object]) -> SessionMessage:
-        tool_call_payload = payload.get("tool_call_group")
+    def _to_domain_message(self, orm: SessionMessageEntity) -> SessionMessage:
         tool_call_group = (
-            self._to_domain_tool_call_group(tool_call_payload)
-            if isinstance(tool_call_payload, dict)
+            self._to_domain_tool_call_group(orm.tool_call_group)
+            if isinstance(orm.tool_call_group, dict)
             else None
         )
 
-        follow_up_payload = payload.get("follow_up_group")
         follow_up_group = (
-            self._to_domain_follow_up_group(follow_up_payload)
-            if isinstance(follow_up_payload, dict)
+            self._to_domain_follow_up_group(orm.follow_up_group)
+            if isinstance(orm.follow_up_group, dict)
             else None
         )
 
         return SessionMessage(
-            id=_parse_uuid(payload.get("id")),
-            role=MessageRole(payload["role"]),
-            content=str(payload.get("content", "")),
+            id=orm.id,
+            role=MessageRole(orm.role),
+            content=orm.content,
             tool_call_group=tool_call_group,
             follow_up_group=follow_up_group,
-            created_time=_parse_datetime(payload.get("created_at")),
+            created_time=orm.created_at,
         )
 
     def _to_orm_tool_call_group(self, group: ToolCallGroup) -> dict[str, object]:
@@ -273,72 +399,93 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
             ),
         )
 
-    def _to_orm_playlist(self, playlist: Playlist | None) -> dict[str, object] | None:
-        if playlist is None:
-            return None
-        return {
-            "id": str(playlist.id),
-            "name": playlist.name,
-            "created_at": playlist.created_at.isoformat(),
-            "tracks": [self._to_orm_track(track) for track in playlist.tracks],
-        }
-
-    def _to_domain_playlist(self, payload: dict[str, object] | None) -> Playlist | None:
-        if not payload:
+    def _to_orm_playlist(
+        self,
+        *,
+        domain_playlist: Playlist | None,
+        session_id: UUID,
+    ) -> SessionPlaylistEntity | None:
+        if domain_playlist is None:
             return None
 
-        tracks_payload = payload.get("tracks")
-        tracks = (
-            [
-                self._to_domain_track(item)
-                for item in tracks_payload
-                if isinstance(item, dict)
-            ]
-            if isinstance(tracks_payload, list)
-            else []
+        orm_playlist = SessionPlaylistEntity(
+            id=domain_playlist.id,
+            session_id=session_id,
+            name=domain_playlist.name,
+            created_at=domain_playlist.created_at,
         )
+        orm_playlist.tracks = [
+            self._to_orm_track(
+                track=track,
+                playlist_id=domain_playlist.id,
+                position=index,
+            )
+            for index, track in enumerate(domain_playlist.tracks)
+        ]
+        return orm_playlist
 
-        name = payload.get("name")
+    def _to_domain_playlist(
+        self,
+        orm_playlist: SessionPlaylistEntity | None,
+    ) -> Playlist | None:
+        if orm_playlist is None:
+            return None
 
+        tracks = sorted(orm_playlist.tracks, key=lambda item: item.position)
         return Playlist(
-            id=_parse_uuid(payload.get("id")),
-            name=str(name) if isinstance(name, str) else None,
-            tracks=tracks,
-            created_time=_parse_datetime(payload.get("created_at")),
+            id=orm_playlist.id,
+            name=orm_playlist.name,
+            tracks=[self._to_domain_track(track) for track in tracks],
+            created_time=orm_playlist.created_at,
         )
 
-    def _to_orm_track(self, track: PlaylistTrack) -> dict[str, object]:
-        return {
-            "id": str(track.id),
-            "title": track.title,
-            "artist": track.artist,
-            "year": track.year,
-            "cover_url": track.cover_url,
-            "created_at": track.created_at.isoformat(),
-        }
+    def _to_orm_track(
+        self,
+        *,
+        track: PlaylistTrack,
+        playlist_id: UUID,
+        position: int,
+    ) -> PlaylistTrackEntity:
+        return PlaylistTrackEntity(
+            id=track.id,
+            playlist_id=playlist_id,
+            position=position,
+            title=track.title,
+            artist=track.artist,
+            year=track.year,
+            cover_url=track.cover_url,
+            created_at=track.created_at,
+        )
 
-    def _to_domain_track(self, payload: dict[str, object]) -> PlaylistTrack:
-        year = payload.get("year")
-
+    def _to_domain_track(self, orm_track: PlaylistTrackEntity) -> PlaylistTrack:
         return PlaylistTrack(
-            id=_parse_uuid(payload.get("id")),
-            title=str(payload.get("title", "")),
-            artist=str(payload.get("artist", "")),
-            year=int(year)
-            if isinstance(year, (int, str)) and str(year).isdigit()
-            else None,
-            cover_url=(
-                str(payload["cover_url"])
-                if payload.get("cover_url") is not None
-                else None
-            ),
-            created_time=_parse_datetime(payload.get("created_at")),
+            id=orm_track.id,
+            title=orm_track.title,
+            artist=orm_track.artist,
+            year=orm_track.year,
+            cover_url=orm_track.cover_url,
+            created_time=orm_track.created_at,
         )
 
 
 def _parse_uuid(value: object) -> UUID | None:
-    return UUID(value) if isinstance(value, str) else None
+    if isinstance(value, UUID):
+        return value
+    if isinstance(value, str) and value:
+        try:
+            return UUID(value)
+        except ValueError:
+            return None
+    return None
 
 
 def _parse_datetime(value: object) -> datetime | None:
-    return datetime.fromisoformat(value) if isinstance(value, str) else None
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, str):
+        normalized = value.replace("Z", "+00:00")
+        try:
+            return datetime.fromisoformat(normalized)
+        except ValueError:
+            return None
+    return None

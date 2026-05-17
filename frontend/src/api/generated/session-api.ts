@@ -25,10 +25,12 @@ import type {
 import type {
   ErrorResponse,
   HTTPValidationError,
+  ListSessionsParams,
   SearchSpotifyTracksParams,
   SendMessageRequest,
   SessionCreateRequest,
   SessionResponse,
+  SessionSummaryListResponse,
   SessionUpdateRequest,
   SpotifyTrackSearchResponse,
 } from "./model";
@@ -37,6 +39,455 @@ import { customInstance } from "../http-client";
 import type { ErrorType, BodyType } from "../http-client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+/**
+ * @summary List Sessions
+ */
+export const listSessions = (
+  params?: ListSessionsParams,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<SessionSummaryListResponse>(
+    { url: `/api/v1/sessions`, method: "GET", params, signal },
+    options,
+  );
+};
+
+export const getListSessionsInfiniteQueryKey = (
+  params?: ListSessionsParams,
+) => {
+  return ["infinite", `/api/v1/sessions`, ...(params ? [params] : [])] as const;
+};
+
+export const getListSessionsQueryKey = (params?: ListSessionsParams) => {
+  return [`/api/v1/sessions`, ...(params ? [params] : [])] as const;
+};
+
+export const getListSessionsInfiniteQueryOptions = <
+  TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  params?: ListSessionsParams,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof listSessions>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListSessionsInfiniteQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listSessions>>> = ({
+    signal,
+  }) => listSessions(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseInfiniteQueryOptions<
+    Awaited<ReturnType<typeof listSessions>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListSessionsInfiniteQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listSessions>>
+>;
+export type ListSessionsInfiniteQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useListSessionsInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  params: undefined | ListSessionsParams,
+  options: {
+    query: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof listSessions>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSessions>>,
+          TError,
+          Awaited<ReturnType<typeof listSessions>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListSessionsInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  params?: ListSessionsParams,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof listSessions>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSessions>>,
+          TError,
+          Awaited<ReturnType<typeof listSessions>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListSessionsInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  params?: ListSessionsParams,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof listSessions>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List Sessions
+ */
+
+export function useListSessionsInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  params?: ListSessionsParams,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof listSessions>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getListSessionsInfiniteQueryOptions(params, options);
+
+  const query = useInfiniteQuery(
+    queryOptions,
+    queryClient,
+  ) as UseInfiniteQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getListSessionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listSessions>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  params?: ListSessionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListSessionsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listSessions>>> = ({
+    signal,
+  }) => listSessions(params, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listSessions>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListSessionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listSessions>>
+>;
+export type ListSessionsQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useListSessions<
+  TData = Awaited<ReturnType<typeof listSessions>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  params: undefined | ListSessionsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSessions>>,
+          TError,
+          Awaited<ReturnType<typeof listSessions>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListSessions<
+  TData = Awaited<ReturnType<typeof listSessions>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  params?: ListSessionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSessions>>,
+          TError,
+          Awaited<ReturnType<typeof listSessions>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useListSessions<
+  TData = Awaited<ReturnType<typeof listSessions>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  params?: ListSessionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary List Sessions
+ */
+
+export function useListSessions<
+  TData = Awaited<ReturnType<typeof listSessions>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  params?: ListSessionsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getListSessionsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create Session
+ */
+export const createSession = (
+  sessionCreateRequest: BodyType<SessionCreateRequest>,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<SessionResponse>(
+    {
+      url: `/api/v1/sessions`,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: sessionCreateRequest,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getCreateSessionQueryKey = (
+  sessionCreateRequest?: BodyType<SessionCreateRequest>,
+) => {
+  return ["POST", `/api/v1/sessions`, sessionCreateRequest] as const;
+};
+
+export const getCreateSessionQueryOptions = <
+  TData = Awaited<ReturnType<typeof createSession>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionCreateRequest: BodyType<SessionCreateRequest>,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getCreateSessionQueryKey(sessionCreateRequest);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof createSession>>> = ({
+    signal,
+  }) => createSession(sessionCreateRequest, requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof createSession>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CreateSessionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof createSession>>
+>;
+export type CreateSessionQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useCreateSession<
+  TData = Awaited<ReturnType<typeof createSession>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionCreateRequest: BodyType<SessionCreateRequest>,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof createSession>>,
+          TError,
+          Awaited<ReturnType<typeof createSession>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCreateSession<
+  TData = Awaited<ReturnType<typeof createSession>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionCreateRequest: BodyType<SessionCreateRequest>,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof createSession>>,
+          TError,
+          Awaited<ReturnType<typeof createSession>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCreateSession<
+  TData = Awaited<ReturnType<typeof createSession>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionCreateRequest: BodyType<SessionCreateRequest>,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Create Session
+ */
+
+export function useCreateSession<
+  TData = Awaited<ReturnType<typeof createSession>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionCreateRequest: BodyType<SessionCreateRequest>,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getCreateSessionQueryOptions(
+    sessionCreateRequest,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Search Spotify Tracks
@@ -980,160 +1431,6 @@ export function useDeleteSession<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getDeleteSessionQueryOptions(sessionId, options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Create Session
- */
-export const createSession = (
-  sessionCreateRequest: BodyType<SessionCreateRequest>,
-  options?: SecondParameter<typeof customInstance>,
-  signal?: AbortSignal,
-) => {
-  return customInstance<SessionResponse>(
-    {
-      url: `/api/v1/sessions`,
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      data: sessionCreateRequest,
-      signal,
-    },
-    options,
-  );
-};
-
-export const getCreateSessionQueryKey = (
-  sessionCreateRequest?: BodyType<SessionCreateRequest>,
-) => {
-  return ["POST", `/api/v1/sessions`, sessionCreateRequest] as const;
-};
-
-export const getCreateSessionQueryOptions = <
-  TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  sessionCreateRequest: BodyType<SessionCreateRequest>,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getCreateSessionQueryKey(sessionCreateRequest);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof createSession>>> = ({
-    signal,
-  }) => createSession(sessionCreateRequest, requestOptions, signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof createSession>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type CreateSessionQueryResult = NonNullable<
-  Awaited<ReturnType<typeof createSession>>
->;
-export type CreateSessionQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
-
-export function useCreateSession<
-  TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  sessionCreateRequest: BodyType<SessionCreateRequest>,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof createSession>>,
-          TError,
-          Awaited<ReturnType<typeof createSession>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useCreateSession<
-  TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  sessionCreateRequest: BodyType<SessionCreateRequest>,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof createSession>>,
-          TError,
-          Awaited<ReturnType<typeof createSession>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useCreateSession<
-  TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  sessionCreateRequest: BodyType<SessionCreateRequest>,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary Create Session
- */
-
-export function useCreateSession<
-  TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  sessionCreateRequest: BodyType<SessionCreateRequest>,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getCreateSessionQueryOptions(
-    sessionCreateRequest,
-    options,
-  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
