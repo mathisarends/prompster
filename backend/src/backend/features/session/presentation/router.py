@@ -22,10 +22,12 @@ from backend.features.session.presentation.schemas import (
 
 router = APIRouter(route_class=DishkaRoute, prefix="/sessions", tags=["sessions"])
 
-_auth_error_responses = {
+_auth_errors = {
     status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
     status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
 }
+_not_found = {status.HTTP_404_NOT_FOUND: {"model": ErrorResponse}}
+_bad_request = {status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse}}
 
 
 @router.get(
@@ -33,13 +35,7 @@ _auth_error_responses = {
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="get_session",
-    responses={
-        status.HTTP_401_UNAUTHORIZED: _auth_error_responses[
-            status.HTTP_401_UNAUTHORIZED
-        ],
-        status.HTTP_403_FORBIDDEN: _auth_error_responses[status.HTTP_403_FORBIDDEN],
-        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
-    },
+    responses=_auth_errors | _not_found,
 )
 async def get_session_by_id(
     session: AuthorizedSession,
@@ -54,11 +50,7 @@ async def get_session_by_id(
     response_model=SessionResponse,
     status_code=status.HTTP_201_CREATED,
     operation_id="create_session",
-    responses={
-        status.HTTP_401_UNAUTHORIZED: _auth_error_responses[
-            status.HTTP_401_UNAUTHORIZED
-        ]
-    },
+    responses=_auth_errors,
 )
 async def create_session(
     authenticated_user_id: AuthenticatedUserId,
@@ -78,12 +70,9 @@ async def create_session(
     operation_id="send_message",
     responses={
         status.HTTP_201_CREATED: {"content": {"text/plain": {}}},
-        status.HTTP_401_UNAUTHORIZED: _auth_error_responses[
-            status.HTTP_401_UNAUTHORIZED
-        ],
-        status.HTTP_403_FORBIDDEN: _auth_error_responses[status.HTTP_403_FORBIDDEN],
-        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
-        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
+        **_auth_errors,
+        **_bad_request,
+        **_not_found,
     },
 )
 async def send_message(
@@ -102,14 +91,7 @@ async def send_message(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="update_session",
-    responses={
-        status.HTTP_401_UNAUTHORIZED: _auth_error_responses[
-            status.HTTP_401_UNAUTHORIZED
-        ],
-        status.HTTP_403_FORBIDDEN: _auth_error_responses[status.HTTP_403_FORBIDDEN],
-        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
-        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
-    },
+    responses=_auth_errors | _bad_request | _not_found,
 )
 async def update_session(
     session: AuthorizedSession,
@@ -127,13 +109,7 @@ async def update_session(
     "/{session_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     operation_id="delete_session",
-    responses={
-        status.HTTP_401_UNAUTHORIZED: _auth_error_responses[
-            status.HTTP_401_UNAUTHORIZED
-        ],
-        status.HTTP_403_FORBIDDEN: _auth_error_responses[status.HTTP_403_FORBIDDEN],
-        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse},
-    },
+    responses=_auth_errors | _not_found,
 )
 async def delete_session(
     session: AuthorizedSession,

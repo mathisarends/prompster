@@ -17,8 +17,17 @@ auth_router = APIRouter(
     tags=["auth"],
 )
 
-_error_responses = {
-    401: {"model": ErrorDto, "description": "Invalid or expired credentials"},
+_invalid_credentials = {
+    status.HTTP_401_UNAUTHORIZED: {
+        "model": ErrorDto,
+        "description": "Invalid or expired credentials",
+    },
+}
+_invalid_refresh_token = {
+    status.HTTP_401_UNAUTHORIZED: {
+        "model": ErrorDto,
+        "description": "Invalid or expired refresh token",
+    },
 }
 
 
@@ -50,7 +59,7 @@ async def google_login(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="google_callback",
-    responses={401: _error_responses[401]},
+    responses=_invalid_credentials,
     include_in_schema=False,
 )
 async def google_callback(
@@ -92,9 +101,7 @@ async def logout(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="refresh",
-    responses={
-        401: {"model": ErrorDto, "description": "Invalid or expired refresh token"},
-    },
+    responses=_invalid_refresh_token,
 )
 async def refresh(
     authenticated_user_id: AuthenticatedUserId,

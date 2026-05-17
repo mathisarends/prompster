@@ -9,13 +9,15 @@ from backend.presentation.errors import ErrorDto
 
 user_router = APIRouter(route_class=DishkaRoute, prefix="/users", tags=["users"])
 
+_unauthorized = {status.HTTP_401_UNAUTHORIZED: {"model": ErrorDto}}
+
 
 @user_router.get(
     "/me",
     response_model=UserMeResponse,
     status_code=status.HTTP_200_OK,
     operation_id="get_me",
-    responses={status.HTTP_401_UNAUTHORIZED: {"model": ErrorDto}},
+    responses=_unauthorized,
 )
 async def get_me(
     authenticated_user_id: AuthenticatedUserId,
