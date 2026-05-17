@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { LogOut, MessageCircle, PanelLeft, Plus, Search } from "lucide-react";
+import {
+  ChevronsUpDown,
+  LogOut,
+  MessageCircle,
+  PanelLeft,
+  Plus,
+  Search,
+} from "lucide-react";
 import { useGetMe } from "@/api/generated/user-api";
 
 import { Button } from "@/components/ui/button";
@@ -38,12 +45,13 @@ export const NavigationSidebar = ({
 }: NavigationSidebarProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const { data: user } = useGetMe();
-  const initials = user?.name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) ?? "";
+  const initials =
+    user?.name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) ?? "";
 
   useKeyboardShortcut({ ctrlOrMeta: true, key: "k" }, () => {
     setSearchOpen((previous) => !previous);
@@ -196,7 +204,7 @@ export const NavigationSidebar = ({
             {open ? (
               <DropdownMenuTrigger
                 aria-label="Profilmenue oeffnen"
-                className="flex h-12 w-full items-center gap-2.5 rounded-md px-2 text-left transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                className="flex h-12 w-full cursor-pointer items-center gap-2.5 rounded-md border border-transparent px-2 text-left transition-colors hover:border-sidebar-border/80 hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring data-[state=open]:border-sidebar-border/80 data-[state=open]:bg-sidebar-accent"
               >
                 <Avatar className="bg-sidebar-accent" size="default">
                   <AvatarFallback className="bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
@@ -204,14 +212,17 @@ export const NavigationSidebar = ({
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{user?.name}</p>
+                  <p className="truncate text-sm font-medium">
+                    {user?.name ?? "Konto"}
+                  </p>
                 </div>
+                <ChevronsUpDown className="size-4 shrink-0 text-sidebar-foreground/70" />
               </DropdownMenuTrigger>
             ) : (
               <div className="grid place-items-center">
                 <DropdownMenuTrigger
                   aria-label="Profilmenue oeffnen"
-                  className="grid size-9 place-items-center rounded-md transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                  className="grid size-9 cursor-pointer place-items-center rounded-md border border-transparent transition-colors hover:border-sidebar-border/80 hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring data-[state=open]:border-sidebar-border/80 data-[state=open]:bg-sidebar-accent"
                 >
                   <Avatar className="bg-sidebar-accent" size="default">
                     <AvatarFallback className="bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
