@@ -10,6 +10,11 @@ class AuthSession(BaseModel):
     refresh_token: str
 
 
+class GoogleAuthorizationRequest(BaseModel):
+    authorization_url: str
+    state: str
+
+
 class GoogleIdentity(BaseModel):
     subject: str = Field(validation_alias=AliasChoices("subject", "sub"))
     email: str

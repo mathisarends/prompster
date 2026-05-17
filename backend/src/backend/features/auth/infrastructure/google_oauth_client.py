@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 import httpx
 from pydantic import ValidationError
 
@@ -9,6 +11,24 @@ from backend.features.auth.infrastructure.auth_settings import GoogleAuthSetting
 class GoogleOAuthClient(GoogleOAuthProvider):
     def __init__(self, google_auth_settings: GoogleAuthSettings) -> None:
         self._google_auth_settings = google_auth_settings
+
+    def build_authorization_url(self, *, state: str) -> str:
+        self._validate_configuration()
+
+        normalized_state = state.strip()
+        if not normalized_state:
+            raise ValueError("OAuth state must not be empty")
+
+        query = urlencode(
+            {
+                "client_id": self._google_auth_settings.client_id,
+                "redirect_uri": self._google_auth_settings.redirect_uri,
+                "response_type": "code",
+                "scope": self._google_auth_settings.scope,
+                "state": normalized_state,
+            }
+        )
+        return f"{self._google_auth_settings.authorization_endpoint}?{query}"
 
     async def exchange_code_for_identity(
         self,

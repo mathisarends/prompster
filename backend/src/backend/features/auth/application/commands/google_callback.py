@@ -1,3 +1,5 @@
+import secrets
+
 from backend.features.auth.application.exceptions import InvalidCredentialsException
 from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
 from backend.features.auth.application.schemas import AuthSession
@@ -15,7 +17,19 @@ class GoogleCallbackHandler:
         self._google_oauth_provider = google_oauth_provider
         self._token_issuer = token_issuer
 
-    async def handle(self, *, authorization_code: str) -> AuthSession:
+    async def handle(
+        self,
+        *,
+        authorization_code: str,
+        oauth_state: str,
+        expected_oauth_state: str | None,
+    ) -> AuthSession:
+        if expected_oauth_state is None or not secrets.compare_digest(
+            expected_oauth_state,
+            oauth_state,
+        ):
+            raise InvalidCredentialsException("Invalid or missing OAuth state")
+
         try:
             identity = await self._google_oauth_provider.exchange_code_for_identity(
                 authorization_code=authorization_code,

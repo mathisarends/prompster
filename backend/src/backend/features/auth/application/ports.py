@@ -11,6 +11,9 @@ from backend.features.auth.application.schemas import (
 
 class GoogleOAuthProvider(ABC):
     @abstractmethod
+    def build_authorization_url(self, *, state: str) -> str: ...
+
+    @abstractmethod
     async def exchange_code_for_identity(
         self,
         *,

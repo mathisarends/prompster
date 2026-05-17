@@ -1,8 +1,10 @@
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, Query, Request, Response, status
+from fastapi.responses import RedirectResponse
 
 from backend.features.auth.application import (
     GoogleCallbackHandler,
+    GoogleLoginHandler,
     RefreshSessionHandler,
 )
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
@@ -21,6 +23,30 @@ _error_responses = {
 
 
 @auth_router.get(
+    "/google/login",
+    status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    response_model=None,
+    operation_id="google_login",
+    include_in_schema=False,
+)
+async def google_login(
+    handler: FromDishka[GoogleLoginHandler],
+    auth_cookies: FromDishka[AuthCookies],
+) -> RedirectResponse:
+    authorization_request = handler.handle()
+
+    redirect_response = RedirectResponse(
+        url=authorization_request.authorization_url,
+        status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    )
+    auth_cookies.set_oauth_state(
+        response=redirect_response,
+        state=authorization_request.state,
+    )
+    return redirect_response
+
+
+@auth_router.get(
     "/google/callback",
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
@@ -29,13 +55,22 @@ _error_responses = {
     include_in_schema=False,
 )
 async def google_callback(
+    request: Request,
     response: Response,
     handler: FromDishka[GoogleCallbackHandler],
     auth_cookies: FromDishka[AuthCookies],
     code: str = Query(min_length=1, max_length=4096),
+    state: str = Query(min_length=1, max_length=4096),
 ) -> None:
+    expected_oauth_state = auth_cookies.pop_oauth_state(
+        request=request,
+        response=response,
+    )
+
     auth_session = await handler.handle(
         authorization_code=code,
+        oauth_state=state,
+        expected_oauth_state=expected_oauth_state,
     )
     auth_cookies.set(response, auth_session)
 

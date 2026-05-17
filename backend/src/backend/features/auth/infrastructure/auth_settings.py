@@ -38,6 +38,17 @@ class GoogleAuthSettings(BaseSettings):
         default="",
         validation_alias=AliasChoices("GOOGLE_REDIRECT_URI", "google_redirect_uri"),
     )
+    authorization_endpoint: str = Field(
+        default="https://accounts.google.com/o/oauth2/v2/auth",
+        validation_alias=AliasChoices(
+            "GOOGLE_AUTHORIZATION_ENDPOINT",
+            "google_authorization_endpoint",
+        ),
+    )
+    scope: str = Field(
+        default="openid email profile",
+        validation_alias=AliasChoices("GOOGLE_SCOPE", "google_scope"),
+    )
     token_endpoint: str = Field(
         default="https://oauth2.googleapis.com/token",
         validation_alias=AliasChoices(
@@ -53,7 +64,12 @@ class GoogleAuthSettings(BaseSettings):
         ),
     )
 
-    @field_validator("redirect_uri", "token_endpoint", "userinfo_endpoint")
+    @field_validator(
+        "redirect_uri",
+        "authorization_endpoint",
+        "token_endpoint",
+        "userinfo_endpoint",
+    )
     @classmethod
     def validate_google_urls(cls, v: str) -> str:
         if v and not v.startswith(("http://", "https://")):
@@ -78,6 +94,8 @@ class AuthSettings(BaseSettings):
 
     access_token_cookie_name: str = "access_token"
     jwt_refresh_token_cookie_name: str = "refresh_token"
+    oauth_state_cookie_name: str = "oauth_state"
+    oauth_state_ttl_seconds: int = 60 * 10
 
     cookie_samesite_dev: _CookieSameSite = _CookieSameSite.LAX
     cookie_samesite_prod: _CookieSameSite = _CookieSameSite.STRICT

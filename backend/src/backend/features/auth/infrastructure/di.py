@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.env import EnvSettings
 from backend.features.auth.application import (
     GoogleCallbackHandler,
+    GoogleLoginHandler,
     RefreshSessionHandler,
 )
 from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
@@ -61,6 +62,13 @@ class AuthProvider(Provider):
             google_oauth_provider=google_oauth_provider,
             token_issuer=token_issuer,
         )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_google_login_handler(
+        self,
+        google_oauth_provider: GoogleOAuthProvider,
+    ) -> GoogleLoginHandler:
+        return GoogleLoginHandler(google_oauth_provider=google_oauth_provider)
 
     @provide(scope=Scope.REQUEST)
     def provide_refresh_session_handler(
