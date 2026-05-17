@@ -27,7 +27,6 @@ _error_responses = {
     status_code=status.HTTP_307_TEMPORARY_REDIRECT,
     response_model=None,
     operation_id="google_login",
-    include_in_schema=False,
 )
 async def google_login(
     handler: FromDishka[GoogleLoginHandler],
