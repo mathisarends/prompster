@@ -1,5 +1,4 @@
-from backend.features.session.domain import Session
-from backend.features.session.domain.views import SessionMessage
+from backend.features.session.domain import Session, SessionMessage
 from backend.features.session.presentation.schemas import (
     MessageResponse,
     SessionResponse,

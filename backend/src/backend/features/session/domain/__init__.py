@@ -1,6 +1,12 @@
 from .exceptions import (
+    EmptyFollowUpAnswerError,
+    FollowUpOptionNotFoundError,
+    FollowUpQuestionAlreadyResolvedError,
+    FollowUpQuestionNotFoundError,
     NoCurrentAssistantMessageError,
+    NoPendingFollowUpGroupError,
     NoPendingToolCallGroupError,
+    PendingFollowUpQuestionsError,
     PendingToolCallsError,
     PlaylistTrackNotFoundError,
     SessionAccessDeniedError,
@@ -8,11 +14,16 @@ from .exceptions import (
     ToolCallAlreadyResolvedError,
     ToolCallNotFoundError,
 )
-from .playlist import Playlist, PlaylistTrack
 from .repository import SessionRepository
 from .session import Session
-from .views import (
+from .entities import (
+    FollowUpOption,
+    FollowUpQuestion,
+    FollowUpQuestionGroup,
+    FollowUpQuestionState,
     MessageRole,
+    Playlist,
+    PlaylistTrack,
     SessionMessage,
     ToolCall,
     ToolCallGroup,
@@ -21,9 +32,19 @@ from .views import (
 )
 
 __all__ = [
+    "EmptyFollowUpAnswerError",
+    "FollowUpOption",
+    "FollowUpOptionNotFoundError",
+    "FollowUpQuestion",
+    "FollowUpQuestionAlreadyResolvedError",
+    "FollowUpQuestionGroup",
+    "FollowUpQuestionNotFoundError",
+    "FollowUpQuestionState",
     "MessageRole",
     "NoCurrentAssistantMessageError",
+    "NoPendingFollowUpGroupError",
     "NoPendingToolCallGroupError",
+    "PendingFollowUpQuestionsError",
     "PendingToolCallsError",
     "Playlist",
     "PlaylistTrack",

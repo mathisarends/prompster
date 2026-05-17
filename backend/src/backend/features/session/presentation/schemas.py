@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.features.session.domain.views import MessageRole
+from backend.features.session.domain import MessageRole
 
 
 class SessionCreateRequest(BaseModel):

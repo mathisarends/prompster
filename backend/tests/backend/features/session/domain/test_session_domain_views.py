@@ -4,7 +4,7 @@ from backend.features.session.domain.exceptions import (
     ToolCallAlreadyResolvedError,
     ToolCallNotFoundError,
 )
-from backend.features.session.domain.views import (
+from backend.features.session.domain import (
     ToolCall,
     ToolCallGroup,
     ToolCallState,

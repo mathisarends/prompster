@@ -4,14 +4,19 @@ from uuid import UUID
 
 from backend.features.session.domain.exceptions import (
     NoCurrentAssistantMessageError,
+    NoPendingFollowUpGroupError,
     NoPendingToolCallGroupError,
+    PendingFollowUpQuestionsError,
     PendingToolCallsError,
     PlaylistTrackNotFoundError,
     SessionAccessDeniedError,
 )
-from backend.features.session.domain.playlist import Playlist, PlaylistTrack
-from backend.features.session.domain.views import (
+from backend.features.session.domain.entities import (
+    FollowUpQuestion,
+    FollowUpQuestionGroup,
     MessageRole,
+    Playlist,
+    PlaylistTrack,
     SessionMessage,
     ToolCall,
     ToolCallGroup,
@@ -110,6 +115,11 @@ class Session(Aggregate):
                 f"Cannot add user message to session {self.id} "
                 "while tool calls are pending."
             )
+        if self._find_pending_follow_up_group() is not None:
+            raise PendingFollowUpQuestionsError(
+                f"Cannot add user message to session {self.id} "
+                "while follow-up questions are pending."
+            )
         message = SessionMessage(role=MessageRole.USER, content=content)
         self._messages.append(message)
         return message
@@ -118,12 +128,19 @@ class Session(Aggregate):
         self,
         content: str = "",
         tool_calls: list[ToolCall] | None = None,
+        follow_up_questions: list[FollowUpQuestion] | None = None,
     ) -> SessionMessage:
-        group = ToolCallGroup(calls=tool_calls) if tool_calls else None
+        tool_call_group = ToolCallGroup(calls=tool_calls) if tool_calls else None
+        follow_up_group = (
+            FollowUpQuestionGroup(questions=follow_up_questions)
+            if follow_up_questions
+            else None
+        )
         message = SessionMessage(
             role=MessageRole.ASSISTANT,
             content=content,
-            tool_call_group=group,
+            tool_call_group=tool_call_group,
+            follow_up_group=follow_up_group,
         )
         self._messages.append(message)
         return message
@@ -146,6 +163,22 @@ class Session(Aggregate):
         group = self._require_pending_group()
         return group.fail(tool_call_id, error)
 
+    def answer_follow_up_with_option(
+        self, question_id: UUID, option_id: str
+    ) -> FollowUpQuestion:
+        group = self._require_pending_follow_up_group()
+        return group.answer_with_option(question_id, option_id)
+
+    def answer_follow_up_with_text(
+        self, question_id: UUID, text: str
+    ) -> FollowUpQuestion:
+        group = self._require_pending_follow_up_group()
+        return group.answer_with_text(question_id, text)
+
+    def skip_follow_up(self, question_id: UUID) -> FollowUpQuestion:
+        group = self._require_pending_follow_up_group()
+        return group.skip(question_id)
+
     def has_access(self, user_id: UUID) -> None:
         if self.owner_id != user_id:
             raise SessionAccessDeniedError(
@@ -163,6 +196,21 @@ class Session(Aggregate):
     def _find_pending_tool_call_group(self) -> ToolCallGroup | None:
         for message in reversed(self._messages):
             group = message.tool_call_group
+            if group is not None and not group.is_complete:
+                return group
+        return None
+
+    def _require_pending_follow_up_group(self) -> FollowUpQuestionGroup:
+        group = self._find_pending_follow_up_group()
+        if group is None:
+            raise NoPendingFollowUpGroupError(
+                f"Session {self.id} has no pending follow-up question group."
+            )
+        return group
+
+    def _find_pending_follow_up_group(self) -> FollowUpQuestionGroup | None:
+        for message in reversed(self._messages):
+            group = message.follow_up_group
             if group is not None and not group.is_complete:
                 return group
         return None

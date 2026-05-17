@@ -1,7 +1,6 @@
 from collections.abc import AsyncIterator
 
-from backend.features.session.domain import Session, SessionRepository
-from backend.features.session.domain.views import MessageRole
+from backend.features.session.domain import MessageRole, Session, SessionRepository
 from llmify import AssistantMessage, ChatOpenAI, UserMessage, Message
 
 

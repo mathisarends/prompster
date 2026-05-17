@@ -4,10 +4,16 @@ requires-python = ">=3.14"
 
 [manifest]
 members = [
+    "agent",
     "backend",
     "prompster",
     "tokens",
 ]
+
+[[package]]
+name = "agent"
+version = "0.1.0"
+source = { editable = "agent" }
 
 [[package]]
 name = "aioboto3"

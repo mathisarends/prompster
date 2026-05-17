@@ -6,6 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from backend.features.session.domain import (
+    FollowUpOption,
+    FollowUpQuestion,
+    FollowUpQuestionGroup,
+    FollowUpQuestionState,
     MessageRole,
     Playlist,
     PlaylistTrack,
@@ -97,13 +101,25 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
                 if message.tool_call_group is not None
                 else None
             ),
+            "follow_up_group": (
+                self._to_orm_follow_up_group(message.follow_up_group)
+                if message.follow_up_group is not None
+                else None
+            ),
         }
 
     def _to_domain_message(self, payload: dict[str, object]) -> SessionMessage:
-        group_payload = payload.get("tool_call_group")
+        tool_call_payload = payload.get("tool_call_group")
         tool_call_group = (
-            self._to_domain_tool_call_group(group_payload)
-            if isinstance(group_payload, dict)
+            self._to_domain_tool_call_group(tool_call_payload)
+            if isinstance(tool_call_payload, dict)
+            else None
+        )
+
+        follow_up_payload = payload.get("follow_up_group")
+        follow_up_group = (
+            self._to_domain_follow_up_group(follow_up_payload)
+            if isinstance(follow_up_payload, dict)
             else None
         )
 
@@ -112,6 +128,7 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
             role=MessageRole(payload["role"]),
             content=str(payload.get("content", "")),
             tool_call_group=tool_call_group,
+            follow_up_group=follow_up_group,
             created_time=_parse_datetime(payload.get("created_at")),
         )
 
@@ -174,6 +191,86 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
             state=ToolCallState(state_value),
             result=str(result) if isinstance(result, str) else None,
             error=str(error) if isinstance(error, str) else None,
+        )
+
+    def _to_orm_follow_up_group(
+        self, group: FollowUpQuestionGroup
+    ) -> dict[str, object]:
+        return {
+            "id": str(group.id),
+            "created_at": group.created_at.isoformat(),
+            "questions": [
+                self._to_orm_follow_up_question(question)
+                for question in group.questions
+            ],
+        }
+
+    def _to_domain_follow_up_group(
+        self, payload: dict[str, object]
+    ) -> FollowUpQuestionGroup:
+        questions_payload = payload.get("questions")
+        questions = (
+            [
+                self._to_domain_follow_up_question(item)
+                for item in questions_payload
+                if isinstance(item, dict)
+            ]
+            if isinstance(questions_payload, list)
+            else []
+        )
+
+        return FollowUpQuestionGroup(
+            id=_parse_uuid(payload.get("id")),
+            questions=questions,
+            created_time=_parse_datetime(payload.get("created_at")),
+        )
+
+    def _to_orm_follow_up_question(
+        self, question: FollowUpQuestion
+    ) -> dict[str, object]:
+        return {
+            "id": str(question.id),
+            "created_at": question.created_at.isoformat(),
+            "question": question.question,
+            "options": [
+                {"id": option.id, "label": option.label} for option in question.options
+            ],
+            "state": question.state.value,
+            "answer_text": question.answer_text,
+            "answered_option_id": question.answered_option_id,
+        }
+
+    def _to_domain_follow_up_question(
+        self, payload: dict[str, object]
+    ) -> FollowUpQuestion:
+        options_payload = payload.get("options")
+        options = (
+            [
+                FollowUpOption(
+                    id=str(item.get("id", "")),
+                    label=str(item.get("label", "")),
+                )
+                for item in options_payload
+                if isinstance(item, dict)
+            ]
+            if isinstance(options_payload, list)
+            else []
+        )
+
+        state_value = payload.get("state", FollowUpQuestionState.PENDING.value)
+        answer_text = payload.get("answer_text")
+        answered_option_id = payload.get("answered_option_id")
+
+        return FollowUpQuestion(
+            id=_parse_uuid(payload.get("id")),
+            created_time=_parse_datetime(payload.get("created_at")),
+            question=str(payload.get("question", "")),
+            options=options,
+            state=FollowUpQuestionState(state_value),
+            answer_text=str(answer_text) if isinstance(answer_text, str) else None,
+            answered_option_id=(
+                str(answered_option_id) if isinstance(answered_option_id, str) else None
+            ),
         )
 
     def _to_orm_playlist(self, playlist: Playlist | None) -> dict[str, object] | None:
