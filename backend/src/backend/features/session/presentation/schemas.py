@@ -35,5 +35,19 @@ class MessageResponse(BaseModel):
     created_at: datetime
 
 
+class SpotifyTrackResponse(BaseModel):
+    id: str
+    title: str
+    artist: str
+    album: str | None = None
+    year: int | None = None
+    cover_url: str | None = None
+    preview_url: str | None = None
+
+
+class SpotifyTrackSearchResponse(BaseModel):
+    items: list[SpotifyTrackResponse]
+
+
 class ErrorResponse(BaseModel):
     detail: str

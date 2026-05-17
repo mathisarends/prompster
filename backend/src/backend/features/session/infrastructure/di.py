@@ -5,13 +5,20 @@ from backend.features.session.application import (
     CreateSessionHandler,
     DeleteSessionHandler,
     GetSessionByIdHandler,
+    SearchSpotifyTracksHandler,
     SendMessageHandler,
     UpdateSessionHandler,
+)
+from backend.features.session.application.ports.spotify_track_search import (
+    SpotifyTrackSearch,
 )
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
 from backend.features.session.domain import SessionRepository
+from backend.features.session.infrastructure.spotify_track_search import (
+    MockSpotifyTrackSearch,
+)
 from backend.features.session.infrastructure.title_generator import (
     LLMSessionTitleGenerator,
 )
@@ -76,3 +83,16 @@ class SessionProvider(Provider):
         session_repository: SessionRepository,
     ) -> DeleteSessionHandler:
         return DeleteSessionHandler(session_repository=session_repository)
+
+    @provide(scope=Scope.APP)
+    def provide_spotify_track_search(self) -> SpotifyTrackSearch:
+        return MockSpotifyTrackSearch()
+
+    @provide(scope=Scope.REQUEST)
+    def provide_search_spotify_tracks_handler(
+        self,
+        spotify_track_search: SpotifyTrackSearch,
+    ) -> SearchSpotifyTracksHandler:
+        return SearchSpotifyTracksHandler(
+            spotify_track_search=spotify_track_search,
+        )
