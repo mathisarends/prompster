@@ -6,8 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+import type { MessageResponse } from "./messageResponse";
+
 export interface SessionResponse {
   id: string;
   title: string;
   created_at: string;
+  messages: MessageResponse[];
 }

@@ -1,3 +1,4 @@
+from backend.env import LLMCredentials
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,7 +38,12 @@ from llmify import ChatOpenAI
 class SessionProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_title_generator_llm(self) -> ChatOpenAI:
-        return ChatOpenAI()
+        credentials = self.llm_credentials()
+        return ChatOpenAI(api_key=credentials.openai_api_key)
+
+    @provide(scope=Scope.APP)
+    def llm_credentials(self) -> LLMCredentials:
+        return LLMCredentials()
 
     @provide(scope=Scope.APP)
     def provide_session_title_generator(

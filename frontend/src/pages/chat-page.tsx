@@ -1,297 +1,274 @@
-import { useCallback, useEffect, useReducer, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { ChatPageHeader } from "../components/chat-page-header";
+import type { MessageResponse, SessionResponse } from "@/api/generated/model";
+import {
+  getGetSessionQueryKey,
+  getListSessionsQueryKey,
+  useGetSession,
+} from "@/api/generated/session-api";
+import { streamSendMessage } from "@/api/session-stream";
 import { AssistantChatMessage } from "@/components/assistant-chat-message";
 import { ChatInputBox } from "@/components/chat-input-box";
-import { DeckWorkspaceView } from "@/components/deck-workspace-view";
-import {
-  FollowUpQuestionFlow,
-  type FollowUpQuestionOption,
-} from "@/components/follow-up-question-flow";
-import { Button } from "@/components/ui/button";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { SpotifyConnectDialog } from "@/components/spotify-connect-dialog";
+import { ChatPageHeader } from "@/components/chat-page-header";
 import { UserChatMessage } from "@/components/user-chat-message";
 import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
 
-import {
-  ChatActionType,
-  chatReducer,
-  createInitialChatState,
-  findMessageWithRunningToolCall,
-  getActiveFollowUpStep,
-  getFollowUpDraftValue,
-  getFollowUpStepStatus,
-} from "./chat-page.state";
-
-const TOOL_CALL_STEP_DURATION_MS = 1400;
-
-const getCanUseResizableLayout = () => {
-  if (typeof window === "undefined") return false;
-
-  return window.matchMedia("(min-width: 768px)").matches;
+type ChatRouteState = {
+  session?: SessionResponse;
+  streamInitialResponse?: boolean;
 };
 
+type ChatMessage = {
+  id: string;
+  role: MessageResponse["role"];
+  text: string;
+  isStreaming?: boolean;
+};
+
+const toChatMessage = (message: MessageResponse): ChatMessage => ({
+  id: message.id,
+  role: message.role,
+  text: message.content,
+});
+
 export const ChatPage = () => {
+  const { chatId } = useParams();
+  const sessionId = chatId ?? "";
   const location = useLocation();
-  const routeState = location.state as { prompt?: string } | null;
-  const initialPrompt = routeState?.prompt;
+  const routeState = location.state as ChatRouteState | null;
+  const queryClient = useQueryClient();
   const [prompt, setPrompt] = useState("");
-  const [workspacePanelLayout, setWorkspacePanelLayout] = useLocalStorage<
-    Record<string, number>
-  >("prompster.chat.workspace-layout", { chat: 50, workspace: 50 });
-  const [spotifyConnected, setSpotifyConnected] = useLocalStorage(
-    "prompster.spotify.connected",
-    false,
-  );
-  const [canUseResizableLayout, setCanUseResizableLayout] = useState(
-    getCanUseResizableLayout,
-  );
-  const [state, dispatch] = useReducer(
-    chatReducer,
-    initialPrompt,
-    createInitialChatState,
-  );
-  const { messages, followUp, workspacePanel } = state;
-  const messagesEndRef = useAutoScrollToBottom<HTMLDivElement>(messages.length);
-  const currentStep = getActiveFollowUpStep(followUp);
-  const currentAnswer = getFollowUpDraftValue(followUp);
-  const { currentStepIndex, totalSteps, isFirstStep, isLastStep } =
-    getFollowUpStepStatus(followUp);
-  const isWorkspacePanelOpen = workspacePanel.status === "open";
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isSending, setIsSending] = useState(false);
+  const loadedSessionIdRef = useRef<string | undefined>(undefined);
+  const initialStreamStartedRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const sendMessage = useCallback(
-    (text: string) => dispatch({ type: ChatActionType.SendMessage, text }),
-    [],
-  );
-  const answerFollowUp = useCallback(
-    (answer: string, option?: FollowUpQuestionOption) =>
-      dispatch({ type: ChatActionType.AnswerFollowUp, answer, option }),
-    [],
-  );
-  const updateFollowUpDraft = useCallback(
-    (value: string) => {
-      if (!currentStep) return;
+  const initialSession = useMemo(() => {
+    if (routeState?.session?.id !== sessionId) return undefined;
+    return routeState.session;
+  }, [routeState?.session, sessionId]);
 
-      dispatch({
-        type: ChatActionType.UpdateFollowUpDraft,
-        stepId: currentStep.id,
-        value,
-      });
+  const {
+    data: session,
+    isError,
+    isLoading,
+  } = useGetSession(sessionId, {
+    query: {
+      enabled: Boolean(sessionId),
+      initialData: initialSession,
     },
-    [currentStep],
-  );
-  const skipFollowUp = useCallback(
-    () => dispatch({ type: ChatActionType.SkipFollowUp }),
-    [],
-  );
-  const dismissFollowUp = useCallback(
-    () => dispatch({ type: ChatActionType.DismissFollowUp }),
-    [],
-  );
-  const goToPrevStep = useCallback(
-    () => dispatch({ type: ChatActionType.GoToPrevStep }),
-    [],
-  );
-  const goToNextStep = useCallback(
-    () => dispatch({ type: ChatActionType.GoToNextStep }),
-    [],
-  );
-  const openWorkspacePanel = useCallback(
-    () => dispatch({ type: ChatActionType.OpenWorkspacePanel }),
-    [],
-  );
-  const closeWorkspacePanel = useCallback(
-    () => dispatch({ type: ChatActionType.CloseWorkspacePanel }),
-    [],
-  );
+  });
+
+  const scrollDependency = messages
+    .map((message) => `${message.id}:${message.text.length}`)
+    .join("|");
+  const messagesEndRef =
+    useAutoScrollToBottom<HTMLDivElement>(scrollDependency);
 
   useEffect(() => {
-    const messageWithRunningTool = findMessageWithRunningToolCall(messages);
-    if (!messageWithRunningTool) return;
-
-    const timeoutId = window.setTimeout(() => {
-      dispatch({
-        type: ChatActionType.AdvanceToolCalls,
-        messageId: messageWithRunningTool.id,
-      });
-    }, TOOL_CALL_STEP_DURATION_MS);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [messages]);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 768px)");
-    const updateLayoutMode = (event: MediaQueryListEvent) => {
-      setCanUseResizableLayout(event.matches);
-    };
-
-    mediaQuery.addEventListener("change", updateLayoutMode);
-
     return () => {
-      mediaQuery.removeEventListener("change", updateLayoutMode);
+      abortControllerRef.current?.abort();
     };
   }, []);
 
-  const shouldUseResizableLayout =
-    isWorkspacePanelOpen && canUseResizableLayout;
+  useEffect(() => {
+    if (!session || loadedSessionIdRef.current === session.id) return;
 
-  const chatPanelContent = (
-    <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-      <ChatPageHeader />
+    loadedSessionIdRef.current = session.id;
+    queueMicrotask(() => {
+      setMessages(session.messages.map(toChatMessage));
+    });
+  }, [session]);
 
-      <main className="prompster-scrollbar min-h-0 flex-1 overflow-y-auto px-4 sm:px-8">
-        <div
-          className={cn(
-            "mx-auto flex w-full flex-col transition-[max-width] duration-500 ease-out",
-            isWorkspacePanelOpen ? "max-w-3xl" : "max-w-4xl",
-          )}
-        >
-          <div className="flex flex-col gap-4 px-1 pt-1 sm:px-2">
-            {messages.map((message) =>
-              message.role === "user" ? (
-                <UserChatMessage key={message.id} text={message.text} />
-              ) : (
-                <AssistantChatMessage
-                  key={message.id}
-                  text={message.text}
-                  toolCalls={message.toolCalls}
-                />
-              ),
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-      </main>
+  const invalidateSessionQueries = useCallback(async () => {
+    if (!sessionId) return;
 
-      <div className="shrink-0 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-6 sm:px-8 sm:pb-3">
-        <div
-          className={cn(
-            "mx-auto w-full transition-[max-width] duration-500 ease-out",
-            isWorkspacePanelOpen ? "max-w-3xl" : "max-w-4xl",
-          )}
-        >
-          {!isWorkspacePanelOpen && (
-            <div className="mb-3 flex flex-col gap-3 rounded-3xl border border-white/10 bg-card/60 px-4 py-3 text-sm text-muted-foreground shadow-xl shadow-black/10 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
-              <span>
-                Prototyp-Test: Sende <span className="font-mono">/deck</span>,{" "}
-                <span className="font-mono">/split</span> oder öffne die
-                Arbeitsfläche direkt.
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={openWorkspacePanel}
-                className="shrink-0 border-white/15 bg-transparent hover:bg-white/10"
-              >
-                Split-Screen testen
-              </Button>
-            </div>
-          )}
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: getGetSessionQueryKey(sessionId),
+      }),
+      queryClient.invalidateQueries({ queryKey: getListSessionsQueryKey() }),
+    ]);
+  }, [queryClient, sessionId]);
 
-          {currentStep && (
-            <div className="mb-3">
-              <FollowUpQuestionFlow
-                key={currentStep.id}
-                question={currentStep.question}
-                options={currentStep.options}
-                value={currentAnswer}
-                onValueChange={updateFollowUpDraft}
-                onAnswer={answerFollowUp}
-                onSkip={skipFollowUp}
-                onDismiss={dismissFollowUp}
-                step={{
-                  current: currentStepIndex + 1,
-                  total: totalSteps,
-                  onPrev: isFirstStep ? undefined : goToPrevStep,
-                  onNext: isLastStep ? undefined : goToNextStep,
-                }}
-                className="rounded-3xl border-border/60 bg-card/90"
-              />
-            </div>
-          )}
-          <ChatInputBox
-            value={prompt}
-            onChange={setPrompt}
-            onSubmit={sendMessage}
-            placeholder="Deine Antwort ..."
-            sendButtonAriaLabel="Nachricht senden"
-            className="rounded-3xl border border-border/50 bg-card/70 p-4 shadow-2xl shadow-black/20"
-            textareaClassName="max-h-40"
-            rows={1}
-          />
-        </div>
-      </div>
-    </section>
+  const streamAssistantResponse = useCallback(
+    async (text: string, options?: { appendUserMessage?: boolean }) => {
+      if (!sessionId || isSending) return;
+
+      const shouldAppendUserMessage = options?.appendUserMessage ?? true;
+      const controller = new AbortController();
+      const assistantMessageId = `assistant-${crypto.randomUUID()}`;
+
+      abortControllerRef.current = controller;
+      setIsSending(true);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        ...(shouldAppendUserMessage
+          ? [
+              {
+                id: `user-${crypto.randomUUID()}`,
+                role: "user" as const,
+                text,
+              },
+            ]
+          : []),
+        {
+          id: assistantMessageId,
+          role: "assistant",
+          text: "",
+          isStreaming: true,
+        },
+      ]);
+
+      try {
+        await streamSendMessage(
+          sessionId,
+          { content: text },
+          {
+            signal: controller.signal,
+            onChunk: (chunk) => {
+              setMessages((currentMessages) =>
+                currentMessages.map((message) =>
+                  message.id === assistantMessageId
+                    ? { ...message, text: message.text + chunk }
+                    : message,
+                ),
+              );
+            },
+          },
+        );
+
+        setMessages((currentMessages) =>
+          currentMessages.map((message) =>
+            message.id === assistantMessageId
+              ? { ...message, isStreaming: false }
+              : message,
+          ),
+        );
+        await invalidateSessionQueries();
+      } catch {
+        if (!controller.signal.aborted) {
+          setMessages((currentMessages) =>
+            currentMessages.map((message) =>
+              message.id === assistantMessageId
+                ? {
+                    ...message,
+                    text:
+                      message.text ||
+                      "Die Antwort konnte nicht geladen werden.",
+                    isStreaming: false,
+                  }
+                : message,
+            ),
+          );
+        }
+      } finally {
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
+        setIsSending(false);
+      }
+    },
+    [invalidateSessionQueries, isSending, sessionId],
   );
 
-  const workspacePanelContent = workspacePanel.status === "open" && (
-    <DeckWorkspaceView onClose={closeWorkspacePanel} />
+  useEffect(() => {
+    if (
+      !routeState?.streamInitialResponse ||
+      initialStreamStartedRef.current ||
+      !session ||
+      isSending
+    ) {
+      return;
+    }
+
+    const latestMessage = session.messages.at(-1);
+    if (!latestMessage || latestMessage.role !== "user") return;
+
+    initialStreamStartedRef.current = true;
+    const timeoutId = window.setTimeout(() => {
+      void streamAssistantResponse(latestMessage.content, {
+        appendUserMessage: false,
+      });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    isSending,
+    routeState?.streamInitialResponse,
+    session,
+    streamAssistantResponse,
+  ]);
+
+  const sendChatMessage = useCallback(
+    (text: string) => streamAssistantResponse(text),
+    [streamAssistantResponse],
   );
+
+  const isLoadingSession = isLoading && messages.length === 0;
+  const title = session?.title ?? "Neues Karten-Deck";
 
   return (
     <div className="chat-page-background flex h-dvh overflow-hidden text-foreground">
       <div className="relative z-10 min-h-0 flex-1">
-        {shouldUseResizableLayout ? (
-          <ResizablePanelGroup
-            orientation="horizontal"
-            className="h-full bg-transparent"
-            defaultLayout={workspacePanelLayout}
-            onLayoutChanged={setWorkspacePanelLayout}
-          >
-            <ResizablePanel
-              id="chat"
-              defaultSize={`${workspacePanelLayout.chat ?? 50}`}
-              minSize="36"
-              maxSize="68"
-            >
-              {chatPanelContent}
-            </ResizablePanel>
-            <ResizableHandle
-              withHandle
-              className="w-px cursor-col-resize bg-white/5 hover:bg-white/10 data-[separator=active]:bg-primary/35"
-            />
-            <ResizablePanel
-              id="workspace"
-              defaultSize={`${workspacePanelLayout.workspace ?? 50}`}
-              minSize="32"
-              maxSize="64"
-            >
-              <div className="h-full animate-in slide-in-from-right-6 duration-500">
-                {workspacePanelContent}
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        ) : (
-          <div className="relative flex h-full min-h-0">
-            {chatPanelContent}
+        <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+          <ChatPageHeader title={title} />
 
-            <aside
-              className={cn(
-                "absolute inset-y-0 right-0 z-30 h-full w-full max-w-xl overflow-hidden border-l border-white/10 bg-[hsl(222_36%_7%)] transition-[transform,opacity] duration-500 ease-out",
-                isWorkspacePanelOpen
-                  ? "translate-x-0 opacity-100"
-                  : "pointer-events-none translate-x-full opacity-0",
-              )}
-              aria-hidden={!isWorkspacePanelOpen}
-            >
-              {workspacePanelContent}
-            </aside>
+          <main className="prompster-scrollbar min-h-0 flex-1 overflow-y-auto px-4 sm:px-8">
+            <div className="mx-auto flex w-full max-w-4xl flex-col">
+              <div className="flex flex-col gap-4 px-1 pt-1 sm:px-2">
+                {isLoadingSession ? (
+                  <p className="px-1 py-2 text-sm text-muted-foreground">
+                    Lade Session...
+                  </p>
+                ) : isError ? (
+                  <p className="px-1 py-2 text-sm text-destructive">
+                    Session konnte nicht geladen werden.
+                  </p>
+                ) : null}
+
+                {messages.map((message) =>
+                  message.role === "user" ? (
+                    <UserChatMessage key={message.id} text={message.text} />
+                  ) : (
+                    <AssistantChatMessage
+                      key={message.id}
+                      text={message.text}
+                      isStreaming={message.isStreaming}
+                    />
+                  ),
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+          </main>
+
+          <div className="shrink-0 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-6 sm:px-8 sm:pb-3">
+            <div className="mx-auto w-full max-w-4xl">
+              <ChatInputBox
+                value={prompt}
+                onChange={setPrompt}
+                onSubmit={sendChatMessage}
+                placeholder="Deine Antwort ..."
+                sendButtonAriaLabel="Nachricht senden"
+                className={cn(
+                  "rounded-3xl border border-border/50 bg-card/70 p-4 shadow-2xl shadow-black/20",
+                )}
+                textareaClassName="max-h-40"
+                rows={1}
+                disabled={!sessionId || isLoadingSession || isError}
+                isSubmitting={isSending}
+              />
+            </div>
           </div>
-        )}
+        </section>
       </div>
-      <SpotifyConnectDialog
-        open={!spotifyConnected}
-        onConnect={() => setSpotifyConnected(true)}
-      />
     </div>
   );
 };

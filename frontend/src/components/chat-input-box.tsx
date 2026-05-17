@@ -7,12 +7,15 @@ import { cn } from "@/lib/utils";
 type ChatInputBoxProps = {
   value: string;
   onChange: (value: string) => void;
-  onSubmit: (text: string) => void;
+  onSubmit: (text: string) => void | Promise<void>;
   placeholder?: string;
   className?: string;
   textareaClassName?: string;
   rows?: number;
   sendButtonAriaLabel?: string;
+  disabled?: boolean;
+  isSubmitting?: boolean;
+  clearOnSubmit?: boolean;
   focusOnTyping?: boolean;
   showDisclaimer?: boolean;
   disclaimerText?: string;
@@ -69,6 +72,9 @@ export const ChatInputBox = ({
   textareaClassName,
   rows,
   sendButtonAriaLabel = "Nachricht senden",
+  disabled = false,
+  isSubmitting = false,
+  clearOnSubmit = true,
   focusOnTyping = true,
   showDisclaimer = false,
   disclaimerText = "Prompster ist eine KI und kann Fehler machen. Bitte überprüfe die Antworten.",
@@ -110,10 +116,10 @@ export const ChatInputBox = ({
 
   const submit = () => {
     const trimmed = value.trim();
-    if (!trimmed) return;
+    if (!trimmed || disabled || isSubmitting) return;
 
     onSubmit(trimmed);
-    onChange("");
+    if (clearOnSubmit) onChange("");
   };
 
   const focusTextareaFromContainer = (event: MouseEvent<HTMLDivElement>) => {
@@ -183,6 +189,7 @@ export const ChatInputBox = ({
             ref={textareaRef}
             rows={rows ?? 1}
             value={value}
+            disabled={disabled || isSubmitting}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -206,7 +213,8 @@ export const ChatInputBox = ({
           >
             <SendButton
               onClick={submit}
-              disabled={!value.trim()}
+              disabled={!value.trim() || disabled}
+              isLoading={isSubmitting}
               ariaLabel={sendButtonAriaLabel}
             />
           </div>

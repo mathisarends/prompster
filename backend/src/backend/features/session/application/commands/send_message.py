@@ -1,13 +1,13 @@
 from collections.abc import AsyncIterator
 
 from backend.features.session.domain import MessageRole, Session, SessionRepository
-from llmify import AssistantMessage, ChatOpenAI, UserMessage, Message
+from llmify import AssistantMessage, ChatModel, UserMessage, Message
 
 
 class SendMessageHandler:
     def __init__(
         self,
-        llm: ChatOpenAI,
+        llm: ChatModel,
         session_repository: SessionRepository,
     ) -> None:
         self._llm = llm
@@ -19,8 +19,16 @@ class SendMessageHandler:
         session: Session,
         content: str,
     ) -> AsyncIterator[str]:
-        session.add_user_message(content=content)
-        await self._session_repository.create(session=session)
+        latest_message = session.messages[-1] if session.messages else None
+        should_append_user_message = not (
+            latest_message is not None
+            and latest_message.role == MessageRole.USER
+            and latest_message.content == content
+        )
+
+        if should_append_user_message:
+            session.add_user_message(content=content)
+            await self._session_repository.create(session=session)
 
         chunks: list[str] = []
         async for chunk in self._llm.stream(self._build_context(session)):

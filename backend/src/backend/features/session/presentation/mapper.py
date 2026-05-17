@@ -18,6 +18,7 @@ def to_session_response(session: Session) -> SessionResponse:
         id=session.id,
         title=session.title,
         created_at=session.created_at,
+        messages=[to_message_response(message) for message in session.messages],
     )
 
 

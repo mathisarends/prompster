@@ -1,17 +1,40 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
 
+import {
+  createSession,
+  getListSessionsQueryKey,
+} from "@/api/generated/session-api";
 import { Badge } from "@/components/ui/badge";
 import { ChatInputBox } from "@/components/chat-input-box";
 
 export const HomePage = () => {
   const [prompt, setPrompt] = useState("");
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const startChat = (text: string) => {
-    const chatId = crypto.randomUUID();
-    navigate(`/chat/${chatId}`, { state: { prompt: text } });
+  const startChat = async (text: string) => {
+    if (isCreatingSession) return;
+
+    setIsCreatingSession(true);
+    setErrorMessage(null);
+
+    try {
+      const session = await createSession({ initial_prompt: text });
+      await queryClient.invalidateQueries({
+        queryKey: getListSessionsQueryKey(),
+      });
+      navigate(`/chat/${session.id}`, {
+        state: { session, streamInitialResponse: true },
+      });
+    } catch {
+      setErrorMessage("Session konnte nicht gestartet werden.");
+      setIsCreatingSession(false);
+    }
   };
 
   return (
@@ -42,7 +65,15 @@ export const HomePage = () => {
               onSubmit={startChat}
               placeholder='z.B. "Hip-Hop Klassiker der 90er fur 60 Karten" oder "Eurovision Hits 2000-2020"'
               sendButtonAriaLabel="Chat starten"
+              disabled={isCreatingSession}
+              isSubmitting={isCreatingSession}
+              clearOnSubmit={false}
             />
+            {errorMessage && (
+              <p className="text-center text-sm text-destructive">
+                {errorMessage}
+              </p>
+            )}
           </section>
         </div>
       </main>

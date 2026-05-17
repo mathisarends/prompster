@@ -10,6 +10,8 @@ export * from "./errorDto";
 export * from "./errorResponse";
 export * from "./hTTPValidationError";
 export * from "./listSessionsParams";
+export * from "./messageRole";
+export * from "./messageResponse";
 export * from "./searchSpotifyTracksParams";
 export * from "./sendMessageRequest";
 export * from "./sessionCreateRequest";
