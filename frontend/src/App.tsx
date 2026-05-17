@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from "react";
 import {
   Navigate,
   Outlet,
@@ -12,6 +13,11 @@ import { HomePage } from "./pages/home-page";
 import { ChatPage } from "./pages/chat-page";
 import { LandingPage } from "./pages/landing-page";
 import { NavigationSidebar } from "@/components/navigation-sidebar";
+import {
+  fetchCurrentUser,
+  logoutAuthSession,
+  refreshAuthSession,
+} from "@/api/auth";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useViewport } from "@/hooks/useViewport";
 import { type ChatHistoryEntry } from "@/lib/mockChats";
@@ -119,23 +125,54 @@ const HomePageRoute = () => {
 
 export const App = () => {
   const navigate = useNavigate();
-  const [isGoogleSignedIn, setIsGoogleSignedIn] = useLocalStorage(
-    "prompster.auth.google",
-    false,
+  const [isGoogleSignedIn, setIsGoogleSignedIn] = useState<boolean | null>(
+    null,
   );
 
-  const handleMockGoogleSignIn = () => {
-    setIsGoogleSignedIn(true);
-    navigate("/new", { replace: true });
-  };
-
-  const handleLogout = () => {
-    setIsGoogleSignedIn(false);
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem("prompster.spotify.connected");
+  const resolveAuthSession = useCallback(async () => {
+    try {
+      await fetchCurrentUser();
+      setIsGoogleSignedIn(true);
+      return true;
+    } catch {
+      try {
+        await refreshAuthSession();
+        await fetchCurrentUser();
+        setIsGoogleSignedIn(true);
+        return true;
+      } catch {
+        setIsGoogleSignedIn(false);
+        return false;
+      }
     }
-    navigate("/", { replace: true });
-  };
+  }, []);
+
+  useEffect(() => {
+    void resolveAuthSession();
+  }, [resolveAuthSession]);
+
+  const handleGoogleSignIn = useCallback(async () => {
+    const isAuthenticated = await resolveAuthSession();
+    if (isAuthenticated) {
+      navigate("/new", { replace: true });
+    }
+  }, [navigate, resolveAuthSession]);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await logoutAuthSession();
+    } finally {
+      setIsGoogleSignedIn(false);
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("prompster.spotify.connected");
+      }
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
+
+  if (isGoogleSignedIn === null) {
+    return <div className="home-page-background min-h-dvh" aria-busy="true" />;
+  }
 
   return (
     <Routes>
@@ -145,7 +182,7 @@ export const App = () => {
           isGoogleSignedIn ? (
             <Navigate to="/new" replace />
           ) : (
-            <LandingPage onSignIn={handleMockGoogleSignIn} />
+            <LandingPage onSignIn={handleGoogleSignIn} />
           )
         }
       />

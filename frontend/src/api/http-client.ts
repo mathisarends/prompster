@@ -1,7 +1,21 @@
 import Axios, { type AxiosError, type AxiosRequestConfig } from "axios";
 
+const resolveApiBaseUrl = (): string => {
+  const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+  if (configuredApiBaseUrl) {
+    return configuredApiBaseUrl;
+  }
+
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:8000`;
+  }
+
+  return "http://localhost:8000";
+};
+
 export const AXIOS_INSTANCE = Axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000",
+  baseURL: resolveApiBaseUrl(),
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },

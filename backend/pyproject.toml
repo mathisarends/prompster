@@ -20,7 +20,7 @@ dependencies = [
     "pydantic-settings>=2.14.1",
     "sqlmodel>=0.0.38",
     "alembic>=1.18.4",
-    "jwt>=1.4.0",
+    "PyJWT>=2.10.1",
 ]
 
 [project.scripts]

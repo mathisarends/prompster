@@ -20,7 +20,7 @@ class GoogleAuthSettings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
-        populate_by_name=True,
+        env_prefix="GOOGLE_",
     )
 
     client_id: str = Field(

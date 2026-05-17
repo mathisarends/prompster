@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { fetchCurrentUser, getGoogleOAuthLoginUrl } from "@/api/auth";
 import { Sparkles } from "lucide-react";
 
 type LandingPageProps = {
@@ -11,11 +12,86 @@ type LandingPageProps = {
 
 export const LandingPage = ({ onSignIn }: LandingPageProps) => {
   const [email, setEmail] = useState("");
+  const [isGoogleOAuthLoading, setIsGoogleOAuthLoading] = useState(false);
+  const oauthPopupRef = useRef<Window | null>(null);
+  const oauthPollTimeoutRef = useRef<number | null>(null);
+  const oauthPollAttemptRef = useRef(0);
 
   const submitEmail = () => {
     if (!email.trim()) return;
     onSignIn();
   };
+
+  const clearOAuthPolling = () => {
+    if (oauthPollTimeoutRef.current !== null) {
+      window.clearTimeout(oauthPollTimeoutRef.current);
+      oauthPollTimeoutRef.current = null;
+    }
+  };
+
+  const stopOAuthFlow = () => {
+    clearOAuthPolling();
+    oauthPopupRef.current = null;
+    oauthPollAttemptRef.current = 0;
+    setIsGoogleOAuthLoading(false);
+  };
+
+  const pollOAuthCompletion = () => {
+    const oauthPopup = oauthPopupRef.current;
+    if (!oauthPopup || oauthPopup.closed) {
+      stopOAuthFlow();
+      return;
+    }
+
+    if (oauthPollAttemptRef.current >= 180) {
+      oauthPopup.close();
+      stopOAuthFlow();
+      return;
+    }
+
+    void fetchCurrentUser()
+      .then(() => {
+        oauthPopup.close();
+        stopOAuthFlow();
+        onSignIn();
+      })
+      .catch(() => {
+        oauthPollAttemptRef.current += 1;
+        oauthPollTimeoutRef.current = window.setTimeout(
+          pollOAuthCompletion,
+          1000,
+        );
+      });
+  };
+
+  const handleGoogleSignIn = () => {
+    if (isGoogleOAuthLoading) {
+      return;
+    }
+
+    const googleLoginUrl = getGoogleOAuthLoginUrl();
+    const oauthPopup = window.open(
+      googleLoginUrl,
+      "prompster-google-oauth",
+      "popup,width=520,height=720",
+    );
+
+    if (!oauthPopup) {
+      window.location.assign(googleLoginUrl);
+      return;
+    }
+
+    oauthPopupRef.current = oauthPopup;
+    setIsGoogleOAuthLoading(true);
+    clearOAuthPolling();
+    pollOAuthCompletion();
+  };
+
+  useEffect(() => {
+    return () => {
+      clearOAuthPolling();
+    };
+  }, []);
 
   return (
     <div className="home-page-background min-h-dvh text-foreground">
@@ -42,13 +118,16 @@ export const LandingPage = ({ onSignIn }: LandingPageProps) => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={onSignIn}
+                onClick={handleGoogleSignIn}
+                disabled={isGoogleOAuthLoading}
                 className="h-10 w-full"
               >
                 <span className="grid size-5 place-items-center rounded-full bg-white text-xs font-bold text-[#4285f4]">
                   G
                 </span>
-                Mit Google fortfahren
+                {isGoogleOAuthLoading
+                  ? "Google-Anmeldung laeuft..."
+                  : "Mit Google fortfahren"}
               </Button>
 
               <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">

@@ -28,10 +28,12 @@ import type {
 import type {
   ErrorResponse,
   HTTPValidationError,
+  SearchSpotifyTracksParams,
   SendMessageRequest,
   SessionCreateRequest,
   SessionResponse,
-  SessionUpdateRequest
+  SessionUpdateRequest,
+  SpotifyTrackSearchResponse
 } from '../model';
 
 import { customInstance } from '../../http-client';
@@ -39,6 +41,172 @@ import type { ErrorType , BodyType } from '../../http-client';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
+/**
+ * @summary Search Spotify Tracks
+ */
+export const searchSpotifyTracks = (
+    params: SearchSpotifyTracksParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<SpotifyTrackSearchResponse>(
+      {url: `/api/v1/sessions/spotify-tracks`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getSearchSpotifyTracksInfiniteQueryKey = (params?: SearchSpotifyTracksParams,) => {
+    return [
+    'infinite', `/api/v1/sessions/spotify-tracks`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+export const getSearchSpotifyTracksQueryKey = (params?: SearchSpotifyTracksParams,) => {
+    return [
+    `/api/v1/sessions/spotify-tracks`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getSearchSpotifyTracksInfiniteQueryOptions = <TData = InfiniteData<Awaited<ReturnType<typeof searchSpotifyTracks>>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params: SearchSpotifyTracksParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof searchSpotifyTracks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchSpotifyTracksInfiniteQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchSpotifyTracks>>> = ({ signal }) => searchSpotifyTracks(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseInfiniteQueryOptions<Awaited<ReturnType<typeof searchSpotifyTracks>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type SearchSpotifyTracksInfiniteQueryResult = NonNullable<Awaited<ReturnType<typeof searchSpotifyTracks>>>
+export type SearchSpotifyTracksInfiniteQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useSearchSpotifyTracksInfinite<TData = InfiniteData<Awaited<ReturnType<typeof searchSpotifyTracks>>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: SearchSpotifyTracksParams, options: { query:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof searchSpotifyTracks>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchSpotifyTracks>>,
+          TError,
+          Awaited<ReturnType<typeof searchSpotifyTracks>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSearchSpotifyTracksInfinite<TData = InfiniteData<Awaited<ReturnType<typeof searchSpotifyTracks>>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: SearchSpotifyTracksParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof searchSpotifyTracks>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchSpotifyTracks>>,
+          TError,
+          Awaited<ReturnType<typeof searchSpotifyTracks>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSearchSpotifyTracksInfinite<TData = InfiniteData<Awaited<ReturnType<typeof searchSpotifyTracks>>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: SearchSpotifyTracksParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof searchSpotifyTracks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Search Spotify Tracks
+ */
+
+export function useSearchSpotifyTracksInfinite<TData = InfiniteData<Awaited<ReturnType<typeof searchSpotifyTracks>>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: SearchSpotifyTracksParams, options?: { query?:Partial<UseInfiniteQueryOptions<Awaited<ReturnType<typeof searchSpotifyTracks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSearchSpotifyTracksInfiniteQueryOptions(params,options)
+
+  const query = useInfiniteQuery(queryOptions, queryClient) as  UseInfiniteQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+export const getSearchSpotifyTracksQueryOptions = <TData = Awaited<ReturnType<typeof searchSpotifyTracks>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(params: SearchSpotifyTracksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchSpotifyTracks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchSpotifyTracksQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchSpotifyTracks>>> = ({ signal }) => searchSpotifyTracks(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchSpotifyTracks>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type SearchSpotifyTracksQueryResult = NonNullable<Awaited<ReturnType<typeof searchSpotifyTracks>>>
+export type SearchSpotifyTracksQueryError = ErrorType<ErrorResponse | HTTPValidationError>
+
+
+export function useSearchSpotifyTracks<TData = Awaited<ReturnType<typeof searchSpotifyTracks>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: SearchSpotifyTracksParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchSpotifyTracks>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchSpotifyTracks>>,
+          TError,
+          Awaited<ReturnType<typeof searchSpotifyTracks>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSearchSpotifyTracks<TData = Awaited<ReturnType<typeof searchSpotifyTracks>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: SearchSpotifyTracksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchSpotifyTracks>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchSpotifyTracks>>,
+          TError,
+          Awaited<ReturnType<typeof searchSpotifyTracks>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSearchSpotifyTracks<TData = Awaited<ReturnType<typeof searchSpotifyTracks>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: SearchSpotifyTracksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchSpotifyTracks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Search Spotify Tracks
+ */
+
+export function useSearchSpotifyTracks<TData = Awaited<ReturnType<typeof searchSpotifyTracks>>, TError = ErrorType<ErrorResponse | HTTPValidationError>>(
+ params: SearchSpotifyTracksParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchSpotifyTracks>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSearchSpotifyTracksQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
 
 
 
