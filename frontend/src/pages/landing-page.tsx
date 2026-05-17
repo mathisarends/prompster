@@ -3,11 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AXIOS_INSTANCE } from "@/api/http-client";
+import { useAuth } from "@/auth/use-auth";
 import { Sparkles } from "lucide-react";
-
-type LandingPageProps = {
-  onSignIn: () => void;
-};
 
 const OAUTH_MESSAGE_TYPE = "prompster-google-oauth";
 
@@ -33,7 +30,8 @@ const resolveBackendOrigin = (): string => {
   return new URL(baseUrl, window.location.origin).origin;
 };
 
-export const LandingPage = ({ onSignIn }: LandingPageProps) => {
+export const LandingPage = () => {
+  const { signIn } = useAuth();
   const [isGoogleOAuthLoading, setIsGoogleOAuthLoading] = useState(false);
   const [oauthError, setOAuthError] = useState<string | null>(null);
   const oauthPopupRef = useRef<Window | null>(null);
@@ -60,7 +58,7 @@ export const LandingPage = ({ onSignIn }: LandingPageProps) => {
 
       if (event.data.status === "success") {
         setOAuthError(null);
-        onSignIn();
+        void signIn();
       } else {
         setOAuthError(
           event.data.reason === "access_denied"
@@ -75,7 +73,7 @@ export const LandingPage = ({ onSignIn }: LandingPageProps) => {
       window.removeEventListener("message", handleMessage);
       stopPopupClosedCheck();
     };
-  }, [onSignIn]);
+  }, [signIn]);
 
   const handleGoogleSignIn = () => {
     if (isGoogleOAuthLoading) return;

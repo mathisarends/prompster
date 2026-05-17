@@ -10,6 +10,7 @@ import {
 import { useListSessions } from "@/api/generated/session-api";
 import type { SessionSummaryResponse } from "@/api/generated/model";
 import { useGetMe } from "@/api/generated/user-api";
+import { useAuth } from "@/auth/use-auth";
 
 import { Button } from "@/components/ui/button";
 import { ChatSearchDialog } from "@/components/chat-search-dialog";
@@ -35,7 +36,6 @@ type NavigationSidebarProps = {
   onNewChat: () => void;
   onNewChatNewTab?: () => void;
   onSelectChat: (session: SessionSummaryResponse) => void;
-  onLogout?: () => void;
   activeChatId?: string;
 };
 
@@ -45,9 +45,9 @@ export const NavigationSidebar = ({
   onNewChat,
   onNewChatNewTab,
   onSelectChat,
-  onLogout,
   activeChatId,
 }: NavigationSidebarProps) => {
+  const { signOut } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const { data: user } = useGetMe();
   const { data: sessionsData, isLoading: isLoadingSessions } = useListSessions({
@@ -278,7 +278,7 @@ export const NavigationSidebar = ({
               side="top"
               sideOffset={8}
             >
-              <DropdownMenuItem onClick={onLogout}>
+              <DropdownMenuItem onClick={() => void signOut()}>
                 <LogOut />
                 <span>Abmelden</span>
               </DropdownMenuItem>

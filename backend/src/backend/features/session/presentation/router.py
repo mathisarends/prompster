@@ -51,7 +51,7 @@ async def list_sessions(
     list_handler: FromDishka[ListSessionsHandler],
     search_handler: FromDishka[SearchSessionsHandler],
     q: str | None = Query(default=None, min_length=1, max_length=120),
-    limit: int = Query(default=50, ge=1, le=100),
+    limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
 ) -> SessionSummaryListResponse:
     if q and q.strip():
