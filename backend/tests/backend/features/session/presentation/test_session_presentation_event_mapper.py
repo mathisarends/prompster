@@ -1,11 +1,11 @@
 from uuid import uuid4
 
 from backend.features.session.application import SessionTitleGenerated
-from backend.features.session.presentation.event_mapper import to_server_event
-from backend.features.session.presentation.events import (
+from backend.features.session.presentation.sse.events import (
     SessionEventType,
     SessionTitleGeneratedEvent,
 )
+from backend.features.session.presentation.sse.mappers import to_server_event
 
 
 class TestSessionEventMapper:

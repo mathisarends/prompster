@@ -1,9 +1,9 @@
-from backend.features.session.presentation.events import (
+from backend.features.session.presentation.sse import SessionEventSchema
+from backend.features.session.presentation.sse.events import (
     DoneEvent,
-    SessionEventSchema,
     SessionEventType,
 )
-from backend.features.session.presentation.sse import to_sse
+from backend.features.session.presentation.sse.stream import _to_sse
 
 
 class TestSessionEventSchema:
@@ -19,4 +19,4 @@ class TestServerSentEvents:
         event = DoneEvent()
 
         assert event.type == SessionEventType.DONE
-        assert to_sse(event) == 'event: done\ndata: {"type":"done"}\n\n'
+        assert _to_sse(event) == 'event: done\ndata: {"type":"done"}\n\n'

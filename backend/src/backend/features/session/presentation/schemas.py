@@ -65,6 +65,14 @@ class AddPlaylistTrackRequest(Schema):
     cover_url: str | None = None
 
 
+class PlaylistTrackResponse(Schema):
+    id: UUID
+    title: str
+    artist: str
+    year: int | None = None
+    cover_url: str | None = None
+
+
 class SpotifyTrackResponse(Schema):
     id: str
     title: str

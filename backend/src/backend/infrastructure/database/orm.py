@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from datetime import datetime
 from uuid import UUID
 
@@ -38,14 +36,14 @@ class SessionModel(DatabaseEntity, table=True):
     owner_id: UUID = Field(index=True)
     last_activity_at: datetime = Field(sa_type=DateTime(timezone=True))
 
-    messages: list[SessionMessageModel] = Relationship(
+    messages: list["SessionMessageModel"] = Relationship(
         back_populates="session",
         sa_relationship_kwargs={
             "cascade": "all, delete-orphan",
             "order_by": "SessionMessageModel.position",
         },
     )
-    playlist: SessionPlaylistModel | None = Relationship(
+    playlist: "SessionPlaylistModel" = Relationship(
         back_populates="session",
         sa_relationship_kwargs={
             "cascade": "all, delete-orphan",
@@ -80,7 +78,7 @@ class SessionPlaylistModel(DatabaseEntity, table=True):
     name: str | None = None
 
     session: SessionModel = Relationship(back_populates="playlist")
-    tracks: list[PlaylistTrackModel] = Relationship(
+    tracks: list["PlaylistTrackModel"] = Relationship(
         back_populates="playlist",
         sa_relationship_kwargs={
             "cascade": "all, delete-orphan",

@@ -1,6 +1,13 @@
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from uuid import UUID
 
+from backend.features.session.application.events import (
+    SessionEvent,
+    SessionFollowUpAnswered,
+    SessionFollowUpSkipped,
+    SessionUserMessageAppended,
+)
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
     SessionSummaryQuery,
@@ -8,7 +15,11 @@ from backend.features.session.application.ports.session_summary_query import (
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
-from backend.features.session.domain import Session, SessionRepository
+from backend.features.session.domain import (
+    PlaylistTrack,
+    Session,
+    SessionRepository,
+)
 
 
 @dataclass(frozen=True)
@@ -58,8 +69,85 @@ class SessionService:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         await self._session_repository.delete(session_id=session.id)
 
-    async def save(self, *, session: Session) -> Session:
-        return await self._session_repository.save(session=session)
+    async def send_message(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        content: str,
+    ) -> AsyncIterator[SessionEvent]:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        message = session.add_user_message(content=content)
+        await self._session_repository.save(session=session)
+        yield SessionUserMessageAppended(message=message)
+
+    async def answer_follow_up(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        question_id: UUID,
+        option_id: str | None,
+        text: str | None,
+    ) -> AsyncIterator[SessionEvent]:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        group = session.require_pending_follow_up_group()
+        if option_id is not None:
+            question = session.answer_follow_up_with_option(
+                question_id=question_id,
+                option_id=option_id,
+            )
+        else:
+            question = session.answer_follow_up_with_text(
+                question_id=question_id,
+                text=text or "",
+            )
+        await self._session_repository.save(session=session)
+        yield SessionFollowUpAnswered(group_id=group.id, question=question)
+
+    async def skip_follow_up(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        question_id: UUID,
+    ) -> AsyncIterator[SessionEvent]:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        group = session.require_pending_follow_up_group()
+        question = session.skip_follow_up(question_id=question_id)
+        await self._session_repository.save(session=session)
+        yield SessionFollowUpSkipped(group_id=group.id, question_id=question.id)
+
+    async def add_playlist_track(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        title: str,
+        artist: str,
+        year: int | None = None,
+        cover_url: str | None = None,
+    ) -> PlaylistTrack:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        track = session.add_track(
+            title=title,
+            artist=artist,
+            year=year,
+            cover_url=cover_url,
+        )
+        await self._session_repository.save(session=session)
+        return track
+
+    async def remove_playlist_track(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        track_id: UUID,
+    ) -> None:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        session.remove_track(track_id=track_id)
+        await self._session_repository.save(session=session)
 
     async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
         session = await self._session_repository.get_by_id(session_id=session_id)

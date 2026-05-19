@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from uuid import UUID
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
@@ -8,28 +7,10 @@ from starlette.responses import StreamingResponse
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.session.application import (
     SearchSpotifyTracksHandler,
-    SessionEvent,
     SessionService,
 )
-from backend.features.session.domain import (
-    EmptyFollowUpAnswerError,
-    FollowUpOptionNotFoundError,
-    FollowUpQuestionAlreadyResolvedError,
-    FollowUpQuestionNotFoundError,
-    NoPendingFollowUpGroupError,
-    PendingFollowUpQuestionsError,
-    PendingToolCallsError,
-    PlaylistTrackNotFoundError,
-    Session,
-)
-from backend.features.session.presentation.event_mapper import to_server_event
-from backend.features.session.presentation.events import (
-    DoneEvent,
-    ErrorEvent,
-    ServerEvent,
-    SessionEventSchema,
-)
 from backend.features.session.presentation.mapper import (
+    to_playlist_track_response,
     to_session_response,
     to_session_summary_response,
     to_spotify_track_response,
@@ -38,21 +19,18 @@ from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
     ErrorResponse,
     FollowUpAnswerRequest,
+    PlaylistTrackResponse,
+    SendMessageRequest,
     SessionCreateRequest,
     SessionResponse,
-    SendMessageRequest,
     SessionSummaryListResponse,
     SessionUpdateRequest,
     SpotifyTrackSearchResponse,
 )
-from backend.features.session.presentation.session_actions import (
-    add_playlist_track,
-    answer_follow_up,
-    append_user_message,
-    remove_playlist_track,
-    skip_follow_up,
+from backend.features.session.presentation.sse import (
+    SessionEventSchema,
+    stream_session_events,
 )
-from backend.features.session.presentation.sse import to_sse
 
 router = APIRouter(route_class=DishkaRoute, prefix="/sessions", tags=["sessions"])
 
@@ -68,16 +46,6 @@ _event_stream_response = {
         "content": {"text/event-stream": {"schema": {"type": "string"}}},
     },
 }
-_COMMAND_ERRORS = (
-    EmptyFollowUpAnswerError,
-    FollowUpOptionNotFoundError,
-    FollowUpQuestionAlreadyResolvedError,
-    FollowUpQuestionNotFoundError,
-    NoPendingFollowUpGroupError,
-    PendingFollowUpQuestionsError,
-    PendingToolCallsError,
-    PlaylistTrackNotFoundError,
-)
 
 
 @router.get(
@@ -195,14 +163,12 @@ async def send_message(
     body: SendMessageRequest,
     service: FromDishka[SessionService],
 ) -> StreamingResponse:
-    return await _event_stream_response_for(
-        session_id=session_id,
-        user_id=authenticated_user_id,
-        action=lambda session: append_user_message(
-            session=session,
+    return stream_session_events(
+        service.send_message(
+            session_id=session_id,
+            user_id=authenticated_user_id,
             content=body.content,
-        ),
-        service=service,
+        )
     )
 
 
@@ -219,15 +185,14 @@ async def answer_session_follow_up(
     body: FollowUpAnswerRequest,
     service: FromDishka[SessionService],
 ) -> StreamingResponse:
-    return await _event_stream_response_for(
-        session_id=session_id,
-        user_id=authenticated_user_id,
-        action=lambda session: answer_follow_up(
-            session=session,
+    return stream_session_events(
+        service.answer_follow_up(
+            session_id=session_id,
+            user_id=authenticated_user_id,
             question_id=question_id,
-            answer=body,
-        ),
-        service=service,
+            option_id=body.option_id,
+            text=body.text,
+        )
     )
 
 
@@ -243,64 +208,57 @@ async def skip_session_follow_up(
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
 ) -> StreamingResponse:
-    return await _event_stream_response_for(
-        session_id=session_id,
-        user_id=authenticated_user_id,
-        action=lambda session: skip_follow_up(
-            session=session,
+    return stream_session_events(
+        service.skip_follow_up(
+            session_id=session_id,
+            user_id=authenticated_user_id,
             question_id=question_id,
-        ),
-        service=service,
+        )
     )
 
 
 @router.post(
     "/{session_id}/tracks",
-    status_code=status.HTTP_200_OK,
+    response_model=PlaylistTrackResponse,
+    status_code=status.HTTP_201_CREATED,
     operation_id="add_playlist_track",
-    responses=_event_stream_response | _auth_errors | _bad_request | _not_found,
+    responses=_auth_errors | _not_found,
 )
 async def add_session_playlist_track(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     body: AddPlaylistTrackRequest,
     service: FromDishka[SessionService],
-) -> StreamingResponse:
-    return await _event_stream_response_for(
+) -> PlaylistTrackResponse:
+    track = await service.add_playlist_track(
         session_id=session_id,
         user_id=authenticated_user_id,
-        action=lambda session: add_playlist_track(
-            session=session,
-            title=body.title,
-            artist=body.artist,
-            year=body.year,
-            cover_url=body.cover_url,
-        ),
-        service=service,
+        title=body.title,
+        artist=body.artist,
+        year=body.year,
+        cover_url=body.cover_url,
     )
+    return to_playlist_track_response(track)
 
 
 @router.delete(
     "/{session_id}/tracks/{track_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
     operation_id="remove_playlist_track",
-    responses=_event_stream_response | _auth_errors | _bad_request | _not_found,
+    responses=_auth_errors | _not_found,
 )
 async def remove_session_playlist_track(
     session_id: UUID,
     track_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
-) -> StreamingResponse:
-    return await _event_stream_response_for(
+) -> Response:
+    await service.remove_playlist_track(
         session_id=session_id,
         user_id=authenticated_user_id,
-        action=lambda session: remove_playlist_track(
-            session=session,
-            track_id=track_id,
-        ),
-        service=service,
+        track_id=track_id,
     )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch(
@@ -337,46 +295,3 @@ async def delete_session(
 ) -> Response:
     await service.delete(session_id=session_id, user_id=authenticated_user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-async def _event_stream_response_for(
-    *,
-    session_id: UUID,
-    user_id: UUID,
-    action: Callable[[Session], tuple[SessionEvent, ...]],
-    service: SessionService,
-) -> StreamingResponse:
-    session = await service.get_by_id(session_id=session_id, user_id=user_id)
-    try:
-        session_events = action(session)
-    except _COMMAND_ERRORS as exc:
-        server_events: tuple[ServerEvent, ...] = (
-            _command_error(error=exc),
-            DoneEvent(),
-        )
-    else:
-        await service.save(session=session)
-        server_events = tuple(to_server_event(event) for event in session_events) + (
-            DoneEvent(),
-        )
-
-    return StreamingResponse(
-        _stream_server_events(server_events),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-        },
-    )
-
-
-async def _stream_server_events(events: tuple[ServerEvent, ...]):
-    for event in events:
-        yield to_sse(event)
-
-
-def _command_error(*, error: Exception) -> ServerEvent:
-    return ErrorEvent(
-        code=type(error).__name__,
-        message=str(error) or type(error).__name__,
-    )
