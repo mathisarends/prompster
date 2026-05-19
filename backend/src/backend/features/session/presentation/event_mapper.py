@@ -8,7 +8,12 @@ from backend.features.session.application import (
     SessionTitleGenerated,
     SessionUserMessageAppended,
 )
-from backend.features.session.presentation.ws.events import (
+from backend.features.session.presentation.event_payload_mapper import (
+    to_message_payload,
+    to_playlist_payload,
+    to_playlist_track_payload,
+)
+from backend.features.session.presentation.events import (
     FollowUpAnsweredEvent,
     FollowUpSkippedEvent,
     PlaylistSetEvent,
@@ -17,11 +22,6 @@ from backend.features.session.presentation.ws.events import (
     ServerEvent,
     SessionTitleGeneratedEvent,
     UserMessageAppendedEvent,
-)
-from backend.features.session.presentation.ws.mapper import (
-    to_message_payload,
-    to_playlist_payload,
-    to_playlist_track_payload,
 )
 
 

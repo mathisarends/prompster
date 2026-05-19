@@ -5,12 +5,11 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-
 import type { MessageRole } from "./messageRole";
 
 export interface MessageResponse {
   id: string;
   role: MessageRole;
   content: string;
-  created_at: string;
+  createdAt: string;
 }

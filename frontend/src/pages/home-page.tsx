@@ -24,7 +24,7 @@ export const HomePage = () => {
     setErrorMessage(null);
 
     try {
-      const session = await createSession({ initial_prompt: text });
+      const session = await createSession({ initialPrompt: text });
       await queryClient.invalidateQueries({
         queryKey: getListSessionsQueryKey(),
       });

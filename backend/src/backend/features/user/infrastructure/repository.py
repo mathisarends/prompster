@@ -1,24 +1,17 @@
+from uuid import UUID
+
 from backend.features.user.domain import User, UserRepository
-from backend.infrastructure.database.orm import DatabaseEntity
+from backend.infrastructure.database.orm import UserModel
 from backend.infrastructure.database.repository import Repository
 
-from sqlmodel import Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class UserEntity(DatabaseEntity, table=True):
-    __tablename__ = "users"
-
-    name: str
-    email: str = Field(index=True, unique=True)
-    google_subject: str = Field(index=True, unique=True)
-
-
-class SqlUserRepository(Repository[UserEntity, User], UserRepository):
+class SqlUserRepository(Repository[UserModel, User], UserRepository):
     def __init__(self, session: AsyncSession) -> None:
-        super().__init__(session=session, model=UserEntity)
+        super().__init__(session=session, model=UserModel)
 
-    def _to_domain(self, orm: UserEntity) -> User:
+    def _to_domain(self, orm: UserModel) -> User:
         return User(
             id=orm.id,
             name=orm.name,
@@ -27,8 +20,8 @@ class SqlUserRepository(Repository[UserEntity, User], UserRepository):
             created_time=orm.created_at,
         )
 
-    def _to_orm(self, domain: User) -> UserEntity:
-        return UserEntity(
+    def _to_orm(self, domain: User) -> UserModel:
+        return UserModel(
             id=domain.id,
             name=domain.name,
             email=domain.email,

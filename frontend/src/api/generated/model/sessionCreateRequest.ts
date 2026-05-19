@@ -11,5 +11,5 @@ export interface SessionCreateRequest {
    * @minLength 1
    * @maxLength 4000
    */
-  initial_prompt: string;
+  initialPrompt: string;
 }

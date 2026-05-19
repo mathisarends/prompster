@@ -14,11 +14,7 @@
         "responses": {
           "307": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           }
         }
       }
@@ -28,11 +24,7 @@
         "tags": ["auth"],
         "summary": "Logout",
         "operationId": "logout",
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          }
-        }
+        "responses": { "204": { "description": "Successful Response" } }
       }
     },
     "/api/v1/auth/refresh": {
@@ -41,16 +33,45 @@
         "summary": "Refresh",
         "operationId": "refresh",
         "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
+          "204": { "description": "Successful Response" },
           "401": {
             "description": "Invalid or expired refresh token",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/events/schema": {
+      "get": {
+        "tags": ["sessions"],
+        "summary": "Get Session Event Schema",
+        "operationId": "get_session_event_schema",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SessionEventSchema" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             }
           }
@@ -69,14 +90,8 @@
             "required": false,
             "schema": {
               "anyOf": [
-                {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 120
-                },
-                {
-                  "type": "null"
-                }
+                { "type": "string", "minLength": 1, "maxLength": 120 },
+                { "type": "null" }
               ],
               "title": "Q"
             }
@@ -87,7 +102,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 50,
               "title": "Limit"
@@ -119,9 +134,7 @@
           "401": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Unauthorized"
@@ -129,9 +142,7 @@
           "403": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Forbidden"
@@ -140,9 +151,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -156,9 +165,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SessionCreateRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/SessionCreateRequest" }
             }
           }
         },
@@ -167,18 +174,14 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SessionResponse" }
               }
             }
           },
           "401": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Unauthorized"
@@ -186,9 +189,7 @@
           "403": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Forbidden"
@@ -197,9 +198,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -252,9 +251,7 @@
           "401": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Unauthorized"
@@ -262,9 +259,7 @@
           "403": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Forbidden"
@@ -273,9 +268,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -304,18 +297,14 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SessionResponse" }
               }
             }
           },
           "401": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Unauthorized"
@@ -323,9 +312,7 @@
           "403": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Forbidden"
@@ -333,9 +320,7 @@
           "404": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Not Found"
@@ -344,9 +329,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -372,9 +355,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SessionUpdateRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/SessionUpdateRequest" }
             }
           }
         },
@@ -383,18 +364,14 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SessionResponse" }
               }
             }
           },
           "401": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Unauthorized"
@@ -402,9 +379,7 @@
           "403": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Forbidden"
@@ -412,9 +387,7 @@
           "400": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Bad Request"
@@ -422,9 +395,7 @@
           "404": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Not Found"
@@ -433,9 +404,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -458,15 +427,11 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
+          "204": { "description": "Successful Response" },
           "401": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Unauthorized"
@@ -474,9 +439,7 @@
           "403": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Forbidden"
@@ -484,9 +447,7 @@
           "404": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Not Found"
@@ -495,9 +456,7 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -525,28 +484,22 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SendMessageRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/SendMessageRequest" }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": "Successful Response",
+          "200": {
+            "description": "Server-sent session events.",
             "content": {
-              "application/json": {
-                "schema": {}
-              },
-              "text/plain": {}
+              "application/json": { "schema": {} },
+              "text/event-stream": { "schema": { "type": "string" } }
             }
           },
           "401": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Unauthorized"
@@ -554,9 +507,7 @@
           "403": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Forbidden"
@@ -564,9 +515,7 @@
           "400": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Bad Request"
@@ -574,9 +523,7 @@
           "404": {
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
               }
             },
             "description": "Not Found"
@@ -585,9 +532,327 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/follow-ups/{question_id}/answer": {
+      "post": {
+        "tags": ["sessions"],
+        "summary": "Answer Session Follow Up",
+        "operationId": "answer_follow_up",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "question_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Question Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FollowUpAnswerRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Server-sent session events.",
+            "content": {
+              "application/json": { "schema": {} },
+              "text/event-stream": { "schema": { "type": "string" } }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/follow-ups/{question_id}/skip": {
+      "post": {
+        "tags": ["sessions"],
+        "summary": "Skip Session Follow Up",
+        "operationId": "skip_follow_up",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "question_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Question Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Server-sent session events.",
+            "content": {
+              "application/json": { "schema": {} },
+              "text/event-stream": { "schema": { "type": "string" } }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/tracks": {
+      "post": {
+        "tags": ["sessions"],
+        "summary": "Add Session Playlist Track",
+        "operationId": "add_playlist_track",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPlaylistTrackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Server-sent session events.",
+            "content": {
+              "application/json": { "schema": {} },
+              "text/event-stream": { "schema": { "type": "string" } }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/tracks/{track_id}": {
+      "delete": {
+        "tags": ["sessions"],
+        "summary": "Remove Session Playlist Track",
+        "operationId": "remove_playlist_track",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "track_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Track Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Server-sent session events.",
+            "content": {
+              "application/json": { "schema": {} },
+              "text/event-stream": { "schema": { "type": "string" } }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
               }
             }
           }
@@ -604,9 +869,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserMeResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/UserMeResponse" }
               }
             }
           },
@@ -614,9 +877,7 @@
             "description": "Unauthorized",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
-                }
+                "schema": { "$ref": "#/components/schemas/ErrorDto" }
               }
             }
           }
@@ -626,40 +887,445 @@
   },
   "components": {
     "schemas": {
-      "ErrorDto": {
+      "AddPlaylistTrackRequest": {
         "properties": {
-          "detail": {
+          "title": {
             "type": "string",
-            "title": "Detail"
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "artist": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Artist"
+          },
+          "year": {
+            "anyOf": [
+              { "type": "integer", "maximum": 2100.0, "minimum": 1900.0 },
+              { "type": "null" }
+            ],
+            "title": "Year"
+          },
+          "coverUrl": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Coverurl"
           }
         },
+        "type": "object",
+        "required": ["title", "artist"],
+        "title": "AddPlaylistTrackRequest"
+      },
+      "AssistantMessageCancelledEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "message.assistant_cancelled",
+            "title": "Type",
+            "default": "message.assistant_cancelled"
+          },
+          "messageId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Messageid"
+          }
+        },
+        "type": "object",
+        "required": ["messageId"],
+        "title": "AssistantMessageCancelledEvent"
+      },
+      "AssistantMessageChunkEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "message.assistant_chunk",
+            "title": "Type",
+            "default": "message.assistant_chunk"
+          },
+          "messageId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Messageid"
+          },
+          "chunk": { "type": "string", "title": "Chunk" }
+        },
+        "type": "object",
+        "required": ["messageId", "chunk"],
+        "title": "AssistantMessageChunkEvent"
+      },
+      "AssistantMessageCompletedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "message.assistant_completed",
+            "title": "Type",
+            "default": "message.assistant_completed"
+          },
+          "message": { "$ref": "#/components/schemas/MessagePayload" }
+        },
+        "type": "object",
+        "required": ["message"],
+        "title": "AssistantMessageCompletedEvent"
+      },
+      "AssistantMessageStartedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "message.assistant_started",
+            "title": "Type",
+            "default": "message.assistant_started"
+          },
+          "messageId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Messageid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          }
+        },
+        "type": "object",
+        "required": ["messageId", "createdAt"],
+        "title": "AssistantMessageStartedEvent"
+      },
+      "DoneEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "done",
+            "title": "Type",
+            "default": "done"
+          }
+        },
+        "type": "object",
+        "title": "DoneEvent"
+      },
+      "ErrorDto": {
+        "properties": { "detail": { "type": "string", "title": "Detail" } },
         "type": "object",
         "required": ["detail"],
         "title": "ErrorDto"
       },
-      "ErrorResponse": {
+      "ErrorEvent": {
         "properties": {
-          "detail": {
+          "type": {
             "type": "string",
-            "title": "Detail"
+            "const": "error",
+            "title": "Type",
+            "default": "error"
+          },
+          "code": { "type": "string", "title": "Code" },
+          "message": { "type": "string", "title": "Message" },
+          "correlationId": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Correlationid"
           }
         },
+        "type": "object",
+        "required": ["code", "message"],
+        "title": "ErrorEvent"
+      },
+      "ErrorResponse": {
+        "properties": { "detail": { "type": "string", "title": "Detail" } },
         "type": "object",
         "required": ["detail"],
         "title": "ErrorResponse"
       },
+      "FollowUpAnswerRequest": {
+        "properties": {
+          "optionId": {
+            "anyOf": [
+              { "type": "string", "maxLength": 120, "minLength": 1 },
+              { "type": "null" }
+            ],
+            "title": "Optionid"
+          },
+          "text": {
+            "anyOf": [
+              { "type": "string", "maxLength": 4000, "minLength": 1 },
+              { "type": "null" }
+            ],
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "title": "FollowUpAnswerRequest"
+      },
+      "FollowUpAnsweredEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "follow_up.answered",
+            "title": "Type",
+            "default": "follow_up.answered"
+          },
+          "groupId": { "type": "string", "format": "uuid", "title": "Groupid" },
+          "questionId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Questionid"
+          },
+          "answerText": { "type": "string", "title": "Answertext" },
+          "answeredOptionId": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Answeredoptionid"
+          }
+        },
+        "type": "object",
+        "required": ["groupId", "questionId", "answerText"],
+        "title": "FollowUpAnsweredEvent"
+      },
+      "FollowUpGroupAddedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "follow_up.group_added",
+            "title": "Type",
+            "default": "follow_up.group_added"
+          },
+          "messageId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Messageid"
+          },
+          "group": {
+            "$ref": "#/components/schemas/FollowUpQuestionGroupPayload"
+          }
+        },
+        "type": "object",
+        "required": ["messageId", "group"],
+        "title": "FollowUpGroupAddedEvent"
+      },
+      "FollowUpGroupCompletedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "follow_up.group_completed",
+            "title": "Type",
+            "default": "follow_up.group_completed"
+          },
+          "groupId": { "type": "string", "format": "uuid", "title": "Groupid" }
+        },
+        "type": "object",
+        "required": ["groupId"],
+        "title": "FollowUpGroupCompletedEvent"
+      },
+      "FollowUpOptionPayload": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "label": { "type": "string", "title": "Label" }
+        },
+        "type": "object",
+        "required": ["id", "label"],
+        "title": "FollowUpOptionPayload"
+      },
+      "FollowUpQuestionGroupPayload": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "questions": {
+            "items": { "$ref": "#/components/schemas/FollowUpQuestionPayload" },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": ["id", "questions"],
+        "title": "FollowUpQuestionGroupPayload"
+      },
+      "FollowUpQuestionPayload": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "question": { "type": "string", "title": "Question" },
+          "options": {
+            "items": { "$ref": "#/components/schemas/FollowUpOptionPayload" },
+            "type": "array",
+            "title": "Options"
+          },
+          "state": { "$ref": "#/components/schemas/FollowUpQuestionState" },
+          "answerText": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Answertext"
+          },
+          "answeredOptionId": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Answeredoptionid"
+          }
+        },
+        "type": "object",
+        "required": ["id", "question", "options", "state"],
+        "title": "FollowUpQuestionPayload"
+      },
+      "FollowUpQuestionState": {
+        "type": "string",
+        "enum": ["pending", "answered", "skipped"],
+        "title": "FollowUpQuestionState"
+      },
+      "FollowUpSkippedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "follow_up.skipped",
+            "title": "Type",
+            "default": "follow_up.skipped"
+          },
+          "groupId": { "type": "string", "format": "uuid", "title": "Groupid" },
+          "questionId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Questionid"
+          }
+        },
+        "type": "object",
+        "required": ["groupId", "questionId"],
+        "title": "FollowUpSkippedEvent"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
+            "items": { "$ref": "#/components/schemas/ValidationError" },
             "type": "array",
             "title": "Detail"
           }
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "MessagePayload": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "role": { "$ref": "#/components/schemas/MessageRole" },
+          "content": { "type": "string", "title": "Content" },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          },
+          "toolCallGroup": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/ToolCallGroupPayload" },
+              { "type": "null" }
+            ]
+          },
+          "followUpGroup": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FollowUpQuestionGroupPayload" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": ["id", "role", "content", "createdAt"],
+        "title": "MessagePayload"
+      },
+      "MessageResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "role": { "$ref": "#/components/schemas/MessageRole" },
+          "content": { "type": "string", "title": "Content" },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          }
+        },
+        "type": "object",
+        "required": ["id", "role", "content", "createdAt"],
+        "title": "MessageResponse"
+      },
+      "MessageRole": {
+        "type": "string",
+        "enum": ["user", "assistant"],
+        "title": "MessageRole"
+      },
+      "PlaylistPayload": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Name"
+          },
+          "tracks": {
+            "items": { "$ref": "#/components/schemas/PlaylistTrackPayload" },
+            "type": "array",
+            "title": "Tracks"
+          }
+        },
+        "type": "object",
+        "required": ["id", "tracks"],
+        "title": "PlaylistPayload"
+      },
+      "PlaylistSetEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "playlist.set",
+            "title": "Type",
+            "default": "playlist.set"
+          },
+          "playlist": { "$ref": "#/components/schemas/PlaylistPayload" }
+        },
+        "type": "object",
+        "required": ["playlist"],
+        "title": "PlaylistSetEvent"
+      },
+      "PlaylistTrackAddedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "playlist.track_added",
+            "title": "Type",
+            "default": "playlist.track_added"
+          },
+          "playlistId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Playlistid"
+          },
+          "track": { "$ref": "#/components/schemas/PlaylistTrackPayload" }
+        },
+        "type": "object",
+        "required": ["playlistId", "track"],
+        "title": "PlaylistTrackAddedEvent"
+      },
+      "PlaylistTrackPayload": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "artist": { "type": "string", "title": "Artist" },
+          "year": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Year"
+          },
+          "coverUrl": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Coverurl"
+          }
+        },
+        "type": "object",
+        "required": ["id", "title", "artist"],
+        "title": "PlaylistTrackPayload"
+      },
+      "PlaylistTrackRemovedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "playlist.track_removed",
+            "title": "Type",
+            "default": "playlist.track_removed"
+          },
+          "playlistId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Playlistid"
+          },
+          "trackId": { "type": "string", "format": "uuid", "title": "Trackid" }
+        },
+        "type": "object",
+        "required": ["playlistId", "trackId"],
+        "title": "PlaylistTrackRemovedEvent"
       },
       "SendMessageRequest": {
         "properties": {
@@ -674,82 +1340,154 @@
         "required": ["content"],
         "title": "SendMessageRequest"
       },
-      "MessageResponse": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "role": {
-            "$ref": "#/components/schemas/MessageRole"
-          },
-          "content": {
-            "type": "string",
-            "title": "Content"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          }
-        },
-        "type": "object",
-        "required": ["id", "role", "content", "created_at"],
-        "title": "MessageResponse"
-      },
-      "MessageRole": {
-        "type": "string",
-        "enum": ["user", "assistant"],
-        "title": "MessageRole"
-      },
       "SessionCreateRequest": {
         "properties": {
-          "initial_prompt": {
+          "initialPrompt": {
             "type": "string",
             "maxLength": 4000,
             "minLength": 1,
-            "title": "Initial Prompt"
+            "title": "Initialprompt"
           }
         },
         "type": "object",
-        "required": ["initial_prompt"],
+        "required": ["initialPrompt"],
         "title": "SessionCreateRequest"
+      },
+      "SessionEventSchema": {
+        "properties": {
+          "serverEvent": {
+            "anyOf": [
+              {
+                "oneOf": [
+                  { "$ref": "#/components/schemas/SessionSnapshotEvent" },
+                  { "$ref": "#/components/schemas/SessionTitleGeneratedEvent" },
+                  { "$ref": "#/components/schemas/UserMessageAppendedEvent" },
+                  {
+                    "$ref": "#/components/schemas/AssistantMessageStartedEvent"
+                  },
+                  { "$ref": "#/components/schemas/AssistantMessageChunkEvent" },
+                  {
+                    "$ref": "#/components/schemas/AssistantMessageCompletedEvent"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AssistantMessageCancelledEvent"
+                  },
+                  { "$ref": "#/components/schemas/ToolCallGroupAddedEvent" },
+                  { "$ref": "#/components/schemas/ToolCallResolvedEvent" },
+                  { "$ref": "#/components/schemas/ToolCallFailedEvent" },
+                  {
+                    "$ref": "#/components/schemas/ToolCallGroupCompletedEvent"
+                  },
+                  { "$ref": "#/components/schemas/FollowUpGroupAddedEvent" },
+                  { "$ref": "#/components/schemas/FollowUpAnsweredEvent" },
+                  { "$ref": "#/components/schemas/FollowUpSkippedEvent" },
+                  {
+                    "$ref": "#/components/schemas/FollowUpGroupCompletedEvent"
+                  },
+                  { "$ref": "#/components/schemas/PlaylistSetEvent" },
+                  { "$ref": "#/components/schemas/PlaylistTrackAddedEvent" },
+                  { "$ref": "#/components/schemas/PlaylistTrackRemovedEvent" },
+                  { "$ref": "#/components/schemas/DoneEvent" },
+                  { "$ref": "#/components/schemas/ErrorEvent" }
+                ],
+                "discriminator": {
+                  "propertyName": "type",
+                  "mapping": {
+                    "done": "#/components/schemas/DoneEvent",
+                    "error": "#/components/schemas/ErrorEvent",
+                    "follow_up.answered": "#/components/schemas/FollowUpAnsweredEvent",
+                    "follow_up.group_added": "#/components/schemas/FollowUpGroupAddedEvent",
+                    "follow_up.group_completed": "#/components/schemas/FollowUpGroupCompletedEvent",
+                    "follow_up.skipped": "#/components/schemas/FollowUpSkippedEvent",
+                    "message.assistant_cancelled": "#/components/schemas/AssistantMessageCancelledEvent",
+                    "message.assistant_chunk": "#/components/schemas/AssistantMessageChunkEvent",
+                    "message.assistant_completed": "#/components/schemas/AssistantMessageCompletedEvent",
+                    "message.assistant_started": "#/components/schemas/AssistantMessageStartedEvent",
+                    "message.user_appended": "#/components/schemas/UserMessageAppendedEvent",
+                    "playlist.set": "#/components/schemas/PlaylistSetEvent",
+                    "playlist.track_added": "#/components/schemas/PlaylistTrackAddedEvent",
+                    "playlist.track_removed": "#/components/schemas/PlaylistTrackRemovedEvent",
+                    "session.snapshot": "#/components/schemas/SessionSnapshotEvent",
+                    "session.title_generated": "#/components/schemas/SessionTitleGeneratedEvent",
+                    "tool_call.failed": "#/components/schemas/ToolCallFailedEvent",
+                    "tool_call.group_added": "#/components/schemas/ToolCallGroupAddedEvent",
+                    "tool_call.group_completed": "#/components/schemas/ToolCallGroupCompletedEvent",
+                    "tool_call.resolved": "#/components/schemas/ToolCallResolvedEvent"
+                  }
+                }
+              },
+              { "type": "null" }
+            ],
+            "title": "Serverevent",
+            "description": "Any event the backend may push over the stream."
+          }
+        },
+        "type": "object",
+        "title": "SessionEventSchema",
+        "description": "References every server event shape for OpenAPI client generation."
       },
       "SessionResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "created_at": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "createdAt": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Createdat"
           },
           "messages": {
-            "items": {
-              "$ref": "#/components/schemas/MessageResponse"
-            },
+            "items": { "$ref": "#/components/schemas/MessageResponse" },
             "type": "array",
             "title": "Messages"
           }
         },
         "type": "object",
-        "required": ["id", "title", "created_at", "messages"],
+        "required": ["id", "title", "createdAt", "messages"],
         "title": "SessionResponse"
+      },
+      "SessionSnapshotEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "session.snapshot",
+            "title": "Type",
+            "default": "session.snapshot"
+          },
+          "session": { "$ref": "#/components/schemas/SessionSnapshotPayload" }
+        },
+        "type": "object",
+        "required": ["session"],
+        "title": "SessionSnapshotEvent"
+      },
+      "SessionSnapshotPayload": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          },
+          "messages": {
+            "items": { "$ref": "#/components/schemas/MessagePayload" },
+            "type": "array",
+            "title": "Messages"
+          },
+          "playlist": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/PlaylistPayload" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": ["id", "title", "createdAt", "messages"],
+        "title": "SessionSnapshotPayload"
       },
       "SessionSummaryListResponse": {
         "properties": {
           "items": {
-            "items": {
-              "$ref": "#/components/schemas/SessionSummaryResponse"
-            },
+            "items": { "$ref": "#/components/schemas/SessionSummaryResponse" },
             "type": "array",
             "title": "Items"
           }
@@ -760,29 +1498,41 @@
       },
       "SessionSummaryResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "created_at": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "createdAt": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Createdat"
           },
-          "last_activity_at": {
+          "lastActivityAt": {
             "type": "string",
             "format": "date-time",
-            "title": "Last Activity At"
+            "title": "Lastactivityat"
           }
         },
         "type": "object",
-        "required": ["id", "title", "created_at", "last_activity_at"],
+        "required": ["id", "title", "createdAt", "lastActivityAt"],
         "title": "SessionSummaryResponse"
+      },
+      "SessionTitleGeneratedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "session.title_generated",
+            "title": "Type",
+            "default": "session.title_generated"
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sessionid"
+          },
+          "title": { "type": "string", "title": "Title" }
+        },
+        "type": "object",
+        "required": ["sessionId", "title"],
+        "title": "SessionTitleGeneratedEvent"
       },
       "SessionUpdateRequest": {
         "properties": {
@@ -799,61 +1549,24 @@
       },
       "SpotifyTrackResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "artist": {
-            "type": "string",
-            "title": "Artist"
-          },
+          "id": { "type": "string", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "artist": { "type": "string", "title": "Artist" },
           "album": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Album"
           },
           "year": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Year"
           },
-          "cover_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cover Url"
+          "coverUrl": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Coverurl"
           },
-          "preview_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Preview Url"
+          "previewUrl": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Previewurl"
           }
         },
         "type": "object",
@@ -863,9 +1576,7 @@
       "SpotifyTrackSearchResponse": {
         "properties": {
           "items": {
-            "items": {
-              "$ref": "#/components/schemas/SpotifyTrackResponse"
-            },
+            "items": { "$ref": "#/components/schemas/SpotifyTrackResponse" },
             "type": "array",
             "title": "Items"
           }
@@ -874,62 +1585,160 @@
         "required": ["items"],
         "title": "SpotifyTrackSearchResponse"
       },
-      "UserMeResponse": {
+      "ToolCallFailedEvent": {
         "properties": {
-          "id": {
+          "type": {
+            "type": "string",
+            "const": "tool_call.failed",
+            "title": "Type",
+            "default": "tool_call.failed"
+          },
+          "groupId": { "type": "string", "format": "uuid", "title": "Groupid" },
+          "toolCallId": { "type": "string", "title": "Toolcallid" },
+          "error": { "type": "string", "title": "Error" }
+        },
+        "type": "object",
+        "required": ["groupId", "toolCallId", "error"],
+        "title": "ToolCallFailedEvent"
+      },
+      "ToolCallGroupAddedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "tool_call.group_added",
+            "title": "Type",
+            "default": "tool_call.group_added"
+          },
+          "messageId": {
             "type": "string",
             "format": "uuid",
-            "title": "Id"
+            "title": "Messageid"
           },
-          "name": {
+          "group": { "$ref": "#/components/schemas/ToolCallGroupPayload" }
+        },
+        "type": "object",
+        "required": ["messageId", "group"],
+        "title": "ToolCallGroupAddedEvent"
+      },
+      "ToolCallGroupCompletedEvent": {
+        "properties": {
+          "type": {
             "type": "string",
-            "title": "Name"
+            "const": "tool_call.group_completed",
+            "title": "Type",
+            "default": "tool_call.group_completed"
           },
-          "email": {
-            "type": "string",
-            "title": "Email"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
+          "groupId": { "type": "string", "format": "uuid", "title": "Groupid" }
+        },
+        "type": "object",
+        "required": ["groupId"],
+        "title": "ToolCallGroupCompletedEvent"
+      },
+      "ToolCallGroupPayload": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "calls": {
+            "items": { "$ref": "#/components/schemas/ToolCallPayload" },
+            "type": "array",
+            "title": "Calls"
           }
         },
         "type": "object",
-        "required": ["id", "name", "email", "created_at"],
+        "required": ["id", "calls"],
+        "title": "ToolCallGroupPayload"
+      },
+      "ToolCallPayload": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "function": { "$ref": "#/components/schemas/ToolFunctionPayload" },
+          "state": { "$ref": "#/components/schemas/ToolCallState" },
+          "result": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Result"
+          },
+          "error": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": ["id", "function", "state"],
+        "title": "ToolCallPayload"
+      },
+      "ToolCallResolvedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "tool_call.resolved",
+            "title": "Type",
+            "default": "tool_call.resolved"
+          },
+          "groupId": { "type": "string", "format": "uuid", "title": "Groupid" },
+          "toolCallId": { "type": "string", "title": "Toolcallid" },
+          "result": { "type": "string", "title": "Result" }
+        },
+        "type": "object",
+        "required": ["groupId", "toolCallId", "result"],
+        "title": "ToolCallResolvedEvent"
+      },
+      "ToolCallState": {
+        "type": "string",
+        "enum": ["pending", "completed", "failed"],
+        "title": "ToolCallState"
+      },
+      "ToolFunctionPayload": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "arguments": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Arguments"
+          }
+        },
+        "type": "object",
+        "required": ["name", "arguments"],
+        "title": "ToolFunctionPayload"
+      },
+      "UserMeResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "email": { "type": "string", "title": "Email" },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          }
+        },
+        "type": "object",
+        "required": ["id", "name", "email", "createdAt"],
         "title": "UserMeResponse"
+      },
+      "UserMessageAppendedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "message.user_appended",
+            "title": "Type",
+            "default": "message.user_appended"
+          },
+          "message": { "$ref": "#/components/schemas/MessagePayload" }
+        },
+        "type": "object",
+        "required": ["message"],
+        "title": "UserMessageAppendedEvent"
       },
       "ValidationError": {
         "properties": {
           "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
             "type": "array",
             "title": "Location"
           },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
-          }
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
         },
         "type": "object",
         "required": ["loc", "msg", "type"],

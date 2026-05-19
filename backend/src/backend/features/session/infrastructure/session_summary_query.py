@@ -7,7 +7,7 @@ from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
     SessionSummaryQuery,
 )
-from backend.features.session.infrastructure.orm import SessionEntity
+from backend.infrastructure.database.orm import SessionModel
 
 
 class SqlSessionSummaryQuery(SessionSummaryQuery):
@@ -23,13 +23,13 @@ class SqlSessionSummaryQuery(SessionSummaryQuery):
     ) -> list[SessionSummary]:
         stmt = (
             select(
-                SessionEntity.id,
-                SessionEntity.title,
-                SessionEntity.created_at,
-                SessionEntity.last_activity_at,
+                SessionModel.id,
+                SessionModel.title,
+                SessionModel.created_at,
+                SessionModel.last_activity_at,
             )
-            .where(SessionEntity.owner_id == owner_id)
-            .order_by(SessionEntity.last_activity_at.desc())
+            .where(SessionModel.owner_id == owner_id)
+            .order_by(SessionModel.last_activity_at.desc())
             .limit(limit)
             .offset(offset)
         )
@@ -54,14 +54,14 @@ class SqlSessionSummaryQuery(SessionSummaryQuery):
     ) -> list[SessionSummary]:
         stmt = (
             select(
-                SessionEntity.id,
-                SessionEntity.title,
-                SessionEntity.created_at,
-                SessionEntity.last_activity_at,
+                SessionModel.id,
+                SessionModel.title,
+                SessionModel.created_at,
+                SessionModel.last_activity_at,
             )
-            .where(SessionEntity.owner_id == owner_id)
-            .where(SessionEntity.title.ilike(f"%{query.strip()}%"))
-            .order_by(SessionEntity.last_activity_at.desc())
+            .where(SessionModel.owner_id == owner_id)
+            .where(SessionModel.title.ilike(f"%{query.strip()}%"))
+            .order_by(SessionModel.last_activity_at.desc())
             .limit(limit)
             .offset(offset)
         )

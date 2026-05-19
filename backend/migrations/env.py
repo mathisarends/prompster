@@ -7,8 +7,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-from backend.features.user.infrastructure.orm import UserEntity
-from backend.features.session.infrastructure.orm import SessionEntity
+from backend.infrastructure.database.orm import SessionModel, UserModel
 from backend.infrastructure.database.settings import DatabaseSettings
 
 # this is the Alembic Config object, which provides
@@ -27,7 +26,7 @@ except Exception:
     pass
 
 # Ensure model modules are imported so SQLModel metadata is populated.
-_ = (UserEntity, SessionEntity)
+_ = (UserModel, SessionModel)
 
 target_metadata = SQLModel.metadata
 

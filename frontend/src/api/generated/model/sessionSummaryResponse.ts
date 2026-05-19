@@ -9,6 +9,6 @@
 export interface SessionSummaryResponse {
   id: string;
   title: string;
-  created_at: string;
-  last_activity_at: string;
+  createdAt: string;
+  lastActivityAt: string;
 }

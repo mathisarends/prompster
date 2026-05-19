@@ -102,6 +102,10 @@ export const ChatPage = () => {
       const shouldAppendUserMessage = options?.appendUserMessage ?? true;
       const controller = new AbortController();
       const assistantMessageId = `assistant-${crypto.randomUUID()}`;
+      let streamedAssistantMessageId = assistantMessageId;
+      const isStreamedAssistantMessage = (message: ChatMessage) =>
+        message.id === assistantMessageId ||
+        message.id === streamedAssistantMessageId;
 
       abortControllerRef.current = controller;
       setIsSending(true);
@@ -130,10 +134,38 @@ export const ChatPage = () => {
           { content: text },
           {
             signal: controller.signal,
+            onEvent: (event) => {
+              if (event.type === "message.assistant_started") {
+                streamedAssistantMessageId = event.messageId;
+                setMessages((currentMessages) =>
+                  currentMessages.map((message) =>
+                    isStreamedAssistantMessage(message)
+                      ? { ...message, id: event.messageId }
+                      : message,
+                  ),
+                );
+              }
+
+              if (event.type === "message.assistant_completed") {
+                setMessages((currentMessages) =>
+                  currentMessages.map((message) =>
+                    isStreamedAssistantMessage(message) ||
+                    message.id === event.message.id
+                      ? {
+                          ...message,
+                          id: event.message.id,
+                          text: event.message.content,
+                          isStreaming: false,
+                        }
+                      : message,
+                  ),
+                );
+              }
+            },
             onChunk: (chunk) => {
               setMessages((currentMessages) =>
                 currentMessages.map((message) =>
-                  message.id === assistantMessageId
+                  isStreamedAssistantMessage(message)
                     ? { ...message, text: message.text + chunk }
                     : message,
                 ),
@@ -144,7 +176,7 @@ export const ChatPage = () => {
 
         setMessages((currentMessages) =>
           currentMessages.map((message) =>
-            message.id === assistantMessageId
+            isStreamedAssistantMessage(message)
               ? { ...message, isStreaming: false }
               : message,
           ),
@@ -154,7 +186,7 @@ export const ChatPage = () => {
         if (!controller.signal.aborted) {
           setMessages((currentMessages) =>
             currentMessages.map((message) =>
-              message.id === assistantMessageId
+              isStreamedAssistantMessage(message)
                 ? {
                     ...message,
                     text:

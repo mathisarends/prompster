@@ -1,11 +1,11 @@
 from datetime import datetime
 from uuid import UUID
 
-from backend.features.session.infrastructure.orm import (
-    PlaylistTrackEntity,
-    SessionEntity,
-    SessionMessageEntity,
-    SessionPlaylistEntity,
+from backend.infrastructure.database.orm import (
+    PlaylistTrackModel,
+    SessionMessageModel,
+    SessionModel,
+    SessionPlaylistModel,
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,11 +31,11 @@ from backend.features.session.domain import (
 from backend.infrastructure.database.repository import Repository
 
 
-class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository):
+class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository):
     def __init__(self, session: AsyncSession) -> None:
-        super().__init__(session=session, model=SessionEntity)
+        super().__init__(session=session, model=SessionModel)
 
-    def _to_domain(self, orm: SessionEntity) -> Session:
+    def _to_domain(self, orm: SessionModel) -> Session:
         messages = sorted(orm.messages, key=lambda item: item.position)
         return Session(
             id=orm.id,
@@ -46,8 +46,8 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
             created_time=orm.created_at,
         )
 
-    def _to_orm(self, domain: Session) -> SessionEntity:
-        orm = SessionEntity(
+    def _to_orm(self, domain: Session) -> SessionModel:
+        orm = SessionModel(
             id=domain.id,
             title=domain.title,
             owner_id=domain.owner_id,
@@ -93,7 +93,7 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
     async def save(self, *, session: Session) -> Session:
         orm = await self.session.scalar(self._detail_query(session_id=session.id))
         if orm is None:
-            orm = SessionEntity(id=session.id)
+            orm = SessionModel(id=session.id)
             self.session.add(orm)
 
         orm.title = session.title
@@ -120,12 +120,12 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
 
     def _detail_query(self, *, session_id: UUID):
         return (
-            select(SessionEntity)
-            .where(SessionEntity.id == session_id)
+            select(SessionModel)
+            .where(SessionModel.id == session_id)
             .options(
-                selectinload(SessionEntity.messages),
-                selectinload(SessionEntity.playlist).selectinload(
-                    SessionPlaylistEntity.tracks
+                selectinload(SessionModel.messages),
+                selectinload(SessionModel.playlist).selectinload(
+                    SessionPlaylistModel.tracks
                 ),
             )
         )
@@ -145,8 +145,8 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
         message: SessionMessage,
         session_id: UUID,
         position: int,
-    ) -> SessionMessageEntity:
-        return SessionMessageEntity(
+    ) -> SessionMessageModel:
+        return SessionMessageModel(
             id=message.id,
             session_id=session_id,
             position=position,
@@ -165,7 +165,7 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
             created_at=message.created_at,
         )
 
-    def _to_domain_message(self, orm: SessionMessageEntity) -> SessionMessage:
+    def _to_domain_message(self, orm: SessionMessageModel) -> SessionMessage:
         tool_call_group = (
             self._to_domain_tool_call_group(orm.tool_call_group)
             if isinstance(orm.tool_call_group, dict)
@@ -333,11 +333,11 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
         *,
         domain_playlist: Playlist | None,
         session_id: UUID,
-    ) -> SessionPlaylistEntity | None:
+    ) -> SessionPlaylistModel | None:
         if domain_playlist is None:
             return None
 
-        orm_playlist = SessionPlaylistEntity(
+        orm_playlist = SessionPlaylistModel(
             id=domain_playlist.id,
             session_id=session_id,
             name=domain_playlist.name,
@@ -355,7 +355,7 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
 
     def _to_domain_playlist(
         self,
-        orm_playlist: SessionPlaylistEntity | None,
+        orm_playlist: SessionPlaylistModel | None,
     ) -> Playlist | None:
         if orm_playlist is None:
             return None
@@ -374,8 +374,8 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
         track: PlaylistTrack,
         playlist_id: UUID,
         position: int,
-    ) -> PlaylistTrackEntity:
-        return PlaylistTrackEntity(
+    ) -> PlaylistTrackModel:
+        return PlaylistTrackModel(
             id=track.id,
             playlist_id=playlist_id,
             position=position,
@@ -386,7 +386,7 @@ class SqlSessionRepository(Repository[SessionEntity, Session], SessionRepository
             created_at=track.created_at,
         )
 
-    def _to_domain_track(self, orm_track: PlaylistTrackEntity) -> PlaylistTrack:
+    def _to_domain_track(self, orm_track: PlaylistTrackModel) -> PlaylistTrack:
         return PlaylistTrack(
             id=orm_track.id,
             title=orm_track.title,

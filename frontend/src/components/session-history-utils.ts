@@ -47,12 +47,12 @@ export const toSessionHistoryEntries = (
   return [...sessions]
     .sort(
       (left, right) =>
-        new Date(right.last_activity_at).getTime() -
-        new Date(left.last_activity_at).getTime(),
+        new Date(right.lastActivityAt).getTime() -
+        new Date(left.lastActivityAt).getTime(),
     )
     .map((session) => ({
       ...session,
-      group: getSessionHistoryGroup(session.last_activity_at),
+      group: getSessionHistoryGroup(session.lastActivityAt),
     }));
 };
 

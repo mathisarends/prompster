@@ -58,6 +58,9 @@ class SessionService:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         await self._session_repository.delete(session_id=session.id)
 
+    async def save(self, *, session: Session) -> Session:
+        return await self._session_repository.save(session=session)
+
     async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
         session = await self._session_repository.get_by_id(session_id=session_id)
         session.has_access(user_id)
