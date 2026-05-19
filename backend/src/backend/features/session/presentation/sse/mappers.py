@@ -1,6 +1,7 @@
 from backend.features.session.application import (
     SessionEvent,
     SessionFollowUpAnswered,
+    SessionFollowUpGroupCompleted,
     SessionFollowUpSkipped,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
@@ -19,6 +20,7 @@ from backend.features.session.domain import (
 )
 from backend.features.session.presentation.sse.events import (
     FollowUpAnsweredEvent,
+    FollowUpGroupCompletedEvent,
     FollowUpOptionPayload,
     FollowUpQuestionGroupPayload,
     FollowUpQuestionPayload,
@@ -61,6 +63,9 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
             group_id=event.group_id,
             question_id=event.question_id,
         )
+
+    if isinstance(event, SessionFollowUpGroupCompleted):
+        return FollowUpGroupCompletedEvent(group_id=event.group_id)
 
     if isinstance(event, SessionPlaylistSet):
         return PlaylistSetEvent(playlist=_to_playlist_payload(event.playlist))

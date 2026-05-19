@@ -33,6 +33,11 @@ class SessionFollowUpSkipped:
 
 
 @dataclass(frozen=True)
+class SessionFollowUpGroupCompleted:
+    group_id: UUID
+
+
+@dataclass(frozen=True)
 class SessionPlaylistSet:
     playlist: Playlist
 
@@ -54,6 +59,7 @@ type SessionEvent = (
     | SessionUserMessageAppended
     | SessionFollowUpAnswered
     | SessionFollowUpSkipped
+    | SessionFollowUpGroupCompleted
     | SessionPlaylistSet
     | SessionPlaylistTrackAdded
     | SessionPlaylistTrackRemoved

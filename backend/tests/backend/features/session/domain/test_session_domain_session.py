@@ -276,6 +276,26 @@ class TestSessionDomainSession:
         assert skipped is question
         assert skipped.state == FollowUpQuestionState.SKIPPED
 
+    def test_skip_remaining_follow_ups_marks_only_pending_questions(
+        self, session: Session
+    ) -> None:
+        first_question = make_pending_follow_up("Welches Genre?")
+        second_question = make_pending_follow_up("Welche Stimmung?")
+        third_question = make_pending_follow_up("Welches Tempo?")
+        session.add_assistant_message(
+            follow_up_questions=[first_question, second_question, third_question]
+        )
+        first_question.answer_with_text("house")
+
+        skipped_questions = session.skip_remaining_follow_ups(
+            question_id=second_question.id
+        )
+
+        assert skipped_questions == (second_question, third_question)
+        assert first_question.state == FollowUpQuestionState.ANSWERED
+        assert second_question.state == FollowUpQuestionState.SKIPPED
+        assert third_question.state == FollowUpQuestionState.SKIPPED
+
     def test_answer_follow_up_raises_without_pending_group(
         self, session: Session
     ) -> None:

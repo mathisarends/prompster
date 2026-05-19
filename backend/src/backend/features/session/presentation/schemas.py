@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import StrEnum
 from typing import Self
 from uuid import UUID
 
@@ -45,7 +46,13 @@ class SendMessageRequest(Schema):
     content: str = Field(min_length=1, max_length=4000)
 
 
+class FollowUpAction(StrEnum):
+    ANSWER = "answer"
+    SKIP_REMAINING = "skip_remaining"
+
+
 class FollowUpAnswerRequest(Schema):
+    question_id: UUID
     option_id: str | None = Field(default=None, min_length=1, max_length=120)
     text: str | None = Field(default=None, min_length=1, max_length=4000)
 
@@ -55,6 +62,24 @@ class FollowUpAnswerRequest(Schema):
         has_text = self.text is not None
         if has_option == has_text:
             raise ValueError("Provide exactly one of option_id or text.")
+        return self
+
+
+class FollowUpRequest(Schema):
+    action: FollowUpAction
+    answers: list[FollowUpAnswerRequest] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def require_action_fields(self) -> Self:
+        if self.action == FollowUpAction.ANSWER:
+            if not self.answers:
+                raise ValueError(
+                    "Provide at least one answer for a follow-up answer action."
+                )
+            return self
+
+        if self.answers:
+            raise ValueError("Do not provide answers for a follow-up skip action.")
         return self
 
 

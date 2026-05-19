@@ -179,6 +179,15 @@ class Session(Aggregate):
         group = self._require_pending_follow_up_group()
         return group.skip(question_id)
 
+    def skip_remaining_follow_ups(
+        self, question_id: UUID
+    ) -> tuple[FollowUpQuestion, ...]:
+        group = self._require_pending_follow_up_group()
+        return tuple(group.skip_remaining_from(question_id))
+
+    def pending_follow_up_group(self) -> FollowUpQuestionGroup | None:
+        return self._find_pending_follow_up_group()
+
     def require_pending_follow_up_group(self) -> FollowUpQuestionGroup:
         group = self._find_pending_follow_up_group()
         if group is None:

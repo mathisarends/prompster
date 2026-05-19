@@ -5,6 +5,7 @@ from uuid import UUID
 from backend.features.session.application.events import (
     SessionEvent,
     SessionFollowUpAnswered,
+    SessionFollowUpGroupCompleted,
     SessionFollowUpSkipped,
     SessionUserMessageAppended,
 )
@@ -77,6 +78,7 @@ class SessionService:
         content: str,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        self._prepare_follow_up_context_for_message(session=session)
         message = session.add_user_message(content=content)
         await self._session_repository.save(session=session)
         yield SessionUserMessageAppended(message=message)
@@ -104,6 +106,8 @@ class SessionService:
             )
         await self._session_repository.save(session=session)
         yield SessionFollowUpAnswered(group_id=group.id, question=question)
+        if group.is_complete:
+            yield SessionFollowUpGroupCompleted(group_id=group.id)
 
     async def skip_follow_up(
         self,
@@ -117,6 +121,20 @@ class SessionService:
         question = session.skip_follow_up(question_id=question_id)
         await self._session_repository.save(session=session)
         yield SessionFollowUpSkipped(group_id=group.id, question_id=question.id)
+        if group.is_complete:
+            yield SessionFollowUpGroupCompleted(group_id=group.id)
+
+    async def skip_remaining_follow_ups(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+    ) -> AsyncIterator[SessionEvent]:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        skipped_group_id = self._prepare_follow_up_context_for_message(session=session)
+        await self._session_repository.save(session=session)
+        if skipped_group_id is not None:
+            yield SessionFollowUpGroupCompleted(group_id=skipped_group_id)
 
     async def add_playlist_track(
         self,
@@ -181,3 +199,17 @@ class SessionService:
             limit=limit,
             offset=offset,
         )
+
+    def _prepare_follow_up_context_for_message(
+        self, *, session: Session
+    ) -> UUID | None:
+        pending_group = session.pending_follow_up_group()
+        if pending_group is None:
+            return None
+
+        current_question = pending_group.current_question
+        if current_question is None:
+            return None
+
+        session.skip_remaining_follow_ups(question_id=current_question.id)
+        return pending_group.id

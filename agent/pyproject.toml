@@ -7,7 +7,14 @@ authors = [
     { name = "mathisarends", email = "mathisarends27@gmail.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "agentory[openai]>=0.4.0",
+    "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.1",
+    "qrcode[pil]>=8.2",
+    "spotifyify>=0.2.0",
+    "typst>=0.14.9",
+]
 
 [project.scripts]
 agent = "agent:main"

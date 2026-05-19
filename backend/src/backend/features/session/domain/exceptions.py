@@ -38,6 +38,10 @@ class FollowUpQuestionAlreadyResolvedError(Exception):
     pass
 
 
+class FollowUpQuestionOutOfOrderError(Exception):
+    pass
+
+
 class FollowUpOptionNotFoundError(Exception):
     pass
 

@@ -8,6 +8,8 @@ from backend.features.session.domain import (
     FollowUpQuestion,
     FollowUpQuestionGroup,
     FollowUpQuestionNotFoundError,
+    FollowUpQuestionOutOfOrderError,
+    FollowUpQuestionState,
 )
 
 
@@ -67,6 +69,25 @@ class TestSessionDomainFollowUpQuestionGroup:
         assert updated.answer_text == "Techno"
         assert updated.answered_option_id == "techno"
 
+    def test_answer_with_text_raises_for_later_pending_question(self) -> None:
+        first_question = make_follow_up_question(label="House")
+        second_question = make_follow_up_question(label="Tech House")
+        group = FollowUpQuestionGroup(questions=[first_question, second_question])
+
+        with pytest.raises(FollowUpQuestionOutOfOrderError, match="current pending"):
+            group.answer_with_text(second_question.id, "techno")
+
+    def test_answer_with_text_allows_next_question_after_previous_answer(self) -> None:
+        first_question = make_follow_up_question(label="House")
+        second_question = make_follow_up_question(label="Tech House")
+        group = FollowUpQuestionGroup(questions=[first_question, second_question])
+
+        group.answer_with_text(first_question.id, "house")
+        updated = group.answer_with_text(second_question.id, "techno")
+
+        assert updated is second_question
+        assert second_question.answer_text == "techno"
+
     def test_answer_with_text_raises_for_unknown_question(self) -> None:
         group = FollowUpQuestionGroup(questions=[make_follow_up_question()])
 
@@ -82,3 +103,29 @@ class TestSessionDomainFollowUpQuestionGroup:
             FollowUpQuestionNotFoundError, match="No follow-up question"
         ):
             group.skip(uuid4())
+
+    def test_skip_remaining_marks_only_pending_questions(self) -> None:
+        first_question = make_follow_up_question(label="House")
+        second_question = make_follow_up_question(label="Tech House")
+        third_question = make_follow_up_question(label="Minimal")
+        group = FollowUpQuestionGroup(
+            questions=[first_question, second_question, third_question]
+        )
+
+        first_question.answer_with_option("house")
+
+        skipped_questions = group.skip_remaining()
+
+        assert skipped_questions == [second_question, third_question]
+        assert first_question.state == FollowUpQuestionState.ANSWERED
+        assert second_question.state == FollowUpQuestionState.SKIPPED
+        assert third_question.state == FollowUpQuestionState.SKIPPED
+        assert group.is_complete is True
+
+    def test_skip_remaining_from_raises_for_later_pending_question(self) -> None:
+        first_question = make_follow_up_question(label="House")
+        second_question = make_follow_up_question(label="Tech House")
+        group = FollowUpQuestionGroup(questions=[first_question, second_question])
+
+        with pytest.raises(FollowUpQuestionOutOfOrderError, match="current pending"):
+            group.skip_remaining_from(second_question.id)

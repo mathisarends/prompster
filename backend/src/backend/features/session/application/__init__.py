@@ -1,6 +1,7 @@
 from .events import (
     SessionEvent,
     SessionFollowUpAnswered,
+    SessionFollowUpGroupCompleted,
     SessionFollowUpSkipped,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
@@ -16,6 +17,7 @@ __all__ = [
     "SearchSpotifyTracksHandler",
     "SessionEvent",
     "SessionFollowUpAnswered",
+    "SessionFollowUpGroupCompleted",
     "SessionFollowUpSkipped",
     "SessionPlaylistSet",
     "SessionPlaylistTrackAdded",

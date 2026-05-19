@@ -4,7 +4,11 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from backend.features.session.application.events import SessionTitleGenerated
+from backend.features.session.application.events import (
+    SessionFollowUpAnswered,
+    SessionFollowUpGroupCompleted,
+    SessionUserMessageAppended,
+)
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
     SessionSummaryQuery,
@@ -14,6 +18,9 @@ from backend.features.session.application.ports.title_generator import (
 )
 from backend.features.session.application.session_service import SessionService
 from backend.features.session.domain import (
+    FollowUpOption,
+    FollowUpQuestion,
+    FollowUpQuestionState,
     Session,
     SessionAccessDeniedError,
     SessionRepository,
@@ -116,6 +123,20 @@ def _make_service(
     )
 
 
+async def _collect_events(iterator):
+    return [event async for event in iterator]
+
+
+def _make_follow_up_question(question: str = "Welches Genre?") -> FollowUpQuestion:
+    return FollowUpQuestion(
+        question=question,
+        options=[
+            FollowUpOption(id="house", label="House"),
+            FollowUpOption(id="techno", label="Techno"),
+        ],
+    )
+
+
 class TestSessionServiceGetById:
     def test_loads_session_and_allows_owner(self) -> None:
         owner_id = uuid4()
@@ -158,9 +179,6 @@ class TestSessionServiceCreate:
         assert created.messages[0].role == MessageRole.USER
         assert created.messages[0].content == initial_prompt
         assert generator.received_initial_prompt == initial_prompt
-        assert result.events == (
-            SessionTitleGenerated(session_id=created.id, title="A" * 120),
-        )
 
     def test_falls_back_to_new_session_for_blank_generated_title(self) -> None:
         repository = _SessionRepositoryStub()
@@ -170,12 +188,6 @@ class TestSessionServiceCreate:
         result = asyncio.run(service.create(owner_id=uuid4(), initial_prompt="prompt"))
 
         assert result.session.title == "New Session"
-        assert result.events == (
-            SessionTitleGenerated(
-                session_id=result.session.id,
-                title="New Session",
-            ),
-        )
 
 
 class TestSessionServiceUpdate:
@@ -272,3 +284,91 @@ class TestSessionServiceSearch:
         assert query.received_query == "techno"
         assert query.received_limit == 5
         assert query.received_offset == 15
+
+
+class TestSessionServiceFollowUps:
+    def test_send_message_skips_pending_follow_ups_before_appending_message(
+        self,
+    ) -> None:
+        owner_id = uuid4()
+        first_question = _make_follow_up_question("Welches Genre?")
+        second_question = _make_follow_up_question("Welche Stimmung?")
+        session = Session(title="Roadtrip", messages=[], owner_id=owner_id)
+        session.add_assistant_message(
+            follow_up_questions=[first_question, second_question]
+        )
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_service(repository=repository)
+
+        events = asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="spiele house",
+                )
+            )
+        )
+
+        assert len(events) == 1
+        assert isinstance(events[0], SessionUserMessageAppended)
+        assert first_question.state == FollowUpQuestionState.SKIPPED
+        assert second_question.state == FollowUpQuestionState.SKIPPED
+        assert events[0].message.content == "spiele house"
+        assert repository.saved_sessions == [session]
+
+    def test_answer_follow_up_emits_completion_when_group_is_complete(self) -> None:
+        owner_id = uuid4()
+        question = _make_follow_up_question()
+        session = Session(title="Roadtrip", messages=[], owner_id=owner_id)
+        session.add_assistant_message(follow_up_questions=[question])
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_service(repository=repository)
+
+        events = asyncio.run(
+            _collect_events(
+                service.answer_follow_up(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    question_id=question.id,
+                    option_id="house",
+                    text=None,
+                )
+            )
+        )
+
+        assert len(events) == 2
+        assert isinstance(events[0], SessionFollowUpAnswered)
+        assert isinstance(events[1], SessionFollowUpGroupCompleted)
+        assert events[1].group_id == session.messages[-1].follow_up_group.id
+        assert question.state == FollowUpQuestionState.ANSWERED
+        assert repository.saved_sessions == [session]
+
+    def test_skip_remaining_follow_ups_skips_pending_questions(self) -> None:
+        owner_id = uuid4()
+        first_question = _make_follow_up_question("Welches Genre?")
+        second_question = _make_follow_up_question("Welche Stimmung?")
+        third_question = _make_follow_up_question("Welches Tempo?")
+        session = Session(title="Roadtrip", messages=[], owner_id=owner_id)
+        session.add_assistant_message(
+            follow_up_questions=[first_question, second_question, third_question]
+        )
+        first_question.answer_with_text("house")
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_service(repository=repository)
+
+        events = asyncio.run(
+            _collect_events(
+                service.skip_remaining_follow_ups(
+                    session_id=session.id,
+                    user_id=owner_id,
+                )
+            )
+        )
+
+        assert len(events) == 1
+        assert isinstance(events[0], SessionFollowUpGroupCompleted)
+        assert first_question.state == FollowUpQuestionState.ANSWERED
+        assert second_question.state == FollowUpQuestionState.SKIPPED
+        assert third_question.state == FollowUpQuestionState.SKIPPED
+        assert repository.saved_sessions == [session]

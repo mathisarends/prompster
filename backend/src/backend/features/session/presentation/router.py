@@ -18,7 +18,8 @@ from backend.features.session.presentation.mapper import (
 from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
     ErrorResponse,
-    FollowUpAnswerRequest,
+    FollowUpAction,
+    FollowUpRequest,
     PlaylistTrackResponse,
     SendMessageRequest,
     SessionCreateRequest,
@@ -173,48 +174,50 @@ async def send_message(
 
 
 @router.post(
-    "/{session_id}/follow-ups/{question_id}/answer",
+    "/{session_id}/follow-ups",
     status_code=status.HTTP_200_OK,
-    operation_id="answer_follow_up",
+    operation_id="handle_follow_up",
     responses=_event_stream_response | _auth_errors | _bad_request | _not_found,
 )
-async def answer_session_follow_up(
+async def handle_follow_up(
     session_id: UUID,
-    question_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    body: FollowUpAnswerRequest,
+    body: FollowUpRequest,
     service: FromDishka[SessionService],
 ) -> StreamingResponse:
+    if body.action == FollowUpAction.ANSWER:
+        return stream_session_events(
+            _answer_follow_ups(
+                service=service,
+                session_id=session_id,
+                user_id=authenticated_user_id,
+                body=body,
+            )
+        )
+
     return stream_session_events(
-        service.answer_follow_up(
-            session_id=session_id,
-            user_id=authenticated_user_id,
-            question_id=question_id,
-            option_id=body.option_id,
-            text=body.text,
+        service.skip_remaining_follow_ups(
+            session_id=session_id, user_id=authenticated_user_id
         )
     )
 
 
-@router.post(
-    "/{session_id}/follow-ups/{question_id}/skip",
-    status_code=status.HTTP_200_OK,
-    operation_id="skip_follow_up",
-    responses=_event_stream_response | _auth_errors | _bad_request | _not_found,
-)
-async def skip_session_follow_up(
+async def _answer_follow_ups(
+    *,
+    service: SessionService,
     session_id: UUID,
-    question_id: UUID,
-    authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionService],
-) -> StreamingResponse:
-    return stream_session_events(
-        service.skip_follow_up(
+    user_id: UUID,
+    body: FollowUpRequest,
+):
+    for answer in body.answers:
+        async for event in service.answer_follow_up(
             session_id=session_id,
-            user_id=authenticated_user_id,
-            question_id=question_id,
-        )
-    )
+            user_id=user_id,
+            question_id=answer.question_id,
+            option_id=answer.option_id,
+            text=answer.text,
+        ):
+            yield event
 
 
 @router.post(
