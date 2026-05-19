@@ -289,6 +289,28 @@ class TestSessionServiceDelete:
             asyncio.run(service.delete(session_id=session.id, user_id=uuid4()))
 
 
+class TestSessionServiceStar:
+    def test_marks_session_as_starred_and_persists(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_management_service(repository=repository)
+
+        result = asyncio.run(service.star(session_id=session.id, user_id=owner_id))
+
+        assert result is session
+        assert result.is_starred is True
+        assert repository.saved_sessions == [session]
+
+    def test_raises_when_user_does_not_own_session(self) -> None:
+        session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_management_service(repository=repository)
+
+        with pytest.raises(SessionAccessDeniedError, match="does not have access"):
+            asyncio.run(service.star(session_id=session.id, user_id=uuid4()))
+
+
 class TestSessionServiceList:
     def test_delegates_to_session_summary_query(self) -> None:
         owner_id = uuid4()
@@ -296,6 +318,7 @@ class TestSessionServiceList:
             SessionSummary(
                 id=uuid4(),
                 title="Roadtrip",
+                is_starred=False,
                 created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
                 last_activity_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
             )
@@ -318,6 +341,7 @@ class TestSessionServiceSearch:
             SessionSummary(
                 id=uuid4(),
                 title="Techno Mix",
+                is_starred=True,
                 created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
                 last_activity_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
             )

@@ -78,6 +78,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
 
         orm.title = session.title
         orm.owner_id = session.owner_id
+        orm.is_starred = session.is_starred
         orm.created_at = session.created_at
         orm.last_activity_at = self._resolve_last_activity_at(session)
 
@@ -108,6 +109,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             title=orm.title,
             entries=[entry for _, entry in entries],
             owner_id=orm.owner_id,
+            is_starred=orm.is_starred,
             playlist=self._to_domain_playlist(orm.playlist),
             created_time=orm.created_at,
         )
@@ -117,6 +119,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             id=domain.id,
             title=domain.title,
             owner_id=domain.owner_id,
+            is_starred=domain.is_starred,
             created_at=domain.created_at,
             last_activity_at=self._resolve_last_activity_at(domain),
         )

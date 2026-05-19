@@ -54,6 +54,11 @@ class SessionService:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         await self._session_repository.delete(session_id=session.id)
 
+    async def star(self, *, session_id: UUID, user_id: UUID) -> Session:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        session.star()
+        return await self._session_repository.save(session=session)
+
     async def add_playlist_track(
         self,
         *,

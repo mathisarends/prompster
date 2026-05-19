@@ -8,6 +8,7 @@ from uuid import UUID
 class SessionSummary:
     id: UUID
     title: str
+    is_starred: bool
     created_at: datetime
     last_activity_at: datetime
 

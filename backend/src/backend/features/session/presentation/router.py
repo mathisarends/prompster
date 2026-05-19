@@ -286,6 +286,25 @@ async def update_session(
     return to_session_response(session)
 
 
+@router.post(
+    "/{session_id}/star",
+    response_model=SessionResponse,
+    status_code=status.HTTP_200_OK,
+    operation_id="star_session",
+    responses=_auth_errors | _not_found,
+)
+async def star_session(
+    session_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    service: FromDishka[SessionService],
+) -> SessionResponse:
+    session = await service.star(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+    )
+    return to_session_response(session)
+
+
 @router.delete(
     "/{session_id}",
     status_code=status.HTTP_204_NO_CONTENT,

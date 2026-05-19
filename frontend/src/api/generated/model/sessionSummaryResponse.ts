@@ -9,6 +9,7 @@
 export interface SessionSummaryResponse {
   id: string;
   title: string;
+  isStarred: boolean;
   createdAt: string;
   lastActivityAt: string;
 }

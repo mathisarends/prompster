@@ -35,6 +35,7 @@ def to_session_response(session: Session) -> SessionResponse:
     return SessionResponse(
         id=session.id,
         title=session.title,
+        is_starred=session.is_starred,
         created_at=session.created_at,
         entries=[to_entry_response(entry) for entry in session.entries],
     )
@@ -119,6 +120,7 @@ def to_session_summary_response(session: SessionSummary) -> SessionSummaryRespon
     return SessionSummaryResponse(
         id=session.id,
         title=session.title,
+        is_starred=session.is_starred,
         created_at=session.created_at,
         last_activity_at=session.last_activity_at,
     )

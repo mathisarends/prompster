@@ -33,6 +33,7 @@ class Session(Aggregate):
         title: str,
         entries: list[SessionEntry],
         owner_id: UUID,
+        is_starred: bool = False,
         playlist: Playlist | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
@@ -41,6 +42,7 @@ class Session(Aggregate):
         self._title = title
         self._entries = entries
         self._owner_id = owner_id
+        self._is_starred = is_starred
         self._playlist = playlist
 
     @property
@@ -54,6 +56,10 @@ class Session(Aggregate):
     @property
     def owner_id(self) -> UUID:
         return self._owner_id
+
+    @property
+    def is_starred(self) -> bool:
+        return self._is_starred
 
     @property
     def entries(self) -> tuple[SessionEntry, ...]:
@@ -200,6 +206,9 @@ class Session(Aggregate):
 
     def pending_tool_call_group(self) -> ToolCallGroup | None:
         return self._find_pending_tool_call_group()
+
+    def star(self) -> None:
+        self._is_starred = True
 
     def has_access(self, user_id: UUID) -> None:
         if self.owner_id != user_id:

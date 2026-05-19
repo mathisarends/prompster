@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import JSON, Column, DateTime, Index
+from sqlalchemy import JSON, Boolean, Column, DateTime, Index
 from sqlmodel import Field, Relationship, SQLModel, text
 
 
@@ -34,6 +34,11 @@ class SessionModel(DatabaseEntity, table=True):
 
     title: str
     owner_id: UUID = Field(index=True)
+    is_starred: bool = Field(
+        default=False,
+        sa_type=Boolean(),
+        sa_column_kwargs={"server_default": text("false")},
+    )
     last_activity_at: datetime = Field(sa_type=DateTime(timezone=True))
 
     user_messages: list["SessionUserMessageModel"] = Relationship(

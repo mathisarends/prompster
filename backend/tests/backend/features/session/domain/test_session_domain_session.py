@@ -95,6 +95,16 @@ class TestSessionDomainSession:
         assert isinstance(created.entries[0], UserMessage)
         assert created.entries[0].content == "spiele was ruhiges"
 
+    def test_session_is_not_starred_by_default(self, owner_id: UUID) -> None:
+        created = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+
+        assert created.is_starred is False
+
+    def test_star_marks_session_as_starred(self, session: Session) -> None:
+        session.star()
+
+        assert session.is_starred is True
+
     def test_entries_property_is_immutable(self, session: Session) -> None:
         assert isinstance(session.entries, tuple)
 

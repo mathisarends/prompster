@@ -94,6 +94,7 @@ SessionEntryResponse = Annotated[
 class SessionResponse(Schema):
     id: UUID
     title: str
+    is_starred: bool
     created_at: datetime
     entries: list[SessionEntryResponse]
 
@@ -101,6 +102,7 @@ class SessionResponse(Schema):
 class SessionSummaryResponse(Schema):
     id: UUID
     title: str
+    is_starred: bool
     created_at: datetime
     last_activity_at: datetime
 

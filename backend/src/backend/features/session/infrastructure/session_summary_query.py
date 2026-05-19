@@ -25,6 +25,7 @@ class SqlSessionSummaryQuery(SessionSummaryQuery):
             select(
                 SessionModel.id,
                 SessionModel.title,
+                SessionModel.is_starred,
                 SessionModel.created_at,
                 SessionModel.last_activity_at,
             )
@@ -38,6 +39,7 @@ class SqlSessionSummaryQuery(SessionSummaryQuery):
             SessionSummary(
                 id=row.id,
                 title=row.title,
+                is_starred=row.is_starred,
                 created_at=row.created_at or row.last_activity_at,
                 last_activity_at=row.last_activity_at or row.created_at,
             )
@@ -56,6 +58,7 @@ class SqlSessionSummaryQuery(SessionSummaryQuery):
             select(
                 SessionModel.id,
                 SessionModel.title,
+                SessionModel.is_starred,
                 SessionModel.created_at,
                 SessionModel.last_activity_at,
             )
@@ -70,6 +73,7 @@ class SqlSessionSummaryQuery(SessionSummaryQuery):
             SessionSummary(
                 id=row.id,
                 title=row.title,
+                is_starred=row.is_starred,
                 created_at=row.created_at or row.last_activity_at,
                 last_activity_at=row.last_activity_at or row.created_at,
             )

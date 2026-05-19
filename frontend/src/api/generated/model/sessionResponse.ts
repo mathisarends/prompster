@@ -13,6 +13,7 @@ import type { UserMessageEntryResponse } from "./userMessageEntryResponse";
 export interface SessionResponse {
   id: string;
   title: string;
+  isStarred: boolean;
   createdAt: string;
   entries: (
     | UserMessageEntryResponse

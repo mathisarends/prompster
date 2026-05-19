@@ -2473,3 +2473,150 @@ export function useExportSessionPlaylist<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Star Session
+ */
+export const starSession = (
+  sessionId: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<SessionResponse>(
+    { url: `/api/v1/sessions/${sessionId}/star`, method: "POST", signal },
+    options,
+  );
+};
+
+export const getStarSessionQueryKey = (sessionId: string) => {
+  return ["POST", `/api/v1/sessions/${sessionId}/star`] as const;
+};
+
+export const getStarSessionQueryOptions = <
+  TData = Awaited<ReturnType<typeof starSession>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof starSession>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getStarSessionQueryKey(sessionId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof starSession>>> = ({
+    signal,
+  }) => starSession(sessionId, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: sessionId !== null && sessionId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof starSession>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type StarSessionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof starSession>>
+>;
+export type StarSessionQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useStarSession<
+  TData = Awaited<ReturnType<typeof starSession>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof starSession>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof starSession>>,
+          TError,
+          Awaited<ReturnType<typeof starSession>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useStarSession<
+  TData = Awaited<ReturnType<typeof starSession>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof starSession>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof starSession>>,
+          TError,
+          Awaited<ReturnType<typeof starSession>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useStarSession<
+  TData = Awaited<ReturnType<typeof starSession>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof starSession>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Star Session
+ */
+
+export function useStarSession<
+  TData = Awaited<ReturnType<typeof starSession>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof starSession>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getStarSessionQueryOptions(sessionId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}

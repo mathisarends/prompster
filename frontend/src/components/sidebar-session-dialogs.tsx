@@ -64,18 +64,19 @@ export const RenameChatDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-6">
-        <DialogTitle className="text-lg">Chat umbenennen</DialogTitle>
-        <DialogDescription className="mt-1.5 text-sm">
+      <DialogContent className="max-w-xl p-8">
+        <DialogTitle className="text-2xl">Chat umbenennen</DialogTitle>
+        <DialogDescription className="mt-2 text-base">
           Gib deinem Chat einen neuen Namen.
         </DialogDescription>
-        <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
+        <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
           <Input
             autoFocus
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             maxLength={MAX_TITLE_LENGTH}
             placeholder="Chat-Titel"
+            className="h-11 text-base"
           />
           {mutation.isError ? (
             <p className="text-sm text-destructive">
@@ -85,13 +86,14 @@ export const RenameChatDialog = ({
           <div className="flex justify-end gap-2">
             <Button
               type="button"
+              size="lg"
               variant="ghost"
               onClick={() => onOpenChange(false)}
               disabled={mutation.isPending}
             >
               Abbrechen
             </Button>
-            <Button type="submit" disabled={!canSave}>
+            <Button type="submit" size="lg" disabled={!canSave}>
               {mutation.isPending ? "Speichern..." : "Speichern"}
             </Button>
           </div>
@@ -134,21 +136,22 @@ export const DeleteChatDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-6">
-        <DialogTitle className="text-lg">Chat löschen?</DialogTitle>
-        <DialogDescription className="mt-1.5 text-sm">
+      <DialogContent className="max-w-xl p-8">
+        <DialogTitle className="text-2xl">Chat löschen?</DialogTitle>
+        <DialogDescription className="mt-2 text-base">
           {session
             ? `„${session.title}" wird endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.`
             : "Diese Aktion kann nicht rückgängig gemacht werden."}
         </DialogDescription>
         {mutation.isError ? (
-          <p className="mt-3 text-sm text-destructive">
+          <p className="mt-4 text-sm text-destructive">
             Löschen fehlgeschlagen. Bitte erneut versuchen.
           </p>
         ) : null}
-        <div className="mt-6 flex justify-end gap-2">
+        <div className="mt-7 flex justify-end gap-2">
           <Button
             type="button"
+            size="lg"
             variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={mutation.isPending}
@@ -157,6 +160,7 @@ export const DeleteChatDialog = ({
           </Button>
           <Button
             type="button"
+            size="lg"
             variant="destructive"
             onClick={handleConfirm}
             disabled={mutation.isPending}
