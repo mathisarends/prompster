@@ -2,17 +2,18 @@ from datetime import datetime
 from typing import Annotated, Literal, Union
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
 
 from backend.features.session.domain import (
     FollowUpQuestionState,
     MessageRole,
     ToolCallState,
 )
+from backend.presentation.schema import Schema
 
 
-class _WsEvent(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class _WsEvent(Schema):
+    pass
 
 
 class FollowUpOptionPayload(_WsEvent):
@@ -275,7 +276,7 @@ ClientEvent = Annotated[
 ]
 
 
-class WebSocketEventCatalog(BaseModel):
+class WebSocketEventCatalog(Schema):
     """References every event shape for OpenAPI client generation."""
 
     client_event: ClientEvent | None = Field(

@@ -1,55 +1,50 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
 
 from backend.features.session.domain import MessageRole
+from backend.presentation.schema import Schema
 
 
-class SessionCreateRequest(BaseModel):
+class SessionCreateRequest(Schema):
     initial_prompt: str = Field(min_length=1, max_length=4000)
 
 
-class SessionUpdateRequest(BaseModel):
+class SessionUpdateRequest(Schema):
     title: str = Field(min_length=1, max_length=120)
 
 
-class MessageResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class MessageResponse(Schema):
     id: UUID
     role: MessageRole
     content: str
     created_at: datetime
 
 
-class SessionResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class SessionResponse(Schema):
     id: UUID
     title: str
     created_at: datetime
     messages: list[MessageResponse]
 
 
-class SessionSummaryResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class SessionSummaryResponse(Schema):
     id: UUID
     title: str
     created_at: datetime
     last_activity_at: datetime
 
 
-class SessionSummaryListResponse(BaseModel):
+class SessionSummaryListResponse(Schema):
     items: list[SessionSummaryResponse]
 
 
-class SendMessageRequest(BaseModel):
+class SendMessageRequest(Schema):
     content: str = Field(min_length=1, max_length=4000)
 
 
-class SpotifyTrackResponse(BaseModel):
+class SpotifyTrackResponse(Schema):
     id: str
     title: str
     artist: str
@@ -59,9 +54,9 @@ class SpotifyTrackResponse(BaseModel):
     preview_url: str | None = None
 
 
-class SpotifyTrackSearchResponse(BaseModel):
+class SpotifyTrackSearchResponse(Schema):
     items: list[SpotifyTrackResponse]
 
 
-class ErrorResponse(BaseModel):
+class ErrorResponse(Schema):
     detail: str

@@ -1,10 +1,10 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from backend.presentation.schema import Schema
 
 
-class UserMeResponse(BaseModel):
+class UserMeResponse(Schema):
     id: UUID
     name: str
     email: str

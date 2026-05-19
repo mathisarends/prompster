@@ -1,5 +1,5 @@
-from pydantic import BaseModel
+from backend.presentation.schema import Schema
 
 
-class ErrorDto(BaseModel):
+class ErrorDto(Schema):
     detail: str
