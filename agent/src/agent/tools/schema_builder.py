@@ -15,6 +15,7 @@ from typing import (
 )
 
 from pydantic import BaseModel
+from pydantic_core import PydanticUndefined
 
 from agent.tools.di import _InjectMarker
 
@@ -139,7 +140,10 @@ class ToolSchemaBuilder:
                 field_info.annotation,
                 field_info.description,
             )
-            if not field_info.is_required() and field_info.default is not None:
+            if not field_info.is_required() and field_info.default not in (
+                None,
+                PydanticUndefined,
+            ):
                 properties[field_name]["default"] = field_info.default
             if field_info.is_required():
                 required.append(field_name)

@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import {
   ChevronsUpDown,
   LogOut,
-  MessageCircle,
   PanelLeft,
   Plus,
   Search,
@@ -24,6 +23,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toSessionHistoryEntries } from "@/components/session-history-utils";
+import { SidebarSessionItem } from "@/components/sidebar-session-item";
+import {
+  DeleteChatDialog,
+  RenameChatDialog,
+} from "@/components/sidebar-session-dialogs";
 import { cn } from "@/lib/utils";
 import { PrompsterLogo } from "./prompster-logo";
 
@@ -46,6 +50,10 @@ export const NavigationSidebar = ({
 }: NavigationSidebarProps) => {
   const { signOut } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [renameTarget, setRenameTarget] =
+    useState<SessionSummaryResponse | null>(null);
+  const [deleteTarget, setDeleteTarget] =
+    useState<SessionSummaryResponse | null>(null);
   const { data: user } = useGetMe();
   const { data: sessionsData, isLoading: isLoadingSessions } = useListSessions({
     limit: 200,
@@ -83,6 +91,12 @@ export const NavigationSidebar = ({
   const selectChat = (session: SessionSummaryResponse) => {
     onSelectChat(session);
     setSearchOpen(false);
+  };
+
+  const handleSessionDeleted = (sessionId: string) => {
+    if (sessionId === activeChatId) {
+      onNewChat();
+    }
   };
 
   return (
@@ -193,28 +207,16 @@ export const NavigationSidebar = ({
                 </p>
               ) : (
                 <ul className="space-y-0.5">
-                  {sessions.map((session) => {
-                    const isActive = session.id === activeChatId;
-                    return (
-                      <li key={session.id}>
-                        <button
-                          type="button"
-                          onClick={() => selectChat(session)}
-                          className={cn(
-                            "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                            isActive
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                              : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                          )}
-                        >
-                          <MessageCircle className="size-4 shrink-0" />
-                          <span className="min-w-0 flex-1 truncate">
-                            {session.title}
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
+                  {sessions.map((session) => (
+                    <SidebarSessionItem
+                      key={session.id}
+                      session={session}
+                      isActive={session.id === activeChatId}
+                      onSelect={() => selectChat(session)}
+                      onRename={() => setRenameTarget(session)}
+                      onDelete={() => setDeleteTarget(session)}
+                    />
+                  ))}
                 </ul>
               )}
             </div>
@@ -275,6 +277,23 @@ export const NavigationSidebar = ({
         onOpenChange={setSearchOpen}
         onSelectChat={onSelectChat}
         activeChatId={activeChatId}
+      />
+
+      <RenameChatDialog
+        session={renameTarget}
+        open={renameTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setRenameTarget(null);
+        }}
+      />
+
+      <DeleteChatDialog
+        session={deleteTarget}
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        onDeleted={handleSessionDeleted}
       />
     </>
   );
