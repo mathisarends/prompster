@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ChevronsUpDown, LogOut, PanelLeft, Plus, Search } from "lucide-react";
 import {
-  ChevronsUpDown,
-  LogOut,
-  PanelLeft,
-  Plus,
-  Search,
-} from "lucide-react";
-import { useListSessions } from "@/api/generated/session-api";
+  getListSessionsQueryKey,
+  starSession,
+  unstarSession,
+  useListSessions,
+} from "@/api/generated/session-api";
 import type { SessionSummaryResponse } from "@/api/generated/model";
 import { useGetMe } from "@/api/generated/user-api";
 import { useAuth } from "@/auth/use-auth";
@@ -49,6 +49,7 @@ export const NavigationSidebar = ({
   activeChatId,
 }: NavigationSidebarProps) => {
   const { signOut } = useAuth();
+  const queryClient = useQueryClient();
   const [searchOpen, setSearchOpen] = useState(false);
   const [renameTarget, setRenameTarget] =
     useState<SessionSummaryResponse | null>(null);
@@ -64,6 +65,37 @@ export const NavigationSidebar = ({
     () => toSessionHistoryEntries(sessionsData?.items ?? []),
     [sessionsData?.items],
   );
+  const { starredSessions, historySessions } = useMemo(
+    () => ({
+      starredSessions: sessions.filter((session) => session.isStarred),
+      historySessions: sessions.filter((session) => !session.isStarred),
+    }),
+    [sessions],
+  );
+
+  const starMutation = useMutation({
+    mutationFn: (sessionId: string) => starSession(sessionId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: getListSessionsQueryKey(),
+      });
+    },
+  });
+  const unstarMutation = useMutation({
+    mutationFn: (sessionId: string) => unstarSession(sessionId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: getListSessionsQueryKey(),
+      });
+    },
+  });
+
+  const starringSessionId = starMutation.isPending
+    ? starMutation.variables
+    : null;
+  const unstarringSessionId = unstarMutation.isPending
+    ? unstarMutation.variables
+    : null;
 
   const initials =
     user?.name
@@ -97,6 +129,21 @@ export const NavigationSidebar = ({
     if (sessionId === activeChatId) {
       onNewChat();
     }
+  };
+
+  const handleToggleStarSession = (session: SessionSummaryResponse) => {
+    if (session.isStarred) {
+      if (unstarMutation.isPending) {
+        return;
+      }
+      unstarMutation.mutate(session.id);
+      return;
+    }
+
+    if (starMutation.isPending) {
+      return;
+    }
+    starMutation.mutate(session.id);
   };
 
   return (
@@ -194,9 +241,6 @@ export const NavigationSidebar = ({
         {open ? (
           <ScrollArea className="min-h-0 flex-1 px-2">
             <div className="pb-2 pt-1">
-              <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
-                Verlauf
-              </p>
               {isLoadingSessions ? (
                 <p className="px-2 py-3 text-xs text-muted-foreground">
                   Lade Verlauf...
@@ -206,18 +250,65 @@ export const NavigationSidebar = ({
                   Noch keine Sessions vorhanden.
                 </p>
               ) : (
-                <ul className="space-y-0.5">
-                  {sessions.map((session) => (
-                    <SidebarSessionItem
-                      key={session.id}
-                      session={session}
-                      isActive={session.id === activeChatId}
-                      onSelect={() => selectChat(session)}
-                      onRename={() => setRenameTarget(session)}
-                      onDelete={() => setDeleteTarget(session)}
-                    />
-                  ))}
-                </ul>
+                <>
+                  {starredSessions.length > 0 ? (
+                    <div>
+                      <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
+                        Markiert
+                      </p>
+                      <ul className="space-y-0.5 pb-3">
+                        {starredSessions.map((session) => (
+                          <SidebarSessionItem
+                            key={session.id}
+                            session={session}
+                            isActive={session.id === activeChatId}
+                            onSelect={() => selectChat(session)}
+                            onToggleStar={() =>
+                              handleToggleStarSession(session)
+                            }
+                            onRename={() => setRenameTarget(session)}
+                            onDelete={() => setDeleteTarget(session)}
+                            isTogglingStar={
+                              session.id === starringSessionId ||
+                              session.id === unstarringSessionId
+                            }
+                          />
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
+                  <div>
+                    <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
+                      Verlauf
+                    </p>
+                    {historySessions.length === 0 ? (
+                      <p className="px-2 py-3 text-xs text-muted-foreground">
+                        Keine weiteren Sessions im Verlauf.
+                      </p>
+                    ) : (
+                      <ul className="space-y-0.5">
+                        {historySessions.map((session) => (
+                          <SidebarSessionItem
+                            key={session.id}
+                            session={session}
+                            isActive={session.id === activeChatId}
+                            onSelect={() => selectChat(session)}
+                            onToggleStar={() =>
+                              handleToggleStarSession(session)
+                            }
+                            onRename={() => setRenameTarget(session)}
+                            onDelete={() => setDeleteTarget(session)}
+                            isTogglingStar={
+                              session.id === starringSessionId ||
+                              session.id === unstarringSessionId
+                            }
+                          />
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </ScrollArea>

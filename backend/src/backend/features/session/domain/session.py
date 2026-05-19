@@ -210,6 +210,9 @@ class Session(Aggregate):
     def star(self) -> None:
         self._is_starred = True
 
+    def unstar(self) -> None:
+        self._is_starred = False
+
     def has_access(self, user_id: UUID) -> None:
         if self.owner_id != user_id:
             raise SessionAccessDeniedError(

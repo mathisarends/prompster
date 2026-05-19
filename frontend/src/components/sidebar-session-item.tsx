@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Star, Trash2 } from "lucide-react";
 
 import type { SessionSummaryResponse } from "@/api/generated/model";
 import {
@@ -14,16 +14,20 @@ type SidebarSessionItemProps = {
   session: SessionSummaryResponse;
   isActive: boolean;
   onSelect: () => void;
+  onToggleStar: () => void;
   onRename: () => void;
   onDelete: () => void;
+  isTogglingStar?: boolean;
 };
 
 export const SidebarSessionItem = ({
   session,
   isActive,
   onSelect,
+  onToggleStar,
   onRename,
   onDelete,
+  isTogglingStar = false,
 }: SidebarSessionItemProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const shouldPinMenuButton = isActive || menuOpen;
@@ -55,6 +59,18 @@ export const SidebarSessionItem = ({
           <MoreVertical className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="bottom" sideOffset={4}>
+          <DropdownMenuItem onClick={onToggleStar} disabled={isTogglingStar}>
+            <Star className={session.isStarred ? "fill-current" : undefined} />
+            <span>
+              {session.isStarred
+                ? isTogglingStar
+                  ? "Stern wird entfernt..."
+                  : "Stern entfernen"
+                : isTogglingStar
+                  ? "Markiere..."
+                  : "Markieren"}
+            </span>
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={onRename}>
             <Pencil />
             <span>Umbenennen</span>

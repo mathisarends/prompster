@@ -105,6 +105,13 @@ class TestSessionDomainSession:
 
         assert session.is_starred is True
 
+    def test_unstar_marks_session_as_not_starred(self, session: Session) -> None:
+        session.star()
+
+        session.unstar()
+
+        assert session.is_starred is False
+
     def test_entries_property_is_immutable(self, session: Session) -> None:
         assert isinstance(session.entries, tuple)
 

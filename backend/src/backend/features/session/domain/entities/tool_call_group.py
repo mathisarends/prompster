@@ -5,9 +5,9 @@ from backend.features.session.domain.entities.tool_call import (
     CompletedCall,
     FailedCall,
     PendingCall,
-    ResolvedCall,
     ToolCall,
     is_pending,
+    is_resolved,
 )
 from backend.features.session.domain.exceptions import (
     ToolCallAlreadyResolvedError,
@@ -64,7 +64,7 @@ class ToolCallGroup(Entity):
         for index, call in enumerate(self.calls):
             if call.id != tool_call_id:
                 continue
-            if isinstance(call, ResolvedCall):
+            if is_resolved(call):
                 state = "completed" if isinstance(call, CompletedCall) else "failed"
                 raise ToolCallAlreadyResolvedError(
                     f"Tool call {tool_call_id!r} is already {state}."
