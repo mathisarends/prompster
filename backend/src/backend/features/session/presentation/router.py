@@ -135,11 +135,11 @@ async def update_session(
     body: SessionUpdateRequest,
     service: FromDishka[SessionService],
 ) -> SessionResponse:
-    session = await service.get_by_id(
+    session = await service.update(
         session_id=session_id,
         user_id=authenticated_user_id,
+        title=body.title,
     )
-    session = await service.update(session=session, title=body.title)
     return to_session_response(session)
 
 
@@ -154,9 +154,5 @@ async def delete_session(
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
 ) -> Response:
-    session = await service.get_by_id(
-        session_id=session_id,
-        user_id=authenticated_user_id,
-    )
-    await service.delete(session=session)
+    await service.delete(session_id=session_id, user_id=authenticated_user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

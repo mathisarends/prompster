@@ -7,7 +7,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-from backend.features.auth.infrastructure.orm import UserEntity
+from backend.features.user.infrastructure.orm import UserEntity
 from backend.features.session.infrastructure.orm import SessionEntity
 from backend.infrastructure.database.settings import DatabaseSettings
 

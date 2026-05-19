@@ -180,29 +180,51 @@ class TestSessionServiceCreate:
 
 class TestSessionServiceUpdate:
     def test_delegates_to_repository_and_returns_updated_session(self) -> None:
-        session = Session(title="Old", messages=[], owner_id=uuid4())
-        updated = Session(
-            title="New", messages=[], owner_id=session.owner_id, id=session.id
+        owner_id = uuid4()
+        session = Session(title="Old", messages=[], owner_id=owner_id)
+        updated = Session(title="New", messages=[], owner_id=owner_id, id=session.id)
+        repository = _SessionRepositoryStub(
+            session_by_id=session, updated_session=updated
         )
-        repository = _SessionRepositoryStub(updated_session=updated)
         service = _make_service(repository=repository)
 
-        result = asyncio.run(service.update(session=session, title="New"))
+        result = asyncio.run(
+            service.update(session_id=session.id, user_id=owner_id, title="New")
+        )
 
         assert result is updated
         assert repository.received_update_session_id == session.id
         assert repository.received_update_title == "New"
 
+    def test_raises_when_user_does_not_own_session(self) -> None:
+        session = Session(title="Old", messages=[], owner_id=uuid4())
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_service(repository=repository)
+
+        with pytest.raises(SessionAccessDeniedError, match="does not have access"):
+            asyncio.run(
+                service.update(session_id=session.id, user_id=uuid4(), title="New")
+            )
+
 
 class TestSessionServiceDelete:
     def test_deletes_session_by_id(self) -> None:
-        repository = _SessionRepositoryStub()
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", messages=[], owner_id=owner_id)
+        repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_service(repository=repository)
-        session = Session(title="Roadtrip", messages=[], owner_id=uuid4())
 
-        asyncio.run(service.delete(session=session))
+        asyncio.run(service.delete(session_id=session.id, user_id=owner_id))
 
         assert repository.deleted_session_id == session.id
+
+    def test_raises_when_user_does_not_own_session(self) -> None:
+        session = Session(title="Roadtrip", messages=[], owner_id=uuid4())
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_service(repository=repository)
+
+        with pytest.raises(SessionAccessDeniedError, match="does not have access"):
+            asyncio.run(service.delete(session_id=session.id, user_id=uuid4()))
 
 
 class TestSessionServiceList:

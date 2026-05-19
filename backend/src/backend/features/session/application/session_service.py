@@ -28,9 +28,7 @@ class SessionService:
         self._title_generator = title_generator
 
     async def get_by_id(self, *, session_id: UUID, user_id: UUID) -> Session:
-        session = await self._session_repository.get_by_id(session_id=session_id)
-        session.has_access(user_id)
-        return session
+        return await self._get_authorized(session_id=session_id, user_id=user_id)
 
     async def create(
         self, *, owner_id: UUID, initial_prompt: str
@@ -47,14 +45,23 @@ class SessionService:
         session = await self._session_repository.create(session=session)
         return CreateSessionResult(session=session)
 
-    async def update(self, *, session: Session, title: str | None = None) -> Session:
+    async def update(
+        self, *, session_id: UUID, user_id: UUID, title: str | None = None
+    ) -> Session:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
         return await self._session_repository.update(
             session_id=session.id,
             title=title,
         )
 
-    async def delete(self, *, session: Session) -> None:
+    async def delete(self, *, session_id: UUID, user_id: UUID) -> None:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
         await self._session_repository.delete(session_id=session.id)
+
+    async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
+        session = await self._session_repository.get_by_id(session_id=session_id)
+        session.has_access(user_id)
+        return session
 
     async def list(
         self,
