@@ -1,7 +1,9 @@
+import json
 import logging
 from collections.abc import Callable
 from typing import Any, overload
 
+from llmify.messages import ToolCall
 from pydantic import BaseModel
 
 from agent.tools.di import Inject, ToolContext
@@ -13,6 +15,7 @@ from agent.views import (
     AlbumTracksParams,
     ArtistAlbumsParams,
     ArtistTopTracksParams,
+    AskFollowUpParams,
     CreatePlaylistParams,
     PlaylistIdParams,
     PlaylistTracksMutationParams,
@@ -105,6 +108,25 @@ class Tools:
         if tool is None:
             raise ValueError(f"Unknown tool '{name}'. Available: {list(self._tools)}")
         return tool.render_status(args)
+
+    @staticmethod
+    def parse_args(call: ToolCall) -> dict[str, Any]:
+        raw = call.function.arguments
+        if not raw:
+            return {}
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError as error:
+            logger.error("Failed to parse tool args JSON: %s", error)
+            return {}
+
+    @staticmethod
+    def serialize_result(result: Any) -> str:
+        if isinstance(result, str):
+            return result
+        if hasattr(result, "model_dump_json"):
+            return result.model_dump_json()
+        return json.dumps(result, ensure_ascii=False, default=str)
 
     def _register_default_tools(self) -> None:
         @self.action(
@@ -221,3 +243,16 @@ class Tools:
             params: PlaylistIdParams,
         ) -> str:
             return await spotify.clear_playlist(params)
+
+        @self.action(
+            description=(
+                "Ask the user one or more clarifying questions before proceeding. "
+                "Use this when the task is ambiguous and user input is required. "
+                "Provide 1–4 questions, each with 1–4 selectable options. "
+                "The user may also type a free-text answer or skip a question."
+            ),
+            status_label="Rückfragen stellen",
+            params=AskFollowUpParams,
+        )
+        async def ask_follow_up(params: AskFollowUpParams) -> str:
+            return params.model_dump_json()

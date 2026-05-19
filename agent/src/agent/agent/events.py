@@ -1,0 +1,42 @@
+import time
+import uuid
+from dataclasses import dataclass, field
+from typing import Any
+
+
+@dataclass(kw_only=True)
+class AgentEvent:
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    timestamp: float = field(default_factory=time.time)
+
+
+@dataclass(kw_only=True)
+class RunStartedEvent(AgentEvent):
+    message: str
+
+
+@dataclass(kw_only=True)
+class StepStartedEvent(AgentEvent):
+    step: int
+
+
+@dataclass(kw_only=True)
+class AssistantMessageEvent(AgentEvent):
+    content: str
+
+
+@dataclass(kw_only=True)
+class ToolCallEvent(AgentEvent):
+    name: str
+    args: dict[str, Any]
+
+
+@dataclass(kw_only=True)
+class ToolResultEvent(AgentEvent):
+    name: str
+    result: str
+
+
+@dataclass(kw_only=True)
+class RunCompletedEvent(AgentEvent):
+    output: str

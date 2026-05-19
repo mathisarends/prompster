@@ -37,3 +37,16 @@ class PlaylistIdParams(BaseModel):
 
 class GenerateCardsParams(BaseModel):
     playlist_id: str
+
+
+class AskFollowUpOption(BaseModel):
+    label: str
+
+
+class AskFollowUpQuestion(BaseModel):
+    question: str
+    options: list[AskFollowUpOption] = Field(min_length=1, max_length=4)
+
+
+class AskFollowUpParams(BaseModel):
+    questions: list[AskFollowUpQuestion] = Field(min_length=1, max_length=4)

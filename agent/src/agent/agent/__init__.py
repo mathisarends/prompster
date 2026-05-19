@@ -1,4 +1,21 @@
 from .agent import Agent
-from .views import AgentResult, StepResult
+from .events import (
+    AgentEvent,
+    AssistantMessageEvent,
+    RunCompletedEvent,
+    RunStartedEvent,
+    StepStartedEvent,
+    ToolCallEvent,
+    ToolResultEvent,
+)
 
-__all__ = ["Agent", "AgentResult", "StepResult"]
+__all__ = [
+    "Agent",
+    "AgentEvent",
+    "AssistantMessageEvent",
+    "RunCompletedEvent",
+    "RunStartedEvent",
+    "StepStartedEvent",
+    "ToolCallEvent",
+    "ToolResultEvent",
+]
