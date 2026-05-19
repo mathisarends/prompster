@@ -12,10 +12,12 @@ from agent.agent.events import (
     StepStartedEvent,
     ToolCallEvent,
     ToolResultEvent,
+    WorkspaceUpdatedEvent,
 )
 from agent.agent.messages.messages import MessageManager
 from agent.tools import Tools
 from agent.tools.handler import Spotify
+from agent.workspace import WorkspaceStore
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +39,11 @@ class Agent:
         self._tools = tools or Tools()
         self._max_iterations = max_iterations
         self._messages = messages or MessageManager(system_prompt or _SYSTEM_PROMPT)
-        self._spotify, self._owns_spotify = self._wire_tool_context()
+        self._spotify, self._owns_spotify = self._wire_spotify_context()
+        self._workspace_store = self._wire_workspace_context()
         self._tool_schema = self._tools.to_schema()
 
-    def _wire_tool_context(self) -> tuple[Spotify, bool]:
+    def _wire_spotify_context(self) -> tuple[Spotify, bool]:
         tool_context = self._tools.get_context()
         spotify = tool_context.resolve(Spotify)
         if spotify is None:
@@ -48,6 +51,14 @@ class Agent:
             tool_context.provide(spotify)
             return spotify, True
         return spotify, False
+
+    def _wire_workspace_context(self) -> WorkspaceStore:
+        tool_context = self._tools.get_context()
+        workspace_store = tool_context.resolve(WorkspaceStore)
+        if workspace_store is None:
+            workspace_store = WorkspaceStore()
+            tool_context.provide(workspace_store)
+        return workspace_store
 
     async def prepare(self) -> None:
         await self._spotify.open()
@@ -84,6 +95,10 @@ class Agent:
                 result = await self._tools.execute(call.function.name, args)
                 serialized = self._tools.serialize_result(result)
                 yield ToolResultEvent(name=call.function.name, result=serialized)
+                for (
+                    playlist_draft
+                ) in self._workspace_store.drain_playlist_draft_updates():
+                    yield WorkspaceUpdatedEvent(playlist_draft=playlist_draft)
                 self._messages.add_tool_result(
                     tool_call_id=call.id,
                     content=serialized,

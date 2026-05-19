@@ -3,6 +3,8 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from agent.workspace import PlaylistDraft
+
 
 @dataclass(kw_only=True)
 class AgentEvent:
@@ -35,6 +37,11 @@ class ToolCallEvent(AgentEvent):
 class ToolResultEvent(AgentEvent):
     name: str
     result: str
+
+
+@dataclass(kw_only=True)
+class WorkspaceUpdatedEvent(AgentEvent):
+    playlist_draft: PlaylistDraft
 
 
 @dataclass(kw_only=True)

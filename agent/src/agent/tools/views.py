@@ -106,6 +106,9 @@ class Tool:
             result = self.fn(**args)
         return result if result is not None else ""
 
+    def format_error(self, error: Exception) -> str:
+        return f"Error: {error}"
+
     def to_schema(self) -> ToolSchema:
         parameters = self._schema if self._schema else self._schema_builder.build()
         return {

@@ -1,28 +1,19 @@
 from typing import Self
 
-from spotifyify import PagingPlaylistTrack, Spotifyify, SpotifyScope, Track
+from spotifyify import PagingPlaylistTrack, Spotifyify, Track
 
 from agent.views import (
     AlbumTracksParams,
     ArtistAlbumsParams,
     ArtistTopTracksParams,
-    CreatePlaylistParams,
     PlaylistIdParams,
-    PlaylistTracksMutationParams,
     SearchParams,
 )
 
 
 class Spotify:
     def __init__(self, client: Spotifyify | None = None) -> None:
-        self._client = client or Spotifyify(
-            scopes=[
-                "user-read-private",
-                SpotifyScope.PLAYLIST_READ_PRIVATE,
-                SpotifyScope.PLAYLIST_MODIFY_PUBLIC,
-                SpotifyScope.PLAYLIST_MODIFY_PRIVATE,
-            ]
-        )
+        self._client = client or Spotifyify(scopes=[])
         self._open = False
 
     async def open(self) -> None:
@@ -121,34 +112,6 @@ class Spotify:
             for index, track in enumerate(tracks)
         )
 
-    async def create_playlist(self, params: CreatePlaylistParams) -> str:
-        await self.open()
-        playlist = await self._client.playlists.create(
-            "Hitster Deck: " + params.name,
-            description=params.description,
-        )
-        return (
-            f"Created playlist '{playlist.name}'"
-            f" - id={playlist.id}  url={_playlist_url(playlist)}"
-        )
-
-    async def add_tracks_to_playlist(
-        self,
-        params: PlaylistTracksMutationParams,
-    ) -> str:
-        invalid = _invalid_track_uris(params.track_uris)
-        if invalid:
-            return (
-                "Error: invalid track URIs (must start with 'spotify:track:'): "
-                f"{invalid}"
-            )
-
-        playlist_id = _normalize_spotify_id(params.playlist_id, "playlist")
-        await self.open()
-        for chunk in _chunked(params.track_uris, 100):
-            await self._client.playlists.add(playlist_id, chunk)
-        return f"Added {len(params.track_uris)} track(s) to playlist {playlist_id}."
-
     async def get_playlist_tracks(self, params: PlaylistIdParams) -> str:
         playlist_id = _normalize_spotify_id(params.playlist_id, "playlist")
         await self.open()
@@ -158,32 +121,6 @@ class Spotify:
         return "\n".join(
             _format_track(index + 1, track) for index, track in enumerate(tracks)
         )
-
-    async def remove_tracks_from_playlist(
-        self,
-        params: PlaylistTracksMutationParams,
-    ) -> str:
-        invalid = _invalid_track_uris(params.track_uris)
-        if invalid:
-            return (
-                "Error: invalid track URIs (must start with 'spotify:track:'): "
-                f"{invalid}"
-            )
-
-        playlist_id = _normalize_spotify_id(params.playlist_id, "playlist")
-        await self.open()
-        for chunk in _chunked(params.track_uris, 100):
-            await self._client.playlists.remove(playlist_id, chunk)
-        return f"Removed {len(params.track_uris)} track(s) from playlist {playlist_id}."
-
-    async def clear_playlist(self, params: PlaylistIdParams) -> str:
-        playlist_id = _normalize_spotify_id(params.playlist_id, "playlist")
-        await self.open()
-        tracks = await self._get_playlist_tracks(playlist_id)
-        uris = [track.uri for track in tracks if track.uri]
-        for chunk in _chunked(uris, 100):
-            await self._client.playlists.remove(playlist_id, chunk)
-        return f"Playlist {playlist_id} cleared."
 
     async def _get_playlist_tracks(self, playlist_id: str) -> list[Track]:
         tracks: list[Track] = []
@@ -214,10 +151,6 @@ class Spotify:
             offset += limit
 
         return tracks
-
-
-def _invalid_track_uris(track_uris: list[str]) -> list[str]:
-    return [uri for uri in track_uris if not uri.startswith("spotify:track:")]
 
 
 def _playlist_track_count(playlist) -> int:
@@ -293,7 +226,3 @@ def _format_album(index: int, album) -> str:
         f" ({_release_year(album.release_date)}, {album.total_tracks} tracks)"
         f"  uri={album.uri}"
     )
-
-
-def _chunked(items: list[str], size: int) -> list[list[str]]:
-    return [items[index : index + size] for index in range(0, len(items), size)]

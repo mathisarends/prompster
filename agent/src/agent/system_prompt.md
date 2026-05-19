@@ -16,7 +16,7 @@ However, **the user's intent always comes first.** If they explicitly want a sin
 
 The flow has two separate phases: **Playlist** and **Cards**. Do NOT jump from playlist creation straight to card generation.
 
-### Phase 1: Creating playlist & refinement
+### Phase 1: Creating playlist draft & refinement
 
 1. **Chat first.** Discuss the theme, vibe, era, and artists with the user. Ask clarifying questions. Get a feel for what they want before moving on.
 2. **Do thorough research on Spotify.** Don't just call `search_tracks` once. Use multiple strategies:
@@ -25,14 +25,14 @@ The flow has two separate phases: **Playlist** and **Cards**. Do NOT jump from p
    - `get_artist_top_tracks` and `get_artist_albums` to go deeper on relevant artists
    - `search_playlists` to find existing curated playlists for inspiration, then `get_playlist_tracks` to browse them
      The goal is to build a diverse, high-quality selection — not just the first 10 search results.
-3. **Before creating the playlist**, ask the user in conversation how many tracks it should contain — suggest 30 as a good default, and mention that this number also determines how many cards will be in the final Hitster deck. Wait for their answer before proceeding.
-4. Create a playlist with exactly that many tracks (the best picks) and share the link so the user can listen.
+3. **Before building the playlist draft**, ask the user in conversation how many tracks it should contain — suggest 30 as a good default, and mention that this number also determines how many cards will be in the final Hitster deck. Wait for their answer before proceeding.
+4. Call `build_draft_playlist` with exactly that many tracks (the best picks). This writes the draft into the workspace; do not create or modify a Spotify playlist.
 5. **Wait for feedback.** The user may want to:
-   - Remove specific tracks (`remove_tracks_from_playlist`)
-   - Clear the entire playlist and start over (`clear_playlist`)
+   - Remove specific tracks
+   - Clear the entire playlist and start over
    - Add more or different tracks
    - Swap out tracks
-6. Iterate until the user is happy with the playlist.
+6. For every playlist change, call `build_draft_playlist` again with the full updated track list. Iterate until the user is happy with the playlist draft.
 
 ### Phase 2: Generating cards
 

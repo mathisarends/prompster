@@ -7,6 +7,7 @@ from .events import (
     StepStartedEvent,
     ToolCallEvent,
     ToolResultEvent,
+    WorkspaceUpdatedEvent,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "StepStartedEvent",
     "ToolCallEvent",
     "ToolResultEvent",
+    "WorkspaceUpdatedEvent",
 ]

@@ -16,11 +16,11 @@ from agent.views import (
     ArtistAlbumsParams,
     ArtistTopTracksParams,
     AskFollowUpParams,
-    CreatePlaylistParams,
+    BuildDraftPlaylistParams,
     PlaylistIdParams,
-    PlaylistTracksMutationParams,
     SearchParams,
 )
+from agent.workspace import PlaylistDraft, WorkspaceStore
 
 logger = logging.getLogger(__name__)
 
@@ -190,26 +190,19 @@ class Tools:
             return await spotify.get_album_tracks(params)
 
         @self.action(
-            description="Create a Spotify playlist for the current user.",
-            status_label=lambda params: f"Playlist erstellen: '{params.name}'",
-            params=CreatePlaylistParams,
+            description=(
+                "Build or replace the current Hitster playlist draft in the workspace. "
+                "Use this after researching tracks; do not create a Spotify playlist."
+            ),
+            status_label=lambda params: f"Playlist-Entwurf bauen: '{params.name}'",
+            params=BuildDraftPlaylistParams,
         )
-        async def create_playlist(
-            spotify: Inject[Spotify],
-            params: CreatePlaylistParams,
-        ) -> str:
-            return await spotify.create_playlist(params)
-
-        @self.action(
-            description="Add tracks to a Spotify playlist.",
-            status_label=lambda params: f"{len(params.track_uris)} Tracks hinzufügen",
-            params=PlaylistTracksMutationParams,
-        )
-        async def add_tracks_to_playlist(
-            spotify: Inject[Spotify],
-            params: PlaylistTracksMutationParams,
-        ) -> str:
-            return await spotify.add_tracks_to_playlist(params)
+        async def build_draft_playlist(
+            workspace_store: Inject[WorkspaceStore],
+            params: BuildDraftPlaylistParams,
+        ) -> PlaylistDraft:
+            playlist_draft = PlaylistDraft(name=params.name, tracks=params.tracks)
+            return workspace_store.save_playlist_draft(playlist_draft)
 
         @self.action(
             description="Get all tracks of a Spotify playlist.",
@@ -221,28 +214,6 @@ class Tools:
             params: PlaylistIdParams,
         ) -> str:
             return await spotify.get_playlist_tracks(params)
-
-        @self.action(
-            description="Remove specific tracks from a Spotify playlist.",
-            status_label=lambda params: f"{len(params.track_uris)} Tracks entfernen",
-            params=PlaylistTracksMutationParams,
-        )
-        async def remove_tracks_from_playlist(
-            spotify: Inject[Spotify],
-            params: PlaylistTracksMutationParams,
-        ) -> str:
-            return await spotify.remove_tracks_from_playlist(params)
-
-        @self.action(
-            description="Remove all tracks from a Spotify playlist.",
-            status_label="Playlist leeren",
-            params=PlaylistIdParams,
-        )
-        async def clear_playlist(
-            spotify: Inject[Spotify],
-            params: PlaylistIdParams,
-        ) -> str:
-            return await spotify.clear_playlist(params)
 
         @self.action(
             description=(

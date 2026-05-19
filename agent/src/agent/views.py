@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from agent.workspace import PlaylistDraftTrack
+
 
 class SearchParams(BaseModel):
     query: str
@@ -21,14 +23,9 @@ class AlbumTracksParams(BaseModel):
     album_id: str = Field(description="URI or ID.")
 
 
-class CreatePlaylistParams(BaseModel):
+class BuildDraftPlaylistParams(BaseModel):
     name: str
-    description: str = ""
-
-
-class PlaylistTracksMutationParams(BaseModel):
-    playlist_id: str
-    track_uris: list[str]
+    tracks: list[PlaylistDraftTrack] = Field(min_length=1)
 
 
 class PlaylistIdParams(BaseModel):
