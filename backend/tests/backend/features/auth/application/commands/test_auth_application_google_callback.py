@@ -1,15 +1,13 @@
 import asyncio
 from uuid import UUID, uuid4
 
-import pytest
-
-from backend.features.auth.application.commands.google_callback import (
-    GoogleCallbackHandler,
+from backend.features.auth.application.commands.google_oauth_flow import (
+    GoogleOAuthFlowHandler,
 )
-from backend.features.auth.application.exceptions import InvalidCredentialsException
 from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
 from backend.features.auth.application.schemas import (
     AuthSession,
+    GoogleCallbackResult,
     GoogleIdentity,
     TokenPayload,
     TokenType,
@@ -76,62 +74,68 @@ class _TokenIssuerStub(TokenIssuer):
         token: str,
         expected_type: TokenType = TokenType.ACCESS,
     ) -> TokenPayload:
-        raise AssertionError("validate is not used in GoogleCallbackHandler tests")
+        raise AssertionError("validate is not used in Google OAuth flow tests")
 
 
-class TestGoogleCallbackHandler:
-    def test_handle_raises_for_missing_expected_state(self) -> None:
+class TestGoogleOAuthFlowHandlerCallback:
+    def test_handle_callback_returns_invalid_credentials_for_missing_expected_state(
+        self,
+    ) -> None:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub()
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleCallbackHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
 
-        with pytest.raises(
-            InvalidCredentialsException, match="Invalid or missing OAuth state"
-        ):
-            asyncio.run(
-                handler.handle(
-                    authorization_code="code-1",
-                    oauth_state="state-1",
-                    expected_oauth_state=None,
-                )
+        result = asyncio.run(
+            handler.callback(
+                code="code-1",
+                state="state-1",
+                error=None,
+                expected_oauth_state=None,
             )
+        )
 
-    def test_handle_raises_for_mismatched_expected_state(self) -> None:
+        assert result == GoogleCallbackResult.error(reason="invalid_credentials")
+
+    def test_handle_callback_returns_invalid_credentials_for_mismatched_state(
+        self,
+    ) -> None:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub()
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleCallbackHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
 
-        with pytest.raises(
-            InvalidCredentialsException, match="Invalid or missing OAuth state"
-        ):
-            asyncio.run(
-                handler.handle(
-                    authorization_code="code-1",
-                    oauth_state="state-1",
-                    expected_oauth_state="state-2",
-                )
+        result = asyncio.run(
+            handler.callback(
+                code="code-1",
+                state="state-1",
+                error=None,
+                expected_oauth_state="state-2",
             )
+        )
 
-    def test_handle_raises_for_invalid_google_authorization_code(self) -> None:
+        assert result == GoogleCallbackResult.error(reason="invalid_credentials")
+
+    def test_handle_callback_returns_invalid_credentials_for_invalid_code(self) -> None:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub(exchange_error=ValueError("invalid code"))
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleCallbackHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
 
-        with pytest.raises(
-            InvalidCredentialsException, match="Invalid Google authorization code"
-        ):
-            asyncio.run(
-                handler.handle(
-                    authorization_code="code-1",
-                    oauth_state="state-1",
-                    expected_oauth_state="state-1",
-                )
+        result = asyncio.run(
+            handler.callback(
+                code="code-1",
+                state="state-1",
+                error=None,
+                expected_oauth_state="state-1",
             )
+        )
 
-    def test_handle_raises_for_unverified_google_email(self) -> None:
+        assert result == GoogleCallbackResult.error(reason="invalid_credentials")
+
+    def test_handle_callback_returns_invalid_credentials_for_unverified_email(
+        self,
+    ) -> None:
         identity = GoogleIdentity(
             subject="google-sub-1",
             email="mathis@example.com",
@@ -140,18 +144,22 @@ class TestGoogleCallbackHandler:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleCallbackHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
 
-        with pytest.raises(InvalidCredentialsException, match="email is not verified"):
-            asyncio.run(
-                handler.handle(
-                    authorization_code="code-1",
-                    oauth_state="state-1",
-                    expected_oauth_state="state-1",
-                )
+        result = asyncio.run(
+            handler.callback(
+                code="code-1",
+                state="state-1",
+                error=None,
+                expected_oauth_state="state-1",
             )
+        )
 
-    def test_handle_creates_user_when_missing_and_returns_session(self) -> None:
+        assert result == GoogleCallbackResult.error(reason="invalid_credentials")
+
+    def test_handle_callback_creates_user_when_missing_and_returns_session(
+        self,
+    ) -> None:
         identity = GoogleIdentity(
             subject="google-sub-1",
             email="  NewUser@Example.com  ",
@@ -164,17 +172,18 @@ class TestGoogleCallbackHandler:
         repository = _UserRepositoryStub(existing_user=None)
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(expected_session)
-        handler = GoogleCallbackHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
 
         result = asyncio.run(
-            handler.handle(
-                authorization_code="code-1",
-                oauth_state="state-1",
+            handler.callback(
+                code="code-1",
+                state="state-1",
+                error=None,
                 expected_oauth_state="state-1",
             )
         )
 
-        assert result == expected_session
+        assert result == GoogleCallbackResult.success(session=expected_session)
         assert repository.last_email_lookup == "newuser@example.com"
         assert repository.created_user is not None
         assert repository.created_user.email == "newuser@example.com"
@@ -182,7 +191,7 @@ class TestGoogleCallbackHandler:
         assert repository.created_user.google_subject == "google-sub-1"
         assert issuer.received_user_id == repository.created_user.id
 
-    def test_handle_raises_when_existing_user_has_different_google_subject(
+    def test_handle_callback_returns_invalid_credentials_for_subject_mismatch(
         self,
     ) -> None:
         existing_user = User(
@@ -200,18 +209,20 @@ class TestGoogleCallbackHandler:
         repository = _UserRepositoryStub(existing_user=existing_user)
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleCallbackHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
 
-        with pytest.raises(InvalidCredentialsException, match="does not match user"):
-            asyncio.run(
-                handler.handle(
-                    authorization_code="code-1",
-                    oauth_state="state-1",
-                    expected_oauth_state="state-1",
-                )
+        result = asyncio.run(
+            handler.callback(
+                code="code-1",
+                state="state-1",
+                error=None,
+                expected_oauth_state="state-1",
             )
+        )
 
-    def test_handle_returns_session_for_existing_matching_user(self) -> None:
+        assert result == GoogleCallbackResult.error(reason="invalid_credentials")
+
+    def test_handle_callback_returns_session_for_existing_matching_user(self) -> None:
         existing_user = User(
             name="Mathis",
             email="mathis@example.com",
@@ -230,17 +241,56 @@ class TestGoogleCallbackHandler:
         repository = _UserRepositoryStub(existing_user=existing_user)
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(expected_session)
-        handler = GoogleCallbackHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
 
         result = asyncio.run(
-            handler.handle(
-                authorization_code="code-1",
-                oauth_state="state-1",
+            handler.callback(
+                code="code-1",
+                state="state-1",
+                error=None,
                 expected_oauth_state="state-1",
             )
         )
 
-        assert result == expected_session
+        assert result == GoogleCallbackResult.success(session=expected_session)
         assert repository.created_user is None
         assert repository.last_email_lookup == "mathis@example.com"
         assert issuer.received_user_id == existing_user.id
+
+    def test_handle_callback_returns_provider_error_reason_without_exchange(
+        self,
+    ) -> None:
+        repository = _UserRepositoryStub()
+        provider = _GoogleOAuthProviderStub()
+        issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
+        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
+
+        result = asyncio.run(
+            handler.callback(
+                code=None,
+                state="state-1",
+                error="access_denied",
+                expected_oauth_state="state-1",
+            )
+        )
+
+        assert result == GoogleCallbackResult.error(reason="access_denied")
+        assert provider.received_authorization_code is None
+
+    def test_handle_callback_returns_missing_code_without_exchange(self) -> None:
+        repository = _UserRepositoryStub()
+        provider = _GoogleOAuthProviderStub()
+        issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
+        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
+
+        result = asyncio.run(
+            handler.callback(
+                code=None,
+                state="state-1",
+                error=None,
+                expected_oauth_state="state-1",
+            )
+        )
+
+        assert result == GoogleCallbackResult.error(reason="missing_code")
+        assert provider.received_authorization_code is None

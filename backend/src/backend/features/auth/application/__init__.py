@@ -1,4 +1,4 @@
-from .commands import GoogleCallbackHandler, GoogleLoginHandler, RefreshSessionHandler
+from .commands import GoogleOAuthFlowHandler, RefreshSessionHandler
 from .exceptions import (
     InvalidCredentialsException,
     SessionExpiredException,
@@ -6,8 +6,7 @@ from .exceptions import (
 )
 
 __all__ = [
-    "GoogleCallbackHandler",
-    "GoogleLoginHandler",
+    "GoogleOAuthFlowHandler",
     "InvalidCredentialsException",
     "RefreshSessionHandler",
     "SessionExpiredException",

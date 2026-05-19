@@ -1,10 +1,3 @@
-from .commands import (
-    CreateSessionHandler,
-    CreateSessionResult,
-    DeleteSessionHandler,
-    SendMessageHandler,
-    UpdateSessionHandler,
-)
 from .events import (
     SessionEvent,
     SessionFollowUpAnswered,
@@ -15,29 +8,19 @@ from .events import (
     SessionTitleGenerated,
     SessionUserMessageAppended,
 )
-from .queries import (
-    GetSessionByIdHandler,
-    ListSessionsHandler,
-    SearchSessionsHandler,
-    SearchSpotifyTracksHandler,
-)
+from .queries import SearchSpotifyTracksHandler
+from .session_service import CreateSessionResult, SessionService
 
 __all__ = [
-    "CreateSessionHandler",
     "CreateSessionResult",
-    "DeleteSessionHandler",
-    "GetSessionByIdHandler",
-    "ListSessionsHandler",
-    "SearchSessionsHandler",
     "SearchSpotifyTracksHandler",
-    "SendMessageHandler",
     "SessionEvent",
     "SessionFollowUpAnswered",
     "SessionFollowUpSkipped",
     "SessionPlaylistSet",
     "SessionPlaylistTrackAdded",
     "SessionPlaylistTrackRemoved",
+    "SessionService",
     "SessionTitleGenerated",
     "SessionUserMessageAppended",
-    "UpdateSessionHandler",
 ]

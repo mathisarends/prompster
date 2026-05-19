@@ -10,14 +10,8 @@ from backend.env import LLMCredentials
 from backend.features.session.infrastructure.repository import SqlSessionRepository
 
 from backend.features.session.application import (
-    CreateSessionHandler,
-    DeleteSessionHandler,
-    GetSessionByIdHandler,
-    ListSessionsHandler,
     SearchSpotifyTracksHandler,
-    SearchSessionsHandler,
-    SendMessageHandler,
-    UpdateSessionHandler,
+    SessionService,
 )
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummaryQuery,
@@ -69,61 +63,17 @@ class SessionProvider(Provider):
         return SqlSessionSummaryQuery(session=session)
 
     @provide(scope=Scope.REQUEST)
-    def provide_create_session_handler(
+    def provide_session_service(
         self,
         session_repository: SessionRepository,
+        session_summary_query: SessionSummaryQuery,
         title_generator: SessionTitleGenerator,
-    ) -> CreateSessionHandler:
-        return CreateSessionHandler(
+    ) -> SessionService:
+        return SessionService(
             session_repository=session_repository,
+            session_summary_query=session_summary_query,
             title_generator=title_generator,
         )
-
-    @provide(scope=Scope.REQUEST)
-    def provide_get_session_by_id_handler(
-        self,
-        session_repository: SessionRepository,
-    ) -> GetSessionByIdHandler:
-        return GetSessionByIdHandler(session_repository=session_repository)
-
-    @provide(scope=Scope.REQUEST)
-    def provide_list_sessions_handler(
-        self,
-        session_summary_query: SessionSummaryQuery,
-    ) -> ListSessionsHandler:
-        return ListSessionsHandler(session_summary_query=session_summary_query)
-
-    @provide(scope=Scope.REQUEST)
-    def provide_search_sessions_handler(
-        self,
-        session_summary_query: SessionSummaryQuery,
-    ) -> SearchSessionsHandler:
-        return SearchSessionsHandler(session_summary_query=session_summary_query)
-
-    @provide(scope=Scope.REQUEST)
-    def provide_update_session_handler(
-        self,
-        session_repository: SessionRepository,
-    ) -> UpdateSessionHandler:
-        return UpdateSessionHandler(session_repository=session_repository)
-
-    @provide(scope=Scope.REQUEST)
-    def provide_send_message_handler(
-        self,
-        llm: ChatOpenAI,
-        session_repository: SessionRepository,
-    ) -> SendMessageHandler:
-        return SendMessageHandler(
-            llm=llm,
-            session_repository=session_repository,
-        )
-
-    @provide(scope=Scope.REQUEST)
-    def provide_delete_session_handler(
-        self,
-        session_repository: SessionRepository,
-    ) -> DeleteSessionHandler:
-        return DeleteSessionHandler(session_repository=session_repository)
 
     @provide(scope=Scope.APP)
     def spotify_credentials(self) -> SpotifyCredentials:

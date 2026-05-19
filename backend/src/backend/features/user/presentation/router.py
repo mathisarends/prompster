@@ -2,7 +2,7 @@ from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, status
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.user.application import GetMeHandler
+from backend.features.user.application import UserService
 from backend.features.user.presentation.mapper import to_user_me_response
 from backend.features.user.presentation.schemas import UserMeResponse
 from backend.presentation.errors import ErrorDto
@@ -21,7 +21,7 @@ _unauthorized = {status.HTTP_401_UNAUTHORIZED: {"model": ErrorDto}}
 )
 async def get_me(
     authenticated_user_id: AuthenticatedUserId,
-    handler: FromDishka[GetMeHandler],
+    service: FromDishka[UserService],
 ) -> UserMeResponse:
-    user = await handler.handle(user_id=authenticated_user_id)
+    user = await service.get_me(user_id=authenticated_user_id)
     return to_user_me_response(user)

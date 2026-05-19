@@ -2,18 +2,11 @@ from uuid import UUID
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Query, Response, status
-from fastapi.responses import StreamingResponse
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.session.application import (
-    CreateSessionHandler,
-    DeleteSessionHandler,
-    GetSessionByIdHandler,
-    ListSessionsHandler,
     SearchSpotifyTracksHandler,
-    SearchSessionsHandler,
-    SendMessageHandler,
-    UpdateSessionHandler,
+    SessionService,
 )
 from backend.features.session.presentation.mapper import (
     to_session_response,
@@ -22,7 +15,6 @@ from backend.features.session.presentation.mapper import (
 )
 from backend.features.session.presentation.schemas import (
     ErrorResponse,
-    SendMessageRequest,
     SessionCreateRequest,
     SessionResponse,
     SessionSummaryListResponse,
@@ -49,21 +41,20 @@ _bad_request = {status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse}}
 )
 async def list_sessions(
     authenticated_user_id: AuthenticatedUserId,
-    list_handler: FromDishka[ListSessionsHandler],
-    search_handler: FromDishka[SearchSessionsHandler],
+    service: FromDishka[SessionService],
     q: str | None = Query(default=None, min_length=1, max_length=120),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
 ) -> SessionSummaryListResponse:
     if q and q.strip():
-        items = await search_handler.handle(
+        items = await service.search(
             owner_id=authenticated_user_id,
             query=q,
             limit=limit,
             offset=offset,
         )
     else:
-        items = await list_handler.handle(
+        items = await service.list(
             owner_id=authenticated_user_id,
             limit=limit,
             offset=offset,
@@ -103,9 +94,9 @@ async def search_spotify_tracks(
 async def get_session_by_id(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    handler: FromDishka[GetSessionByIdHandler],
+    service: FromDishka[SessionService],
 ) -> SessionResponse:
-    session = await handler.handle(
+    session = await service.get_by_id(
         session_id=session_id,
         user_id=authenticated_user_id,
     )
@@ -122,41 +113,13 @@ async def get_session_by_id(
 async def create_session(
     authenticated_user_id: AuthenticatedUserId,
     body: SessionCreateRequest,
-    handler: FromDishka[CreateSessionHandler],
+    service: FromDishka[SessionService],
 ) -> SessionResponse:
-    result = await handler.handle(
+    result = await service.create(
         owner_id=authenticated_user_id,
         initial_prompt=body.initial_prompt,
     )
     return to_session_response(result.session)
-
-
-@router.post(
-    "/{session_id}/messages",
-    status_code=status.HTTP_201_CREATED,
-    operation_id="send_message",
-    responses={
-        status.HTTP_201_CREATED: {"content": {"text/plain": {}}},
-        **_auth_errors,
-        **_bad_request,
-        **_not_found,
-    },
-)
-async def send_message(
-    session_id: UUID,
-    authenticated_user_id: AuthenticatedUserId,
-    body: SendMessageRequest,
-    get_handler: FromDishka[GetSessionByIdHandler],
-    handler: FromDishka[SendMessageHandler],
-) -> StreamingResponse:
-    session = await get_handler.handle(
-        session_id=session_id,
-        user_id=authenticated_user_id,
-    )
-    return StreamingResponse(
-        handler.stream_response(session=session, content=body.content),
-        media_type="text/plain; charset=utf-8",
-    )
 
 
 @router.patch(
@@ -170,17 +133,13 @@ async def update_session(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     body: SessionUpdateRequest,
-    get_handler: FromDishka[GetSessionByIdHandler],
-    handler: FromDishka[UpdateSessionHandler],
+    service: FromDishka[SessionService],
 ) -> SessionResponse:
-    session = await get_handler.handle(
+    session = await service.get_by_id(
         session_id=session_id,
         user_id=authenticated_user_id,
     )
-    session = await handler.handle(
-        session=session,
-        title=body.title,
-    )
+    session = await service.update(session=session, title=body.title)
     return to_session_response(session)
 
 
@@ -193,12 +152,11 @@ async def update_session(
 async def delete_session(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    get_handler: FromDishka[GetSessionByIdHandler],
-    handler: FromDishka[DeleteSessionHandler],
+    service: FromDishka[SessionService],
 ) -> Response:
-    session = await get_handler.handle(
+    session = await service.get_by_id(
         session_id=session_id,
         user_id=authenticated_user_id,
     )
-    await handler.handle(session=session)
+    await service.delete(session=session)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

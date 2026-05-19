@@ -7,13 +7,13 @@ from pydantic import TypeAdapter, ValidationError
 from starlette.websockets import WebSocketState
 
 from backend.features.session.application import (
-    GetSessionByIdHandler,
     SessionEvent,
     SessionFollowUpAnswered,
     SessionFollowUpSkipped,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
+    SessionService,
     SessionUserMessageAppended,
 )
 from backend.features.session.domain import (
@@ -118,8 +118,8 @@ class SessionWebSocketConnection:
 
     async def _load_session(self) -> Session:
         async with self._container() as request_container:
-            handler = await request_container.get(GetSessionByIdHandler)
-            return await handler.handle(
+            service = await request_container.get(SessionService)
+            return await service.get_by_id(
                 session_id=self._session_id,
                 user_id=self._user_id,
             )

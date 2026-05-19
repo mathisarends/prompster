@@ -3,11 +3,9 @@ from fastapi import APIRouter, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from backend.features.auth.application import (
-    GoogleCallbackHandler,
-    GoogleLoginHandler,
+    GoogleOAuthFlowHandler,
     RefreshSessionHandler,
 )
-from backend.features.auth.application.exceptions import InvalidCredentialsException
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
@@ -35,10 +33,10 @@ _invalid_refresh_token = {
     operation_id="google_login",
 )
 async def google_login(
-    handler: FromDishka[GoogleLoginHandler],
+    handler: FromDishka[GoogleOAuthFlowHandler],
     auth_cookies: FromDishka[AuthCookies],
 ) -> RedirectResponse:
-    authorization_request = handler.handle()
+    authorization_request = handler.login()
 
     redirect_response = RedirectResponse(
         url=authorization_request.authorization_url,
@@ -59,35 +57,30 @@ async def google_login(
 )
 async def google_callback(
     request: Request,
-    handler: FromDishka[GoogleCallbackHandler],
+    handler: FromDishka[GoogleOAuthFlowHandler],
     auth_cookies: FromDishka[AuthCookies],
     auth_settings: FromDishka[AuthSettings],
     code: str | None = Query(default=None, min_length=1, max_length=4096),
     state: str = Query(min_length=1, max_length=4096),
     error: str | None = Query(default=None, min_length=1, max_length=256),
 ) -> HTMLResponse:
-    target_origin = auth_settings.frontend_base_url
-    expected_oauth_state = auth_cookies.read_oauth_state(request=request)
+    result = await handler.callback(
+        code=code,
+        state=state,
+        error=error,
+        expected_oauth_state=auth_cookies.read_oauth_state(request=request),
+    )
 
-    if error is not None or code is None:
-        response = OAuthPopupResponse.error(
-            target_origin=target_origin,
-            reason=error or "missing_code",
+    if result.succeeded and result.session is not None:
+        response = OAuthPopupResponse.success(
+            target_origin=auth_settings.frontend_base_url
         )
+        auth_cookies.set(response, result.session)
     else:
-        try:
-            auth_session = await handler.handle(
-                authorization_code=code,
-                oauth_state=state,
-                expected_oauth_state=expected_oauth_state,
-            )
-            response = OAuthPopupResponse.success(target_origin=target_origin)
-            auth_cookies.set(response, auth_session)
-        except InvalidCredentialsException:
-            response = OAuthPopupResponse.error(
-                target_origin=target_origin,
-                reason="invalid_credentials",
-            )
+        response = OAuthPopupResponse.error(
+            target_origin=auth_settings.frontend_base_url,
+            reason=result.error_reason or "invalid_credentials",
+        )
 
     auth_cookies.clear_oauth_state(response)
     return response

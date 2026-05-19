@@ -1,13 +1,43 @@
 import secrets
+from uuid import UUID
 
 import pytest
 
-from backend.features.auth.application.commands.google_login import GoogleLoginHandler
-from backend.features.auth.application.ports import GoogleOAuthProvider
+from backend.features.auth.application.commands.google_oauth_flow import (
+    GoogleOAuthFlowHandler,
+)
+from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
 from backend.features.auth.application.schemas import (
+    AuthSession,
     GoogleAuthorizationRequest,
     GoogleIdentity,
+    TokenPayload,
+    TokenType,
 )
+from backend.features.user.domain import User, UserRepository
+
+
+class _UserRepositoryStub(UserRepository):
+    async def get_by_id(self, *, user_id: UUID) -> User | None:
+        raise AssertionError("Google login must not load users")
+
+    async def get_by_email(self, *, email: str) -> User | None:
+        raise AssertionError("Google login must not query users")
+
+    async def create(self, *, user: User) -> User:
+        raise AssertionError("Google login must not create users")
+
+
+class _TokenIssuerStub(TokenIssuer):
+    def create_session(self, user_id: UUID) -> AuthSession:
+        raise AssertionError("Google login must not issue tokens")
+
+    def validate(
+        self,
+        token: str,
+        expected_type: TokenType = TokenType.ACCESS,
+    ) -> TokenPayload:
+        raise AssertionError("Google login tests do not validate tokens")
 
 
 class _GoogleOAuthProviderStub(GoogleOAuthProvider):
@@ -26,16 +56,20 @@ class _GoogleOAuthProviderStub(GoogleOAuthProvider):
         raise AssertionError("Google login must not exchange an authorization code")
 
 
-class TestGoogleLoginHandler:
-    def test_handle_generates_oauth_state_and_builds_authorization_request(
+class TestGoogleOAuthFlowHandlerLogin:
+    def test_handle_login_generates_oauth_state_and_builds_authorization_request(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(secrets, "token_urlsafe", lambda _: "state-123")
         provider = _GoogleOAuthProviderStub()
-        handler = GoogleLoginHandler(google_oauth_provider=provider)
+        handler = GoogleOAuthFlowHandler(
+            user_repository=_UserRepositoryStub(),
+            google_oauth_provider=provider,
+            token_issuer=_TokenIssuerStub(),
+        )
 
-        result = handler.handle()
+        result = handler.login()
 
         assert isinstance(result, GoogleAuthorizationRequest)
         assert result.state == "state-123"

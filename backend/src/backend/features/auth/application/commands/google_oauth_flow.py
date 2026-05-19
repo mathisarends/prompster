@@ -2,11 +2,17 @@ import secrets
 
 from backend.features.auth.application.exceptions import InvalidCredentialsException
 from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
-from backend.features.auth.application.schemas import AuthSession
+from backend.features.auth.application.schemas import (
+    AuthSession,
+    GoogleAuthorizationRequest,
+    GoogleCallbackResult,
+)
 from backend.features.user.domain import User, UserRepository
 
 
-class GoogleCallbackHandler:
+class GoogleOAuthFlowHandler:
+    _STATE_TOKEN_BYTES = 32
+
     def __init__(
         self,
         user_repository: UserRepository,
@@ -17,7 +23,43 @@ class GoogleCallbackHandler:
         self._google_oauth_provider = google_oauth_provider
         self._token_issuer = token_issuer
 
-    async def handle(
+    def login(self) -> GoogleAuthorizationRequest:
+        oauth_state = secrets.token_urlsafe(self._STATE_TOKEN_BYTES)
+        authorization_url = self._google_oauth_provider.build_authorization_url(
+            state=oauth_state,
+        )
+
+        return GoogleAuthorizationRequest(
+            authorization_url=authorization_url,
+            state=oauth_state,
+        )
+
+    async def callback(
+        self,
+        *,
+        code: str | None,
+        state: str,
+        error: str | None,
+        expected_oauth_state: str | None,
+    ) -> GoogleCallbackResult:
+        if error is not None:
+            return GoogleCallbackResult.error(reason=error)
+
+        if code is None:
+            return GoogleCallbackResult.error(reason="missing_code")
+
+        try:
+            auth_session = await self._create_auth_session(
+                authorization_code=code,
+                oauth_state=state,
+                expected_oauth_state=expected_oauth_state,
+            )
+        except InvalidCredentialsException:
+            return GoogleCallbackResult.error(reason="invalid_credentials")
+
+        return GoogleCallbackResult.success(session=auth_session)
+
+    async def _create_auth_session(
         self,
         *,
         authorization_code: str,

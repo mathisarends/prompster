@@ -1,7 +1,6 @@
 from typing import Annotated
 from uuid import UUID
 
-from dishka.integrations.fastapi import FromDishka
 from fastapi import Depends, HTTPException, WebSocket, WebSocketException, status
 from starlette.requests import HTTPConnection
 
@@ -10,10 +9,18 @@ from backend.features.auth.application.schemas import TokenPayload, TokenType
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 
 
+async def _get_auth_settings(conn: HTTPConnection) -> AuthSettings:
+    return await conn.state.dishka_container.get(AuthSettings)
+
+
+async def _get_token_issuer(conn: HTTPConnection) -> TokenIssuer:
+    return await conn.state.dishka_container.get(TokenIssuer)
+
+
 def _get_token_payload(
     conn: HTTPConnection,
-    auth_settings: FromDishka[AuthSettings],
-    token_issuer: FromDishka[TokenIssuer],
+    auth_settings: Annotated[AuthSettings, Depends(_get_auth_settings)],
+    token_issuer: Annotated[TokenIssuer, Depends(_get_token_issuer)],
 ) -> TokenPayload:
     token = conn.cookies.get(auth_settings.access_token_cookie_name)
     if not token:

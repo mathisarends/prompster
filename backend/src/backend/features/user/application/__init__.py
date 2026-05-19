@@ -1,3 +1,3 @@
-from .queries import GetMeHandler
+from .user_service import UserService
 
-__all__ = ["GetMeHandler"]
+__all__ = ["UserService"]

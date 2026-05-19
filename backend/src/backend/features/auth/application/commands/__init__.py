@@ -1,9 +1,7 @@
-from .google_callback import GoogleCallbackHandler
-from .google_login import GoogleLoginHandler
+from .google_oauth_flow import GoogleOAuthFlowHandler
 from .refresh_session import RefreshSessionHandler
 
 __all__ = [
-    "GoogleCallbackHandler",
-    "GoogleLoginHandler",
+    "GoogleOAuthFlowHandler",
     "RefreshSessionHandler",
 ]
