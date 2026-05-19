@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { Check, ChevronDown, Loader2 } from "lucide-react";
+import { Check, ChevronDown, CircleAlert, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type ToolCallStatus = "pending" | "running" | "completed";
+export type ToolCallStatus = "pending" | "running" | "completed" | "failed";
 
 export type ToolCallItem = {
   id: string;
   text: string;
   status?: ToolCallStatus;
+  detail?: string;
 };
 
 type ToolCallAccordionProps = {
@@ -32,6 +33,17 @@ const HeaderIcon = ({ status }: { status: ToolCallStatus }) => {
     );
   }
 
+  if (status === "failed") {
+    return (
+      <span className="flex size-[18px] shrink-0 items-center justify-center rounded-full border border-destructive/60 bg-destructive/[0.08]">
+        <CircleAlert
+          className="size-[12px] text-destructive"
+          strokeWidth={2.5}
+        />
+      </span>
+    );
+  }
+
   return (
     <span className="flex size-[18px] shrink-0 items-center justify-center rounded-full border border-primary/60 bg-primary/[0.07]">
       <Check className="size-[11px] text-primary" strokeWidth={3} />
@@ -42,11 +54,13 @@ const HeaderIcon = ({ status }: { status: ToolCallStatus }) => {
 const ChildMarker = ({ status }: { status: ToolCallStatus }) =>
   status === "running" ? (
     <Loader2 className="size-3 shrink-0 animate-spin text-primary" />
-  ) : (
-    <Check
-      className="size-3 shrink-0 text-primary/70"
-      strokeWidth={3}
+  ) : status === "failed" ? (
+    <CircleAlert
+      className="size-3 shrink-0 text-destructive"
+      strokeWidth={2.5}
     />
+  ) : (
+    <Check className="size-3 shrink-0 text-primary/70" strokeWidth={3} />
   );
 
 export const ToolCallAccordion = ({
@@ -60,15 +74,19 @@ export const ToolCallAccordion = ({
 
   const visibleCalls = calls.filter((call) => getStatus(call) !== "pending");
   const runningCall = calls.find((call) => getStatus(call) === "running");
+  const failedCall = calls.find((call) => getStatus(call) === "failed");
   const isRunning = Boolean(runningCall);
+  const hasFailed = Boolean(failedCall);
 
   if (visibleCalls.length === 0) return null;
 
   const headerLabel = isRunning
     ? runningCall!.text
-    : `${calls.length} ${
-        calls.length === 1 ? "Tool verwendet" : "Tools verwendet"
-      }`;
+    : hasFailed
+      ? `${failedCall!.text} fehlgeschlagen`
+      : `${calls.length} ${
+          calls.length === 1 ? "Tool verwendet" : "Tools verwendet"
+        }`;
 
   return (
     <section
@@ -81,13 +99,17 @@ export const ToolCallAccordion = ({
         className="group flex w-full items-center gap-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
         aria-expanded={isOpen}
       >
-        <HeaderIcon status={isRunning ? "running" : "completed"} />
+        <HeaderIcon
+          status={isRunning ? "running" : hasFailed ? "failed" : "completed"}
+        />
         <span
           className={cn(
             "min-w-0 flex-1 truncate text-sm leading-6",
             isRunning
               ? "font-medium text-foreground"
-              : "text-muted-foreground group-hover:text-foreground/90",
+              : hasFailed
+                ? "font-medium text-destructive"
+                : "text-muted-foreground group-hover:text-foreground/90",
           )}
         >
           {headerLabel}
@@ -110,16 +132,25 @@ export const ToolCallAccordion = ({
                 <span className="mt-[5px]">
                   <ChildMarker status={status} />
                 </span>
-                <span
-                  className={cn(
-                    "min-w-0 flex-1 break-words text-xs leading-5",
-                    status === "running"
-                      ? "font-medium text-foreground/90"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  {call.text}
-                </span>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <span
+                    className={cn(
+                      "block break-words text-xs leading-5",
+                      status === "running"
+                        ? "font-medium text-foreground/90"
+                        : status === "failed"
+                          ? "font-medium text-destructive"
+                          : "text-muted-foreground",
+                    )}
+                  >
+                    {call.text}
+                  </span>
+                  {call.detail ? (
+                    <pre className="max-h-32 overflow-auto whitespace-pre-wrap break-words rounded-md bg-black/20 px-2 py-1.5 font-mono text-[11px] leading-4 text-muted-foreground">
+                      {call.detail}
+                    </pre>
+                  ) : null}
+                </div>
               </li>
             );
           })}

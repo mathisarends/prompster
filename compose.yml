@@ -26,6 +26,8 @@ services:
       SPOTIFY_REDIRECT_URI: ${SPOTIFY_REDIRECT_URI:-}
     volumes:
       - ./backend/src:/app/backend/src
+      - ./llm/src:/app/llm/src
+      - ./agent/src:/app/agent/src
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:

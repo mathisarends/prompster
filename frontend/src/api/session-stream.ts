@@ -1,4 +1,5 @@
 import type {
+  FollowUpRequest,
   SendMessageRequest,
   SessionEventSchema,
 } from "@/api/generated/model";
@@ -15,6 +16,8 @@ type StreamSendMessageOptions = {
   onEvent?: (event: SessionServerEvent) => void;
 };
 
+type StreamRequestBody = SendMessageRequest | FollowUpRequest;
+
 const getApiUrl = (path: string) => {
   const baseUrl = String(
     AXIOS_INSTANCE.defaults.baseURL ?? window.location.origin,
@@ -28,20 +31,35 @@ const getApiUrl = (path: string) => {
 export const streamSendMessage = async (
   sessionId: string,
   body: SendMessageRequest,
+  options: StreamSendMessageOptions,
+) =>
+  streamSessionRequest(`/api/v1/sessions/${sessionId}/messages`, body, options);
+
+export const streamFollowUp = async (
+  sessionId: string,
+  body: FollowUpRequest,
+  options: StreamSendMessageOptions,
+) =>
+  streamSessionRequest(
+    `/api/v1/sessions/${sessionId}/follow-ups`,
+    body,
+    options,
+  );
+
+const streamSessionRequest = async (
+  path: string,
+  body: StreamRequestBody,
   { signal, onChunk, onDone, onEvent }: StreamSendMessageOptions,
 ) => {
-  const response = await fetch(
-    getApiUrl(`/api/v1/sessions/${sessionId}/messages`),
-    {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-      signal,
+  const response = await fetch(getApiUrl(path), {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify(body),
+    signal,
+  });
 
   if (!response.ok) {
     const detail = await response.text();

@@ -43,4 +43,4 @@ ENV PYTHONPATH=/app/backend/src \
 EXPOSE 8000
 
 CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port 8000 \
-     $([ \"$RELOAD\" = 'true' ] && echo '--reload --reload-dir /app/backend/src')"]
+    $([ \"$RELOAD\" = 'true' ] && echo '--reload --reload-dir /app/backend/src --reload-dir /app/llm/src --reload-dir /app/agent/src')"]

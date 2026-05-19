@@ -9,9 +9,9 @@ import {
 import { ProtectedRoute } from "@/auth/protected-route";
 import { useAuth } from "@/auth/use-auth";
 import { AppLayout } from "@/layouts/app-layout";
-import { ChatPage } from "@/pages/chat-page";
 import { HomePage } from "@/pages/home-page";
 import { LandingPage } from "@/pages/landing-page";
+import { ChatPage } from "@/pages/chat-page";
 
 const HomePageRoute = () => {
   const location = useLocation();
