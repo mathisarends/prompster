@@ -1,8 +1,18 @@
 from datetime import datetime
 from uuid import UUID
 
-from backend.features.session.domain.entities.tool_call import ToolCall
-from backend.features.session.domain.exceptions import ToolCallNotFoundError
+from backend.features.session.domain.entities.tool_call import (
+    CompletedCall,
+    FailedCall,
+    PendingCall,
+    ResolvedCall,
+    ToolCall,
+    is_pending,
+)
+from backend.features.session.domain.exceptions import (
+    ToolCallAlreadyResolvedError,
+    ToolCallNotFoundError,
+)
 from backend.shared.ddd import Entity
 
 
@@ -18,26 +28,48 @@ class ToolCallGroup(Entity):
 
     @property
     def is_complete(self) -> bool:
-        return all(call.is_resolved for call in self.calls)
+        return all(not is_pending(call) for call in self.calls)
 
     @property
-    def pending_calls(self) -> list[ToolCall]:
-        return [call for call in self.calls if call.is_pending]
+    def pending_calls(self) -> list[PendingCall]:
+        return [call for call in self.calls if isinstance(call, PendingCall)]
 
-    def resolve(self, tool_call_id: str, result: str) -> ToolCall:
-        call = self._get(tool_call_id)
-        call.complete(result)
+    def add(self, call: PendingCall) -> PendingCall:
+        self.calls.append(call)
         return call
 
-    def fail(self, tool_call_id: str, error: str) -> ToolCall:
-        call = self._get(tool_call_id)
-        call.fail(error)
-        return call
+    def resolve(self, tool_call_id: str, result: str) -> CompletedCall:
+        index, pending = self._require_pending(tool_call_id)
+        completed = CompletedCall(
+            id=pending.id, function=pending.function, result=result
+        )
+        self.calls[index] = completed
+        return completed
 
-    def _get(self, tool_call_id: str) -> ToolCall:
+    def fail(self, tool_call_id: str, error: str) -> FailedCall:
+        index, pending = self._require_pending(tool_call_id)
+        failed = FailedCall(id=pending.id, function=pending.function, error=error)
+        self.calls[index] = failed
+        return failed
+
+    def get(self, tool_call_id: str) -> ToolCall:
         for call in self.calls:
             if call.id == tool_call_id:
                 return call
+        raise ToolCallNotFoundError(
+            f"No tool call {tool_call_id!r} in group {self.id}."
+        )
+
+    def _require_pending(self, tool_call_id: str) -> tuple[int, PendingCall]:
+        for index, call in enumerate(self.calls):
+            if call.id != tool_call_id:
+                continue
+            if isinstance(call, ResolvedCall):
+                state = "completed" if isinstance(call, CompletedCall) else "failed"
+                raise ToolCallAlreadyResolvedError(
+                    f"Tool call {tool_call_id!r} is already {state}."
+                )
+            return index, call
         raise ToolCallNotFoundError(
             f"No tool call {tool_call_id!r} in group {self.id}."
         )

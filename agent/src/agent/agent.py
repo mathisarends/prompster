@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Self
 
 from agentory import Agent, Inject, Tools
-from llmify import ChatOpenAI
+from llm import LLMCredentials, create_gpt_5_4
 from spotifyify import PagingPlaylistTrack, Spotifyify, SpotifyScope, Track
 
 from agent.helpers import (
@@ -52,10 +52,11 @@ class HitsterAgent:
             ]
         )
         self._register_tools()
+        llm_credentials = LLMCredentials()
         self._agent = Agent(
             instructions=self._instructions,
             tools=self._tools,
-            llm=ChatOpenAI(model="gpt-5.4"),
+            llm=create_gpt_5_4(credentials=llm_credentials),
             injectables=[self._spotify],
         )
 

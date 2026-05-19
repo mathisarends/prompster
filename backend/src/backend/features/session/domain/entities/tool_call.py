@@ -1,57 +1,39 @@
-from enum import StrEnum
-
-from backend.features.session.domain.exceptions import (
-    ToolCallAlreadyResolvedError,
-)
+from dataclasses import dataclass
 
 
-class ToolCallState(StrEnum):
-    PENDING = "pending"
-    COMPLETED = "completed"
-    FAILED = "failed"
-
-
+@dataclass(frozen=True)
 class ToolFunction:
-    def __init__(self, name: str, arguments: dict[str, object]) -> None:
-        self.name = name
-        self.arguments = arguments
+    name: str
+    arguments: dict[str, object]
 
 
-class ToolCall:
-    def __init__(
-        self,
-        id: str,
-        function: ToolFunction,
-        state: ToolCallState = ToolCallState.PENDING,
-        result: str | None = None,
-        error: str | None = None,
-    ) -> None:
-        self.id = id
-        self.function = function
-        self.state = state
-        self.result = result
-        self.error = error
+@dataclass(frozen=True)
+class PendingCall:
+    id: str
+    function: ToolFunction
 
-    @property
-    def is_pending(self) -> bool:
-        return self.state == ToolCallState.PENDING
 
-    @property
-    def is_resolved(self) -> bool:
-        return self.state != ToolCallState.PENDING
+@dataclass(frozen=True)
+class CompletedCall:
+    id: str
+    function: ToolFunction
+    result: str
 
-    def complete(self, result: str) -> None:
-        self._assert_pending()
-        self.state = ToolCallState.COMPLETED
-        self.result = result
 
-    def fail(self, error: str) -> None:
-        self._assert_pending()
-        self.state = ToolCallState.FAILED
-        self.error = error
+@dataclass(frozen=True)
+class FailedCall:
+    id: str
+    function: ToolFunction
+    error: str
 
-    def _assert_pending(self) -> None:
-        if self.is_resolved:
-            raise ToolCallAlreadyResolvedError(
-                f"Tool call {self.id!r} is already {self.state}."
-            )
+
+ResolvedCall = CompletedCall | FailedCall
+ToolCall = PendingCall | ResolvedCall
+
+
+def is_pending(call: ToolCall) -> bool:
+    return isinstance(call, PendingCall)
+
+
+def is_resolved(call: ToolCall) -> bool:
+    return not is_pending(call)

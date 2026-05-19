@@ -1,31 +1,40 @@
 import json
 
 from backend.features.session.domain import (
-    MessageRole,
-    SessionMessage,
+    AssistantMessage,
+    CompletedCall,
+    FailedCall,
+    PendingCall,
+    SessionEntry,
     ToolCall,
-    ToolCallState,
+    ToolCallGroup,
+    UserMessage,
 )
 
 
-def to_openai_messages(messages: list[SessionMessage]) -> list[dict]:
+def to_openai_messages(entries: list[SessionEntry]) -> list[dict]:
     result: list[dict] = []
-    for message in messages:
-        result.extend(_map_message(message))
+    for entry in entries:
+        if isinstance(entry, UserMessage):
+            result.append({"role": "user", "content": entry.content})
+        elif isinstance(entry, AssistantMessage):
+            result.append({"role": "assistant", "content": entry.content})
+        elif isinstance(entry, ToolCallGroup):
+            result.extend(_map_tool_call_group(entry))
     return result
 
 
-def _map_message(message: SessionMessage) -> list[dict]:
-    if message.role == MessageRole.USER:
-        return [{"role": "user", "content": message.content}]
-
-    assistant: dict = {"role": "assistant", "content": message.content}
-    group = message.tool_call_group
-    if group is None:
-        return [assistant]
-
-    assistant["tool_calls"] = [_map_tool_call(call) for call in group.calls]
-    tool_messages = [_map_tool_result(call) for call in group.calls if call.is_resolved]
+def _map_tool_call_group(group: ToolCallGroup) -> list[dict]:
+    assistant = {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [_map_tool_call(call) for call in group.calls],
+    }
+    tool_messages = [
+        _map_tool_result(call)
+        for call in group.calls
+        if not isinstance(call, PendingCall)
+    ]
     return [assistant, *tool_messages]
 
 
@@ -41,9 +50,14 @@ def _map_tool_call(call: ToolCall) -> dict:
 
 
 def _map_tool_result(call: ToolCall) -> dict:
-    content = call.error if call.state == ToolCallState.FAILED else call.result
+    if isinstance(call, CompletedCall):
+        content = call.result
+    elif isinstance(call, FailedCall):
+        content = call.error
+    else:
+        content = ""
     return {
         "role": "tool",
         "tool_call_id": call.id,
-        "content": content or "",
+        "content": content,
     }

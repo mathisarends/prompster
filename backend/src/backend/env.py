@@ -27,14 +27,3 @@ class EnvSettings(BaseSettings):
     @property
     def is_prod(self) -> bool:
         return self.env == _EnvironmentMode.PROD
-
-
-class LLMCredentials(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-        populate_by_name=True,
-    )
-
-    openai_api_key: str

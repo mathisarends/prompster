@@ -6,7 +6,7 @@ from backend.features.session.application import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
 )
-from backend.features.session.domain import MessageRole, SessionMessage
+from backend.features.session.domain import AssistantMessage
 from backend.features.session.presentation.sse.events import (
     AssistantMessageChunkEvent,
     AssistantMessageCompletedEvent,
@@ -16,9 +16,8 @@ from backend.features.session.presentation.sse.events import (
 from backend.features.session.presentation.sse.mappers import to_server_event
 
 
-def _make_assistant_message() -> SessionMessage:
-    return SessionMessage(
-        role=MessageRole.ASSISTANT,
+def _make_assistant_message() -> AssistantMessage:
+    return AssistantMessage(
         content="",
         id=uuid4(),
         created_time=datetime(2026, 1, 1, tzinfo=timezone.utc),

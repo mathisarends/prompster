@@ -13,14 +13,18 @@ from backend.features.session.domain.exceptions import (
     SessionAccessDeniedError,
 )
 from backend.features.session.domain import (
+    AssistantMessage,
+    CompletedCall,
+    FailedCall,
     FollowUpOption,
     FollowUpQuestion,
+    FollowUpQuestionGroup,
     FollowUpQuestionState,
-    MessageRole,
+    PendingCall,
     Session,
-    ToolCall,
-    ToolCallState,
+    ToolCallGroup,
     ToolFunction,
+    UserMessage,
 )
 
 
@@ -31,11 +35,11 @@ def owner_id() -> UUID:
 
 @pytest.fixture
 def session(owner_id: UUID) -> Session:
-    return Session(title="Roadtrip", messages=[], owner_id=owner_id)
+    return Session(title="Roadtrip", entries=[], owner_id=owner_id)
 
 
-def make_pending_tool_call(call_id: str = "tc-1") -> ToolCall:
-    return ToolCall(
+def make_pending_call(call_id: str = "tc-1") -> PendingCall:
+    return PendingCall(
         id=call_id,
         function=ToolFunction(name="search_track", arguments={"query": "daft punk"}),
     )
@@ -55,7 +59,7 @@ class TestSessionDomainSession:
     def test_session_generates_aggregate_identity_by_default(
         self, owner_id: UUID
     ) -> None:
-        created = Session(title="Roadtrip", messages=[], owner_id=owner_id)
+        created = Session(title="Roadtrip", entries=[], owner_id=owner_id)
 
         assert isinstance(created.id, UUID)
         assert created.created_at.tzinfo is not None
@@ -67,7 +71,7 @@ class TestSessionDomainSession:
 
         created = Session(
             title="Roadtrip",
-            messages=[],
+            entries=[],
             owner_id=owner_id,
             id=session_id,
             created_time=created_time,
@@ -87,29 +91,27 @@ class TestSessionDomainSession:
 
         assert created.title == "Roadtrip"
         assert created.owner_id == owner_id
-        assert len(created.messages) == 1
-        assert created.messages[0].role == MessageRole.USER
-        assert created.messages[0].content == "spiele was ruhiges"
+        assert len(created.entries) == 1
+        assert isinstance(created.entries[0], UserMessage)
+        assert created.entries[0].content == "spiele was ruhiges"
 
-    def test_messages_property_is_immutable(self, session: Session) -> None:
-        assert isinstance(session.messages, tuple)
+    def test_entries_property_is_immutable(self, session: Session) -> None:
+        assert isinstance(session.entries, tuple)
 
         with pytest.raises(AttributeError, match="append"):
-            session.messages.append(object())
+            session.entries.append(object())  # type: ignore[attr-defined]
 
-    def test_add_user_message_appends_internal_messages(self, session: Session) -> None:
+    def test_add_user_message_appends_entry(self, session: Session) -> None:
         created = session.add_user_message("play something chill")
 
-        assert len(session.messages) == 1
-        assert session.messages[0] is created
+        assert len(session.entries) == 1
+        assert session.entries[0] is created
+        assert isinstance(created, UserMessage)
 
     def test_add_user_message_raises_when_tool_calls_pending(
         self, session: Session
     ) -> None:
-        pending_call = make_pending_tool_call()
-        session.add_assistant_message(
-            content="Ich suche Tracks...", tool_calls=[pending_call]
-        )
+        session.add_tool_call(make_pending_call())
 
         with pytest.raises(PendingToolCallsError, match="tool calls are pending"):
             session.add_user_message("noch ein song")
@@ -117,33 +119,51 @@ class TestSessionDomainSession:
     def test_add_user_message_raises_when_follow_up_questions_pending(
         self, session: Session
     ) -> None:
-        session.add_assistant_message(
-            content="Noch eine Frage...",
-            follow_up_questions=[make_pending_follow_up()],
-        )
+        session.add_follow_up_questions([make_pending_follow_up()])
 
         with pytest.raises(
             PendingFollowUpQuestionsError, match="follow-up questions are pending"
         ):
             session.add_user_message("antwort")
 
-    def test_add_assistant_message_attaches_pending_groups(
+    def test_add_tool_call_auto_creates_group(self, session: Session) -> None:
+        group = session.add_tool_call(make_pending_call("tc-1"))
+
+        assert isinstance(group, ToolCallGroup)
+        assert len(session.entries) == 1
+        assert session.entries[0] is group
+        assert len(group.calls) == 1
+
+    def test_add_tool_call_appends_to_open_group(self, session: Session) -> None:
+        first_group = session.add_tool_call(make_pending_call("tc-1"))
+        second_group = session.add_tool_call(make_pending_call("tc-2"))
+
+        assert first_group is second_group
+        assert len(session.entries) == 1
+        assert len(first_group.calls) == 2
+
+    def test_add_tool_call_starts_new_group_after_assistant_message(
         self, session: Session
     ) -> None:
-        tool_call = make_pending_tool_call()
-        follow_up = make_pending_follow_up()
+        session.add_user_message("recherche bitte")
+        first_group = session.add_tool_call(make_pending_call("tc-1"))
+        session.resolve_tool_call("tc-1", "ok")
+        session.add_assistant_message("Zwischenergebnis")
 
-        message = session.add_assistant_message(
-            content="Ich brauche noch Infos",
-            tool_calls=[tool_call],
-            follow_up_questions=[follow_up],
-        )
+        second_group = session.add_tool_call(make_pending_call("tc-2"))
 
-        assert message.role == MessageRole.ASSISTANT
-        assert message.tool_call_group is not None
-        assert message.follow_up_group is not None
-        assert message.tool_call_group.calls[0] is tool_call
-        assert message.follow_up_group.questions[0] is follow_up
+        assert first_group is not second_group
+        assert len(session.entries) == 4
+        assert isinstance(session.entries[-1], ToolCallGroup)
+
+    def test_add_assistant_message_creates_pure_text_entry(
+        self, session: Session
+    ) -> None:
+        message = session.add_assistant_message(content="Hallo")
+
+        assert isinstance(message, AssistantMessage)
+        assert message.content == "Hallo"
+        assert session.entries[-1] is message
 
     def test_append_to_current_assistant_message_updates_content(
         self, session: Session
@@ -163,7 +183,7 @@ class TestSessionDomainSession:
         ):
             session.append_to_current_assistant_message("chunk")
 
-    def test_cancel_current_assistant_message_removes_last_message(
+    def test_cancel_current_assistant_message_removes_last_entry(
         self, session: Session
     ) -> None:
         removed = session.add_assistant_message(content="streaming...")
@@ -171,7 +191,7 @@ class TestSessionDomainSession:
         cancelled = session.cancel_current_assistant_message()
 
         assert cancelled is removed
-        assert len(session.messages) == 0
+        assert len(session.entries) == 0
 
     def test_cancel_current_assistant_message_raises_without_assistant(
         self, session: Session
@@ -215,22 +235,20 @@ class TestSessionDomainSession:
         with pytest.raises(PlaylistTrackNotFoundError, match="not found in playlist"):
             session.remove_track(uuid4())
 
-    def test_resolve_tool_call_marks_call_completed(self, session: Session) -> None:
-        pending_call = make_pending_tool_call(call_id="tc-1")
-        session.add_assistant_message(tool_calls=[pending_call])
+    def test_resolve_tool_call_replaces_with_completed(self, session: Session) -> None:
+        session.add_tool_call(make_pending_call("tc-1"))
 
         resolved = session.resolve_tool_call("tc-1", "done")
 
-        assert resolved.state == ToolCallState.COMPLETED
+        assert isinstance(resolved, CompletedCall)
         assert resolved.result == "done"
 
-    def test_fail_tool_call_marks_call_failed(self, session: Session) -> None:
-        pending_call = make_pending_tool_call(call_id="tc-1")
-        session.add_assistant_message(tool_calls=[pending_call])
+    def test_fail_tool_call_replaces_with_failed(self, session: Session) -> None:
+        session.add_tool_call(make_pending_call("tc-1"))
 
         failed = session.fail_tool_call("tc-1", "timeout")
 
-        assert failed.state == ToolCallState.FAILED
+        assert isinstance(failed, FailedCall)
         assert failed.error == "timeout"
 
     def test_resolve_tool_call_raises_without_pending_group(
@@ -241,11 +259,21 @@ class TestSessionDomainSession:
         ):
             session.resolve_tool_call("tc-1", "ok")
 
+    def test_add_follow_up_questions_creates_group_entry(
+        self, session: Session
+    ) -> None:
+        question = make_pending_follow_up()
+
+        group = session.add_follow_up_questions([question])
+
+        assert isinstance(group, FollowUpQuestionGroup)
+        assert session.entries[-1] is group
+
     def test_answer_follow_up_with_option_resolves_question(
         self, session: Session
     ) -> None:
         question = make_pending_follow_up()
-        session.add_assistant_message(follow_up_questions=[question])
+        session.add_follow_up_questions([question])
 
         answered = session.answer_follow_up_with_option(question.id, "house")
 
@@ -258,7 +286,7 @@ class TestSessionDomainSession:
         self, session: Session
     ) -> None:
         question = make_pending_follow_up()
-        session.add_assistant_message(follow_up_questions=[question])
+        session.add_follow_up_questions([question])
 
         answered = session.answer_follow_up_with_text(question.id, "  chillwave  ")
 
@@ -269,7 +297,7 @@ class TestSessionDomainSession:
 
     def test_skip_follow_up_marks_question_skipped(self, session: Session) -> None:
         question = make_pending_follow_up()
-        session.add_assistant_message(follow_up_questions=[question])
+        session.add_follow_up_questions([question])
 
         skipped = session.skip_follow_up(question.id)
 
@@ -282,8 +310,8 @@ class TestSessionDomainSession:
         first_question = make_pending_follow_up("Welches Genre?")
         second_question = make_pending_follow_up("Welche Stimmung?")
         third_question = make_pending_follow_up("Welches Tempo?")
-        session.add_assistant_message(
-            follow_up_questions=[first_question, second_question, third_question]
+        session.add_follow_up_questions(
+            [first_question, second_question, third_question]
         )
         first_question.answer_with_text("house")
 

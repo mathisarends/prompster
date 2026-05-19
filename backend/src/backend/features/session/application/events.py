@@ -2,15 +2,15 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from backend.features.session.domain import (
+    AssistantMessage,
     Playlist,
     PlaylistTrack,
-    SessionMessage,
 )
 
 
 @dataclass(frozen=True)
 class SessionAssistantMessageStarted:
-    message: SessionMessage
+    message: AssistantMessage
 
 
 @dataclass(frozen=True)
@@ -21,7 +21,7 @@ class SessionAssistantMessageChunk:
 
 @dataclass(frozen=True)
 class SessionAssistantMessageCompleted:
-    message: SessionMessage
+    message: AssistantMessage
 
 
 @dataclass(frozen=True)

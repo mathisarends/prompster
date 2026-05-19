@@ -1,11 +1,10 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Self
+from typing import Annotated, Literal, Self, Union
 from uuid import UUID
 
 from pydantic import Field, model_validator
 
-from backend.features.session.domain import MessageRole
 from backend.presentation.schema import Schema
 
 
@@ -17,18 +16,86 @@ class SessionUpdateRequest(Schema):
     title: str = Field(min_length=1, max_length=120)
 
 
-class MessageResponse(Schema):
+class EntryKind(StrEnum):
+    USER_MESSAGE = "user_message"
+    ASSISTANT_MESSAGE = "assistant_message"
+    TOOL_CALL_GROUP = "tool_call_group"
+    FOLLOW_UP_QUESTION_GROUP = "follow_up_question_group"
+
+
+class UserMessageEntryResponse(Schema):
+    kind: Literal[EntryKind.USER_MESSAGE] = EntryKind.USER_MESSAGE
     id: UUID
-    role: MessageRole
     content: str
     created_at: datetime
+
+
+class AssistantMessageEntryResponse(Schema):
+    kind: Literal[EntryKind.ASSISTANT_MESSAGE] = EntryKind.ASSISTANT_MESSAGE
+    id: UUID
+    content: str
+    created_at: datetime
+
+
+class ToolFunctionResponse(Schema):
+    name: str
+    arguments: dict[str, object]
+
+
+class ToolCallResponse(Schema):
+    id: str
+    function: ToolFunctionResponse
+    state: Literal["pending", "completed", "failed"]
+    result: str | None = None
+    error: str | None = None
+
+
+class ToolCallGroupEntryResponse(Schema):
+    kind: Literal[EntryKind.TOOL_CALL_GROUP] = EntryKind.TOOL_CALL_GROUP
+    id: UUID
+    created_at: datetime
+    calls: list[ToolCallResponse]
+
+
+class FollowUpOptionResponse(Schema):
+    id: str
+    label: str
+
+
+class FollowUpQuestionResponse(Schema):
+    id: UUID
+    question: str
+    options: list[FollowUpOptionResponse]
+    state: Literal["pending", "answered", "skipped"]
+    answer_text: str | None = None
+    answered_option_id: str | None = None
+
+
+class FollowUpQuestionGroupEntryResponse(Schema):
+    kind: Literal[EntryKind.FOLLOW_UP_QUESTION_GROUP] = (
+        EntryKind.FOLLOW_UP_QUESTION_GROUP
+    )
+    id: UUID
+    created_at: datetime
+    questions: list[FollowUpQuestionResponse]
+
+
+SessionEntryResponse = Annotated[
+    Union[
+        UserMessageEntryResponse,
+        AssistantMessageEntryResponse,
+        ToolCallGroupEntryResponse,
+        FollowUpQuestionGroupEntryResponse,
+    ],
+    Field(discriminator="kind"),
+]
 
 
 class SessionResponse(Schema):
     id: UUID
     title: str
     created_at: datetime
-    messages: list[MessageResponse]
+    entries: list[SessionEntryResponse]
 
 
 class SessionSummaryResponse(Schema):

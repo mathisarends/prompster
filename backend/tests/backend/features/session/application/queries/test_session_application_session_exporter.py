@@ -52,7 +52,7 @@ class _DeckGeneratorStub(PlaylistDeckGenerator):
 class TestSessionPlaylistExporter:
     def test_export_generates_deck_from_playlist(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", messages=[], owner_id=owner_id)
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
         session.add_track(
             title="Insomnia",
             artist="Faithless",
@@ -80,7 +80,7 @@ class TestSessionPlaylistExporter:
 
     def test_export_raises_when_playlist_empty(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", messages=[], owner_id=owner_id)
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
         repository = _SessionRepositoryStub(session=session)
         generator = _DeckGeneratorStub()
         exporter = SessionPlaylistExporter(
@@ -92,7 +92,7 @@ class TestSessionPlaylistExporter:
             asyncio.run(exporter.export(session_id=session.id, user_id=owner_id))
 
     def test_export_raises_for_unauthorized_user(self) -> None:
-        session = Session(title="Roadtrip", messages=[], owner_id=uuid4())
+        session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
         repository = _SessionRepositoryStub(session=session)
         generator = _DeckGeneratorStub()
         exporter = SessionPlaylistExporter(

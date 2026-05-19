@@ -5,10 +5,12 @@ from uuid import UUID
 
 from pydantic import Field
 
-from backend.features.session.domain import (
-    FollowUpQuestionState,
-    MessageRole,
-    ToolCallState,
+from backend.features.session.presentation.schemas import (
+    AssistantMessageEntryResponse,
+    FollowUpQuestionGroupEntryResponse,
+    PlaylistTrackResponse,
+    SessionEntryResponse,
+    ToolCallGroupEntryResponse,
 )
 from backend.presentation.schema import Schema
 
@@ -40,71 +42,17 @@ class SessionEventType(StrEnum):
     ERROR = "error"
 
 
-class FollowUpOptionPayload(_SessionEventSchema):
-    id: str
-    label: str
-
-
-class FollowUpQuestionPayload(_SessionEventSchema):
-    id: UUID
-    question: str
-    options: list[FollowUpOptionPayload]
-    state: FollowUpQuestionState
-    answer_text: str | None = None
-    answered_option_id: str | None = None
-
-
-class FollowUpQuestionGroupPayload(_SessionEventSchema):
-    id: UUID
-    questions: list[FollowUpQuestionPayload]
-
-
-class ToolFunctionPayload(_SessionEventSchema):
-    name: str
-    arguments: dict[str, object]
-
-
-class ToolCallPayload(_SessionEventSchema):
-    id: str
-    function: ToolFunctionPayload
-    state: ToolCallState
-    result: str | None = None
-    error: str | None = None
-
-
-class ToolCallGroupPayload(_SessionEventSchema):
-    id: UUID
-    calls: list[ToolCallPayload]
-
-
-class PlaylistTrackPayload(_SessionEventSchema):
-    id: UUID
-    title: str
-    artist: str
-    year: int | None = None
-    cover_url: str | None = None
-
-
 class PlaylistPayload(_SessionEventSchema):
     id: UUID
     name: str | None = None
-    tracks: list[PlaylistTrackPayload]
-
-
-class MessagePayload(_SessionEventSchema):
-    id: UUID
-    role: MessageRole
-    content: str
-    created_at: datetime
-    tool_call_group: ToolCallGroupPayload | None = None
-    follow_up_group: FollowUpQuestionGroupPayload | None = None
+    tracks: list[PlaylistTrackResponse]
 
 
 class SessionSnapshotPayload(_SessionEventSchema):
     id: UUID
     title: str
     created_at: datetime
-    messages: list[MessagePayload]
+    entries: list[SessionEntryResponse]
     playlist: PlaylistPayload | None = None
 
 
@@ -133,7 +81,7 @@ class AssistantMessageCompletedEvent(_SessionEventSchema):
     type: Literal[SessionEventType.ASSISTANT_MESSAGE_COMPLETED] = (
         SessionEventType.ASSISTANT_MESSAGE_COMPLETED
     )
-    message: MessagePayload
+    message: AssistantMessageEntryResponse
 
 
 class AssistantMessageCancelledEvent(_SessionEventSchema):
@@ -147,8 +95,7 @@ class ToolCallGroupAddedEvent(_SessionEventSchema):
     type: Literal[SessionEventType.TOOL_CALL_GROUP_ADDED] = (
         SessionEventType.TOOL_CALL_GROUP_ADDED
     )
-    message_id: UUID
-    group: ToolCallGroupPayload
+    group: ToolCallGroupEntryResponse
 
 
 class ToolCallResolvedEvent(_SessionEventSchema):
@@ -178,8 +125,7 @@ class FollowUpGroupAddedEvent(_SessionEventSchema):
     type: Literal[SessionEventType.FOLLOW_UP_GROUP_ADDED] = (
         SessionEventType.FOLLOW_UP_GROUP_ADDED
     )
-    message_id: UUID
-    group: FollowUpQuestionGroupPayload
+    group: FollowUpQuestionGroupEntryResponse
 
 
 class PlaylistSetEvent(_SessionEventSchema):
@@ -192,7 +138,7 @@ class PlaylistTrackAddedEvent(_SessionEventSchema):
         SessionEventType.PLAYLIST_TRACK_ADDED
     )
     playlist_id: UUID
-    track: PlaylistTrackPayload
+    track: PlaylistTrackResponse
 
 
 class PlaylistTrackRemovedEvent(_SessionEventSchema):

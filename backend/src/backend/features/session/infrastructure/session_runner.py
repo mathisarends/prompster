@@ -1,9 +1,15 @@
 from collections.abc import AsyncIterator
 
-from llmify import AssistantMessage, ChatModel, SystemMessage, UserMessage
+from llmify import AssistantMessage as LLMAssistantMessage
+from llmify import ChatModel, SystemMessage
+from llmify import UserMessage as LLMUserMessage
 
 from backend.features.session.application.ports.session_runner import SessionRunner
-from backend.features.session.domain import MessageRole, Session
+from backend.features.session.domain import (
+    AssistantMessage,
+    Session,
+    UserMessage,
+)
 
 
 class LLMSessionRunner(SessionRunner):
@@ -13,10 +19,10 @@ class LLMSessionRunner(SessionRunner):
 
     async def run(self, *, session: Session) -> AsyncIterator[str]:
         messages = [SystemMessage(content=self._system_prompt)]
-        for msg in session.messages:
-            if msg.role == MessageRole.USER:
-                messages.append(UserMessage(content=msg.content))
-            elif msg.role == MessageRole.ASSISTANT:
-                messages.append(AssistantMessage(content=msg.content))
+        for entry in session.entries:
+            if isinstance(entry, UserMessage):
+                messages.append(LLMUserMessage(content=entry.content))
+            elif isinstance(entry, AssistantMessage):
+                messages.append(LLMAssistantMessage(content=entry.content))
         async for chunk in self._llm.stream(messages):
             yield chunk

@@ -12,14 +12,17 @@ from backend.features.session.domain.exceptions import (
     SessionAccessDeniedError,
 )
 from backend.features.session.domain.entities import (
+    AssistantMessage,
+    CompletedCall,
+    FailedCall,
     FollowUpQuestion,
     FollowUpQuestionGroup,
-    MessageRole,
+    PendingCall,
     Playlist,
     PlaylistTrack,
-    SessionMessage,
-    ToolCall,
+    SessionEntry,
     ToolCallGroup,
+    UserMessage,
 )
 from backend.shared.ddd import Aggregate
 
@@ -28,7 +31,7 @@ class Session(Aggregate):
     def __init__(
         self,
         title: str,
-        messages: list[SessionMessage],
+        entries: list[SessionEntry],
         owner_id: UUID,
         playlist: Playlist | None = None,
         id: UUID | None = None,
@@ -36,7 +39,7 @@ class Session(Aggregate):
     ) -> None:
         super().__init__(id=id, created_time=created_time)
         self._title = title
-        self._messages = messages
+        self._entries = entries
         self._owner_id = owner_id
         self._playlist = playlist
 
@@ -44,13 +47,17 @@ class Session(Aggregate):
     def title(self) -> str:
         return self._title
 
+    @title.setter
+    def title(self, value: str) -> None:
+        self._title = value
+
     @property
     def owner_id(self) -> UUID:
         return self._owner_id
 
     @property
-    def messages(self) -> tuple[SessionMessage, ...]:
-        return tuple(self._messages)
+    def entries(self) -> tuple[SessionEntry, ...]:
+        return tuple(self._entries)
 
     @property
     def playlist(self) -> Playlist | None:
@@ -66,7 +73,7 @@ class Session(Aggregate):
     ) -> Self:
         session = cls(
             title=title,
-            messages=[],
+            entries=[],
             owner_id=owner_id,
         )
         session.add_user_message(content=initial_prompt)
@@ -109,7 +116,7 @@ class Session(Aggregate):
             f"Track {track_id} not found in playlist {self._playlist.id}."
         )
 
-    def add_user_message(self, content: str) -> SessionMessage:
+    def add_user_message(self, content: str) -> UserMessage:
         if self._find_pending_tool_call_group() is not None:
             raise PendingToolCallsError(
                 f"Cannot add user message to session {self.id} "
@@ -120,48 +127,48 @@ class Session(Aggregate):
                 f"Cannot add user message to session {self.id} "
                 "while follow-up questions are pending."
             )
-        message = SessionMessage(role=MessageRole.USER, content=content)
-        self._messages.append(message)
+        message = UserMessage(content=content)
+        self._entries.append(message)
         return message
 
-    def add_assistant_message(
-        self,
-        content: str = "",
-        tool_calls: list[ToolCall] | None = None,
-        follow_up_questions: list[FollowUpQuestion] | None = None,
-    ) -> SessionMessage:
-        tool_call_group = ToolCallGroup(calls=tool_calls) if tool_calls else None
-        follow_up_group = (
-            FollowUpQuestionGroup(questions=follow_up_questions)
-            if follow_up_questions
-            else None
-        )
-        message = SessionMessage(
-            role=MessageRole.ASSISTANT,
-            content=content,
-            tool_call_group=tool_call_group,
-            follow_up_group=follow_up_group,
-        )
-        self._messages.append(message)
+    def add_assistant_message(self, content: str = "") -> AssistantMessage:
+        message = AssistantMessage(content=content)
+        self._entries.append(message)
         return message
 
-    def append_to_current_assistant_message(self, chunk: str) -> SessionMessage:
+    def append_to_current_assistant_message(self, chunk: str) -> AssistantMessage:
         message = self._require_current_assistant_message()
         message.content += chunk
         return message
 
-    def cancel_current_assistant_message(self) -> SessionMessage:
+    def cancel_current_assistant_message(self) -> AssistantMessage:
         message = self._require_current_assistant_message()
-        self._messages.pop()
+        self._entries.pop()
         return message
 
-    def resolve_tool_call(self, tool_call_id: str, result: str) -> ToolCall:
-        group = self._require_pending_group()
+    def add_tool_call(self, call: PendingCall) -> ToolCallGroup:
+        last = self._entries[-1] if self._entries else None
+        if isinstance(last, ToolCallGroup):
+            last.add(call)
+            return last
+        group = ToolCallGroup(calls=[call])
+        self._entries.append(group)
+        return group
+
+    def resolve_tool_call(self, tool_call_id: str, result: str) -> CompletedCall:
+        group = self._require_pending_tool_call_group()
         return group.resolve(tool_call_id, result)
 
-    def fail_tool_call(self, tool_call_id: str, error: str) -> ToolCall:
-        group = self._require_pending_group()
+    def fail_tool_call(self, tool_call_id: str, error: str) -> FailedCall:
+        group = self._require_pending_tool_call_group()
         return group.fail(tool_call_id, error)
+
+    def add_follow_up_questions(
+        self, questions: list[FollowUpQuestion]
+    ) -> FollowUpQuestionGroup:
+        group = FollowUpQuestionGroup(questions=questions)
+        self._entries.append(group)
+        return group
 
     def answer_follow_up_with_option(
         self, question_id: UUID, option_id: str
@@ -189,12 +196,10 @@ class Session(Aggregate):
         return self._find_pending_follow_up_group()
 
     def require_pending_follow_up_group(self) -> FollowUpQuestionGroup:
-        group = self._find_pending_follow_up_group()
-        if group is None:
-            raise NoPendingFollowUpGroupError(
-                f"Session {self.id} has no pending follow-up question group."
-            )
-        return group
+        return self._require_pending_follow_up_group()
+
+    def pending_tool_call_group(self) -> ToolCallGroup | None:
+        return self._find_pending_tool_call_group()
 
     def has_access(self, user_id: UUID) -> None:
         if self.owner_id != user_id:
@@ -202,7 +207,7 @@ class Session(Aggregate):
                 f"User {user_id} does not have access to session {self.id}."
             )
 
-    def _require_pending_group(self) -> ToolCallGroup:
+    def _require_pending_tool_call_group(self) -> ToolCallGroup:
         group = self._find_pending_tool_call_group()
         if group is None:
             raise NoPendingToolCallGroupError(
@@ -211,25 +216,28 @@ class Session(Aggregate):
         return group
 
     def _find_pending_tool_call_group(self) -> ToolCallGroup | None:
-        for message in reversed(self._messages):
-            group = message.tool_call_group
-            if group is not None and not group.is_complete:
-                return group
+        for entry in reversed(self._entries):
+            if isinstance(entry, ToolCallGroup) and not entry.is_complete:
+                return entry
         return None
 
     def _require_pending_follow_up_group(self) -> FollowUpQuestionGroup:
-        return self.require_pending_follow_up_group()
+        group = self._find_pending_follow_up_group()
+        if group is None:
+            raise NoPendingFollowUpGroupError(
+                f"Session {self.id} has no pending follow-up question group."
+            )
+        return group
 
     def _find_pending_follow_up_group(self) -> FollowUpQuestionGroup | None:
-        for message in reversed(self._messages):
-            group = message.follow_up_group
-            if group is not None and not group.is_complete:
-                return group
+        for entry in reversed(self._entries):
+            if isinstance(entry, FollowUpQuestionGroup) and not entry.is_complete:
+                return entry
         return None
 
-    def _require_current_assistant_message(self) -> SessionMessage:
-        if not self._messages or self._messages[-1].role != MessageRole.ASSISTANT:
+    def _require_current_assistant_message(self) -> AssistantMessage:
+        if not self._entries or not isinstance(self._entries[-1], AssistantMessage):
             raise NoCurrentAssistantMessageError(
                 f"Session {self.id} has no current assistant message."
             )
-        return self._messages[-1]
+        return self._entries[-1]

@@ -1,8 +1,8 @@
 from dishka import Provider, Scope, provide
-from llmify import ChatOpenAI
+from llm import LLMCredentials, create_gpt_5_4
+from llmify import ChatModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.env import LLMCredentials
 from backend.features.session.infrastructure.repository import SqlSessionRepository
 
 from backend.features.session.application import (
@@ -32,23 +32,22 @@ from backend.features.session.infrastructure.title_generator import (
 
 class SessionProvider(Provider):
     @provide(scope=Scope.APP)
-    def provide_title_generator_llm(self) -> ChatOpenAI:
-        credentials = self.llm_credentials()
-        return ChatOpenAI(api_key=credentials.openai_api_key)
-
-    @provide(scope=Scope.APP)
     def llm_credentials(self) -> LLMCredentials:
         return LLMCredentials()
 
     @provide(scope=Scope.APP)
+    def provide_title_generator_llm(self, credentials: LLMCredentials) -> ChatModel:
+        return create_gpt_5_4(credentials=credentials)
+
+    @provide(scope=Scope.APP)
     def provide_session_title_generator(
         self,
-        llm: ChatOpenAI,
+        llm: ChatModel,
     ) -> SessionTitleGenerator:
         return LLMSessionTitleGenerator(llm=llm)
 
     @provide(scope=Scope.APP)
-    def provide_session_runner(self, llm: ChatOpenAI) -> SessionRunner:
+    def provide_session_runner(self, llm: ChatModel) -> SessionRunner:
         return LLMSessionRunner(llm=llm, system_prompt="You are a helpful assistant.")
 
     @provide(scope=Scope.REQUEST)

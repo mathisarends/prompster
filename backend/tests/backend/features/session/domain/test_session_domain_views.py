@@ -5,60 +5,61 @@ from backend.features.session.domain.exceptions import (
     ToolCallNotFoundError,
 )
 from backend.features.session.domain import (
-    ToolCall,
+    CompletedCall,
+    FailedCall,
+    PendingCall,
     ToolCallGroup,
-    ToolCallState,
     ToolFunction,
+    is_pending,
 )
 
 
-def make_pending_call(call_id: str) -> ToolCall:
-    return ToolCall(
+def make_pending(call_id: str) -> PendingCall:
+    return PendingCall(
         id=call_id,
         function=ToolFunction(name="fetch_tracks", arguments={"limit": 5}),
     )
 
 
-class TestSessionDomainViews:
-    def test_tool_call_complete_sets_completed_state(self) -> None:
-        call = make_pending_call("tc-1")
+class TestSessionDomainToolCall:
+    def test_resolve_returns_completed_variant(self) -> None:
+        group = ToolCallGroup(calls=[make_pending("tc-1")])
 
-        call.complete("done")
+        completed = group.resolve("tc-1", "done")
 
-        assert call.state == ToolCallState.COMPLETED
-        assert call.result == "done"
-        assert call.is_resolved is True
+        assert isinstance(completed, CompletedCall)
+        assert completed.result == "done"
 
-    def test_tool_call_fail_sets_failed_state(self) -> None:
-        call = make_pending_call("tc-1")
+    def test_fail_returns_failed_variant(self) -> None:
+        group = ToolCallGroup(calls=[make_pending("tc-1")])
 
-        call.fail("timeout")
+        failed = group.fail("tc-1", "timeout")
 
-        assert call.state == ToolCallState.FAILED
-        assert call.error == "timeout"
-        assert call.is_resolved is True
+        assert isinstance(failed, FailedCall)
+        assert failed.error == "timeout"
 
-    def test_tool_call_complete_raises_when_already_resolved(self) -> None:
-        call = make_pending_call("tc-1")
-        call.complete("ok")
+    def test_resolve_raises_when_already_resolved(self) -> None:
+        group = ToolCallGroup(calls=[make_pending("tc-1")])
+        group.resolve("tc-1", "ok")
 
         with pytest.raises(ToolCallAlreadyResolvedError, match="already"):
-            call.complete("again")
+            group.resolve("tc-1", "again")
 
-    def test_tool_call_group_pending_calls_filters_unresolved(self) -> None:
-        pending_call = make_pending_call("tc-1")
-        resolved_call = make_pending_call("tc-2")
-        resolved_call.complete("ok")
-        group = ToolCallGroup(calls=[pending_call, resolved_call])
+    def test_pending_calls_filters_unresolved(self) -> None:
+        group = ToolCallGroup(
+            calls=[make_pending("tc-1"), make_pending("tc-2")],
+        )
+        group.resolve("tc-2", "ok")
 
         pending = group.pending_calls
 
         assert len(pending) == 1
-        assert pending[0] is pending_call
+        assert pending[0].id == "tc-1"
+        assert is_pending(pending[0])
         assert group.is_complete is False
 
-    def test_tool_call_group_resolve_unknown_raises(self) -> None:
-        group = ToolCallGroup(calls=[make_pending_call("tc-1")])
+    def test_resolve_unknown_raises(self) -> None:
+        group = ToolCallGroup(calls=[make_pending("tc-1")])
 
         with pytest.raises(ToolCallNotFoundError, match="No tool call"):
             group.resolve("tc-404", "nope")
