@@ -1,21 +1,34 @@
-from typing import Any
+from pathlib import Path
 
-from llmify import AssistantMessage, SystemMessage, ToolResultMessage, UserMessage
+from llmify import (
+    AssistantMessage,
+    Message,
+    SystemMessage,
+    ToolCall,
+    ToolResultMessage,
+    UserMessage,
+)
+
+_SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "system_prompt.md").read_text(
+    encoding="utf-8"
+)
 
 
 class MessageManager:
-    def __init__(self, system_prompt: str) -> None:
-        self._system_prompt = system_prompt
-        self._messages: list[Any] = []
+    def __init__(self, system_prompt: str | None = None) -> None:
+        self._system_prompt = system_prompt or _SYSTEM_PROMPT
+        self._messages: list[Message] = []
         self.reset()
 
-    def all(self) -> list[Any]:
+    def all(self) -> list[Message]:
         return list(self._messages)
 
     def add_user(self, content: str) -> None:
         self._messages.append(UserMessage(content=content))
 
-    def add_assistant(self, content: str, tool_calls: list[Any] | None = None) -> None:
+    def add_assistant(
+        self, content: str, tool_calls: list[ToolCall] | None = None
+    ) -> None:
         self._messages.append(
             AssistantMessage(content=content, tool_calls=tool_calls or [])
         )

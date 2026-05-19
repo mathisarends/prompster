@@ -3,6 +3,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from agent.views import AskFollowUpQuestion
 from agent.workspace import PlaylistDraft
 
 
@@ -42,6 +43,12 @@ class ToolResultEvent(AgentEvent):
 @dataclass(kw_only=True)
 class WorkspaceUpdatedEvent(AgentEvent):
     playlist_draft: PlaylistDraft
+
+
+@dataclass(kw_only=True)
+class FollowUpRequestedEvent(AgentEvent):
+    tool_call_id: str
+    questions: list[AskFollowUpQuestion]
 
 
 @dataclass(kw_only=True)

@@ -10,8 +10,8 @@ from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
 from agent.tools.handler import Spotify
 from agent.tools.schemas import ToolSchema
-from agent.tools.views import Tool
-from agent.views import (
+from agent.tools.views import (
+    Tool,
     AlbumTracksParams,
     ArtistAlbumsParams,
     ArtistTopTracksParams,
@@ -20,6 +20,7 @@ from agent.views import (
     PlaylistIdParams,
     SearchParams,
 )
+
 from agent.workspace import PlaylistDraft, WorkspaceStore
 
 logger = logging.getLogger(__name__)

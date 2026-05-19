@@ -2,7 +2,8 @@ import inspect
 from collections.abc import Callable
 from typing import Any, overload
 
-from pydantic import BaseModel
+from agent.workspace import PlaylistDraftTrack
+from pydantic import BaseModel, Field
 
 from agent.tools.schema_builder import ToolSchemaBuilder
 from agent.tools.schemas import ToolSchema
@@ -139,3 +140,49 @@ def _make_dummy(param_model: type[BaseModel]) -> BaseModel:
         for field_name, field_info in param_model.model_fields.items()
     }
     return param_model.model_construct(**defaults)
+
+
+class SearchParams(BaseModel):
+    query: str
+    limit: int = 10
+
+
+class ArtistAlbumsParams(BaseModel):
+    artist_id: str = Field(description="URI or ID.")
+    include_groups: str = Field(default="album,single", description="Comma-separated.")
+    limit: int = 20
+
+
+class ArtistTopTracksParams(BaseModel):
+    artist_id: str = Field(description="URI or ID.")
+    country: str = Field(default="DE", description="ISO 3166-1 alpha-2.")
+
+
+class AlbumTracksParams(BaseModel):
+    album_id: str = Field(description="URI or ID.")
+
+
+class BuildDraftPlaylistParams(BaseModel):
+    name: str
+    tracks: list[PlaylistDraftTrack] = Field(min_length=1)
+
+
+class PlaylistIdParams(BaseModel):
+    playlist_id: str
+
+
+class GenerateCardsParams(BaseModel):
+    playlist_id: str
+
+
+class AskFollowUpOption(BaseModel):
+    label: str
+
+
+class AskFollowUpQuestion(BaseModel):
+    question: str
+    options: list[AskFollowUpOption] = Field(min_length=1, max_length=4)
+
+
+class AskFollowUpParams(BaseModel):
+    questions: list[AskFollowUpQuestion] = Field(min_length=1, max_length=4)

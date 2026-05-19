@@ -2,6 +2,7 @@ from .agent import Agent
 from .events import (
     AgentEvent,
     AssistantMessageEvent,
+    FollowUpRequestedEvent,
     RunCompletedEvent,
     RunStartedEvent,
     StepStartedEvent,
@@ -14,6 +15,7 @@ __all__ = [
     "Agent",
     "AgentEvent",
     "AssistantMessageEvent",
+    "FollowUpRequestedEvent",
     "RunCompletedEvent",
     "RunStartedEvent",
     "StepStartedEvent",
