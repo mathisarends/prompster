@@ -10,15 +10,15 @@ import qrcode.image.svg
 import typst
 
 from backend.features.session.application.ports import (
-    PlaylistDeckPdfRenderer,
+    PlaylistDeckGenerator,
     PlaylistDeckTrack,
 )
 
 
-class TypstPlaylistDeckPdfRenderer(PlaylistDeckPdfRenderer):
-    _DECK_TEMPLATE = Path(__file__).parent / "templates" / "deck.typ"
+class TypstPlaylistDeckGenerator(PlaylistDeckGenerator):
+    _DECK_TEMPLATE = Path(__file__).parent / "deck.typ"
 
-    async def render(self, *, tracks: list[PlaylistDeckTrack]) -> bytes:
+    async def generate(self, tracks: list[PlaylistDeckTrack]) -> bytes:
         loop = asyncio.get_running_loop()
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -28,9 +28,7 @@ class TypstPlaylistDeckPdfRenderer(PlaylistDeckPdfRenderer):
             songs_data = []
             for index, track in enumerate(tracks):
                 qr_file = f"qr_{index}.svg"
-                (tmp_path / qr_file).write_bytes(
-                    self._make_qr_svg_bytes(track.spotify_url)
-                )
+                (tmp_path / qr_file).write_bytes(_make_qr_svg_bytes(track.spotify_url))
                 songs_data.append(
                     {
                         "title": track.title,
@@ -55,9 +53,9 @@ class TypstPlaylistDeckPdfRenderer(PlaylistDeckPdfRenderer):
 
             return output.read_bytes()
 
-    @staticmethod
-    def _make_qr_svg_bytes(spotify_url: str) -> bytes:
-        image = qrcode.make(spotify_url, image_factory=qrcode.image.svg.SvgPathImage)
-        buffer = io.BytesIO()
-        image.save(buffer)
-        return buffer.getvalue()
+
+def _make_qr_svg_bytes(spotify_url: str) -> bytes:
+    image = qrcode.make(spotify_url, image_factory=qrcode.image.svg.SvgPathImage)
+    buffer = io.BytesIO()
+    image.save(buffer)
+    return buffer.getvalue()

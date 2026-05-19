@@ -13,7 +13,12 @@ class SpotifyTrack:
     preview_url: str | None = None
 
 
-class SpotifyTrackSearch(ABC):
+class SpotifyService(ABC):
     @abstractmethod
-    async def search(self, *, query: str, limit: int = 20) -> list[SpotifyTrack]:
+    async def search_tracks(
+        self,
+        *,
+        query: str,
+        limit: int = 20,
+    ) -> list[SpotifyTrack]:
         """Searches Spotify tracks matching the given query."""

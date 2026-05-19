@@ -10,10 +10,6 @@ from backend.features.session.application.events import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
 )
-from backend.features.session.application.ports.playlist_deck_pdf_renderer import (
-    PlaylistDeckPdfRenderer,
-    PlaylistDeckTrack,
-)
 from backend.features.session.application.ports.session_runner import SessionRunner
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
@@ -32,7 +28,6 @@ from backend.features.session.domain import (
     FollowUpQuestionState,
     Session,
     SessionAccessDeniedError,
-    SessionPlaylistEmptyError,
     SessionRepository,
 )
 
@@ -128,23 +123,12 @@ class _SessionRunnerStub(SessionRunner):
             yield chunk
 
 
-class _PlaylistDeckPdfRendererStub(PlaylistDeckPdfRenderer):
-    def __init__(self, pdf_bytes: bytes = b"%PDF-1.4") -> None:
-        self._pdf_bytes = pdf_bytes
-        self.received_tracks: list[PlaylistDeckTrack] | None = None
-
-    async def render(self, *, tracks: list[PlaylistDeckTrack]) -> bytes:
-        self.received_tracks = tracks
-        return self._pdf_bytes
-
-
 def _make_service(
     *,
     repository: _SessionRepositoryStub | None = None,
     summary_query: _SessionSummaryQueryStub | None = None,
     title_generator: _SessionTitleGeneratorStub | None = None,
     runner: _SessionRunnerStub | None = None,
-    playlist_deck_pdf_renderer: _PlaylistDeckPdfRendererStub | None = None,
 ) -> SessionService:
     return SessionService(
         session_repository=repository or _SessionRepositoryStub(),
@@ -152,8 +136,6 @@ def _make_service(
         title_generator=title_generator
         or _SessionTitleGeneratorStub(generated_title=""),
         runner=runner or _SessionRunnerStub(),
-        playlist_deck_pdf_renderer=playlist_deck_pdf_renderer
-        or _PlaylistDeckPdfRendererStub(),
     )
 
 
@@ -542,7 +524,6 @@ def _make_service(
     summary_query: _SessionSummaryQueryStub | None = None,
     title_generator: _SessionTitleGeneratorStub | None = None,
     runner: _SessionRunnerStub | None = None,
-    playlist_deck_pdf_renderer: _PlaylistDeckPdfRendererStub | None = None,
 ) -> SessionService:
     return SessionService(
         session_repository=repository or _SessionRepositoryStub(),
@@ -550,8 +531,6 @@ def _make_service(
         title_generator=title_generator
         or _SessionTitleGeneratorStub(generated_title=""),
         runner=runner or _SessionRunnerStub(),
-        playlist_deck_pdf_renderer=playlist_deck_pdf_renderer
-        or _PlaylistDeckPdfRendererStub(),
     )
 
 
@@ -840,46 +819,3 @@ class TestSessionServiceFollowUps:
         assert isinstance(events[0], SessionAssistantMessageStarted)
         assert isinstance(events[-1], SessionAssistantMessageCompleted)
         assert repository.saved_sessions[-1] is session
-
-
-class TestSessionServiceExportPlaylistPdf:
-    def test_exports_playlist_with_renderer_tracks(self) -> None:
-        owner_id = uuid4()
-        session = Session(title="Roadtrip", messages=[], owner_id=owner_id)
-        session.add_track(
-            title="Insomnia",
-            artist="Faithless",
-            year=1995,
-            cover_url=None,
-        )
-        repository = _SessionRepositoryStub(session_by_id=session)
-        renderer = _PlaylistDeckPdfRendererStub(pdf_bytes=b"PDF_BYTES")
-        service = _make_service(
-            repository=repository,
-            playlist_deck_pdf_renderer=renderer,
-        )
-
-        result = asyncio.run(
-            service.export_playlist_pdf(session_id=session.id, user_id=owner_id)
-        )
-
-        assert result == b"PDF_BYTES"
-        assert renderer.received_tracks is not None
-        assert len(renderer.received_tracks) == 1
-        assert renderer.received_tracks[0].title == "Insomnia"
-        assert renderer.received_tracks[0].artist_names == "Faithless"
-        assert renderer.received_tracks[0].release_year == "1995"
-        assert renderer.received_tracks[0].spotify_url.startswith(
-            "https://open.spotify.com/search/"
-        )
-
-    def test_raises_when_playlist_is_missing_or_empty(self) -> None:
-        owner_id = uuid4()
-        session = Session(title="Roadtrip", messages=[], owner_id=owner_id)
-        repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_service(repository=repository)
-
-        with pytest.raises(SessionPlaylistEmptyError, match="no playlist tracks"):
-            asyncio.run(
-                service.export_playlist_pdf(session_id=session.id, user_id=owner_id)
-            )

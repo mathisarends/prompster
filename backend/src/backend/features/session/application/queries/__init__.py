@@ -1,5 +1,5 @@
-from .search_spotify_tracks import SearchSpotifyTracksHandler
+from .session_exporter import SessionPlaylistExporter
 
 __all__ = [
-    "SearchSpotifyTracksHandler",
+    "SessionPlaylistExporter",
 ]

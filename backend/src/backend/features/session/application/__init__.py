@@ -7,17 +7,17 @@ from .events import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
 )
-from .queries import SearchSpotifyTracksHandler
+from .queries import SessionPlaylistExporter
 from .session_service import CreateSessionResult, FollowUpAnswer, SessionService
 
 __all__ = [
     "CreateSessionResult",
     "FollowUpAnswer",
-    "SearchSpotifyTracksHandler",
     "SessionAssistantMessageChunk",
     "SessionAssistantMessageCompleted",
     "SessionAssistantMessageStarted",
     "SessionEvent",
+    "SessionPlaylistExporter",
     "SessionPlaylistSet",
     "SessionPlaylistTrackAdded",
     "SessionPlaylistTrackRemoved",

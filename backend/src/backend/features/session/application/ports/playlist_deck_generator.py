@@ -10,7 +10,7 @@ class PlaylistDeckTrack:
     spotify_url: str
 
 
-class PlaylistDeckPdfRenderer(ABC):
+class PlaylistDeckGenerator(ABC):
     @abstractmethod
-    async def render(self, *, tracks: list[PlaylistDeckTrack]) -> bytes:
-        """Renders playlist cards into a printable PDF document."""
+    async def generate(self, tracks: list[PlaylistDeckTrack]) -> bytes:
+        """Generates a playlist deck document from tracks."""

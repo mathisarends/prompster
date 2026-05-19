@@ -7,14 +7,13 @@ from starlette.responses import StreamingResponse
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.session.application import (
     FollowUpAnswer,
-    SearchSpotifyTracksHandler,
     SessionService,
+    SessionPlaylistExporter,
 )
 from backend.features.session.presentation.mapper import (
     to_playlist_track_response,
     to_session_response,
     to_session_summary_response,
-    to_spotify_track_response,
 )
 from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
@@ -27,7 +26,6 @@ from backend.features.session.presentation.schemas import (
     SessionResponse,
     SessionSummaryListResponse,
     SessionUpdateRequest,
-    SpotifyTrackSearchResponse,
 )
 from backend.features.session.presentation.sse import (
     SessionEventSchema,
@@ -101,25 +99,6 @@ async def list_sessions(
 
     return SessionSummaryListResponse(
         items=[to_session_summary_response(item) for item in items],
-    )
-
-
-@router.get(
-    "/spotify-tracks",
-    response_model=SpotifyTrackSearchResponse,
-    status_code=status.HTTP_200_OK,
-    operation_id="search_spotify_tracks",
-    responses=_auth_errors,
-)
-async def search_spotify_tracks(
-    _authenticated_user_id: AuthenticatedUserId,  # keep to ensure authentication
-    handler: FromDishka[SearchSpotifyTracksHandler],
-    query: str = Query(min_length=1, max_length=200, description="Search query"),
-    limit: int = Query(default=20, ge=1, le=50),
-) -> SpotifyTrackSearchResponse:
-    tracks = await handler.handle(query=query, limit=limit)
-    return SpotifyTrackSearchResponse(
-        items=[to_spotify_track_response(track) for track in tracks],
     )
 
 
@@ -264,15 +243,15 @@ async def remove_session_playlist_track(
 @router.get(
     "/{session_id}/playlist/pdf",
     status_code=status.HTTP_200_OK,
-    operation_id="export_session_playlist_pdf",
+    operation_id="export_session_playlist",
     responses=_pdf_response | _auth_errors | _bad_request | _not_found,
 )
-async def export_session_playlist_pdf(
+async def export_session_playlist(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionService],
+    exporter: FromDishka[SessionPlaylistExporter],
 ) -> Response:
-    pdf = await service.export_playlist_pdf(
+    pdf = await exporter.export(
         session_id=session_id,
         user_id=authenticated_user_id,
     )

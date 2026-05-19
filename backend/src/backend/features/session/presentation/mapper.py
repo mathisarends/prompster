@@ -1,6 +1,3 @@
-from backend.features.session.application.ports.spotify_track_search import (
-    SpotifyTrack,
-)
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
 )
@@ -14,7 +11,6 @@ from backend.features.session.presentation.schemas import (
     PlaylistTrackResponse,
     SessionResponse,
     SessionSummaryResponse,
-    SpotifyTrackResponse,
 )
 
 
@@ -52,16 +48,4 @@ def to_playlist_track_response(track: PlaylistTrack) -> PlaylistTrackResponse:
         artist=track.artist,
         year=track.year,
         cover_url=track.cover_url,
-    )
-
-
-def to_spotify_track_response(track: SpotifyTrack) -> SpotifyTrackResponse:
-    return SpotifyTrackResponse(
-        id=track.id,
-        title=track.title,
-        artist=track.artist,
-        album=track.album,
-        year=track.year,
-        cover_url=track.cover_url,
-        preview_url=track.preview_url,
     )

@@ -6,27 +6,21 @@ from llmify import ChatOpenAI
 from spotifyify import PagingPlaylistTrack, Spotifyify, SpotifyScope, Track
 
 from agent.helpers import (
-    artist_names,
     chunked,
     format_album,
     format_track,
     normalize_spotify_id,
     playlist_url,
-    release_year,
-    track_title,
-    track_url,
 )
 from agent.views import (
     AlbumTracksParams,
     ArtistAlbumsParams,
     ArtistTopTracksParams,
     CreatePlaylistParams,
-    GenerateCardsParams,
     PlaylistIdParams,
     PlaylistTracksMutationParams,
     SearchParams,
 )
-from agent.export import DeckRenderer, TrackCard
 
 _SYSTEM_PROMPT = (Path(__file__).parent / "system_prompt.md").read_text(
     encoding="utf-8"
@@ -57,13 +51,12 @@ class HitsterAgent:
                 SpotifyScope.PLAYLIST_MODIFY_PRIVATE,
             ]
         )
-        self._deck_renderer = DeckRenderer()
         self._register_tools()
         self._agent = Agent(
             instructions=self._instructions,
             tools=self._tools,
             llm=ChatOpenAI(model="gpt-5.4"),
-            injectables=[self._spotify, self._deck_renderer],
+            injectables=[self._spotify],
         )
 
     def stream(self, user_input: str):
@@ -315,36 +308,36 @@ class HitsterAgent:
                 await sp.playlists.remove(playlist_id, chunk)
             return f"Playlist {playlist_id} cleared."
 
-        @tools.action(
-            description="Generate Hitster cards as a PDF for the given Spotify playlist. Returns the path to the generated PDF.",
-            status_label="Karten generieren...",
-            params=GenerateCardsParams,
-        )
-        async def generate_cards(
-            spotify: Inject[Spotifyify],
-            deck_renderer: Inject[DeckRenderer],
-            params: GenerateCardsParams,
-        ) -> str:
-            playlist_id = normalize_spotify_id(params.playlist_id, "playlist")
-            sp = await self._require_open_spotify(spotify)
-            tracks = await self._get_playlist_tracks(sp, playlist_id)
-            if not tracks:
-                return "Playlist is empty — no cards generated."
-            cards = [
-                TrackCard(
-                    title=track_title(t),
-                    artist_names=artist_names(t.artists),
-                    release_year=release_year(
-                        t.album.release_date if t.album else None
-                    ),
-                    spotify_url=track_url(t),
-                )
-                for t in tracks
-            ]
-            output = Path.cwd() / "output" / "hitster-deck.pdf"
-            output.parent.mkdir(exist_ok=True)
-            await deck_renderer.render(cards, output)
-            return f"Cards generated: {output}  ({len(cards)} cards)"
+        # @tools.action(
+        #     description="Generate Hitster cards as a PDF for the given Spotify playlist. Returns the path to the generated PDF.",
+        #     status_label="Karten generieren...",
+        #     params=GenerateCardsParams,
+        # )
+        # async def generate_cards(
+        #     spotify: Inject[Spotifyify],
+        #     deck_renderer: Inject[DeckRenderer],
+        #     params: GenerateCardsParams,
+        # ) -> str:
+        #     playlist_id = normalize_spotify_id(params.playlist_id, "playlist")
+        #     sp = await self._require_open_spotify(spotify)
+        #     tracks = await self._get_playlist_tracks(sp, playlist_id)
+        #     if not tracks:
+        #         return "Playlist is empty — no cards generated."
+        #     cards = [
+        #         TrackCard(
+        #             title=track_title(t),
+        #             artist_names=artist_names(t.artists),
+        #             release_year=release_year(
+        #                 t.album.release_date if t.album else None
+        #             ),
+        #             spotify_url=track_url(t),
+        #         )
+        #         for t in tracks
+        #     ]
+        #     output = Path.cwd() / "output" / "hitster-deck.pdf"
+        #     output.parent.mkdir(exist_ok=True)
+        #     await deck_renderer.render(cards, output)
+        #     return f"Cards generated: {output}  ({len(cards)} cards)"
 
     @staticmethod
     async def _get_playlist_tracks(

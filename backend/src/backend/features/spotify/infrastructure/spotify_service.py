@@ -1,16 +1,13 @@
 from spotifyify import Image, Spotifyify, Track
 
-from backend.features.session.application.ports.spotify_track_search import (
-    SpotifyTrack,
-    SpotifyTrackSearch,
-)
+from backend.features.spotify.application.ports import SpotifyService, SpotifyTrack
 
 
-class SpotifyifyTrackSearch(SpotifyTrackSearch):
+class SpotifyifyService(SpotifyService):
     def __init__(self, spotify: Spotifyify) -> None:
         self._spotify = spotify
 
-    async def search(self, *, query: str, limit: int = 20) -> list[SpotifyTrack]:
+    async def search_tracks(self, *, query: str, limit: int = 20) -> list[SpotifyTrack]:
         normalized_query = query.strip()
         if not normalized_query:
             return []
