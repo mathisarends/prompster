@@ -1,10 +1,6 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from backend.features.session.application.events import (
-    SessionEvent,
-    SessionTitleGenerated,
-)
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
     SessionSummaryQuery,
@@ -18,7 +14,6 @@ from backend.features.session.domain import Session, SessionRepository
 @dataclass(frozen=True)
 class CreateSessionResult:
     session: Session
-    events: tuple[SessionEvent, ...]
 
 
 class SessionService:
@@ -50,10 +45,7 @@ class SessionService:
             owner_id=owner_id,
         )
         session = await self._session_repository.create(session=session)
-        return CreateSessionResult(
-            session=session,
-            events=(SessionTitleGenerated(session_id=session.id, title=session.title),),
-        )
+        return CreateSessionResult(session=session)
 
     async def update(self, *, session: Session, title: str | None = None) -> Session:
         return await self._session_repository.update(

@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from backend.features.auth.application.exceptions import SessionInvalidException
-from backend.features.user.application.queries.get_me import GetMeHandler
+from backend.features.user.application.user_service import UserService
 from backend.features.user.domain import User, UserRepository
 
 
@@ -24,15 +24,15 @@ class _UserRepositoryStub(UserRepository):
         return user
 
 
-class TestGetMeHandler:
-    def test_handle_raises_when_user_is_missing(self) -> None:
+class TestUserService:
+    def test_get_me_raises_when_user_is_missing(self) -> None:
         repository = _UserRepositoryStub(user=None)
-        handler = GetMeHandler(user_repository=repository)
+        service = UserService(user_repository=repository)
 
         with pytest.raises(SessionInvalidException, match="Invalid user"):
-            asyncio.run(handler.handle(user_id=uuid4()))
+            asyncio.run(service.get_me(user_id=uuid4()))
 
-    def test_handle_returns_user_when_existing(self) -> None:
+    def test_get_me_returns_user_when_existing(self) -> None:
         user = User(
             name="Mathis",
             email="mathis@example.com",
@@ -40,9 +40,9 @@ class TestGetMeHandler:
             id=uuid4(),
         )
         repository = _UserRepositoryStub(user=user)
-        handler = GetMeHandler(user_repository=repository)
+        service = UserService(user_repository=repository)
 
-        result = asyncio.run(handler.handle(user_id=user.id))
+        result = asyncio.run(service.get_me(user_id=user.id))
 
         assert result is user
         assert repository.received_user_id == user.id
