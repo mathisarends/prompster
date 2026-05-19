@@ -49,4 +49,4 @@ class _InjectMarker:
         return "ToolContext.Inject"
 
 
-type Inject = ToolContext.Inject
+Inject = ToolContext.Inject
