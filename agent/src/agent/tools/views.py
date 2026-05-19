@@ -1,36 +1,24 @@
 import inspect
 from collections.abc import Callable
-from typing import Any, TypeVar, TypedDict, overload
+from typing import Any, overload
 
-from agent.tools.schema_builder import ToolSchemaBuilder
 from pydantic import BaseModel
 
-
-_P = TypeVar("_P", bound=BaseModel)
-
-
-class FunctionSchema(TypedDict):
-    name: str
-    description: str
-    parameters: dict
-
-
-class ToolSchema(TypedDict):
-    type: str
-    function: FunctionSchema
+from agent.tools.schema_builder import ToolSchemaBuilder
+from agent.tools.schemas import ToolSchema
 
 
 class Tool:
     @overload
-    def __init__(
+    def __init__[P: BaseModel](
         self,
         name: str,
         description: str,
         fn: Callable[..., Any],
-        status: str | Callable[[_P], str] | None = None,
-        status_label: str | Callable[[_P], str] | None = None,
+        status: str | Callable[[P], str] | None = None,
+        status_label: str | Callable[[P], str] | None = None,
         schema: dict | None = None,
-        param_model: type[_P] | None = None,
+        param_model: type[P] = ...,
     ) -> None: ...
 
     @overload
@@ -75,9 +63,9 @@ class Tool:
                 raise ValueError(
                     f"Tool '{self.name}' status_label callable requires a params model"
                 )
-            self._validate_status_for_model()
+            self._validate_status_label_for_model()
 
-    def _validate_status_for_model(self) -> None:
+    def _validate_status_label_for_model(self) -> None:
         assert self.param_model is not None
         assert callable(self._status_label)
 
@@ -89,14 +77,13 @@ class Tool:
                     f"Tool '{self.name}' status_label callable must return str, "
                     f"got {type(result).__name__}"
                 )
-        except AttributeError as e:
+        except AttributeError as error:
             raise ValueError(
-                f"Tool '{self.name}' status_label callable references unknown params-model field: {e}"
-            ) from e
+                f"Tool '{self.name}' status_label callable references unknown params-model field: {error}"
+            ) from error
         except ValueError:
             raise
         except Exception:
-            # Runtime failures are allowed for dummy placeholders.
             pass
 
     def render_status(self, args: dict[str, Any]) -> str | None:
@@ -113,17 +100,11 @@ class Tool:
         return self._status_label
 
     async def execute(self, args: dict[str, Any]) -> Any:
-        try:
-            if inspect.iscoroutinefunction(self.fn):
-                result = await self.fn(**args)
-            else:
-                result = self.fn(**args)
-            return result if result is not None else ""
-        except Exception as e:
-            return f"Error: {e}"
-
-    def format_error(self, error: Exception) -> Any:
-        return f"Error: {error}"
+        if inspect.iscoroutinefunction(self.fn):
+            result = await self.fn(**args)
+        else:
+            result = self.fn(**args)
+        return result if result is not None else ""
 
     def to_schema(self) -> ToolSchema:
         parameters = self._schema if self._schema else self._schema_builder.build()
@@ -144,18 +125,14 @@ class Tool:
 
 
 def _make_dummy(param_model: type[BaseModel]) -> BaseModel:
-    """Builds a model instance with placeholder values for status callable checks."""
-    defaults: dict[str, Any] = {}
-    for field_name, field_info in param_model.model_fields.items():
-        annotation = field_info.annotation
-        if annotation is str:
-            defaults[field_name] = "placeholder"
-        elif annotation is int:
-            defaults[field_name] = 0
-        elif annotation is float:
-            defaults[field_name] = 0.0
-        elif annotation is bool:
-            defaults[field_name] = False
-        else:
-            defaults[field_name] = None
+    type_defaults: dict[type, Any] = {
+        str: "placeholder",
+        int: 0,
+        float: 0.0,
+        bool: False,
+    }
+    defaults = {
+        field_name: type_defaults.get(field_info.annotation, None)
+        for field_name, field_info in param_model.model_fields.items()
+    }
     return param_model.model_construct(**defaults)

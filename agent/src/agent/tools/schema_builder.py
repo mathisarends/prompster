@@ -20,7 +20,6 @@ from agent.tools.di import _InjectMarker
 
 
 def is_injectable(hint: Any) -> bool:
-    """Return *True* if *hint* is ``Inject[T]`` i.e. ``Annotated[T, _InjectMarker]``."""
     if get_origin(hint) is not Annotated:
         return False
     return any(isinstance(a, _InjectMarker) for a in get_args(hint))

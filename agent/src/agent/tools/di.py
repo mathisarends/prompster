@@ -1,29 +1,9 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Annotated, Any, Self, TypeVar, final
-
-T = TypeVar("T")
+from typing import TYPE_CHECKING, Annotated, Any, Self, final
 
 
 @final
 class ToolContext:
-    """Dependency container for tool functions.
-
-    Usage::
-
-        ctx = ToolContext(notion_client, llm)
-
-        @tools.action("Create page", param_model=CreatePageParams)
-        async def create_page(
-            params: CreatePageParams,
-            client: Inject[NotionClient],
-        ) -> CreatePageResult:
-            ...
-    """
-
-    # --- Inject marker (inner class so it lives on ToolContext) ---
-
-    _marker_instance: _InjectMarker | None = None  # set after class body
+    _marker_instance: _InjectMarker | None = None
 
     if TYPE_CHECKING:
         type Inject[T] = T
@@ -39,8 +19,6 @@ class ToolContext:
             ToolContext._marker_instance = _InjectMarker()
         return ToolContext._marker_instance
 
-    # --- Container ---
-
     def __init__(self, *dependencies: Any) -> None:
         self._dependencies: list[Any] = list(dependencies)
 
@@ -52,7 +30,7 @@ class ToolContext:
         self._dependencies.clear()
         return self
 
-    def resolve(self, expected_type: type[T]) -> T | None:
+    def resolve[T](self, expected_type: type[T]) -> T | None:
         for dep in self._dependencies:
             try:
                 if isinstance(dep, expected_type):
@@ -71,4 +49,4 @@ class _InjectMarker:
         return "ToolContext.Inject"
 
 
-Inject = ToolContext.Inject
+type Inject = ToolContext.Inject
