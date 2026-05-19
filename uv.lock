@@ -16,7 +16,6 @@ name = "agent"
 version = "0.1.0"
 source = { editable = "agent" }
 dependencies = [
-    { name = "agentory", extra = ["openai"] },
     { name = "llm" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -25,28 +24,10 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentory", extras = ["openai"], specifier = ">=0.4.0" },
     { name = "llm", editable = "llm" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
     { name = "spotifyify", specifier = ">=0.2.0" },
-]
-
-[[package]]
-name = "agentory"
-version = "0.4.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "py-llmify" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/56/b9/c74a4b0682bbae26067a5e8eb819a2c69030f6d9f41bf0b77a151ea87d8b/agentory-0.4.0.tar.gz", hash = "sha256:3be406584fa2a4db0e62a66672f4f6d475538a1411908fd18cd7b66296ea3eac", size = 25605, upload-time = "2026-04-11T08:09:06.863Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/77/a5/d8c673cf545c80a171a2223563c7ed87db980f67f423825cdb31f169a45f/agentory-0.4.0-py3-none-any.whl", hash = "sha256:16ba28317cd1de29530ddfca56e5d511a573e1c8da388f64bb86fa9bbf231c73", size = 19594, upload-time = "2026-04-11T08:09:05.808Z" },
-]
-
-[package.optional-dependencies]
-openai = [
-    { name = "py-llmify", extra = ["openai"] },
 ]
 
 [[package]]
@@ -264,7 +245,6 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "llm" },
-    { name = "py-llmify", extra = ["openai"] },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
@@ -291,7 +271,6 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.136.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "llm", editable = "llm" },
-    { name = "py-llmify", extras = ["openai"], specifier = ">=0.3.0" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
     { name = "pyjwt", specifier = ">=2.10.1" },
