@@ -11,7 +11,9 @@ RUN pip install uv
 
 COPY pyproject.toml uv.lock* ./
 COPY backend/pyproject.toml backend/README.md* backend/
+COPY llm/pyproject.toml llm/README.md* llm/
 COPY backend/src backend/src
+COPY llm/src llm/src
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --package backend
@@ -27,6 +29,7 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 
 COPY backend/src ./backend/src
+COPY llm/src ./llm/src
 COPY backend/alembic.ini ./backend/alembic.ini
 COPY backend/migrations ./backend/migrations
 

@@ -8,4 +8,6 @@ from backend.features.session.domain.entities.messages import (
 from backend.features.session.domain.entities.tool_call_group import ToolCallGroup
 
 
-SessionEntry = UserMessage | AssistantMessage | ToolCallGroup | FollowUpQuestionGroup
+type SessionEntry = (
+    UserMessage | AssistantMessage | ToolCallGroup | FollowUpQuestionGroup
+)
