@@ -24,6 +24,7 @@ dependencies = [
     "spotifyify>=0.2.0",
     "resend>=2.30.1",
     "typst>=0.14.9",
+    "qrcode[pil]>=8.2",
 ]
 
 [project.scripts]

@@ -48,6 +48,14 @@ _event_stream_response = {
         "content": {"text/event-stream": {"schema": {"type": "string"}}},
     },
 }
+_pdf_response = {
+    status.HTTP_200_OK: {
+        "description": "Playlist deck PDF.",
+        "content": {
+            "application/pdf": {"schema": {"type": "string", "format": "binary"}}
+        },
+    }
+}
 
 
 @router.get(
@@ -251,6 +259,30 @@ async def remove_session_playlist_track(
         track_id=track_id,
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    "/{session_id}/playlist/pdf",
+    status_code=status.HTTP_200_OK,
+    operation_id="export_session_playlist_pdf",
+    responses=_pdf_response | _auth_errors | _bad_request | _not_found,
+)
+async def export_session_playlist_pdf(
+    session_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    service: FromDishka[SessionService],
+) -> Response:
+    pdf = await service.export_playlist_pdf(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+    )
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="session-{session_id}.pdf"'
+        },
+    )
 
 
 @router.patch(

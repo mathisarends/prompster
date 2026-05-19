@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from backend.features.session.domain.exceptions import (
     PlaylistTrackNotFoundError,
     SessionAccessDeniedError,
+    SessionPlaylistEmptyError,
     SessionNotFoundError,
 )
 
@@ -43,6 +44,18 @@ async def _playlist_track_not_found_handler(
     )
 
 
+async def _session_playlist_empty_handler(
+    _: Request,
+    exc: SessionPlaylistEmptyError,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={
+            "detail": _exception_detail(exc, fallback="Session playlist is empty")
+        },
+    )
+
+
 async def _bad_request_handler(_: Request, exc: ValueError) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -55,5 +68,8 @@ def register_session_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(SessionAccessDeniedError, _session_access_denied_handler)
     app.add_exception_handler(
         PlaylistTrackNotFoundError, _playlist_track_not_found_handler
+    )
+    app.add_exception_handler(
+        SessionPlaylistEmptyError, _session_playlist_empty_handler
     )
     app.add_exception_handler(ValueError, _bad_request_handler)

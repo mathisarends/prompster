@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
+from urllib.parse import quote_plus
 from uuid import UUID
 
 from backend.features.session.application.events import (
@@ -7,6 +8,10 @@ from backend.features.session.application.events import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionEvent,
+)
+from backend.features.session.application.ports import (
+    PlaylistDeckPdfRenderer,
+    PlaylistDeckTrack,
 )
 from backend.features.session.application.ports.session_runner import SessionRunner
 from backend.features.session.application.ports.session_summary_query import (
@@ -19,6 +24,7 @@ from backend.features.session.application.ports.title_generator import (
 from backend.features.session.domain import (
     PlaylistTrack,
     Session,
+    SessionPlaylistEmptyError,
     SessionRepository,
 )
 
@@ -42,11 +48,13 @@ class SessionService:
         session_summary_query: SessionSummaryQuery,
         title_generator: SessionTitleGenerator,
         runner: SessionRunner,
+        playlist_deck_pdf_renderer: PlaylistDeckPdfRenderer,
     ) -> None:
         self._session_repository = session_repository
         self._session_summary_query = session_summary_query
         self._title_generator = title_generator
         self._runner = runner
+        self._playlist_deck_pdf_renderer = playlist_deck_pdf_renderer
 
     async def get_by_id(self, *, session_id: UUID, user_id: UUID) -> Session:
         return await self._get_authorized(session_id=session_id, user_id=user_id)
@@ -159,6 +167,17 @@ class SessionService:
         session.remove_track(track_id=track_id)
         await self._session_repository.save(session=session)
 
+    async def export_playlist_pdf(self, *, session_id: UUID, user_id: UUID) -> bytes:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        playlist = session.playlist
+        if playlist is None or not playlist.tracks:
+            raise SessionPlaylistEmptyError(
+                f"Session {session.id} has no playlist tracks to export."
+            )
+
+        tracks = [self._to_deck_track(track) for track in playlist.tracks]
+        return await self._playlist_deck_pdf_renderer.render(tracks=tracks)
+
     async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
         session = await self._session_repository.get_by_id(session_id=session_id)
         session.has_access(user_id)
@@ -214,3 +233,14 @@ class SessionService:
             yield SessionAssistantMessageChunk(message_id=message.id, chunk=chunk)
         await self._session_repository.save(session=session)
         yield SessionAssistantMessageCompleted(message=message)
+
+    def _to_deck_track(self, track: PlaylistTrack) -> PlaylistDeckTrack:
+        query = quote_plus(f"{track.title} {track.artist}".strip())
+        spotify_search_url = f"https://open.spotify.com/search/{query}"
+        year = str(track.year) if track.year is not None else ""
+        return PlaylistDeckTrack(
+            title=track.title,
+            artist_names=track.artist,
+            release_year=year,
+            spotify_url=spotify_search_url,
+        )

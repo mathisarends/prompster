@@ -13,6 +13,7 @@ from backend.features.session.application import (
     SearchSpotifyTracksHandler,
     SessionService,
 )
+from backend.features.session.application.ports import PlaylistDeckPdfRenderer
 from backend.features.session.application.ports.session_runner import SessionRunner
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummaryQuery,
@@ -27,6 +28,9 @@ from backend.features.session.domain import SessionRepository
 from backend.features.session.infrastructure.session_runner import LLMSessionRunner
 from backend.features.session.infrastructure.spotify_track_search import (
     SpotifyifyTrackSearch,
+)
+from backend.features.session.infrastructure.playlist_deck_pdf_renderer import (
+    TypstPlaylistDeckPdfRenderer,
 )
 from backend.features.session.infrastructure.session_summary_query import (
     SqlSessionSummaryQuery,
@@ -75,13 +79,19 @@ class SessionProvider(Provider):
         session_summary_query: SessionSummaryQuery,
         title_generator: SessionTitleGenerator,
         runner: SessionRunner,
+        playlist_deck_pdf_renderer: PlaylistDeckPdfRenderer,
     ) -> SessionService:
         return SessionService(
             session_repository=session_repository,
             session_summary_query=session_summary_query,
             title_generator=title_generator,
             runner=runner,
+            playlist_deck_pdf_renderer=playlist_deck_pdf_renderer,
         )
+
+    @provide(scope=Scope.APP)
+    def provide_playlist_deck_pdf_renderer(self) -> PlaylistDeckPdfRenderer:
+        return TypstPlaylistDeckPdfRenderer()
 
     @provide(scope=Scope.APP)
     def spotify_credentials(self) -> SpotifyCredentials:
