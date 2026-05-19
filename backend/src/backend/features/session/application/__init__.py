@@ -1,3 +1,4 @@
+from .conversation_service import FollowUpAnswer, SessionConversationService
 from .events import (
     SessionAssistantMessageChunk,
     SessionAssistantMessageCompleted,
@@ -8,10 +9,9 @@ from .events import (
     SessionPlaylistTrackRemoved,
 )
 from .queries import SessionPlaylistExporter
-from .session_service import CreateSessionResult, FollowUpAnswer, SessionService
+from .session_service import SessionService
 
 __all__ = [
-    "CreateSessionResult",
     "FollowUpAnswer",
     "SessionAssistantMessageChunk",
     "SessionAssistantMessageCompleted",
@@ -21,5 +21,6 @@ __all__ = [
     "SessionPlaylistSet",
     "SessionPlaylistTrackAdded",
     "SessionPlaylistTrackRemoved",
+    "SessionConversationService",
     "SessionService",
 ]

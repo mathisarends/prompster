@@ -7,6 +7,7 @@ from backend.features.session.infrastructure.repository import SqlSessionReposit
 
 from backend.features.session.application import (
     SessionPlaylistExporter,
+    SessionConversationService,
     SessionService,
 )
 from backend.features.session.application.ports import PlaylistDeckGenerator
@@ -62,17 +63,26 @@ class SessionProvider(Provider):
         return SqlSessionSummaryQuery(session=session)
 
     @provide(scope=Scope.REQUEST)
-    def provide_session_service(
+    def provide_session_management_service(
         self,
         session_repository: SessionRepository,
         session_summary_query: SessionSummaryQuery,
         title_generator: SessionTitleGenerator,
-        runner: SessionRunner,
     ) -> SessionService:
         return SessionService(
             session_repository=session_repository,
             session_summary_query=session_summary_query,
             title_generator=title_generator,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_session_conversation_service(
+        self,
+        session_repository: SessionRepository,
+        runner: SessionRunner,
+    ) -> SessionConversationService:
+        return SessionConversationService(
+            session_repository=session_repository,
             runner=runner,
         )
 

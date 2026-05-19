@@ -7,6 +7,7 @@ from starlette.responses import StreamingResponse
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.session.application import (
     FollowUpAnswer,
+    SessionConversationService,
     SessionService,
     SessionPlaylistExporter,
 )
@@ -133,11 +134,11 @@ async def create_session(
     body: SessionCreateRequest,
     service: FromDishka[SessionService],
 ) -> SessionResponse:
-    result = await service.create(
+    session = await service.create(
         owner_id=authenticated_user_id,
         initial_prompt=body.initial_prompt,
     )
-    return to_session_response(result.session)
+    return to_session_response(session)
 
 
 @router.post(
@@ -150,7 +151,7 @@ async def send_message(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     body: SendMessageRequest,
-    service: FromDishka[SessionService],
+    service: FromDishka[SessionConversationService],
 ) -> StreamingResponse:
     return stream_session_events(
         service.send_message(
@@ -171,7 +172,7 @@ async def handle_follow_up(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     body: FollowUpRequest,
-    service: FromDishka[SessionService],
+    service: FromDishka[SessionConversationService],
 ) -> StreamingResponse:
     if body.action == FollowUpAction.ANSWER:
         return stream_session_events(

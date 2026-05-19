@@ -18,8 +18,11 @@ from backend.features.session.application.ports.session_summary_query import (
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
-from backend.features.session.application.session_service import (
+from backend.features.session.application.conversation_service import (
     FollowUpAnswer,
+    SessionConversationService,
+)
+from backend.features.session.application.session_service import (
     SessionService,
 )
 from backend.features.session.domain import (
@@ -124,18 +127,27 @@ class _SessionRunnerStub(SessionRunner):
             yield chunk
 
 
-def _make_service(
+def _make_management_service(
     *,
     repository: _SessionRepositoryStub | None = None,
     summary_query: _SessionSummaryQueryStub | None = None,
     title_generator: _SessionTitleGeneratorStub | None = None,
-    runner: _SessionRunnerStub | None = None,
 ) -> SessionService:
     return SessionService(
         session_repository=repository or _SessionRepositoryStub(),
         session_summary_query=summary_query or _SessionSummaryQueryStub(summaries=[]),
         title_generator=title_generator
         or _SessionTitleGeneratorStub(generated_title=""),
+    )
+
+
+def _make_conversation_service(
+    *,
+    repository: _SessionRepositoryStub | None = None,
+    runner: _SessionRunnerStub | None = None,
+) -> SessionConversationService:
+    return SessionConversationService(
+        session_repository=repository or _SessionRepositoryStub(),
         runner=runner or _SessionRunnerStub(),
     )
 
@@ -159,7 +171,7 @@ class TestSessionServiceGetById:
         owner_id = uuid4()
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_service(repository=repository)
+        service = _make_management_service(repository=repository)
 
         result = asyncio.run(service.get_by_id(session_id=session.id, user_id=owner_id))
 
@@ -168,7 +180,7 @@ class TestSessionServiceGetById:
     def test_raises_when_user_does_not_own_session(self) -> None:
         session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
         repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_service(repository=repository)
+        service = _make_management_service(repository=repository)
 
         with pytest.raises(SessionAccessDeniedError, match="does not have access"):
             asyncio.run(service.get_by_id(session_id=session.id, user_id=uuid4()))
@@ -180,12 +192,14 @@ class TestSessionServiceCreate:
         initial_prompt = "spiele was ruhiges"
         repository = _SessionRepositoryStub()
         generator = _SessionTitleGeneratorStub(generated_title=f"  {'A' * 130}  ")
-        service = _make_service(repository=repository, title_generator=generator)
+        service = _make_management_service(
+            repository=repository,
+            title_generator=generator,
+        )
 
-        result = asyncio.run(
+        created = asyncio.run(
             service.create(owner_id=owner_id, initial_prompt=initial_prompt)
         )
-        created = result.session
 
         assert created is repository.created_session
         assert created.title == "A" * 120
@@ -198,11 +212,14 @@ class TestSessionServiceCreate:
     def test_falls_back_to_new_session_for_blank_generated_title(self) -> None:
         repository = _SessionRepositoryStub()
         generator = _SessionTitleGeneratorStub(generated_title="   ")
-        service = _make_service(repository=repository, title_generator=generator)
+        service = _make_management_service(
+            repository=repository,
+            title_generator=generator,
+        )
 
-        result = asyncio.run(service.create(owner_id=uuid4(), initial_prompt="prompt"))
+        session = asyncio.run(service.create(owner_id=uuid4(), initial_prompt="prompt"))
 
-        assert result.session.title == "New Session"
+        assert session.title == "New Session"
 
 
 class TestSessionServiceUpdate:
@@ -213,7 +230,7 @@ class TestSessionServiceUpdate:
         repository = _SessionRepositoryStub(
             session_by_id=session, updated_session=updated
         )
-        service = _make_service(repository=repository)
+        service = _make_management_service(repository=repository)
 
         result = asyncio.run(
             service.update(session_id=session.id, user_id=owner_id, title="New")
@@ -226,7 +243,7 @@ class TestSessionServiceUpdate:
     def test_raises_when_user_does_not_own_session(self) -> None:
         session = Session(title="Old", entries=[], owner_id=uuid4())
         repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_service(repository=repository)
+        service = _make_management_service(repository=repository)
 
         with pytest.raises(SessionAccessDeniedError, match="does not have access"):
             asyncio.run(
@@ -239,7 +256,7 @@ class TestSessionServiceDelete:
         owner_id = uuid4()
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_service(repository=repository)
+        service = _make_management_service(repository=repository)
 
         asyncio.run(service.delete(session_id=session.id, user_id=owner_id))
 
@@ -248,7 +265,7 @@ class TestSessionServiceDelete:
     def test_raises_when_user_does_not_own_session(self) -> None:
         session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
         repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_service(repository=repository)
+        service = _make_management_service(repository=repository)
 
         with pytest.raises(SessionAccessDeniedError, match="does not have access"):
             asyncio.run(service.delete(session_id=session.id, user_id=uuid4()))
@@ -266,7 +283,7 @@ class TestSessionServiceList:
             )
         ]
         query = _SessionSummaryQueryStub(summaries=summaries)
-        service = _make_service(summary_query=query)
+        service = _make_management_service(summary_query=query)
 
         result = asyncio.run(service.list(owner_id=owner_id, limit=10, offset=20))
 
@@ -288,7 +305,7 @@ class TestSessionServiceSearch:
             )
         ]
         query = _SessionSummaryQueryStub(summaries=summaries)
-        service = _make_service(summary_query=query)
+        service = _make_management_service(summary_query=query)
 
         result = asyncio.run(
             service.search(owner_id=owner_id, query="techno", limit=5, offset=15)
@@ -310,7 +327,7 @@ class TestSessionServiceSendMessage:
         session.add_follow_up_questions([first_question, second_question])
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub(chunks=["Hi"])
-        service = _make_service(repository=repository, runner=runner)
+        service = _make_conversation_service(repository=repository, runner=runner)
 
         events = asyncio.run(
             _collect_events(
@@ -338,7 +355,7 @@ class TestSessionServiceFollowUps:
         session.add_follow_up_questions([question])
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub(chunks=["chunk1", "chunk2"])
-        service = _make_service(repository=repository, runner=runner)
+        service = _make_conversation_service(repository=repository, runner=runner)
 
         events = asyncio.run(
             _collect_events(
@@ -371,7 +388,7 @@ class TestSessionServiceFollowUps:
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
         session.add_follow_up_questions([question])
         repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_service(repository=repository)
+        service = _make_conversation_service(repository=repository)
 
         events = asyncio.run(
             _collect_events(
@@ -406,7 +423,7 @@ class TestSessionServiceFollowUps:
         )
         first_question.answer_with_text("house")
         repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_service(repository=repository)
+        service = _make_conversation_service(repository=repository)
 
         events = asyncio.run(
             _collect_events(
