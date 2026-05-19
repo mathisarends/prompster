@@ -5,13 +5,21 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { MessagePayload } from "./messagePayload";
+import type { AssistantMessageEntryResponse } from "./assistantMessageEntryResponse";
+import type { FollowUpQuestionGroupEntryResponse } from "./followUpQuestionGroupEntryResponse";
 import type { PlaylistPayload } from "./playlistPayload";
+import type { ToolCallGroupEntryResponse } from "./toolCallGroupEntryResponse";
+import type { UserMessageEntryResponse } from "./userMessageEntryResponse";
 
 export interface SessionSnapshotPayload {
   id: string;
   title: string;
   createdAt: string;
-  messages: MessagePayload[];
+  entries: (
+    | UserMessageEntryResponse
+    | AssistantMessageEntryResponse
+    | ToolCallGroupEntryResponse
+    | FollowUpQuestionGroupEntryResponse
+  )[];
   playlist?: PlaylistPayload | null;
 }

@@ -6,8 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface FollowUpSkippedEvent {
-  type?: "follow_up.skipped";
-  groupId: string;
-  questionId: string;
+export interface FollowUpOptionResponse {
+  id: string;
+  label: string;
 }

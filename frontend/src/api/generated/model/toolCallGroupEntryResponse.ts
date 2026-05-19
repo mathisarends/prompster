@@ -5,11 +5,11 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { MessageRole } from "./messageRole";
+import type { ToolCallResponse } from "./toolCallResponse";
 
-export interface MessageResponse {
+export interface ToolCallGroupEntryResponse {
+  kind?: "tool_call_group";
   id: string;
-  role: MessageRole;
-  content: string;
   createdAt: string;
+  calls: ToolCallResponse[];
 }

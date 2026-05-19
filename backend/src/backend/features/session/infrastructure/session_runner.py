@@ -9,10 +9,9 @@ from agent.agent import (
     ToolResultEvent,
     WorkspaceUpdatedEvent,
 )
-from agent.agent.messages import MessageManager
-from agent.tools import Spotify
+from agent import MessageManager, Spotify, PlaylistDraft
 from agent.tools.views import AskFollowUpQuestion
-from agent.workspace import PlaylistDraft
+
 from llmify import ChatModel
 from llmify.messages import ToolCall as LLMToolCall
 from spotifyify import Spotifyify

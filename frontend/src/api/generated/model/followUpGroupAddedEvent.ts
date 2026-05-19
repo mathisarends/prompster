@@ -5,10 +5,9 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { FollowUpQuestionGroupPayload } from "./followUpQuestionGroupPayload";
+import type { FollowUpQuestionGroupEntryResponse } from "./followUpQuestionGroupEntryResponse";
 
 export interface FollowUpGroupAddedEvent {
   type?: "follow_up.group_added";
-  messageId: string;
-  group: FollowUpQuestionGroupPayload;
+  group: FollowUpQuestionGroupEntryResponse;
 }

@@ -6,4 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ToolFunctionPayloadArguments = { [key: string]: unknown };
+export interface AssistantMessageEntryResponse {
+  kind?: "assistant_message";
+  id: string;
+  content: string;
+  createdAt: string;
+}

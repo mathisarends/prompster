@@ -10,6 +10,7 @@ from .events import (
     ToolResultEvent,
     WorkspaceUpdatedEvent,
 )
+from .messages import MessageManager
 
 __all__ = [
     "Agent",
@@ -22,4 +23,5 @@ __all__ = [
     "ToolCallEvent",
     "ToolResultEvent",
     "WorkspaceUpdatedEvent",
+    "MessageManager",
 ]

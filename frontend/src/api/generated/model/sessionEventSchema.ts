@@ -11,20 +11,15 @@ import type { AssistantMessageCompletedEvent } from "./assistantMessageCompleted
 import type { AssistantMessageStartedEvent } from "./assistantMessageStartedEvent";
 import type { DoneEvent } from "./doneEvent";
 import type { ErrorEvent } from "./errorEvent";
-import type { FollowUpAnsweredEvent } from "./followUpAnsweredEvent";
 import type { FollowUpGroupAddedEvent } from "./followUpGroupAddedEvent";
-import type { FollowUpGroupCompletedEvent } from "./followUpGroupCompletedEvent";
-import type { FollowUpSkippedEvent } from "./followUpSkippedEvent";
 import type { PlaylistSetEvent } from "./playlistSetEvent";
 import type { PlaylistTrackAddedEvent } from "./playlistTrackAddedEvent";
 import type { PlaylistTrackRemovedEvent } from "./playlistTrackRemovedEvent";
 import type { SessionSnapshotEvent } from "./sessionSnapshotEvent";
-import type { SessionTitleGeneratedEvent } from "./sessionTitleGeneratedEvent";
 import type { ToolCallFailedEvent } from "./toolCallFailedEvent";
 import type { ToolCallGroupAddedEvent } from "./toolCallGroupAddedEvent";
 import type { ToolCallGroupCompletedEvent } from "./toolCallGroupCompletedEvent";
 import type { ToolCallResolvedEvent } from "./toolCallResolvedEvent";
-import type { UserMessageAppendedEvent } from "./userMessageAppendedEvent";
 
 /**
  * References every server event shape for OpenAPI client generation.
@@ -33,8 +28,6 @@ export interface SessionEventSchema {
   /** Any event the backend may push over the stream. */
   serverEvent?:
     | SessionSnapshotEvent
-    | SessionTitleGeneratedEvent
-    | UserMessageAppendedEvent
     | AssistantMessageStartedEvent
     | AssistantMessageChunkEvent
     | AssistantMessageCompletedEvent
@@ -44,9 +37,6 @@ export interface SessionEventSchema {
     | ToolCallFailedEvent
     | ToolCallGroupCompletedEvent
     | FollowUpGroupAddedEvent
-    | FollowUpAnsweredEvent
-    | FollowUpSkippedEvent
-    | FollowUpGroupCompletedEvent
     | PlaylistSetEvent
     | PlaylistTrackAddedEvent
     | PlaylistTrackRemovedEvent

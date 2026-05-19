@@ -5,10 +5,10 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { PlaylistTrackPayload } from "./playlistTrackPayload";
+import type { PlaylistTrackResponse } from "./playlistTrackResponse";
 
 export interface PlaylistTrackAddedEvent {
   type?: "playlist.track_added";
   playlistId: string;
-  track: PlaylistTrackPayload;
+  track: PlaylistTrackResponse;
 }

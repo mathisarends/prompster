@@ -7,6 +7,7 @@
  */
 
 export interface FollowUpAnswerRequest {
+  questionId: string;
   optionId?: string | null;
   text?: string | null;
 }

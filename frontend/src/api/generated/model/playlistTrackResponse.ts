@@ -5,9 +5,11 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { ToolCallPayload } from "./toolCallPayload";
 
-export interface ToolCallGroupPayload {
+export interface PlaylistTrackResponse {
   id: string;
-  calls: ToolCallPayload[];
+  title: string;
+  artist: string;
+  year?: number | null;
+  coverUrl?: string | null;
 }

@@ -6,8 +6,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface SessionTitleGeneratedEvent {
-  type?: "session.title_generated";
-  sessionId: string;
-  title: string;
-}
+export type ToolFunctionResponseArguments = { [key: string]: unknown };

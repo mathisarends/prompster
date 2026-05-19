@@ -5,10 +5,10 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { PlaylistTrackPayload } from "./playlistTrackPayload";
+import type { PlaylistTrackResponse } from "./playlistTrackResponse";
 
 export interface PlaylistPayload {
   id: string;
   name?: string | null;
-  tracks: PlaylistTrackPayload[];
+  tracks: PlaylistTrackResponse[];
 }

@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FollowUpQuestionState =
-  (typeof FollowUpQuestionState)[keyof typeof FollowUpQuestionState];
+export type FollowUpQuestionResponseState =
+  (typeof FollowUpQuestionResponseState)[keyof typeof FollowUpQuestionResponseState];
 
-export const FollowUpQuestionState = {
+export const FollowUpQuestionResponseState = {
   pending: "pending",
   answered: "answered",
   skipped: "skipped",

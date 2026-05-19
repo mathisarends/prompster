@@ -27,8 +27,8 @@ class FailedCall:
     error: str
 
 
-ResolvedCall = CompletedCall | FailedCall
-ToolCall = PendingCall | ResolvedCall
+type ResolvedCall = CompletedCall | FailedCall
+type ToolCall = PendingCall | ResolvedCall
 
 
 def is_pending(call: ToolCall) -> bool:

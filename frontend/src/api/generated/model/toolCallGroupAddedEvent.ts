@@ -5,10 +5,9 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { ToolCallGroupPayload } from "./toolCallGroupPayload";
+import type { ToolCallGroupEntryResponse } from "./toolCallGroupEntryResponse";
 
 export interface ToolCallGroupAddedEvent {
   type?: "tool_call.group_added";
-  messageId: string;
-  group: ToolCallGroupPayload;
+  group: ToolCallGroupEntryResponse;
 }

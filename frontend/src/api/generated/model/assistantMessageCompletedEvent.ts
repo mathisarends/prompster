@@ -5,9 +5,9 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { MessagePayload } from "./messagePayload";
+import type { AssistantMessageEntryResponse } from "./assistantMessageEntryResponse";
 
 export interface AssistantMessageCompletedEvent {
   type?: "message.assistant_completed";
-  message: MessagePayload;
+  message: AssistantMessageEntryResponse;
 }

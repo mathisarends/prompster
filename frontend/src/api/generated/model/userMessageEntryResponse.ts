@@ -6,7 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface FollowUpGroupCompletedEvent {
-  type?: "follow_up.group_completed";
-  groupId: string;
+export interface UserMessageEntryResponse {
+  kind?: "user_message";
+  id: string;
+  content: string;
+  createdAt: string;
 }

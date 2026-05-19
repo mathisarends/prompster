@@ -5,11 +5,19 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { MessageResponse } from "./messageResponse";
+import type { AssistantMessageEntryResponse } from "./assistantMessageEntryResponse";
+import type { FollowUpQuestionGroupEntryResponse } from "./followUpQuestionGroupEntryResponse";
+import type { ToolCallGroupEntryResponse } from "./toolCallGroupEntryResponse";
+import type { UserMessageEntryResponse } from "./userMessageEntryResponse";
 
 export interface SessionResponse {
   id: string;
   title: string;
   createdAt: string;
-  messages: MessageResponse[];
+  entries: (
+    | UserMessageEntryResponse
+    | AssistantMessageEntryResponse
+    | ToolCallGroupEntryResponse
+    | FollowUpQuestionGroupEntryResponse
+  )[];
 }

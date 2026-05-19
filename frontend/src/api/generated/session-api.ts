@@ -25,17 +25,16 @@ import type {
 import type {
   AddPlaylistTrackRequest,
   ErrorResponse,
-  FollowUpAnswerRequest,
+  FollowUpRequest,
   HTTPValidationError,
   ListSessionsParams,
-  SearchSpotifyTracksParams,
+  PlaylistTrackResponse,
   SendMessageRequest,
   SessionCreateRequest,
   SessionEventSchema,
   SessionResponse,
   SessionSummaryListResponse,
   SessionUpdateRequest,
-  SpotifyTrackSearchResponse,
 } from "./model";
 
 import { customInstance } from "../http-client";
@@ -777,334 +776,6 @@ export function useCreateSession<
     sessionCreateRequest,
     options,
   );
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Search Spotify Tracks
- */
-export const searchSpotifyTracks = (
-  params: SearchSpotifyTracksParams,
-  options?: SecondParameter<typeof customInstance>,
-  signal?: AbortSignal,
-) => {
-  return customInstance<SpotifyTrackSearchResponse>(
-    { url: `/api/v1/sessions/spotify-tracks`, method: "GET", params, signal },
-    options,
-  );
-};
-
-export const getSearchSpotifyTracksInfiniteQueryKey = (
-  params?: SearchSpotifyTracksParams,
-) => {
-  return [
-    "infinite",
-    `/api/v1/sessions/spotify-tracks`,
-    ...(params ? [params] : []),
-  ] as const;
-};
-
-export const getSearchSpotifyTracksQueryKey = (
-  params?: SearchSpotifyTracksParams,
-) => {
-  return [
-    `/api/v1/sessions/spotify-tracks`,
-    ...(params ? [params] : []),
-  ] as const;
-};
-
-export const getSearchSpotifyTracksInfiniteQueryOptions = <
-  TData = InfiniteData<Awaited<ReturnType<typeof searchSpotifyTracks>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  params: SearchSpotifyTracksParams,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof searchSpotifyTracks>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getSearchSpotifyTracksInfiniteQueryKey(params);
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof searchSpotifyTracks>>
-  > = ({ signal }) => searchSpotifyTracks(params, requestOptions, signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseInfiniteQueryOptions<
-    Awaited<ReturnType<typeof searchSpotifyTracks>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type SearchSpotifyTracksInfiniteQueryResult = NonNullable<
-  Awaited<ReturnType<typeof searchSpotifyTracks>>
->;
-export type SearchSpotifyTracksInfiniteQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
-
-export function useSearchSpotifyTracksInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof searchSpotifyTracks>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  params: SearchSpotifyTracksParams,
-  options: {
-    query: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof searchSpotifyTracks>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof searchSpotifyTracks>>,
-          TError,
-          Awaited<ReturnType<typeof searchSpotifyTracks>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useSearchSpotifyTracksInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof searchSpotifyTracks>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  params: SearchSpotifyTracksParams,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof searchSpotifyTracks>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof searchSpotifyTracks>>,
-          TError,
-          Awaited<ReturnType<typeof searchSpotifyTracks>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useSearchSpotifyTracksInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof searchSpotifyTracks>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  params: SearchSpotifyTracksParams,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof searchSpotifyTracks>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary Search Spotify Tracks
- */
-
-export function useSearchSpotifyTracksInfinite<
-  TData = InfiniteData<Awaited<ReturnType<typeof searchSpotifyTracks>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  params: SearchSpotifyTracksParams,
-  options?: {
-    query?: Partial<
-      UseInfiniteQueryOptions<
-        Awaited<ReturnType<typeof searchSpotifyTracks>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseInfiniteQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getSearchSpotifyTracksInfiniteQueryOptions(
-    params,
-    options,
-  );
-
-  const query = useInfiniteQuery(
-    queryOptions,
-    queryClient,
-  ) as UseInfiniteQueryResult<TData, TError> & {
-    queryKey: DataTag<QueryKey, TData, TError>;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-export const getSearchSpotifyTracksQueryOptions = <
-  TData = Awaited<ReturnType<typeof searchSpotifyTracks>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  params: SearchSpotifyTracksParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof searchSpotifyTracks>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getSearchSpotifyTracksQueryKey(params);
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof searchSpotifyTracks>>
-  > = ({ signal }) => searchSpotifyTracks(params, requestOptions, signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof searchSpotifyTracks>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type SearchSpotifyTracksQueryResult = NonNullable<
-  Awaited<ReturnType<typeof searchSpotifyTracks>>
->;
-export type SearchSpotifyTracksQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
-
-export function useSearchSpotifyTracks<
-  TData = Awaited<ReturnType<typeof searchSpotifyTracks>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  params: SearchSpotifyTracksParams,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof searchSpotifyTracks>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof searchSpotifyTracks>>,
-          TError,
-          Awaited<ReturnType<typeof searchSpotifyTracks>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useSearchSpotifyTracks<
-  TData = Awaited<ReturnType<typeof searchSpotifyTracks>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  params: SearchSpotifyTracksParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof searchSpotifyTracks>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof searchSpotifyTracks>>,
-          TError,
-          Awaited<ReturnType<typeof searchSpotifyTracks>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useSearchSpotifyTracks<
-  TData = Awaited<ReturnType<typeof searchSpotifyTracks>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  params: SearchSpotifyTracksParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof searchSpotifyTracks>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary Search Spotify Tracks
- */
-
-export function useSearchSpotifyTracks<
-  TData = Awaited<ReturnType<typeof searchSpotifyTracks>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  params: SearchSpotifyTracksParams,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof searchSpotifyTracks>>,
-        TError,
-        TData
-      >
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getSearchSpotifyTracksQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -1910,49 +1581,46 @@ export function useSendMessage<
 }
 
 /**
- * @summary Answer Session Follow Up
+ * @summary Handle Follow Up
  */
-export const answerFollowUp = (
+export const handleFollowUp = (
   sessionId: string,
-  questionId: string,
-  followUpAnswerRequest: BodyType<FollowUpAnswerRequest>,
+  followUpRequest: BodyType<FollowUpRequest>,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<unknown | string>(
     {
-      url: `/api/v1/sessions/${sessionId}/follow-ups/${questionId}/answer`,
+      url: `/api/v1/sessions/${sessionId}/follow-ups`,
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      data: followUpAnswerRequest,
+      data: followUpRequest,
       signal,
     },
     options,
   );
 };
 
-export const getAnswerFollowUpQueryKey = (
+export const getHandleFollowUpQueryKey = (
   sessionId: string,
-  questionId: string,
-  followUpAnswerRequest?: BodyType<FollowUpAnswerRequest>,
+  followUpRequest?: BodyType<FollowUpRequest>,
 ) => {
   return [
     "POST",
-    `/api/v1/sessions/${sessionId}/follow-ups/${questionId}/answer`,
-    followUpAnswerRequest,
+    `/api/v1/sessions/${sessionId}/follow-ups`,
+    followUpRequest,
   ] as const;
 };
 
-export const getAnswerFollowUpQueryOptions = <
-  TData = Awaited<ReturnType<typeof answerFollowUp>>,
+export const getHandleFollowUpQueryOptions = <
+  TData = Awaited<ReturnType<typeof handleFollowUp>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
-  questionId: string,
-  followUpAnswerRequest: BodyType<FollowUpAnswerRequest>,
+  followUpRequest: BodyType<FollowUpRequest>,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof answerFollowUp>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof handleFollowUp>>, TError, TData>
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -1961,58 +1629,46 @@ export const getAnswerFollowUpQueryOptions = <
 
   const queryKey =
     queryOptions?.queryKey ??
-    getAnswerFollowUpQueryKey(sessionId, questionId, followUpAnswerRequest);
+    getHandleFollowUpQueryKey(sessionId, followUpRequest);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof answerFollowUp>>> = ({
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof handleFollowUp>>> = ({
     signal,
-  }) =>
-    answerFollowUp(
-      sessionId,
-      questionId,
-      followUpAnswerRequest,
-      requestOptions,
-      signal,
-    );
+  }) => handleFollowUp(sessionId, followUpRequest, requestOptions, signal);
 
   return {
     queryKey,
     queryFn,
-    enabled:
-      sessionId !== null &&
-      sessionId !== undefined &&
-      questionId !== null &&
-      questionId !== undefined,
+    enabled: sessionId !== null && sessionId !== undefined,
     ...queryOptions,
   } as UseQueryOptions<
-    Awaited<ReturnType<typeof answerFollowUp>>,
+    Awaited<ReturnType<typeof handleFollowUp>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type AnswerFollowUpQueryResult = NonNullable<
-  Awaited<ReturnType<typeof answerFollowUp>>
+export type HandleFollowUpQueryResult = NonNullable<
+  Awaited<ReturnType<typeof handleFollowUp>>
 >;
-export type AnswerFollowUpQueryError = ErrorType<
+export type HandleFollowUpQueryError = ErrorType<
   ErrorResponse | HTTPValidationError
 >;
 
-export function useAnswerFollowUp<
-  TData = Awaited<ReturnType<typeof answerFollowUp>>,
+export function useHandleFollowUp<
+  TData = Awaited<ReturnType<typeof handleFollowUp>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
-  questionId: string,
-  followUpAnswerRequest: BodyType<FollowUpAnswerRequest>,
+  followUpRequest: BodyType<FollowUpRequest>,
   options: {
     query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof answerFollowUp>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof handleFollowUp>>, TError, TData>
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof answerFollowUp>>,
+          Awaited<ReturnType<typeof handleFollowUp>>,
           TError,
-          Awaited<ReturnType<typeof answerFollowUp>>
+          Awaited<ReturnType<typeof handleFollowUp>>
         >,
         "initialData"
       >;
@@ -2022,22 +1678,21 @@ export function useAnswerFollowUp<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useAnswerFollowUp<
-  TData = Awaited<ReturnType<typeof answerFollowUp>>,
+export function useHandleFollowUp<
+  TData = Awaited<ReturnType<typeof handleFollowUp>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
-  questionId: string,
-  followUpAnswerRequest: BodyType<FollowUpAnswerRequest>,
+  followUpRequest: BodyType<FollowUpRequest>,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof answerFollowUp>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof handleFollowUp>>, TError, TData>
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof answerFollowUp>>,
+          Awaited<ReturnType<typeof handleFollowUp>>,
           TError,
-          Awaited<ReturnType<typeof answerFollowUp>>
+          Awaited<ReturnType<typeof handleFollowUp>>
         >,
         "initialData"
       >;
@@ -2047,16 +1702,15 @@ export function useAnswerFollowUp<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useAnswerFollowUp<
-  TData = Awaited<ReturnType<typeof answerFollowUp>>,
+export function useHandleFollowUp<
+  TData = Awaited<ReturnType<typeof handleFollowUp>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
-  questionId: string,
-  followUpAnswerRequest: BodyType<FollowUpAnswerRequest>,
+  followUpRequest: BodyType<FollowUpRequest>,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof answerFollowUp>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof handleFollowUp>>, TError, TData>
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -2065,19 +1719,18 @@ export function useAnswerFollowUp<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary Answer Session Follow Up
+ * @summary Handle Follow Up
  */
 
-export function useAnswerFollowUp<
-  TData = Awaited<ReturnType<typeof answerFollowUp>>,
+export function useHandleFollowUp<
+  TData = Awaited<ReturnType<typeof handleFollowUp>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
-  questionId: string,
-  followUpAnswerRequest: BodyType<FollowUpAnswerRequest>,
+  followUpRequest: BodyType<FollowUpRequest>,
   options?: {
     query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof answerFollowUp>>, TError, TData>
+      UseQueryOptions<Awaited<ReturnType<typeof handleFollowUp>>, TError, TData>
     >;
     request?: SecondParameter<typeof customInstance>;
   },
@@ -2085,182 +1738,9 @@ export function useAnswerFollowUp<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getAnswerFollowUpQueryOptions(
+  const queryOptions = getHandleFollowUpQueryOptions(
     sessionId,
-    questionId,
-    followUpAnswerRequest,
-    options,
-  );
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Skip Session Follow Up
- */
-export const skipFollowUp = (
-  sessionId: string,
-  questionId: string,
-  options?: SecondParameter<typeof customInstance>,
-  signal?: AbortSignal,
-) => {
-  return customInstance<unknown | string>(
-    {
-      url: `/api/v1/sessions/${sessionId}/follow-ups/${questionId}/skip`,
-      method: "POST",
-      signal,
-    },
-    options,
-  );
-};
-
-export const getSkipFollowUpQueryKey = (
-  sessionId: string,
-  questionId: string,
-) => {
-  return [
-    "POST",
-    `/api/v1/sessions/${sessionId}/follow-ups/${questionId}/skip`,
-  ] as const;
-};
-
-export const getSkipFollowUpQueryOptions = <
-  TData = Awaited<ReturnType<typeof skipFollowUp>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  sessionId: string,
-  questionId: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof skipFollowUp>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getSkipFollowUpQueryKey(sessionId, questionId);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof skipFollowUp>>> = ({
-    signal,
-  }) => skipFollowUp(sessionId, questionId, requestOptions, signal);
-
-  return {
-    queryKey,
-    queryFn,
-    enabled:
-      sessionId !== null &&
-      sessionId !== undefined &&
-      questionId !== null &&
-      questionId !== undefined,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof skipFollowUp>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
-
-export type SkipFollowUpQueryResult = NonNullable<
-  Awaited<ReturnType<typeof skipFollowUp>>
->;
-export type SkipFollowUpQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
-
-export function useSkipFollowUp<
-  TData = Awaited<ReturnType<typeof skipFollowUp>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  sessionId: string,
-  questionId: string,
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof skipFollowUp>>, TError, TData>
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof skipFollowUp>>,
-          TError,
-          Awaited<ReturnType<typeof skipFollowUp>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useSkipFollowUp<
-  TData = Awaited<ReturnType<typeof skipFollowUp>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  sessionId: string,
-  questionId: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof skipFollowUp>>, TError, TData>
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof skipFollowUp>>,
-          TError,
-          Awaited<ReturnType<typeof skipFollowUp>>
-        >,
-        "initialData"
-      >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useSkipFollowUp<
-  TData = Awaited<ReturnType<typeof skipFollowUp>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  sessionId: string,
-  questionId: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof skipFollowUp>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary Skip Session Follow Up
- */
-
-export function useSkipFollowUp<
-  TData = Awaited<ReturnType<typeof skipFollowUp>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
->(
-  sessionId: string,
-  questionId: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof skipFollowUp>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getSkipFollowUpQueryOptions(
-    sessionId,
-    questionId,
+    followUpRequest,
     options,
   );
 
@@ -2281,7 +1761,7 @@ export const addPlaylistTrack = (
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  return customInstance<unknown | string>(
+  return customInstance<PlaylistTrackResponse>(
     {
       url: `/api/v1/sessions/${sessionId}/tracks`,
       method: "POST",
@@ -2479,7 +1959,7 @@ export const removePlaylistTrack = (
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  return customInstance<unknown | string>(
+  return customInstance<void>(
     {
       url: `/api/v1/sessions/${sessionId}/tracks/${trackId}`,
       method: "DELETE",
@@ -2652,6 +2132,339 @@ export function useRemovePlaylistTrack<
     trackId,
     options,
   );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Export Session Playlist
+ */
+export const exportSessionPlaylist = (
+  sessionId: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<unknown | Blob>(
+    {
+      url: `/api/v1/sessions/${sessionId}/playlist/pdf`,
+      method: "GET",
+      responseType: "blob",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getExportSessionPlaylistInfiniteQueryKey = (sessionId: string) => {
+  return ["infinite", `/api/v1/sessions/${sessionId}/playlist/pdf`] as const;
+};
+
+export const getExportSessionPlaylistQueryKey = (sessionId: string) => {
+  return [`/api/v1/sessions/${sessionId}/playlist/pdf`] as const;
+};
+
+export const getExportSessionPlaylistInfiniteQueryOptions = <
+  TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylist>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getExportSessionPlaylistInfiniteQueryKey(sessionId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof exportSessionPlaylist>>
+  > = ({ signal }) => exportSessionPlaylist(sessionId, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: sessionId !== null && sessionId !== undefined,
+    ...queryOptions,
+  } as UseInfiniteQueryOptions<
+    Awaited<ReturnType<typeof exportSessionPlaylist>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportSessionPlaylistInfiniteQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportSessionPlaylist>>
+>;
+export type ExportSessionPlaylistInfiniteQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useExportSessionPlaylistInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options: {
+    query: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylist>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportSessionPlaylist>>,
+          TError,
+          Awaited<ReturnType<typeof exportSessionPlaylist>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useExportSessionPlaylistInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylist>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportSessionPlaylist>>,
+          TError,
+          Awaited<ReturnType<typeof exportSessionPlaylist>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useExportSessionPlaylistInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylist>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Export Session Playlist
+ */
+
+export function useExportSessionPlaylistInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylist>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getExportSessionPlaylistInfiniteQueryOptions(
+    sessionId,
+    options,
+  );
+
+  const query = useInfiniteQuery(
+    queryOptions,
+    queryClient,
+  ) as UseInfiniteQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getExportSessionPlaylistQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylist>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getExportSessionPlaylistQueryKey(sessionId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof exportSessionPlaylist>>
+  > = ({ signal }) => exportSessionPlaylist(sessionId, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: sessionId !== null && sessionId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportSessionPlaylist>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportSessionPlaylistQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportSessionPlaylist>>
+>;
+export type ExportSessionPlaylistQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useExportSessionPlaylist<
+  TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylist>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportSessionPlaylist>>,
+          TError,
+          Awaited<ReturnType<typeof exportSessionPlaylist>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useExportSessionPlaylist<
+  TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylist>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportSessionPlaylist>>,
+          TError,
+          Awaited<ReturnType<typeof exportSessionPlaylist>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useExportSessionPlaylist<
+  TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylist>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Export Session Playlist
+ */
+
+export function useExportSessionPlaylist<
+  TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylist>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getExportSessionPlaylistQueryOptions(sessionId, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
