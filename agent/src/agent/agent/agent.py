@@ -46,8 +46,12 @@ class Agent:
             self._owns_spotify = True
         self._tools.get_context().provide(self._spotify)
 
-        self._workspace_store = workspace_store or WorkspaceStore()
-        self._tools.get_context().provide(self._workspace_store)
+        existing_workspace_store = self._tools.get_context().resolve(WorkspaceStore)
+        self._workspace_store = (
+            workspace_store or existing_workspace_store or WorkspaceStore()
+        )
+        if existing_workspace_store is None:
+            self._tools.get_context().provide(self._workspace_store)
 
         self._tool_schema = self._tools.to_schema()
 
@@ -97,7 +101,8 @@ class Agent:
                 args = self._tools.parse_args(call)
                 yield ToolCallEvent(name=call.function.name, args=args)
 
-                if call.function.name == "ask_follow_up":
+                tool = self._tools.get(call.function.name)
+                if tool is not None and tool.suspends_for_input:
                     parsed = AskFollowUpParams.model_validate(args)
                     yield FollowUpRequestedEvent(
                         tool_call_id=call.id,

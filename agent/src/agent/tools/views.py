@@ -43,6 +43,7 @@ class Tool:
         status_label: str | Callable[[BaseModel], str] | None = None,
         schema: dict | None = None,
         param_model: type[BaseModel] | None = None,
+        suspends_for_input: bool = False,
     ) -> None:
         if status is not None and status_label is not None:
             raise ValueError(
@@ -54,6 +55,7 @@ class Tool:
         self.fn = fn
         self._schema = schema
         self.param_model = param_model
+        self.suspends_for_input = suspends_for_input
         self._schema_builder = (
             None if schema else ToolSchemaBuilder(self.fn, param_model)
         )

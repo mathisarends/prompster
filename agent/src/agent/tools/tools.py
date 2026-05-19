@@ -56,6 +56,7 @@ class Tools:
         status: str | Callable[[P], str] | None = None,
         status_label: str | Callable[[P], str] | None = None,
         params: type[P],
+        suspends_for_input: bool = False,
     ) -> Callable: ...
 
     @overload
@@ -67,6 +68,7 @@ class Tools:
         status: str | None = None,
         status_label: str | None = None,
         params: None = None,
+        suspends_for_input: bool = False,
     ) -> Callable: ...
 
     def action[P: BaseModel](
@@ -76,6 +78,7 @@ class Tools:
         status: str | Callable[[P], str] | None = None,
         status_label: str | Callable[[P], str] | None = None,
         params: type[P] | None = None,
+        suspends_for_input: bool = False,
     ) -> Callable:
         if status is not None and status_label is not None:
             raise ValueError("Use either 'status' or 'status_label', not both")
@@ -89,6 +92,7 @@ class Tools:
                     status=status,
                     status_label=status_label,
                     param_model=params,
+                    suspends_for_input=suspends_for_input,
                 )
             )
             return fn
@@ -225,6 +229,7 @@ class Tools:
             ),
             status_label="Rückfragen stellen",
             params=AskFollowUpParams,
+            suspends_for_input=True,
         )
         async def ask_follow_up(params: AskFollowUpParams) -> str:
             return params.model_dump_json()

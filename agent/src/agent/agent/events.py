@@ -3,7 +3,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from agent.views import AskFollowUpQuestion
+from agent.tools.views import AskFollowUpQuestion
 from agent.workspace import PlaylistDraft
 
 

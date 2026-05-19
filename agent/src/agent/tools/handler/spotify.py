@@ -2,7 +2,7 @@ from typing import Self
 
 from spotifyify import PagingPlaylistTrack, Spotifyify, Track
 
-from agent.views import (
+from agent.tools.views import (
     AlbumTracksParams,
     ArtistAlbumsParams,
     ArtistTopTracksParams,
