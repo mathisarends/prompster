@@ -10,4 +10,5 @@ members = [
     "backend",
     "tokens",
     "agent",
+    "llm",
 ]

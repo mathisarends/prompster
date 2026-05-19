@@ -28,7 +28,9 @@ class TypstPlaylistDeckGenerator(PlaylistDeckGenerator):
             songs_data = []
             for index, track in enumerate(tracks):
                 qr_file = f"qr_{index}.svg"
-                (tmp_path / qr_file).write_bytes(_make_qr_svg_bytes(track.spotify_url))
+                (tmp_path / qr_file).write_bytes(
+                    self._make_qr_svg_bytes(track.spotify_url)
+                )
                 songs_data.append(
                     {
                         "title": track.title,
@@ -53,9 +55,8 @@ class TypstPlaylistDeckGenerator(PlaylistDeckGenerator):
 
             return output.read_bytes()
 
-
-def _make_qr_svg_bytes(spotify_url: str) -> bytes:
-    image = qrcode.make(spotify_url, image_factory=qrcode.image.svg.SvgPathImage)
-    buffer = io.BytesIO()
-    image.save(buffer)
-    return buffer.getvalue()
+    def _make_qr_svg_bytes(self, spotify_url: str) -> bytes:
+        image = qrcode.make(spotify_url, image_factory=qrcode.image.svg.SvgPathImage)
+        buffer = io.BytesIO()
+        image.save(buffer)
+        return buffer.getvalue()
