@@ -1,3 +1,4 @@
+import json
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from uuid import UUID
@@ -7,9 +8,27 @@ from backend.features.session.application.events import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionEvent,
+    SessionFollowUpGroupAdded,
+    SessionPlaylistSet,
+    SessionToolCallGroupAdded,
+    SessionToolCallGroupCompleted,
+    SessionToolCallResolved,
 )
-from backend.features.session.application.ports.session_runner import SessionRunner
-from backend.features.session.domain import Session, SessionRepository
+from backend.features.session.application.ports.session_runner import (
+    SessionRunner,
+    SessionRunnerAssistantMessage,
+    SessionRunnerFollowUpRequested,
+    SessionRunnerPlaylistUpdated,
+    SessionRunnerToolCallCompleted,
+    SessionRunnerToolCallStarted,
+)
+from backend.features.session.domain import (
+    FollowUpQuestionGroup,
+    NoPendingToolCallGroupError,
+    Session,
+    SessionRepository,
+    ToolCallGroup,
+)
 
 
 @dataclass(frozen=True)
@@ -17,6 +36,14 @@ class FollowUpAnswer:
     question_id: UUID
     option_id: str | None
     text: str | None
+
+
+@dataclass(frozen=True)
+class _ResolvedToolCall:
+    group_id: UUID
+    tool_call_id: str
+    result: str
+    group_completed: bool
 
 
 class SessionConversationService:
@@ -36,10 +63,14 @@ class SessionConversationService:
         content: str,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
-        self._prepare_follow_up_context_for_message(session=session)
+        resolved_tool_call = self._prepare_follow_up_context_for_message(
+            session=session
+        )
         session.add_user_message(content=content)
         await self._session_repository.save(session=session)
-        async for event in self._run_llm(session=session):
+        for event in self._to_tool_call_resolution_events(resolved_tool_call):
+            yield event
+        async for event in self._run_agent(session=session):
             yield event
 
     async def answer_follow_ups(
@@ -50,6 +81,7 @@ class SessionConversationService:
         answers: list[FollowUpAnswer],
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        pending_group = session.require_pending_follow_up_group()
         for answer in answers:
             if answer.option_id is not None:
                 session.answer_follow_up_with_option(
@@ -61,8 +93,18 @@ class SessionConversationService:
                     question_id=answer.question_id,
                     text=answer.text or "",
                 )
+        if not pending_group.is_complete:
+            await self._session_repository.save(session=session)
+            return
+
+        resolved_tool_call = self._resolve_pending_tool_call(
+            session=session,
+            result=self._serialize_follow_up_answers(pending_group),
+        )
         await self._session_repository.save(session=session)
-        async for event in self._run_llm(session=session):
+        for event in self._to_tool_call_resolution_events(resolved_tool_call):
+            yield event
+        async for event in self._run_agent(session=session):
             yield event
 
     async def skip_remaining_follow_ups(
@@ -72,9 +114,15 @@ class SessionConversationService:
         user_id: UUID,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
-        self._prepare_follow_up_context_for_message(session=session)
+        pending_group = session.require_pending_follow_up_group()
+        resolved_tool_call = self._skip_remaining_follow_ups(
+            session=session,
+            pending_group=pending_group,
+        )
         await self._session_repository.save(session=session)
-        async for event in self._run_llm(session=session):
+        for event in self._to_tool_call_resolution_events(resolved_tool_call):
+            yield event
+        async for event in self._run_agent(session=session):
             yield event
 
     async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
@@ -84,23 +132,131 @@ class SessionConversationService:
 
     def _prepare_follow_up_context_for_message(
         self, *, session: Session
-    ) -> UUID | None:
+    ) -> _ResolvedToolCall | None:
         pending_group = session.pending_follow_up_group()
         if pending_group is None:
             return None
 
+        return self._skip_remaining_follow_ups(
+            session=session,
+            pending_group=pending_group,
+        )
+
+    def _skip_remaining_follow_ups(
+        self,
+        *,
+        session: Session,
+        pending_group: FollowUpQuestionGroup,
+    ) -> _ResolvedToolCall | None:
         current_question = pending_group.current_question
         if current_question is None:
             return None
 
         session.skip_remaining_follow_ups(question_id=current_question.id)
-        return pending_group.id
+        return self._resolve_pending_tool_call(
+            session=session,
+            result=self._serialize_follow_up_answers(pending_group),
+        )
 
-    async def _run_llm(self, *, session: Session) -> AsyncIterator[SessionEvent]:
-        message = session.add_assistant_message()
-        yield SessionAssistantMessageStarted(message=message)
-        async for chunk in self._runner.run(session=session):
-            session.append_to_current_assistant_message(chunk)
-            yield SessionAssistantMessageChunk(message_id=message.id, chunk=chunk)
-        await self._session_repository.save(session=session)
-        yield SessionAssistantMessageCompleted(message=message)
+    def _resolve_pending_tool_call(
+        self,
+        *,
+        session: Session,
+        result: str,
+    ) -> _ResolvedToolCall:
+        group = self._require_pending_tool_call_group(session=session)
+        call = group.pending_calls[0]
+        session.resolve_tool_call(tool_call_id=call.id, result=result)
+        return _ResolvedToolCall(
+            group_id=group.id,
+            tool_call_id=call.id,
+            result=result,
+            group_completed=group.is_complete,
+        )
+
+    def _require_pending_tool_call_group(self, *, session: Session) -> ToolCallGroup:
+        group = session.pending_tool_call_group()
+        if group is None or not group.pending_calls:
+            raise NoPendingToolCallGroupError(
+                f"Session {session.id} has no pending tool call group."
+            )
+        return group
+
+    def _serialize_follow_up_answers(self, group: FollowUpQuestionGroup) -> str:
+        return json.dumps(
+            {
+                "answers": [
+                    {
+                        "question": question.question,
+                        "state": question.state.value,
+                        "answer": question.answer_text,
+                    }
+                    for question in group.questions
+                ]
+            },
+            ensure_ascii=False,
+        )
+
+    def _to_tool_call_resolution_events(
+        self,
+        resolved_tool_call: _ResolvedToolCall | None,
+    ) -> tuple[SessionEvent, ...]:
+        if resolved_tool_call is None:
+            return ()
+        events: list[SessionEvent] = [
+            SessionToolCallResolved(
+                group_id=resolved_tool_call.group_id,
+                tool_call_id=resolved_tool_call.tool_call_id,
+                result=resolved_tool_call.result,
+            )
+        ]
+        if resolved_tool_call.group_completed:
+            events.append(
+                SessionToolCallGroupCompleted(group_id=resolved_tool_call.group_id)
+            )
+        return tuple(events)
+
+    async def _run_agent(self, *, session: Session) -> AsyncIterator[SessionEvent]:
+        async for event in self._runner.run(session=session):
+            if isinstance(event, SessionRunnerAssistantMessage):
+                message = session.add_assistant_message()
+                await self._session_repository.save(session=session)
+                yield SessionAssistantMessageStarted(message=message)
+                if event.content:
+                    session.append_to_current_assistant_message(event.content)
+                    yield SessionAssistantMessageChunk(
+                        message_id=message.id,
+                        chunk=event.content,
+                    )
+                await self._session_repository.save(session=session)
+                yield SessionAssistantMessageCompleted(message=message)
+            elif isinstance(event, SessionRunnerToolCallStarted):
+                group = session.add_tool_call(event.call)
+                await self._session_repository.save(session=session)
+                yield SessionToolCallGroupAdded(group=group)
+            elif isinstance(event, SessionRunnerToolCallCompleted):
+                group = self._require_pending_tool_call_group(session=session)
+                session.resolve_tool_call(
+                    tool_call_id=event.tool_call_id,
+                    result=event.result,
+                )
+                await self._session_repository.save(session=session)
+                yield SessionToolCallResolved(
+                    group_id=group.id,
+                    tool_call_id=event.tool_call_id,
+                    result=event.result,
+                )
+                if group.is_complete:
+                    yield SessionToolCallGroupCompleted(group_id=group.id)
+            elif isinstance(event, SessionRunnerFollowUpRequested):
+                group = session.add_follow_up_questions(event.questions)
+                await self._session_repository.save(session=session)
+                yield SessionFollowUpGroupAdded(group=group)
+                return
+            elif isinstance(event, SessionRunnerPlaylistUpdated):
+                playlist = session.set_playlist(
+                    tracks=list(event.playlist.tracks),
+                    name=event.playlist.name,
+                )
+                await self._session_repository.save(session=session)
+                yield SessionPlaylistSet(playlist=playlist)

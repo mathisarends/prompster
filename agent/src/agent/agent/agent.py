@@ -14,7 +14,7 @@ from agent.agent.events import (
     ToolResultEvent,
     WorkspaceUpdatedEvent,
 )
-from agent.agent.messages.messages import MessageManager
+from agent.agent.messages import MessageManager
 from agent.tools import Tools, Spotify
 from agent.tools.views import AskFollowUpParams
 from agent.workspace import WorkspaceStore
@@ -65,13 +65,17 @@ class Agent:
     async def stream(self, message: str) -> AsyncGenerator[AgentEvent, None]:
         self._messages.add_user(message)
         yield RunStartedEvent(message=message)
-        async for event in self._run_loop():
+        async for event in self.continue_stream():
             yield event
 
     async def resume(
         self, tool_call_id: str, answer: str
     ) -> AsyncGenerator[AgentEvent, None]:
         self._messages.add_tool_result(tool_call_id=tool_call_id, content=answer)
+        async for event in self.continue_stream():
+            yield event
+
+    async def continue_stream(self) -> AsyncGenerator[AgentEvent, None]:
         async for event in self._run_loop():
             yield event
 
@@ -99,7 +103,11 @@ class Agent:
 
             for call in response.tool_calls:
                 args = self._tools.parse_args(call)
-                yield ToolCallEvent(name=call.function.name, args=args)
+                yield ToolCallEvent(
+                    tool_call_id=call.id,
+                    name=call.function.name,
+                    args=args,
+                )
 
                 tool = self._tools.get(call.function.name)
                 if tool is not None and tool.suspends_for_input:
@@ -112,7 +120,11 @@ class Agent:
 
                 result = await self._tools.execute(call.function.name, args)
                 serialized = self._tools.serialize_result(result)
-                yield ToolResultEvent(name=call.function.name, result=serialized)
+                yield ToolResultEvent(
+                    tool_call_id=call.id,
+                    name=call.function.name,
+                    result=serialized,
+                )
                 for (
                     playlist_draft
                 ) in self._workspace_store.drain_playlist_draft_updates():

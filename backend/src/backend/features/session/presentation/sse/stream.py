@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator
 
 from pydantic import TypeAdapter
-from starlette.responses import StreamingResponse
+from fastapi.responses import StreamingResponse
 
 from backend.features.session.application import SessionEvent
 from backend.features.session.domain import (
@@ -11,8 +11,11 @@ from backend.features.session.domain import (
     FollowUpQuestionNotFoundError,
     FollowUpQuestionOutOfOrderError,
     NoPendingFollowUpGroupError,
+    NoPendingToolCallGroupError,
     PendingFollowUpQuestionsError,
     PendingToolCallsError,
+    ToolCallAlreadyResolvedError,
+    ToolCallNotFoundError,
 )
 from backend.features.session.presentation.sse.events import (
     DoneEvent,
@@ -28,8 +31,11 @@ _COMMAND_ERRORS = (
     FollowUpQuestionNotFoundError,
     FollowUpQuestionOutOfOrderError,
     NoPendingFollowUpGroupError,
+    NoPendingToolCallGroupError,
     PendingFollowUpQuestionsError,
     PendingToolCallsError,
+    ToolCallAlreadyResolvedError,
+    ToolCallNotFoundError,
 )
 
 _SERVER_EVENT_ADAPTER: TypeAdapter[ServerEvent] = TypeAdapter(ServerEvent)

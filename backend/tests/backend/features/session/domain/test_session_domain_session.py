@@ -156,6 +156,18 @@ class TestSessionDomainSession:
         assert len(session.entries) == 4
         assert isinstance(session.entries[-1], ToolCallGroup)
 
+    def test_add_tool_call_starts_new_group_after_completed_group(
+        self, session: Session
+    ) -> None:
+        first_group = session.add_tool_call(make_pending_call("tc-1"))
+        session.resolve_tool_call("tc-1", "ok")
+
+        second_group = session.add_tool_call(make_pending_call("tc-2"))
+
+        assert first_group is not second_group
+        assert len(session.entries) == 2
+        assert isinstance(session.entries[-1], ToolCallGroup)
+
     def test_add_assistant_message_creates_pure_text_entry(
         self, session: Session
     ) -> None:

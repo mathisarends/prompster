@@ -9,8 +9,13 @@ from backend.features.session.application.events import (
     SessionAssistantMessageChunk,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
+    SessionToolCallResolved,
 )
-from backend.features.session.application.ports.session_runner import SessionRunner
+from backend.features.session.application.ports.session_runner import (
+    SessionRunner,
+    SessionRunnerAssistantMessage,
+    SessionRunnerEvent,
+)
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
     SessionSummaryQuery,
@@ -29,9 +34,11 @@ from backend.features.session.domain import (
     FollowUpOption,
     FollowUpQuestion,
     FollowUpQuestionState,
+    PendingCall,
     Session,
     SessionAccessDeniedError,
     SessionRepository,
+    ToolFunction,
     UserMessage,
 )
 
@@ -122,9 +129,8 @@ class _SessionRunnerStub(SessionRunner):
     def __init__(self, chunks: list[str] | None = None) -> None:
         self._chunks = chunks or ["Hello", " world"]
 
-    async def run(self, *, session: Session) -> AsyncIterator[str]:
-        for chunk in self._chunks:
-            yield chunk
+    async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
+        yield SessionRunnerAssistantMessage(content="".join(self._chunks))
 
 
 def _make_management_service(
@@ -163,6 +169,18 @@ def _make_follow_up_question(question: str = "Welches Genre?") -> FollowUpQuesti
             FollowUpOption(id="house", label="House"),
             FollowUpOption(id="techno", label="Techno"),
         ],
+    )
+
+
+def _add_pending_follow_up_tool_call(session: Session) -> None:
+    session.add_tool_call(
+        PendingCall(
+            id="call-follow-up",
+            function=ToolFunction(
+                name="ask_follow_up",
+                arguments={"questions": []},
+            ),
+        )
     )
 
 
@@ -324,6 +342,7 @@ class TestSessionServiceSendMessage:
         first_question = _make_follow_up_question("Welches Genre?")
         second_question = _make_follow_up_question("Welche Stimmung?")
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        _add_pending_follow_up_tool_call(session)
         session.add_follow_up_questions([first_question, second_question])
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub(chunks=["Hi"])
@@ -341,9 +360,16 @@ class TestSessionServiceSendMessage:
 
         assert first_question.state == FollowUpQuestionState.SKIPPED
         assert second_question.state == FollowUpQuestionState.SKIPPED
-        assert isinstance(events[0], SessionAssistantMessageStarted)
-        assert isinstance(events[1], SessionAssistantMessageChunk)
-        assert events[1].chunk == "Hi"
+        assert any(isinstance(event, SessionToolCallResolved) for event in events)
+        assistant_started_index = next(
+            index
+            for index, event in enumerate(events)
+            if isinstance(event, SessionAssistantMessageStarted)
+        )
+        assert isinstance(
+            events[assistant_started_index + 1], SessionAssistantMessageChunk
+        )
+        assert events[assistant_started_index + 1].chunk == "Hi"
         assert isinstance(events[-1], SessionAssistantMessageCompleted)
 
 
@@ -352,6 +378,7 @@ class TestSessionServiceFollowUps:
         owner_id = uuid4()
         question = _make_follow_up_question()
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        _add_pending_follow_up_tool_call(session)
         session.add_follow_up_questions([question])
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub(chunks=["chunk1", "chunk2"])
@@ -374,18 +401,18 @@ class TestSessionServiceFollowUps:
         )
 
         assert question.state == FollowUpQuestionState.ANSWERED
-        assert isinstance(events[0], SessionAssistantMessageStarted)
-        assert isinstance(events[1], SessionAssistantMessageChunk)
-        assert events[1].chunk == "chunk1"
-        assert isinstance(events[2], SessionAssistantMessageChunk)
-        assert events[2].chunk == "chunk2"
-        assert isinstance(events[3], SessionAssistantMessageCompleted)
-        assert len(repository.saved_sessions) == 2
+        assert isinstance(events[0], SessionToolCallResolved)
+        assert isinstance(events[2], SessionAssistantMessageStarted)
+        assert isinstance(events[3], SessionAssistantMessageChunk)
+        assert events[3].chunk == "chunk1chunk2"
+        assert isinstance(events[4], SessionAssistantMessageCompleted)
+        assert len(repository.saved_sessions) == 3
 
     def test_answer_follow_ups_with_text_and_streams_llm(self) -> None:
         owner_id = uuid4()
         question = _make_follow_up_question()
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        _add_pending_follow_up_tool_call(session)
         session.add_follow_up_questions([question])
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_conversation_service(repository=repository)
@@ -407,7 +434,7 @@ class TestSessionServiceFollowUps:
         )
 
         assert question.state == FollowUpQuestionState.ANSWERED
-        assert isinstance(events[0], SessionAssistantMessageStarted)
+        assert isinstance(events[0], SessionToolCallResolved)
         assert isinstance(events[-1], SessionAssistantMessageCompleted)
 
     def test_skip_remaining_follow_ups_skips_pending_questions_and_streams_llm(
@@ -418,6 +445,7 @@ class TestSessionServiceFollowUps:
         second_question = _make_follow_up_question("Welche Stimmung?")
         third_question = _make_follow_up_question("Welches Tempo?")
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        _add_pending_follow_up_tool_call(session)
         session.add_follow_up_questions(
             [first_question, second_question, third_question]
         )
@@ -437,5 +465,5 @@ class TestSessionServiceFollowUps:
         assert first_question.state == FollowUpQuestionState.ANSWERED
         assert second_question.state == FollowUpQuestionState.SKIPPED
         assert third_question.state == FollowUpQuestionState.SKIPPED
-        assert isinstance(events[0], SessionAssistantMessageStarted)
+        assert isinstance(events[0], SessionToolCallResolved)
         assert isinstance(events[-1], SessionAssistantMessageCompleted)

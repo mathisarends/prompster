@@ -148,7 +148,7 @@ class Session(Aggregate):
 
     def add_tool_call(self, call: PendingCall) -> ToolCallGroup:
         last = self._entries[-1] if self._entries else None
-        if isinstance(last, ToolCallGroup):
+        if isinstance(last, ToolCallGroup) and not last.is_complete:
             last.add(call)
             return last
         group = ToolCallGroup(calls=[call])

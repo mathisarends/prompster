@@ -8,6 +8,8 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
+    "agent",
+    "llm",
     "dishka>=1.10.1",
     "fastapi>=0.136.1",
     "httpx>=0.28.1",
@@ -24,7 +26,6 @@ dependencies = [
     "resend>=2.30.1",
     "typst>=0.14.9",
     "qrcode[pil]>=8.2",
-    "llm",
 ]
 
 [project.scripts]
@@ -40,4 +41,5 @@ dev = [
 ]
 
 [tool.uv.sources]
+agent = { workspace = true }
 llm = { workspace = true }

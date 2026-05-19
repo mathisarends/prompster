@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { groupSessionHistoryEntries } from "@/components/session-history-utils";
+import { toSessionHistoryEntries } from "@/components/session-history-utils";
 import { cn } from "@/lib/utils";
 import { PrompsterLogo } from "./prompster-logo";
 
@@ -52,8 +52,8 @@ export const NavigationSidebar = ({
     offset: 0,
   });
 
-  const sessionGroups = useMemo(
-    () => groupSessionHistoryEntries(sessionsData?.items ?? []),
+  const sessions = useMemo(
+    () => toSessionHistoryEntries(sessionsData?.items ?? []),
     [sessionsData?.items],
   );
 
@@ -187,44 +187,35 @@ export const NavigationSidebar = ({
                 <p className="px-2 py-3 text-xs text-muted-foreground">
                   Lade Verlauf...
                 </p>
-              ) : sessionGroups.length === 0 ? (
+              ) : sessions.length === 0 ? (
                 <p className="px-2 py-3 text-xs text-muted-foreground">
                   Noch keine Sessions vorhanden.
                 </p>
               ) : (
-                <div className="space-y-3">
-                  {sessionGroups.map((group) => (
-                    <div key={group.group} className="space-y-0.5">
-                      <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
-                        {group.group}
-                      </p>
-                      <ul className="space-y-0.5">
-                        {group.items.map((session) => {
-                          const isActive = session.id === activeChatId;
-                          return (
-                            <li key={session.id}>
-                              <button
-                                type="button"
-                                onClick={() => selectChat(session)}
-                                className={cn(
-                                  "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                                  isActive
-                                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                                )}
-                              >
-                                <MessageCircle className="size-4 shrink-0" />
-                                <span className="min-w-0 flex-1 truncate">
-                                  {session.title}
-                                </span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
+                <ul className="space-y-0.5">
+                  {sessions.map((session) => {
+                    const isActive = session.id === activeChatId;
+                    return (
+                      <li key={session.id}>
+                        <button
+                          type="button"
+                          onClick={() => selectChat(session)}
+                          className={cn(
+                            "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+                            isActive
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                              : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                          )}
+                        >
+                          <MessageCircle className="size-4 shrink-0" />
+                          <span className="min-w-0 flex-1 truncate">
+                            {session.title}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </div>
           </ScrollArea>

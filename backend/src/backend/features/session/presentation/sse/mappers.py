@@ -3,13 +3,20 @@ from backend.features.session.application import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionEvent,
+    SessionFollowUpGroupAdded,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
+    SessionToolCallFailed,
+    SessionToolCallGroupAdded,
+    SessionToolCallGroupCompleted,
+    SessionToolCallResolved,
 )
 from backend.features.session.domain import Playlist
 from backend.features.session.presentation.mapper import (
+    to_follow_up_group_response,
     to_playlist_track_response,
+    to_tool_call_group_response,
 )
 from backend.features.session.presentation.schemas import (
     AssistantMessageEntryResponse,
@@ -18,11 +25,16 @@ from backend.features.session.presentation.sse.events import (
     AssistantMessageChunkEvent,
     AssistantMessageCompletedEvent,
     AssistantMessageStartedEvent,
+    FollowUpGroupAddedEvent,
     PlaylistPayload,
     PlaylistSetEvent,
     PlaylistTrackAddedEvent,
     PlaylistTrackRemovedEvent,
     ServerEvent,
+    ToolCallFailedEvent,
+    ToolCallGroupAddedEvent,
+    ToolCallGroupCompletedEvent,
+    ToolCallResolvedEvent,
 )
 
 
@@ -47,6 +59,29 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
                 created_at=event.message.created_at,
             ),
         )
+
+    if isinstance(event, SessionToolCallGroupAdded):
+        return ToolCallGroupAddedEvent(group=to_tool_call_group_response(event.group))
+
+    if isinstance(event, SessionToolCallResolved):
+        return ToolCallResolvedEvent(
+            group_id=event.group_id,
+            tool_call_id=event.tool_call_id,
+            result=event.result,
+        )
+
+    if isinstance(event, SessionToolCallFailed):
+        return ToolCallFailedEvent(
+            group_id=event.group_id,
+            tool_call_id=event.tool_call_id,
+            error=event.error,
+        )
+
+    if isinstance(event, SessionToolCallGroupCompleted):
+        return ToolCallGroupCompletedEvent(group_id=event.group_id)
+
+    if isinstance(event, SessionFollowUpGroupAdded):
+        return FollowUpGroupAddedEvent(group=to_follow_up_group_response(event.group))
 
     if isinstance(event, SessionPlaylistSet):
         return PlaylistSetEvent(playlist=_to_playlist_payload(event.playlist))

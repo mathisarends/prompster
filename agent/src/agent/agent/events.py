@@ -30,12 +30,14 @@ class AssistantMessageEvent(AgentEvent):
 
 @dataclass(kw_only=True)
 class ToolCallEvent(AgentEvent):
+    tool_call_id: str
     name: str
     args: dict[str, Any]
 
 
 @dataclass(kw_only=True)
 class ToolResultEvent(AgentEvent):
+    tool_call_id: str
     name: str
     result: str
 

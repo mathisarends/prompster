@@ -2,6 +2,7 @@ from dishka import Provider, Scope, provide
 from llm import LLMCredentials, create_gpt_5_4
 from llmify import ChatModel
 from sqlalchemy.ext.asyncio import AsyncSession
+from spotifyify import Spotifyify
 
 from backend.features.session.infrastructure.repository import SqlSessionRepository
 
@@ -19,7 +20,7 @@ from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
 from backend.features.session.domain import SessionRepository
-from backend.features.session.infrastructure.session_runner import LLMSessionRunner
+from backend.features.session.infrastructure.session_runner import AgentSessionRunner
 from backend.features.session.infrastructure.pdf_generator import (
     TypstPlaylistDeckGenerator,
 )
@@ -48,8 +49,12 @@ class SessionProvider(Provider):
         return LLMSessionTitleGenerator(llm=llm)
 
     @provide(scope=Scope.APP)
-    def provide_session_runner(self, llm: ChatModel) -> SessionRunner:
-        return LLMSessionRunner(llm=llm, system_prompt="You are a helpful assistant.")
+    def provide_session_runner(
+        self,
+        llm: ChatModel,
+        spotify: Spotifyify,
+    ) -> SessionRunner:
+        return AgentSessionRunner(llm=llm, spotify=spotify)
 
     @provide(scope=Scope.REQUEST)
     def provide_session_repository(self, session: AsyncSession) -> SessionRepository:

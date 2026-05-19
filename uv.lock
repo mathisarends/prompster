@@ -250,6 +250,7 @@ name = "backend"
 version = "0.1.0"
 source = { editable = "backend" }
 dependencies = [
+    { name = "agent" },
     { name = "aioboto3" },
     { name = "alembic" },
     { name = "asyncpg" },
@@ -276,6 +277,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "agent", editable = "agent" },
     { name = "aioboto3", specifier = ">=13.3.0" },
     { name = "alembic", specifier = ">=1.18.4" },
     { name = "asyncpg", specifier = ">=0.30.0" },

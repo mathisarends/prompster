@@ -10,8 +10,10 @@ WORKDIR /app
 RUN pip install uv
 
 COPY pyproject.toml uv.lock* ./
+COPY agent/pyproject.toml agent/README.md* agent/
 COPY backend/pyproject.toml backend/README.md* backend/
 COPY llm/pyproject.toml llm/README.md* llm/
+COPY agent/src agent/src
 COPY backend/src backend/src
 COPY llm/src llm/src
 
@@ -28,6 +30,7 @@ WORKDIR /app
 
 COPY --from=builder /app/.venv /app/.venv
 
+COPY agent/src ./agent/src
 COPY backend/src ./backend/src
 COPY llm/src ./llm/src
 COPY backend/alembic.ini ./backend/alembic.ini
