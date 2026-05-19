@@ -108,7 +108,7 @@ class Tools:
 
     def _register_default_tools(self) -> None:
         @self.action(
-            description="Search Spotify for tracks matching a query. Returns title, artist, year and URI for each result.",
+            description="Search Spotify for tracks matching a query.",
             status_label=lambda params: f"Suche nach '{params.query}'",
             params=SearchParams,
         )
@@ -116,7 +116,7 @@ class Tools:
             return await spotify.search_tracks(params)
 
         @self.action(
-            description="Search Spotify for albums matching a query. Returns album name, artist, year, track count and URI.",
+            description="Search Spotify for albums matching a query.",
             status_label=lambda params: f"Alben suchen: '{params.query}'",
             params=SearchParams,
         )
@@ -124,7 +124,7 @@ class Tools:
             return await spotify.search_albums(params)
 
         @self.action(
-            description="Search Spotify for public playlists matching a query. Returns playlist name, track count and ID.",
+            description="Search Spotify for public playlists matching a query.",
             status_label=lambda params: f"Playlists suchen: '{params.query}'",
             params=SearchParams,
         )
@@ -135,7 +135,7 @@ class Tools:
             return await spotify.search_playlists(params)
 
         @self.action(
-            description="Get albums by an artist (pass artist URI or ID). Returns album name, year, track count.",
+            description="Get albums by an artist.",
             status_label="Künstler-Alben laden",
             params=ArtistAlbumsParams,
         )
@@ -146,7 +146,7 @@ class Tools:
             return await spotify.get_artist_albums(params)
 
         @self.action(
-            description="Get an artist's top tracks. Pass artist URI or ID. Returns title, artist, year and URI.",
+            description="Get an artist's top tracks.",
             status_label="Top-Tracks laden",
             params=ArtistTopTracksParams,
         )
@@ -157,7 +157,7 @@ class Tools:
             return await spotify.get_artist_top_tracks(params)
 
         @self.action(
-            description="Get all tracks of an album by album URI or ID. Returns title, artist, year and URI.",
+            description="Get all tracks of an album.",
             status_label="Album-Tracks laden",
             params=AlbumTracksParams,
         )
@@ -168,7 +168,7 @@ class Tools:
             return await spotify.get_album_tracks(params)
 
         @self.action(
-            description="Create a Spotify playlist for the current user. Returns the playlist ID and URL.",
+            description="Create a Spotify playlist for the current user.",
             status_label=lambda params: f"Playlist erstellen: '{params.name}'",
             params=CreatePlaylistParams,
         )
@@ -179,7 +179,7 @@ class Tools:
             return await spotify.create_playlist(params)
 
         @self.action(
-            description="Add tracks to an existing Spotify playlist by playlist ID and a list of Spotify track URIs.",
+            description="Add tracks to a Spotify playlist.",
             status_label=lambda params: f"{len(params.track_uris)} Tracks hinzufügen",
             params=PlaylistTracksMutationParams,
         )
@@ -190,7 +190,7 @@ class Tools:
             return await spotify.add_tracks_to_playlist(params)
 
         @self.action(
-            description="Get all tracks of an existing Spotify playlist. Returns title, artist, year and URI per track.",
+            description="Get all tracks of a Spotify playlist.",
             status_label="Playlist-Tracks laden",
             params=PlaylistIdParams,
         )
@@ -201,7 +201,7 @@ class Tools:
             return await spotify.get_playlist_tracks(params)
 
         @self.action(
-            description="Remove specific tracks from a Spotify playlist by playlist ID and a list of track URIs.",
+            description="Remove specific tracks from a Spotify playlist.",
             status_label=lambda params: f"{len(params.track_uris)} Tracks entfernen",
             params=PlaylistTracksMutationParams,
         )
@@ -212,7 +212,7 @@ class Tools:
             return await spotify.remove_tracks_from_playlist(params)
 
         @self.action(
-            description="Remove all tracks from a Spotify playlist (clear it completely).",
+            description="Remove all tracks from a Spotify playlist.",
             status_label="Playlist leeren",
             params=PlaylistIdParams,
         )

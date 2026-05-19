@@ -2,41 +2,38 @@ from pydantic import BaseModel, Field
 
 
 class SearchParams(BaseModel):
-    query: str = Field(description="Search query.")
-    limit: int = Field(default=10, description="Maximum number of results.")
+    query: str
+    limit: int = 10
 
 
 class ArtistAlbumsParams(BaseModel):
-    artist_id: str = Field(description="Spotify artist URI or ID.")
-    include_groups: str = Field(
-        default="album,single",
-        description="Album groups to include, comma-separated.",
-    )
-    limit: int = Field(default=20, description="Maximum number of albums.")
+    artist_id: str = Field(description="URI or ID.")
+    include_groups: str = Field(default="album,single", description="Comma-separated.")
+    limit: int = 20
 
 
 class ArtistTopTracksParams(BaseModel):
-    artist_id: str = Field(description="Spotify artist URI or ID.")
-    country: str = Field(default="DE", description="ISO country code.")
+    artist_id: str = Field(description="URI or ID.")
+    country: str = Field(default="DE", description="ISO 3166-1 alpha-2.")
 
 
 class AlbumTracksParams(BaseModel):
-    album_id: str = Field(description="Spotify album URI or ID.")
+    album_id: str = Field(description="URI or ID.")
 
 
 class CreatePlaylistParams(BaseModel):
-    name: str = Field(description="Name of the playlist to create.")
-    description: str = Field(default="", description="Playlist description.")
+    name: str
+    description: str = ""
 
 
 class PlaylistTracksMutationParams(BaseModel):
-    playlist_id: str = Field(description="Spotify playlist ID.")
-    track_uris: list[str] = Field(description="Spotify track URIs.")
+    playlist_id: str
+    track_uris: list[str]
 
 
 class PlaylistIdParams(BaseModel):
-    playlist_id: str = Field(description="Spotify playlist ID.")
+    playlist_id: str
 
 
 class GenerateCardsParams(BaseModel):
-    playlist_id: str = Field(description="Spotify playlist ID.")
+    playlist_id: str
