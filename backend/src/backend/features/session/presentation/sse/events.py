@@ -19,9 +19,6 @@ class _SessionEventSchema(Schema):
 
 class SessionEventType(StrEnum):
     SESSION_SNAPSHOT = "session.snapshot"
-    SESSION_TITLE_GENERATED = "session.title_generated"
-
-    USER_MESSAGE_APPENDED = "message.user_appended"
 
     ASSISTANT_MESSAGE_STARTED = "message.assistant_started"
     ASSISTANT_MESSAGE_CHUNK = "message.assistant_chunk"
@@ -34,9 +31,6 @@ class SessionEventType(StrEnum):
     TOOL_CALL_GROUP_COMPLETED = "tool_call.group_completed"
 
     FOLLOW_UP_GROUP_ADDED = "follow_up.group_added"
-    FOLLOW_UP_ANSWERED = "follow_up.answered"
-    FOLLOW_UP_SKIPPED = "follow_up.skipped"
-    FOLLOW_UP_GROUP_COMPLETED = "follow_up.group_completed"
 
     PLAYLIST_SET = "playlist.set"
     PLAYLIST_TRACK_ADDED = "playlist.track_added"
@@ -119,21 +113,6 @@ class SessionSnapshotEvent(_SessionEventSchema):
     session: SessionSnapshotPayload
 
 
-class SessionTitleGeneratedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.SESSION_TITLE_GENERATED] = (
-        SessionEventType.SESSION_TITLE_GENERATED
-    )
-    session_id: UUID
-    title: str
-
-
-class UserMessageAppendedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.USER_MESSAGE_APPENDED] = (
-        SessionEventType.USER_MESSAGE_APPENDED
-    )
-    message: MessagePayload
-
-
 class AssistantMessageStartedEvent(_SessionEventSchema):
     type: Literal[SessionEventType.ASSISTANT_MESSAGE_STARTED] = (
         SessionEventType.ASSISTANT_MESSAGE_STARTED
@@ -203,31 +182,6 @@ class FollowUpGroupAddedEvent(_SessionEventSchema):
     group: FollowUpQuestionGroupPayload
 
 
-class FollowUpAnsweredEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.FOLLOW_UP_ANSWERED] = (
-        SessionEventType.FOLLOW_UP_ANSWERED
-    )
-    group_id: UUID
-    question_id: UUID
-    answer_text: str
-    answered_option_id: str | None = None
-
-
-class FollowUpSkippedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.FOLLOW_UP_SKIPPED] = (
-        SessionEventType.FOLLOW_UP_SKIPPED
-    )
-    group_id: UUID
-    question_id: UUID
-
-
-class FollowUpGroupCompletedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.FOLLOW_UP_GROUP_COMPLETED] = (
-        SessionEventType.FOLLOW_UP_GROUP_COMPLETED
-    )
-    group_id: UUID
-
-
 class PlaylistSetEvent(_SessionEventSchema):
     type: Literal[SessionEventType.PLAYLIST_SET] = SessionEventType.PLAYLIST_SET
     playlist: PlaylistPayload
@@ -263,8 +217,6 @@ class ErrorEvent(_SessionEventSchema):
 ServerEvent = Annotated[
     Union[
         SessionSnapshotEvent,
-        SessionTitleGeneratedEvent,
-        UserMessageAppendedEvent,
         AssistantMessageStartedEvent,
         AssistantMessageChunkEvent,
         AssistantMessageCompletedEvent,
@@ -274,9 +226,6 @@ ServerEvent = Annotated[
         ToolCallFailedEvent,
         ToolCallGroupCompletedEvent,
         FollowUpGroupAddedEvent,
-        FollowUpAnsweredEvent,
-        FollowUpSkippedEvent,
-        FollowUpGroupCompletedEvent,
         PlaylistSetEvent,
         PlaylistTrackAddedEvent,
         PlaylistTrackRemovedEvent,

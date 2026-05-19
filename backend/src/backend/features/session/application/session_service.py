@@ -3,12 +3,12 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from backend.features.session.application.events import (
+    SessionAssistantMessageChunk,
+    SessionAssistantMessageCompleted,
+    SessionAssistantMessageStarted,
     SessionEvent,
-    SessionFollowUpAnswered,
-    SessionFollowUpGroupCompleted,
-    SessionFollowUpSkipped,
-    SessionUserMessageAppended,
 )
+from backend.features.session.application.ports.session_runner import SessionRunner
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
     SessionSummaryQuery,
@@ -28,16 +28,25 @@ class CreateSessionResult:
     session: Session
 
 
+@dataclass(frozen=True)
+class FollowUpAnswer:
+    question_id: UUID
+    option_id: str | None
+    text: str | None
+
+
 class SessionService:
     def __init__(
         self,
         session_repository: SessionRepository,
         session_summary_query: SessionSummaryQuery,
         title_generator: SessionTitleGenerator,
+        runner: SessionRunner,
     ) -> None:
         self._session_repository = session_repository
         self._session_summary_query = session_summary_query
         self._title_generator = title_generator
+        self._runner = runner
 
     async def get_by_id(self, *, session_id: UUID, user_id: UUID) -> Session:
         return await self._get_authorized(session_id=session_id, user_id=user_id)
@@ -79,50 +88,33 @@ class SessionService:
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         self._prepare_follow_up_context_for_message(session=session)
-        message = session.add_user_message(content=content)
+        session.add_user_message(content=content)
         await self._session_repository.save(session=session)
-        yield SessionUserMessageAppended(message=message)
+        async for event in self._run_llm(session=session):
+            yield event
 
-    async def answer_follow_up(
+    async def answer_follow_ups(
         self,
         *,
         session_id: UUID,
         user_id: UUID,
-        question_id: UUID,
-        option_id: str | None,
-        text: str | None,
+        answers: list[FollowUpAnswer],
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
-        group = session.require_pending_follow_up_group()
-        if option_id is not None:
-            question = session.answer_follow_up_with_option(
-                question_id=question_id,
-                option_id=option_id,
-            )
-        else:
-            question = session.answer_follow_up_with_text(
-                question_id=question_id,
-                text=text or "",
-            )
+        for answer in answers:
+            if answer.option_id is not None:
+                session.answer_follow_up_with_option(
+                    question_id=answer.question_id,
+                    option_id=answer.option_id,
+                )
+            else:
+                session.answer_follow_up_with_text(
+                    question_id=answer.question_id,
+                    text=answer.text or "",
+                )
         await self._session_repository.save(session=session)
-        yield SessionFollowUpAnswered(group_id=group.id, question=question)
-        if group.is_complete:
-            yield SessionFollowUpGroupCompleted(group_id=group.id)
-
-    async def skip_follow_up(
-        self,
-        *,
-        session_id: UUID,
-        user_id: UUID,
-        question_id: UUID,
-    ) -> AsyncIterator[SessionEvent]:
-        session = await self._get_authorized(session_id=session_id, user_id=user_id)
-        group = session.require_pending_follow_up_group()
-        question = session.skip_follow_up(question_id=question_id)
-        await self._session_repository.save(session=session)
-        yield SessionFollowUpSkipped(group_id=group.id, question_id=question.id)
-        if group.is_complete:
-            yield SessionFollowUpGroupCompleted(group_id=group.id)
+        async for event in self._run_llm(session=session):
+            yield event
 
     async def skip_remaining_follow_ups(
         self,
@@ -131,10 +123,10 @@ class SessionService:
         user_id: UUID,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
-        skipped_group_id = self._prepare_follow_up_context_for_message(session=session)
+        self._prepare_follow_up_context_for_message(session=session)
         await self._session_repository.save(session=session)
-        if skipped_group_id is not None:
-            yield SessionFollowUpGroupCompleted(group_id=skipped_group_id)
+        async for event in self._run_llm(session=session):
+            yield event
 
     async def add_playlist_track(
         self,
@@ -213,3 +205,12 @@ class SessionService:
 
         session.skip_remaining_follow_ups(question_id=current_question.id)
         return pending_group.id
+
+    async def _run_llm(self, *, session: Session) -> AsyncIterator[SessionEvent]:
+        message = session.add_assistant_message()
+        yield SessionAssistantMessageStarted(message=message)
+        async for chunk in self._runner.run(session=session):
+            session.append_to_current_assistant_message(chunk)
+            yield SessionAssistantMessageChunk(message_id=message.id, chunk=chunk)
+        await self._session_repository.save(session=session)
+        yield SessionAssistantMessageCompleted(message=message)

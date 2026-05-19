@@ -6,6 +6,7 @@ from starlette.responses import StreamingResponse
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.session.application import (
+    FollowUpAnswer,
     SearchSpotifyTracksHandler,
     SessionService,
 )
@@ -187,11 +188,17 @@ async def handle_follow_up(
 ) -> StreamingResponse:
     if body.action == FollowUpAction.ANSWER:
         return stream_session_events(
-            _answer_follow_ups(
-                service=service,
+            service.answer_follow_ups(
                 session_id=session_id,
                 user_id=authenticated_user_id,
-                body=body,
+                answers=[
+                    FollowUpAnswer(
+                        question_id=a.question_id,
+                        option_id=a.option_id,
+                        text=a.text,
+                    )
+                    for a in body.answers
+                ],
             )
         )
 
@@ -200,24 +207,6 @@ async def handle_follow_up(
             session_id=session_id, user_id=authenticated_user_id
         )
     )
-
-
-async def _answer_follow_ups(
-    *,
-    service: SessionService,
-    session_id: UUID,
-    user_id: UUID,
-    body: FollowUpRequest,
-):
-    for answer in body.answers:
-        async for event in service.answer_follow_up(
-            session_id=session_id,
-            user_id=user_id,
-            question_id=answer.question_id,
-            option_id=answer.option_id,
-            text=answer.text,
-        ):
-            yield event
 
 
 @router.post(

@@ -1,28 +1,25 @@
 from .events import (
+    SessionAssistantMessageChunk,
+    SessionAssistantMessageCompleted,
+    SessionAssistantMessageStarted,
     SessionEvent,
-    SessionFollowUpAnswered,
-    SessionFollowUpGroupCompleted,
-    SessionFollowUpSkipped,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
-    SessionTitleGenerated,
-    SessionUserMessageAppended,
 )
 from .queries import SearchSpotifyTracksHandler
-from .session_service import CreateSessionResult, SessionService
+from .session_service import CreateSessionResult, FollowUpAnswer, SessionService
 
 __all__ = [
     "CreateSessionResult",
+    "FollowUpAnswer",
     "SearchSpotifyTracksHandler",
+    "SessionAssistantMessageChunk",
+    "SessionAssistantMessageCompleted",
+    "SessionAssistantMessageStarted",
     "SessionEvent",
-    "SessionFollowUpAnswered",
-    "SessionFollowUpGroupCompleted",
-    "SessionFollowUpSkipped",
     "SessionPlaylistSet",
     "SessionPlaylistTrackAdded",
     "SessionPlaylistTrackRemoved",
     "SessionService",
-    "SessionTitleGenerated",
-    "SessionUserMessageAppended",
 ]

@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from backend.features.session.domain import (
-    FollowUpQuestion,
     Playlist,
     PlaylistTrack,
     SessionMessage,
@@ -10,31 +9,19 @@ from backend.features.session.domain import (
 
 
 @dataclass(frozen=True)
-class SessionTitleGenerated:
-    session_id: UUID
-    title: str
-
-
-@dataclass(frozen=True)
-class SessionUserMessageAppended:
+class SessionAssistantMessageStarted:
     message: SessionMessage
 
 
 @dataclass(frozen=True)
-class SessionFollowUpAnswered:
-    group_id: UUID
-    question: FollowUpQuestion
+class SessionAssistantMessageChunk:
+    message_id: UUID
+    chunk: str
 
 
 @dataclass(frozen=True)
-class SessionFollowUpSkipped:
-    group_id: UUID
-    question_id: UUID
-
-
-@dataclass(frozen=True)
-class SessionFollowUpGroupCompleted:
-    group_id: UUID
+class SessionAssistantMessageCompleted:
+    message: SessionMessage
 
 
 @dataclass(frozen=True)
@@ -55,11 +42,9 @@ class SessionPlaylistTrackRemoved:
 
 
 type SessionEvent = (
-    SessionTitleGenerated
-    | SessionUserMessageAppended
-    | SessionFollowUpAnswered
-    | SessionFollowUpSkipped
-    | SessionFollowUpGroupCompleted
+    SessionAssistantMessageStarted
+    | SessionAssistantMessageChunk
+    | SessionAssistantMessageCompleted
     | SessionPlaylistSet
     | SessionPlaylistTrackAdded
     | SessionPlaylistTrackRemoved

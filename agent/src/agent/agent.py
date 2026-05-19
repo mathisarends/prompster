@@ -32,9 +32,19 @@ _SYSTEM_PROMPT = (Path(__file__).parent / "system_prompt.md").read_text(
     encoding="utf-8"
 )
 
+# TODO: Playlists muss hier ein gedankliches Konstrukt sein was wir hier injeten (Datenstruktur nirgendwo bei spotify persistiert)
+
+# Nicht ohne User-Scopes:
+
+# create_playlist — braucht user-read-private (für /me) + PLAYLIST_MODIFY_*
+# add_tracks_to_playlist — PLAYLIST_MODIFY_*
+# remove_tracks_from_playlist — PLAYLIST_MODIFY_*
+# clear_playlist — PLAYLIST_MODIFY_*
+# get_playlist_tracks auf privaten Playlists — PLAYLIST_READ_PRIVATE
+
 
 class HitsterAgent:
-    def __init__(self, model: str | None = None) -> None:
+    def __init__(self) -> None:
         self._instructions = _SYSTEM_PROMPT
         self._tools = Tools()
         self._spotify_open = False

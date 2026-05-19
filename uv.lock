@@ -272,6 +272,7 @@ dependencies = [
     { name = "spotifyify" },
     { name = "sqlmodel" },
     { name = "types-aiobotocore-s3" },
+    { name = "typst" },
     { name = "uvicorn" },
 ]
 
@@ -296,6 +297,7 @@ requires-dist = [
     { name = "spotifyify", specifier = ">=0.2.0" },
     { name = "sqlmodel", specifier = ">=0.0.38" },
     { name = "types-aiobotocore-s3", specifier = ">=2.15.0" },
+    { name = "typst", specifier = ">=0.14.9" },
     { name = "uvicorn", specifier = ">=0.35.0" },
 ]
 

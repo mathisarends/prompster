@@ -1,13 +1,11 @@
 from backend.features.session.application import (
+    SessionAssistantMessageChunk,
+    SessionAssistantMessageCompleted,
+    SessionAssistantMessageStarted,
     SessionEvent,
-    SessionFollowUpAnswered,
-    SessionFollowUpGroupCompleted,
-    SessionFollowUpSkipped,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
-    SessionTitleGenerated,
-    SessionUserMessageAppended,
 )
 from backend.features.session.domain import (
     FollowUpQuestion,
@@ -19,12 +17,12 @@ from backend.features.session.domain import (
     ToolCallGroup,
 )
 from backend.features.session.presentation.sse.events import (
-    FollowUpAnsweredEvent,
-    FollowUpGroupCompletedEvent,
+    AssistantMessageChunkEvent,
+    AssistantMessageCompletedEvent,
+    AssistantMessageStartedEvent,
     FollowUpOptionPayload,
     FollowUpQuestionGroupPayload,
     FollowUpQuestionPayload,
-    FollowUpSkippedEvent,
     MessagePayload,
     PlaylistPayload,
     PlaylistSetEvent,
@@ -32,40 +30,29 @@ from backend.features.session.presentation.sse.events import (
     PlaylistTrackPayload,
     PlaylistTrackRemovedEvent,
     ServerEvent,
-    SessionTitleGeneratedEvent,
     ToolCallGroupPayload,
     ToolCallPayload,
     ToolFunctionPayload,
-    UserMessageAppendedEvent,
 )
 
 
 def to_server_event(event: SessionEvent) -> ServerEvent:
-    if isinstance(event, SessionTitleGenerated):
-        return SessionTitleGeneratedEvent(
-            session_id=event.session_id,
-            title=event.title,
+    if isinstance(event, SessionAssistantMessageStarted):
+        return AssistantMessageStartedEvent(
+            message_id=event.message.id,
+            created_at=event.message.created_at,
         )
 
-    if isinstance(event, SessionUserMessageAppended):
-        return UserMessageAppendedEvent(message=_to_message_payload(event.message))
-
-    if isinstance(event, SessionFollowUpAnswered):
-        return FollowUpAnsweredEvent(
-            group_id=event.group_id,
-            question_id=event.question.id,
-            answer_text=event.question.answer_text or "",
-            answered_option_id=event.question.answered_option_id,
+    if isinstance(event, SessionAssistantMessageChunk):
+        return AssistantMessageChunkEvent(
+            message_id=event.message_id,
+            chunk=event.chunk,
         )
 
-    if isinstance(event, SessionFollowUpSkipped):
-        return FollowUpSkippedEvent(
-            group_id=event.group_id,
-            question_id=event.question_id,
+    if isinstance(event, SessionAssistantMessageCompleted):
+        return AssistantMessageCompletedEvent(
+            message=_to_message_payload(event.message),
         )
-
-    if isinstance(event, SessionFollowUpGroupCompleted):
-        return FollowUpGroupCompletedEvent(group_id=event.group_id)
 
     if isinstance(event, SessionPlaylistSet):
         return PlaylistSetEvent(playlist=_to_playlist_payload(event.playlist))
