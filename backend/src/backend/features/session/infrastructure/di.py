@@ -10,20 +10,13 @@ from backend.env import LLMCredentials
 from backend.features.session.infrastructure.repository import SqlSessionRepository
 
 from backend.features.session.application import (
-    AddPlaylistTrackHandler,
-    AnswerFollowUpWithOptionHandler,
-    AnswerFollowUpWithTextHandler,
-    AppendUserMessageHandler,
     CreateSessionHandler,
     DeleteSessionHandler,
     GetSessionByIdHandler,
     ListSessionsHandler,
-    PersistSessionHandler,
-    RemovePlaylistTrackHandler,
     SearchSpotifyTracksHandler,
     SearchSessionsHandler,
     SendMessageHandler,
-    SkipFollowUpHandler,
     UpdateSessionHandler,
 )
 from backend.features.session.application.ports.session_summary_query import (
@@ -92,41 +85,6 @@ class SessionProvider(Provider):
         session_repository: SessionRepository,
     ) -> GetSessionByIdHandler:
         return GetSessionByIdHandler(session_repository=session_repository)
-
-    @provide(scope=Scope.REQUEST)
-    def provide_append_user_message_handler(self) -> AppendUserMessageHandler:
-        return AppendUserMessageHandler()
-
-    @provide(scope=Scope.REQUEST)
-    def provide_answer_follow_up_with_option_handler(
-        self,
-    ) -> AnswerFollowUpWithOptionHandler:
-        return AnswerFollowUpWithOptionHandler()
-
-    @provide(scope=Scope.REQUEST)
-    def provide_answer_follow_up_with_text_handler(
-        self,
-    ) -> AnswerFollowUpWithTextHandler:
-        return AnswerFollowUpWithTextHandler()
-
-    @provide(scope=Scope.REQUEST)
-    def provide_skip_follow_up_handler(self) -> SkipFollowUpHandler:
-        return SkipFollowUpHandler()
-
-    @provide(scope=Scope.REQUEST)
-    def provide_add_playlist_track_handler(self) -> AddPlaylistTrackHandler:
-        return AddPlaylistTrackHandler()
-
-    @provide(scope=Scope.REQUEST)
-    def provide_remove_playlist_track_handler(self) -> RemovePlaylistTrackHandler:
-        return RemovePlaylistTrackHandler()
-
-    @provide(scope=Scope.REQUEST)
-    def provide_persist_session_handler(
-        self,
-        session_repository: SessionRepository,
-    ) -> PersistSessionHandler:
-        return PersistSessionHandler(session_repository=session_repository)
 
     @provide(scope=Scope.REQUEST)
     def provide_list_sessions_handler(

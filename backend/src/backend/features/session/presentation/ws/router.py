@@ -4,12 +4,6 @@ from dishka import AsyncContainer
 from fastapi import APIRouter, WebSocket, status
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.session.application import GetSessionByIdHandler
-from backend.features.session.domain import (
-    Session,
-    SessionAccessDeniedError,
-    SessionNotFoundError,
-)
 from backend.features.session.presentation.ws.connection import (
     SessionWebSocketConnection,
 )
@@ -35,42 +29,10 @@ async def session_websocket(
     authenticated_user_id: AuthenticatedUserId,
 ) -> None:
     container: AsyncContainer = websocket.app.state.dishka_container
-
-    try:
-        session = await _load_session(
-            container,
-            session_id=session_id,
-            user_id=authenticated_user_id,
-        )
-    except SessionNotFoundError:
-        await _close_policy_violation(websocket, reason="Session not found")
-        return
-    except SessionAccessDeniedError:
-        await _close_policy_violation(websocket, reason="Session access denied")
-        return
-
     connection = SessionWebSocketConnection(
         websocket=websocket,
         container=container,
         session_id=session_id,
-        session=session,
+        user_id=authenticated_user_id,
     )
     await connection.run()
-
-
-async def _load_session(
-    container: AsyncContainer,
-    *,
-    session_id: UUID,
-    user_id: UUID,
-) -> Session:
-    async with container() as request_container:
-        handler = await request_container.get(GetSessionByIdHandler)
-        return await handler.handle(session_id=session_id, user_id=user_id)
-
-
-async def _close_policy_violation(websocket: WebSocket, *, reason: str) -> None:
-    await websocket.close(
-        code=status.WS_1008_POLICY_VIOLATION,
-        reason=reason,
-    )

@@ -7,13 +7,14 @@ from pydantic import TypeAdapter, ValidationError
 from starlette.websockets import WebSocketState
 
 from backend.features.session.application import (
-    AddPlaylistTrackHandler,
-    AnswerFollowUpWithOptionHandler,
-    AnswerFollowUpWithTextHandler,
-    AppendUserMessageHandler,
-    RemovePlaylistTrackHandler,
+    GetSessionByIdHandler,
     SessionEvent,
-    SkipFollowUpHandler,
+    SessionFollowUpAnswered,
+    SessionFollowUpSkipped,
+    SessionPlaylistSet,
+    SessionPlaylistTrackAdded,
+    SessionPlaylistTrackRemoved,
+    SessionUserMessageAppended,
 )
 from backend.features.session.domain import (
     EmptyFollowUpAnswerError,
@@ -26,6 +27,7 @@ from backend.features.session.domain import (
     PlaylistTrackNotFoundError,
     Session,
     SessionAccessDeniedError,
+    SessionNotFoundError,
 )
 from backend.features.session.presentation.ws.event_mapper import to_server_event
 from backend.features.session.presentation.ws.events import (
@@ -69,18 +71,34 @@ class SessionWebSocketConnection:
         websocket: WebSocket,
         container: AsyncContainer,
         session_id: UUID,
-        session: Session,
+        user_id: UUID,
     ) -> None:
         self._websocket = websocket
         self._container = container
         self._session_id = session_id
-        self._session = session
+        self._user_id = user_id
+        self._session: Session | None = None
         self._persistence = SessionPersistenceDaemon(
             container=container,
             session_id=session_id,
         )
 
     async def run(self) -> None:
+        try:
+            self._session = await self._load_session()
+        except SessionNotFoundError:
+            await self._websocket.close(
+                code=status.WS_1008_POLICY_VIOLATION,
+                reason="Session not found",
+            )
+            return
+        except SessionAccessDeniedError:
+            await self._websocket.close(
+                code=status.WS_1008_POLICY_VIOLATION,
+                reason="Session access denied",
+            )
+            return
+
         await self._websocket.accept()
         await self._send_snapshot()
         self._persistence.start()
@@ -98,7 +116,16 @@ class SessionWebSocketConnection:
         finally:
             await self._persistence.close()
 
+    async def _load_session(self) -> Session:
+        async with self._container() as request_container:
+            handler = await request_container.get(GetSessionByIdHandler)
+            return await handler.handle(
+                session_id=self._session_id,
+                user_id=self._user_id,
+            )
+
     async def _send_snapshot(self) -> None:
+        assert self._session is not None
         await _send(
             self._websocket,
             SessionSnapshotEvent(session=to_session_snapshot_payload(self._session)),
@@ -123,7 +150,7 @@ class SessionWebSocketConnection:
 
     async def _dispatch(self, event: ClientEvent) -> None:
         try:
-            session_events = await self._handle(event)
+            session_events = self._handle(event)
         except _COMMAND_ERRORS as exc:
             await self._send_command_error(event=event, error=exc)
             return
@@ -137,95 +164,73 @@ class SessionWebSocketConnection:
 
         await self._publish(session_events)
 
-    async def _handle(self, event: ClientEvent) -> tuple[SessionEvent, ...]:
+    def _handle(self, event: ClientEvent) -> tuple[SessionEvent, ...]:
+        assert self._session is not None
+        session = self._session
         match event:
-            case SendMessageCommand():
-                return await self._handle_send_message(event)
-            case AnswerFollowUpWithOptionCommand():
-                return await self._handle_answer_follow_up_option(event)
-            case AnswerFollowUpWithTextCommand():
-                return await self._handle_answer_follow_up_text(event)
-            case SkipFollowUpCommand():
-                return await self._handle_skip_follow_up(event)
-            case AddPlaylistTrackCommand():
-                return await self._handle_add_track(event)
-            case RemovePlaylistTrackCommand():
-                return await self._handle_remove_track(event)
+            case SendMessageCommand(content=content):
+                message = session.add_user_message(content=content)
+                return (SessionUserMessageAppended(message=message),)
+
+            case AnswerFollowUpWithOptionCommand(
+                question_id=question_id,
+                option_id=option_id,
+            ):
+                group = session.require_pending_follow_up_group()
+                question = session.answer_follow_up_with_option(
+                    question_id=question_id,
+                    option_id=option_id,
+                )
+                return (SessionFollowUpAnswered(group_id=group.id, question=question),)
+
+            case AnswerFollowUpWithTextCommand(question_id=question_id, text=text):
+                group = session.require_pending_follow_up_group()
+                question = session.answer_follow_up_with_text(
+                    question_id=question_id,
+                    text=text,
+                )
+                return (SessionFollowUpAnswered(group_id=group.id, question=question),)
+
+            case SkipFollowUpCommand(question_id=question_id):
+                group = session.require_pending_follow_up_group()
+                question = session.skip_follow_up(question_id=question_id)
+                return (
+                    SessionFollowUpSkipped(group_id=group.id, question_id=question.id),
+                )
+
+            case AddPlaylistTrackCommand() as cmd:
+                playlist_existed = session.playlist is not None
+                track = session.add_track(
+                    title=cmd.title,
+                    artist=cmd.artist,
+                    year=cmd.year,
+                    cover_url=cmd.cover_url,
+                )
+                playlist = session.playlist
+                if playlist is None:
+                    return ()
+                if not playlist_existed:
+                    return (SessionPlaylistSet(playlist=playlist),)
+                return (
+                    SessionPlaylistTrackAdded(playlist_id=playlist.id, track=track),
+                )
+
+            case RemovePlaylistTrackCommand(track_id=track_id):
+                playlist = session.playlist
+                session.remove_track(track_id=track_id)
+                if playlist is None:
+                    return ()
+                return (
+                    SessionPlaylistTrackRemoved(
+                        playlist_id=playlist.id,
+                        track_id=track_id,
+                    ),
+                )
 
         raise TypeError(f"Unsupported client event: {type(event).__name__}")
 
-    async def _handle_send_message(
-        self,
-        event: SendMessageCommand,
-    ) -> tuple[SessionEvent, ...]:
-        async with self._container() as request_container:
-            handler = await request_container.get(AppendUserMessageHandler)
-            return await handler.handle(
-                session=self._session,
-                content=event.content,
-            )
-
-    async def _handle_answer_follow_up_option(
-        self,
-        event: AnswerFollowUpWithOptionCommand,
-    ) -> tuple[SessionEvent, ...]:
-        async with self._container() as request_container:
-            handler = await request_container.get(AnswerFollowUpWithOptionHandler)
-            return await handler.handle(
-                session=self._session,
-                question_id=event.question_id,
-                option_id=event.option_id,
-            )
-
-    async def _handle_answer_follow_up_text(
-        self,
-        event: AnswerFollowUpWithTextCommand,
-    ) -> tuple[SessionEvent, ...]:
-        async with self._container() as request_container:
-            handler = await request_container.get(AnswerFollowUpWithTextHandler)
-            return await handler.handle(
-                session=self._session,
-                question_id=event.question_id,
-                text=event.text,
-            )
-
-    async def _handle_skip_follow_up(
-        self,
-        event: SkipFollowUpCommand,
-    ) -> tuple[SessionEvent, ...]:
-        async with self._container() as request_container:
-            handler = await request_container.get(SkipFollowUpHandler)
-            return await handler.handle(
-                session=self._session,
-                question_id=event.question_id,
-            )
-
-    async def _handle_add_track(
-        self,
-        event: AddPlaylistTrackCommand,
-    ) -> tuple[SessionEvent, ...]:
-        async with self._container() as request_container:
-            handler = await request_container.get(AddPlaylistTrackHandler)
-            return await handler.handle(
-                session=self._session,
-                title=event.title,
-                artist=event.artist,
-                year=event.year,
-                cover_url=event.cover_url,
-            )
-
-    async def _handle_remove_track(
-        self,
-        event: RemovePlaylistTrackCommand,
-    ) -> tuple[SessionEvent, ...]:
-        async with self._container() as request_container:
-            handler = await request_container.get(RemovePlaylistTrackHandler)
-            return await handler.handle(
-                session=self._session,
-                track_id=event.track_id,
-            )
-
     async def _publish(self, events: tuple[SessionEvent, ...]) -> None:
+        assert self._session is not None
         try:
             for event in events:
                 await _send(self._websocket, to_server_event(event))

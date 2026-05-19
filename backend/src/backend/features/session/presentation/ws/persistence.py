@@ -4,8 +4,7 @@ from uuid import UUID
 
 from dishka import AsyncContainer
 
-from backend.features.session.application import PersistSessionHandler
-from backend.features.session.domain import Session
+from backend.features.session.domain import Session, SessionRepository
 
 logger = logging.getLogger(__name__)
 
@@ -54,5 +53,5 @@ class SessionPersistenceDaemon:
 
     async def _persist(self, session: Session) -> None:
         async with self._container() as request_container:
-            handler = await request_container.get(PersistSessionHandler)
-            await handler.handle(session=session)
+            repository = await request_container.get(SessionRepository)
+            await repository.save(session=session)

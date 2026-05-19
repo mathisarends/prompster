@@ -20,12 +20,6 @@ auth_router = APIRouter(
     tags=["auth"],
 )
 
-_invalid_credentials = {
-    status.HTTP_401_UNAUTHORIZED: {
-        "model": ErrorDto,
-        "description": "Invalid or expired credentials",
-    },
-}
 _invalid_refresh_token = {
     status.HTTP_401_UNAUTHORIZED: {
         "model": ErrorDto,
