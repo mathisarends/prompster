@@ -416,7 +416,6 @@ export const NavigationSidebar = ({
         open={searchOpen}
         onOpenChange={setSearchOpen}
         onSelectChat={onSelectChat}
-        onNewChat={onNewChat}
         activeChatId={activeChatId}
       />
 

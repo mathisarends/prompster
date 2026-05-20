@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import type { SessionSummaryResponse } from "@/api/generated/model";
 import {
@@ -126,6 +127,11 @@ export const DeleteChatDialog = ({
       });
       onOpenChange(false);
       onDeleted?.(id);
+      toast.success("Chat gelöscht", {
+        description: session
+          ? `„${session.title}" wurde entfernt.`
+          : undefined,
+      });
     },
   });
 
