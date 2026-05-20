@@ -135,9 +135,7 @@ export const DeleteChatDialog = ({
       });
       onOpenChange(false);
       onDeleted?.(id);
-      toast.success("Chat gelöscht", {
-        description: session ? `„${session.title}" wurde entfernt.` : undefined,
-      });
+      toast.success("Chat gelöscht");
     },
   });
 
