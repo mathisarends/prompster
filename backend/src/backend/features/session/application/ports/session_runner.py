@@ -16,6 +16,11 @@ class SessionRunnerAssistantMessage:
 
 
 @dataclass(frozen=True)
+class SessionRunnerAssistantMessageChunk:
+    chunk: str
+
+
+@dataclass(frozen=True)
 class SessionRunnerToolCallStarted:
     call: PendingCall
 
@@ -38,6 +43,7 @@ class SessionRunnerPlaylistUpdated:
 
 type SessionRunnerEvent = (
     SessionRunnerAssistantMessage
+    | SessionRunnerAssistantMessageChunk
     | SessionRunnerToolCallStarted
     | SessionRunnerToolCallCompleted
     | SessionRunnerFollowUpRequested

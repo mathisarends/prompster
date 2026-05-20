@@ -1,6 +1,7 @@
 from .agent import Agent
 from .events import (
     AgentEvent,
+    AssistantMessageChunkEvent,
     AssistantMessageEvent,
     FollowUpRequestedEvent,
     RunCompletedEvent,
@@ -15,6 +16,7 @@ from .messages import MessageManager
 __all__ = [
     "Agent",
     "AgentEvent",
+    "AssistantMessageChunkEvent",
     "AssistantMessageEvent",
     "FollowUpRequestedEvent",
     "RunCompletedEvent",

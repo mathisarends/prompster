@@ -29,6 +29,11 @@ class AssistantMessageEvent(AgentEvent):
 
 
 @dataclass(kw_only=True)
+class AssistantMessageChunkEvent(AgentEvent):
+    chunk: str
+
+
+@dataclass(kw_only=True)
 class ToolCallEvent(AgentEvent):
     tool_call_id: str
     name: str

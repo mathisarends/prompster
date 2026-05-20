@@ -14,6 +14,7 @@ from backend.features.session.application.events import (
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
     SessionRunnerAssistantMessage,
+    SessionRunnerAssistantMessageChunk,
     SessionRunnerEvent,
 )
 from backend.features.session.application.ports.session_summary_query import (
@@ -130,6 +131,8 @@ class _SessionRunnerStub(SessionRunner):
         self._chunks = chunks or ["Hello", " world"]
 
     async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
+        for chunk in self._chunks:
+            yield SessionRunnerAssistantMessageChunk(chunk=chunk)
         yield SessionRunnerAssistantMessage(content="".join(self._chunks))
 
 
@@ -451,8 +454,10 @@ class TestSessionServiceFollowUps:
         assert isinstance(events[0], SessionToolCallResolved)
         assert isinstance(events[2], SessionAssistantMessageStarted)
         assert isinstance(events[3], SessionAssistantMessageChunk)
-        assert events[3].chunk == "chunk1chunk2"
-        assert isinstance(events[4], SessionAssistantMessageCompleted)
+        assert events[3].chunk == "chunk1"
+        assert isinstance(events[4], SessionAssistantMessageChunk)
+        assert events[4].chunk == "chunk2"
+        assert isinstance(events[5], SessionAssistantMessageCompleted)
         assert len(repository.saved_sessions) == 3
 
     def test_answer_follow_ups_with_text_and_streams_llm(self) -> None:

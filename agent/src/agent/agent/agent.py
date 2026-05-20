@@ -1,10 +1,11 @@
 import logging
 from collections.abc import AsyncGenerator
 
-from llmify import ChatModel
+from llmify import ChatModel, StreamEventType
 
 from agent.agent.events import (
     AgentEvent,
+    AssistantMessageChunkEvent,
     AssistantMessageEvent,
     FollowUpRequestedEvent,
     RunCompletedEvent,
@@ -85,23 +86,38 @@ class Agent:
     async def _run_loop(self) -> AsyncGenerator[AgentEvent, None]:
         for iteration in range(1, self._max_iterations + 1):
             yield StepStartedEvent(step=iteration)
-            response = await self._llm.invoke(
-                self._messages.all(), tools=self._tool_schema
-            )
+            completion = ""
+            tool_calls = []
 
-            if not response.tool_calls:
-                output = response.completion or ""
-                self._messages.add_assistant(output)
-                yield AssistantMessageEvent(content=output)
-                yield RunCompletedEvent(output=output)
+            async for response_event in self._llm.stream(
+                self._messages.all(), tools=self._tool_schema
+            ):
+                if response_event.type == StreamEventType.TEXT:
+                    if response_event.delta:
+                        completion += response_event.delta
+                        yield AssistantMessageChunkEvent(chunk=response_event.delta)
+                elif response_event.type == StreamEventType.TOOL_CALL:
+                    tool_calls.append(response_event.tool_call)
+                elif response_event.type == StreamEventType.END:
+                    completion = response_event.completion or completion
+                    if response_event.tool_calls:
+                        tool_calls = response_event.tool_calls
+
+            if not tool_calls:
+                self._messages.add_assistant(completion)
+                yield AssistantMessageEvent(content=completion)
+                yield RunCompletedEvent(output=completion)
                 return
 
+            if completion:
+                yield AssistantMessageEvent(content=completion)
+
             self._messages.add_assistant(
-                response.completion or "",
-                tool_calls=response.tool_calls,
+                completion,
+                tool_calls=tool_calls,
             )
 
-            for call in response.tool_calls:
+            for call in tool_calls:
                 args = self._tools.parse_args(call)
                 yield ToolCallEvent(
                     tool_call_id=call.id,

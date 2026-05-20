@@ -1,6 +1,7 @@
 from .agent import (
     Agent,
     AgentEvent,
+    AssistantMessageChunkEvent,
     AssistantMessageEvent,
     FollowUpRequestedEvent,
     RunCompletedEvent,
@@ -19,6 +20,7 @@ from .workspace import PlaylistDraft
 __all__ = [
     "Agent",
     "AgentEvent",
+    "AssistantMessageChunkEvent",
     "AssistantMessageEvent",
     "AskFollowUpOption",
     "AskFollowUpQuestion",

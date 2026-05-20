@@ -3,6 +3,7 @@ from collections.abc import AsyncIterator
 
 from agent.agent import (
     Agent,
+    AssistantMessageChunkEvent,
     AssistantMessageEvent,
     FollowUpRequestedEvent,
     ToolCallEvent,
@@ -19,6 +20,7 @@ from spotifyify import Spotifyify
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
     SessionRunnerAssistantMessage,
+    SessionRunnerAssistantMessageChunk,
     SessionRunnerEvent,
     SessionRunnerFollowUpRequested,
     SessionRunnerPlaylistUpdated,
@@ -65,7 +67,9 @@ class AgentSessionRunner(SessionRunner):
 
         try:
             async for event in agent.continue_stream():
-                if isinstance(event, AssistantMessageEvent):
+                if isinstance(event, AssistantMessageChunkEvent):
+                    yield SessionRunnerAssistantMessageChunk(chunk=event.chunk)
+                elif isinstance(event, AssistantMessageEvent):
                     yield SessionRunnerAssistantMessage(content=event.content)
                 elif isinstance(event, ToolCallEvent):
                     yield SessionRunnerToolCallStarted(

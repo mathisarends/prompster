@@ -2,6 +2,7 @@ from .playlist_deck_generator import PlaylistDeckGenerator, PlaylistDeckTrack
 from .session_runner import (
     SessionRunner,
     SessionRunnerAssistantMessage,
+    SessionRunnerAssistantMessageChunk,
     SessionRunnerEvent,
     SessionRunnerFollowUpRequested,
     SessionRunnerPlaylistUpdated,
@@ -16,6 +17,7 @@ __all__ = [
     "PlaylistDeckTrack",
     "SessionRunner",
     "SessionRunnerAssistantMessage",
+    "SessionRunnerAssistantMessageChunk",
     "SessionRunnerEvent",
     "SessionRunnerFollowUpRequested",
     "SessionRunnerPlaylistUpdated",

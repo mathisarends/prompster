@@ -17,12 +17,14 @@ from backend.features.session.application.events import (
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
     SessionRunnerAssistantMessage,
+    SessionRunnerAssistantMessageChunk,
     SessionRunnerFollowUpRequested,
     SessionRunnerPlaylistUpdated,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallStarted,
 )
 from backend.features.session.domain import (
+    AssistantMessage,
     FollowUpQuestionGroup,
     NoPendingToolCallGroupError,
     Session,
@@ -217,20 +219,53 @@ class SessionConversationService:
         return tuple(events)
 
     async def _run_agent(self, *, session: Session) -> AsyncIterator[SessionEvent]:
+        current_assistant_message: AssistantMessage | None = None
+
         async for event in self._runner.run(session=session):
-            if isinstance(event, SessionRunnerAssistantMessage):
-                message = session.add_assistant_message()
-                await self._session_repository.save(session=session)
-                yield SessionAssistantMessageStarted(message=message)
-                if event.content:
-                    session.append_to_current_assistant_message(event.content)
-                    yield SessionAssistantMessageChunk(
-                        message_id=message.id,
-                        chunk=event.content,
+            if isinstance(event, SessionRunnerAssistantMessageChunk):
+                if current_assistant_message is None:
+                    current_assistant_message = session.add_assistant_message()
+                    await self._session_repository.save(session=session)
+                    yield SessionAssistantMessageStarted(
+                        message=current_assistant_message
                     )
+
+                session.append_to_current_assistant_message(event.chunk)
+                yield SessionAssistantMessageChunk(
+                    message_id=current_assistant_message.id,
+                    chunk=event.chunk,
+                )
+            elif isinstance(event, SessionRunnerAssistantMessage):
+                if current_assistant_message is None:
+                    current_assistant_message = session.add_assistant_message()
+                    await self._session_repository.save(session=session)
+                    yield SessionAssistantMessageStarted(
+                        message=current_assistant_message
+                    )
+
+                if event.content:
+                    if current_assistant_message.content:
+                        current_assistant_message.content = event.content
+                    else:
+                        session.append_to_current_assistant_message(event.content)
+                        yield SessionAssistantMessageChunk(
+                            message_id=current_assistant_message.id,
+                            chunk=event.content,
+                        )
+
                 await self._session_repository.save(session=session)
-                yield SessionAssistantMessageCompleted(message=message)
+                yield SessionAssistantMessageCompleted(
+                    message=current_assistant_message
+                )
+                current_assistant_message = None
             elif isinstance(event, SessionRunnerToolCallStarted):
+                if current_assistant_message is not None:
+                    await self._session_repository.save(session=session)
+                    yield SessionAssistantMessageCompleted(
+                        message=current_assistant_message
+                    )
+                    current_assistant_message = None
+
                 group = session.add_tool_call(event.call)
                 await self._session_repository.save(session=session)
                 yield SessionToolCallGroupAdded(group=group)
