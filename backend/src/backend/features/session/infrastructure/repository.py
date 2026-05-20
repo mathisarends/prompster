@@ -87,6 +87,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm.playlist = self._to_orm_playlist(
             domain_playlist=session.playlist,
             session_id=session_id,
+            existing_playlist=orm.playlist,
         )
 
         await self.session.flush()
@@ -128,6 +129,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm.playlist = self._to_orm_playlist(
             domain_playlist=domain.playlist,
             session_id=session_id,
+            existing_playlist=None,
         )
         return orm
 
@@ -138,6 +140,19 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         session_id: UUID,
         entries: tuple[SessionEntry, ...],
     ) -> None:
+        existing_user_rows = {
+            row.id: row for row in orm.user_messages if row.id is not None
+        }
+        existing_assistant_rows = {
+            row.id: row for row in orm.assistant_messages if row.id is not None
+        }
+        existing_tool_group_rows = {
+            row.id: row for row in orm.tool_call_groups if row.id is not None
+        }
+        existing_follow_up_group_rows = {
+            row.id: row for row in orm.follow_up_question_groups if row.id is not None
+        }
+
         user_rows: list[SessionUserMessageModel] = []
         assistant_rows: list[SessionAssistantMessageModel] = []
         tool_group_rows: list[SessionToolCallGroupModel] = []
@@ -145,35 +160,39 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
 
         for position, entry in enumerate(entries):
             if isinstance(entry, UserMessage):
-                user_rows.append(
-                    SessionUserMessageModel(
-                        id=entry.id,
-                        session_id=session_id,
-                        position=position,
-                        content=entry.content,
-                        created_at=entry.created_at,
-                    )
-                )
+                row = existing_user_rows.get(entry.id)
+                if row is None:
+                    row = SessionUserMessageModel(id=entry.id)
+                row.session_id = session_id
+                row.position = position
+                row.content = entry.content
+                row.created_at = entry.created_at
+                user_rows.append(row)
             elif isinstance(entry, AssistantMessage):
-                assistant_rows.append(
-                    SessionAssistantMessageModel(
-                        id=entry.id,
-                        session_id=session_id,
-                        position=position,
-                        content=entry.content,
-                        created_at=entry.created_at,
-                    )
-                )
+                row = existing_assistant_rows.get(entry.id)
+                if row is None:
+                    row = SessionAssistantMessageModel(id=entry.id)
+                row.session_id = session_id
+                row.position = position
+                row.content = entry.content
+                row.created_at = entry.created_at
+                assistant_rows.append(row)
             elif isinstance(entry, ToolCallGroup):
                 tool_group_rows.append(
                     self._to_orm_tool_call_group(
-                        group=entry, session_id=session_id, position=position
+                        group=entry,
+                        session_id=session_id,
+                        position=position,
+                        existing_group=existing_tool_group_rows.get(entry.id),
                     )
                 )
             elif isinstance(entry, FollowUpQuestionGroup):
                 follow_group_rows.append(
                     self._to_orm_follow_up_group(
-                        group=entry, session_id=session_id, position=position
+                        group=entry,
+                        session_id=session_id,
+                        position=position,
+                        existing_group=existing_follow_up_group_rows.get(entry.id),
                     )
                 )
 
@@ -247,15 +266,21 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         group: ToolCallGroup,
         session_id: UUID,
         position: int,
+        existing_group: SessionToolCallGroupModel | None = None,
     ) -> SessionToolCallGroupModel:
-        orm = SessionToolCallGroupModel(
-            id=group.id,
-            session_id=session_id,
-            position=position,
-            created_at=group.created_at,
-        )
+        orm = existing_group or SessionToolCallGroupModel(id=group.id)
+        orm.session_id = session_id
+        orm.position = position
+        orm.created_at = group.created_at
+
+        existing_calls = {call.call_id: call for call in orm.calls}
         orm.calls = [
-            self._to_orm_tool_call(call=call, group_id=group.id, position=call_position)
+            self._to_orm_tool_call(
+                call=call,
+                group_id=group.id,
+                position=call_position,
+                existing_call=existing_calls.get(call.id),
+            )
             for call_position, call in enumerate(group.calls)
         ]
         return orm
@@ -266,6 +291,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         call: ToolCall,
         group_id: UUID,
         position: int,
+        existing_call: SessionToolCallModel | None = None,
     ) -> SessionToolCallModel:
         if isinstance(call, CompletedCall):
             state, result, error = _COMPLETED_STATE, call.result, None
@@ -274,16 +300,16 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         else:
             state, result, error = _PENDING_STATE, None, None
 
-        return SessionToolCallModel(
-            group_id=group_id,
-            position=position,
-            call_id=call.id,
-            function_name=call.function.name,
-            function_arguments=dict(call.function.arguments),
-            state=state,
-            result=result,
-            error=error,
-        )
+        orm = existing_call or SessionToolCallModel()
+        orm.group_id = group_id
+        orm.position = position
+        orm.call_id = call.id
+        orm.function_name = call.function.name
+        orm.function_arguments = dict(call.function.arguments)
+        orm.state = state
+        orm.result = result
+        orm.error = error
+        return orm
 
     def _to_domain_follow_up_group(
         self, row: SessionFollowUpQuestionGroupModel
@@ -320,16 +346,20 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         group: FollowUpQuestionGroup,
         session_id: UUID,
         position: int,
+        existing_group: SessionFollowUpQuestionGroupModel | None = None,
     ) -> SessionFollowUpQuestionGroupModel:
-        orm = SessionFollowUpQuestionGroupModel(
-            id=group.id,
-            session_id=session_id,
-            position=position,
-            created_at=group.created_at,
-        )
+        orm = existing_group or SessionFollowUpQuestionGroupModel(id=group.id)
+        orm.session_id = session_id
+        orm.position = position
+        orm.created_at = group.created_at
+
+        existing_questions = {question.id: question for question in orm.questions}
         orm.questions = [
             self._to_orm_follow_up_question(
-                question=question, group_id=group.id, position=question_position
+                question=question,
+                group_id=group.id,
+                position=question_position,
+                existing_question=existing_questions.get(question.id),
             )
             for question_position, question in enumerate(group.questions)
         ]
@@ -341,41 +371,48 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         question: FollowUpQuestion,
         group_id: UUID,
         position: int,
+        existing_question: SessionFollowUpQuestionModel | None = None,
     ) -> SessionFollowUpQuestionModel:
-        return SessionFollowUpQuestionModel(
-            id=question.id,
-            group_id=group_id,
-            position=position,
-            question=question.question,
-            options=[
-                {"id": option.id, "label": option.label} for option in question.options
-            ],
-            state=question.state.value,
-            answer_text=question.answer_text,
-            answered_option_id=question.answered_option_id,
-            created_at=question.created_at,
-        )
+        orm = existing_question or SessionFollowUpQuestionModel(id=question.id)
+        orm.group_id = group_id
+        orm.position = position
+        orm.question = question.question
+        orm.options = [
+            {"id": option.id, "label": option.label} for option in question.options
+        ]
+        orm.state = question.state.value
+        orm.answer_text = question.answer_text
+        orm.answered_option_id = question.answered_option_id
+        orm.created_at = question.created_at
+        return orm
 
     def _to_orm_playlist(
         self,
         *,
         domain_playlist: Playlist | None,
         session_id: UUID,
+        existing_playlist: SessionPlaylistModel | None = None,
     ) -> SessionPlaylistModel | None:
         if domain_playlist is None:
             return None
 
-        orm_playlist = SessionPlaylistModel(
-            id=domain_playlist.id,
-            session_id=session_id,
-            name=domain_playlist.name,
-            created_at=domain_playlist.created_at,
+        orm_playlist = (
+            existing_playlist
+            if existing_playlist is not None
+            and existing_playlist.id == domain_playlist.id
+            else SessionPlaylistModel(id=domain_playlist.id)
         )
+        orm_playlist.session_id = session_id
+        orm_playlist.name = domain_playlist.name
+        orm_playlist.created_at = domain_playlist.created_at
+
+        existing_tracks = {track.id: track for track in orm_playlist.tracks}
         orm_playlist.tracks = [
             self._to_orm_track(
                 track=track,
                 playlist_id=domain_playlist.id,
                 position=index,
+                existing_track=existing_tracks.get(track.id),
             )
             for index, track in enumerate(domain_playlist.tracks)
         ]
@@ -402,17 +439,17 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         track: PlaylistTrack,
         playlist_id: UUID,
         position: int,
+        existing_track: PlaylistTrackModel | None = None,
     ) -> PlaylistTrackModel:
-        return PlaylistTrackModel(
-            id=track.id,
-            playlist_id=playlist_id,
-            position=position,
-            title=track.title,
-            artist=track.artist,
-            year=track.year,
-            cover_url=track.cover_url,
-            created_at=track.created_at,
-        )
+        orm = existing_track or PlaylistTrackModel(id=track.id)
+        orm.playlist_id = playlist_id
+        orm.position = position
+        orm.title = track.title
+        orm.artist = track.artist
+        orm.year = track.year
+        orm.cover_url = track.cover_url
+        orm.created_at = track.created_at
+        return orm
 
     def _to_domain_track(self, orm_track: PlaylistTrackModel) -> PlaylistTrack:
         return PlaylistTrack(

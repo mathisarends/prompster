@@ -215,6 +215,28 @@ export const toToolCallItems = (
   group: ChatToolCallGroupEntry,
 ): ToolCallItem[] => group.calls.map(toToolCallItem);
 
+export const getScrollKey = (entry: ChatEntry): string => {
+  switch (entry.kind) {
+    case "user_message":
+    case "assistant_message":
+      return `${entry.id}:${entry.content.length}:${entry.kind === "assistant_message" && entry.isStreaming ? "streaming" : "done"}`;
+    case "tool_call_group":
+      return `${entry.id}:${entry.calls
+        .map(
+          (call) =>
+            `${call.id}:${call.state}:${call.result?.length ?? 0}:${call.error?.length ?? 0}`,
+        )
+        .join(",")}`;
+    case "follow_up_question_group":
+      return `${entry.id}:${entry.questions
+        .map(
+          (question) =>
+            `${question.id}:${question.state}:${question.answerText?.length ?? 0}`,
+        )
+        .join(",")}`;
+  }
+};
+
 const normalizeSessionEntries = (
   entries: SessionLike["entries"],
 ): ChatEntry[] => entries.map((entry) => normalizeSessionEntry(entry));

@@ -1,39 +1,19 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
+import { useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 
-import type {
-  FollowUpQuestionResponse,
-  FollowUpRequest,
-  SessionResponse,
-} from "@/api/generated/model";
-import {
-  getGetSessionQueryKey,
-  getListSessionsQueryKey,
-  useGetSession,
-} from "@/api/generated/session-api";
-import { streamFollowUp, streamSendMessage } from "@/api/session-stream";
+import type { SessionResponse } from "@/api/generated/model";
 import { AssistantChatMessage } from "@/components/chat/assistant-chat-message";
 import { ChatInputBox } from "@/components/chat/chat-input-box";
 import { ChatPageHeader } from "@/components/chat/chat-page-header";
 import { FollowUpQuestionGroup } from "@/components/chat/follow-up-question-group";
-import type { FollowUpQuestionOption } from "@/components/chat/follow-up-question-flow";
 import { ToolCallAccordion } from "@/components/chat/tool-call-accordion";
 import { UserChatMessage } from "@/components/chat/user-chat-message";
 import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
 import { cn } from "@/lib/utils";
 
+import { useChatSession } from "./chat-page.hook";
 import {
-  chatReducer,
-  createInitialChatState,
-  getLatestUserMessageContent,
+  getScrollKey,
   toToolCallItems,
   type ChatEntry,
 } from "./chat-page.state";
@@ -43,50 +23,11 @@ type ChatRouteState = {
   streamInitialResponse?: boolean;
 };
 
-type StreamOptions = Parameters<typeof streamSendMessage>[2];
-
-const getStreamErrorMessage = (error: unknown) => {
-  if (error instanceof Error && error.message) return error.message;
-  return "Die Antwort konnte nicht geladen werden.";
-};
-
-const getScrollKey = (entry: ChatEntry) => {
-  switch (entry.kind) {
-    case "user_message":
-    case "assistant_message":
-      return `${entry.id}:${entry.content.length}:${entry.kind === "assistant_message" && entry.isStreaming ? "streaming" : "done"}`;
-    case "tool_call_group":
-      return `${entry.id}:${entry.calls
-        .map(
-          (call) =>
-            `${call.id}:${call.state}:${call.result?.length ?? 0}:${call.error?.length ?? 0}`,
-        )
-        .join(",")}`;
-    case "follow_up_question_group":
-      return `${entry.id}:${entry.questions
-        .map(
-          (question) =>
-            `${question.id}:${question.state}:${question.answerText?.length ?? 0}`,
-        )
-        .join(",")}`;
-  }
-};
-
 export const ChatPage = () => {
   const { chatId } = useParams();
   const sessionId = chatId ?? "";
   const location = useLocation();
   const routeState = location.state as ChatRouteState | null;
-  const queryClient = useQueryClient();
-  const [prompt, setPrompt] = useState("");
-  const [chatState, dispatch] = useReducer(
-    chatReducer,
-    undefined,
-    createInitialChatState,
-  );
-  const initialStreamStartedRef = useRef(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const isStreamingRef = useRef(false);
 
   const initialSession = useMemo(() => {
     if (routeState?.session?.id !== sessionId) return undefined;
@@ -94,196 +35,26 @@ export const ChatPage = () => {
   }, [routeState?.session, sessionId]);
 
   const {
-    data: session,
+    title,
+    entries,
+    followUpDrafts,
+    isStreaming,
+    isLoadingSession,
     isError,
-    isLoading,
-  } = useGetSession(sessionId, {
-    query: {
-      enabled: Boolean(sessionId),
-      initialData: initialSession,
-    },
+    sendMessage,
+    answerFollowUp,
+    skipFollowUps,
+    updateFollowUpDraft,
+  } = useChatSession({
+    sessionId,
+    initialSession,
+    streamInitialResponse: Boolean(routeState?.streamInitialResponse),
   });
 
-  const isSending = chatState.isStreaming;
-  const scrollDependency = chatState.entries.map(getScrollKey).join("|");
+  const [prompt, setPrompt] = useState("");
+  const scrollDependency = entries.map(getScrollKey).join("|");
   const messagesEndRef =
     useAutoScrollToBottom<HTMLDivElement>(scrollDependency);
-
-  useEffect(() => {
-    return () => {
-      abortControllerRef.current?.abort();
-    };
-  }, []);
-
-  useEffect(() => {
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = null;
-    isStreamingRef.current = false;
-    initialStreamStartedRef.current = false;
-    dispatch({ type: "session/reset" });
-  }, [sessionId]);
-
-  useEffect(() => {
-    isStreamingRef.current = chatState.isStreaming;
-  }, [chatState.isStreaming]);
-
-  useEffect(() => {
-    if (!session || session.id !== sessionId || chatState.isStreaming) return;
-
-    dispatch({ type: "session/loaded", session });
-  }, [chatState.isStreaming, session, sessionId]);
-
-  const invalidateSessionQueries = useCallback(async () => {
-    if (!sessionId) return;
-
-    await Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: getGetSessionQueryKey(sessionId),
-      }),
-      queryClient.invalidateQueries({ queryKey: getListSessionsQueryKey() }),
-    ]);
-  }, [queryClient, sessionId]);
-
-  const runEventStream = useCallback(
-    async (
-      startAction: Parameters<typeof dispatch>[0],
-      streamRequest: (options: StreamOptions) => Promise<void>,
-    ) => {
-      if (!sessionId || isStreamingRef.current) return;
-
-      const controller = new AbortController();
-      let streamErrorReceived = false;
-
-      isStreamingRef.current = true;
-      abortControllerRef.current = controller;
-      dispatch(startAction);
-
-      try {
-        await streamRequest({
-          signal: controller.signal,
-          onEvent: (event) => {
-            if (event.type === "error") streamErrorReceived = true;
-            dispatch({ type: "stream/event", event });
-          },
-        });
-
-        await invalidateSessionQueries();
-      } catch (error) {
-        if (!controller.signal.aborted && !streamErrorReceived) {
-          dispatch({
-            type: "stream/failed",
-            message: getStreamErrorMessage(error),
-          });
-        }
-      } finally {
-        if (abortControllerRef.current === controller) {
-          abortControllerRef.current = null;
-        }
-        isStreamingRef.current = false;
-        dispatch({ type: "stream/finished" });
-      }
-    },
-    [invalidateSessionQueries, sessionId],
-  );
-
-  const streamAssistantResponse = useCallback(
-    async (text: string, options?: { appendUserMessage?: boolean }) => {
-      const shouldAppendUserMessage = options?.appendUserMessage ?? true;
-
-      await runEventStream(
-        {
-          type: "stream/started",
-          userMessageText: shouldAppendUserMessage ? text : undefined,
-          skipPendingFollowUps: shouldAppendUserMessage,
-        },
-        (streamOptions) =>
-          streamSendMessage(sessionId, { content: text }, streamOptions),
-      );
-    },
-    [runEventStream, sessionId],
-  );
-
-  const streamFollowUpResponse = useCallback(
-    async (body: FollowUpRequest) => {
-      await runEventStream({ type: "stream/started" }, (streamOptions) =>
-        streamFollowUp(sessionId, body, streamOptions),
-      );
-    },
-    [runEventStream, sessionId],
-  );
-
-  useEffect(() => {
-    if (
-      !routeState?.streamInitialResponse ||
-      initialStreamStartedRef.current ||
-      !session ||
-      isSending
-    ) {
-      return;
-    }
-
-    const latestUserMessageContent = getLatestUserMessageContent(session);
-    if (!latestUserMessageContent) return;
-
-    initialStreamStartedRef.current = true;
-    const timeoutId = window.setTimeout(() => {
-      void streamAssistantResponse(latestUserMessageContent, {
-        appendUserMessage: false,
-      });
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [
-    isSending,
-    routeState?.streamInitialResponse,
-    session,
-    streamAssistantResponse,
-  ]);
-
-  const sendChatMessage = useCallback(
-    (text: string) => streamAssistantResponse(text),
-    [streamAssistantResponse],
-  );
-
-  const answerFollowUp = useCallback(
-    (
-      groupId: string,
-      question: FollowUpQuestionResponse,
-      answer: string,
-      option?: FollowUpQuestionOption,
-    ) => {
-      if (isStreamingRef.current) return;
-
-      dispatch({
-        type: "follow-up/answered",
-        groupId,
-        questionId: question.id,
-        answerText: answer,
-        optionId: option?.id,
-      });
-      void streamFollowUpResponse({
-        action: "answer",
-        answers: [
-          option
-            ? { questionId: question.id, optionId: option.id }
-            : { questionId: question.id, text: answer },
-        ],
-      });
-    },
-    [streamFollowUpResponse],
-  );
-
-  const skipFollowUps = useCallback(
-    (groupId: string) => {
-      if (isStreamingRef.current) return;
-
-      dispatch({ type: "follow-up/skipped", groupId });
-      void streamFollowUpResponse({ action: "skip_remaining" });
-    },
-    [streamFollowUpResponse],
-  );
 
   const renderEntry = (entry: ChatEntry) => {
     switch (entry.kind) {
@@ -319,18 +90,10 @@ export const ChatPage = () => {
             key={entry.id}
             group={entry}
             draftValue={
-              currentQuestion
-                ? (chatState.followUpDrafts[currentQuestion.id] ?? "")
-                : ""
+              currentQuestion ? (followUpDrafts[currentQuestion.id] ?? "") : ""
             }
-            disabled={isSending}
-            onDraftChange={(questionId, value) =>
-              dispatch({
-                type: "follow-up/draft-changed",
-                questionId,
-                value,
-              })
-            }
+            disabled={isStreaming}
+            onDraftChange={updateFollowUpDraft}
             onAnswer={(question, answer, option) =>
               answerFollowUp(entry.id, question, answer, option)
             }
@@ -341,14 +104,13 @@ export const ChatPage = () => {
     }
   };
 
-  const isLoadingSession = isLoading && chatState.entries.length === 0;
-  const title = chatState.title ?? session?.title ?? "Neues Karten-Deck";
+  const headerTitle = title ?? "Neues Karten-Deck";
 
   return (
     <div className="chat-page-background flex h-dvh overflow-hidden text-foreground">
       <div className="relative z-10 min-h-0 flex-1">
         <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-          <ChatPageHeader title={title} />
+          <ChatPageHeader title={headerTitle} />
 
           <main className="prompster-scrollbar min-h-0 flex-1 overflow-y-auto px-4 sm:px-8">
             <div className="mx-auto flex w-full max-w-4xl flex-col">
@@ -363,7 +125,7 @@ export const ChatPage = () => {
                   </p>
                 ) : null}
 
-                {chatState.entries.map(renderEntry)}
+                {entries.map(renderEntry)}
                 <div ref={messagesEndRef} />
               </div>
             </div>
@@ -374,7 +136,7 @@ export const ChatPage = () => {
               <ChatInputBox
                 value={prompt}
                 onChange={setPrompt}
-                onSubmit={sendChatMessage}
+                onSubmit={sendMessage}
                 placeholder="Deine Antwort ..."
                 sendButtonAriaLabel="Nachricht senden"
                 className={cn(
@@ -383,7 +145,7 @@ export const ChatPage = () => {
                 textareaClassName="max-h-40"
                 rows={1}
                 disabled={!sessionId || isLoadingSession || isError}
-                isSubmitting={isSending}
+                isSubmitting={isStreaming}
               />
             </div>
           </div>
