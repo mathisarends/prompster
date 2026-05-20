@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-type ShortcutKey = "mod" | "shift" | "alt" | "enter" | "escape" | string;
+export type ShortcutKey = "mod" | "shift" | "alt" | "enter" | "escape" | string;
 
 type KeyboardShortcutHintProps = {
   children: ReactElement;
@@ -27,7 +27,7 @@ const isApplePlatform = () => {
   return /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 };
 
-const formatShortcutKey = (key: ShortcutKey) => {
+export const formatShortcutKey = (key: ShortcutKey) => {
   const normalizedKey = key.toLocaleLowerCase();
   const applePlatform = isApplePlatform();
 
@@ -74,6 +74,7 @@ export const KeyboardShortcutHint = ({
           side={side}
           align={align}
           sideOffset={8}
+          showArrow={false}
           className={cn(
             "gap-2 border border-sidebar-border bg-sidebar px-2.5 py-1.5 text-sidebar-foreground shadow-xl",
             className,

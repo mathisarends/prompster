@@ -13,6 +13,11 @@ import { useAuth } from "@/auth/use-auth";
 
 import { Button } from "@/components/ui/button";
 import { ChatSearchDialog } from "@/components/chat-search-dialog";
+import {
+  KeyboardShortcutHint,
+  formatShortcutKey,
+  type ShortcutKey,
+} from "@/components/keyboard-shortcut-hint";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -30,6 +35,23 @@ import {
 } from "@/components/sidebar-session-dialogs";
 import { cn } from "@/lib/utils";
 import { PrompsterLogo } from "./prompster-logo";
+
+const NEW_CHAT_SHORTCUT: ShortcutKey[] = ["mod", "shift", "o"];
+const SEARCH_SHORTCUT: ShortcutKey[] = ["mod", "k"];
+const TOGGLE_SIDEBAR_SHORTCUT: ShortcutKey[] = ["mod", "shift", "."];
+
+const InlineShortcutKeys = ({ keys }: { keys: ShortcutKey[] }) => (
+  <span className="ml-auto flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+    {keys.map((key, index) => (
+      <kbd
+        key={`${key}-${index}`}
+        className="min-w-5 rounded border border-sidebar-border/60 bg-sidebar px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none text-sidebar-foreground/80"
+      >
+        {formatShortcutKey(key)}
+      </kbd>
+    ))}
+  </span>
+);
 
 type NavigationSidebarProps = {
   open: boolean;
@@ -162,15 +184,20 @@ export const NavigationSidebar = ({
           <div className="space-y-4 px-3 py-3">
             <div className="flex items-center justify-between gap-2">
               <PrompsterLogo />
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                onClick={onToggle}
-                aria-label="Sidebar einklappen"
-                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              <KeyboardShortcutHint
+                label="Sidebar einklappen"
+                keys={TOGGLE_SIDEBAR_SHORTCUT}
               >
-                <PanelLeft className="size-4 transition-transform" />
-              </Button>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  onClick={onToggle}
+                  aria-label="Sidebar einklappen"
+                  className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                >
+                  <PanelLeft className="size-4 transition-transform" />
+                </Button>
+              </KeyboardShortcutHint>
             </div>
 
             <div className="space-y-1">
@@ -184,57 +211,68 @@ export const NavigationSidebar = ({
                     onNewChat();
                   }
                 }}
-                className="flex h-10 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                className="group flex h-10 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
                 <Plus className="size-5 shrink-0" />
                 <span>Neuer Chat</span>
+                <InlineShortcutKeys keys={NEW_CHAT_SHORTCUT} />
               </button>
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
-                className="flex h-10 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                className="group flex h-10 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               >
                 <Search className="size-5 shrink-0" />
                 <span>Suchen</span>
+                <InlineShortcutKeys keys={SEARCH_SHORTCUT} />
               </button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 px-1 py-3">
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              onClick={onToggle}
-              aria-label="Sidebar ausklappen"
-              className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            <KeyboardShortcutHint
+              label="Sidebar ausklappen"
+              keys={TOGGLE_SIDEBAR_SHORTCUT}
             >
-              <PanelLeft className="size-4 rotate-180 transition-transform" />
-            </Button>
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              onClick={(e) => {
-                if ((e.ctrlKey || e.metaKey) && onNewChatNewTab) {
-                  e.preventDefault();
-                  onNewChatNewTab();
-                } else {
-                  onNewChat();
-                }
-              }}
-              aria-label="Neuen Chat starten"
-              className="rounded-full bg-sidebar-accent hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground"
-            >
-              <Plus className="size-4" />
-            </Button>
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Suche oeffnen"
-              className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            >
-              <Search className="size-5" />
-            </Button>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                onClick={onToggle}
+                aria-label="Sidebar ausklappen"
+                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <PanelLeft className="size-4 rotate-180 transition-transform" />
+              </Button>
+            </KeyboardShortcutHint>
+            <KeyboardShortcutHint label="Neuer Chat" keys={NEW_CHAT_SHORTCUT}>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                onClick={(e) => {
+                  if ((e.ctrlKey || e.metaKey) && onNewChatNewTab) {
+                    e.preventDefault();
+                    onNewChatNewTab();
+                  } else {
+                    onNewChat();
+                  }
+                }}
+                aria-label="Neuen Chat starten"
+                className="rounded-full bg-sidebar-accent hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground"
+              >
+                <Plus className="size-4" />
+              </Button>
+            </KeyboardShortcutHint>
+            <KeyboardShortcutHint label="Suchen" keys={SEARCH_SHORTCUT}>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Suche oeffnen"
+                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              >
+                <Search className="size-5" />
+              </Button>
+            </KeyboardShortcutHint>
           </div>
         )}
 
