@@ -1,6 +1,13 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronsUpDown, LogOut, PanelLeft, Plus, Search } from "lucide-react";
+import {
+  ChevronsUpDown,
+  LogOut,
+  Music2,
+  PanelLeft,
+  Plus,
+  Search,
+} from "lucide-react";
 import {
   getListSessionsQueryKey,
   starSession,
@@ -392,6 +399,10 @@ export const NavigationSidebar = ({
               side="top"
               sideOffset={8}
             >
+              <DropdownMenuItem onClick={() => {}}>
+                <Music2 />
+                <span>Mit Spotify verbinden</span>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => void signOut()}>
                 <LogOut />
                 <span>Abmelden</span>
@@ -405,6 +416,7 @@ export const NavigationSidebar = ({
         open={searchOpen}
         onOpenChange={setSearchOpen}
         onSelectChat={onSelectChat}
+        onNewChat={onNewChat}
         activeChatId={activeChatId}
       />
 

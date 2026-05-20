@@ -67,7 +67,7 @@ export const KeyboardShortcutHint = ({
   className,
 }: KeyboardShortcutHintProps) => {
   return (
-    <TooltipProvider delay={250}>
+    <TooltipProvider delay={0}>
       <Tooltip>
         <TooltipTrigger render={children} />
         <TooltipContent

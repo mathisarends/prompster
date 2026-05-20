@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MessageCircle, Search, X } from "lucide-react";
+import { CirclePlus, MessageCircle, Search, X } from "lucide-react";
 import { useListSessions } from "@/api/generated/session-api";
 import type { SessionSummaryResponse } from "@/api/generated/model";
 
@@ -15,8 +15,13 @@ type ChatSearchDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectChat: (session: SessionSummaryResponse) => void;
+  onNewChat: () => void;
   activeChatId?: string;
 };
+
+type CommandItem =
+  | { kind: "action"; id: "new-chat" }
+  | { kind: "session"; id: string; session: SessionHistoryEntry };
 
 const ShortcutKey = ({ label }: { label: string }) => (
   <kbd className="min-w-5 rounded border border-sidebar-border bg-sidebar-accent px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none text-sidebar-accent-foreground">
@@ -24,10 +29,17 @@ const ShortcutKey = ({ label }: { label: string }) => (
   </kbd>
 );
 
+const SectionHeader = ({ label }: { label: string }) => (
+  <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+    {label}
+  </p>
+);
+
 export const ChatSearchDialog = ({
   open,
   onOpenChange,
   onSelectChat,
+  onNewChat,
   activeChatId,
 }: ChatSearchDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,22 +109,56 @@ export const ChatSearchDialog = ({
     onOpenChange(false);
   };
 
+  const triggerNewChat = useCallback(() => {
+    onNewChat();
+    onOpenChange(false);
+  }, [onNewChat, onOpenChange]);
+
+  const commandItems = useMemo<CommandItem[]>(
+    () => [
+      { kind: "action", id: "new-chat" },
+      ...visibleChats.map(
+        (session): CommandItem => ({
+          kind: "session",
+          id: session.id,
+          session,
+        }),
+      ),
+    ],
+    [visibleChats],
+  );
+
+  const handleConfirm = useCallback(
+    (item: CommandItem) => {
+      if (item.kind === "action") {
+        triggerNewChat();
+        return;
+      }
+      selectChat(item.session);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [triggerNewChat, onSelectChat, onOpenChange],
+  );
+
   const getInitialHighlightIndex = useCallback(() => {
     if (!activeChatId) {
-      return 0;
+      return -1;
     }
 
-    return visibleChats.findIndex((chat) => chat.id === activeChatId);
+    const sessionIndex = visibleChats.findIndex(
+      (chat) => chat.id === activeChatId,
+    );
+    return sessionIndex < 0 ? -1 : sessionIndex + 1;
   }, [activeChatId, visibleChats]);
 
   const {
     highlightedIndex,
     setHighlightedIndex,
     onKeyDown: handleSearchInputKeyDown,
-  } = useListKeyboardNavigation<SessionHistoryEntry, HTMLInputElement>({
-    items: visibleChats,
+  } = useListKeyboardNavigation<CommandItem, HTMLInputElement>({
+    items: commandItems,
     open,
-    onConfirm: selectChat,
+    onConfirm: handleConfirm,
     getInitialIndex: getInitialHighlightIndex,
   });
 
@@ -144,58 +190,92 @@ export const ChatSearchDialog = ({
           </DialogClose>
         </div>
 
-        <div className="max-h-[min(32rem,calc(100vh-13rem))] overflow-y-auto p-3">
-          {visibleChats.length > 0 ? (
-            <ul className="space-y-1">
-              {visibleChats.map((session, index) => (
-                <li key={session.id}>
-                  <button
-                    ref={(element) => {
-                      itemRefs.current[index] = element;
-                    }}
-                    type="button"
-                    onClick={() => selectChat(session)}
-                    onMouseEnter={() => setHighlightedIndex(index)}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-sidebar-accent/70",
-                      index === highlightedIndex &&
-                        "bg-sidebar-accent/80 text-sidebar-accent-foreground",
-                      session.id === activeChatId &&
-                        "bg-sidebar-accent text-sidebar-accent-foreground",
-                    )}
-                  >
-                    <MessageCircle className="size-5 shrink-0 text-muted-foreground" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-base font-medium">
-                        {session.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {session.group}
-                      </p>
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="rounded-lg px-2 py-4 text-left text-sm text-muted-foreground">
-              <div>
-                <p className="font-medium text-sidebar-foreground">
-                  {isLoadingEmptyState
-                    ? "Suche läuft..."
-                    : hasAnySessions
-                      ? "Keine Sessions für diese Suche."
-                      : "Du hast noch keine Sessions."}
-                </p>
-                {!isLoadingEmptyState && !hasAnySessions ? (
-                  <p className="mt-1">
-                    Starte deinen ersten Chat, dann erscheinen deine Sessions
-                    hier.
+        <div className="max-h-[min(32rem,calc(100vh-13rem))] overflow-y-auto p-2">
+          <SectionHeader label="Schnellaktionen" />
+          <ul className="space-y-1">
+            <li>
+              <button
+                ref={(element) => {
+                  itemRefs.current[0] = element;
+                }}
+                type="button"
+                onClick={triggerNewChat}
+                onMouseEnter={() => setHighlightedIndex(0)}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-sidebar-accent/70",
+                  highlightedIndex === 0 &&
+                    "bg-sidebar-accent/80 text-sidebar-accent-foreground",
+                )}
+              >
+                <CirclePlus className="size-5 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-base font-medium">
+                    Neuer Chat
+                    {debouncedQuery.length > 0 ? (
+                      <span className="ml-2 text-muted-foreground">
+                        &ldquo;{debouncedQuery}&rdquo;
+                      </span>
+                    ) : null}
                   </p>
+                </div>
+                {highlightedIndex === 0 ? (
+                  <ShortcutKey label="Enter" />
                 ) : null}
-              </div>
+              </button>
+            </li>
+          </ul>
+
+          {visibleChats.length > 0 ? (
+            <>
+              <SectionHeader label="Zuletzt verwendet" />
+              <ul className="space-y-1">
+                {visibleChats.map((session, index) => {
+                  const itemIndex = index + 1;
+                  return (
+                    <li key={session.id}>
+                      <button
+                        ref={(element) => {
+                          itemRefs.current[itemIndex] = element;
+                        }}
+                        type="button"
+                        onClick={() => selectChat(session)}
+                        onMouseEnter={() => setHighlightedIndex(itemIndex)}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-sidebar-accent/70",
+                          itemIndex === highlightedIndex &&
+                            "bg-sidebar-accent/80 text-sidebar-accent-foreground",
+                          session.id === activeChatId &&
+                            "bg-sidebar-accent text-sidebar-accent-foreground",
+                        )}
+                      >
+                        <MessageCircle className="size-5 shrink-0 text-muted-foreground" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-base font-medium">
+                            {session.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {session.group}
+                          </p>
+                        </div>
+                        {itemIndex === highlightedIndex ? (
+                          <ShortcutKey label="Enter" />
+                        ) : null}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          ) : !isLoadingEmptyState && !hasAnySessions ? (
+            <div className="rounded-lg px-3 py-4 text-left text-sm text-muted-foreground">
+              <p className="font-medium text-sidebar-foreground">
+                Du hast noch keine Sessions.
+              </p>
+              <p className="mt-1">
+                Starte deinen ersten Chat, dann erscheinen deine Sessions hier.
+              </p>
             </div>
-          )}
+          ) : null}
         </div>
 
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-sidebar-border px-5 py-3 text-xs text-muted-foreground">

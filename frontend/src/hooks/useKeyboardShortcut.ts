@@ -125,7 +125,7 @@ export const useListKeyboardNavigation = <
   getInitialIndex,
   global = false,
 }: UseListKeyboardNavigationOptions<T>) => {
-  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   useEffect(() => {
     if (!open) {
@@ -135,9 +135,11 @@ export const useListKeyboardNavigation = <
     const rawInitialIndex =
       items.length === 0 ? -1 : (getInitialIndex?.() ?? 0);
     const nextIndex =
-      rawInitialIndex >= 0 && rawInitialIndex < items.length
-        ? rawInitialIndex
-        : 0;
+      rawInitialIndex < 0
+        ? -1
+        : rawInitialIndex < items.length
+          ? rawInitialIndex
+          : 0;
 
     const frameId = requestAnimationFrame(() => {
       setHighlightedIndex(items.length === 0 ? -1 : nextIndex);
