@@ -2,7 +2,7 @@ import { useCallback, useMemo, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { logout, refresh } from "@/api/generated/auth-api";
+import { logout } from "@/api/generated/auth-api";
 import { getMe } from "@/api/generated/user-api";
 
 import {
@@ -20,13 +20,7 @@ const resolveAuthSession = async (): Promise<AuthSessionResult> => {
     await getMe();
     return { authenticated: true };
   } catch {
-    try {
-      await refresh();
-      await getMe();
-      return { authenticated: true };
-    } catch {
-      return { authenticated: false };
-    }
+    return { authenticated: false };
   }
 };
 

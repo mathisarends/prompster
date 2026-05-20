@@ -9,7 +9,9 @@
 
 @layer base {
   button,
-  [role="button"] {
+  [role="button"],
+  [role="menuitem"],
+  [role="option"] {
     cursor: pointer;
   }
 }

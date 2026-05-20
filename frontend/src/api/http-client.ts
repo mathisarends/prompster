@@ -1,5 +1,10 @@
 import Axios, { type AxiosError, type AxiosRequestConfig } from "axios";
 
+type RetryableRequestConfig = AxiosRequestConfig & {
+  _retry?: boolean;
+  skipAuthRefresh?: boolean;
+};
+
 const resolveApiBaseUrl = (): string => {
   const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
   if (configuredApiBaseUrl) {
@@ -20,6 +25,54 @@ export const AXIOS_INSTANCE = Axios.create({
     "Content-Type": "application/json",
   },
 });
+
+let refreshPromise: Promise<void> | null = null;
+
+const isRefreshRequest = (config: RetryableRequestConfig): boolean => {
+  const requestUrl = config.url ?? "";
+  return (
+    requestUrl.includes("/api/v1/auth/refresh") ||
+    requestUrl.includes("/auth/refresh")
+  );
+};
+
+AXIOS_INSTANCE.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined;
+
+    if (
+      error.response?.status !== 401 ||
+      !originalRequest ||
+      originalRequest.skipAuthRefresh ||
+      originalRequest._retry ||
+      isRefreshRequest(originalRequest)
+    ) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      if (!refreshPromise) {
+        refreshPromise = AXIOS_INSTANCE({
+          url: "/api/v1/auth/refresh",
+          method: "POST",
+          skipAuthRefresh: true,
+        } as RetryableRequestConfig)
+          .then(() => undefined)
+          .finally(() => {
+            refreshPromise = null;
+          });
+      }
+
+      await refreshPromise;
+      return AXIOS_INSTANCE(originalRequest);
+    } catch (refreshError) {
+      return Promise.reject(refreshError);
+    }
+  },
+);
 
 export const customInstance = <T>(
   config: AxiosRequestConfig,
