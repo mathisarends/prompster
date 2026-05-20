@@ -4,6 +4,7 @@ import { useLocation, useParams } from "react-router-dom";
 import type { SessionResponse } from "@/api/generated/model";
 import { AssistantChatMessage } from "@/components/chat/assistant-chat-message";
 import { ChatInputBox } from "@/components/chat/chat-input-box";
+import { ChatMessageSkeleton } from "@/components/chat/chat-message-skeleton";
 import { ChatPageHeader } from "@/components/chat/chat-page-header";
 import { FollowUpQuestionGroup } from "@/components/chat/follow-up-question-group";
 import { ToolCallAccordion } from "@/components/chat/tool-call-accordion";
@@ -110,22 +111,26 @@ export const ChatPage = () => {
     <div className="chat-page-background flex h-dvh overflow-hidden text-foreground">
       <div className="relative z-10 min-h-0 flex-1">
         <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-          <ChatPageHeader title={headerTitle} />
+          <ChatPageHeader title={headerTitle} isLoading={isLoadingSession} />
 
           <main className="prompster-scrollbar min-h-0 flex-1 overflow-y-auto px-4 sm:px-8">
             <div className="mx-auto flex w-full max-w-4xl flex-col">
               <div className="flex flex-col gap-4 px-1 pt-1 sm:px-2">
                 {isLoadingSession ? (
-                  <p className="px-1 py-2 text-sm text-muted-foreground">
-                    Lade Session...
-                  </p>
-                ) : isError ? (
-                  <p className="px-1 py-2 text-sm text-destructive">
-                    Session konnte nicht geladen werden.
-                  </p>
-                ) : null}
-
-                {entries.map(renderEntry)}
+                  <>
+                    <ChatMessageSkeleton variant="user" />
+                    <ChatMessageSkeleton variant="assistant" />
+                  </>
+                ) : (
+                  <>
+                    {isError && (
+                      <p className="px-1 py-2 text-sm text-destructive">
+                        Session konnte nicht geladen werden.
+                      </p>
+                    )}
+                    {entries.map(renderEntry)}
+                  </>
+                )}
                 <div ref={messagesEndRef} />
               </div>
             </div>
