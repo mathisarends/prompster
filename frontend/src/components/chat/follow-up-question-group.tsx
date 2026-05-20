@@ -5,7 +5,7 @@ import type {
 import {
   FollowUpQuestionFlow,
   type FollowUpQuestionOption,
-} from "@/components/follow-up-question-flow";
+} from "@/components/chat/follow-up-question-flow";
 import { cn } from "@/lib/utils";
 
 type FollowUpQuestionGroupProps = {

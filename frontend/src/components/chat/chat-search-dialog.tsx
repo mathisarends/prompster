@@ -8,7 +8,7 @@ import { useListKeyboardNavigation } from "@/hooks/useKeyboardShortcut";
 import {
   toSessionHistoryEntries,
   type SessionHistoryEntry,
-} from "@/components/session-history-utils";
+} from "@/components/sidebar/session-history-utils";
 import { cn } from "@/lib/utils";
 
 type ChatSearchDialogProps = {

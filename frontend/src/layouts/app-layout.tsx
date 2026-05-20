@@ -2,7 +2,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { PanelLeft } from "lucide-react";
 
 import type { SessionSummaryResponse } from "@/api/generated/model";
-import { NavigationSidebar } from "@/components/navigation-sidebar";
+import { NavigationSidebar } from "@/components/sidebar/navigation-sidebar";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useViewport } from "@/hooks/useViewport";
 import { cn } from "@/lib/utils";

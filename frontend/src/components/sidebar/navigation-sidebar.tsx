@@ -19,12 +19,12 @@ import { useGetMe } from "@/api/generated/user-api";
 import { useAuth } from "@/auth/use-auth";
 
 import { Button } from "@/components/ui/button";
-import { ChatSearchDialog } from "@/components/chat-search-dialog";
+import { ChatSearchDialog } from "@/components/chat/chat-search-dialog";
 import {
   KeyboardShortcutHint,
   formatShortcutKey,
   type ShortcutKey,
-} from "@/components/keyboard-shortcut-hint";
+} from "@/components/sidebar/keyboard-shortcut-hint";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -34,14 +34,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { toSessionHistoryEntries } from "@/components/session-history-utils";
-import { SidebarSessionItem } from "@/components/sidebar-session-item";
+import { toSessionHistoryEntries } from "@/components/sidebar/session-history-utils";
+import { SidebarSessionItem } from "@/components/sidebar/sidebar-session-item";
 import {
   DeleteChatDialog,
   RenameChatDialog,
-} from "@/components/sidebar-session-dialogs";
+} from "@/components/sidebar/sidebar-session-dialogs";
+import { PrompsterLogo } from "@/components/prompster-logo";
 import { cn } from "@/lib/utils";
-import { PrompsterLogo } from "./prompster-logo";
 
 const NEW_CHAT_SHORTCUT: ShortcutKey[] = ["mod", "shift", "o"];
 const SEARCH_SHORTCUT: ShortcutKey[] = ["mod", "k"];

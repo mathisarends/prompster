@@ -20,13 +20,13 @@ import {
   useGetSession,
 } from "@/api/generated/session-api";
 import { streamFollowUp, streamSendMessage } from "@/api/session-stream";
-import { AssistantChatMessage } from "@/components/assistant-chat-message";
-import { ChatInputBox } from "@/components/chat-input-box";
-import { ChatPageHeader } from "@/components/chat-page-header";
-import { FollowUpQuestionGroup } from "@/components/follow-up-question-group";
-import type { FollowUpQuestionOption } from "@/components/follow-up-question-flow";
-import { ToolCallAccordion } from "@/components/tool-call-accordion";
-import { UserChatMessage } from "@/components/user-chat-message";
+import { AssistantChatMessage } from "@/components/chat/assistant-chat-message";
+import { ChatInputBox } from "@/components/chat/chat-input-box";
+import { ChatPageHeader } from "@/components/chat/chat-page-header";
+import { FollowUpQuestionGroup } from "@/components/chat/follow-up-question-group";
+import type { FollowUpQuestionOption } from "@/components/chat/follow-up-question-flow";
+import { ToolCallAccordion } from "@/components/chat/tool-call-accordion";
+import { UserChatMessage } from "@/components/chat/user-chat-message";
 import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
 import { cn } from "@/lib/utils";
 

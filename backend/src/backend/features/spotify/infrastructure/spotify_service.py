@@ -1,6 +1,11 @@
 from spotifyify import Image, Spotifyify, Track
+from spotifyify.schemas import SimplifiedPlaylist
 
-from backend.features.spotify.application.ports import SpotifyService, SpotifyTrack
+from backend.features.spotify.application.ports import (
+    SpotifyPlaylist,
+    SpotifyService,
+    SpotifyTrack,
+)
 
 
 class SpotifyifyService(SpotifyService):
@@ -18,6 +23,33 @@ class SpotifyifyService(SpotifyService):
             for track in result.items or []
             if track.id and track.name
         ]
+
+    async def search_playlists(
+        self, *, query: str, limit: int = 20
+    ) -> list[SpotifyPlaylist]:
+        normalized_query = query.strip()
+        if not normalized_query:
+            return []
+
+        result = await self._spotify.playlists.find(normalized_query, limit=limit)
+        return [
+            _to_spotify_playlist(playlist)
+            for playlist in result.items or []
+            if playlist.id and playlist.name
+        ]
+
+
+def _to_spotify_playlist(playlist: SimplifiedPlaylist) -> SpotifyPlaylist:
+    total = playlist.items.total if playlist.items else None
+    cover_url = playlist.images[0].url if playlist.images else None
+    owner = playlist.owner.display_name if playlist.owner else None
+    return SpotifyPlaylist(
+        id=playlist.id or "",
+        name=playlist.name or "",
+        owner=owner,
+        cover_url=cover_url,
+        total_tracks=total,
+    )
 
 
 def _to_spotify_track(track: Track) -> SpotifyTrack:

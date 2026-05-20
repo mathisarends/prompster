@@ -8,7 +8,7 @@ import {
   X,
 } from "lucide-react";
 
-import { SendButton } from "@/components/send-button";
+import { SendButton } from "@/components/chat/send-button";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useListKeyboardNavigation } from "@/hooks/useKeyboardShortcut";

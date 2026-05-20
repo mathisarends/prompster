@@ -8,7 +8,7 @@ import {
   getListSessionsQueryKey,
 } from "@/api/generated/session-api";
 import { Badge } from "@/components/ui/badge";
-import { ChatInputBox } from "@/components/chat-input-box";
+import { ChatInputBox } from "@/components/chat/chat-input-box";
 
 export const HomePage = () => {
   const [prompt, setPrompt] = useState("");

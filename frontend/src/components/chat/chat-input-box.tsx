@@ -1,6 +1,6 @@
 import { type MouseEvent, useEffect, useRef, useState } from "react";
 
-import { SendButton } from "@/components/send-button";
+import { SendButton } from "@/components/chat/send-button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 

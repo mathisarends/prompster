@@ -13,3 +13,15 @@ class SpotifyTrackResponse(Schema):
 
 class SpotifyTrackSearchResponse(Schema):
     items: list[SpotifyTrackResponse]
+
+
+class SpotifyPlaylistResponse(Schema):
+    id: str
+    name: str
+    owner: str | None = None
+    cover_url: str | None = None
+    total_tracks: int | None = None
+
+
+class SpotifyPlaylistSearchResponse(Schema):
+    items: list[SpotifyPlaylistResponse]

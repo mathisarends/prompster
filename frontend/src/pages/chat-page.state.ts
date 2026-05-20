@@ -12,7 +12,7 @@ import type { SessionServerEvent } from "@/api/session-stream";
 import type {
   ToolCallItem,
   ToolCallStatus,
-} from "@/components/tool-call-accordion";
+} from "@/components/chat/tool-call-accordion";
 
 type SessionLike =
   | Pick<SessionResponse, "id" | "title" | "entries">
