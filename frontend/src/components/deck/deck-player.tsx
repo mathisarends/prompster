@@ -10,7 +10,7 @@ import {
   VolumeX,
 } from "lucide-react";
 
-import { PlayerSlider } from "@/components/player-slider";
+import { PlayerSlider } from "@/components/deck/player-slider";
 import { Button } from "@/components/ui/button";
 import { type PlaylistTrack } from "@/lib/mockTracks";
 

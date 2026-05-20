@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pause, Play, X } from "lucide-react";
 
-import { DeckPlayer } from "@/components/deck-player";
+import { DeckPlayer } from "@/components/deck/deck-player";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SearchBar } from "@/components/search-bar";
+import { SearchBar } from "@/components/deck/search-bar";
 import { cn } from "@/lib/utils";
 import { mockTracks, type PlaylistTrack } from "@/lib/mockTracks";
 
