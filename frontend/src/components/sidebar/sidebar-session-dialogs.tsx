@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { SessionSummaryResponse } from "@/api/generated/model";
 import {
   deleteSession,
+  getGetSessionQueryKey,
   getListSessionsQueryKey,
   updateSession,
 } from "@/api/generated/session-api";
@@ -19,8 +20,10 @@ import { Input } from "@/components/ui/input";
 
 const MAX_TITLE_LENGTH = 120;
 
+type ChatDialogSession = Pick<SessionSummaryResponse, "id" | "title">;
+
 type RenameChatDialogProps = {
-  session: SessionSummaryResponse | null;
+  session: ChatDialogSession | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -42,10 +45,15 @@ export const RenameChatDialog = ({
   const mutation = useMutation({
     mutationFn: ({ id, nextTitle }: { id: string; nextTitle: string }) =>
       updateSession(id, { title: nextTitle }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: getListSessionsQueryKey(),
-      });
+    onSuccess: async (_data, { id }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: getListSessionsQueryKey(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getGetSessionQueryKey(id),
+        }),
+      ]);
       onOpenChange(false);
     },
   });
@@ -67,7 +75,7 @@ export const RenameChatDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl p-8">
         <DialogTitle className="text-2xl">Chat umbenennen</DialogTitle>
-        <DialogDescription className="mt-2 text-base">
+        <DialogDescription className="mt-0.5 text-base">
           Gib deinem Chat einen neuen Namen.
         </DialogDescription>
         <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
@@ -105,7 +113,7 @@ export const RenameChatDialog = ({
 };
 
 type DeleteChatDialogProps = {
-  session: SessionSummaryResponse | null;
+  session: ChatDialogSession | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleted?: (sessionId: string) => void;
@@ -128,9 +136,7 @@ export const DeleteChatDialog = ({
       onOpenChange(false);
       onDeleted?.(id);
       toast.success("Chat gelöscht", {
-        description: session
-          ? `„${session.title}" wurde entfernt.`
-          : undefined,
+        description: session ? `„${session.title}" wurde entfernt.` : undefined,
       });
     },
   });

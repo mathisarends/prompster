@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { MoreVertical, Pencil, Star, Trash2 } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 
 import type { SessionSummaryResponse } from "@/api/generated/model";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SessionActionsMenuItems } from "@/components/sidebar/session-actions-menu-items";
 import { cn } from "@/lib/utils";
 
 type SidebarSessionItemProps = {
@@ -59,29 +59,13 @@ export const SidebarSessionItem = ({
           <MoreVertical className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="bottom" sideOffset={4}>
-          <DropdownMenuItem onClick={onToggleStar} disabled={isTogglingStar}>
-            <Star className={session.isStarred ? "fill-current" : undefined} />
-            <span>
-              {session.isStarred
-                ? isTogglingStar
-                  ? "Stern wird entfernt..."
-                  : "Stern entfernen"
-                : isTogglingStar
-                  ? "Markiere..."
-                  : "Markieren"}
-            </span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onRename}>
-            <Pencil />
-            <span>Umbenennen</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={onDelete}
-            className="text-destructive data-highlighted:bg-destructive/10 data-highlighted:text-destructive"
-          >
-            <Trash2 />
-            <span>Löschen</span>
-          </DropdownMenuItem>
+          <SessionActionsMenuItems
+            isStarred={session.isStarred}
+            isTogglingStar={isTogglingStar}
+            onToggleStar={onToggleStar}
+            onRename={onRename}
+            onDelete={onDelete}
+          />
         </DropdownMenuContent>
       </DropdownMenu>
     </li>

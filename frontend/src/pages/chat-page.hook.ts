@@ -31,6 +31,7 @@ type UseChatSessionParams = {
 };
 
 export type UseChatSessionResult = {
+  session?: SessionResponse;
   title?: string;
   entries: ChatEntry[];
   followUpDrafts: Record<string, string>;
@@ -264,6 +265,7 @@ export const useChatSession = ({
   );
 
   return {
+    session,
     title: state.title ?? session?.title,
     entries: state.entries,
     followUpDrafts: state.followUpDrafts,

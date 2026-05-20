@@ -27,3 +27,15 @@ class EnvSettings(BaseSettings):
     @property
     def is_prod(self) -> bool:
         return self.env == _EnvironmentMode.PROD
+
+
+# TODO: Actually use this and block routes if they do not support it
+class FeatureToggleSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        populate_by_name=True,
+    )
+
+    enable_spotify_sync: bool = False

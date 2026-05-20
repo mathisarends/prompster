@@ -1,12 +1,6 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronsUpDown, LogOut, PanelLeft, Plus, Search } from "lucide-react";
-import {
-  getListSessionsQueryKey,
-  starSession,
-  unstarSession,
-  useListSessions,
-} from "@/api/generated/session-api";
+import { useListSessions } from "@/api/generated/session-api";
 import type { SessionSummaryResponse } from "@/api/generated/model";
 import { useGetMe } from "@/api/generated/user-api";
 import { useAuth } from "@/auth/use-auth";
@@ -19,6 +13,7 @@ import {
   type ShortcutKey,
 } from "@/components/sidebar/keyboard-shortcut-hint";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
+import { useSessionStarActions } from "@/hooks/useSessionStarActions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -71,7 +66,6 @@ export const NavigationSidebar = ({
   activeChatId,
 }: NavigationSidebarProps) => {
   const { signOut } = useAuth();
-  const queryClient = useQueryClient();
   const [searchOpen, setSearchOpen] = useState(false);
   const [renameTarget, setRenameTarget] =
     useState<SessionSummaryResponse | null>(null);
@@ -95,29 +89,7 @@ export const NavigationSidebar = ({
     [sessions],
   );
 
-  const starMutation = useMutation({
-    mutationFn: (sessionId: string) => starSession(sessionId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: getListSessionsQueryKey(),
-      });
-    },
-  });
-  const unstarMutation = useMutation({
-    mutationFn: (sessionId: string) => unstarSession(sessionId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: getListSessionsQueryKey(),
-      });
-    },
-  });
-
-  const starringSessionId = starMutation.isPending
-    ? starMutation.variables
-    : null;
-  const unstarringSessionId = unstarMutation.isPending
-    ? unstarMutation.variables
-    : null;
+  const { toggleStar, isTogglingFor } = useSessionStarActions();
 
   const initials =
     user?.name
@@ -151,21 +123,6 @@ export const NavigationSidebar = ({
     if (sessionId === activeChatId) {
       onNewChat();
     }
-  };
-
-  const handleToggleStarSession = (session: SessionSummaryResponse) => {
-    if (session.isStarred) {
-      if (unstarMutation.isPending) {
-        return;
-      }
-      unstarMutation.mutate(session.id);
-      return;
-    }
-
-    if (starMutation.isPending) {
-      return;
-    }
-    starMutation.mutate(session.id);
   };
 
   return (
@@ -301,15 +258,10 @@ export const NavigationSidebar = ({
                             session={session}
                             isActive={session.id === activeChatId}
                             onSelect={() => selectChat(session)}
-                            onToggleStar={() =>
-                              handleToggleStarSession(session)
-                            }
+                            onToggleStar={() => toggleStar(session)}
                             onRename={() => setRenameTarget(session)}
                             onDelete={() => setDeleteTarget(session)}
-                            isTogglingStar={
-                              session.id === starringSessionId ||
-                              session.id === unstarringSessionId
-                            }
+                            isTogglingStar={isTogglingFor(session.id)}
                           />
                         ))}
                       </ul>
@@ -332,15 +284,10 @@ export const NavigationSidebar = ({
                             session={session}
                             isActive={session.id === activeChatId}
                             onSelect={() => selectChat(session)}
-                            onToggleStar={() =>
-                              handleToggleStarSession(session)
-                            }
+                            onToggleStar={() => toggleStar(session)}
                             onRename={() => setRenameTarget(session)}
                             onDelete={() => setDeleteTarget(session)}
-                            isTogglingStar={
-                              session.id === starringSessionId ||
-                              session.id === unstarringSessionId
-                            }
+                            isTogglingStar={isTogglingFor(session.id)}
                           />
                         ))}
                       </ul>

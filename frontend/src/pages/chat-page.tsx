@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import type { SessionResponse } from "@/api/generated/model";
 import { AssistantChatMessage } from "@/components/chat/assistant-chat-message";
@@ -28,6 +28,7 @@ export const ChatPage = () => {
   const { chatId } = useParams();
   const sessionId = chatId ?? "";
   const location = useLocation();
+  const navigate = useNavigate();
   const routeState = location.state as ChatRouteState | null;
 
   const initialSession = useMemo(() => {
@@ -36,6 +37,7 @@ export const ChatPage = () => {
   }, [routeState?.session, sessionId]);
 
   const {
+    session,
     title,
     entries,
     followUpDrafts,
@@ -111,7 +113,14 @@ export const ChatPage = () => {
     <div className="chat-page-background flex h-dvh overflow-hidden text-foreground">
       <div className="relative z-10 min-h-0 flex-1">
         <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-          <ChatPageHeader title={headerTitle} isLoading={isLoadingSession} />
+          <ChatPageHeader
+            session={session}
+            title={headerTitle}
+            isLoading={isLoadingSession}
+            onSessionDeleted={() =>
+              navigate("/new", { state: { newChatAt: Date.now() } })
+            }
+          />
 
           <main className="prompster-scrollbar min-h-0 flex-1 overflow-y-auto px-4 sm:px-8">
             <div className="mx-auto flex w-full max-w-4xl flex-col">
