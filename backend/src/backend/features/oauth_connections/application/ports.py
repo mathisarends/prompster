@@ -21,7 +21,7 @@ class SpotifyOAuthProvider(ABC):
     async def refresh_access_token(self, *, refresh_token: str) -> SpotifyTokens: ...
 
 
-class OAuthTokenCipherPort(ABC):
+class OAuthTokenCipher(ABC):
     @abstractmethod
     def encrypt(self, plaintext: str) -> bytes: ...
 

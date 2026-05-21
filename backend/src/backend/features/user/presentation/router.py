@@ -23,5 +23,5 @@ async def get_me(
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[UserService],
 ) -> UserMeResponse:
-    dto = await service.get_me(user_id=authenticated_user_id)
-    return to_user_me_response(dto)
+    user = await service.get_me(user_id=authenticated_user_id)
+    return to_user_me_response(user)

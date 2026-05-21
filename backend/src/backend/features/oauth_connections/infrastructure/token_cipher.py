@@ -1,9 +1,9 @@
 from cryptography.fernet import Fernet, InvalidToken
 
-from backend.features.oauth_connections.application.ports import OAuthTokenCipherPort
+from backend.features.oauth_connections.application.ports import OAuthTokenCipher
 
 
-class OAuthTokenCipher(OAuthTokenCipherPort):
+class FernetOAuthTokenCipher(OAuthTokenCipher):
     def __init__(self, encryption_key: str) -> None:
         normalized_key = encryption_key.strip()
         if not normalized_key:

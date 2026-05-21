@@ -11,6 +11,7 @@ class User(Aggregate):
         name: str,
         email: str,
         google_subject: str,
+        spotify_connected: bool = False,
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> None:
@@ -18,3 +19,4 @@ class User(Aggregate):
         self.name = name
         self.email = email
         self.google_subject = google_subject
+        self.spotify_connected = spotify_connected

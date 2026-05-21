@@ -10,7 +10,10 @@ from backend.features.auth.infrastructure.di import AuthProvider
 from backend.features.oauth_connections.infrastructure.di import (
     OAuthConnectionsProvider,
 )
-from backend.features.oauth_connections.presentation import spotify_oauth_router
+from backend.features.oauth_connections.presentation import (
+    register_oauth_connections_exception_handlers,
+    spotify_oauth_router,
+)
 from backend.features.spotify.infrastructure.di import SpotifyProvider
 from backend.features.spotify.presentation import spotify_router
 from backend.features.session.presentation import (
@@ -64,6 +67,7 @@ def _create_app() -> FastAPI:
 
     _setup_middleware(app)
     register_auth_exception_handlers(app)
+    register_oauth_connections_exception_handlers(app)
     register_session_exception_handlers(app)
 
     container = make_async_container(

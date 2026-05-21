@@ -10,14 +10,12 @@ from backend.features.oauth_connections.application import (
     SpotifyTokenRevokedException,
     SpotifyTokenService,
 )
+from backend.features.oauth_connections.application.ports import OAuthTokenCipher
 from backend.features.oauth_connections.application.schemas import SpotifyTokens
 from backend.features.oauth_connections.domain import (
     OAuthConnection,
     OAuthConnectionRepository,
     OAuthProvider,
-)
-from backend.features.oauth_connections.infrastructure.token_cipher import (
-    OAuthTokenCipher,
 )
 
 

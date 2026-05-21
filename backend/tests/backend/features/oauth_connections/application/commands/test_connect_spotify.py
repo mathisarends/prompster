@@ -3,22 +3,22 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from backend.features.oauth_connections.application.commands.connect_spotify import (
-    ConnectSpotifyHandler,
+from backend.features.oauth_connections.application.ports import (
+    OAuthTokenCipher,
+    SpotifyOAuthProvider,
 )
-from backend.features.oauth_connections.application.ports import SpotifyOAuthProvider
 from backend.features.oauth_connections.application.schemas import (
     SpotifyAuthorizationRequest,
     SpotifyCallbackResult,
     SpotifyTokens,
 )
+from backend.features.oauth_connections.application.spotify_oauth_connection_service import (
+    SpotifyOAuthConnectionService,
+)
 from backend.features.oauth_connections.domain import (
     OAuthConnection,
     OAuthConnectionRepository,
     OAuthProvider,
-)
-from backend.features.oauth_connections.infrastructure.token_cipher import (
-    OAuthTokenCipher,
 )
 
 
@@ -91,21 +91,21 @@ class _TokenCipherStub(OAuthTokenCipher):
         return ciphertext.decode("utf-8")
 
 
-class TestConnectSpotifyHandler:
+class TestSpotifyOAuthConnectionService:
     def test_start_binds_user_id_into_state(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr("secrets.token_urlsafe", lambda _: "nonce-1")
         repository = _OAuthConnectionRepositoryStub()
         provider = _SpotifyOAuthProviderStub()
-        handler = ConnectSpotifyHandler(
+        service = SpotifyOAuthConnectionService(
             connection_repository=repository,
             spotify_oauth_provider=provider,
             token_cipher=_TokenCipherStub(),
         )
         user_id = uuid4()
 
-        result = handler.start(user_id=user_id)
+        result = service.start_connect(user_id=user_id)
 
         assert isinstance(result, SpotifyAuthorizationRequest)
         assert result.state == f"{user_id}:nonce-1"
@@ -115,7 +115,7 @@ class TestConnectSpotifyHandler:
     def test_complete_returns_user_mismatch_when_state_user_differs(self) -> None:
         repository = _OAuthConnectionRepositoryStub()
         provider = _SpotifyOAuthProviderStub()
-        handler = ConnectSpotifyHandler(
+        service = SpotifyOAuthConnectionService(
             connection_repository=repository,
             spotify_oauth_provider=provider,
             token_cipher=_TokenCipherStub(),
@@ -124,7 +124,7 @@ class TestConnectSpotifyHandler:
         state = f"{state_user_id}:nonce-1"
 
         result = asyncio.run(
-            handler.complete(
+            service.complete_connect(
                 authenticated_user_id=uuid4(),
                 code="code-1",
                 state=state,
@@ -138,7 +138,7 @@ class TestConnectSpotifyHandler:
     def test_complete_saves_connection_and_returns_success(self) -> None:
         repository = _OAuthConnectionRepositoryStub()
         provider = _SpotifyOAuthProviderStub()
-        handler = ConnectSpotifyHandler(
+        service = SpotifyOAuthConnectionService(
             connection_repository=repository,
             spotify_oauth_provider=provider,
             token_cipher=_TokenCipherStub(),
@@ -147,7 +147,7 @@ class TestConnectSpotifyHandler:
         state = f"{user_id}:nonce-1"
 
         result = asyncio.run(
-            handler.complete(
+            service.complete_connect(
                 authenticated_user_id=user_id,
                 code="code-1",
                 state=state,

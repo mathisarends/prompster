@@ -1,5 +1,5 @@
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
@@ -7,10 +7,7 @@ from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.oauth_popup import OAuthPopupResponse
 from backend.features.oauth_connections.application import (
-    ConnectSpotifyHandler,
-    DisconnectSpotifyHandler,
-    SpotifyConnectionNotFoundException,
-    SpotifyTokenRevokedException,
+    SpotifyOAuthConnectionService,
     SpotifyTokenService,
 )
 from backend.features.oauth_connections.presentation.schemas import (
@@ -44,10 +41,10 @@ _spotify_token_errors = {
 )
 async def spotify_connect(
     authenticated_user_id: AuthenticatedUserId,
-    handler: FromDishka[ConnectSpotifyHandler],
+    service: FromDishka[SpotifyOAuthConnectionService],
     auth_cookies: FromDishka[AuthCookies],
 ) -> RedirectResponse:
-    authorization_request = handler.start(user_id=authenticated_user_id)
+    authorization_request = service.start_connect(user_id=authenticated_user_id)
     response = RedirectResponse(
         url=authorization_request.authorization_url,
         status_code=status.HTTP_307_TEMPORARY_REDIRECT,
@@ -68,14 +65,14 @@ async def spotify_connect(
 async def spotify_callback(
     request: Request,
     authenticated_user_id: AuthenticatedUserId,
-    handler: FromDishka[ConnectSpotifyHandler],
+    service: FromDishka[SpotifyOAuthConnectionService],
     auth_cookies: FromDishka[AuthCookies],
     auth_settings: FromDishka[AuthSettings],
     code: str | None = Query(default=None, min_length=1, max_length=4096),
     state: str = Query(min_length=1, max_length=4096),
     error: str | None = Query(default=None, min_length=1, max_length=256),
 ) -> HTMLResponse:
-    result = await handler.complete(
+    result = await service.complete_connect(
         authenticated_user_id=authenticated_user_id,
         code=code,
         state=state,
@@ -99,9 +96,9 @@ async def spotify_callback(
 )
 async def spotify_disconnect(
     authenticated_user_id: AuthenticatedUserId,
-    handler: FromDishka[DisconnectSpotifyHandler],
+    service: FromDishka[SpotifyOAuthConnectionService],
 ) -> None:
-    await handler.handle(user_id=authenticated_user_id)
+    await service.disconnect(user_id=authenticated_user_id)
 
 
 @spotify_oauth_router.get(
@@ -118,20 +115,9 @@ async def spotify_get_access_token(
 ) -> SpotifyAccessTokenResponse:
     response.headers["Cache-Control"] = "no-store"
 
-    try:
-        access_token = await token_service.get_valid_access_token(
-            user_id=authenticated_user_id,
-        )
-    except SpotifyConnectionNotFoundException as exc:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Spotify is not connected",
-        ) from exc
-    except SpotifyTokenRevokedException as exc:
-        raise HTTPException(
-            status_code=status.HTTP_410_GONE,
-            detail="Spotify access revoked, please reconnect",
-        ) from exc
+    access_token = await token_service.get_valid_access_token(
+        user_id=authenticated_user_id,
+    )
 
     return SpotifyAccessTokenResponse(
         access_token=access_token.access_token,

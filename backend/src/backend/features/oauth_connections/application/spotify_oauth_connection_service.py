@@ -2,8 +2,10 @@ import secrets
 from datetime import datetime, timezone
 from uuid import UUID
 
-from backend.features.oauth_connections.application.ports import SpotifyOAuthProvider
-from backend.features.oauth_connections.application.ports import OAuthTokenCipherPort
+from backend.features.oauth_connections.application.ports import (
+    OAuthTokenCipher,
+    SpotifyOAuthProvider,
+)
 from backend.features.oauth_connections.application.schemas import (
     SpotifyAuthorizationRequest,
     SpotifyCallbackResult,
@@ -15,20 +17,20 @@ from backend.features.oauth_connections.domain import (
 )
 
 
-class ConnectSpotifyHandler:
+class SpotifyOAuthConnectionService:
     _STATE_TOKEN_BYTES = 32
 
     def __init__(
         self,
         connection_repository: OAuthConnectionRepository,
         spotify_oauth_provider: SpotifyOAuthProvider,
-        token_cipher: OAuthTokenCipherPort,
+        token_cipher: OAuthTokenCipher,
     ) -> None:
         self._connection_repository = connection_repository
         self._spotify_oauth_provider = spotify_oauth_provider
         self._token_cipher = token_cipher
 
-    def start(self, *, user_id: UUID) -> SpotifyAuthorizationRequest:
+    def start_connect(self, *, user_id: UUID) -> SpotifyAuthorizationRequest:
         state_payload = f"{user_id}:{secrets.token_urlsafe(self._STATE_TOKEN_BYTES)}"
         authorization_url = self._spotify_oauth_provider.build_authorization_url(
             state=state_payload,
@@ -38,7 +40,7 @@ class ConnectSpotifyHandler:
             state=state_payload,
         )
 
-    async def complete(
+    async def complete_connect(
         self,
         *,
         authenticated_user_id: UUID,
@@ -94,3 +96,9 @@ class ConnectSpotifyHandler:
         )
         await self._connection_repository.save(connection=connection)
         return SpotifyCallbackResult.success()
+
+    async def disconnect(self, *, user_id: UUID) -> None:
+        await self._connection_repository.delete(
+            user_id=user_id,
+            provider=OAuthProvider.SPOTIFY,
+        )

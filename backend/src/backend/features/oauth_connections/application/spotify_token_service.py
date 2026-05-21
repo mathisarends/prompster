@@ -5,7 +5,7 @@ from backend.features.oauth_connections.application.exceptions import (
     SpotifyTokenRevokedException,
 )
 from backend.features.oauth_connections.application.ports import (
-    OAuthTokenCipherPort,
+    OAuthTokenCipher,
     SpotifyOAuthProvider,
 )
 from backend.features.oauth_connections.application.schemas import SpotifyAccessToken
@@ -20,7 +20,7 @@ class SpotifyTokenService:
         self,
         connection_repository: OAuthConnectionRepository,
         spotify_oauth_provider: SpotifyOAuthProvider,
-        token_cipher: OAuthTokenCipherPort,
+        token_cipher: OAuthTokenCipher,
     ) -> None:
         self._connection_repository = connection_repository
         self._spotify_oauth_provider = spotify_oauth_provider

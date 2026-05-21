@@ -6,9 +6,8 @@ from backend.features.auth.infrastructure.auth_settings import (
     SpotifyAuthSettings,
 )
 from backend.features.oauth_connections.application import (
-    ConnectSpotifyHandler,
-    DisconnectSpotifyHandler,
-    OAuthTokenCipherPort,
+    OAuthTokenCipher,
+    SpotifyOAuthConnectionService,
     SpotifyOAuthProvider,
     SpotifyTokenService,
 )
@@ -20,7 +19,7 @@ from backend.features.oauth_connections.infrastructure.spotify_oauth_client impo
     SpotifyOAuthClient,
 )
 from backend.features.oauth_connections.infrastructure.token_cipher import (
-    OAuthTokenCipher,
+    FernetOAuthTokenCipher,
 )
 
 
@@ -33,8 +32,8 @@ class OAuthConnectionsProvider(Provider):
     def provide_token_cipher(
         self,
         auth_settings: AuthSettings,
-    ) -> OAuthTokenCipherPort:
-        return OAuthTokenCipher(
+    ) -> OAuthTokenCipher:
+        return FernetOAuthTokenCipher(
             encryption_key=auth_settings.spotify_token_encryption_key,
         )
 
@@ -53,31 +52,24 @@ class OAuthConnectionsProvider(Provider):
         return SqlOAuthConnectionRepository(session=session)
 
     @provide(scope=Scope.REQUEST)
-    def provide_connect_handler(
+    def provide_oauth_connection_service(
         self,
         repo: OAuthConnectionRepository,
         provider: SpotifyOAuthProvider,
-        cipher: OAuthTokenCipherPort,
-    ) -> ConnectSpotifyHandler:
-        return ConnectSpotifyHandler(
+        cipher: OAuthTokenCipher,
+    ) -> SpotifyOAuthConnectionService:
+        return SpotifyOAuthConnectionService(
             connection_repository=repo,
             spotify_oauth_provider=provider,
             token_cipher=cipher,
         )
 
     @provide(scope=Scope.REQUEST)
-    def provide_disconnect_handler(
-        self,
-        repo: OAuthConnectionRepository,
-    ) -> DisconnectSpotifyHandler:
-        return DisconnectSpotifyHandler(connection_repository=repo)
-
-    @provide(scope=Scope.REQUEST)
     def provide_token_service(
         self,
         repo: OAuthConnectionRepository,
         provider: SpotifyOAuthProvider,
-        cipher: OAuthTokenCipherPort,
+        cipher: OAuthTokenCipher,
     ) -> SpotifyTokenService:
         return SpotifyTokenService(
             connection_repository=repo,
