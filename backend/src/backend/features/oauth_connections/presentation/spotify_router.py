@@ -3,7 +3,6 @@ from fastapi import APIRouter, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
-from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.oauth_popup import OAuthPopupResponse
 from backend.features.oauth_connections.application import (
@@ -12,6 +11,9 @@ from backend.features.oauth_connections.application import (
 )
 from backend.features.oauth_connections.presentation.schemas import (
     SpotifyAccessTokenResponse,
+)
+from backend.features.oauth_connections.presentation.spotify_oauth_state_cookies import (
+    SpotifyOAuthStateCookies,
 )
 from backend.presentation.errors import ErrorDto
 
@@ -42,14 +44,14 @@ _spotify_token_errors = {
 async def spotify_connect(
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SpotifyOAuthConnectionService],
-    auth_cookies: FromDishka[AuthCookies],
+    spotify_oauth_state_cookies: FromDishka[SpotifyOAuthStateCookies],
 ) -> RedirectResponse:
     authorization_request = service.start_connect(user_id=authenticated_user_id)
     response = RedirectResponse(
         url=authorization_request.authorization_url,
         status_code=status.HTTP_307_TEMPORARY_REDIRECT,
     )
-    auth_cookies.set_spotify_oauth_state(
+    spotify_oauth_state_cookies.set(
         response=response,
         state=authorization_request.state,
     )
@@ -66,7 +68,7 @@ async def spotify_callback(
     request: Request,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SpotifyOAuthConnectionService],
-    auth_cookies: FromDishka[AuthCookies],
+    spotify_oauth_state_cookies: FromDishka[SpotifyOAuthStateCookies],
     auth_settings: FromDishka[AuthSettings],
     code: str | None = Query(default=None, min_length=1, max_length=4096),
     state: str = Query(min_length=1, max_length=4096),
@@ -77,14 +79,14 @@ async def spotify_callback(
         code=code,
         state=state,
         error=error,
-        expected_oauth_state=auth_cookies.read_spotify_oauth_state(request=request),
+        expected_oauth_state=spotify_oauth_state_cookies.read(request=request),
     )
     response = OAuthPopupResponse.for_spotify(
         target_origin=auth_settings.frontend_base_url,
         succeeded=result.succeeded,
         reason=result.error_reason,
     )
-    auth_cookies.clear_spotify_oauth_state(response)
+    spotify_oauth_state_cookies.clear(response)
     return response
 
 

@@ -8,14 +8,16 @@ from backend.features.auth.application import (
     RefreshSessionHandler,
 )
 from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
-from backend.features.auth.infrastructure.auth_settings import (
-    AuthSettings,
-    GoogleAuthSettings,
-)
+from backend.features.auth.infrastructure.auth_settings import AuthSettings
+from backend.features.auth.infrastructure.google_auth_settings import GoogleAuthSettings
 from backend.features.auth.infrastructure.google_oauth_client import GoogleOAuthClient
 from backend.features.auth.infrastructure.jwt_token_issuer import JwtTokenIssuer
-from backend.features.user.domain import UserRepository
+from backend.features.auth.infrastructure.oauth_state_settings import OAuthStateSettings
 from backend.features.auth.presentation.cookies import AuthCookies
+from backend.features.auth.presentation.oauth_state_cookies import (
+    GoogleOAuthStateCookies,
+)
+from backend.features.user.domain import UserRepository
 
 
 class AuthProvider(Provider):
@@ -30,6 +32,10 @@ class AuthProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_google_auth_settings(self) -> GoogleAuthSettings:
         return GoogleAuthSettings()
+
+    @provide(scope=Scope.APP)
+    def provide_oauth_state_settings(self) -> OAuthStateSettings:
+        return OAuthStateSettings()
 
     @provide(scope=Scope.APP)
     def provide_token_issuer(
@@ -80,3 +86,19 @@ class AuthProvider(Provider):
         env_config: EnvSettings,
     ) -> AuthCookies:
         return AuthCookies(auth_settings=auth_settings, env_config=env_config)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_google_oauth_state_cookies(
+        self,
+        auth_settings: AuthSettings,
+        google_auth_settings: GoogleAuthSettings,
+        oauth_state_settings: OAuthStateSettings,
+        env_config: EnvSettings,
+    ) -> GoogleOAuthStateCookies:
+        return GoogleOAuthStateCookies(
+            cookie_name=google_auth_settings.state_cookie_name,
+            ttl_seconds=oauth_state_settings.ttl_seconds,
+            signing_secret=auth_settings.jwt_secret,
+            frontend_base_url=auth_settings.frontend_base_url,
+            env_config=env_config,
+        )

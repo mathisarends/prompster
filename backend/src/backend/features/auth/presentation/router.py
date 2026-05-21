@@ -10,6 +10,9 @@ from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.oauth_popup import OAuthPopupResponse
+from backend.features.auth.presentation.oauth_state_cookies import (
+    GoogleOAuthStateCookies,
+)
 from backend.presentation.errors import ErrorDto
 
 auth_router = APIRouter(
@@ -34,7 +37,7 @@ _invalid_refresh_token = {
 )
 async def google_login(
     handler: FromDishka[GoogleOAuthFlowHandler],
-    auth_cookies: FromDishka[AuthCookies],
+    google_oauth_state_cookies: FromDishka[GoogleOAuthStateCookies],
 ) -> RedirectResponse:
     authorization_request = handler.login()
 
@@ -42,7 +45,7 @@ async def google_login(
         url=authorization_request.authorization_url,
         status_code=status.HTTP_307_TEMPORARY_REDIRECT,
     )
-    auth_cookies.set_oauth_state(
+    google_oauth_state_cookies.set(
         response=redirect_response,
         state=authorization_request.state,
     )
@@ -59,6 +62,7 @@ async def google_callback(
     request: Request,
     handler: FromDishka[GoogleOAuthFlowHandler],
     auth_cookies: FromDishka[AuthCookies],
+    google_oauth_state_cookies: FromDishka[GoogleOAuthStateCookies],
     auth_settings: FromDishka[AuthSettings],
     code: str | None = Query(default=None, min_length=1, max_length=4096),
     state: str = Query(min_length=1, max_length=4096),
@@ -68,7 +72,7 @@ async def google_callback(
         code=code,
         state=state,
         error=error,
-        expected_oauth_state=auth_cookies.read_oauth_state(request=request),
+        expected_oauth_state=google_oauth_state_cookies.read(request=request),
     )
 
     if result.succeeded and result.session is not None:
@@ -82,7 +86,7 @@ async def google_callback(
             reason=result.error_reason or "invalid_credentials",
         )
 
-    auth_cookies.clear_oauth_state(response)
+    google_oauth_state_cookies.clear(response)
     return response
 
 

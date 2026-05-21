@@ -5,7 +5,7 @@ from pydantic import ValidationError
 
 from backend.features.auth.application.ports import GoogleOAuthProvider
 from backend.features.auth.application.schemas import GoogleIdentity
-from backend.features.auth.infrastructure.auth_settings import GoogleAuthSettings
+from backend.features.auth.infrastructure.google_auth_settings import GoogleAuthSettings
 
 
 class GoogleOAuthClient(GoogleOAuthProvider):

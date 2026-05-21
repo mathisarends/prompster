@@ -8,6 +8,9 @@ from backend.features.auth.application import GoogleOAuthFlowHandler
 from backend.features.auth.application.schemas import GoogleCallbackResult
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.presentation.cookies import AuthCookies
+from backend.features.auth.presentation.oauth_state_cookies import (
+    GoogleOAuthStateCookies,
+)
 from backend.features.auth.presentation.router import google_callback
 
 
@@ -37,13 +40,18 @@ class _GoogleOAuthFlowHandlerStub:
 
 
 class _AuthCookiesStub:
+    def set(self, response: HTMLResponse, auth_session: object) -> None:
+        pass
+
+
+class _GoogleOAuthStateCookiesStub:
     def __init__(self) -> None:
         self.clear_called = False
 
-    def read_oauth_state(self, request: Request) -> str | None:
+    def read(self, *, request: Request) -> str | None:
         return "state-1"
 
-    def clear_oauth_state(self, response: HTMLResponse) -> None:
+    def clear(self, response: HTMLResponse) -> None:
         self.clear_called = True
 
 
@@ -63,12 +71,14 @@ class TestGoogleCallback:
     def test_access_denied_returns_popup_error(self) -> None:
         handler = _GoogleOAuthFlowHandlerStub()
         auth_cookies = _AuthCookiesStub()
+        state_cookies = _GoogleOAuthStateCookiesStub()
 
         response = asyncio.run(
             google_callback(
                 request=_build_request(),
                 handler=cast(GoogleOAuthFlowHandler, handler),
                 auth_cookies=cast(AuthCookies, auth_cookies),
+                google_oauth_state_cookies=cast(GoogleOAuthStateCookies, state_cookies),
                 auth_settings=AuthSettings(frontend_base_url="http://localhost:5173"),
                 code=None,
                 state="state-1",
@@ -85,17 +95,19 @@ class TestGoogleCallback:
         assert handler.received_state == "state-1"
         assert handler.received_error == "access_denied"
         assert handler.received_expected_oauth_state == "state-1"
-        assert auth_cookies.clear_called is True
+        assert state_cookies.clear_called is True
 
     def test_missing_code_returns_popup_error(self) -> None:
         handler = _GoogleOAuthFlowHandlerStub()
         auth_cookies = _AuthCookiesStub()
+        state_cookies = _GoogleOAuthStateCookiesStub()
 
         response = asyncio.run(
             google_callback(
                 request=_build_request(),
                 handler=cast(GoogleOAuthFlowHandler, handler),
                 auth_cookies=cast(AuthCookies, auth_cookies),
+                google_oauth_state_cookies=cast(GoogleOAuthStateCookies, state_cookies),
                 auth_settings=AuthSettings(frontend_base_url="http://localhost:5173"),
                 code=None,
                 state="state-1",
@@ -111,4 +123,4 @@ class TestGoogleCallback:
         assert handler.received_state == "state-1"
         assert handler.received_error is None
         assert handler.received_expected_oauth_state == "state-1"
-        assert auth_cookies.clear_called is True
+        assert state_cookies.clear_called is True

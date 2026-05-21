@@ -4,9 +4,14 @@ from urllib.parse import urlencode
 import httpx
 from pydantic import ValidationError
 
-from backend.features.auth.infrastructure.auth_settings import SpotifyAuthSettings
 from backend.features.oauth_connections.application.ports import SpotifyOAuthProvider
 from backend.features.oauth_connections.application.schemas import SpotifyTokens
+from backend.features.oauth_connections.infrastructure.spotify_auth_settings import (
+    SpotifyAuthSettings,
+)
+from backend.features.oauth_connections.infrastructure.spotify_scopes import (
+    SPOTIFY_SCOPE_STRING,
+)
 
 
 class SpotifyOAuthClient(SpotifyOAuthProvider):
@@ -25,7 +30,7 @@ class SpotifyOAuthClient(SpotifyOAuthProvider):
                 "client_id": self._settings.client_id,
                 "response_type": "code",
                 "redirect_uri": self._settings.redirect_uri,
-                "scope": self._settings.scope,
+                "scope": SPOTIFY_SCOPE_STRING,
                 "state": normalized_state,
                 "show_dialog": "false",
             }
