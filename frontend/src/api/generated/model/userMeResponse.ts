@@ -11,4 +11,5 @@ export interface UserMeResponse {
   name: string;
   email: string;
   createdAt: string;
+  spotifyConnected: boolean;
 }
