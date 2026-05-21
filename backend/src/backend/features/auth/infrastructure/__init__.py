@@ -1,9 +1,3 @@
-from .auth_settings import AuthSettings, GoogleAuthSettings
+from .auth_settings import AuthSettings, GoogleAuthSettings, SpotifyAuthSettings
 
-AuthConfig = AuthSettings
-
-__all__ = [
-    "AuthConfig",
-    "AuthSettings",
-    "GoogleAuthSettings",
-]
+__all__ = ["AuthSettings", "GoogleAuthSettings", "SpotifyAuthSettings"]
