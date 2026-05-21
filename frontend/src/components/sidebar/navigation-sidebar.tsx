@@ -461,25 +461,24 @@ export const NavigationSidebar = ({
               side="top"
               sideOffset={8}
             >
-              <DropdownMenuItem
-                onClick={handleSpotifyConnect}
-                disabled={isSpotifyOAuthLoading}
-              >
-                <Music2 />
-                <span>
-                  {isSpotifyOAuthLoading
-                    ? "Spotify verbindet..."
-                    : user?.spotifyConnected
-                      ? "Spotify neu verbinden"
-                      : "Spotify verbinden"}
-                </span>
-              </DropdownMenuItem>
-              {user?.spotifyConnected && (
+              {user?.spotifyConnected ? (
                 <DropdownMenuItem
                   onClick={() => void handleSpotifyDisconnect()}
                 >
                   <Music2 />
                   <span>Spotify trennen</span>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={handleSpotifyConnect}
+                  disabled={isSpotifyOAuthLoading}
+                >
+                  <Music2 />
+                  <span>
+                    {isSpotifyOAuthLoading
+                      ? "Spotify verbindet..."
+                      : "Spotify verbinden"}
+                  </span>
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={() => void signOut()}>
