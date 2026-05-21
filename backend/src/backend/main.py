@@ -23,7 +23,7 @@ from backend.features.session.presentation import (
 from backend.features.session.infrastructure.di import SessionProvider
 from backend.features.user.presentation import user_router
 from backend.features.user.infrastructure.di import UserProvider
-from backend.infrastructure.di.database_provider import DatabaseProvider
+from backend.infrastructure.di import DatabaseProvider, StorageBackendProvider
 from backend.presentation import PascalCaseRouter, LoggingMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -72,6 +72,7 @@ def _create_app() -> FastAPI:
 
     container = make_async_container(
         DatabaseProvider(),
+        StorageBackendProvider(),
         AuthProvider(),
         OAuthConnectionsProvider(),
         SpotifyProvider(),

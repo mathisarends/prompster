@@ -1,5 +1,6 @@
 from enum import StrEnum
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,8 +18,7 @@ class EnvSettings(BaseSettings):
     )
 
     env: _EnvironmentMode = _EnvironmentMode.DEV
-
-    allowed_origins: set[str] = set()
+    frontend_base_url: str = "http://127.0.0.1:5173"
 
     @property
     def is_dev(self) -> bool:
@@ -27,6 +27,17 @@ class EnvSettings(BaseSettings):
     @property
     def is_prod(self) -> bool:
         return self.env == _EnvironmentMode.PROD
+
+    @property
+    def allowed_origins(self) -> list[str]:
+        return [self.frontend_base_url]
+
+    @field_validator("frontend_base_url")
+    @classmethod
+    def validate_frontend_url(cls, value: str) -> str:
+        if not value.startswith(("http://", "https://")):
+            raise ValueError("Frontend URL must start with http:// or https://")
+        return value.rstrip("/")
 
 
 # TODO: Actually use this and block routes if they do not support it

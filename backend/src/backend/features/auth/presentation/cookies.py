@@ -1,5 +1,4 @@
 from typing import Final
-from urllib.parse import urlparse
 
 from fastapi import Response
 
@@ -15,7 +14,6 @@ class AuthCookies:
     def __init__(self, auth_settings: AuthSettings, env_config: EnvSettings):
         self._auth_settings = auth_settings
         self._env_config = env_config
-        self._domain = urlparse(auth_settings.frontend_base_url).hostname
 
     def set(self, response: Response, auth_session: AuthSession) -> None:
         self._set_cookie(
@@ -37,12 +35,10 @@ class AuthCookies:
         response.delete_cookie(
             key=self._auth_settings.access_token_cookie_name,
             path="/",
-            domain=self._domain,
         )
         response.delete_cookie(
             key=self._auth_settings.jwt_refresh_token_cookie_name,
             path="/",
-            domain=self._domain,
         )
 
     def _set_cookie(
@@ -64,7 +60,6 @@ class AuthCookies:
             httponly=True,
             secure=self._env_config.is_prod,
             samesite=cookie_same_site,
-            domain=self._domain,
             path="/",
             max_age=max_age,
         )

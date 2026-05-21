@@ -27,7 +27,7 @@ class OAuthStateCookies:
         self._cookie_name = cookie_name
         self._ttl_seconds = ttl_seconds
         self._signing_key = signing_secret.encode("utf-8")
-        self._domain = urlparse(frontend_base_url).hostname
+        self._legacy_domain = urlparse(frontend_base_url).hostname
         self._env_config = env_config
 
     def set(self, *, response: Response, state: str) -> None:
@@ -36,13 +36,13 @@ class OAuthStateCookies:
             raise ValueError("OAuth state must not be empty")
 
         signed_state = self._encode(state=normalized_state)
+        self._delete_legacy_domain_cookie(response=response)
         response.set_cookie(
             key=self._cookie_name,
             value=signed_state,
             httponly=True,
             secure=self._env_config.is_prod,
             samesite="lax",
-            domain=self._domain,
             path="/",
             max_age=self._ttl_seconds,
         )
@@ -57,7 +57,17 @@ class OAuthStateCookies:
         response.delete_cookie(
             key=self._cookie_name,
             path="/",
-            domain=self._domain,
+        )
+        self._delete_legacy_domain_cookie(response=response)
+
+    def _delete_legacy_domain_cookie(self, *, response: Response) -> None:
+        if self._legacy_domain is None:
+            return
+
+        response.delete_cookie(
+            key=self._cookie_name,
+            path="/",
+            domain=self._legacy_domain,
         )
 
     def _encode(self, *, state: str) -> str:

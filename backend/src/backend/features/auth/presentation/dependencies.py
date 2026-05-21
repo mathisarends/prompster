@@ -17,19 +17,50 @@ async def _get_token_issuer(conn: HTTPConnection) -> TokenIssuer:
     return await conn.state.dishka_container.get(TokenIssuer)
 
 
-def _get_token_payload(
+def _get_cookie_token_payload(
     conn: HTTPConnection,
-    auth_settings: Annotated[AuthSettings, Depends(_get_auth_settings)],
-    token_issuer: Annotated[TokenIssuer, Depends(_get_token_issuer)],
+    auth_settings: AuthSettings,
+    token_issuer: TokenIssuer,
+    *,
+    cookie_name: str,
+    expected_type: TokenType,
 ) -> TokenPayload:
-    token = conn.cookies.get(auth_settings.access_token_cookie_name)
+    token = conn.cookies.get(cookie_name)
     if not token:
         _raise(conn, "Authentication required")
 
     try:
-        return token_issuer.validate(token, expected_type=TokenType.ACCESS)
+        return token_issuer.validate(token, expected_type=expected_type)
     except Exception as exc:
         _raise(conn, "Invalid or expired token", exc)
+
+
+def _get_access_token_payload(
+    conn: HTTPConnection,
+    auth_settings: Annotated[AuthSettings, Depends(_get_auth_settings)],
+    token_issuer: Annotated[TokenIssuer, Depends(_get_token_issuer)],
+) -> TokenPayload:
+    return _get_cookie_token_payload(
+        conn,
+        auth_settings,
+        token_issuer,
+        cookie_name=auth_settings.access_token_cookie_name,
+        expected_type=TokenType.ACCESS,
+    )
+
+
+def _get_refresh_token_payload(
+    conn: HTTPConnection,
+    auth_settings: Annotated[AuthSettings, Depends(_get_auth_settings)],
+    token_issuer: Annotated[TokenIssuer, Depends(_get_token_issuer)],
+) -> TokenPayload:
+    return _get_cookie_token_payload(
+        conn,
+        auth_settings,
+        token_issuer,
+        cookie_name=auth_settings.jwt_refresh_token_cookie_name,
+        expected_type=TokenType.REFRESH,
+    )
 
 
 def _raise(conn: HTTPConnection, detail: str, exc: Exception | None = None) -> None:
@@ -46,9 +77,19 @@ def _raise(conn: HTTPConnection, detail: str, exc: Exception | None = None) -> N
 
 
 def _get_authenticated_user_id(
-    payload: Annotated[TokenPayload, Depends(_get_token_payload)],
+    payload: Annotated[TokenPayload, Depends(_get_access_token_payload)],
+) -> UUID:
+    return payload.user_id
+
+
+def _get_refresh_authenticated_user_id(
+    payload: Annotated[TokenPayload, Depends(_get_refresh_token_payload)],
 ) -> UUID:
     return payload.user_id
 
 
 AuthenticatedUserId = Annotated[UUID, Depends(_get_authenticated_user_id)]
+RefreshAuthenticatedUserId = Annotated[
+    UUID,
+    Depends(_get_refresh_authenticated_user_id),
+]

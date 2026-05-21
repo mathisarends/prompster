@@ -58,7 +58,11 @@ export const LandingPage = () => {
 
       if (event.data.status === "success") {
         setOAuthError(null);
-        void signIn();
+        void signIn().catch(() => {
+          setOAuthError(
+            "Anmeldung abgeschlossen, aber die Sitzung konnte nicht geladen werden.",
+          );
+        });
       } else {
         setOAuthError(
           event.data.reason === "access_denied"

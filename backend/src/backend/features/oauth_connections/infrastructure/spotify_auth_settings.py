@@ -1,4 +1,4 @@
-from pydantic import AliasChoices, Field, field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,21 +10,10 @@ class SpotifyAuthSettings(BaseSettings):
         env_prefix="SPOTIFY_",
     )
 
-    client_id: str = Field(
-        default="",
-        validation_alias=AliasChoices("SPOTIFY_CLIENT_ID", "spotify_client_id"),
-    )
-    client_secret: str = Field(
-        default="",
-        validation_alias=AliasChoices(
-            "SPOTIFY_CLIENT_SECRET",
-            "spotify_client_secret",
-        ),
-    )
-    redirect_uri: str = Field(
-        default="",
-        validation_alias=AliasChoices("SPOTIFY_REDIRECT_URI", "spotify_redirect_uri"),
-    )
+    client_id: str = Field(default="")
+    client_secret: str = Field(default="")
+    redirect_uri: str = Field(default="")
+
     authorization_endpoint: str = Field(
         default="https://accounts.spotify.com/authorize",
     )
@@ -35,13 +24,7 @@ class SpotifyAuthSettings(BaseSettings):
         default="https://api.spotify.com/v1/me",
     )
     state_cookie_name: str = "spotify_oauth_state"
-    token_encryption_key: str = Field(
-        default="",
-        validation_alias=AliasChoices(
-            "SPOTIFY_TOKEN_ENCRYPTION_KEY",
-            "spotify_token_encryption_key",
-        ),
-    )
+    token_encryption_key: str = Field(default="")
 
     @field_validator(
         "redirect_uri",

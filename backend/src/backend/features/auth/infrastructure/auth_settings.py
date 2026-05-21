@@ -23,7 +23,7 @@ class AuthSettings(BaseSettings):
         populate_by_name=True,
     )
 
-    frontend_base_url: str = "http://localhost:5173"
+    frontend_base_url: str = "http://127.0.0.1:5173"
 
     jwt_secret: str = "dev-secret-change-me"
     jwt_algorithm: _JwtAlgorithm = _JwtAlgorithm.HS256
@@ -42,7 +42,3 @@ class AuthSettings(BaseSettings):
         if not v.startswith(("http://", "https://")):
             raise ValueError("Frontend URL must start with http:// or https://")
         return v.rstrip("/")
-
-    @property
-    def allowed_origins(self) -> list[str]:
-        return [self.frontend_base_url]

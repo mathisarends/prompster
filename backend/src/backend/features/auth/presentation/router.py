@@ -8,7 +8,9 @@ from backend.features.auth.application import (
 )
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.presentation.cookies import AuthCookies
-from backend.features.auth.presentation.dependencies import AuthenticatedUserId
+from backend.features.auth.presentation.dependencies import (
+    RefreshAuthenticatedUserId,
+)
 from backend.features.auth.presentation.oauth_popup import OAuthPopupResponse
 from backend.features.auth.presentation.oauth_state_cookies import (
     GoogleOAuthStateCookies,
@@ -111,7 +113,7 @@ async def logout(
     responses=_invalid_refresh_token,
 )
 async def refresh(
-    authenticated_user_id: AuthenticatedUserId,
+    authenticated_user_id: RefreshAuthenticatedUserId,
     response: Response,
     handler: FromDishka[RefreshSessionHandler],
     auth_cookies: FromDishka[AuthCookies],

@@ -43,13 +43,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       : "unauthenticated";
 
   const signIn = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
     const result = await queryClient.fetchQuery({
       queryKey: AUTH_QUERY_KEY,
       queryFn: resolveAuthSession,
+      staleTime: 0,
     });
     if (result.authenticated) {
       navigate("/new", { replace: true });
+      return;
     }
+
+    throw new Error("Session could not be loaded after sign-in.");
   }, [navigate, queryClient]);
 
   const signOut = useCallback(async () => {
