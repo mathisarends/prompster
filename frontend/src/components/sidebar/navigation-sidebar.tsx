@@ -1,8 +1,19 @@
-import { useMemo, useState } from "react";
-import { ChevronsUpDown, LogOut, Music2, PanelLeft, Plus, Search } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ChevronsUpDown,
+  LogOut,
+  Music2,
+  PanelLeft,
+  Plus,
+  Search,
+} from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useListSessions } from "@/api/generated/session-api";
 import type { SessionSummaryResponse } from "@/api/generated/model";
-import { useGetMe } from "@/api/generated/user-api";
+import { getSpotifyConnectQueryKey } from "@/api/generated/spotify/spotify";
+import { getGetMeQueryKey, useGetMe } from "@/api/generated/user-api";
+import { AXIOS_INSTANCE } from "@/api/http-client";
 import { useAuth } from "@/auth/use-auth";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +45,38 @@ import { cn } from "@/lib/utils";
 const NEW_CHAT_SHORTCUT: ShortcutKey[] = ["mod", "shift", "o"];
 const SEARCH_SHORTCUT: ShortcutKey[] = ["mod", "k"];
 const TOGGLE_SIDEBAR_SHORTCUT: ShortcutKey[] = ["mod", "shift", "."];
+const SPOTIFY_OAUTH_MESSAGE_TYPE = "prompster-spotify-oauth";
+
+type SpotifyOAuthPopupMessage = {
+  type: typeof SPOTIFY_OAUTH_MESSAGE_TYPE;
+  status: "success" | "error";
+  reason?: string;
+};
+
+const isSpotifyOAuthPopupMessage = (
+  data: unknown,
+): data is SpotifyOAuthPopupMessage => {
+  if (typeof data !== "object" || data === null) return false;
+
+  const candidate = data as { type?: unknown; status?: unknown };
+  return (
+    candidate.type === SPOTIFY_OAUTH_MESSAGE_TYPE &&
+    (candidate.status === "success" || candidate.status === "error")
+  );
+};
+
+const resolveBackendOrigin = (): string => {
+  const baseUrl =
+    AXIOS_INSTANCE.defaults.baseURL ??
+    `${window.location.protocol}//${window.location.hostname}:8000`;
+
+  return new URL(baseUrl, window.location.origin).origin;
+};
+
+const getSpotifyConnectUrl = (): string => {
+  const [spotifyConnectPath] = getSpotifyConnectQueryKey();
+  return new URL(spotifyConnectPath, resolveBackendOrigin()).toString();
+};
 
 const InlineShortcutKeys = ({ keys }: { keys: ShortcutKey[] }) => (
   <span className="ml-auto flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -66,11 +109,15 @@ export const NavigationSidebar = ({
   activeChatId,
 }: NavigationSidebarProps) => {
   const { signOut } = useAuth();
+  const queryClient = useQueryClient();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isSpotifyOAuthLoading, setIsSpotifyOAuthLoading] = useState(false);
   const [renameTarget, setRenameTarget] =
     useState<SessionSummaryResponse | null>(null);
   const [deleteTarget, setDeleteTarget] =
     useState<SessionSummaryResponse | null>(null);
+  const spotifyOAuthPopupRef = useRef<Window | null>(null);
+  const spotifyPopupClosedCheckRef = useRef<number | null>(null);
   const { data: user } = useGetMe();
   const { data: sessionsData, isLoading: isLoadingSessions } = useListSessions({
     limit: 200,
@@ -90,6 +137,72 @@ export const NavigationSidebar = ({
   );
 
   const { toggleStar, isTogglingFor } = useSessionStarActions();
+
+  const stopSpotifyPopupClosedCheck = useCallback(() => {
+    if (spotifyPopupClosedCheckRef.current !== null) {
+      window.clearInterval(spotifyPopupClosedCheckRef.current);
+      spotifyPopupClosedCheckRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    const backendOrigin = resolveBackendOrigin();
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== backendOrigin) return;
+      if (!isSpotifyOAuthPopupMessage(event.data)) return;
+
+      stopSpotifyPopupClosedCheck();
+      spotifyOAuthPopupRef.current?.close();
+      spotifyOAuthPopupRef.current = null;
+      setIsSpotifyOAuthLoading(false);
+
+      if (event.data.status === "success") {
+        void queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+        toast.success("Spotify verbunden.");
+      } else {
+        toast.error(
+          event.data.reason === "access_denied"
+            ? "Spotify-Verbindung abgebrochen."
+            : "Spotify-Verbindung fehlgeschlagen.",
+        );
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      stopSpotifyPopupClosedCheck();
+    };
+  }, [queryClient, stopSpotifyPopupClosedCheck]);
+
+  const handleSpotifyConnect = () => {
+    if (isSpotifyOAuthLoading) return;
+
+    const spotifyConnectUrl = getSpotifyConnectUrl();
+    const oauthPopup = window.open(
+      spotifyConnectUrl,
+      SPOTIFY_OAUTH_MESSAGE_TYPE,
+      "popup,width=520,height=720",
+    );
+
+    if (!oauthPopup) {
+      window.location.assign(spotifyConnectUrl);
+      return;
+    }
+
+    spotifyOAuthPopupRef.current = oauthPopup;
+    setIsSpotifyOAuthLoading(true);
+
+    stopSpotifyPopupClosedCheck();
+    spotifyPopupClosedCheckRef.current = window.setInterval(() => {
+      if (spotifyOAuthPopupRef.current?.closed) {
+        stopSpotifyPopupClosedCheck();
+        spotifyOAuthPopupRef.current = null;
+        setIsSpotifyOAuthLoading(false);
+      }
+    }, 500);
+  };
 
   const initials =
     user?.name
@@ -339,9 +452,18 @@ export const NavigationSidebar = ({
               side="top"
               sideOffset={8}
             >
-              <DropdownMenuItem onClick={() => {}}>
+              <DropdownMenuItem
+                onClick={handleSpotifyConnect}
+                disabled={isSpotifyOAuthLoading}
+              >
                 <Music2 />
-                <span>Spotify verbinden</span>
+                <span>
+                  {isSpotifyOAuthLoading
+                    ? "Spotify verbindet..."
+                    : user?.spotifyConnected
+                      ? "Spotify neu verbinden"
+                      : "Spotify verbinden"}
+                </span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => void signOut()}>
                 <LogOut />

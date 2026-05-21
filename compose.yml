@@ -24,6 +24,7 @@ services:
       SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:-}
       SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:-}
       SPOTIFY_REDIRECT_URI: ${SPOTIFY_REDIRECT_URI:-}
+      SPOTIFY_TOKEN_ENCRYPTION_KEY: ${SPOTIFY_TOKEN_ENCRYPTION_KEY:-}
     volumes:
       - ./backend/src:/app/backend/src
       - ./llm/src:/app/llm/src

@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,7 +22,7 @@ from backend.features.oauth_connections.infrastructure.spotify_auth_settings imp
 from backend.features.oauth_connections.infrastructure.spotify_oauth_client import (
     SpotifyOAuthClient,
 )
-from backend.features.oauth_connections.infrastructure.token_cipher import (
+from backend.features.oauth_connections.infrastructure.fernet_token_cypher import (
     FernetOAuthTokenCipher,
 )
 from backend.features.oauth_connections.presentation.spotify_oauth_state_cookies import (
@@ -30,8 +32,25 @@ from backend.features.oauth_connections.presentation.spotify_oauth_state_cookies
 
 class OAuthConnectionsProvider(Provider):
     @provide(scope=Scope.APP)
-    def provide_spotify_auth_settings(self) -> SpotifyAuthSettings:
-        return SpotifyAuthSettings()
+    def provide_spotify_auth_settings(
+        self,
+        auth_settings: AuthSettings,
+    ) -> SpotifyAuthSettings:
+        spotify_auth_settings = SpotifyAuthSettings()
+
+        redirect_host = urlparse(spotify_auth_settings.redirect_uri).hostname
+        frontend_host = urlparse(auth_settings.frontend_base_url).hostname
+        if (
+            redirect_host
+            and frontend_host
+            and redirect_host.lower() != frontend_host.lower()
+        ):
+            raise ValueError(
+                "SPOTIFY_REDIRECT_URI host must match frontend_base_url host "
+                "so access cookies are sent on /auth/spotify/callback"
+            )
+
+        return spotify_auth_settings
 
     @provide(scope=Scope.APP)
     def provide_token_cipher(
