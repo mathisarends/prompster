@@ -1,5 +1,3 @@
-from urllib.parse import urlparse
-
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -36,21 +34,9 @@ class OAuthConnectionsProvider(Provider):
         self,
         auth_settings: AuthSettings,
     ) -> SpotifyAuthSettings:
-        spotify_auth_settings = SpotifyAuthSettings()
-
-        redirect_host = urlparse(spotify_auth_settings.redirect_uri).hostname
-        frontend_host = urlparse(auth_settings.frontend_base_url).hostname
-        if (
-            redirect_host
-            and frontend_host
-            and redirect_host.lower() != frontend_host.lower()
-        ):
-            raise ValueError(
-                "SPOTIFY_REDIRECT_URI host must match frontend_base_url host "
-                "so access cookies are sent on /auth/spotify/callback"
-            )
-
-        return spotify_auth_settings
+        settings = SpotifyAuthSettings()
+        settings.validate_redirect_host(auth_settings.frontend_base_url)
+        return settings
 
     @provide(scope=Scope.APP)
     def provide_token_cipher(

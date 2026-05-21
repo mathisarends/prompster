@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -25,6 +27,19 @@ class SpotifyAuthSettings(BaseSettings):
     )
     state_cookie_name: str = "spotify_oauth_state"
     token_encryption_key: str = Field(default="")
+
+    def validate_redirect_host(self, frontend_base_url: str) -> None:
+        redirect_host = urlparse(self.redirect_uri).hostname
+        frontend_host = urlparse(frontend_base_url).hostname
+        if (
+            redirect_host
+            and frontend_host
+            and redirect_host.lower() != frontend_host.lower()
+        ):
+            raise ValueError(
+                "SPOTIFY_REDIRECT_URI host must match frontend_base_url host "
+                "so access cookies are sent on /auth/spotify/callback"
+            )
 
     @field_validator(
         "redirect_uri",

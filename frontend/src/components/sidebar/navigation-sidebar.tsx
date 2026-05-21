@@ -11,7 +11,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useListSessions } from "@/api/generated/session-api";
 import type { SessionSummaryResponse } from "@/api/generated/model";
-import { getSpotifyConnectQueryKey } from "@/api/generated/spotify/spotify";
+import {
+  getSpotifyConnectQueryKey,
+  spotifyDisconnect,
+} from "@/api/generated/spotify/spotify";
 import { getGetMeQueryKey, useGetMe } from "@/api/generated/user-api";
 import { AXIOS_INSTANCE } from "@/api/http-client";
 import { useAuth } from "@/auth/use-auth";
@@ -202,6 +205,12 @@ export const NavigationSidebar = ({
         setIsSpotifyOAuthLoading(false);
       }
     }, 500);
+  };
+
+  const handleSpotifyDisconnect = async () => {
+    await spotifyDisconnect();
+    void queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+    toast.success("Spotify getrennt.");
   };
 
   const initials =
@@ -465,6 +474,14 @@ export const NavigationSidebar = ({
                       : "Spotify verbinden"}
                 </span>
               </DropdownMenuItem>
+              {user?.spotifyConnected && (
+                <DropdownMenuItem
+                  onClick={() => void handleSpotifyDisconnect()}
+                >
+                  <Music2 />
+                  <span>Spotify trennen</span>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => void signOut()}>
                 <LogOut />
                 <span>Abmelden</span>
