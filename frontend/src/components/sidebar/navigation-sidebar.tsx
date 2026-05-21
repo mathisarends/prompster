@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronsUpDown, LogOut, PanelLeft, Plus, Search } from "lucide-react";
+import { ChevronsUpDown, LogOut, Music2, PanelLeft, Plus, Search } from "lucide-react";
 import { useListSessions } from "@/api/generated/session-api";
 import type { SessionSummaryResponse } from "@/api/generated/model";
 import { useGetMe } from "@/api/generated/user-api";
@@ -339,6 +339,10 @@ export const NavigationSidebar = ({
               side="top"
               sideOffset={8}
             >
+              <DropdownMenuItem onClick={() => {}}>
+                <Music2 />
+                <span>Spotify verbinden</span>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => void signOut()}>
                 <LogOut />
                 <span>Abmelden</span>

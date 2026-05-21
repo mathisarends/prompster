@@ -9,3 +9,4 @@ class UserMeResponse(Schema):
     name: str
     email: str
     created_at: datetime
+    spotify_connected: bool

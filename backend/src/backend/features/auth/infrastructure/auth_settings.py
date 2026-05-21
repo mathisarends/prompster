@@ -95,7 +95,9 @@ class AuthSettings(BaseSettings):
     access_token_cookie_name: str = "access_token"
     jwt_refresh_token_cookie_name: str = "refresh_token"
     oauth_state_cookie_name: str = "oauth_state"
+    spotify_oauth_state_cookie_name: str = "spotify_oauth_state"
     oauth_state_ttl_seconds: int = 60 * 10
+    spotify_token_encryption_key: str = ""
 
     cookie_samesite_dev: _CookieSameSite = _CookieSameSite.LAX
     cookie_samesite_prod: _CookieSameSite = _CookieSameSite.STRICT
@@ -120,5 +122,47 @@ class SpotifyAuthSettings(BaseSettings):
         env_prefix="SPOTIFY_",
     )
 
-    client_id: str
-    client_secret: str
+    client_id: str = Field(
+        default="",
+        validation_alias=AliasChoices("SPOTIFY_CLIENT_ID", "spotify_client_id"),
+    )
+    client_secret: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "SPOTIFY_CLIENT_SECRET",
+            "spotify_client_secret",
+        ),
+    )
+    redirect_uri: str = Field(
+        default="",
+        validation_alias=AliasChoices("SPOTIFY_REDIRECT_URI", "spotify_redirect_uri"),
+    )
+    authorization_endpoint: str = Field(
+        default="https://accounts.spotify.com/authorize",
+    )
+    token_endpoint: str = Field(
+        default="https://accounts.spotify.com/api/token",
+    )
+    userinfo_endpoint: str = Field(
+        default="https://api.spotify.com/v1/me",
+    )
+    scope: str = Field(
+        default=(
+            "user-read-email "
+            "streaming "
+            "user-read-private "
+            "playlist-modify-private playlist-modify-public"
+        ),
+    )
+
+    @field_validator(
+        "redirect_uri",
+        "authorization_endpoint",
+        "token_endpoint",
+        "userinfo_endpoint",
+    )
+    @classmethod
+    def validate_spotify_urls(cls, v: str) -> str:
+        if v and not v.startswith(("http://", "https://")):
+            raise ValueError("Spotify URLs must start with http:// or https://")
+        return v.rstrip("/") if v else v

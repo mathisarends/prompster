@@ -51,8 +51,56 @@ class AuthCookies:
             response=response,
             key=self._auth_settings.oauth_state_cookie_name,
         )
+        self._delete_cookie(
+            response=response,
+            key=self._auth_settings.spotify_oauth_state_cookie_name,
+        )
 
     def set_oauth_state(self, response: Response, state: str) -> None:
+        self._set_signed_state_cookie(
+            response=response,
+            cookie_name=self._auth_settings.oauth_state_cookie_name,
+            state=state,
+        )
+
+    def read_oauth_state(self, request: Request) -> str | None:
+        return self._read_signed_state_cookie(
+            request=request,
+            cookie_name=self._auth_settings.oauth_state_cookie_name,
+        )
+
+    def clear_oauth_state(self, response: Response) -> None:
+        self._clear_state_cookie(
+            response=response,
+            cookie_name=self._auth_settings.oauth_state_cookie_name,
+        )
+
+    def set_spotify_oauth_state(self, response: Response, state: str) -> None:
+        self._set_signed_state_cookie(
+            response=response,
+            cookie_name=self._auth_settings.spotify_oauth_state_cookie_name,
+            state=state,
+        )
+
+    def read_spotify_oauth_state(self, request: Request) -> str | None:
+        return self._read_signed_state_cookie(
+            request=request,
+            cookie_name=self._auth_settings.spotify_oauth_state_cookie_name,
+        )
+
+    def clear_spotify_oauth_state(self, response: Response) -> None:
+        self._clear_state_cookie(
+            response=response,
+            cookie_name=self._auth_settings.spotify_oauth_state_cookie_name,
+        )
+
+    def _set_signed_state_cookie(
+        self,
+        *,
+        response: Response,
+        cookie_name: str,
+        state: str,
+    ) -> None:
         normalized_state = state.strip()
         if not normalized_state:
             raise ValueError("OAuth state must not be empty")
@@ -60,22 +108,27 @@ class AuthCookies:
         signed_state = self._encode_signed_oauth_state(state=normalized_state)
         self._set_cookie(
             response=response,
-            key=self._auth_settings.oauth_state_cookie_name,
+            key=cookie_name,
             value=signed_state,
             max_age=self._auth_settings.oauth_state_ttl_seconds,
             same_site="lax",
         )
 
-    def read_oauth_state(self, request: Request) -> str | None:
-        signed_state = request.cookies.get(self._auth_settings.oauth_state_cookie_name)
+    def _read_signed_state_cookie(
+        self,
+        *,
+        request: Request,
+        cookie_name: str,
+    ) -> str | None:
+        signed_state = request.cookies.get(cookie_name)
         if not signed_state:
             return None
         return self._decode_signed_oauth_state(signed_state=signed_state)
 
-    def clear_oauth_state(self, response: Response) -> None:
+    def _clear_state_cookie(self, *, response: Response, cookie_name: str) -> None:
         self._delete_cookie(
             response=response,
-            key=self._auth_settings.oauth_state_cookie_name,
+            key=cookie_name,
         )
 
     def _set_cookie(

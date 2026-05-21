@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Index
+from sqlalchemy import JSON, Boolean, Column, DateTime, Index, LargeBinary
 from sqlmodel import Field, Relationship, SQLModel, text
 
 
@@ -24,6 +24,20 @@ class UserModel(DatabaseEntity, table=True):
     name: str
     email: str = Field(index=True, unique=True)
     google_subject: str = Field(index=True, unique=True)
+
+
+class OAuthConnectionModel(DatabaseEntity, table=True):
+    __tablename__ = "oauth_connections"
+    __table_args__ = (
+        Index("ix_oauth_connections_user_provider", "user_id", "provider", unique=True),
+    )
+
+    user_id: UUID = Field(foreign_key="users.id", index=True)
+    provider: str
+    provider_user_id: str = Field(index=True)
+    refresh_token_encrypted: bytes = Field(sa_type=LargeBinary())
+    scope: str
+    connected_at: datetime = Field(sa_type=DateTime(timezone=True))
 
 
 class SessionModel(DatabaseEntity, table=True):

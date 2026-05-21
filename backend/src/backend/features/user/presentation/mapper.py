@@ -1,11 +1,12 @@
-from backend.features.user.domain import User
+from backend.features.user.application import UserMeDto
 from backend.features.user.presentation.schemas import UserMeResponse
 
 
-def to_user_me_response(user: User) -> UserMeResponse:
+def to_user_me_response(dto: UserMeDto) -> UserMeResponse:
     return UserMeResponse(
-        id=user.id,
-        name=user.name,
-        email=user.email,
-        created_at=user.created_at,
+        id=dto.user.id,
+        name=dto.user.name,
+        email=dto.user.email,
+        created_at=dto.user.created_at,
+        spotify_connected=dto.spotify_connected,
     )

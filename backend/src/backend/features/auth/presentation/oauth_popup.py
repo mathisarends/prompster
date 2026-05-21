@@ -3,24 +3,56 @@ import json
 from fastapi.responses import HTMLResponse
 
 _OAUTH_POPUP_MESSAGE_TYPE = "prompster-google-oauth"
+_SPOTIFY_OAUTH_POPUP_MESSAGE_TYPE = "prompster-spotify-oauth"
 
 
 class OAuthPopupResponse:
     @classmethod
     def success(cls, *, target_origin: str) -> HTMLResponse:
-        return HTMLResponse(
-            content=cls._build_html(
-                target_origin=target_origin,
-                status_value="success",
-            )
+        return cls.for_google(
+            target_origin=target_origin,
+            succeeded=True,
+            reason=None,
         )
 
     @classmethod
     def error(cls, *, target_origin: str, reason: str) -> HTMLResponse:
+        return cls.for_google(
+            target_origin=target_origin,
+            succeeded=False,
+            reason=reason,
+        )
+
+    @classmethod
+    def for_google(
+        cls,
+        *,
+        target_origin: str,
+        succeeded: bool,
+        reason: str | None,
+    ) -> HTMLResponse:
         return HTMLResponse(
             content=cls._build_html(
+                message_type=_OAUTH_POPUP_MESSAGE_TYPE,
                 target_origin=target_origin,
-                status_value="error",
+                status_value="success" if succeeded else "error",
+                reason_value=reason,
+            )
+        )
+
+    @classmethod
+    def for_spotify(
+        cls,
+        *,
+        target_origin: str,
+        succeeded: bool,
+        reason: str | None,
+    ) -> HTMLResponse:
+        return HTMLResponse(
+            content=cls._build_html(
+                message_type=_SPOTIFY_OAUTH_POPUP_MESSAGE_TYPE,
+                target_origin=target_origin,
+                status_value="success" if succeeded else "error",
                 reason_value=reason,
             )
         )
@@ -28,11 +60,12 @@ class OAuthPopupResponse:
     @staticmethod
     def _build_html(
         *,
+        message_type: str,
         target_origin: str,
         status_value: str,
         reason_value: str | None = None,
     ) -> str:
-        payload = {"type": _OAUTH_POPUP_MESSAGE_TYPE, "status": status_value}
+        payload = {"type": message_type, "status": status_value}
         if reason_value is not None:
             payload["reason"] = reason_value
 
