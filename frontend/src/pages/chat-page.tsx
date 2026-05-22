@@ -12,12 +12,12 @@ import { UserChatMessage } from "@/components/chat/user-chat-message";
 import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
 import { cn } from "@/lib/utils";
 
-import { useChatSession } from "./chat-page.hook";
 import {
   getScrollKey,
   toToolCallItems,
   type ChatEntry,
 } from "./chat-page.state";
+import { useChatSession } from "./chat-page.hook";
 
 type ChatRouteState = {
   session?: SessionResponse;

@@ -6,7 +6,7 @@ from backend.features.session.application import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionFollowUpGroupAdded,
-    SessionToolCallGroupAdded,
+    SessionToolCallSequenceAdded,
     SessionToolCallResolved,
 )
 from backend.features.session.domain import (
@@ -15,7 +15,7 @@ from backend.features.session.domain import (
     FollowUpQuestion,
     FollowUpQuestionGroup,
     PendingCall,
-    ToolCallGroup,
+    ToolCallSequence,
     ToolFunction,
 )
 from backend.features.session.presentation.sse.events import (
@@ -24,7 +24,7 @@ from backend.features.session.presentation.sse.events import (
     AssistantMessageStartedEvent,
     FollowUpGroupAddedEvent,
     SessionEventType,
-    ToolCallGroupAddedEvent,
+    ToolCallSequenceAddedEvent,
     ToolCallResolvedEvent,
 )
 from backend.features.session.presentation.sse.mappers import to_server_event
@@ -72,8 +72,8 @@ class TestSessionEventMapper:
         assert event.message.id == message.id
         assert event.message.content == "Hello world"
 
-    def test_to_server_event_maps_tool_call_group_added(self) -> None:
-        group = ToolCallGroup(
+    def test_to_server_event_maps_tool_call_sequence_added(self) -> None:
+        sequence = ToolCallSequence(
             calls=[
                 PendingCall(
                     id="call-1",
@@ -85,19 +85,19 @@ class TestSessionEventMapper:
             ]
         )
 
-        event = to_server_event(SessionToolCallGroupAdded(group=group))
+        event = to_server_event(SessionToolCallSequenceAdded(sequence=sequence))
 
-        assert isinstance(event, ToolCallGroupAddedEvent)
-        assert event.type == SessionEventType.TOOL_CALL_GROUP_ADDED
-        assert event.group.id == group.id
-        assert event.group.calls[0].id == "call-1"
+        assert isinstance(event, ToolCallSequenceAddedEvent)
+        assert event.type == SessionEventType.TOOL_CALL_SEQUENCE_ADDED
+        assert event.sequence.id == sequence.id
+        assert event.sequence.calls[0].id == "call-1"
 
     def test_to_server_event_maps_tool_call_resolved(self) -> None:
-        group_id = uuid4()
+        sequence_id = uuid4()
 
         event = to_server_event(
             SessionToolCallResolved(
-                group_id=group_id,
+                sequence_id=sequence_id,
                 tool_call_id="call-1",
                 result="done",
             )
@@ -105,7 +105,7 @@ class TestSessionEventMapper:
 
         assert isinstance(event, ToolCallResolvedEvent)
         assert event.type == SessionEventType.TOOL_CALL_RESOLVED
-        assert event.group_id == group_id
+        assert event.sequence_id == sequence_id
         assert event.tool_call_id == "call-1"
         assert event.result == "done"
 

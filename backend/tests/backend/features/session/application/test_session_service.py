@@ -9,6 +9,7 @@ from backend.features.session.application.events import (
     SessionAssistantMessageChunk,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
+    SessionToolCallSequenceAdded,
     SessionToolCallResolved,
 )
 from backend.features.session.application.ports.session_runner import (
@@ -16,6 +17,8 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
     SessionRunnerEvent,
+    SessionRunnerToolCallCompleted,
+    SessionRunnerToolCallStarted,
 )
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
@@ -32,6 +35,7 @@ from backend.features.session.application.session_service import (
     SessionService,
 )
 from backend.features.session.domain import (
+    CompletedCall,
     FollowUpOption,
     FollowUpQuestion,
     FollowUpQuestionState,
@@ -39,6 +43,7 @@ from backend.features.session.domain import (
     Session,
     SessionAccessDeniedError,
     SessionRepository,
+    ToolCallSequence,
     ToolFunction,
     UserMessage,
 )
@@ -127,10 +132,20 @@ class _SessionTitleGeneratorStub(SessionTitleGenerator):
 
 
 class _SessionRunnerStub(SessionRunner):
-    def __init__(self, chunks: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        chunks: list[str] | None = None,
+        events: list[SessionRunnerEvent] | None = None,
+    ) -> None:
         self._chunks = chunks or ["Hello", " world"]
+        self._events = events
 
     async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
+        if self._events is not None:
+            for event in self._events:
+                yield event
+            return
+
         for chunk in self._chunks:
             yield SessionRunnerAssistantMessageChunk(chunk=chunk)
         yield SessionRunnerAssistantMessage(content="".join(self._chunks))
@@ -421,6 +436,65 @@ class TestSessionServiceSendMessage:
         )
         assert events[assistant_started_index + 1].chunk == "Hi"
         assert isinstance(events[-1], SessionAssistantMessageCompleted)
+
+    def test_batches_consecutive_tool_calls_into_one_sequence(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        first_call = PendingCall(
+            id="call-1",
+            function=ToolFunction(name="search_tracks", arguments={"query": "70s"}),
+        )
+        second_call = PendingCall(
+            id="call-2",
+            function=ToolFunction(name="search_tracks", arguments={"query": "80s"}),
+        )
+        runner = _SessionRunnerStub(
+            events=[
+                SessionRunnerToolCallStarted(call=first_call),
+                SessionRunnerToolCallCompleted(
+                    tool_call_id="call-1",
+                    result="result-1",
+                ),
+                SessionRunnerToolCallStarted(call=second_call),
+                SessionRunnerToolCallCompleted(
+                    tool_call_id="call-2",
+                    result="result-2",
+                ),
+            ]
+        )
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        events = asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="baue ein decades deck",
+                )
+            )
+        )
+
+        sequences = [
+            entry for entry in session.entries if isinstance(entry, ToolCallSequence)
+        ]
+        assert len(sequences) == 1
+        assert [call.id for call in sequences[0].calls] == ["call-1", "call-2"]
+        assert all(isinstance(call, CompletedCall) for call in sequences[0].calls)
+        sequence_added_events = [
+            event for event in events if isinstance(event, SessionToolCallSequenceAdded)
+        ]
+        assert len(sequence_added_events) == 2
+        assert {event.sequence.id for event in sequence_added_events} == {
+            sequences[0].id
+        }
+        resolved_events = [
+            event for event in events if isinstance(event, SessionToolCallResolved)
+        ]
+        assert [event.sequence_id for event in resolved_events] == [
+            sequences[0].id,
+            sequences[0].id,
+        ]
 
 
 class TestSessionServiceFollowUps:

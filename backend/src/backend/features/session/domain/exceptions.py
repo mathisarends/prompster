@@ -22,7 +22,7 @@ class ToolCallAlreadyResolvedError(Exception):
     pass
 
 
-class NoPendingToolCallGroupError(Exception):
+class NoPendingToolCallSequenceError(Exception):
     pass
 
 

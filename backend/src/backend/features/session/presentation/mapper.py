@@ -12,7 +12,7 @@ from backend.features.session.domain import (
     Session,
     SessionEntry,
     ToolCall,
-    ToolCallGroup,
+    ToolCallSequence,
     UserMessage,
 )
 from backend.features.session.presentation.schemas import (
@@ -24,7 +24,7 @@ from backend.features.session.presentation.schemas import (
     SessionEntryResponse,
     SessionResponse,
     SessionSummaryResponse,
-    ToolCallGroupEntryResponse,
+    ToolCallSequenceEntryResponse,
     ToolCallResponse,
     ToolFunctionResponse,
     UserMessageEntryResponse,
@@ -54,18 +54,20 @@ def to_entry_response(entry: SessionEntry) -> SessionEntryResponse:
             content=entry.content,
             created_at=entry.created_at,
         )
-    if isinstance(entry, ToolCallGroup):
-        return to_tool_call_group_response(entry)
+    if isinstance(entry, ToolCallSequence):
+        return to_tool_call_sequence_response(entry)
     if isinstance(entry, FollowUpQuestionGroup):
         return to_follow_up_group_response(entry)
     raise TypeError(f"Unsupported session entry: {type(entry).__name__}")
 
 
-def to_tool_call_group_response(group: ToolCallGroup) -> ToolCallGroupEntryResponse:
-    return ToolCallGroupEntryResponse(
-        id=group.id,
-        created_at=group.created_at,
-        calls=[to_tool_call_response(call) for call in group.calls],
+def to_tool_call_sequence_response(
+    sequence: ToolCallSequence,
+) -> ToolCallSequenceEntryResponse:
+    return ToolCallSequenceEntryResponse(
+        id=sequence.id,
+        created_at=sequence.created_at,
+        calls=[to_tool_call_response(call) for call in sequence.calls],
     )
 
 

@@ -10,8 +10,8 @@ from backend.features.session.application.events import (
     SessionEvent,
     SessionFollowUpGroupAdded,
     SessionPlaylistSet,
-    SessionToolCallGroupAdded,
-    SessionToolCallGroupCompleted,
+    SessionToolCallSequenceAdded,
+    SessionToolCallSequenceCompleted,
     SessionToolCallResolved,
 )
 from backend.features.session.application.ports.session_runner import (
@@ -26,10 +26,10 @@ from backend.features.session.application.ports.session_runner import (
 from backend.features.session.domain import (
     AssistantMessage,
     FollowUpQuestionGroup,
-    NoPendingToolCallGroupError,
+    NoPendingToolCallSequenceError,
     Session,
     SessionRepository,
-    ToolCallGroup,
+    ToolCallSequence,
 )
 
 
@@ -42,10 +42,10 @@ class FollowUpAnswer:
 
 @dataclass(frozen=True)
 class _ResolvedToolCall:
-    group_id: UUID
+    sequence_id: UUID
     tool_call_id: str
     result: str
-    group_completed: bool
+    sequence_completed: bool
 
 
 class SessionConversationService:
@@ -166,23 +166,25 @@ class SessionConversationService:
         session: Session,
         result: str,
     ) -> _ResolvedToolCall:
-        group = self._require_pending_tool_call_group(session=session)
-        call = group.pending_calls[0]
+        sequence = self._require_pending_tool_call_sequence(session=session)
+        call = sequence.pending_calls[0]
         session.resolve_tool_call(tool_call_id=call.id, result=result)
         return _ResolvedToolCall(
-            group_id=group.id,
+            sequence_id=sequence.id,
             tool_call_id=call.id,
             result=result,
-            group_completed=group.is_complete,
+            sequence_completed=sequence.is_complete,
         )
 
-    def _require_pending_tool_call_group(self, *, session: Session) -> ToolCallGroup:
-        group = session.pending_tool_call_group()
-        if group is None or not group.pending_calls:
-            raise NoPendingToolCallGroupError(
-                f"Session {session.id} has no pending tool call group."
+    def _require_pending_tool_call_sequence(
+        self, *, session: Session
+    ) -> ToolCallSequence:
+        sequence = session.pending_tool_call_sequence()
+        if sequence is None or not sequence.pending_calls:
+            raise NoPendingToolCallSequenceError(
+                f"Session {session.id} has no pending tool call sequence."
             )
-        return group
+        return sequence
 
     def _serialize_follow_up_answers(self, group: FollowUpQuestionGroup) -> str:
         return json.dumps(
@@ -207,14 +209,16 @@ class SessionConversationService:
             return ()
         events: list[SessionEvent] = [
             SessionToolCallResolved(
-                group_id=resolved_tool_call.group_id,
+                sequence_id=resolved_tool_call.sequence_id,
                 tool_call_id=resolved_tool_call.tool_call_id,
                 result=resolved_tool_call.result,
             )
         ]
-        if resolved_tool_call.group_completed:
+        if resolved_tool_call.sequence_completed:
             events.append(
-                SessionToolCallGroupCompleted(group_id=resolved_tool_call.group_id)
+                SessionToolCallSequenceCompleted(
+                    sequence_id=resolved_tool_call.sequence_id
+                )
             )
         return tuple(events)
 
@@ -266,23 +270,23 @@ class SessionConversationService:
                     )
                     current_assistant_message = None
 
-                group = session.add_tool_call(event.call)
+                sequence = session.add_tool_call(event.call)
                 await self._session_repository.save(session=session)
-                yield SessionToolCallGroupAdded(group=group)
+                yield SessionToolCallSequenceAdded(sequence=sequence)
             elif isinstance(event, SessionRunnerToolCallCompleted):
-                group = self._require_pending_tool_call_group(session=session)
+                sequence = self._require_pending_tool_call_sequence(session=session)
                 session.resolve_tool_call(
                     tool_call_id=event.tool_call_id,
                     result=event.result,
                 )
                 await self._session_repository.save(session=session)
                 yield SessionToolCallResolved(
-                    group_id=group.id,
+                    sequence_id=sequence.id,
                     tool_call_id=event.tool_call_id,
                     result=event.result,
                 )
-                if group.is_complete:
-                    yield SessionToolCallGroupCompleted(group_id=group.id)
+                if sequence.is_complete:
+                    yield SessionToolCallSequenceCompleted(sequence_id=sequence.id)
             elif isinstance(event, SessionRunnerFollowUpRequested):
                 group = session.add_follow_up_questions(event.questions)
                 await self._session_repository.save(session=session)

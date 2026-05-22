@@ -19,7 +19,7 @@ class SessionUpdateRequest(Schema):
 class EntryKind(StrEnum):
     USER_MESSAGE = "user_message"
     ASSISTANT_MESSAGE = "assistant_message"
-    TOOL_CALL_GROUP = "tool_call_group"
+    TOOL_CALL_SEQUENCE = "tool_call_sequence"
     FOLLOW_UP_QUESTION_GROUP = "follow_up_question_group"
 
 
@@ -50,8 +50,8 @@ class ToolCallResponse(Schema):
     error: str | None = None
 
 
-class ToolCallGroupEntryResponse(Schema):
-    kind: Literal[EntryKind.TOOL_CALL_GROUP] = EntryKind.TOOL_CALL_GROUP
+class ToolCallSequenceEntryResponse(Schema):
+    kind: Literal[EntryKind.TOOL_CALL_SEQUENCE] = EntryKind.TOOL_CALL_SEQUENCE
     id: UUID
     created_at: datetime
     calls: list[ToolCallResponse]
@@ -84,7 +84,7 @@ SessionEntryResponse = Annotated[
     Union[
         UserMessageEntryResponse,
         AssistantMessageEntryResponse,
-        ToolCallGroupEntryResponse,
+        ToolCallSequenceEntryResponse,
         FollowUpQuestionGroupEntryResponse,
     ],
     Field(discriminator="kind"),

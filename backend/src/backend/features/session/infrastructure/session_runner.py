@@ -38,7 +38,7 @@ from backend.features.session.domain import (
     PlaylistTrack,
     Session,
     ToolCall,
-    ToolCallGroup,
+    ToolCallSequence,
     ToolFunction,
     UserMessage,
 )
@@ -112,12 +112,9 @@ def _to_message_manager(
             manager.add_user(entry.content)
         elif isinstance(entry, AssistantMessage):
             manager.add_assistant(entry.content)
-        elif isinstance(entry, ToolCallGroup):
-            manager.add_assistant(
-                "",
-                tool_calls=[_to_llm_tool_call(call) for call in entry.calls],
-            )
+        elif isinstance(entry, ToolCallSequence):
             for call in entry.calls:
+                manager.add_assistant("", tool_calls=[_to_llm_tool_call(call)])
                 if isinstance(call, CompletedCall):
                     manager.add_tool_result(
                         tool_call_id=call.id,

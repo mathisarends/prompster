@@ -5,7 +5,7 @@ from uuid import UUID
 from backend.features.session.domain.exceptions import (
     NoCurrentAssistantMessageError,
     NoPendingFollowUpGroupError,
-    NoPendingToolCallGroupError,
+    NoPendingToolCallSequenceError,
     PendingFollowUpQuestionsError,
     PendingToolCallsError,
     PlaylistTrackNotFoundError,
@@ -21,7 +21,7 @@ from backend.features.session.domain.entities import (
     Playlist,
     PlaylistTrack,
     SessionEntry,
-    ToolCallGroup,
+    ToolCallSequence,
     UserMessage,
 )
 from backend.shared.ddd import Aggregate
@@ -123,7 +123,7 @@ class Session(Aggregate):
         )
 
     def add_user_message(self, content: str) -> UserMessage:
-        if self._find_pending_tool_call_group() is not None:
+        if self._find_pending_tool_call_sequence() is not None:
             raise PendingToolCallsError(
                 f"Cannot add user message to session {self.id} "
                 "while tool calls are pending."
@@ -152,22 +152,22 @@ class Session(Aggregate):
         self._entries.pop()
         return message
 
-    def add_tool_call(self, call: PendingCall) -> ToolCallGroup:
+    def add_tool_call(self, call: PendingCall) -> ToolCallSequence:
         last = self._entries[-1] if self._entries else None
-        if isinstance(last, ToolCallGroup) and not last.is_complete:
+        if isinstance(last, ToolCallSequence):
             last.add(call)
             return last
-        group = ToolCallGroup(calls=[call])
-        self._entries.append(group)
-        return group
+        sequence = ToolCallSequence(calls=[call])
+        self._entries.append(sequence)
+        return sequence
 
     def resolve_tool_call(self, tool_call_id: str, result: str) -> CompletedCall:
-        group = self._require_pending_tool_call_group()
-        return group.resolve(tool_call_id, result)
+        sequence = self._require_pending_tool_call_sequence()
+        return sequence.resolve(tool_call_id, result)
 
     def fail_tool_call(self, tool_call_id: str, error: str) -> FailedCall:
-        group = self._require_pending_tool_call_group()
-        return group.fail(tool_call_id, error)
+        sequence = self._require_pending_tool_call_sequence()
+        return sequence.fail(tool_call_id, error)
 
     def add_follow_up_questions(
         self, questions: list[FollowUpQuestion]
@@ -204,8 +204,8 @@ class Session(Aggregate):
     def require_pending_follow_up_group(self) -> FollowUpQuestionGroup:
         return self._require_pending_follow_up_group()
 
-    def pending_tool_call_group(self) -> ToolCallGroup | None:
-        return self._find_pending_tool_call_group()
+    def pending_tool_call_sequence(self) -> ToolCallSequence | None:
+        return self._find_pending_tool_call_sequence()
 
     def star(self) -> None:
         self._is_starred = True
@@ -219,17 +219,17 @@ class Session(Aggregate):
                 f"User {user_id} does not have access to session {self.id}."
             )
 
-    def _require_pending_tool_call_group(self) -> ToolCallGroup:
-        group = self._find_pending_tool_call_group()
-        if group is None:
-            raise NoPendingToolCallGroupError(
-                f"Session {self.id} has no pending tool call group."
+    def _require_pending_tool_call_sequence(self) -> ToolCallSequence:
+        sequence = self._find_pending_tool_call_sequence()
+        if sequence is None:
+            raise NoPendingToolCallSequenceError(
+                f"Session {self.id} has no pending tool call sequence."
             )
-        return group
+        return sequence
 
-    def _find_pending_tool_call_group(self) -> ToolCallGroup | None:
+    def _find_pending_tool_call_sequence(self) -> ToolCallSequence | None:
         for entry in reversed(self._entries):
-            if isinstance(entry, ToolCallGroup) and not entry.is_complete:
+            if isinstance(entry, ToolCallSequence) and not entry.is_complete:
                 return entry
         return None
 

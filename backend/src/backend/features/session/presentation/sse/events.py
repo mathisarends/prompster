@@ -10,7 +10,7 @@ from backend.features.session.presentation.schemas import (
     FollowUpQuestionGroupEntryResponse,
     PlaylistTrackResponse,
     SessionEntryResponse,
-    ToolCallGroupEntryResponse,
+    ToolCallSequenceEntryResponse,
 )
 from backend.presentation.schema import Schema
 
@@ -27,10 +27,10 @@ class SessionEventType(StrEnum):
     ASSISTANT_MESSAGE_COMPLETED = "message.assistant_completed"
     ASSISTANT_MESSAGE_CANCELLED = "message.assistant_cancelled"
 
-    TOOL_CALL_GROUP_ADDED = "tool_call.group_added"
+    TOOL_CALL_SEQUENCE_ADDED = "tool_call.sequence_added"
     TOOL_CALL_RESOLVED = "tool_call.resolved"
     TOOL_CALL_FAILED = "tool_call.failed"
-    TOOL_CALL_GROUP_COMPLETED = "tool_call.group_completed"
+    TOOL_CALL_SEQUENCE_COMPLETED = "tool_call.sequence_completed"
 
     FOLLOW_UP_GROUP_ADDED = "follow_up.group_added"
 
@@ -91,34 +91,34 @@ class AssistantMessageCancelledEvent(_SessionEventSchema):
     message_id: UUID
 
 
-class ToolCallGroupAddedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.TOOL_CALL_GROUP_ADDED] = (
-        SessionEventType.TOOL_CALL_GROUP_ADDED
+class ToolCallSequenceAddedEvent(_SessionEventSchema):
+    type: Literal[SessionEventType.TOOL_CALL_SEQUENCE_ADDED] = (
+        SessionEventType.TOOL_CALL_SEQUENCE_ADDED
     )
-    group: ToolCallGroupEntryResponse
+    sequence: ToolCallSequenceEntryResponse
 
 
 class ToolCallResolvedEvent(_SessionEventSchema):
     type: Literal[SessionEventType.TOOL_CALL_RESOLVED] = (
         SessionEventType.TOOL_CALL_RESOLVED
     )
-    group_id: UUID
+    sequence_id: UUID
     tool_call_id: str
     result: str
 
 
 class ToolCallFailedEvent(_SessionEventSchema):
     type: Literal[SessionEventType.TOOL_CALL_FAILED] = SessionEventType.TOOL_CALL_FAILED
-    group_id: UUID
+    sequence_id: UUID
     tool_call_id: str
     error: str
 
 
-class ToolCallGroupCompletedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.TOOL_CALL_GROUP_COMPLETED] = (
-        SessionEventType.TOOL_CALL_GROUP_COMPLETED
+class ToolCallSequenceCompletedEvent(_SessionEventSchema):
+    type: Literal[SessionEventType.TOOL_CALL_SEQUENCE_COMPLETED] = (
+        SessionEventType.TOOL_CALL_SEQUENCE_COMPLETED
     )
-    group_id: UUID
+    sequence_id: UUID
 
 
 class FollowUpGroupAddedEvent(_SessionEventSchema):
@@ -167,10 +167,10 @@ ServerEvent = Annotated[
         AssistantMessageChunkEvent,
         AssistantMessageCompletedEvent,
         AssistantMessageCancelledEvent,
-        ToolCallGroupAddedEvent,
+        ToolCallSequenceAddedEvent,
         ToolCallResolvedEvent,
         ToolCallFailedEvent,
-        ToolCallGroupCompletedEvent,
+        ToolCallSequenceCompletedEvent,
         FollowUpGroupAddedEvent,
         PlaylistSetEvent,
         PlaylistTrackAddedEvent,

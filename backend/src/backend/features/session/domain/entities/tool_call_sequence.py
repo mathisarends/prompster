@@ -16,7 +16,7 @@ from backend.features.session.domain.exceptions import (
 from backend.shared.ddd import Entity
 
 
-class ToolCallGroup(Entity):
+class ToolCallSequence(Entity):
     def __init__(
         self,
         calls: list[ToolCall],
@@ -57,7 +57,7 @@ class ToolCallGroup(Entity):
             if call.id == tool_call_id:
                 return call
         raise ToolCallNotFoundError(
-            f"No tool call {tool_call_id!r} in group {self.id}."
+            f"No tool call {tool_call_id!r} in sequence {self.id}."
         )
 
     def _require_pending(self, tool_call_id: str) -> tuple[int, PendingCall]:
@@ -71,5 +71,5 @@ class ToolCallGroup(Entity):
                 )
             return index, call
         raise ToolCallNotFoundError(
-            f"No tool call {tool_call_id!r} in group {self.id}."
+            f"No tool call {tool_call_id!r} in sequence {self.id}."
         )

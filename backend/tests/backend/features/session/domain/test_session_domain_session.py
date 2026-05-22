@@ -6,7 +6,7 @@ import pytest
 from backend.features.session.domain.exceptions import (
     NoCurrentAssistantMessageError,
     NoPendingFollowUpGroupError,
-    NoPendingToolCallGroupError,
+    NoPendingToolCallSequenceError,
     PendingFollowUpQuestionsError,
     PendingToolCallsError,
     PlaylistTrackNotFoundError,
@@ -22,7 +22,7 @@ from backend.features.session.domain import (
     FollowUpQuestionState,
     PendingCall,
     Session,
-    ToolCallGroup,
+    ToolCallSequence,
     ToolFunction,
     UserMessage,
 )
@@ -143,47 +143,47 @@ class TestSessionDomainSession:
         ):
             session.add_user_message("antwort")
 
-    def test_add_tool_call_auto_creates_group(self, session: Session) -> None:
-        group = session.add_tool_call(make_pending_call("tc-1"))
+    def test_add_tool_call_auto_creates_sequence(self, session: Session) -> None:
+        sequence = session.add_tool_call(make_pending_call("tc-1"))
 
-        assert isinstance(group, ToolCallGroup)
+        assert isinstance(sequence, ToolCallSequence)
         assert len(session.entries) == 1
-        assert session.entries[0] is group
-        assert len(group.calls) == 1
+        assert session.entries[0] is sequence
+        assert len(sequence.calls) == 1
 
-    def test_add_tool_call_appends_to_open_group(self, session: Session) -> None:
-        first_group = session.add_tool_call(make_pending_call("tc-1"))
-        second_group = session.add_tool_call(make_pending_call("tc-2"))
+    def test_add_tool_call_appends_to_open_sequence(self, session: Session) -> None:
+        first_sequence = session.add_tool_call(make_pending_call("tc-1"))
+        second_sequence = session.add_tool_call(make_pending_call("tc-2"))
 
-        assert first_group is second_group
+        assert first_sequence is second_sequence
         assert len(session.entries) == 1
-        assert len(first_group.calls) == 2
+        assert len(first_sequence.calls) == 2
 
-    def test_add_tool_call_starts_new_group_after_assistant_message(
+    def test_add_tool_call_starts_new_sequence_after_assistant_message(
         self, session: Session
     ) -> None:
         session.add_user_message("recherche bitte")
-        first_group = session.add_tool_call(make_pending_call("tc-1"))
+        first_sequence = session.add_tool_call(make_pending_call("tc-1"))
         session.resolve_tool_call("tc-1", "ok")
         session.add_assistant_message("Zwischenergebnis")
 
-        second_group = session.add_tool_call(make_pending_call("tc-2"))
+        second_sequence = session.add_tool_call(make_pending_call("tc-2"))
 
-        assert first_group is not second_group
+        assert first_sequence is not second_sequence
         assert len(session.entries) == 4
-        assert isinstance(session.entries[-1], ToolCallGroup)
+        assert isinstance(session.entries[-1], ToolCallSequence)
 
-    def test_add_tool_call_starts_new_group_after_completed_group(
+    def test_add_tool_call_appends_to_completed_sequence(
         self, session: Session
     ) -> None:
-        first_group = session.add_tool_call(make_pending_call("tc-1"))
+        first_sequence = session.add_tool_call(make_pending_call("tc-1"))
         session.resolve_tool_call("tc-1", "ok")
 
-        second_group = session.add_tool_call(make_pending_call("tc-2"))
+        second_sequence = session.add_tool_call(make_pending_call("tc-2"))
 
-        assert first_group is not second_group
-        assert len(session.entries) == 2
-        assert isinstance(session.entries[-1], ToolCallGroup)
+        assert first_sequence is second_sequence
+        assert len(session.entries) == 1
+        assert first_sequence.calls[1].id == "tc-2"
 
     def test_add_assistant_message_creates_pure_text_entry(
         self, session: Session
@@ -284,7 +284,7 @@ class TestSessionDomainSession:
         self, session: Session
     ) -> None:
         with pytest.raises(
-            NoPendingToolCallGroupError, match="no pending tool call group"
+            NoPendingToolCallSequenceError, match="no pending tool call sequence"
         ):
             session.resolve_tool_call("tc-1", "ok")
 

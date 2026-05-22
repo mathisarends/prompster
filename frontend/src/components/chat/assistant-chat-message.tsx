@@ -1,4 +1,4 @@
-import { LoaderCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { MarkdownRenderer } from "./markdown-renderer";
 import { ToolCallAccordion, type ToolCallItem } from "./tool-call-accordion";
@@ -15,16 +15,21 @@ export const AssistantChatMessage = ({
   toolCalls,
 }: AssistantChatMessageProps) => {
   return (
-    <div className="flex max-w-[82%] flex-col gap-1.5 px-1 py-2">
+    <div className="chat-assistant-message flex max-w-[82%] flex-col gap-1.5 px-1 py-2">
       {text ? (
         <MarkdownRenderer
           content={text}
-          className="text-sm text-muted-foreground sm:text-base"
+          className={cn("chat-assistant-prose", isStreaming && "is-streaming")}
         />
       ) : isStreaming ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground sm:text-base">
-          <LoaderCircle className="size-4 animate-spin" />
-          <span>Antwort wird erstellt...</span>
+        <div
+          className="chat-thinking-dots flex items-center gap-1.5 py-1"
+          aria-label="Antwort wird erstellt"
+          role="status"
+        >
+          <span className="chat-thinking-dot" />
+          <span className="chat-thinking-dot" />
+          <span className="chat-thinking-dot" />
         </div>
       ) : null}
       {toolCalls && <ToolCallAccordion calls={toolCalls} />}

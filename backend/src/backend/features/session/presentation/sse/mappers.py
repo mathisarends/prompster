@@ -8,15 +8,15 @@ from backend.features.session.application import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionToolCallFailed,
-    SessionToolCallGroupAdded,
-    SessionToolCallGroupCompleted,
+    SessionToolCallSequenceAdded,
+    SessionToolCallSequenceCompleted,
     SessionToolCallResolved,
 )
 from backend.features.session.domain import Playlist
 from backend.features.session.presentation.mapper import (
     to_follow_up_group_response,
     to_playlist_track_response,
-    to_tool_call_group_response,
+    to_tool_call_sequence_response,
 )
 from backend.features.session.presentation.schemas import (
     AssistantMessageEntryResponse,
@@ -32,8 +32,8 @@ from backend.features.session.presentation.sse.events import (
     PlaylistTrackRemovedEvent,
     ServerEvent,
     ToolCallFailedEvent,
-    ToolCallGroupAddedEvent,
-    ToolCallGroupCompletedEvent,
+    ToolCallSequenceAddedEvent,
+    ToolCallSequenceCompletedEvent,
     ToolCallResolvedEvent,
 )
 
@@ -60,25 +60,27 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
             ),
         )
 
-    if isinstance(event, SessionToolCallGroupAdded):
-        return ToolCallGroupAddedEvent(group=to_tool_call_group_response(event.group))
+    if isinstance(event, SessionToolCallSequenceAdded):
+        return ToolCallSequenceAddedEvent(
+            sequence=to_tool_call_sequence_response(event.sequence)
+        )
 
     if isinstance(event, SessionToolCallResolved):
         return ToolCallResolvedEvent(
-            group_id=event.group_id,
+            sequence_id=event.sequence_id,
             tool_call_id=event.tool_call_id,
             result=event.result,
         )
 
     if isinstance(event, SessionToolCallFailed):
         return ToolCallFailedEvent(
-            group_id=event.group_id,
+            sequence_id=event.sequence_id,
             tool_call_id=event.tool_call_id,
             error=event.error,
         )
 
-    if isinstance(event, SessionToolCallGroupCompleted):
-        return ToolCallGroupCompletedEvent(group_id=event.group_id)
+    if isinstance(event, SessionToolCallSequenceCompleted):
+        return ToolCallSequenceCompletedEvent(sequence_id=event.sequence_id)
 
     if isinstance(event, SessionFollowUpGroupAdded):
         return FollowUpGroupAddedEvent(group=to_follow_up_group_response(event.group))

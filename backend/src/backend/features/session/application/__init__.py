@@ -9,8 +9,8 @@ from .events import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionToolCallFailed,
-    SessionToolCallGroupAdded,
-    SessionToolCallGroupCompleted,
+    SessionToolCallSequenceAdded,
+    SessionToolCallSequenceCompleted,
     SessionToolCallResolved,
 )
 from .queries import SessionPlaylistExporter
@@ -28,8 +28,8 @@ __all__ = [
     "SessionPlaylistTrackAdded",
     "SessionPlaylistTrackRemoved",
     "SessionToolCallFailed",
-    "SessionToolCallGroupAdded",
-    "SessionToolCallGroupCompleted",
+    "SessionToolCallSequenceAdded",
+    "SessionToolCallSequenceCompleted",
     "SessionToolCallResolved",
     "SessionConversationService",
     "SessionService",

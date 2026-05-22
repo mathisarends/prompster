@@ -21,7 +21,7 @@ from backend.features.session.domain import (
     SessionNotFoundError,
     SessionRepository,
     ToolCall,
-    ToolCallGroup,
+    ToolCallSequence,
     ToolFunction,
     UserMessage,
 )
@@ -32,7 +32,7 @@ from backend.infrastructure.database.orm import (
     SessionFollowUpQuestionModel,
     SessionModel,
     SessionPlaylistModel,
-    SessionToolCallGroupModel,
+    SessionToolCallSequenceModel,
     SessionToolCallModel,
     SessionUserMessageModel,
 )
@@ -99,8 +99,8 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             entries.append((row.position, self._to_domain_user_message(row)))
         for row in orm.assistant_messages:
             entries.append((row.position, self._to_domain_assistant_message(row)))
-        for row in orm.tool_call_groups:
-            entries.append((row.position, self._to_domain_tool_call_group(row)))
+        for row in orm.tool_call_sequences:
+            entries.append((row.position, self._to_domain_tool_call_sequence(row)))
         for row in orm.follow_up_question_groups:
             entries.append((row.position, self._to_domain_follow_up_group(row)))
         entries.sort(key=lambda item: item[0])
@@ -146,8 +146,8 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         existing_assistant_rows = {
             row.id: row for row in orm.assistant_messages if row.id is not None
         }
-        existing_tool_group_rows = {
-            row.id: row for row in orm.tool_call_groups if row.id is not None
+        existing_tool_sequence_rows = {
+            row.id: row for row in orm.tool_call_sequences if row.id is not None
         }
         existing_follow_up_group_rows = {
             row.id: row for row in orm.follow_up_question_groups if row.id is not None
@@ -155,7 +155,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
 
         user_rows: list[SessionUserMessageModel] = []
         assistant_rows: list[SessionAssistantMessageModel] = []
-        tool_group_rows: list[SessionToolCallGroupModel] = []
+        tool_sequence_rows: list[SessionToolCallSequenceModel] = []
         follow_group_rows: list[SessionFollowUpQuestionGroupModel] = []
 
         for position, entry in enumerate(entries):
@@ -177,13 +177,13 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
                 row.content = entry.content
                 row.created_at = entry.created_at
                 assistant_rows.append(row)
-            elif isinstance(entry, ToolCallGroup):
-                tool_group_rows.append(
-                    self._to_orm_tool_call_group(
-                        group=entry,
+            elif isinstance(entry, ToolCallSequence):
+                tool_sequence_rows.append(
+                    self._to_orm_tool_call_sequence(
+                        sequence=entry,
                         session_id=session_id,
                         position=position,
-                        existing_group=existing_tool_group_rows.get(entry.id),
+                        existing_sequence=existing_tool_sequence_rows.get(entry.id),
                     )
                 )
             elif isinstance(entry, FollowUpQuestionGroup):
@@ -198,7 +198,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
 
         orm.user_messages = user_rows
         orm.assistant_messages = assistant_rows
-        orm.tool_call_groups = tool_group_rows
+        orm.tool_call_sequences = tool_sequence_rows
         orm.follow_up_question_groups = follow_group_rows
 
     def _detail_query(self, *, session_id: UUID):
@@ -208,8 +208,8 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             .options(
                 selectinload(SessionModel.user_messages),
                 selectinload(SessionModel.assistant_messages),
-                selectinload(SessionModel.tool_call_groups).selectinload(
-                    SessionToolCallGroupModel.calls
+                selectinload(SessionModel.tool_call_sequences).selectinload(
+                    SessionToolCallSequenceModel.calls
                 ),
                 selectinload(SessionModel.follow_up_question_groups).selectinload(
                     SessionFollowUpQuestionGroupModel.questions
@@ -238,11 +238,11 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             id=row.id, content=row.content, created_time=row.created_at
         )
 
-    def _to_domain_tool_call_group(
-        self, row: SessionToolCallGroupModel
-    ) -> ToolCallGroup:
+    def _to_domain_tool_call_sequence(
+        self, row: SessionToolCallSequenceModel
+    ) -> ToolCallSequence:
         calls = sorted(row.calls, key=lambda c: c.position)
-        return ToolCallGroup(
+        return ToolCallSequence(
             id=row.id,
             calls=[self._to_domain_tool_call(call) for call in calls],
             created_time=row.created_at,
@@ -260,28 +260,28 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             return FailedCall(id=row.call_id, function=function, error=row.error or "")
         return PendingCall(id=row.call_id, function=function)
 
-    def _to_orm_tool_call_group(
+    def _to_orm_tool_call_sequence(
         self,
         *,
-        group: ToolCallGroup,
+        sequence: ToolCallSequence,
         session_id: UUID,
         position: int,
-        existing_group: SessionToolCallGroupModel | None = None,
-    ) -> SessionToolCallGroupModel:
-        orm = existing_group or SessionToolCallGroupModel(id=group.id)
+        existing_sequence: SessionToolCallSequenceModel | None = None,
+    ) -> SessionToolCallSequenceModel:
+        orm = existing_sequence or SessionToolCallSequenceModel(id=sequence.id)
         orm.session_id = session_id
         orm.position = position
-        orm.created_at = group.created_at
+        orm.created_at = sequence.created_at
 
         existing_calls = {call.call_id: call for call in orm.calls}
         orm.calls = [
             self._to_orm_tool_call(
                 call=call,
-                group_id=group.id,
+                sequence_id=sequence.id,
                 position=call_position,
                 existing_call=existing_calls.get(call.id),
             )
-            for call_position, call in enumerate(group.calls)
+            for call_position, call in enumerate(sequence.calls)
         ]
         return orm
 
@@ -289,7 +289,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         self,
         *,
         call: ToolCall,
-        group_id: UUID,
+        sequence_id: UUID,
         position: int,
         existing_call: SessionToolCallModel | None = None,
     ) -> SessionToolCallModel:
@@ -301,7 +301,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             state, result, error = _PENDING_STATE, None, None
 
         orm = existing_call or SessionToolCallModel()
-        orm.group_id = group_id
+        orm.sequence_id = sequence_id
         orm.position = position
         orm.call_id = call.id
         orm.function_name = call.function.name

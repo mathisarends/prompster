@@ -6,7 +6,7 @@ from backend.features.session.domain import (
     FollowUpQuestionGroup,
     Playlist,
     PlaylistTrack,
-    ToolCallGroup,
+    ToolCallSequence,
 )
 
 
@@ -27,27 +27,27 @@ class SessionAssistantMessageCompleted:
 
 
 @dataclass(frozen=True)
-class SessionToolCallGroupAdded:
-    group: ToolCallGroup
+class SessionToolCallSequenceAdded:
+    sequence: ToolCallSequence
 
 
 @dataclass(frozen=True)
 class SessionToolCallResolved:
-    group_id: UUID
+    sequence_id: UUID
     tool_call_id: str
     result: str
 
 
 @dataclass(frozen=True)
 class SessionToolCallFailed:
-    group_id: UUID
+    sequence_id: UUID
     tool_call_id: str
     error: str
 
 
 @dataclass(frozen=True)
-class SessionToolCallGroupCompleted:
-    group_id: UUID
+class SessionToolCallSequenceCompleted:
+    sequence_id: UUID
 
 
 @dataclass(frozen=True)
@@ -76,10 +76,10 @@ type SessionEvent = (
     SessionAssistantMessageStarted
     | SessionAssistantMessageChunk
     | SessionAssistantMessageCompleted
-    | SessionToolCallGroupAdded
+    | SessionToolCallSequenceAdded
     | SessionToolCallResolved
     | SessionToolCallFailed
-    | SessionToolCallGroupCompleted
+    | SessionToolCallSequenceCompleted
     | SessionFollowUpGroupAdded
     | SessionPlaylistSet
     | SessionPlaylistTrackAdded

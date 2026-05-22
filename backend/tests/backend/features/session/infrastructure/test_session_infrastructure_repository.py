@@ -34,7 +34,7 @@ def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
     )
     orm.user_messages = [existing_row]
     orm.assistant_messages = []
-    orm.tool_call_groups = []
+    orm.tool_call_sequences = []
     orm.follow_up_question_groups = []
 
     repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]

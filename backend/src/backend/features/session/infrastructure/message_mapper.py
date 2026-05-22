@@ -7,7 +7,7 @@ from backend.features.session.domain import (
     PendingCall,
     SessionEntry,
     ToolCall,
-    ToolCallGroup,
+    ToolCallSequence,
     UserMessage,
 )
 
@@ -19,23 +19,24 @@ def to_openai_messages(entries: list[SessionEntry]) -> list[dict]:
             result.append({"role": "user", "content": entry.content})
         elif isinstance(entry, AssistantMessage):
             result.append({"role": "assistant", "content": entry.content})
-        elif isinstance(entry, ToolCallGroup):
-            result.extend(_map_tool_call_group(entry))
+        elif isinstance(entry, ToolCallSequence):
+            result.extend(_map_tool_call_sequence(entry))
     return result
 
 
-def _map_tool_call_group(group: ToolCallGroup) -> list[dict]:
-    assistant = {
-        "role": "assistant",
-        "content": "",
-        "tool_calls": [_map_tool_call(call) for call in group.calls],
-    }
-    tool_messages = [
-        _map_tool_result(call)
-        for call in group.calls
-        if not isinstance(call, PendingCall)
-    ]
-    return [assistant, *tool_messages]
+def _map_tool_call_sequence(sequence: ToolCallSequence) -> list[dict]:
+    messages: list[dict] = []
+    for call in sequence.calls:
+        messages.append(
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [_map_tool_call(call)],
+            }
+        )
+        if not isinstance(call, PendingCall):
+            messages.append(_map_tool_result(call))
+    return messages
 
 
 def _map_tool_call(call: ToolCall) -> dict:

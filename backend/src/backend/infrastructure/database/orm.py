@@ -63,7 +63,7 @@ class SessionModel(DatabaseEntity, table=True):
         back_populates="session",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    tool_call_groups: list["SessionToolCallGroupModel"] = Relationship(
+    tool_call_sequences: list["SessionToolCallSequenceModel"] = Relationship(
         back_populates="session",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
@@ -108,18 +108,22 @@ class SessionAssistantMessageModel(DatabaseEntity, table=True):
     session: SessionModel = Relationship(back_populates="assistant_messages")
 
 
-class SessionToolCallGroupModel(DatabaseEntity, table=True):
-    __tablename__ = "session_tool_call_groups"
+class SessionToolCallSequenceModel(DatabaseEntity, table=True):
+    __tablename__ = "session_tool_call_sequences"
     __table_args__ = (
-        Index("ix_session_tool_call_groups_session_position", "session_id", "position"),
+        Index(
+            "ix_session_tool_call_sequences_session_position",
+            "session_id",
+            "position",
+        ),
     )
 
     session_id: UUID = Field(foreign_key="sessions.id")
     position: int
 
-    session: SessionModel = Relationship(back_populates="tool_call_groups")
+    session: SessionModel = Relationship(back_populates="tool_call_sequences")
     calls: list["SessionToolCallModel"] = Relationship(
-        back_populates="group",
+        back_populates="sequence",
         sa_relationship_kwargs={
             "cascade": "all, delete-orphan",
             "order_by": "SessionToolCallModel.position",
@@ -130,7 +134,7 @@ class SessionToolCallGroupModel(DatabaseEntity, table=True):
 class SessionToolCallModel(DatabaseEntity, table=True):
     __tablename__ = "session_tool_calls"
 
-    group_id: UUID = Field(foreign_key="session_tool_call_groups.id")
+    sequence_id: UUID = Field(foreign_key="session_tool_call_sequences.id")
     position: int
     call_id: str
     function_name: str
@@ -141,7 +145,7 @@ class SessionToolCallModel(DatabaseEntity, table=True):
     result: str | None = None
     error: str | None = None
 
-    group: SessionToolCallGroupModel = Relationship(back_populates="calls")
+    sequence: SessionToolCallSequenceModel = Relationship(back_populates="calls")
 
 
 class SessionFollowUpQuestionGroupModel(DatabaseEntity, table=True):

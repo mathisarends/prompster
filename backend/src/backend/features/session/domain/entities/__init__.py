@@ -17,7 +17,7 @@ from .tool_call import (
     is_pending,
     is_resolved,
 )
-from .tool_call_group import ToolCallGroup
+from .tool_call_sequence import ToolCallSequence
 
 __all__ = [
     "AssistantMessage",
@@ -33,7 +33,7 @@ __all__ = [
     "ResolvedCall",
     "SessionEntry",
     "ToolCall",
-    "ToolCallGroup",
+    "ToolCallSequence",
     "ToolFunction",
     "UserMessage",
     "is_pending",
