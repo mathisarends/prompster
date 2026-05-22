@@ -5,6 +5,7 @@ from dataclasses import dataclass
 class ToolFunction:
     name: str
     arguments: dict[str, object]
+    status_label: str | None = None
 
 
 @dataclass(frozen=True)

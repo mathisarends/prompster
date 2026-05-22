@@ -250,7 +250,9 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
 
     def _to_domain_tool_call(self, row: SessionToolCallModel) -> ToolCall:
         function = ToolFunction(
-            name=row.function_name, arguments=row.function_arguments or {}
+            name=row.function_name,
+            arguments=row.function_arguments or {},
+            status_label=row.function_status_label,
         )
         if row.state == _COMPLETED_STATE:
             return CompletedCall(
@@ -306,6 +308,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm.call_id = call.id
         orm.function_name = call.function.name
         orm.function_arguments = dict(call.function.arguments)
+        orm.function_status_label = call.function.status_label
         orm.state = state
         orm.result = result
         orm.error = error

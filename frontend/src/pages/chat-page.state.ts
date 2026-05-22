@@ -657,7 +657,7 @@ const toToolCallStatus = (call: ToolCallResponse): ToolCallStatus => {
 };
 
 const formatToolCallName = (call: ToolCallResponse) =>
-  call.function.name.replaceAll("_", " ");
+  call.function.statusLabel ?? call.function.name.replaceAll("_", " ");
 
 const getToolCallDetail = (call: ToolCallResponse) => {
   if (call.state === "failed") return call.error ?? undefined;

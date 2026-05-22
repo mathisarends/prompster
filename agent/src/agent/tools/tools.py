@@ -1,7 +1,7 @@
 import json
 import logging
 from collections.abc import Callable
-from typing import Any, overload
+from typing import Any
 
 from llmify.messages import ToolCall
 from pydantic import BaseModel
@@ -47,49 +47,21 @@ class Tools:
     def get(self, name: str) -> Tool | None:
         return self._tools.get(name)
 
-    @overload
     def action[P: BaseModel](
         self,
         description: str,
         name: str | None = None,
         *,
-        status: str | Callable[[P], str] | None = None,
-        status_label: str | Callable[[P], str] | None = None,
-        params: type[P],
-        suspends_for_input: bool = False,
-    ) -> Callable: ...
-
-    @overload
-    def action(
-        self,
-        description: str,
-        name: str | None = None,
-        *,
-        status: str | None = None,
-        status_label: str | None = None,
-        params: None = None,
-        suspends_for_input: bool = False,
-    ) -> Callable: ...
-
-    def action[P: BaseModel](
-        self,
-        description: str,
-        name: str | None = None,
-        status: str | Callable[[P], str] | None = None,
-        status_label: str | Callable[[P], str] | None = None,
         params: type[P] | None = None,
+        status_label: Callable[[P], str] | None = None,
         suspends_for_input: bool = False,
     ) -> Callable:
-        if status is not None and status_label is not None:
-            raise ValueError("Use either 'status' or 'status_label', not both")
-
         def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
             self._register(
                 Tool(
                     name=name or fn.__name__,
                     description=description,
                     fn=fn,
-                    status=status,
                     status_label=status_label,
                     param_model=params,
                     suspends_for_input=suspends_for_input,
@@ -107,12 +79,6 @@ class Tools:
 
     def to_schema(self) -> list[ToolSchema]:
         return [t.to_schema() for t in self._tools.values()]
-
-    def render_status(self, name: str, args: dict[str, Any]) -> str | None:
-        tool = self.get(name)
-        if tool is None:
-            raise ValueError(f"Unknown tool '{name}'. Available: {list(self._tools)}")
-        return tool.render_status(args)
 
     @staticmethod
     def parse_args(call: ToolCall) -> dict[str, Any]:
@@ -136,7 +102,6 @@ class Tools:
     def _register_default_tools(self) -> None:
         @self.action(
             description="Search Spotify for tracks matching a query.",
-            status_label=lambda params: f"Suche nach '{params.query}'",
             params=SearchParams,
         )
         async def search_tracks(spotify: Inject[Spotify], params: SearchParams) -> str:
@@ -144,7 +109,6 @@ class Tools:
 
         @self.action(
             description="Search Spotify for albums matching a query.",
-            status_label=lambda params: f"Alben suchen: '{params.query}'",
             params=SearchParams,
         )
         async def search_albums(spotify: Inject[Spotify], params: SearchParams) -> str:
@@ -152,7 +116,6 @@ class Tools:
 
         @self.action(
             description="Search Spotify for public playlists matching a query.",
-            status_label=lambda params: f"Playlists suchen: '{params.query}'",
             params=SearchParams,
         )
         async def search_playlists(
@@ -163,7 +126,6 @@ class Tools:
 
         @self.action(
             description="Get albums by an artist.",
-            status_label="Künstler-Alben laden",
             params=ArtistAlbumsParams,
         )
         async def get_artist_albums(
@@ -174,7 +136,6 @@ class Tools:
 
         @self.action(
             description="Get an artist's top tracks.",
-            status_label="Top-Tracks laden",
             params=ArtistTopTracksParams,
         )
         async def get_artist_top_tracks(
@@ -185,7 +146,6 @@ class Tools:
 
         @self.action(
             description="Get all tracks of an album.",
-            status_label="Album-Tracks laden",
             params=AlbumTracksParams,
         )
         async def get_album_tracks(
@@ -199,7 +159,6 @@ class Tools:
                 "Build or replace the current Hitster playlist draft in the workspace. "
                 "Use this after researching tracks; do not create a Spotify playlist."
             ),
-            status_label=lambda params: f"Playlist-Entwurf bauen: '{params.name}'",
             params=BuildDraftPlaylistParams,
         )
         async def build_draft_playlist(
@@ -211,7 +170,6 @@ class Tools:
 
         @self.action(
             description="Get all tracks of a Spotify playlist.",
-            status_label="Playlist-Tracks laden",
             params=PlaylistIdParams,
         )
         async def get_playlist_tracks(
@@ -227,7 +185,6 @@ class Tools:
                 "Provide 1–4 questions, each with 1–4 selectable options. "
                 "The user may also type a free-text answer or skip a question."
             ),
-            status_label="Rückfragen stellen",
             params=AskFollowUpParams,
             suspends_for_input=True,
         )

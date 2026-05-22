@@ -74,6 +74,7 @@ class TestAgentWorkspaceUpdateEvents:
         tools = Tools(ToolContext(workspace_store))
         tool_args = {
             "name": "80er Party",
+            "status": "Playlist-Entwurf bauen: '80er Party'",
             "tracks": [
                 {
                     "title": "Take On Me",

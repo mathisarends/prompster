@@ -85,6 +85,7 @@ def to_tool_call_response(call: ToolCall) -> ToolCallResponse:
         function=ToolFunctionResponse(
             name=call.function.name,
             arguments=call.function.arguments,
+            status_label=call.function.status_label,
         ),
         state=state,
         result=result,

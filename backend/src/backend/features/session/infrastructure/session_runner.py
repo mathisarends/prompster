@@ -78,6 +78,7 @@ class AgentSessionRunner(SessionRunner):
                             function=ToolFunction(
                                 name=event.name,
                                 arguments=dict(event.args),
+                                status_label=event.status_label,
                             ),
                         )
                     )

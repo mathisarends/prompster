@@ -119,14 +119,14 @@ class Agent:
 
             for call in tool_calls:
                 args = self._tools.parse_args(call)
+                tool = self._tools.get(call.function.name)
                 yield ToolCallEvent(
                     tool_call_id=call.id,
                     name=call.function.name,
                     args=args,
-                    status_label=self._tools.render_status(call.function.name, args),
+                    status_label=args.get("status") if isinstance(args, dict) else None,
                 )
 
-                tool = self._tools.get(call.function.name)
                 if tool is not None and tool.suspends_for_input:
                     parsed = AskFollowUpParams.model_validate(args)
                     yield FollowUpRequestedEvent(

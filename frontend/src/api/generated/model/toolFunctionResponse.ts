@@ -10,4 +10,5 @@ import type { ToolFunctionResponseArguments } from "./toolFunctionResponseArgume
 export interface ToolFunctionResponse {
   name: string;
   arguments: ToolFunctionResponseArguments;
+  statusLabel?: string | null;
 }

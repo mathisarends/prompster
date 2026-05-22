@@ -1,7 +1,7 @@
 import pytest
 from pydantic import BaseModel
 
-from agent.tools.views import Tool
+from agent.tools.views import Tool, ToolParams
 
 
 class _Params(BaseModel):
@@ -22,70 +22,21 @@ def _read_query(params: _Params) -> str:
 
 
 class TestToolAbstraction:
-    def test_rejects_status_and_status_label_together(self) -> None:
-        with pytest.raises(ValueError, match="both 'status' and 'status_label'"):
-            Tool(
-                name="demo",
-                description="Demo",
-                fn=_read_query,
-                status="Busy",
-                status_label="Busy",
-            )
+    def test_tool_params_requires_status_field(self) -> None:
+        class _Concrete(ToolParams):
+            query: str
 
-    def test_status_label_callable_requires_param_model(self) -> None:
-        with pytest.raises(ValueError, match="requires a params model"):
-            Tool(
-                name="demo",
-                description="Demo",
-                fn=_sync_returns_none,
-                status_label=lambda params: f"query={params.query}",
-            )
+        with pytest.raises(ValueError, match="status"):
+            _Concrete.model_validate({"query": "abba"})
 
-    def test_status_label_callable_rejects_unknown_field(self) -> None:
-        with pytest.raises(ValueError, match="unknown params-model field"):
-            Tool(
-                name="demo",
-                description="Demo",
-                fn=_read_query,
-                status_label=lambda params: params.unknown,
-                param_model=_Params,
-            )
+    def test_tool_params_accepts_status_field(self) -> None:
+        class _Concrete(ToolParams):
+            query: str
 
-    def test_status_label_callable_must_return_string(self) -> None:
-        with pytest.raises(ValueError, match="must return str"):
-            Tool(
-                name="demo",
-                description="Demo",
-                fn=_read_query,
-                status_label=lambda params: 123,
-                param_model=_Params,
-            )
+        params = _Concrete.model_validate({"query": "abba", "status": "Suche läuft"})
 
-    def test_render_status_callable_with_valid_args(self) -> None:
-        tool = Tool(
-            name="demo",
-            description="Demo",
-            fn=_read_query,
-            status_label=lambda params: f"Searching: {params.query}",
-            param_model=_Params,
-        )
-
-        status = tool.render_status({"query": "abba"})
-
-        assert status == "Searching: abba"
-
-    def test_render_status_returns_none_for_invalid_args(self) -> None:
-        tool = Tool(
-            name="demo",
-            description="Demo",
-            fn=_read_query,
-            status_label=lambda params: f"Searching: {params.query}",
-            param_model=_Params,
-        )
-
-        status = tool.render_status({"limit": 3})
-
-        assert status is None
+        assert params.status == "Suche läuft"
+        assert params.query == "abba"
 
     @pytest.mark.asyncio
     async def test_execute_async_none_becomes_empty_string(self) -> None:

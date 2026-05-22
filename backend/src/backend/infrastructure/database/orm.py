@@ -141,6 +141,7 @@ class SessionToolCallModel(DatabaseEntity, table=True):
     function_arguments: dict[str, object] = Field(
         sa_column=Column(JSON, nullable=False)
     )
+    function_status_label: str | None = None
     state: str
     result: str | None = None
     error: str | None = None

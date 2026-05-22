@@ -40,6 +40,7 @@ class AssistantMessageEntryResponse(Schema):
 class ToolFunctionResponse(Schema):
     name: str
     arguments: dict[str, object]
+    status_label: str | None = None
 
 
 class ToolCallResponse(Schema):

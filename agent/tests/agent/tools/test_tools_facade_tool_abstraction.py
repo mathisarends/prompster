@@ -18,19 +18,6 @@ class _ResultModel(BaseModel):
 
 
 class TestToolsFacadeAbstraction:
-    def test_action_rejects_status_and_status_label_together(self) -> None:
-        tools = Tools()
-
-        with pytest.raises(ValueError, match="Use either 'status' or 'status_label'"):
-
-            @tools.action(
-                description="Invalid action",
-                status="Busy",
-                status_label="Busy",
-            )
-            async def invalid_action() -> str:
-                return "invalid"
-
     @pytest.mark.asyncio
     async def test_action_registers_and_executes_custom_tool(self) -> None:
         tools = Tools()
@@ -75,12 +62,6 @@ class TestToolsFacadeAbstraction:
         assert json.loads(serialized_model) == {"value": 3}
         assert "2026-05-19" in serialized_dict
 
-    def test_render_status_raises_for_unknown_tool(self) -> None:
-        tools = Tools()
-
-        with pytest.raises(ValueError, match="Unknown tool 'missing'"):
-            tools.render_status("missing", {})
-
     @pytest.mark.asyncio
     async def test_set_context_updates_executor_dependency_resolution(self) -> None:
         old_store = WorkspaceStore()
@@ -92,6 +73,7 @@ class TestToolsFacadeAbstraction:
             "build_draft_playlist",
             {
                 "name": "Context Switch",
+                "status": "Playlist-Entwurf bauen",
                 "tracks": [
                     {
                         "title": "Take On Me",
