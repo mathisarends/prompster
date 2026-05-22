@@ -123,6 +123,7 @@ class Agent:
                     tool_call_id=call.id,
                     name=call.function.name,
                     args=args,
+                    status_label=self._tools.render_status(call.function.name, args),
                 )
 
                 tool = self._tools.get(call.function.name)
