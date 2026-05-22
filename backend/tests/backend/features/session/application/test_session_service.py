@@ -251,9 +251,7 @@ class TestSessionServiceCreate:
         assert created is repository.created_session
         assert created.title == "A" * 120
         assert created.owner_id == owner_id
-        assert len(created.entries) == 1
-        assert isinstance(created.entries[0], UserMessage)
-        assert created.entries[0].content == initial_prompt
+        assert len(created.entries) == 0
         assert generator.received_initial_prompt == initial_prompt
 
     def test_falls_back_to_new_session_for_blank_generated_title(self) -> None:
@@ -413,6 +411,34 @@ class TestSessionServiceSearch:
 
 
 class TestSessionServiceSendMessage:
+    def test_persists_user_message_and_streams_llm(self) -> None:
+        owner_id = uuid4()
+        prompt = "spiele rihanna hits"
+        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        repository = _SessionRepositoryStub(session_by_id=session)
+        runner = _SessionRunnerStub(chunks=["Hi"])
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        events = asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content=prompt,
+                )
+            )
+        )
+
+        user_messages = [
+            entry for entry in session.entries if isinstance(entry, UserMessage)
+        ]
+        assert len(user_messages) == 1
+        assert user_messages[0].content == prompt
+        assert any(
+            isinstance(event, SessionAssistantMessageStarted) for event in events
+        )
+        assert isinstance(events[-1], SessionAssistantMessageCompleted)
+
     def test_skips_pending_follow_ups_then_streams_llm(self) -> None:
         owner_id = uuid4()
         first_question = _make_follow_up_question("Welches Genre?")

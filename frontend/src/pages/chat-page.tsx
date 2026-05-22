@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+  useNavigationType,
+  useParams,
+} from "react-router-dom";
 
 import type { SessionResponse } from "@/api/generated/model";
 import { AssistantChatMessage } from "@/components/chat/assistant-chat-message";
@@ -29,6 +34,7 @@ import { useChatSession } from "./chat-page.hook";
 type ChatRouteState = {
   session?: SessionResponse;
   streamInitialResponse?: boolean;
+  initialPrompt?: string;
 };
 
 export const ChatPage = () => {
@@ -36,6 +42,7 @@ export const ChatPage = () => {
   const sessionId = chatId ?? "";
   const location = useLocation();
   const navigate = useNavigate();
+  const navigationType = useNavigationType();
   const routeState = location.state as ChatRouteState | null;
 
   const initialSession = useMemo(() => {
@@ -59,13 +66,13 @@ export const ChatPage = () => {
   } = useChatSession({
     sessionId,
     initialSession,
-    streamInitialResponse: Boolean(routeState?.streamInitialResponse),
+    streamInitialResponse: Boolean(
+      routeState?.streamInitialResponse && navigationType === "PUSH",
+    ),
+    initialPrompt: routeState?.initialPrompt,
   });
 
   const [prompt, setPrompt] = useState("");
-  const [closedWorkspacePlaylistId, setClosedWorkspacePlaylistId] = useState<
-    string | null
-  >(null);
   const [workspaceLayout, setWorkspaceLayout] = useLocalStorage(
     "prompster.chat.workspace-layout",
     [62, 38],
@@ -138,9 +145,6 @@ export const ChatPage = () => {
   };
 
   const headerTitle = title ?? "Neues Karten-Deck";
-  const isWorkspaceOpen = Boolean(
-    playlist && playlist.id !== closedWorkspacePlaylistId,
-  );
   const chatPane = (
     <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
       <ChatPageHeader
@@ -198,7 +202,7 @@ export const ChatPage = () => {
 
   return (
     <div className="chat-page-background h-dvh overflow-hidden text-foreground">
-      {playlist && isWorkspaceOpen && canShowWorkspace ? (
+      {playlist && canShowWorkspace ? (
         <ResizablePanelGroup
           orientation="horizontal"
           className="relative z-10 h-full"
@@ -225,10 +229,7 @@ export const ChatPage = () => {
             maxSize="52%"
             className="border-l border-white/[0.06]"
           >
-            <DeckWorkspaceView
-              playlist={playlist}
-              onClose={() => setClosedWorkspacePlaylistId(playlist.id)}
-            />
+            <DeckWorkspaceView playlist={playlist} />
           </ResizablePanel>
         </ResizablePanelGroup>
       ) : (

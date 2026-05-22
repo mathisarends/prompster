@@ -29,7 +29,7 @@ export const HomePage = () => {
         queryKey: getListSessionsQueryKey(),
       });
       navigate(`/chat/${session.id}`, {
-        state: { session, streamInitialResponse: true },
+        state: { session, streamInitialResponse: true, initialPrompt: text },
       });
     } catch {
       setErrorMessage("Session konnte nicht gestartet werden.");

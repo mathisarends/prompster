@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 type ChatWorkspacePanelProps = {
   children: ReactNode;
-  onClose: () => void;
+  onClose?: () => void;
   header?: ReactNode;
   contentClassName?: string;
 };
@@ -14,23 +14,23 @@ type ChatWorkspacePanelProps = {
 export const ChatWorkspacePanel = ({
   children,
   onClose,
-  header,
   contentClassName,
 }: ChatWorkspacePanelProps) => {
   return (
     <section className="relative flex h-full min-h-0 flex-col bg-[hsl(222_36%_7%)] text-foreground shadow-2xl shadow-black/30">
-      <div className="flex shrink-0 items-center justify-between gap-3 px-5 pt-1.5 pb-3">
-        <div className="flex min-w-0 flex-1 items-center">{header}</div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={onClose}
-          aria-label="Arbeitsfläche schließen"
-          className="shrink-0 text-muted-foreground hover:bg-white/10 hover:text-foreground"
-        >
-          <X className="size-4" />
-        </Button>
+      <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-3">
+        {onClose ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            aria-label="Arbeitsfläche schließen"
+            className="shrink-0 text-muted-foreground hover:bg-white/10 hover:text-foreground"
+          >
+            <X className="size-4" />
+          </Button>
+        ) : null}
       </div>
 
       <div

@@ -33,9 +33,9 @@ class SessionService:
             initial_prompt=initial_prompt
         )
         title = (generated_title.strip() or "New Session")[:120]
-        session = Session.create_with_initial_prompt(
+        session = Session(
             title=title,
-            initial_prompt=initial_prompt,
+            entries=[],
             owner_id=owner_id,
         )
         session = await self._session_repository.create(session=session)

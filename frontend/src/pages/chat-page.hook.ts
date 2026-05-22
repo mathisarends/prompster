@@ -17,7 +17,6 @@ import type { FollowUpQuestionOption } from "@/components/chat/follow-up-questio
 import {
   chatReducer,
   createInitialChatState,
-  getLatestUserMessageContent,
   type ChatAction,
   type ChatEntry,
   type ChatPlaylist,
@@ -29,6 +28,7 @@ type UseChatSessionParams = {
   sessionId: string;
   initialSession?: SessionResponse;
   streamInitialResponse?: boolean;
+  initialPrompt?: string;
 };
 
 export type UseChatSessionResult = {
@@ -61,6 +61,7 @@ export const useChatSession = ({
   sessionId,
   initialSession,
   streamInitialResponse,
+  initialPrompt,
 }: UseChatSessionParams): UseChatSessionResult => {
   const queryClient = useQueryClient();
   const [state, dispatch] = useReducer(
@@ -161,14 +162,12 @@ export const useChatSession = ({
   );
 
   const streamAssistantResponse = useCallback(
-    (text: string, options?: { appendUserMessage?: boolean }) => {
-      const shouldAppendUserMessage = options?.appendUserMessage ?? true;
-
+    (text: string) => {
       return runEventStream(
         {
           type: "stream/started",
-          userMessageText: shouldAppendUserMessage ? text : undefined,
-          skipPendingFollowUps: shouldAppendUserMessage,
+          userMessageText: text,
+          skipPendingFollowUps: true,
         },
         (streamOptions) =>
           streamSendMessage(sessionId, { content: text }, streamOptions),
@@ -195,14 +194,12 @@ export const useChatSession = ({
       return;
     }
 
-    const latestUserMessageContent = getLatestUserMessageContent(session);
-    if (!latestUserMessageContent) return;
+    const initialMessage = initialPrompt?.trim();
+    if (!initialMessage) return;
 
     initialStreamStartedRef.current = true;
     const timeoutId = window.setTimeout(() => {
-      void streamAssistantResponse(latestUserMessageContent, {
-        appendUserMessage: false,
-      });
+      void streamAssistantResponse(initialMessage);
     }, 0);
 
     return () => {
@@ -213,6 +210,7 @@ export const useChatSession = ({
     state.isStreaming,
     streamAssistantResponse,
     streamInitialResponse,
+    initialPrompt,
   ]);
 
   const sendMessage = useCallback(
