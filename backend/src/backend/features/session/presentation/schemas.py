@@ -86,6 +86,7 @@ class PlaylistTrackResponse(Schema):
     title: str
     artist: str
     year: int | None = None
+    spotify_uri: str | None = None
     cover_url: str | None = None
 
 

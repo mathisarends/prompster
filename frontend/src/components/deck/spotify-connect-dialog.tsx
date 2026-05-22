@@ -11,11 +11,13 @@ import { Button } from "@/components/ui/button";
 type SpotifyConnectDialogProps = {
   open: boolean;
   onConnect: () => void;
+  isConnecting?: boolean;
 };
 
 export const SpotifyConnectDialog = ({
   open,
   onConnect,
+  isConnecting = false,
 }: SpotifyConnectDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={() => undefined}>
@@ -53,10 +55,11 @@ export const SpotifyConnectDialog = ({
           <Button
             type="button"
             onClick={onConnect}
+            disabled={isConnecting}
             className="mt-6 h-11 w-full bg-[#1db954] text-[#07120b] hover:bg-[#1ed760]"
           >
             <Music2 className="size-4" />
-            Spotify verbinden
+            {isConnecting ? "Spotify verbindet..." : "Spotify verbinden"}
           </Button>
         </div>
       </DialogContent>

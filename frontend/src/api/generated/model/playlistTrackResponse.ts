@@ -11,5 +11,6 @@ export interface PlaylistTrackResponse {
   title: string;
   artist: string;
   year?: number | null;
+  spotifyUri?: string | null;
   coverUrl?: string | null;
 }

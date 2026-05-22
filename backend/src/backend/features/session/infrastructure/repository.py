@@ -450,6 +450,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm.title = track.title
         orm.artist = track.artist
         orm.year = track.year
+        orm.spotify_uri = track.spotify_uri
         orm.cover_url = track.cover_url
         orm.created_at = track.created_at
         return orm
@@ -460,6 +461,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             title=orm_track.title,
             artist=orm_track.artist,
             year=orm_track.year,
+            spotify_uri=orm_track.spotify_uri,
             cover_url=orm_track.cover_url,
             created_time=orm_track.created_at,
         )

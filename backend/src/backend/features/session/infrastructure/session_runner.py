@@ -204,6 +204,7 @@ def _to_playlist_track(track: PlaylistDraftTrack) -> PlaylistTrack:
         title=track.title,
         artist=track.artist,
         year=track.year,
+        spotify_uri=track.spotify_uri,
         cover_url=track.cover_url,
     )
 
@@ -222,6 +223,7 @@ def _to_workspace_store(playlist: Playlist | None) -> WorkspaceStore:
                     title=track.title,
                     artist=track.artist,
                     year=track.year,
+                    spotify_uri=track.spotify_uri,
                     cover_url=track.cover_url,
                 )
                 for track in playlist.tracks

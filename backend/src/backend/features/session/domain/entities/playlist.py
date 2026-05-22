@@ -10,6 +10,7 @@ class PlaylistTrack(Entity):
         title: str,
         artist: str,
         year: int | None = None,
+        spotify_uri: str | None = None,
         cover_url: str | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
@@ -18,6 +19,7 @@ class PlaylistTrack(Entity):
         self.title = title
         self.artist = artist
         self.year = year
+        self.spotify_uri = spotify_uri
         self.cover_url = cover_url
 
 

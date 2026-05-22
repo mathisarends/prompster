@@ -23,6 +23,20 @@ type DeckPlaylistProps = {
   onVisibleTrackCountChange?: (count: number) => void;
   showHeader?: boolean;
   allowLocalRemoval?: boolean;
+  controller?: DeckPlaylistController;
+};
+
+export type DeckPlaylistController = {
+  isPlaying: boolean;
+  activeTrackId: string | null;
+  positionSeconds: number;
+  durationSeconds: number;
+  volume: number;
+  onPlayTrack: (trackId: string) => void;
+  onPause: () => void;
+  onResume: () => void;
+  onSeek: (seconds: number) => void;
+  onVolumeChange: (volume: number) => void;
 };
 
 export const DeckPlaylist = ({
@@ -31,17 +45,24 @@ export const DeckPlaylist = ({
   onVisibleTrackCountChange,
   showHeader = true,
   allowLocalRemoval = true,
+  controller,
 }: DeckPlaylistProps) => {
-  const [tracks, setTracks] = useState(initialTracks);
+  const [localTracks, setLocalTracks] = useState(initialTracks);
   const [query, setQuery] = useState("");
-  const [activeTrackId, setActiveTrackId] = useState<string | null>(
+  const [localActiveTrackId, setLocalActiveTrackId] = useState<string | null>(
     initialTracks[0]?.id ?? null,
   );
-  const [isPlaying, setIsPlaying] = useState(initialTracks.length > 0);
-  const [remainingSeconds, setRemainingSeconds] = useState(
+  const [localIsPlaying, setLocalIsPlaying] = useState(
+    initialTracks.length > 0,
+  );
+  const [localRemainingSeconds, setLocalRemainingSeconds] = useState(
     initialTracks[0]?.durationSeconds ?? 0,
   );
-  const [volume, setVolume] = useState(72);
+  const [localVolume, setLocalVolume] = useState(72);
+
+  const activeTrackId = controller?.activeTrackId ?? localActiveTrackId;
+  const isPlaying = controller?.isPlaying ?? localIsPlaying;
+  const tracks = controller ? initialTracks : localTracks;
 
   const activeTrack = useMemo(
     () => tracks.find((track) => track.id === activeTrackId) ?? null,
@@ -54,9 +75,17 @@ export const DeckPlaylist = ({
   );
 
   const durationSeconds = activeTrack?.durationSeconds ?? 0;
-  const elapsedSeconds = activeTrack
-    ? Math.max(0, durationSeconds - remainingSeconds)
-    : 0;
+  const elapsedSeconds = controller
+    ? controller.positionSeconds
+    : activeTrack
+      ? Math.max(0, durationSeconds - localRemainingSeconds)
+      : 0;
+
+  const currentDurationSeconds = controller
+    ? controller.durationSeconds
+    : durationSeconds;
+
+  const volume = controller?.volume ?? localVolume;
 
   const filteredTracks = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -73,25 +102,30 @@ export const DeckPlaylist = ({
   }, [query, tracks]);
 
   const removeTrack = (trackId: string) => {
-    if (!allowLocalRemoval) return;
-    setTracks((prev) => prev.filter((track) => track.id !== trackId));
+    if (controller || !allowLocalRemoval) return;
+    setLocalTracks((prev) => prev.filter((track) => track.id !== trackId));
     if (trackId === activeTrackId) {
-      setActiveTrackId(null);
-      setIsPlaying(false);
-      setRemainingSeconds(0);
+      setLocalActiveTrackId(null);
+      setLocalIsPlaying(false);
+      setLocalRemainingSeconds(0);
     }
   };
 
   const activateTrack = (trackId: string) => {
+    if (controller) {
+      controller.onPlayTrack(trackId);
+      return;
+    }
+
     const selectedTrack = tracks.find((track) => track.id === trackId);
 
     if (!selectedTrack) {
       return;
     }
 
-    setActiveTrackId(trackId);
-    setRemainingSeconds(selectedTrack.durationSeconds);
-    setIsPlaying(true);
+    setLocalActiveTrackId(trackId);
+    setLocalRemainingSeconds(selectedTrack.durationSeconds);
+    setLocalIsPlaying(true);
   };
 
   const selectTrackByOffset = (offset: number) => {
@@ -101,31 +135,28 @@ export const DeckPlaylist = ({
 
     const currentIndex = activeTrackIndex >= 0 ? activeTrackIndex : 0;
     const nextIndex = (currentIndex + offset + tracks.length) % tracks.length;
-    activateTrack(tracks[nextIndex].id);
+    const nextTrack = tracks[nextIndex];
+    if (!nextTrack) {
+      return;
+    }
+    activateTrack(nextTrack.id);
   };
-
-  useEffect(() => {
-    setTracks(initialTracks);
-    setActiveTrackId(initialTracks[0]?.id ?? null);
-    setIsPlaying(initialTracks.length > 0);
-    setRemainingSeconds(initialTracks[0]?.durationSeconds ?? 0);
-  }, [initialTracks]);
 
   useEffect(() => {
     onVisibleTrackCountChange?.(filteredTracks.length);
   }, [filteredTracks.length, onVisibleTrackCountChange]);
 
   useEffect(() => {
-    if (!activeTrack || !isPlaying) {
+    if (controller || !activeTrack || !isPlaying) {
       return;
     }
 
     const intervalId = window.setInterval(() => {
-      setRemainingSeconds((seconds) => Math.max(seconds - 1, 0));
+      setLocalRemainingSeconds((seconds) => Math.max(seconds - 1, 0));
     }, 1000);
 
     return () => window.clearInterval(intervalId);
-  }, [activeTrack, isPlaying]);
+  }, [activeTrack, controller, isPlaying]);
 
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
@@ -158,16 +189,22 @@ export const DeckPlaylist = ({
         <div className="space-y-1 pt-2 pb-3">
           {filteredTracks.map((track, index) => {
             const isActive = track.id === activeTrackId;
+            const isPlayable = controller ? Boolean(track.spotifyUri) : true;
 
             return (
               <div
                 key={track.id}
                 role="button"
                 tabIndex={0}
-                onDoubleClick={() => activateTrack(track.id)}
+                onDoubleClick={() => {
+                  if (isPlayable) {
+                    activateTrack(track.id);
+                  }
+                }}
                 className={cn(
                   "group grid grid-cols-[40px_minmax(0,1fr)_72px_40px] gap-x-4 px-2 items-center rounded-md py-3 transition-colors",
                   isActive ? "bg-white/[0.07]" : "hover:bg-white/[0.04]",
+                  !isPlayable ? "opacity-55" : null,
                 )}
               >
                 <div className="relative grid h-7 place-items-center text-sm tabular-nums text-muted-foreground">
@@ -189,13 +226,29 @@ export const DeckPlaylist = ({
                     }
                     onClick={() => {
                       if (isActive && isPlaying) {
-                        setIsPlaying(false);
+                        if (controller) {
+                          controller.onPause();
+                        } else {
+                          setLocalIsPlaying(false);
+                        }
                       } else if (isActive) {
-                        setIsPlaying(true);
+                        if (controller) {
+                          controller.onResume();
+                        } else {
+                          setLocalIsPlaying(true);
+                        }
                       } else {
-                        activateTrack(track.id);
+                        if (isPlayable) {
+                          activateTrack(track.id);
+                        }
                       }
                     }}
+                    disabled={!isPlayable}
+                    title={
+                      !isPlayable
+                        ? "Track ist ohne Spotify-URI nicht abspielbar"
+                        : undefined
+                    }
                   >
                     {isActive && isPlaying ? (
                       <Pause className="size-3.5 fill-current" />
@@ -265,16 +318,36 @@ export const DeckPlaylist = ({
       <DeckPlayer
         activeTrack={activeTrack}
         elapsedSeconds={elapsedSeconds}
-        durationSeconds={durationSeconds}
+        durationSeconds={currentDurationSeconds}
         isPlaying={isPlaying}
         trackCount={tracks.length}
         volume={volume}
-        onPlayPause={() => setIsPlaying((playing) => !playing)}
+        onPlayPause={() => {
+          if (controller) {
+            if (controller.isPlaying) {
+              controller.onPause();
+            } else {
+              controller.onResume();
+            }
+            return;
+          }
+          setLocalIsPlaying((playing) => !playing);
+        }}
         onSelectTrackByOffset={selectTrackByOffset}
         onSeek={(nextElapsedSeconds) => {
-          setRemainingSeconds(durationSeconds - nextElapsedSeconds);
+          if (controller) {
+            controller.onSeek(nextElapsedSeconds);
+            return;
+          }
+          setLocalRemainingSeconds(durationSeconds - nextElapsedSeconds);
         }}
-        onVolumeChange={setVolume}
+        onVolumeChange={(nextVolume) => {
+          if (controller) {
+            controller.onVolumeChange(nextVolume);
+            return;
+          }
+          setLocalVolume(nextVolume);
+        }}
       />
     </div>
   );

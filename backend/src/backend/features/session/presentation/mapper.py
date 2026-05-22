@@ -138,6 +138,7 @@ def to_playlist_track_response(track: PlaylistTrack) -> PlaylistTrackResponse:
         title=track.title,
         artist=track.artist,
         year=track.year,
+        spotify_uri=track.spotify_uri,
         cover_url=track.cover_url,
     )
 

@@ -1,6 +1,8 @@
+import { Plus } from "lucide-react";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
 
 import { SendButton } from "@/components/chat/send-button";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
@@ -136,7 +138,7 @@ export const ChatInputBox = ({
 
     const measureSingleLine = () => {
       const styles = window.getComputedStyle(textarea);
-      const inlineTextareaWidth = Math.max(inputContent.clientWidth - 48, 0);
+      const inlineTextareaWidth = Math.max(inputContent.clientWidth - 88, 0);
       textMirror.style.width = `${inlineTextareaWidth}px`;
 
       const lineHeight =
@@ -171,7 +173,7 @@ export const ChatInputBox = ({
           ref={inputContentRef}
           className={cn(
             isSingleLine
-              ? "relative flex items-center gap-3"
+              ? "relative flex items-center gap-2"
               : "relative flex flex-col gap-3",
           )}
         >
@@ -184,6 +186,18 @@ export const ChatInputBox = ({
               ? `${value || placeholder || " "}\n `
               : value || placeholder || " "}
           </div>
+
+          {isSingleLine && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Anhang hinzufügen"
+              className="shrink-0 rounded-full text-muted-foreground"
+            >
+              <Plus />
+            </Button>
+          )}
 
           <Textarea
             ref={textareaRef}
@@ -199,7 +213,7 @@ export const ChatInputBox = ({
             }}
             placeholder={placeholder}
             className={cn(
-              "max-h-40 min-h-9 flex-1 resize-none border-none bg-transparent p-0 pt-0.5 text-base shadow-none focus-visible:ring-0 md:text-base",
+              "max-h-72 min-h-9 flex-1 resize-none border-none bg-transparent p-0 pt-0.5 text-base shadow-none focus-visible:ring-0 md:text-base",
               !isSingleLine && "min-h-15",
               textareaClassName,
             )}
@@ -208,9 +222,20 @@ export const ChatInputBox = ({
           <div
             className={cn(
               "flex items-center",
-              isSingleLine ? "shrink-0" : "justify-end",
+              isSingleLine ? "shrink-0" : "justify-between",
             )}
           >
+            {!isSingleLine && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Anhang hinzufügen"
+                className="rounded-full text-muted-foreground"
+              >
+                <Plus />
+              </Button>
+            )}
             <SendButton
               onClick={submit}
               disabled={!value.trim() || disabled}

@@ -7,7 +7,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["vite/client", "react", "react-dom"],
+    "types": ["vite/client", "react", "react-dom", "spotify-web-playback-sdk"],
     "skipLibCheck": true,
 
     /* Bundler mode */
