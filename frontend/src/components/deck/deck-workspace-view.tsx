@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { LayoutGrid, ListMusic } from "lucide-react";
 
+import type { PlaylistTrackResponse } from "@/api/generated/model";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,13 +9,32 @@ import { ChatWorkspacePanel } from "@/components/chat/chat-workspace-panel";
 import { DeckPlaylist } from "@/components/deck/deck-playlist";
 
 type DeckWorkspaceViewProps = {
+  playlist: {
+    name?: string | null;
+    tracks: PlaylistTrackResponse[];
+  };
   onClose: () => void;
 };
 
 type DeckViewMode = "playlist" | "cards";
 
-export const DeckWorkspaceView = ({ onClose }: DeckWorkspaceViewProps) => {
+export const DeckWorkspaceView = ({
+  playlist,
+  onClose,
+}: DeckWorkspaceViewProps) => {
   const [activeView, setActiveView] = useState<DeckViewMode>("playlist");
+  const tracks = useMemo(
+    () =>
+      playlist.tracks.map((track) => ({
+        id: track.id,
+        title: track.title,
+        artist: track.artist,
+        year: track.year?.toString() ?? "",
+        durationSeconds: 0,
+        coverUrl: track.coverUrl ?? "",
+      })),
+    [playlist.tracks],
+  );
 
   return (
     <Tabs
@@ -47,7 +67,11 @@ export const DeckWorkspaceView = ({ onClose }: DeckWorkspaceViewProps) => {
           value="playlist"
           className="flex min-h-0 flex-1 flex-col pt-2 data-[hidden]:hidden"
         >
-          <DeckPlaylist showHeader={false} />
+          <DeckPlaylist
+            initialTracks={tracks}
+            showHeader={false}
+            allowLocalRemoval={false}
+          />
         </TabsContent>
 
         <TabsContent

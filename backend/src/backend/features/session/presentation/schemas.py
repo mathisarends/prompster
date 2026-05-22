@@ -81,6 +81,20 @@ class FollowUpQuestionGroupEntryResponse(Schema):
     questions: list[FollowUpQuestionResponse]
 
 
+class PlaylistTrackResponse(Schema):
+    id: UUID
+    title: str
+    artist: str
+    year: int | None = None
+    cover_url: str | None = None
+
+
+class PlaylistResponse(Schema):
+    id: UUID
+    name: str | None = None
+    tracks: list[PlaylistTrackResponse]
+
+
 SessionEntryResponse = Annotated[
     Union[
         UserMessageEntryResponse,
@@ -98,6 +112,7 @@ class SessionResponse(Schema):
     is_starred: bool
     created_at: datetime
     entries: list[SessionEntryResponse]
+    playlist: PlaylistResponse | None = None
 
 
 class SessionSummaryResponse(Schema):
@@ -157,14 +172,6 @@ class AddPlaylistTrackRequest(Schema):
     title: str = Field(min_length=1, max_length=300)
     artist: str = Field(min_length=1, max_length=300)
     year: int | None = Field(default=None, ge=1900, le=2100)
-    cover_url: str | None = None
-
-
-class PlaylistTrackResponse(Schema):
-    id: UUID
-    title: str
-    artist: str
-    year: int | None = None
     cover_url: str | None = None
 
 

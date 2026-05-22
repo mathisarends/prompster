@@ -73,7 +73,7 @@ export const DeckPlayer = ({
       <div className="grid min-h-16 grid-cols-1 items-center gap-3 xl:grid-cols-[minmax(10rem,1fr)_minmax(18rem,1.25fr)_minmax(12rem,1fr)] xl:gap-5">
         <div className="flex min-w-0 items-center gap-3">
           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-[3px] bg-white/[0.06]">
-            {activeTrack ? (
+            {activeTrack?.coverUrl ? (
               <img
                 src={activeTrack.coverUrl}
                 alt={`${activeTrack.title} Cover`}

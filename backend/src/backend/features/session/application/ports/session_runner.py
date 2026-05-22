@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
+from uuid import UUID
 
 from backend.features.session.domain import (
     FollowUpQuestion,
     PendingCall,
     Playlist,
+    PlaylistTrack,
     Session,
 )
 
@@ -41,6 +43,30 @@ class SessionRunnerPlaylistUpdated:
     playlist: Playlist
 
 
+@dataclass(frozen=True)
+class SessionRunnerPlaylistTracksAdded:
+    playlist_id: UUID
+    tracks: list[PlaylistTrack]
+
+
+@dataclass(frozen=True)
+class SessionRunnerPlaylistTracksRemoved:
+    playlist_id: UUID
+    track_ids: list[UUID]
+
+
+@dataclass(frozen=True)
+class SessionRunnerPlaylistTrackReplacement:
+    track_id: UUID
+    track: PlaylistTrack
+
+
+@dataclass(frozen=True)
+class SessionRunnerPlaylistTracksReplaced:
+    playlist_id: UUID
+    replacements: list[SessionRunnerPlaylistTrackReplacement]
+
+
 type SessionRunnerEvent = (
     SessionRunnerAssistantMessage
     | SessionRunnerAssistantMessageChunk
@@ -48,6 +74,9 @@ type SessionRunnerEvent = (
     | SessionRunnerToolCallCompleted
     | SessionRunnerFollowUpRequested
     | SessionRunnerPlaylistUpdated
+    | SessionRunnerPlaylistTracksAdded
+    | SessionRunnerPlaylistTracksRemoved
+    | SessionRunnerPlaylistTracksReplaced
 )
 
 

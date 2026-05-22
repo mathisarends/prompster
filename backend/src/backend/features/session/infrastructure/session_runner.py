@@ -10,8 +10,16 @@ from agent.agent import (
     ToolResultEvent,
     WorkspaceUpdatedEvent,
 )
-from agent import MessageManager, Spotify, PlaylistDraft
+from agent import MessageManager, Spotify
 from agent.tools.views import AskFollowUpQuestion
+from agent.workspace import (
+    PlaylistDraft,
+    PlaylistDraftTrack,
+    PlaylistDraftTracksAdded,
+    PlaylistDraftTracksRemoved,
+    PlaylistDraftTracksReplaced,
+    WorkspaceStore,
+)
 
 from llmify import ChatModel
 from llmify.messages import ToolCall as LLMToolCall
@@ -23,6 +31,10 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerAssistantMessageChunk,
     SessionRunnerEvent,
     SessionRunnerFollowUpRequested,
+    SessionRunnerPlaylistTrackReplacement,
+    SessionRunnerPlaylistTracksAdded,
+    SessionRunnerPlaylistTracksRemoved,
+    SessionRunnerPlaylistTracksReplaced,
     SessionRunnerPlaylistUpdated,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallStarted,
@@ -63,6 +75,7 @@ class AgentSessionRunner(SessionRunner):
                 system_prompt=self._system_prompt,
             ),
             spotify=Spotify(client=self._spotify),
+            workspace_store=_to_workspace_store(session.playlist),
         )
 
         try:
@@ -95,9 +108,34 @@ class AgentSessionRunner(SessionRunner):
                         ]
                     )
                 elif isinstance(event, WorkspaceUpdatedEvent):
-                    yield SessionRunnerPlaylistUpdated(
-                        playlist=_to_playlist(event.playlist_draft)
-                    )
+                    update = event.update
+                    if isinstance(update, PlaylistDraftTracksAdded):
+                        yield SessionRunnerPlaylistTracksAdded(
+                            playlist_id=update.playlist_draft.id,
+                            tracks=[
+                                _to_playlist_track(track) for track in update.tracks
+                            ],
+                        )
+                    elif isinstance(update, PlaylistDraftTracksRemoved):
+                        yield SessionRunnerPlaylistTracksRemoved(
+                            playlist_id=update.playlist_draft.id,
+                            track_ids=update.track_ids,
+                        )
+                    elif isinstance(update, PlaylistDraftTracksReplaced):
+                        yield SessionRunnerPlaylistTracksReplaced(
+                            playlist_id=update.playlist_draft.id,
+                            replacements=[
+                                SessionRunnerPlaylistTrackReplacement(
+                                    track_id=replacement.track_id,
+                                    track=_to_playlist_track(replacement.track),
+                                )
+                                for replacement in update.replacements
+                            ],
+                        )
+                    else:
+                        yield SessionRunnerPlaylistUpdated(
+                            playlist=_to_playlist(event.playlist_draft)
+                        )
         finally:
             await agent.close()
 
@@ -154,14 +192,39 @@ def _to_follow_up_question(question: AskFollowUpQuestion) -> FollowUpQuestion:
 
 def _to_playlist(playlist_draft: PlaylistDraft) -> Playlist:
     return Playlist(
+        id=playlist_draft.id,
         name=playlist_draft.name,
-        tracks=[
-            PlaylistTrack(
-                title=track.title,
-                artist=track.artist,
-                year=track.year,
-                cover_url=track.cover_url,
-            )
-            for track in playlist_draft.tracks
-        ],
+        tracks=[_to_playlist_track(track) for track in playlist_draft.tracks],
+    )
+
+
+def _to_playlist_track(track: PlaylistDraftTrack) -> PlaylistTrack:
+    return PlaylistTrack(
+        id=track.id,
+        title=track.title,
+        artist=track.artist,
+        year=track.year,
+        cover_url=track.cover_url,
+    )
+
+
+def _to_workspace_store(playlist: Playlist | None) -> WorkspaceStore:
+    if playlist is None:
+        return WorkspaceStore()
+
+    return WorkspaceStore(
+        PlaylistDraft(
+            id=playlist.id,
+            name=playlist.name or "Playlist",
+            tracks=[
+                PlaylistDraftTrack(
+                    id=track.id,
+                    title=track.title,
+                    artist=track.artist,
+                    year=track.year,
+                    cover_url=track.cover_url,
+                )
+                for track in playlist.tracks
+            ],
+        )
     )

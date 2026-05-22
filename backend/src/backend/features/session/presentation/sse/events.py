@@ -37,6 +37,7 @@ class SessionEventType(StrEnum):
     PLAYLIST_SET = "playlist.set"
     PLAYLIST_TRACK_ADDED = "playlist.track_added"
     PLAYLIST_TRACK_REMOVED = "playlist.track_removed"
+    PLAYLIST_TRACK_REPLACED = "playlist.track_replaced"
 
     DONE = "done"
     ERROR = "error"
@@ -149,6 +150,15 @@ class PlaylistTrackRemovedEvent(_SessionEventSchema):
     track_id: UUID
 
 
+class PlaylistTrackReplacedEvent(_SessionEventSchema):
+    type: Literal[SessionEventType.PLAYLIST_TRACK_REPLACED] = (
+        SessionEventType.PLAYLIST_TRACK_REPLACED
+    )
+    playlist_id: UUID
+    track_id: UUID
+    track: PlaylistTrackResponse
+
+
 class DoneEvent(_SessionEventSchema):
     type: Literal[SessionEventType.DONE] = SessionEventType.DONE
 
@@ -175,6 +185,7 @@ ServerEvent = Annotated[
         PlaylistSetEvent,
         PlaylistTrackAddedEvent,
         PlaylistTrackRemovedEvent,
+        PlaylistTrackReplacedEvent,
         DoneEvent,
         ErrorEvent,
     ],

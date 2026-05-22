@@ -14,7 +14,19 @@ from .agent import (
 )
 from .tools import Spotify
 from .tools.views import AskFollowUpOption, AskFollowUpQuestion
-from .workspace import PlaylistDraft
+from .workspace import (
+    PlaylistDraft,
+    PlaylistDraftCreated,
+    PlaylistDraftReplaced,
+    PlaylistDraftTrack,
+    PlaylistDraftTrackReplacement,
+    PlaylistDraftTracksAdded,
+    PlaylistDraftTracksRemoved,
+    PlaylistDraftTracksReplaced,
+    PlaylistDraftUpdate,
+    PlaylistDraftUpdateKind,
+    WorkspaceStore,
+)
 
 
 __all__ = [
@@ -34,4 +46,14 @@ __all__ = [
     "MessageManager",
     "Spotify",
     "PlaylistDraft",
+    "PlaylistDraftCreated",
+    "PlaylistDraftReplaced",
+    "PlaylistDraftTrack",
+    "PlaylistDraftTrackReplacement",
+    "PlaylistDraftTracksAdded",
+    "PlaylistDraftTracksRemoved",
+    "PlaylistDraftTracksReplaced",
+    "PlaylistDraftUpdate",
+    "PlaylistDraftUpdateKind",
+    "WorkspaceStore",
 ]

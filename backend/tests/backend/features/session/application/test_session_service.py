@@ -9,6 +9,10 @@ from backend.features.session.application.events import (
     SessionAssistantMessageChunk,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
+    SessionPlaylistSet,
+    SessionPlaylistTrackAdded,
+    SessionPlaylistTrackRemoved,
+    SessionPlaylistTrackReplaced,
     SessionToolCallSequenceAdded,
     SessionToolCallResolved,
 )
@@ -17,6 +21,11 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
     SessionRunnerEvent,
+    SessionRunnerPlaylistTrackReplacement,
+    SessionRunnerPlaylistTracksAdded,
+    SessionRunnerPlaylistTracksRemoved,
+    SessionRunnerPlaylistTracksReplaced,
+    SessionRunnerPlaylistUpdated,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallStarted,
 )
@@ -40,6 +49,8 @@ from backend.features.session.domain import (
     FollowUpQuestion,
     FollowUpQuestionState,
     PendingCall,
+    Playlist,
+    PlaylistTrack,
     Session,
     SessionAccessDeniedError,
     SessionRepository,
@@ -495,6 +506,116 @@ class TestSessionServiceSendMessage:
             sequences[0].id,
             sequences[0].id,
         ]
+
+    def test_emits_playlist_set_for_initial_runner_playlist(self) -> None:
+        owner_id = uuid4()
+        playlist_id = uuid4()
+        track = PlaylistTrack(id=uuid4(), title="Take On Me", artist="a-ha")
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        runner = _SessionRunnerStub(
+            events=[
+                SessionRunnerPlaylistUpdated(
+                    playlist=Playlist(id=playlist_id, name="80er Party", tracks=[track])
+                )
+            ]
+        )
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        events = asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="baue ein 80er deck",
+                )
+            )
+        )
+
+        playlist_event = next(
+            event for event in events if isinstance(event, SessionPlaylistSet)
+        )
+        assert playlist_event.playlist.id == playlist_id
+        assert playlist_event.playlist.name == "80er Party"
+        assert playlist_event.playlist.tracks == [track]
+        assert session.playlist is not None
+        assert session.playlist.id == playlist_id
+
+    def test_emits_playlist_track_diffs_for_runner_playlist_mutations(self) -> None:
+        owner_id = uuid4()
+        playlist_id = uuid4()
+        removed_track = PlaylistTrack(
+            id=uuid4(),
+            title="Take On Me",
+            artist="a-ha",
+        )
+        added_track = PlaylistTrack(
+            id=uuid4(),
+            title="Billie Jean",
+            artist="Michael Jackson",
+        )
+        replacement_track = PlaylistTrack(
+            id=uuid4(),
+            title="Africa",
+            artist="Toto",
+        )
+        session = Session(
+            title="Roadtrip",
+            entries=[],
+            owner_id=owner_id,
+            playlist=Playlist(id=playlist_id, tracks=[removed_track]),
+        )
+        runner = _SessionRunnerStub(
+            events=[
+                SessionRunnerPlaylistTracksAdded(
+                    playlist_id=playlist_id,
+                    tracks=[added_track],
+                ),
+                SessionRunnerPlaylistTracksReplaced(
+                    playlist_id=playlist_id,
+                    replacements=[
+                        SessionRunnerPlaylistTrackReplacement(
+                            track_id=added_track.id,
+                            track=replacement_track,
+                        )
+                    ],
+                ),
+                SessionRunnerPlaylistTracksRemoved(
+                    playlist_id=playlist_id,
+                    track_ids=[removed_track.id],
+                ),
+            ]
+        )
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        events = asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="aendere die playlist",
+                )
+            )
+        )
+
+        assert any(
+            isinstance(event, SessionPlaylistTrackAdded) and event.track is added_track
+            for event in events
+        )
+        assert any(
+            isinstance(event, SessionPlaylistTrackReplaced)
+            and event.track_id == added_track.id
+            and event.track is replacement_track
+            for event in events
+        )
+        assert any(
+            isinstance(event, SessionPlaylistTrackRemoved)
+            and event.track_id == removed_track.id
+            for event in events
+        )
+        assert session.playlist is not None
+        assert session.playlist.tracks == [replacement_track]
 
 
 class TestSessionServiceFollowUps:

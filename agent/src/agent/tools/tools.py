@@ -12,12 +12,15 @@ from agent.tools.handler import Spotify
 from agent.tools.schemas import ToolSchema
 from agent.tools.views import (
     Tool,
+    AddDraftPlaylistTracksParams,
     AlbumTracksParams,
     ArtistAlbumsParams,
     ArtistTopTracksParams,
     AskFollowUpParams,
     BuildDraftPlaylistParams,
     PlaylistIdParams,
+    RemoveDraftPlaylistTracksParams,
+    ReplaceDraftPlaylistTracksParams,
     SearchParams,
 )
 
@@ -101,22 +104,25 @@ class Tools:
 
     def _register_default_tools(self) -> None:
         @self.action(
-            description="Search Spotify for tracks matching a query.",
+            description="",
             params=SearchParams,
+            status_label=lambda params: params.status,
         )
         async def search_tracks(spotify: Inject[Spotify], params: SearchParams) -> str:
             return await spotify.search_tracks(params)
 
         @self.action(
-            description="Search Spotify for albums matching a query.",
+            description="",
             params=SearchParams,
+            status_label=lambda params: params.status,
         )
         async def search_albums(spotify: Inject[Spotify], params: SearchParams) -> str:
             return await spotify.search_albums(params)
 
         @self.action(
-            description="Search Spotify for public playlists matching a query.",
+            description="",
             params=SearchParams,
+            status_label=lambda params: params.status,
         )
         async def search_playlists(
             spotify: Inject[Spotify],
@@ -125,8 +131,9 @@ class Tools:
             return await spotify.search_playlists(params)
 
         @self.action(
-            description="Get albums by an artist.",
+            description="",
             params=ArtistAlbumsParams,
+            status_label=lambda params: params.status,
         )
         async def get_artist_albums(
             spotify: Inject[Spotify],
@@ -135,8 +142,9 @@ class Tools:
             return await spotify.get_artist_albums(params)
 
         @self.action(
-            description="Get an artist's top tracks.",
+            description="",
             params=ArtistTopTracksParams,
+            status_label=lambda params: params.status,
         )
         async def get_artist_top_tracks(
             spotify: Inject[Spotify],
@@ -145,8 +153,9 @@ class Tools:
             return await spotify.get_artist_top_tracks(params)
 
         @self.action(
-            description="Get all tracks of an album.",
+            description="",
             params=AlbumTracksParams,
+            status_label=lambda params: params.status,
         )
         async def get_album_tracks(
             spotify: Inject[Spotify],
@@ -156,10 +165,27 @@ class Tools:
 
         @self.action(
             description=(
-                "Build or replace the current Hitster playlist draft in the workspace. "
-                "Use this after researching tracks; do not create a Spotify playlist."
+                "Create the initial Hitster playlist draft in the workspace. "
+                "Use this only when no draft exists yet; do not create a Spotify playlist."
             ),
             params=BuildDraftPlaylistParams,
+            status_label=lambda params: params.status,
+        )
+        async def create_draft_playlist(
+            workspace_store: Inject[WorkspaceStore],
+            params: BuildDraftPlaylistParams,
+        ) -> PlaylistDraft:
+            playlist_draft = PlaylistDraft(name=params.name, tracks=params.tracks)
+            return workspace_store.save_playlist_draft(playlist_draft)
+
+        @self.action(
+            description=(
+                "Build or fully replace the current Hitster playlist draft in the "
+                "workspace. Prefer create_draft_playlist for the initial draft and "
+                "the add/remove/replace tools for refinements."
+            ),
+            params=BuildDraftPlaylistParams,
+            status_label=lambda params: params.status,
         )
         async def build_draft_playlist(
             workspace_store: Inject[WorkspaceStore],
@@ -169,8 +195,42 @@ class Tools:
             return workspace_store.save_playlist_draft(playlist_draft)
 
         @self.action(
-            description="Get all tracks of a Spotify playlist.",
+            description="Add tracks to the current Hitster playlist draft.",
+            params=AddDraftPlaylistTracksParams,
+            status_label=lambda params: params.status,
+        )
+        async def add_draft_playlist_tracks(
+            workspace_store: Inject[WorkspaceStore],
+            params: AddDraftPlaylistTracksParams,
+        ) -> PlaylistDraft:
+            return workspace_store.add_tracks(params.tracks)
+
+        @self.action(
+            description="Remove tracks from the current Hitster playlist draft by ID.",
+            params=RemoveDraftPlaylistTracksParams,
+            status_label=lambda params: params.status,
+        )
+        async def remove_draft_playlist_tracks(
+            workspace_store: Inject[WorkspaceStore],
+            params: RemoveDraftPlaylistTracksParams,
+        ) -> PlaylistDraft:
+            return workspace_store.remove_tracks(params.track_ids)
+
+        @self.action(
+            description="Replace tracks in the current Hitster playlist draft by ID.",
+            params=ReplaceDraftPlaylistTracksParams,
+            status_label=lambda params: params.status,
+        )
+        async def replace_draft_playlist_tracks(
+            workspace_store: Inject[WorkspaceStore],
+            params: ReplaceDraftPlaylistTracksParams,
+        ) -> PlaylistDraft:
+            return workspace_store.replace_tracks(params.replacements)
+
+        @self.action(
+            description="",
             params=PlaylistIdParams,
+            status_label=lambda params: params.status,
         )
         async def get_playlist_tracks(
             spotify: Inject[Spotify],
@@ -186,6 +246,7 @@ class Tools:
                 "The user may also type a free-text answer or skip a question."
             ),
             params=AskFollowUpParams,
+            status_label=lambda params: params.status,
             suspends_for_input=True,
         )
         async def ask_follow_up(params: AskFollowUpParams) -> str:

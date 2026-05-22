@@ -7,6 +7,7 @@ from backend.features.session.application import (
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
+    SessionPlaylistTrackReplaced,
     SessionToolCallFailed,
     SessionToolCallSequenceAdded,
     SessionToolCallSequenceCompleted,
@@ -30,6 +31,7 @@ from backend.features.session.presentation.sse.events import (
     PlaylistSetEvent,
     PlaylistTrackAddedEvent,
     PlaylistTrackRemovedEvent,
+    PlaylistTrackReplacedEvent,
     ServerEvent,
     ToolCallFailedEvent,
     ToolCallSequenceAddedEvent,
@@ -98,6 +100,13 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
         return PlaylistTrackRemovedEvent(
             playlist_id=event.playlist_id,
             track_id=event.track_id,
+        )
+
+    if isinstance(event, SessionPlaylistTrackReplaced):
+        return PlaylistTrackReplacedEvent(
+            playlist_id=event.playlist_id,
+            track_id=event.track_id,
+            track=to_playlist_track_response(event.track),
         )
 
     raise TypeError(f"Unsupported session event: {type(event).__name__}")

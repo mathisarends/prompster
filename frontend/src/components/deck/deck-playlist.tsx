@@ -22,6 +22,7 @@ type DeckPlaylistProps = {
   initialTracks?: PlaylistTrack[];
   onVisibleTrackCountChange?: (count: number) => void;
   showHeader?: boolean;
+  allowLocalRemoval?: boolean;
 };
 
 export const DeckPlaylist = ({
@@ -29,6 +30,7 @@ export const DeckPlaylist = ({
   initialTracks = mockTracks,
   onVisibleTrackCountChange,
   showHeader = true,
+  allowLocalRemoval = true,
 }: DeckPlaylistProps) => {
   const [tracks, setTracks] = useState(initialTracks);
   const [query, setQuery] = useState("");
@@ -71,6 +73,7 @@ export const DeckPlaylist = ({
   }, [query, tracks]);
 
   const removeTrack = (trackId: string) => {
+    if (!allowLocalRemoval) return;
     setTracks((prev) => prev.filter((track) => track.id !== trackId));
     if (trackId === activeTrackId) {
       setActiveTrackId(null);
@@ -100,6 +103,13 @@ export const DeckPlaylist = ({
     const nextIndex = (currentIndex + offset + tracks.length) % tracks.length;
     activateTrack(tracks[nextIndex].id);
   };
+
+  useEffect(() => {
+    setTracks(initialTracks);
+    setActiveTrackId(initialTracks[0]?.id ?? null);
+    setIsPlaying(initialTracks.length > 0);
+    setRemainingSeconds(initialTracks[0]?.durationSeconds ?? 0);
+  }, [initialTracks]);
 
   useEffect(() => {
     onVisibleTrackCountChange?.(filteredTracks.length);
@@ -197,12 +207,14 @@ export const DeckPlaylist = ({
 
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="h-10 w-10 shrink-0 overflow-hidden rounded-[4px] bg-white/[0.06] shadow-sm">
-                    <img
-                      src={track.coverUrl}
-                      alt={`${track.title} Cover`}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
+                    {track.coverUrl ? (
+                      <img
+                        src={track.coverUrl}
+                        alt={`${track.title} Cover`}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : null}
                   </div>
                   <div className="min-w-0">
                     <p
@@ -224,18 +236,20 @@ export const DeckPlaylist = ({
                 </span>
 
                 <div className="flex items-center justify-end">
-                  <Button
-                    size="icon-xs"
-                    variant="ghost"
-                    className="text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100"
-                    aria-label={`${track.title} entfernen`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      removeTrack(track.id);
-                    }}
-                  >
-                    <X className="size-3.5" />
-                  </Button>
+                  {allowLocalRemoval ? (
+                    <Button
+                      size="icon-xs"
+                      variant="ghost"
+                      className="text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100"
+                      aria-label={`${track.title} entfernen`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        removeTrack(track.id);
+                      }}
+                    >
+                      <X className="size-3.5" />
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             );

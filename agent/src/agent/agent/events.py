@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from agent.tools.views import AskFollowUpQuestion
-from agent.workspace import PlaylistDraft
+from agent.workspace import PlaylistDraft, PlaylistDraftUpdate
 
 
 @dataclass(kw_only=True)
@@ -51,6 +51,7 @@ class ToolResultEvent(AgentEvent):
 @dataclass(kw_only=True)
 class WorkspaceUpdatedEvent(AgentEvent):
     playlist_draft: PlaylistDraft
+    update: PlaylistDraftUpdate
 
 
 @dataclass(kw_only=True)

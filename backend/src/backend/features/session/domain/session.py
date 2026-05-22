@@ -89,8 +89,21 @@ class Session(Aggregate):
         self,
         tracks: list[PlaylistTrack],
         name: str | None = None,
+        id: UUID | None = None,
+        created_time: datetime | None = None,
     ) -> Playlist:
-        self._playlist = Playlist(tracks=tracks, name=name)
+        self._playlist = Playlist(
+            id=id,
+            tracks=tracks,
+            name=name,
+            created_time=created_time,
+        )
+        return self._playlist
+
+    def add_tracks(self, tracks: list[PlaylistTrack]) -> Playlist:
+        if self._playlist is None:
+            self._playlist = Playlist(tracks=[])
+        self._playlist.tracks.extend(tracks)
         return self._playlist
 
     def add_track(
@@ -118,6 +131,17 @@ class Session(Aggregate):
             if track.id == track_id:
                 self._playlist.tracks.pop(index)
                 return
+        raise PlaylistTrackNotFoundError(
+            f"Track {track_id} not found in playlist {self._playlist.id}."
+        )
+
+    def replace_track(self, track_id: UUID, track: PlaylistTrack) -> Playlist:
+        if self._playlist is None:
+            raise PlaylistTrackNotFoundError(f"Session {self.id} has no playlist.")
+        for index, existing_track in enumerate(self._playlist.tracks):
+            if existing_track.id == track_id:
+                self._playlist.tracks[index] = track
+                return self._playlist
         raise PlaylistTrackNotFoundError(
             f"Track {track_id} not found in playlist {self._playlist.id}."
         )

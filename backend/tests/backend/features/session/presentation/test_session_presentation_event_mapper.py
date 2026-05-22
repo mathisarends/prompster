@@ -6,6 +6,10 @@ from backend.features.session.application import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionFollowUpGroupAdded,
+    SessionPlaylistSet,
+    SessionPlaylistTrackAdded,
+    SessionPlaylistTrackRemoved,
+    SessionPlaylistTrackReplaced,
     SessionToolCallSequenceAdded,
     SessionToolCallResolved,
 )
@@ -15,6 +19,8 @@ from backend.features.session.domain import (
     FollowUpQuestion,
     FollowUpQuestionGroup,
     PendingCall,
+    Playlist,
+    PlaylistTrack,
     ToolCallSequence,
     ToolFunction,
 )
@@ -23,6 +29,10 @@ from backend.features.session.presentation.sse.events import (
     AssistantMessageCompletedEvent,
     AssistantMessageStartedEvent,
     FollowUpGroupAddedEvent,
+    PlaylistSetEvent,
+    PlaylistTrackAddedEvent,
+    PlaylistTrackRemovedEvent,
+    PlaylistTrackReplacedEvent,
     SessionEventType,
     ToolCallSequenceAddedEvent,
     ToolCallResolvedEvent,
@@ -125,3 +135,62 @@ class TestSessionEventMapper:
         assert event.type == SessionEventType.FOLLOW_UP_GROUP_ADDED
         assert event.group.id == group.id
         assert event.group.questions[0].question == "Welches Genre?"
+
+    def test_to_server_event_maps_playlist_set(self) -> None:
+        playlist = Playlist(
+            name="80er Party",
+            tracks=[PlaylistTrack(title="Take On Me", artist="a-ha")],
+        )
+
+        event = to_server_event(SessionPlaylistSet(playlist=playlist))
+
+        assert isinstance(event, PlaylistSetEvent)
+        assert event.type == SessionEventType.PLAYLIST_SET
+        assert event.playlist.id == playlist.id
+        assert event.playlist.name == "80er Party"
+        assert event.playlist.tracks[0].title == "Take On Me"
+
+    def test_to_server_event_maps_playlist_track_added(self) -> None:
+        playlist_id = uuid4()
+        track = PlaylistTrack(title="Billie Jean", artist="Michael Jackson")
+
+        event = to_server_event(
+            SessionPlaylistTrackAdded(playlist_id=playlist_id, track=track)
+        )
+
+        assert isinstance(event, PlaylistTrackAddedEvent)
+        assert event.type == SessionEventType.PLAYLIST_TRACK_ADDED
+        assert event.playlist_id == playlist_id
+        assert event.track.id == track.id
+
+    def test_to_server_event_maps_playlist_track_removed(self) -> None:
+        playlist_id = uuid4()
+        track_id = uuid4()
+
+        event = to_server_event(
+            SessionPlaylistTrackRemoved(playlist_id=playlist_id, track_id=track_id)
+        )
+
+        assert isinstance(event, PlaylistTrackRemovedEvent)
+        assert event.type == SessionEventType.PLAYLIST_TRACK_REMOVED
+        assert event.playlist_id == playlist_id
+        assert event.track_id == track_id
+
+    def test_to_server_event_maps_playlist_track_replaced(self) -> None:
+        playlist_id = uuid4()
+        track_id = uuid4()
+        track = PlaylistTrack(title="Africa", artist="Toto")
+
+        event = to_server_event(
+            SessionPlaylistTrackReplaced(
+                playlist_id=playlist_id,
+                track_id=track_id,
+                track=track,
+            )
+        )
+
+        assert isinstance(event, PlaylistTrackReplacedEvent)
+        assert event.type == SessionEventType.PLAYLIST_TRACK_REPLACED
+        assert event.playlist_id == playlist_id
+        assert event.track_id == track_id
+        assert event.track.id == track.id

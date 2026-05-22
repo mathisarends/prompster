@@ -7,6 +7,7 @@
  */
 import type { AssistantMessageEntryResponse } from "./assistantMessageEntryResponse";
 import type { FollowUpQuestionGroupEntryResponse } from "./followUpQuestionGroupEntryResponse";
+import type { PlaylistResponse } from "./playlistResponse";
 import type { ToolCallSequenceEntryResponse } from "./toolCallSequenceEntryResponse";
 import type { UserMessageEntryResponse } from "./userMessageEntryResponse";
 
@@ -21,4 +22,5 @@ export interface SessionResponse {
     | ToolCallSequenceEntryResponse
     | FollowUpQuestionGroupEntryResponse
   )[];
+  playlist?: PlaylistResponse | null;
 }

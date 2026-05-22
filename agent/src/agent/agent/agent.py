@@ -124,7 +124,7 @@ class Agent:
                     tool_call_id=call.id,
                     name=call.function.name,
                     args=args,
-                    status_label=args.get("status") if isinstance(args, dict) else None,
+                    status_label=tool.render_status(args) if tool else None,
                 )
 
                 if tool is not None and tool.suspends_for_input:
@@ -142,10 +142,11 @@ class Agent:
                     name=call.function.name,
                     result=serialized,
                 )
-                for (
-                    playlist_draft
-                ) in self._workspace_store.drain_playlist_draft_updates():
-                    yield WorkspaceUpdatedEvent(playlist_draft=playlist_draft)
+                for update in self._workspace_store.drain_playlist_draft_updates():
+                    yield WorkspaceUpdatedEvent(
+                        playlist_draft=update.playlist_draft,
+                        update=update,
+                    )
                 self._messages.add_tool_result(
                     tool_call_id=call.id,
                     content=serialized,

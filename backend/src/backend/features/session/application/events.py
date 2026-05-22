@@ -72,6 +72,13 @@ class SessionPlaylistTrackRemoved:
     track_id: UUID
 
 
+@dataclass(frozen=True)
+class SessionPlaylistTrackReplaced:
+    playlist_id: UUID
+    track_id: UUID
+    track: PlaylistTrack
+
+
 type SessionEvent = (
     SessionAssistantMessageStarted
     | SessionAssistantMessageChunk
@@ -84,4 +91,5 @@ type SessionEvent = (
     | SessionPlaylistSet
     | SessionPlaylistTrackAdded
     | SessionPlaylistTrackRemoved
+    | SessionPlaylistTrackReplaced
 )

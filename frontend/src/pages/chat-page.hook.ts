@@ -20,6 +20,7 @@ import {
   getLatestUserMessageContent,
   type ChatAction,
   type ChatEntry,
+  type ChatPlaylist,
 } from "./chat-page.state";
 
 type StreamOptions = Parameters<typeof streamSendMessage>[2];
@@ -34,6 +35,7 @@ export type UseChatSessionResult = {
   session?: SessionResponse;
   title?: string;
   entries: ChatEntry[];
+  playlist: ChatPlaylist | null;
   followUpDrafts: Record<string, string>;
   isStreaming: boolean;
   errorMessage?: string;
@@ -268,6 +270,7 @@ export const useChatSession = ({
     session,
     title: state.title ?? session?.title,
     entries: state.entries,
+    playlist: state.playlist,
     followUpDrafts: state.followUpDrafts,
     isStreaming: state.isStreaming,
     errorMessage: state.errorMessage,

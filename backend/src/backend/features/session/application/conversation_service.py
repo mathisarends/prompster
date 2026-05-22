@@ -10,6 +10,9 @@ from backend.features.session.application.events import (
     SessionEvent,
     SessionFollowUpGroupAdded,
     SessionPlaylistSet,
+    SessionPlaylistTrackAdded,
+    SessionPlaylistTrackRemoved,
+    SessionPlaylistTrackReplaced,
     SessionToolCallSequenceAdded,
     SessionToolCallSequenceCompleted,
     SessionToolCallResolved,
@@ -19,6 +22,9 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
     SessionRunnerFollowUpRequested,
+    SessionRunnerPlaylistTracksAdded,
+    SessionRunnerPlaylistTracksRemoved,
+    SessionRunnerPlaylistTracksReplaced,
     SessionRunnerPlaylistUpdated,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallStarted,
@@ -296,6 +302,48 @@ class SessionConversationService:
                 playlist = session.set_playlist(
                     tracks=list(event.playlist.tracks),
                     name=event.playlist.name,
+                    id=event.playlist.id,
+                    created_time=event.playlist.created_at,
                 )
                 await self._session_repository.save(session=session)
                 yield SessionPlaylistSet(playlist=playlist)
+            elif isinstance(event, SessionRunnerPlaylistTracksAdded):
+                had_playlist = session.playlist is not None
+                playlist = session.add_tracks(list(event.tracks))
+                await self._session_repository.save(session=session)
+                if not had_playlist:
+                    yield SessionPlaylistSet(playlist=playlist)
+                    continue
+                for track in event.tracks:
+                    yield SessionPlaylistTrackAdded(
+                        playlist_id=playlist.id,
+                        track=track,
+                    )
+            elif isinstance(event, SessionRunnerPlaylistTracksRemoved):
+                playlist = session.playlist
+                for track_id in event.track_ids:
+                    session.remove_track(track_id=track_id)
+                if playlist is None:
+                    playlist = session.playlist
+                await self._session_repository.save(session=session)
+                if playlist is not None:
+                    for track_id in event.track_ids:
+                        yield SessionPlaylistTrackRemoved(
+                            playlist_id=playlist.id,
+                            track_id=track_id,
+                        )
+            elif isinstance(event, SessionRunnerPlaylistTracksReplaced):
+                playlist = session.playlist
+                for replacement in event.replacements:
+                    playlist = session.replace_track(
+                        track_id=replacement.track_id,
+                        track=replacement.track,
+                    )
+                await self._session_repository.save(session=session)
+                if playlist is not None:
+                    for replacement in event.replacements:
+                        yield SessionPlaylistTrackReplaced(
+                            playlist_id=playlist.id,
+                            track_id=replacement.track_id,
+                            track=replacement.track,
+                        )

@@ -2,6 +2,8 @@ import type {
   AssistantMessageEntryResponse,
   FollowUpQuestionGroupEntryResponse,
   FollowUpQuestionResponse,
+  PlaylistPayload,
+  PlaylistResponse,
   SessionResponse,
   SessionSnapshotPayload,
   ToolCallSequenceEntryResponse,
@@ -15,9 +17,16 @@ import type {
 } from "@/components/chat/tool-call-accordion";
 
 type SessionLike =
-  | Pick<SessionResponse, "id" | "title" | "entries">
+  | Pick<SessionResponse, "id" | "title" | "entries" | "playlist">
   | SessionSnapshotPayload;
 type SessionEntryResponse = SessionResponse["entries"][number];
+type PlaylistLike = PlaylistPayload | PlaylistResponse | null | undefined;
+
+export type ChatPlaylist = {
+  id: string;
+  name?: string | null;
+  tracks: PlaylistPayload["tracks"];
+};
 
 export type ChatUserEntry = Omit<UserMessageEntryResponse, "kind"> & {
   kind: "user_message";
@@ -59,6 +68,7 @@ export type PendingFollowUpQuestion = {
 export type ChatState = {
   title?: string;
   entries: ChatEntry[];
+  playlist: ChatPlaylist | null;
   followUpDrafts: Record<string, string>;
   isStreaming: boolean;
   errorMessage?: string;
@@ -87,6 +97,7 @@ export type ChatAction =
 
 export const createInitialChatState = (): ChatState => ({
   entries: [],
+  playlist: null,
   followUpDrafts: {},
   isStreaming: false,
 });
@@ -101,6 +112,7 @@ export const chatReducer = (
         ...state,
         title: action.session.title,
         entries: normalizeSessionEntries(action.session.entries),
+        playlist: normalizePlaylist(action.session.playlist),
         errorMessage: undefined,
       };
 
@@ -288,6 +300,69 @@ const normalizeFollowUpQuestionGroupEntry = (
   kind: "follow_up_question_group",
 });
 
+const normalizePlaylist = (playlist: PlaylistLike): ChatPlaylist | null => {
+  if (!playlist) return null;
+  return {
+    id: playlist.id,
+    name: playlist.name,
+    tracks: playlist.tracks,
+  };
+};
+
+const addPlaylistTrack = (
+  playlist: ChatPlaylist | null,
+  playlistId: string,
+  track: PlaylistPayload["tracks"][number],
+): ChatPlaylist => {
+  if (!playlist || playlist.id !== playlistId) {
+    return { id: playlistId, tracks: [track] };
+  }
+
+  return {
+    ...playlist,
+    tracks: playlist.tracks.some((candidate) => candidate.id === track.id)
+      ? playlist.tracks.map((candidate) =>
+          candidate.id === track.id ? track : candidate,
+        )
+      : [...playlist.tracks, track],
+  };
+};
+
+const removePlaylistTrack = (
+  playlist: ChatPlaylist | null,
+  playlistId: string,
+  trackId: string,
+): ChatPlaylist | null => {
+  if (!playlist || playlist.id !== playlistId) return playlist;
+  return {
+    ...playlist,
+    tracks: playlist.tracks.filter((track) => track.id !== trackId),
+  };
+};
+
+const replacePlaylistTrack = (
+  playlist: ChatPlaylist | null,
+  playlistId: string,
+  trackId: string,
+  track: PlaylistPayload["tracks"][number],
+): ChatPlaylist => {
+  if (!playlist || playlist.id !== playlistId) {
+    return { id: playlistId, tracks: [track] };
+  }
+
+  const replaced = playlist.tracks.some(
+    (candidate) => candidate.id === trackId,
+  );
+  return {
+    ...playlist,
+    tracks: replaced
+      ? playlist.tracks.map((candidate) =>
+          candidate.id === trackId ? track : candidate,
+        )
+      : [...playlist.tracks, track],
+  };
+};
+
 const reduceServerEvent = (
   state: ChatState,
   event: SessionServerEvent,
@@ -298,6 +373,7 @@ const reduceServerEvent = (
         ...state,
         title: event.session.title,
         entries: normalizeSessionEntries(event.session.entries),
+        playlist: normalizePlaylist(event.session.playlist),
         errorMessage: undefined,
       };
 
@@ -387,6 +463,43 @@ const reduceServerEvent = (
         entries: upsertChatEntry(
           state.entries,
           normalizeFollowUpQuestionGroupEntry(event.group),
+        ),
+      };
+
+    case "playlist.set":
+      return {
+        ...state,
+        playlist: normalizePlaylist(event.playlist),
+      };
+
+    case "playlist.track_added":
+      return {
+        ...state,
+        playlist: addPlaylistTrack(
+          state.playlist,
+          event.playlistId,
+          event.track,
+        ),
+      };
+
+    case "playlist.track_removed":
+      return {
+        ...state,
+        playlist: removePlaylistTrack(
+          state.playlist,
+          event.playlistId,
+          event.trackId,
+        ),
+      };
+
+    case "playlist.track_replaced":
+      return {
+        ...state,
+        playlist: replacePlaylistTrack(
+          state.playlist,
+          event.playlistId,
+          event.trackId,
+          event.track,
         ),
       };
 

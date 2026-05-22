@@ -8,6 +8,7 @@ from backend.features.session.domain import (
     FollowUpQuestion,
     FollowUpQuestionGroup,
     PendingCall,
+    Playlist,
     PlaylistTrack,
     Session,
     SessionEntry,
@@ -20,6 +21,7 @@ from backend.features.session.presentation.schemas import (
     FollowUpOptionResponse,
     FollowUpQuestionGroupEntryResponse,
     FollowUpQuestionResponse,
+    PlaylistResponse,
     PlaylistTrackResponse,
     SessionEntryResponse,
     SessionResponse,
@@ -38,6 +40,7 @@ def to_session_response(session: Session) -> SessionResponse:
         is_starred=session.is_starred,
         created_at=session.created_at,
         entries=[to_entry_response(entry) for entry in session.entries],
+        playlist=to_playlist_response(session.playlist),
     )
 
 
@@ -136,4 +139,14 @@ def to_playlist_track_response(track: PlaylistTrack) -> PlaylistTrackResponse:
         artist=track.artist,
         year=track.year,
         cover_url=track.cover_url,
+    )
+
+
+def to_playlist_response(playlist: Playlist | None) -> PlaylistResponse | None:
+    if playlist is None:
+        return None
+    return PlaylistResponse(
+        id=playlist.id,
+        name=playlist.name,
+        tracks=[to_playlist_track_response(track) for track in playlist.tracks],
     )

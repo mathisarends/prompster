@@ -15,6 +15,7 @@ import type { FollowUpGroupAddedEvent } from "./followUpGroupAddedEvent";
 import type { PlaylistSetEvent } from "./playlistSetEvent";
 import type { PlaylistTrackAddedEvent } from "./playlistTrackAddedEvent";
 import type { PlaylistTrackRemovedEvent } from "./playlistTrackRemovedEvent";
+import type { PlaylistTrackReplacedEvent } from "./playlistTrackReplacedEvent";
 import type { SessionSnapshotEvent } from "./sessionSnapshotEvent";
 import type { ToolCallFailedEvent } from "./toolCallFailedEvent";
 import type { ToolCallResolvedEvent } from "./toolCallResolvedEvent";
@@ -40,6 +41,7 @@ export interface SessionEventSchema {
     | PlaylistSetEvent
     | PlaylistTrackAddedEvent
     | PlaylistTrackRemovedEvent
+    | PlaylistTrackReplacedEvent
     | DoneEvent
     | ErrorEvent
     | null;

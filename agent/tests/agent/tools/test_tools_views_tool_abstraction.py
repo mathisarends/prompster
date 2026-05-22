@@ -38,6 +38,37 @@ class TestToolAbstraction:
         assert params.status == "Suche läuft"
         assert params.query == "abba"
 
+    def test_render_status_returns_lambda_result(self) -> None:
+        class _Concrete(ToolParams):
+            query: str
+
+        tool = Tool(
+            name="demo",
+            description="Demo",
+            fn=lambda params: params.query,
+            param_model=_Concrete,
+            status_label=lambda params: params.status,
+        )
+
+        assert (
+            tool.render_status({"query": "abba", "status": "Suche nach 'abba'"})
+            == "Suche nach 'abba'"
+        )
+
+    def test_render_status_returns_none_for_invalid_args(self) -> None:
+        class _Concrete(ToolParams):
+            query: str
+
+        tool = Tool(
+            name="demo",
+            description="Demo",
+            fn=lambda params: params.query,
+            param_model=_Concrete,
+            status_label=lambda params: params.status,
+        )
+
+        assert tool.render_status({"query": "abba"}) is None
+
     @pytest.mark.asyncio
     async def test_execute_async_none_becomes_empty_string(self) -> None:
         tool = Tool(name="demo", description="Demo", fn=_async_returns_none)

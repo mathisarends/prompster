@@ -1,8 +1,9 @@
 import inspect
 from collections.abc import Callable
 from typing import Any
+from uuid import UUID
 
-from agent.workspace import PlaylistDraftTrack
+from agent.workspace import PlaylistDraftTrack, PlaylistDraftTrackReplacement
 from pydantic import BaseModel, Field
 
 from agent.tools.schema_builder import ToolSchemaBuilder
@@ -101,6 +102,18 @@ class AlbumTracksParams(ToolParams):
 class BuildDraftPlaylistParams(ToolParams):
     name: str
     tracks: list[PlaylistDraftTrack] = Field(min_length=1)
+
+
+class AddDraftPlaylistTracksParams(ToolParams):
+    tracks: list[PlaylistDraftTrack] = Field(min_length=1)
+
+
+class RemoveDraftPlaylistTracksParams(ToolParams):
+    track_ids: list[UUID] = Field(min_length=1)
+
+
+class ReplaceDraftPlaylistTracksParams(ToolParams):
+    replacements: list[PlaylistDraftTrackReplacement] = Field(min_length=1)
 
 
 class PlaylistIdParams(ToolParams):
