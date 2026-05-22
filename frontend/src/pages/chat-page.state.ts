@@ -4,7 +4,7 @@ import type {
   FollowUpQuestionResponse,
   SessionResponse,
   SessionSnapshotPayload,
-  ToolCallGroupEntryResponse,
+  ToolCallSequenceEntryResponse,
   ToolCallResponse,
   UserMessageEntryResponse,
 } from "@/api/generated/model";
@@ -30,7 +30,7 @@ export type ChatAssistantEntry = Omit<AssistantMessageEntryResponse, "kind"> & {
 };
 
 export type ChatToolCallGroupEntry = Omit<
-  ToolCallGroupEntryResponse,
+  ToolCallSequenceEntryResponse,
   "kind"
 > & {
   kind: "tool_call_group";
@@ -247,7 +247,7 @@ const normalizeSessionEntry = (entry: SessionEntryResponse): ChatEntry => {
       return normalizeUserEntry(entry);
     case "assistant_message":
       return normalizeAssistantEntry(entry);
-    case "tool_call_group":
+    case "tool_call_sequence":
       return normalizeToolCallGroupEntry(entry);
     case "follow_up_question_group":
       return normalizeFollowUpQuestionGroupEntry(entry);
@@ -275,7 +275,7 @@ const normalizeAssistantEntry = (
 });
 
 const normalizeToolCallGroupEntry = (
-  entry: ToolCallGroupEntryResponse,
+  entry: ToolCallSequenceEntryResponse,
 ): ChatToolCallGroupEntry => ({
   ...entry,
   kind: "tool_call_group",
@@ -336,12 +336,12 @@ const reduceServerEvent = (
         entries: cancelAssistantMessage(state.entries, event.messageId),
       };
 
-    case "tool_call.group_added":
+    case "tool_call.sequence_added":
       return {
         ...state,
         entries: upsertChatEntry(
           state.entries,
-          normalizeToolCallGroupEntry(event.group),
+          normalizeToolCallGroupEntry(event.sequence),
         ),
       };
 
@@ -350,7 +350,7 @@ const reduceServerEvent = (
         ...state,
         entries: updateToolCall(
           state.entries,
-          event.groupId,
+          event.sequenceId,
           event.toolCallId,
           {
             state: "completed",
@@ -365,7 +365,7 @@ const reduceServerEvent = (
         ...state,
         entries: updateToolCall(
           state.entries,
-          event.groupId,
+          event.sequenceId,
           event.toolCallId,
           {
             state: "failed",
@@ -375,10 +375,10 @@ const reduceServerEvent = (
         ),
       };
 
-    case "tool_call.group_completed":
+    case "tool_call.sequence_completed":
       return {
         ...state,
-        entries: completeToolCallGroup(state.entries, event.groupId),
+        entries: completeToolCallGroup(state.entries, event.sequenceId),
       };
 
     case "follow_up.group_added":
@@ -621,7 +621,8 @@ const upsertStreamErrorEntry = (
 };
 
 const omitDraft = (drafts: Record<string, string>, questionId: string) => {
-  const { [questionId]: _removed, ...remainingDrafts } = drafts;
+  const remainingDrafts = { ...drafts };
+  delete remainingDrafts[questionId];
   return remainingDrafts;
 };
 

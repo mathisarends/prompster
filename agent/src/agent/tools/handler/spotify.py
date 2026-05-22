@@ -42,7 +42,13 @@ class Spotify:
         if not tracks:
             return "No tracks found."
         return "\n".join(
-            _format_track(index + 1, track) for index, track in enumerate(tracks)
+            _format_track(
+                index + 1,
+                track,
+                _track_release_date(track),
+                _track_cover_url(track),
+            )
+            for index, track in enumerate(tracks)
         )
 
     async def search_albums(self, params: SearchParams) -> str:
@@ -92,7 +98,13 @@ class Spotify:
         if not tracks:
             return "No top tracks found."
         return "\n".join(
-            _format_track(index + 1, track) for index, track in enumerate(tracks)
+            _format_track(
+                index + 1,
+                track,
+                _track_release_date(track),
+                _track_cover_url(track),
+            )
+            for index, track in enumerate(tracks)
         )
 
     async def get_album_tracks(self, params: AlbumTracksParams) -> str:
@@ -103,12 +115,9 @@ class Spotify:
         tracks = page.items or []
         if not tracks:
             return "No tracks found."
+        album_cover_url = _cover_url(album.images)
         return "\n".join(
-            _format_track(
-                index + 1,
-                track,
-                fallback_release_date=album.release_date,
-            )
+            _format_track(index + 1, track, album.release_date, album_cover_url)
             for index, track in enumerate(tracks)
         )
 
@@ -119,7 +128,13 @@ class Spotify:
         if not tracks:
             return "Playlist is empty."
         return "\n".join(
-            _format_track(index + 1, track) for index, track in enumerate(tracks)
+            _format_track(
+                index + 1,
+                track,
+                _track_release_date(track),
+                _track_cover_url(track),
+            )
+            for index, track in enumerate(tracks)
         )
 
     async def _get_playlist_tracks(self, playlist_id: str) -> list[Track]:
@@ -203,19 +218,34 @@ def _playlist_url(playlist) -> str:
     return ""
 
 
-def _format_track(index: int, track, fallback_release_date: str | None = None) -> str:
+def _track_release_date(track: Track) -> str | None:
+    return track.album.release_date if track.album else None
+
+
+def _track_cover_url(track: Track) -> str | None:
+    return _cover_url(track.album.images) if track.album else None
+
+
+def _cover_url(images) -> str | None:
+    if not images:
+        return None
+    return images[0].url
+
+
+def _format_track(
+    index: int,
+    track,
+    release_date: str | None,
+    cover_url: str | None,
+) -> str:
     artists = track.artists or []
     artist_uris = ", ".join(artist.uri for artist in artists if artist.uri)
-    date = (
-        track.album.release_date
-        if track.album and track.album.release_date
-        else fallback_release_date
-    )
     return (
         f"{index}. {_track_title(track)}"
         f" – {_artist_names(artists)}"
-        f" ({_release_year(date)})"
+        f" ({_release_year(release_date)})"
         f"  uri={track.uri or 'n/a'}  artist_uris=[{artist_uris}]"
+        f"  cover_url={cover_url or 'n/a'}"
     )
 
 

@@ -80,6 +80,7 @@ class TestAgentWorkspaceUpdateEvents:
                     "artist": "a-ha",
                     "year": 1985,
                     "spotify_uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+                    "cover_url": "https://i.scdn.co/image/take-on-me.jpg",
                 }
             ],
         }

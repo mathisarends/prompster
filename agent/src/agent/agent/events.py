@@ -38,6 +38,7 @@ class ToolCallEvent(AgentEvent):
     tool_call_id: str
     name: str
     args: dict[str, Any]
+    status_label: str | None = None
 
 
 @dataclass(kw_only=True)

@@ -35,6 +35,7 @@ class TestWorkspaceDraftPlaylistTool:
                         "artist": "a-ha",
                         "year": 1985,
                         "spotify_uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+                        "cover_url": "https://i.scdn.co/image/take-on-me.jpg",
                     }
                 ],
             },
@@ -43,6 +44,7 @@ class TestWorkspaceDraftPlaylistTool:
         assert isinstance(result, PlaylistDraft)
         assert result.name == "80er Party"
         assert result.tracks[0].title == "Take On Me"
+        assert result.tracks[0].cover_url == "https://i.scdn.co/image/take-on-me.jpg"
         assert workspace_store.playlist_draft == result
         assert workspace_store.drain_playlist_draft_updates() == [result]
 
@@ -62,6 +64,7 @@ class TestWorkspaceDraftPlaylistTool:
                         "title": "Not a Track",
                         "artist": "Nobody",
                         "spotify_uri": "spotify:album:not-a-track",
+                        "cover_url": "https://i.scdn.co/image/whatever.jpg",
                     }
                 ],
             },

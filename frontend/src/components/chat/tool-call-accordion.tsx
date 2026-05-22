@@ -18,7 +18,7 @@ type ToolCallAccordionProps = {
 };
 
 const getStatus = (call: ToolCallItem): ToolCallStatus =>
-  call.status ?? "completed";
+  call.status === "pending" ? "running" : (call.status ?? "completed");
 
 const HeaderIcon = ({ status }: { status: ToolCallStatus }) => {
   if (status === "running") {
@@ -72,9 +72,13 @@ export const ToolCallAccordion = ({
 
   if (calls.length === 0) return null;
 
-  const visibleCalls = calls.filter((call) => getStatus(call) !== "pending");
-  const runningCall = calls.find((call) => getStatus(call) === "running");
-  const failedCall = calls.find((call) => getStatus(call) === "failed");
+  const visibleCalls = calls;
+  const runningCall = [...visibleCalls]
+    .reverse()
+    .find((call) => getStatus(call) === "running");
+  const failedCall = [...visibleCalls]
+    .reverse()
+    .find((call) => getStatus(call) === "failed");
   const isRunning = Boolean(runningCall);
   const hasFailed = Boolean(failedCall);
 
@@ -90,7 +94,10 @@ export const ToolCallAccordion = ({
 
   return (
     <section
-      className={cn("mt-3 text-sm", className)}
+      className={cn(
+        "mt-3 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-sm",
+        className,
+      )}
       aria-label="Tool-Aufrufe"
     >
       <button
@@ -123,7 +130,7 @@ export const ToolCallAccordion = ({
       </button>
 
       {isOpen && (
-        <ul className="ml-[8px] mt-2.5 space-y-2 border-l border-white/10 pl-5">
+        <ul className="ml-[8px] mt-2.5 space-y-2 border-l border-white/10 pb-1 pl-5">
           {visibleCalls.map((call) => {
             const status = getStatus(call);
 
@@ -132,25 +139,18 @@ export const ToolCallAccordion = ({
                 <span className="mt-[5px]">
                   <ChildMarker status={status} />
                 </span>
-                <div className="min-w-0 flex-1 space-y-1">
-                  <span
-                    className={cn(
-                      "block break-words text-xs leading-5",
-                      status === "running"
-                        ? "font-medium text-foreground/90"
-                        : status === "failed"
-                          ? "font-medium text-destructive"
-                          : "text-muted-foreground",
-                    )}
-                  >
-                    {call.text}
-                  </span>
-                  {call.detail ? (
-                    <pre className="max-h-32 overflow-auto whitespace-pre-wrap break-words rounded-md bg-black/20 px-2 py-1.5 font-mono text-[11px] leading-4 text-muted-foreground">
-                      {call.detail}
-                    </pre>
-                  ) : null}
-                </div>
+                <span
+                  className={cn(
+                    "block min-w-0 break-words text-xs leading-5",
+                    status === "running"
+                      ? "font-medium text-foreground/90"
+                      : status === "failed"
+                        ? "font-medium text-destructive"
+                        : "text-muted-foreground",
+                  )}
+                >
+                  {call.text}
+                </span>
               </li>
             );
           })}

@@ -9,7 +9,7 @@ class PlaylistDraftTrack(BaseModel):
     artist: str = Field(description="Primary artist or comma-separated artists.")
     year: int | None = Field(default=None, description="Release year.")
     spotify_uri: str = Field(description="Spotify track URI, e.g. spotify:track:...")
-    cover_url: str | None = Field(default=None, description="Album cover image URL.")
+    cover_url: str = Field(description="Album cover image URL.")
 
     @field_validator("spotify_uri")
     @classmethod

@@ -8,7 +8,7 @@
 
 export interface ToolCallFailedEvent {
   type?: "tool_call.failed";
-  groupId: string;
+  sequenceId: string;
   toolCallId: string;
   error: string;
 }

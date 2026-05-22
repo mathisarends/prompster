@@ -17,9 +17,9 @@ import type { PlaylistTrackAddedEvent } from "./playlistTrackAddedEvent";
 import type { PlaylistTrackRemovedEvent } from "./playlistTrackRemovedEvent";
 import type { SessionSnapshotEvent } from "./sessionSnapshotEvent";
 import type { ToolCallFailedEvent } from "./toolCallFailedEvent";
-import type { ToolCallGroupAddedEvent } from "./toolCallGroupAddedEvent";
-import type { ToolCallGroupCompletedEvent } from "./toolCallGroupCompletedEvent";
 import type { ToolCallResolvedEvent } from "./toolCallResolvedEvent";
+import type { ToolCallSequenceAddedEvent } from "./toolCallSequenceAddedEvent";
+import type { ToolCallSequenceCompletedEvent } from "./toolCallSequenceCompletedEvent";
 
 /**
  * References every server event shape for OpenAPI client generation.
@@ -32,10 +32,10 @@ export interface SessionEventSchema {
     | AssistantMessageChunkEvent
     | AssistantMessageCompletedEvent
     | AssistantMessageCancelledEvent
-    | ToolCallGroupAddedEvent
+    | ToolCallSequenceAddedEvent
     | ToolCallResolvedEvent
     | ToolCallFailedEvent
-    | ToolCallGroupCompletedEvent
+    | ToolCallSequenceCompletedEvent
     | FollowUpGroupAddedEvent
     | PlaylistSetEvent
     | PlaylistTrackAddedEvent

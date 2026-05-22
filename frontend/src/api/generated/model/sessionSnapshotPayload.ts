@@ -8,7 +8,7 @@
 import type { AssistantMessageEntryResponse } from "./assistantMessageEntryResponse";
 import type { FollowUpQuestionGroupEntryResponse } from "./followUpQuestionGroupEntryResponse";
 import type { PlaylistPayload } from "./playlistPayload";
-import type { ToolCallGroupEntryResponse } from "./toolCallGroupEntryResponse";
+import type { ToolCallSequenceEntryResponse } from "./toolCallSequenceEntryResponse";
 import type { UserMessageEntryResponse } from "./userMessageEntryResponse";
 
 export interface SessionSnapshotPayload {
@@ -18,7 +18,7 @@ export interface SessionSnapshotPayload {
   entries: (
     | UserMessageEntryResponse
     | AssistantMessageEntryResponse
-    | ToolCallGroupEntryResponse
+    | ToolCallSequenceEntryResponse
     | FollowUpQuestionGroupEntryResponse
   )[];
   playlist?: PlaylistPayload | null;

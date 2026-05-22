@@ -7,8 +7,8 @@
  */
 import type { ToolCallResponse } from "./toolCallResponse";
 
-export interface ToolCallGroupEntryResponse {
-  kind?: "tool_call_group";
+export interface ToolCallSequenceEntryResponse {
+  kind?: "tool_call_sequence";
   id: string;
   createdAt: string;
   calls: ToolCallResponse[];

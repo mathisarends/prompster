@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ToolCallGroupCompletedEvent {
-  type?: "tool_call.group_completed";
-  groupId: string;
+export interface ToolCallSequenceCompletedEvent {
+  type?: "tool_call.sequence_completed";
+  sequenceId: string;
 }

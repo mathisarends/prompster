@@ -8,7 +8,7 @@
 
 export interface ToolCallResolvedEvent {
   type?: "tool_call.resolved";
-  groupId: string;
+  sequenceId: string;
   toolCallId: string;
   result: string;
 }
