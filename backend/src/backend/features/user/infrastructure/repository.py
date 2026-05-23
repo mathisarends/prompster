@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Row
 
@@ -14,6 +14,7 @@ from backend.features.user.domain import (
 from backend.infrastructure.database.orm import (
     AuthIdentityModel,
     OAuthConnectionModel,
+    SessionModel,
     UserModel,
 )
 from backend.infrastructure.database.repository import Repository
@@ -58,6 +59,13 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
 
     async def delete_by_id(self, *, user_id: UUID) -> bool:
         return await super().delete_by_id(user_id)
+
+    async def count_sessions_for_user(self, *, user_id: UUID) -> int:
+        stmt = select(func.count(SessionModel.id)).where(
+            SessionModel.owner_id == user_id
+        )
+        count = await self.session.scalar(stmt)
+        return int(count or 0)
 
     async def get_by_email(self, *, email: str) -> User | None:
         normalized_email = email.strip().lower()

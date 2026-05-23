@@ -1,7 +1,13 @@
 from uuid import UUID
+from dataclasses import dataclass
 
 from backend.features.auth.application.exceptions import SessionInvalidException
 from backend.features.user.domain import User, UserRepository
+
+
+@dataclass(frozen=True)
+class UserDeleteInformation:
+    session_count: int
 
 
 class UserService:
@@ -18,3 +24,13 @@ class UserService:
         deleted = await self._user_repository.delete_by_id(user_id=user_id)
         if not deleted:
             raise SessionInvalidException("Invalid user")
+
+    async def get_delete_information(self, *, user_id: UUID) -> UserDeleteInformation:
+        user = await self._user_repository.get_by_id(user_id=user_id)
+        if user is None:
+            raise SessionInvalidException("Invalid user")
+
+        session_count = await self._user_repository.count_sessions_for_user(
+            user_id=user_id
+        )
+        return UserDeleteInformation(session_count=session_count)

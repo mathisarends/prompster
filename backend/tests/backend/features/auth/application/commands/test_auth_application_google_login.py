@@ -29,6 +29,9 @@ class _UserRepositoryStub(UserRepository):
     async def delete_by_id(self, *, user_id: UUID) -> bool:
         raise AssertionError("Google login must not delete users")
 
+    async def count_sessions_for_user(self, *, user_id: UUID) -> int:
+        raise AssertionError("Google login must not count sessions")
+
     async def get_by_email(self, *, email: str) -> User | None:
         raise AssertionError("Google login must not query users")
 

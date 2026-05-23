@@ -13,6 +13,9 @@ class UserRepository(ABC):
     async def delete_by_id(self, *, user_id: UUID) -> bool: ...
 
     @abstractmethod
+    async def count_sessions_for_user(self, *, user_id: UUID) -> int: ...
+
+    @abstractmethod
     async def get_by_email(self, *, email: str) -> User | None: ...
 
     @abstractmethod

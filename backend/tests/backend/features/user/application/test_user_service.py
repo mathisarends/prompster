@@ -18,7 +18,9 @@ class _UserRepositoryStub(UserRepository):
         self._user = user
         self.received_user_id: UUID | None = None
         self.received_delete_user_id: UUID | None = None
+        self.received_count_user_id: UUID | None = None
         self.delete_result = user is not None
+        self.session_count = 0
 
     async def get_by_id(self, *, user_id: UUID) -> User | None:
         self.received_user_id = user_id
@@ -27,6 +29,10 @@ class _UserRepositoryStub(UserRepository):
     async def delete_by_id(self, *, user_id: UUID) -> bool:
         self.received_delete_user_id = user_id
         return self.delete_result
+
+    async def count_sessions_for_user(self, *, user_id: UUID) -> int:
+        self.received_count_user_id = user_id
+        return self.session_count
 
     async def get_by_email(self, *, email: str) -> User | None:
         return None
@@ -97,3 +103,26 @@ class TestUserService:
         asyncio.run(service.delete_me(user_id=user.id))
 
         assert repository.received_delete_user_id == user.id
+
+    def test_get_delete_information_raises_when_user_is_missing(self) -> None:
+        repository = _UserRepositoryStub(user=None)
+        service = UserService(user_repository=repository)
+
+        with pytest.raises(SessionInvalidException, match="Invalid user"):
+            asyncio.run(service.get_delete_information(user_id=uuid4()))
+
+    def test_get_delete_information_returns_session_count(self) -> None:
+        user = User(
+            name="Mathis",
+            email="mathis@example.com",
+            id=uuid4(),
+        )
+        repository = _UserRepositoryStub(user=user)
+        repository.session_count = 7
+        service = UserService(user_repository=repository)
+
+        result = asyncio.run(service.get_delete_information(user_id=user.id))
+
+        assert result.session_count == 7
+        assert repository.received_user_id == user.id
+        assert repository.received_count_user_id == user.id

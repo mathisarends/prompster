@@ -22,7 +22,11 @@ import type {
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { ErrorDto, UserMeResponse } from "./model";
+import type {
+  ErrorDto,
+  UserDeleteInformationResponse,
+  UserMeResponse,
+} from "./model";
 
 import { customInstance } from "../http-client";
 import type { ErrorType } from "../http-client";
@@ -271,6 +275,432 @@ export function useGetMe<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetMeQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Delete Me
+ */
+export const deleteMe = (
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<void>(
+    { url: `/api/v1/users/me`, method: "DELETE", signal },
+    options,
+  );
+};
+
+export const getDeleteMeQueryKey = () => {
+  return ["DELETE", `/api/v1/users/me`] as const;
+};
+
+export const getDeleteMeQueryOptions = <
+  TData = Awaited<ReturnType<typeof deleteMe>>,
+  TError = ErrorType<ErrorDto>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof deleteMe>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getDeleteMeQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof deleteMe>>> = ({
+    signal,
+  }) => deleteMe(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof deleteMe>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type DeleteMeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof deleteMe>>
+>;
+export type DeleteMeQueryError = ErrorType<ErrorDto>;
+
+export function useDeleteMe<
+  TData = Awaited<ReturnType<typeof deleteMe>>,
+  TError = ErrorType<ErrorDto>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof deleteMe>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof deleteMe>>,
+          TError,
+          Awaited<ReturnType<typeof deleteMe>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDeleteMe<
+  TData = Awaited<ReturnType<typeof deleteMe>>,
+  TError = ErrorType<ErrorDto>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof deleteMe>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof deleteMe>>,
+          TError,
+          Awaited<ReturnType<typeof deleteMe>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDeleteMe<
+  TData = Awaited<ReturnType<typeof deleteMe>>,
+  TError = ErrorType<ErrorDto>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof deleteMe>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Delete Me
+ */
+
+export function useDeleteMe<
+  TData = Awaited<ReturnType<typeof deleteMe>>,
+  TError = ErrorType<ErrorDto>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof deleteMe>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getDeleteMeQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get Delete Information
+ */
+export const getDeleteInformation = (
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<UserDeleteInformationResponse>(
+    { url: `/api/v1/users/me/delete-information`, method: "GET", signal },
+    options,
+  );
+};
+
+export const getGetDeleteInformationInfiniteQueryKey = () => {
+  return ["infinite", `/api/v1/users/me/delete-information`] as const;
+};
+
+export const getGetDeleteInformationQueryKey = () => {
+  return [`/api/v1/users/me/delete-information`] as const;
+};
+
+export const getGetDeleteInformationInfiniteQueryOptions = <
+  TData = InfiniteData<Awaited<ReturnType<typeof getDeleteInformation>>>,
+  TError = ErrorType<ErrorDto>,
+>(options?: {
+  query?: Partial<
+    UseInfiniteQueryOptions<
+      Awaited<ReturnType<typeof getDeleteInformation>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetDeleteInformationInfiniteQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getDeleteInformation>>
+  > = ({ signal }) => getDeleteInformation(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseInfiniteQueryOptions<
+    Awaited<ReturnType<typeof getDeleteInformation>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetDeleteInformationInfiniteQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDeleteInformation>>
+>;
+export type GetDeleteInformationInfiniteQueryError = ErrorType<ErrorDto>;
+
+export function useGetDeleteInformationInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getDeleteInformation>>>,
+  TError = ErrorType<ErrorDto>,
+>(
+  options: {
+    query: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getDeleteInformation>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDeleteInformation>>,
+          TError,
+          Awaited<ReturnType<typeof getDeleteInformation>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDeleteInformationInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getDeleteInformation>>>,
+  TError = ErrorType<ErrorDto>,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getDeleteInformation>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDeleteInformation>>,
+          TError,
+          Awaited<ReturnType<typeof getDeleteInformation>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDeleteInformationInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getDeleteInformation>>>,
+  TError = ErrorType<ErrorDto>,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getDeleteInformation>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Delete Information
+ */
+
+export function useGetDeleteInformationInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getDeleteInformation>>>,
+  TError = ErrorType<ErrorDto>,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getDeleteInformation>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetDeleteInformationInfiniteQueryOptions(options);
+
+  const query = useInfiniteQuery(
+    queryOptions,
+    queryClient,
+  ) as UseInfiniteQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getGetDeleteInformationQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDeleteInformation>>,
+  TError = ErrorType<ErrorDto>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getDeleteInformation>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetDeleteInformationQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getDeleteInformation>>
+  > = ({ signal }) => getDeleteInformation(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDeleteInformation>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetDeleteInformationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDeleteInformation>>
+>;
+export type GetDeleteInformationQueryError = ErrorType<ErrorDto>;
+
+export function useGetDeleteInformation<
+  TData = Awaited<ReturnType<typeof getDeleteInformation>>,
+  TError = ErrorType<ErrorDto>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDeleteInformation>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDeleteInformation>>,
+          TError,
+          Awaited<ReturnType<typeof getDeleteInformation>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDeleteInformation<
+  TData = Awaited<ReturnType<typeof getDeleteInformation>>,
+  TError = ErrorType<ErrorDto>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDeleteInformation>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDeleteInformation>>,
+          TError,
+          Awaited<ReturnType<typeof getDeleteInformation>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetDeleteInformation<
+  TData = Awaited<ReturnType<typeof getDeleteInformation>>,
+  TError = ErrorType<ErrorDto>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDeleteInformation>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Delete Information
+ */
+
+export function useGetDeleteInformation<
+  TData = Awaited<ReturnType<typeof getDeleteInformation>>,
+  TError = ErrorType<ErrorDto>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getDeleteInformation>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetDeleteInformationQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

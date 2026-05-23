@@ -58,6 +58,7 @@ export * from "./toolCallSequenceCompletedEvent";
 export * from "./toolCallSequenceEntryResponse";
 export * from "./toolFunctionResponse";
 export * from "./toolFunctionResponseArguments";
+export * from "./userDeleteInformationResponse";
 export * from "./userMeResponse";
 export * from "./userMessageEntryResponse";
 export * from "./validationError";

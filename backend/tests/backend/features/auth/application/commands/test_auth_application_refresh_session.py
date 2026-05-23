@@ -33,6 +33,9 @@ class _UserRepositoryStub(UserRepository):
     async def delete_by_id(self, *, user_id: UUID) -> bool:
         return False
 
+    async def count_sessions_for_user(self, *, user_id: UUID) -> int:
+        return 0
+
     async def get_by_email(self, *, email: str) -> User | None:
         return None
 
