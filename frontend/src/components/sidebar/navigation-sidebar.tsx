@@ -17,6 +17,7 @@ import { useSpotifyOAuthPopup } from "@/hooks/useSpotifyOAuthPopup";
 import { useSessionStarActions } from "@/hooks/useSessionStarActions";
 import { toSessionHistoryEntries } from "@/components/sidebar/session-history-utils";
 import {
+  DeleteAccountDialog,
   DeleteChatDialog,
   RenameChatDialog,
 } from "@/components/sidebar/sidebar-session-dialogs";
@@ -50,6 +51,7 @@ export const NavigationSidebar = ({
     useState<SessionSummaryResponse | null>(null);
   const [deleteTarget, setDeleteTarget] =
     useState<SessionSummaryResponse | null>(null);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const { isSpotifyOAuthLoading, openSpotifyOAuthPopup } =
     useSpotifyOAuthPopup();
   const { data: user } = useGetMe();
@@ -147,6 +149,7 @@ export const NavigationSidebar = ({
           isSpotifyOAuthLoading={isSpotifyOAuthLoading}
           onSpotifyConnect={openSpotifyOAuthPopup}
           onSpotifyDisconnect={() => void handleSpotifyDisconnect()}
+          onDeleteAccount={() => setDeleteAccountOpen(true)}
           onSignOut={() => void signOut()}
         />
       </aside>
@@ -173,6 +176,12 @@ export const NavigationSidebar = ({
           if (!open) setDeleteTarget(null);
         }}
         onDeleted={handleSessionDeleted}
+      />
+
+      <DeleteAccountDialog
+        open={deleteAccountOpen}
+        onOpenChange={setDeleteAccountOpen}
+        onDeleted={signOut}
       />
     </>
   );

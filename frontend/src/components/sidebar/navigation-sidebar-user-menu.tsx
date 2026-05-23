@@ -1,4 +1,4 @@
-import { ChevronsUpDown, LogOut, Music2 } from "lucide-react";
+import { ChevronsUpDown, LogOut, Music2, Trash2 } from "lucide-react";
 
 import type { UserMeResponse } from "@/api/generated/model";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,6 +15,7 @@ type NavigationSidebarUserMenuProps = {
   isSpotifyOAuthLoading: boolean;
   onSpotifyConnect: () => void;
   onSpotifyDisconnect: () => void;
+  onDeleteAccount: () => void;
   onSignOut: () => void;
 };
 
@@ -37,6 +38,7 @@ export const NavigationSidebarUserMenu = ({
   isSpotifyOAuthLoading,
   onSpotifyConnect,
   onSpotifyDisconnect,
+  onDeleteAccount,
   onSignOut,
 }: NavigationSidebarUserMenuProps) => {
   const initials = getInitials(user?.name);
@@ -98,6 +100,13 @@ export const NavigationSidebarUserMenu = ({
               </span>
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem
+            onClick={onDeleteAccount}
+            className="text-destructive data-highlighted:bg-destructive/10 data-highlighted:text-destructive"
+          >
+            <Trash2 />
+            <span>Account löschen</span>
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={onSignOut}>
             <LogOut />
             <span>Abmelden</span>

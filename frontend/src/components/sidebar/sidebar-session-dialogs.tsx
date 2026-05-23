@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -9,6 +9,7 @@ import {
   getListSessionsQueryKey,
   updateSession,
 } from "@/api/generated/session-api";
+import { deleteMe, useGetDeleteInformation } from "@/api/generated/user-api";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -119,6 +120,64 @@ type DeleteChatDialogProps = {
   onDeleted?: (sessionId: string) => void;
 };
 
+type DeleteConfirmationDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: ReactNode;
+  isPending: boolean;
+  isError: boolean;
+  errorMessage: string;
+  confirmLabel: string;
+  pendingConfirmLabel: string;
+  onConfirm: () => void;
+};
+
+const DeleteConfirmationDialog = ({
+  open,
+  onOpenChange,
+  title,
+  description,
+  isPending,
+  isError,
+  errorMessage,
+  confirmLabel,
+  pendingConfirmLabel,
+  onConfirm,
+}: DeleteConfirmationDialogProps) => (
+  <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent className="max-w-xl p-8">
+      <DialogTitle className="text-2xl">{title}</DialogTitle>
+      <DialogDescription className="mt-2 text-base">
+        {description}
+      </DialogDescription>
+      {isError ? (
+        <p className="mt-4 text-sm text-destructive">{errorMessage}</p>
+      ) : null}
+      <div className="mt-7 flex justify-end gap-2">
+        <Button
+          type="button"
+          size="lg"
+          variant="ghost"
+          onClick={() => onOpenChange(false)}
+          disabled={isPending}
+        >
+          Abbrechen
+        </Button>
+        <Button
+          type="button"
+          size="lg"
+          variant="destructive"
+          onClick={onConfirm}
+          disabled={isPending}
+        >
+          {isPending ? pendingConfirmLabel : confirmLabel}
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
+);
+
 export const DeleteChatDialog = ({
   session,
   open,
@@ -145,40 +204,85 @@ export const DeleteChatDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl p-8">
-        <DialogTitle className="text-2xl">Chat löschen?</DialogTitle>
-        <DialogDescription className="mt-2 text-base">
-          {session
-            ? `„${session.title}" wird endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.`
-            : "Diese Aktion kann nicht rückgängig gemacht werden."}
-        </DialogDescription>
-        {mutation.isError ? (
-          <p className="mt-4 text-sm text-destructive">
-            Löschen fehlgeschlagen. Bitte erneut versuchen.
-          </p>
-        ) : null}
-        <div className="mt-7 flex justify-end gap-2">
-          <Button
-            type="button"
-            size="lg"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={mutation.isPending}
-          >
-            Abbrechen
-          </Button>
-          <Button
-            type="button"
-            size="lg"
-            variant="destructive"
-            onClick={handleConfirm}
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? "Löschen..." : "Löschen"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <DeleteConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Chat löschen?"
+      description={
+        session
+          ? `„${session.title}" wird endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.`
+          : "Diese Aktion kann nicht rückgängig gemacht werden."
+      }
+      isPending={mutation.isPending}
+      isError={mutation.isError}
+      errorMessage="Löschen fehlgeschlagen. Bitte erneut versuchen."
+      confirmLabel="Löschen"
+      pendingConfirmLabel="Löschen..."
+      onConfirm={handleConfirm}
+    />
+  );
+};
+
+type DeleteAccountDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDeleted?: () => Promise<void> | void;
+};
+
+const getSessionCountLabel = (sessionCount: number) => {
+  return sessionCount === 1
+    ? "1 Session wird mit gelöscht."
+    : `${sessionCount} Sessions werden mit gelöscht.`;
+};
+
+export const DeleteAccountDialog = ({
+  open,
+  onOpenChange,
+  onDeleted,
+}: DeleteAccountDialogProps) => {
+  const deleteInformation = useGetDeleteInformation({
+    query: { enabled: open },
+  });
+
+  const mutation = useMutation({
+    mutationFn: () => deleteMe(),
+    onSuccess: async () => {
+      onOpenChange(false);
+      await onDeleted?.();
+      toast.success("Account gelöscht");
+    },
+  });
+
+  const handleConfirm = () => {
+    if (mutation.isPending) return;
+    mutation.mutate();
+  };
+
+  const sessionCountMessage =
+    typeof deleteInformation.data?.sessionCount === "number"
+      ? getSessionCountLabel(deleteInformation.data.sessionCount)
+      : deleteInformation.isLoading
+        ? "Session-Anzahl wird geladen..."
+        : "Deine Sessions werden ebenfalls dauerhaft gelöscht.";
+
+  return (
+    <DeleteConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Account löschen?"
+      description={
+        <>
+          Dein Account wird dauerhaft gelöscht. Diese Aktion kann nicht
+          rückgängig gemacht werden.
+          <span className="mt-2 block font-medium">{sessionCountMessage}</span>
+        </>
+      }
+      isPending={mutation.isPending}
+      isError={mutation.isError}
+      errorMessage="Account konnte nicht gelöscht werden. Bitte erneut versuchen."
+      confirmLabel="Account löschen"
+      pendingConfirmLabel="Account wird gelöscht..."
+      onConfirm={handleConfirm}
+    />
   );
 };
