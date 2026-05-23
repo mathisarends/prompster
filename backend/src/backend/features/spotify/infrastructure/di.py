@@ -4,9 +4,8 @@ from dishka import Provider, Scope, provide
 from spotifyify import SpotifyCredentials, Spotifyify
 from spotifyify.cache_handler import MemoryCacheHandler
 
-from backend.features.spotify.application import SpotifyService
 from backend.features.spotify.infrastructure.spotify_service import (
-    SpotifyifyService,
+    SpotifyService,
 )
 
 
@@ -34,4 +33,4 @@ class SpotifyProvider(Provider):
         self,
         spotify: Spotifyify,
     ) -> SpotifyService:
-        return SpotifyifyService(spotify=spotify)
+        return SpotifyService(spotify=spotify)

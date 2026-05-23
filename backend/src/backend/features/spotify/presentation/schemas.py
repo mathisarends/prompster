@@ -25,3 +25,18 @@ class SpotifyPlaylistResponse(Schema):
 
 class SpotifyPlaylistSearchResponse(Schema):
     items: list[SpotifyPlaylistResponse]
+
+
+class SpotifyArtistResponse(Schema):
+    id: str
+    name: str
+    genres: list[str]
+    followers: int | None = None
+    popularity: int | None = None
+    image_url: str | None = None
+
+
+class SpotifyUnifiedSearchResponse(Schema):
+    tracks: list[SpotifyTrackResponse]
+    playlists: list[SpotifyPlaylistResponse]
+    artists: list[SpotifyArtistResponse]

@@ -1,5 +1,20 @@
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import StrEnum
+
+
+class SpotifySearchType(StrEnum):
+    TRACK = "track"
+    PLAYLIST = "playlist"
+    ARTIST = "artist"
+
+
+DEFAULT_SPOTIFY_SEARCH_TYPES = frozenset(
+    {
+        SpotifySearchType.TRACK,
+        SpotifySearchType.PLAYLIST,
+        SpotifySearchType.ARTIST,
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,21 +37,18 @@ class SpotifyPlaylist:
     total_tracks: int | None = None
 
 
-class SpotifyService(ABC):
-    @abstractmethod
-    async def search_tracks(
-        self,
-        *,
-        query: str,
-        limit: int = 20,
-    ) -> list[SpotifyTrack]:
-        """Searches Spotify tracks matching the given query."""
+@dataclass(frozen=True, slots=True)
+class SpotifyArtist:
+    id: str
+    name: str
+    genres: list[str]
+    followers: int | None = None
+    popularity: int | None = None
+    image_url: str | None = None
 
-    @abstractmethod
-    async def search_playlists(
-        self,
-        *,
-        query: str,
-        limit: int = 20,
-    ) -> list[SpotifyPlaylist]:
-        """Searches Spotify playlists matching the given query."""
+
+@dataclass(frozen=True, slots=True)
+class SpotifyUnifiedSearchResult:
+    tracks: list[SpotifyTrack]
+    playlists: list[SpotifyPlaylist]
+    artists: list[SpotifyArtist]
