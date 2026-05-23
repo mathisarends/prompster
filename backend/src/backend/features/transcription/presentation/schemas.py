@@ -3,11 +3,6 @@ from typing import Annotated, Literal, Union
 
 from pydantic import Field
 
-from backend.features.transcription.application import (
-    NoiseReduction,
-    RealtimeProvider,
-    TranscriptionDelay,
-)
 from backend.presentation.schema import Schema
 
 
@@ -97,11 +92,3 @@ TranscriptionServerEvent = Annotated[
     ],
     Field(discriminator="type"),
 ]
-
-
-class RealtimeTranscriptionOptionsQuery(Schema):
-    language: str | None = Field(default=None, min_length=2, max_length=12)
-    delay: TranscriptionDelay = TranscriptionDelay.MEDIUM
-    noise_reduction: NoiseReduction = NoiseReduction.FAR_FIELD
-    include_logprobs: bool = False
-    provider: RealtimeProvider = RealtimeProvider.OPENAI

@@ -24,14 +24,18 @@ logger = logging.getLogger(__name__)
 
 
 class RealtimeTranscriptionSocketHandler:
-    def __init__(self, *, session_factory: TranscriptionSessionFactory) -> None:
-        self._session_factory = session_factory
-
-    async def handle(
-        self, *, websocket: WebSocket, options: TranscriptionOptions
+    def __init__(
+        self,
+        *,
+        session_factory: TranscriptionSessionFactory,
+        default_options: TranscriptionOptions,
     ) -> None:
+        self._session_factory = session_factory
+        self._default_options = default_options
+
+    async def __call__(self, websocket: WebSocket) -> None:
         await websocket.accept()
-        session = self._session_factory.create(options=options)
+        session = self._session_factory.create(options=self._default_options)
 
         forward_task = asyncio.create_task(
             self._forward_transcription_events(websocket=websocket, session=session)

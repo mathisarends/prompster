@@ -8,11 +8,9 @@ from backend.features.transcription.application import (
     TranscriptDelta,
     TranscriberError,
     TranscriptionEvent,
-    TranscriptionOptions,
 )
 from backend.features.transcription.presentation.schemas import (
     ClientCommand,
-    RealtimeTranscriptionOptionsQuery,
     SessionConnectedEventResponse,
     SocketErrorEventResponse,
     SpeechStartedEventResponse,
@@ -29,18 +27,6 @@ _client_command_adapter = TypeAdapter(ClientCommand)
 
 def parse_client_command(raw_message: str) -> ClientCommand:
     return _client_command_adapter.validate_json(raw_message)
-
-
-def to_transcription_options(
-    query: RealtimeTranscriptionOptionsQuery,
-) -> TranscriptionOptions:
-    return TranscriptionOptions(
-        language=query.language,
-        delay=query.delay,
-        noise_reduction=query.noise_reduction,
-        include_logprobs=query.include_logprobs,
-        provider=query.provider,
-    )
 
 
 def to_transcription_server_event(
