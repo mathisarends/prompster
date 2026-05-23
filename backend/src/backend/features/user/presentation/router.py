@@ -1,5 +1,5 @@
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Response, status
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.user.application import UserService
@@ -25,3 +25,18 @@ async def get_me(
 ) -> UserMeResponse:
     user = await service.get_me(user_id=authenticated_user_id)
     return to_user_me_response(user)
+
+
+@user_router.delete(
+    "/me",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+    operation_id="delete_me",
+    responses=_unauthorized,
+)
+async def delete_me(
+    authenticated_user_id: AuthenticatedUserId,
+    service: FromDishka[UserService],
+) -> Response:
+    await service.delete_me(user_id=authenticated_user_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -28,6 +28,7 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
             id=orm.id,
             name=orm.name,
             email=orm.email,
+            profile_image_url=orm.profile_image_url,
             spotify_connected=spotify_connected,
             created_time=orm.created_at,
         )
@@ -37,6 +38,7 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
             id=domain.id,
             name=domain.name,
             email=domain.email,
+            profile_image_url=domain.profile_image_url,
             created_at=domain.created_at,
         )
 
@@ -53,6 +55,9 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
             user_orm,
             spotify_connected=oauth_connection_id is not None,
         )
+
+    async def delete_by_id(self, *, user_id: UUID) -> bool:
+        return await super().delete_by_id(user_id)
 
     async def get_by_email(self, *, email: str) -> User | None:
         normalized_email = email.strip().lower()
@@ -83,6 +88,9 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
         )
 
     async def create(self, *, user: User) -> User:
+        return await self.save(user)
+
+    async def update(self, *, user: User) -> User:
         return await self.save(user)
 
     async def create_with_auth_identity(

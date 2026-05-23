@@ -110,6 +110,7 @@ class GoogleOAuthFlow:
             user = User(
                 name=display_name,
                 email=normalized_email,
+                profile_image_url=identity.profile_image_url,
             )
             existing_user = await self._user_repository.create_with_auth_identity(
                 user=user,
@@ -119,5 +120,22 @@ class GoogleOAuthFlow:
                     subject=identity.subject,
                 ),
             )
+        else:
+            existing_user = await self._sync_profile_image(
+                user=existing_user,
+                profile_image_url=identity.profile_image_url,
+            )
 
         return self._token_issuer.create_session(user_id=existing_user.id)
+
+    async def _sync_profile_image(
+        self,
+        *,
+        user: User,
+        profile_image_url: str | None,
+    ) -> User:
+        if profile_image_url is None or user.profile_image_url == profile_image_url:
+            return user
+
+        user.profile_image_url = profile_image_url
+        return await self._user_repository.update(user=user)

@@ -10,6 +10,7 @@ class User(Aggregate):
         *,
         name: str,
         email: str,
+        profile_image_url: str | None = None,
         spotify_connected: bool = False,
         id: UUID | None = None,
         created_time: datetime | None = None,
@@ -17,4 +18,5 @@ class User(Aggregate):
         super().__init__(id=id, created_time=created_time)
         self.name = name
         self.email = email
+        self.profile_image_url = profile_image_url
         self.spotify_connected = spotify_connected

@@ -23,6 +23,7 @@ class UserModel(DatabaseEntity, table=True):
 
     name: str
     email: str = Field(index=True, unique=True)
+    profile_image_url: str | None = None
 
 
 class AuthIdentityModel(DatabaseEntity, table=True):

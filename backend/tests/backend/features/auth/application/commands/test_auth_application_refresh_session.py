@@ -30,6 +30,9 @@ class _UserRepositoryStub(UserRepository):
         self.received_user_id = user_id
         return self._user
 
+    async def delete_by_id(self, *, user_id: UUID) -> bool:
+        return False
+
     async def get_by_email(self, *, email: str) -> User | None:
         return None
 
@@ -42,6 +45,9 @@ class _UserRepositoryStub(UserRepository):
         return None
 
     async def create(self, *, user: User) -> User:
+        return user
+
+    async def update(self, *, user: User) -> User:
         return user
 
     async def create_with_auth_identity(

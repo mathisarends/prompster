@@ -9,10 +9,12 @@ class TestUserDomainUser:
         user = User(
             name="Mathis",
             email="mathis@example.com",
+            profile_image_url="https://example.com/avatar.jpg",
         )
 
         assert user.name == "Mathis"
         assert user.email == "mathis@example.com"
+        assert user.profile_image_url == "https://example.com/avatar.jpg"
 
     def test_user_keeps_explicit_id_and_created_time(self) -> None:
         user_id: UUID = uuid4()

@@ -9,12 +9,14 @@ class TestGoogleIdentitySchema:
             sub="  google-sub-1  ",
             email="  MaTHis@Example.com  ",
             name="  Mathis  ",
+            picture=" https://example.com/picture.png ",
             email_verified=True,
         )
 
         assert identity.subject == "google-sub-1"
         assert identity.email == "mathis@example.com"
         assert identity.name == "Mathis"
+        assert identity.profile_image_url == "https://example.com/picture.png"
         assert identity.email_verified is True
 
     def test_normalizes_blank_name_to_none(self) -> None:
@@ -25,6 +27,15 @@ class TestGoogleIdentitySchema:
         )
 
         assert identity.name is None
+
+    def test_normalizes_blank_profile_image_url_to_none(self) -> None:
+        identity = GoogleIdentity(
+            subject="google-sub-1",
+            email="mathis@example.com",
+            profile_image_url="   ",
+        )
+
+        assert identity.profile_image_url is None
 
     def test_raises_for_blank_subject(self) -> None:
         with pytest.raises(ValueError, match="subject must not be empty"):

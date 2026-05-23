@@ -26,6 +26,9 @@ class _UserRepositoryStub(UserRepository):
     async def get_by_id(self, *, user_id: UUID) -> User | None:
         raise AssertionError("Google login must not load users")
 
+    async def delete_by_id(self, *, user_id: UUID) -> bool:
+        raise AssertionError("Google login must not delete users")
+
     async def get_by_email(self, *, email: str) -> User | None:
         raise AssertionError("Google login must not query users")
 
@@ -39,6 +42,9 @@ class _UserRepositoryStub(UserRepository):
 
     async def create(self, *, user: User) -> User:
         raise AssertionError("Google login must not create users")
+
+    async def update(self, *, user: User) -> User:
+        raise AssertionError("Google login must not update users")
 
     async def create_with_auth_identity(
         self,

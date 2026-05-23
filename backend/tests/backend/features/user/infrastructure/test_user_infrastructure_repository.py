@@ -13,7 +13,11 @@ def test_create_with_auth_identity_flushes_user_before_identity_insert() -> None
     session.refresh = AsyncMock()
 
     repository = SqlUserRepository(session=session)  # type: ignore[arg-type]
-    user = User(name="Mathis", email="mathis@example.com")
+    user = User(
+        name="Mathis",
+        email="mathis@example.com",
+        profile_image_url="https://example.com/avatar.jpg",
+    )
     auth_identity = AuthIdentity(
         user_id=user.id,
         provider=AuthProvider.GOOGLE,
@@ -33,3 +37,5 @@ def test_create_with_auth_identity_flushes_user_before_identity_insert() -> None
     assert session.mock_calls[4][0] == "refresh"
     assert session.flush.await_count == 2
     assert created_user.id == user.id
+    created_user_model = session.add.call_args_list[0].args[0]
+    assert created_user_model.profile_image_url == "https://example.com/avatar.jpg"

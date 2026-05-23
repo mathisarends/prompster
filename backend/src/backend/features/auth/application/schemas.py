@@ -45,6 +45,10 @@ class GoogleIdentity(BaseModel):
     subject: str = Field(validation_alias=AliasChoices("subject", "sub"))
     email: str
     name: str | None = None
+    profile_image_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("profile_image_url", "picture"),
+    )
     email_verified: bool = False
 
     @field_validator("subject")
@@ -66,6 +70,15 @@ class GoogleIdentity(BaseModel):
     @field_validator("name")
     @classmethod
     def normalize_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+
+        normalized = value.strip()
+        return normalized or None
+
+    @field_validator("profile_image_url")
+    @classmethod
+    def normalize_profile_image_url(cls, value: str | None) -> str | None:
         if value is None:
             return None
 

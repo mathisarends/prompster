@@ -33,9 +33,13 @@ class _UserRepositoryStub(UserRepository):
         self.last_auth_identity_lookup: tuple[AuthProvider, str] | None = None
         self.created_user: User | None = None
         self.created_auth_identity: AuthIdentity | None = None
+        self.updated_user: User | None = None
 
     async def get_by_id(self, *, user_id: UUID) -> User | None:
         return None
+
+    async def delete_by_id(self, *, user_id: UUID) -> bool:
+        return False
 
     async def get_by_email(self, *, email: str) -> User | None:
         self.last_email_lookup = email
@@ -52,6 +56,12 @@ class _UserRepositoryStub(UserRepository):
 
     async def create(self, *, user: User) -> User:
         self.created_user = user
+        self._existing_email_user = user
+        return user
+
+    async def update(self, *, user: User) -> User:
+        self.updated_user = user
+        self._existing_identity_user = user
         self._existing_email_user = user
         return user
 
@@ -230,6 +240,7 @@ class TestGoogleOAuthFlowCallback:
         assert repository.created_auth_identity.user_id == repository.created_user.id
         assert repository.created_auth_identity.provider == AuthProvider.GOOGLE
         assert repository.created_auth_identity.subject == "google-sub-1"
+        assert repository.updated_user is None
         assert issuer.received_user_id == repository.created_user.id
 
     def test_handle_callback_returns_invalid_credentials_for_email_identity_mismatch(
@@ -297,6 +308,45 @@ class TestGoogleOAuthFlowCallback:
         assert repository.last_auth_identity_lookup == (
             AuthProvider.GOOGLE,
             "google-sub-1",
+        )
+        assert repository.updated_user is None
+        assert issuer.received_user_id == existing_user.id
+
+    def test_handle_callback_updates_existing_user_profile_image(self) -> None:
+        existing_user = User(
+            name="Mathis",
+            email="mathis@example.com",
+            id=uuid4(),
+        )
+        identity = GoogleIdentity(
+            subject="google-sub-1",
+            email="mathis@example.com",
+            name="Mathis",
+            profile_image_url="https://example.com/avatar.jpg",
+            email_verified=True,
+        )
+        expected_session = AuthSession(
+            access_token="access-3", refresh_token="refresh-3"
+        )
+        repository = _UserRepositoryStub(existing_identity_user=existing_user)
+        provider = _GoogleOAuthProviderStub(identity=identity)
+        issuer = _TokenIssuerStub(expected_session)
+        handler = GoogleOAuthFlow(repository, provider, issuer)
+
+        result = asyncio.run(
+            handler.callback(
+                code="code-1",
+                state="state-1",
+                error=None,
+                expected_oauth_state="state-1",
+            )
+        )
+
+        assert result == GoogleCallbackResult.success(session=expected_session)
+        assert repository.updated_user is not None
+        assert (
+            repository.updated_user.profile_image_url
+            == "https://example.com/avatar.jpg"
         )
         assert issuer.received_user_id == existing_user.id
 

@@ -13,3 +13,8 @@ class UserService:
         if user is None:
             raise SessionInvalidException("Invalid user")
         return user
+
+    async def delete_me(self, *, user_id: UUID) -> None:
+        deleted = await self._user_repository.delete_by_id(user_id=user_id)
+        if not deleted:
+            raise SessionInvalidException("Invalid user")

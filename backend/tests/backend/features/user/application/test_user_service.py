@@ -16,11 +16,17 @@ from backend.features.user.domain import (
 class _UserRepositoryStub(UserRepository):
     def __init__(self, user: User | None) -> None:
         self._user = user
-        self.received_user_id = None
+        self.received_user_id: UUID | None = None
+        self.received_delete_user_id: UUID | None = None
+        self.delete_result = user is not None
 
     async def get_by_id(self, *, user_id: UUID) -> User | None:
         self.received_user_id = user_id
         return self._user
+
+    async def delete_by_id(self, *, user_id: UUID) -> bool:
+        self.received_delete_user_id = user_id
+        return self.delete_result
 
     async def get_by_email(self, *, email: str) -> User | None:
         return None
@@ -34,6 +40,9 @@ class _UserRepositoryStub(UserRepository):
         return None
 
     async def create(self, *, user: User) -> User:
+        return user
+
+    async def update(self, *, user: User) -> User:
         return user
 
     async def create_with_auth_identity(
@@ -68,3 +77,23 @@ class TestUserService:
         assert result is user
         assert result.spotify_connected is True
         assert repository.received_user_id == user.id
+
+    def test_delete_me_raises_when_user_is_missing(self) -> None:
+        repository = _UserRepositoryStub(user=None)
+        service = UserService(user_repository=repository)
+
+        with pytest.raises(SessionInvalidException, match="Invalid user"):
+            asyncio.run(service.delete_me(user_id=uuid4()))
+
+    def test_delete_me_deletes_existing_user(self) -> None:
+        user = User(
+            name="Mathis",
+            email="mathis@example.com",
+            id=uuid4(),
+        )
+        repository = _UserRepositoryStub(user=user)
+        service = UserService(user_repository=repository)
+
+        asyncio.run(service.delete_me(user_id=user.id))
+
+        assert repository.received_delete_user_id == user.id
