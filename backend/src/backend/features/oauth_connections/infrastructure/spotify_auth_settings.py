@@ -1,6 +1,6 @@
 from urllib.parse import urlparse
 
-from pydantic import Field, field_validator
+from pydantic import Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -40,6 +40,18 @@ class SpotifyAuthSettings(BaseSettings):
                 "SPOTIFY_REDIRECT_URI host must match frontend_base_url host "
                 "so access cookies are sent on /auth/spotify/callback"
             )
+
+    @field_validator("client_id", "client_secret", "redirect_uri")
+    @classmethod
+    def validate_required_values(cls, value: str, info: ValidationInfo) -> str:
+        normalized = value.strip()
+        if not normalized:
+            if info.field_name == "client_id":
+                raise ValueError("Spotify client ID is not configured")
+            if info.field_name == "client_secret":
+                raise ValueError("Spotify client secret is not configured")
+            raise ValueError("Spotify redirect URI is not configured")
+        return normalized
 
     @field_validator(
         "redirect_uri",

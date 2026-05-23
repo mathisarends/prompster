@@ -2,7 +2,7 @@ import base64
 from urllib.parse import urlencode
 
 import httpx
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from backend.features.oauth_connections.application.ports import SpotifyOAuthProvider
 from backend.features.oauth_connections.application.schemas import (
@@ -17,13 +17,16 @@ from backend.features.oauth_connections.infrastructure.spotify_scopes import (
 )
 
 
+class _SpotifyUserProfileResponse(BaseModel):
+    id: str = Field(min_length=1)
+    product: str | None = None
+
+
 class SpotifyOAuthClient(SpotifyOAuthProvider):
     def __init__(self, settings: SpotifyAuthSettings) -> None:
         self._settings = settings
 
     def build_authorization_url(self, *, state: str) -> str:
-        self._validate_configuration()
-
         normalized_state = state.strip()
         if not normalized_state:
             raise ValueError("OAuth state must not be empty")
@@ -43,7 +46,6 @@ class SpotifyOAuthClient(SpotifyOAuthProvider):
     async def exchange_code_for_tokens(
         self, *, authorization_code: str
     ) -> SpotifyTokens:
-        self._validate_configuration()
         return await self._post_token(
             {
                 "grant_type": "authorization_code",
@@ -53,7 +55,6 @@ class SpotifyOAuthClient(SpotifyOAuthProvider):
         )
 
     async def refresh_access_token(self, *, refresh_token: str) -> SpotifyTokens:
-        self._validate_configuration()
         return await self._post_token(
             {
                 "grant_type": "refresh_token",
@@ -73,23 +74,15 @@ class SpotifyOAuthClient(SpotifyOAuthProvider):
         if response.status_code >= 400:
             raise ValueError("Spotify /me request failed")
 
-        payload = response.json()
-        spotify_user_id = payload.get("id")
-        if not isinstance(spotify_user_id, str) or not spotify_user_id:
-            raise ValueError("Spotify /me response did not include id")
+        try:
+            payload = _SpotifyUserProfileResponse.model_validate(response.json())
+        except ValidationError as exc:
+            raise ValueError("Spotify /me payload is invalid") from exc
 
         return SpotifyUserProfile(
-            spotify_user_id=spotify_user_id,
-            is_premium=payload.get("product") == "premium",
+            spotify_user_id=payload.id,
+            is_premium=payload.product == "premium",
         )
-
-    def _validate_configuration(self) -> None:
-        if not self._settings.client_id:
-            raise ValueError("Spotify client ID is not configured")
-        if not self._settings.client_secret:
-            raise ValueError("Spotify client secret is not configured")
-        if not self._settings.redirect_uri:
-            raise ValueError("Spotify redirect URI is not configured")
 
     async def _post_token(self, form: dict[str, str]) -> SpotifyTokens:
         basic_auth = base64.b64encode(
