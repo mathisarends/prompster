@@ -16,6 +16,8 @@ from backend.features.oauth_connections.presentation import (
 )
 from backend.features.spotify.infrastructure.di import SpotifyProvider
 from backend.features.spotify.presentation import spotify_router
+from backend.features.transcription.infrastructure import TranscriptionProvider
+from backend.features.transcription.presentation import transcription_router
 from backend.features.session.presentation import (
     register_session_exception_handlers,
     router as session_router,
@@ -76,6 +78,7 @@ def _create_app() -> FastAPI:
         AuthProvider(),
         OAuthConnectionsProvider(),
         SpotifyProvider(),
+        TranscriptionProvider(),
         SessionProvider(),
         UserProvider(),
     )
@@ -86,6 +89,7 @@ def _create_app() -> FastAPI:
     api_v1_router.include_router(auth_router)
     api_v1_router.include_router(spotify_oauth_router)
     api_v1_router.include_router(spotify_router)
+    api_v1_router.include_router(transcription_router)
     api_v1_router.include_router(session_router)
     api_v1_router.include_router(user_router)
     app.include_router(api_v1_router)
