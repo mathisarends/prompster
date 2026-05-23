@@ -13,7 +13,12 @@ from backend.features.auth.application.schemas import (
     TokenPayload,
     TokenType,
 )
-from backend.features.user.domain import User, UserRepository
+from backend.features.user.domain import (
+    AuthIdentity,
+    AuthProvider,
+    User,
+    UserRepository,
+)
 
 
 class _UserRepositoryStub(UserRepository):
@@ -28,7 +33,23 @@ class _UserRepositoryStub(UserRepository):
     async def get_by_email(self, *, email: str) -> User | None:
         return None
 
+    async def get_by_auth_identity(
+        self,
+        *,
+        provider: AuthProvider,
+        subject: str,
+    ) -> User | None:
+        return None
+
     async def create(self, *, user: User) -> User:
+        return user
+
+    async def create_with_auth_identity(
+        self,
+        *,
+        user: User,
+        auth_identity: AuthIdentity,
+    ) -> User:
         return user
 
 
@@ -62,7 +83,6 @@ class TestRefreshSessionHandler:
         user = User(
             name="Mathis",
             email="mathis@example.com",
-            google_subject="google-sub-1",
             id=uuid4(),
         )
         expected_session = AuthSession(access_token="access", refresh_token="refresh")

@@ -1,11 +1,16 @@
 import asyncio
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
 from backend.features.auth.application.exceptions import SessionInvalidException
 from backend.features.user.application.user_service import UserService
-from backend.features.user.domain import User, UserRepository
+from backend.features.user.domain import (
+    AuthIdentity,
+    AuthProvider,
+    User,
+    UserRepository,
+)
 
 
 class _UserRepositoryStub(UserRepository):
@@ -20,7 +25,23 @@ class _UserRepositoryStub(UserRepository):
     async def get_by_email(self, *, email: str) -> User | None:
         return None
 
+    async def get_by_auth_identity(
+        self,
+        *,
+        provider: AuthProvider,
+        subject: str,
+    ) -> User | None:
+        return None
+
     async def create(self, *, user: User) -> User:
+        return user
+
+    async def create_with_auth_identity(
+        self,
+        *,
+        user: User,
+        auth_identity: AuthIdentity,
+    ) -> User:
         return user
 
 
@@ -36,7 +57,6 @@ class TestUserService:
         user = User(
             name="Mathis",
             email="mathis@example.com",
-            google_subject="google-sub-1",
             spotify_connected=True,
             id=uuid4(),
         )

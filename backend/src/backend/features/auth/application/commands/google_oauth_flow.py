@@ -7,7 +7,12 @@ from backend.features.auth.application.schemas import (
     GoogleAuthorizationRequest,
     GoogleCallbackResult,
 )
-from backend.features.user.domain import User, UserRepository
+from backend.features.user.domain import (
+    AuthIdentity,
+    AuthProvider,
+    User,
+    UserRepository,
+)
 
 
 class GoogleOAuthFlowHandler:
@@ -85,21 +90,34 @@ class GoogleOAuthFlowHandler:
             raise InvalidCredentialsException("Google account email is not verified")
 
         normalized_email = identity.email.strip().lower()
-        existing_user = await self._user_repository.get_by_email(email=normalized_email)
+        existing_user = await self._user_repository.get_by_auth_identity(
+            provider=AuthProvider.GOOGLE,
+            subject=identity.subject,
+        )
 
         if existing_user is None:
+            email_user = await self._user_repository.get_by_email(
+                email=normalized_email
+            )
+            if email_user is not None:
+                raise InvalidCredentialsException(
+                    "Email already belongs to another auth identity"
+                )
+
             raw_name = (identity.name or "").strip()
             fallback_name = normalized_email.split("@", maxsplit=1)[0]
             display_name = raw_name or fallback_name
-            existing_user = await self._user_repository.create(
-                user=User(
-                    name=display_name,
-                    email=normalized_email,
-                    google_subject=identity.subject,
-                )
+            user = User(
+                name=display_name,
+                email=normalized_email,
             )
-
-        if existing_user.google_subject != identity.subject:
-            raise InvalidCredentialsException("Google account does not match user")
+            existing_user = await self._user_repository.create_with_auth_identity(
+                user=user,
+                auth_identity=AuthIdentity(
+                    user_id=user.id,
+                    provider=AuthProvider.GOOGLE,
+                    subject=identity.subject,
+                ),
+            )
 
         return self._token_issuer.create_session(user_id=existing_user.id)

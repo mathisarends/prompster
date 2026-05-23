@@ -1,14 +1,22 @@
 from uuid import UUID
 
 from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Row
 
 from backend.features.oauth_connections.domain import OAuthProvider
-from backend.features.user.domain import User, UserRepository
-from backend.infrastructure.database.orm import OAuthConnectionModel, UserModel
+from backend.features.user.domain import (
+    AuthIdentity,
+    AuthProvider,
+    User,
+    UserRepository,
+)
+from backend.infrastructure.database.orm import (
+    AuthIdentityModel,
+    OAuthConnectionModel,
+    UserModel,
+)
 from backend.infrastructure.database.repository import Repository
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class SqlUserRepository(Repository[UserModel, User], UserRepository):
@@ -20,7 +28,6 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
             id=orm.id,
             name=orm.name,
             email=orm.email,
-            google_subject=orm.google_subject,
             spotify_connected=spotify_connected,
             created_time=orm.created_at,
         )
@@ -30,21 +37,12 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
             id=domain.id,
             name=domain.name,
             email=domain.email,
-            google_subject=domain.google_subject,
             created_at=domain.created_at,
         )
 
     async def get_by_id(self, *, user_id: UUID) -> User | None:
-        stmt = (
-            select(UserModel, OAuthConnectionModel.id)
-            .outerjoin(
-                OAuthConnectionModel,
-                and_(
-                    OAuthConnectionModel.user_id == UserModel.id,
-                    OAuthConnectionModel.provider == OAuthProvider.SPOTIFY.value,
-                ),
-            )
-            .where(UserModel.id == user_id)
+        stmt = self._select_user_with_spotify_connection().where(
+            UserModel.id == user_id
         )
         row = (await self.session.execute(stmt)).first()
         if row is None:
@@ -60,8 +58,63 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
         normalized_email = email.strip().lower()
         return await self.find_by(email=normalized_email)
 
+    async def get_by_auth_identity(
+        self,
+        *,
+        provider: AuthProvider,
+        subject: str,
+    ) -> User | None:
+        stmt = (
+            self._select_user_with_spotify_connection()
+            .join(AuthIdentityModel, AuthIdentityModel.user_id == UserModel.id)
+            .where(
+                AuthIdentityModel.provider == provider.value,
+                AuthIdentityModel.subject == subject,
+            )
+        )
+        row = (await self.session.execute(stmt)).first()
+        if row is None:
+            return None
+
+        user_orm, oauth_connection_id = self._split_user_with_connection(row)
+        return self._to_domain(
+            user_orm,
+            spotify_connected=oauth_connection_id is not None,
+        )
+
     async def create(self, *, user: User) -> User:
         return await self.save(user)
+
+    async def create_with_auth_identity(
+        self,
+        *,
+        user: User,
+        auth_identity: AuthIdentity,
+    ) -> User:
+        user_orm = self._to_orm(user)
+        auth_identity_orm = AuthIdentityModel(
+            id=auth_identity.id,
+            user_id=auth_identity.user_id,
+            provider=auth_identity.provider.value,
+            subject=auth_identity.subject,
+            created_at=auth_identity.created_at,
+        )
+
+        self.session.add(user_orm)
+        self.session.add(auth_identity_orm)
+        await self.session.flush()
+        await self.session.refresh(user_orm)
+        return self._to_domain(user_orm)
+
+    @staticmethod
+    def _select_user_with_spotify_connection():
+        return select(UserModel, OAuthConnectionModel.id).outerjoin(
+            OAuthConnectionModel,
+            and_(
+                OAuthConnectionModel.user_id == UserModel.id,
+                OAuthConnectionModel.provider == OAuthProvider.SPOTIFY.value,
+            ),
+        )
 
     @staticmethod
     def _split_user_with_connection(

@@ -23,7 +23,23 @@ class UserModel(DatabaseEntity, table=True):
 
     name: str
     email: str = Field(index=True, unique=True)
-    google_subject: str = Field(index=True, unique=True)
+
+
+class AuthIdentityModel(DatabaseEntity, table=True):
+    __tablename__ = "auth_identities"
+    __table_args__ = (
+        Index(
+            "ix_auth_identities_provider_subject",
+            "provider",
+            "subject",
+            unique=True,
+        ),
+        Index("ix_auth_identities_user_provider", "user_id", "provider", unique=True),
+    )
+
+    user_id: UUID = Field(foreign_key="users.id", index=True)
+    provider: str
+    subject: str
 
 
 class OAuthConnectionModel(DatabaseEntity, table=True):

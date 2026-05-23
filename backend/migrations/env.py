@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from backend.infrastructure.database.orm import (
+    AuthIdentityModel,
     OAuthConnectionModel,
     SessionModel,
     UserModel,
@@ -30,7 +31,7 @@ except Exception:
     pass
 
 # Ensure model modules are imported so SQLModel metadata is populated.
-_ = (UserModel, SessionModel, OAuthConnectionModel)
+_ = (UserModel, AuthIdentityModel, SessionModel, OAuthConnectionModel)
 
 target_metadata = SQLModel.metadata
 

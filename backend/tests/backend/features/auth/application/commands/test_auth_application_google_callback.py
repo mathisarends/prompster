@@ -12,25 +12,59 @@ from backend.features.auth.application.schemas import (
     TokenPayload,
     TokenType,
 )
-from backend.features.user.domain import User, UserRepository
+from backend.features.user.domain import (
+    AuthIdentity,
+    AuthProvider,
+    User,
+    UserRepository,
+)
 
 
 class _UserRepositoryStub(UserRepository):
-    def __init__(self, *, existing_user: User | None = None) -> None:
-        self._existing_user = existing_user
+    def __init__(
+        self,
+        *,
+        existing_identity_user: User | None = None,
+        existing_email_user: User | None = None,
+    ) -> None:
+        self._existing_identity_user = existing_identity_user
+        self._existing_email_user = existing_email_user
         self.last_email_lookup: str | None = None
+        self.last_auth_identity_lookup: tuple[AuthProvider, str] | None = None
         self.created_user: User | None = None
+        self.created_auth_identity: AuthIdentity | None = None
 
     async def get_by_id(self, *, user_id: UUID) -> User | None:
         return None
 
     async def get_by_email(self, *, email: str) -> User | None:
         self.last_email_lookup = email
-        return self._existing_user
+        return self._existing_email_user
+
+    async def get_by_auth_identity(
+        self,
+        *,
+        provider: AuthProvider,
+        subject: str,
+    ) -> User | None:
+        self.last_auth_identity_lookup = (provider, subject)
+        return self._existing_identity_user
 
     async def create(self, *, user: User) -> User:
         self.created_user = user
-        self._existing_user = user
+        self._existing_email_user = user
+        return user
+
+    async def create_with_auth_identity(
+        self,
+        *,
+        user: User,
+        auth_identity: AuthIdentity,
+    ) -> User:
+        self.created_user = user
+        self.created_auth_identity = auth_identity
+        self._existing_identity_user = user
+        self._existing_email_user = user
         return user
 
 
@@ -169,7 +203,7 @@ class TestGoogleOAuthFlowHandlerCallback:
         expected_session = AuthSession(
             access_token="access-1", refresh_token="refresh-1"
         )
-        repository = _UserRepositoryStub(existing_user=None)
+        repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(expected_session)
         handler = GoogleOAuthFlowHandler(repository, provider, issuer)
@@ -185,19 +219,25 @@ class TestGoogleOAuthFlowHandlerCallback:
 
         assert result == GoogleCallbackResult.success(session=expected_session)
         assert repository.last_email_lookup == "newuser@example.com"
+        assert repository.last_auth_identity_lookup == (
+            AuthProvider.GOOGLE,
+            "google-sub-1",
+        )
         assert repository.created_user is not None
         assert repository.created_user.email == "newuser@example.com"
         assert repository.created_user.name == "newuser"
-        assert repository.created_user.google_subject == "google-sub-1"
+        assert repository.created_auth_identity is not None
+        assert repository.created_auth_identity.user_id == repository.created_user.id
+        assert repository.created_auth_identity.provider == AuthProvider.GOOGLE
+        assert repository.created_auth_identity.subject == "google-sub-1"
         assert issuer.received_user_id == repository.created_user.id
 
-    def test_handle_callback_returns_invalid_credentials_for_subject_mismatch(
+    def test_handle_callback_returns_invalid_credentials_for_email_identity_mismatch(
         self,
     ) -> None:
         existing_user = User(
             name="Mathis",
             email="mathis@example.com",
-            google_subject="google-sub-old",
             id=uuid4(),
         )
         identity = GoogleIdentity(
@@ -206,7 +246,7 @@ class TestGoogleOAuthFlowHandlerCallback:
             name="Mathis",
             email_verified=True,
         )
-        repository = _UserRepositoryStub(existing_user=existing_user)
+        repository = _UserRepositoryStub(existing_email_user=existing_user)
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
         handler = GoogleOAuthFlowHandler(repository, provider, issuer)
@@ -226,7 +266,6 @@ class TestGoogleOAuthFlowHandlerCallback:
         existing_user = User(
             name="Mathis",
             email="mathis@example.com",
-            google_subject="google-sub-1",
             id=uuid4(),
         )
         identity = GoogleIdentity(
@@ -238,7 +277,7 @@ class TestGoogleOAuthFlowHandlerCallback:
         expected_session = AuthSession(
             access_token="access-2", refresh_token="refresh-2"
         )
-        repository = _UserRepositoryStub(existing_user=existing_user)
+        repository = _UserRepositoryStub(existing_identity_user=existing_user)
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(expected_session)
         handler = GoogleOAuthFlowHandler(repository, provider, issuer)
@@ -254,7 +293,11 @@ class TestGoogleOAuthFlowHandlerCallback:
 
         assert result == GoogleCallbackResult.success(session=expected_session)
         assert repository.created_user is None
-        assert repository.last_email_lookup == "mathis@example.com"
+        assert repository.last_email_lookup is None
+        assert repository.last_auth_identity_lookup == (
+            AuthProvider.GOOGLE,
+            "google-sub-1",
+        )
         assert issuer.received_user_id == existing_user.id
 
     def test_handle_callback_returns_provider_error_reason_without_exchange(

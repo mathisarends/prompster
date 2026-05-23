@@ -14,7 +14,12 @@ from backend.features.auth.application.schemas import (
     TokenPayload,
     TokenType,
 )
-from backend.features.user.domain import User, UserRepository
+from backend.features.user.domain import (
+    AuthIdentity,
+    AuthProvider,
+    User,
+    UserRepository,
+)
 
 
 class _UserRepositoryStub(UserRepository):
@@ -24,7 +29,23 @@ class _UserRepositoryStub(UserRepository):
     async def get_by_email(self, *, email: str) -> User | None:
         raise AssertionError("Google login must not query users")
 
+    async def get_by_auth_identity(
+        self,
+        *,
+        provider: AuthProvider,
+        subject: str,
+    ) -> User | None:
+        raise AssertionError("Google login must not query auth identities")
+
     async def create(self, *, user: User) -> User:
+        raise AssertionError("Google login must not create users")
+
+    async def create_with_auth_identity(
+        self,
+        *,
+        user: User,
+        auth_identity: AuthIdentity,
+    ) -> User:
         raise AssertionError("Google login must not create users")
 
 
