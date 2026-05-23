@@ -76,7 +76,7 @@ class TestGoogleCallback:
         response = asyncio.run(
             google_callback(
                 request=_build_request(),
-                handler=cast(GoogleOAuthFlow, handler),
+                google_auth_flow=cast(GoogleOAuthFlow, handler),
                 auth_cookies=cast(AuthCookies, auth_cookies),
                 google_oauth_state_cookies=cast(GoogleOAuthStateCookies, state_cookies),
                 auth_settings=AuthSettings(frontend_base_url="http://localhost:5173"),
@@ -105,7 +105,7 @@ class TestGoogleCallback:
         response = asyncio.run(
             google_callback(
                 request=_build_request(),
-                handler=cast(GoogleOAuthFlow, handler),
+                google_auth_flow=cast(GoogleOAuthFlow, handler),
                 auth_cookies=cast(AuthCookies, auth_cookies),
                 google_oauth_state_cookies=cast(GoogleOAuthStateCookies, state_cookies),
                 auth_settings=AuthSettings(frontend_base_url="http://localhost:5173"),
