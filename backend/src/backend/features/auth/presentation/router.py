@@ -3,8 +3,8 @@ from fastapi import APIRouter, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from backend.features.auth.application import (
-    GoogleOAuthFlowHandler,
-    RefreshSessionHandler,
+    GoogleOAuthFlow,
+    SessionRefresher,
 )
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.presentation.cookies import AuthCookies
@@ -38,10 +38,10 @@ _invalid_refresh_token = {
     operation_id="google_login",
 )
 async def google_login(
-    handler: FromDishka[GoogleOAuthFlowHandler],
+    google_auth_flow: FromDishka[GoogleOAuthFlow],
     google_oauth_state_cookies: FromDishka[GoogleOAuthStateCookies],
 ) -> RedirectResponse:
-    authorization_request = handler.login()
+    authorization_request = google_auth_flow.login()
 
     redirect_response = RedirectResponse(
         url=authorization_request.authorization_url,
@@ -62,7 +62,7 @@ async def google_login(
 )
 async def google_callback(
     request: Request,
-    handler: FromDishka[GoogleOAuthFlowHandler],
+    google_auth_flow: FromDishka[GoogleOAuthFlow],
     auth_cookies: FromDishka[AuthCookies],
     google_oauth_state_cookies: FromDishka[GoogleOAuthStateCookies],
     auth_settings: FromDishka[AuthSettings],
@@ -70,7 +70,7 @@ async def google_callback(
     state: str = Query(min_length=1, max_length=4096),
     error: str | None = Query(default=None, min_length=1, max_length=256),
 ) -> HTMLResponse:
-    result = await handler.callback(
+    result = await google_auth_flow.callback(
         code=code,
         state=state,
         error=error,
@@ -115,9 +115,9 @@ async def logout(
 async def refresh(
     authenticated_user_id: RefreshAuthenticatedUserId,
     response: Response,
-    handler: FromDishka[RefreshSessionHandler],
+    session_refresher: FromDishka[SessionRefresher],
     auth_cookies: FromDishka[AuthCookies],
 ) -> None:
-    new_session = await handler.handle(user_id=authenticated_user_id)
+    new_session = await session_refresher.refresh(user_id=authenticated_user_id)
 
     auth_cookies.set(response, new_session)

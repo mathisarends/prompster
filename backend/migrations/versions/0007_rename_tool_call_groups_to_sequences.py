@@ -20,6 +20,28 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                    AND table_name = 'alembic_version'
+                    AND column_name = 'version_num'
+                    AND data_type = 'character varying'
+                    AND character_maximum_length IS NOT NULL
+                    AND character_maximum_length < 128
+            ) THEN
+                ALTER TABLE public.alembic_version
+                    ALTER COLUMN version_num TYPE VARCHAR(128);
+            END IF;
+        END
+        $$;
+        """
+    )
+
     op.drop_constraint(
         "session_tool_calls_group_id_fkey",
         "session_tool_calls",

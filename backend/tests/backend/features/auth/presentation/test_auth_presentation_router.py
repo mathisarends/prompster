@@ -4,7 +4,7 @@ from typing import cast
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 
-from backend.features.auth.application import GoogleOAuthFlowHandler
+from backend.features.auth.application import GoogleOAuthFlow
 from backend.features.auth.application.schemas import GoogleCallbackResult
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.presentation.cookies import AuthCookies
@@ -14,7 +14,7 @@ from backend.features.auth.presentation.oauth_state_cookies import (
 from backend.features.auth.presentation.router import google_callback
 
 
-class _GoogleOAuthFlowHandlerStub:
+class _GoogleOAuthFlowStub:
     def __init__(self) -> None:
         self.received_code: str | None = None
         self.received_state: str | None = None
@@ -69,14 +69,14 @@ def _build_request() -> Request:
 
 class TestGoogleCallback:
     def test_access_denied_returns_popup_error(self) -> None:
-        handler = _GoogleOAuthFlowHandlerStub()
+        handler = _GoogleOAuthFlowStub()
         auth_cookies = _AuthCookiesStub()
         state_cookies = _GoogleOAuthStateCookiesStub()
 
         response = asyncio.run(
             google_callback(
                 request=_build_request(),
-                handler=cast(GoogleOAuthFlowHandler, handler),
+                handler=cast(GoogleOAuthFlow, handler),
                 auth_cookies=cast(AuthCookies, auth_cookies),
                 google_oauth_state_cookies=cast(GoogleOAuthStateCookies, state_cookies),
                 auth_settings=AuthSettings(frontend_base_url="http://localhost:5173"),
@@ -98,14 +98,14 @@ class TestGoogleCallback:
         assert state_cookies.clear_called is True
 
     def test_missing_code_returns_popup_error(self) -> None:
-        handler = _GoogleOAuthFlowHandlerStub()
+        handler = _GoogleOAuthFlowStub()
         auth_cookies = _AuthCookiesStub()
         state_cookies = _GoogleOAuthStateCookiesStub()
 
         response = asyncio.run(
             google_callback(
                 request=_build_request(),
-                handler=cast(GoogleOAuthFlowHandler, handler),
+                handler=cast(GoogleOAuthFlow, handler),
                 auth_cookies=cast(AuthCookies, auth_cookies),
                 google_oauth_state_cookies=cast(GoogleOAuthStateCookies, state_cookies),
                 auth_settings=AuthSettings(frontend_base_url="http://localhost:5173"),

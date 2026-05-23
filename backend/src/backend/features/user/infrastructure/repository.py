@@ -92,6 +92,9 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
         auth_identity: AuthIdentity,
     ) -> User:
         user_orm = self._to_orm(user)
+        self.session.add(user_orm)
+        await self.session.flush()
+
         auth_identity_orm = AuthIdentityModel(
             id=auth_identity.id,
             user_id=auth_identity.user_id,
@@ -99,8 +102,6 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
             subject=auth_identity.subject,
             created_at=auth_identity.created_at,
         )
-
-        self.session.add(user_orm)
         self.session.add(auth_identity_orm)
         await self.session.flush()
         await self.session.refresh(user_orm)

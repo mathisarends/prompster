@@ -1,7 +1,7 @@
-from .google_oauth_flow import GoogleOAuthFlowHandler
-from .refresh_session import RefreshSessionHandler
+from .google_oauth_flow import GoogleOAuthFlow
+from .refresh_session import SessionRefresher
 
 __all__ = [
-    "GoogleOAuthFlowHandler",
-    "RefreshSessionHandler",
+    "GoogleOAuthFlow",
+    "SessionRefresher",
 ]

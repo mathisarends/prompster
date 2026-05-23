@@ -2,7 +2,7 @@ import asyncio
 from uuid import UUID, uuid4
 
 from backend.features.auth.application.commands.google_oauth_flow import (
-    GoogleOAuthFlowHandler,
+    GoogleOAuthFlow,
 )
 from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
 from backend.features.auth.application.schemas import (
@@ -111,14 +111,14 @@ class _TokenIssuerStub(TokenIssuer):
         raise AssertionError("validate is not used in Google OAuth flow tests")
 
 
-class TestGoogleOAuthFlowHandlerCallback:
+class TestGoogleOAuthFlowCallback:
     def test_handle_callback_returns_invalid_credentials_for_missing_expected_state(
         self,
     ) -> None:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub()
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer)
 
         result = asyncio.run(
             handler.callback(
@@ -137,7 +137,7 @@ class TestGoogleOAuthFlowHandlerCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub()
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer)
 
         result = asyncio.run(
             handler.callback(
@@ -154,7 +154,7 @@ class TestGoogleOAuthFlowHandlerCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub(exchange_error=ValueError("invalid code"))
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer)
 
         result = asyncio.run(
             handler.callback(
@@ -178,7 +178,7 @@ class TestGoogleOAuthFlowHandlerCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer)
 
         result = asyncio.run(
             handler.callback(
@@ -206,7 +206,7 @@ class TestGoogleOAuthFlowHandlerCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(expected_session)
-        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer)
 
         result = asyncio.run(
             handler.callback(
@@ -249,7 +249,7 @@ class TestGoogleOAuthFlowHandlerCallback:
         repository = _UserRepositoryStub(existing_email_user=existing_user)
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer)
 
         result = asyncio.run(
             handler.callback(
@@ -280,7 +280,7 @@ class TestGoogleOAuthFlowHandlerCallback:
         repository = _UserRepositoryStub(existing_identity_user=existing_user)
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(expected_session)
-        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer)
 
         result = asyncio.run(
             handler.callback(
@@ -306,7 +306,7 @@ class TestGoogleOAuthFlowHandlerCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub()
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer)
 
         result = asyncio.run(
             handler.callback(
@@ -324,7 +324,7 @@ class TestGoogleOAuthFlowHandlerCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub()
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlowHandler(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer)
 
         result = asyncio.run(
             handler.callback(

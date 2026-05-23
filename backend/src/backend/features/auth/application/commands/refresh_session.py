@@ -6,7 +6,7 @@ from backend.features.auth.application.schemas import AuthSession
 from backend.features.user.domain import UserRepository
 
 
-class RefreshSessionHandler:
+class SessionRefresher:
     def __init__(
         self,
         user_repository: UserRepository,
@@ -15,7 +15,7 @@ class RefreshSessionHandler:
         self._user_repository = user_repository
         self._token_issuer = token_issuer
 
-    async def handle(self, *, user_id: UUID) -> AuthSession:
+    async def refresh(self, *, user_id: UUID) -> AuthSession:
         user = await self._user_repository.get_by_id(user_id=user_id)
         if user is None:
             raise SessionInvalidException("Invalid user")

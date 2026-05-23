@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from backend.features.auth.application.commands.refresh_session import (
-    RefreshSessionHandler,
+    SessionRefresher,
 )
 from backend.features.auth.application.exceptions import SessionInvalidException
 from backend.features.auth.application.ports import TokenIssuer
@@ -67,17 +67,17 @@ class _TokenIssuerStub(TokenIssuer):
         token: str,
         expected_type: TokenType = TokenType.ACCESS,
     ) -> TokenPayload:
-        raise AssertionError("validate is not used in RefreshSessionHandler tests")
+        raise AssertionError("validate is not used in SessionRefresher tests")
 
 
-class TestRefreshSessionHandler:
+class TestSessionRefresher:
     def test_handle_raises_when_user_does_not_exist(self) -> None:
         repository = _UserRepositoryStub(user=None)
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = RefreshSessionHandler(user_repository=repository, token_issuer=issuer)
+        handler = SessionRefresher(user_repository=repository, token_issuer=issuer)
 
         with pytest.raises(SessionInvalidException, match="Invalid user"):
-            asyncio.run(handler.handle(user_id=uuid4()))
+            asyncio.run(handler.refresh(user_id=uuid4()))
 
     def test_handle_returns_new_auth_session_for_existing_user(self) -> None:
         user = User(
@@ -88,9 +88,9 @@ class TestRefreshSessionHandler:
         expected_session = AuthSession(access_token="access", refresh_token="refresh")
         repository = _UserRepositoryStub(user=user)
         issuer = _TokenIssuerStub(expected_session)
-        handler = RefreshSessionHandler(user_repository=repository, token_issuer=issuer)
+        handler = SessionRefresher(user_repository=repository, token_issuer=issuer)
 
-        result = asyncio.run(handler.handle(user_id=user.id))
+        result = asyncio.run(handler.refresh(user_id=user.id))
 
         assert result == expected_session
         assert repository.received_user_id == user.id

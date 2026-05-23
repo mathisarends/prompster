@@ -15,7 +15,7 @@ from backend.features.user.domain import (
 )
 
 
-class GoogleOAuthFlowHandler:
+class GoogleOAuthFlow:
     _STATE_TOKEN_BYTES = 32
 
     def __init__(

@@ -4,7 +4,7 @@ from uuid import UUID
 import pytest
 
 from backend.features.auth.application.commands.google_oauth_flow import (
-    GoogleOAuthFlowHandler,
+    GoogleOAuthFlow,
 )
 from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
 from backend.features.auth.application.schemas import (
@@ -77,14 +77,14 @@ class _GoogleOAuthProviderStub(GoogleOAuthProvider):
         raise AssertionError("Google login must not exchange an authorization code")
 
 
-class TestGoogleOAuthFlowHandlerLogin:
+class TestGoogleOAuthFlowLogin:
     def test_handle_login_generates_oauth_state_and_builds_authorization_request(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(secrets, "token_urlsafe", lambda _: "state-123")
         provider = _GoogleOAuthProviderStub()
-        handler = GoogleOAuthFlowHandler(
+        handler = GoogleOAuthFlow(
             user_repository=_UserRepositoryStub(),
             google_oauth_provider=provider,
             token_issuer=_TokenIssuerStub(),
