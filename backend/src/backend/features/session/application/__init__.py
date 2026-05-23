@@ -14,10 +14,15 @@ from .events import (
     SessionToolCallSequenceCompleted,
     SessionToolCallResolved,
 )
-from .queries import SessionPlaylistExporter
 from .session_service import SessionService
+from .session_exporter import SessionPlaylistExporter
+from .spotify_playlist_exporter import (
+    ExportedSpotifyPlaylist,
+    SessionSpotifyPlaylistExporter,
+)
 
 __all__ = [
+    "ExportedSpotifyPlaylist",
     "FollowUpAnswer",
     "SessionAssistantMessageChunk",
     "SessionAssistantMessageCompleted",
@@ -25,6 +30,7 @@ __all__ = [
     "SessionEvent",
     "SessionFollowUpGroupAdded",
     "SessionPlaylistExporter",
+    "SessionSpotifyPlaylistExporter",
     "SessionPlaylistSet",
     "SessionPlaylistTrackAdded",
     "SessionPlaylistTrackRemoved",

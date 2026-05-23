@@ -28,9 +28,11 @@ class Playlist(Entity):
         self,
         tracks: list[PlaylistTrack],
         name: str | None = None,
+        spotify_playlist_id: str | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> None:
         super().__init__(id=id, created_time=created_time)
         self.tracks = tracks
         self.name = name
+        self.spotify_playlist_id = spotify_playlist_id

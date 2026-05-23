@@ -208,6 +208,7 @@ class SessionPlaylistModel(DatabaseEntity, table=True):
 
     session_id: UUID = Field(foreign_key="sessions.id", unique=True)
     name: str | None = None
+    spotify_playlist_id: str | None = Field(default=None, max_length=64)
 
     session: SessionModel = Relationship(back_populates="playlist")
     tracks: list["PlaylistTrackModel"] = Relationship(

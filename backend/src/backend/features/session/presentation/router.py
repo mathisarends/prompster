@@ -10,11 +10,13 @@ from backend.features.session.application import (
     SessionConversationService,
     SessionService,
     SessionPlaylistExporter,
+    SessionSpotifyPlaylistExporter,
 )
 from backend.features.session.presentation.mapper import (
     to_playlist_track_response,
     to_session_response,
     to_session_summary_response,
+    to_spotify_playlist_export_response,
 )
 from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
@@ -27,6 +29,7 @@ from backend.features.session.presentation.schemas import (
     SessionResponse,
     SessionSummaryListResponse,
     SessionUpdateRequest,
+    SpotifyPlaylistExportResponse,
 )
 from backend.features.session.presentation.sse import (
     SessionEventSchema,
@@ -41,6 +44,7 @@ _auth_errors = {
 }
 _not_found = {status.HTTP_404_NOT_FOUND: {"model": ErrorResponse}}
 _bad_request = {status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse}}
+_conflict = {status.HTTP_409_CONFLICT: {"model": ErrorResponse}}
 _event_stream_response = {
     status.HTTP_200_OK: {
         "description": "Server-sent session events.",
@@ -263,6 +267,25 @@ async def export_session_playlist(
             "Content-Disposition": f'attachment; filename="session-{session_id}.pdf"'
         },
     )
+
+
+@router.post(
+    "/{session_id}/playlist/spotify",
+    response_model=SpotifyPlaylistExportResponse,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="export_session_playlist_to_spotify",
+    responses=_auth_errors | _bad_request | _not_found | _conflict,
+)
+async def export_session_playlist_to_spotify(
+    session_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    exporter: FromDishka[SessionSpotifyPlaylistExporter],
+) -> SpotifyPlaylistExportResponse:
+    exported = await exporter.export(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+    )
+    return to_spotify_playlist_export_response(exported)
 
 
 @router.patch(

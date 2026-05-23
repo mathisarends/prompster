@@ -1,4 +1,9 @@
 from .playlist_deck_generator import PlaylistDeckGenerator, PlaylistDeckTrack
+from .playlist_metadata_generator import (
+    PlaylistMetadata,
+    PlaylistMetadataGenerator,
+    PlaylistMetadataTrack,
+)
 from .session_runner import (
     SessionRunner,
     SessionRunnerAssistantMessage,
@@ -19,6 +24,9 @@ from .title_generator import SessionTitleGenerator
 __all__ = [
     "PlaylistDeckGenerator",
     "PlaylistDeckTrack",
+    "PlaylistMetadata",
+    "PlaylistMetadataGenerator",
+    "PlaylistMetadataTrack",
     "SessionRunner",
     "SessionRunnerAssistantMessage",
     "SessionRunnerAssistantMessageChunk",

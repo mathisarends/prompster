@@ -1,0 +1,154 @@
+from dataclasses import dataclass
+from uuid import UUID
+
+from spotifyify import Spotifyify
+
+from backend.features.session.application.ports import (
+    PlaylistMetadataGenerator,
+    PlaylistMetadataTrack,
+)
+from backend.features.session.domain import (
+    PlaylistTrack,
+    Session,
+    SessionExportRequiresSpotifyConnectionError,
+    SessionPlaylistEmptyError,
+    SessionPlaylistMissingSpotifyTracksError,
+    SessionRepository,
+)
+from backend.features.user.domain import UserRepository
+
+
+@dataclass(frozen=True, slots=True)
+class ExportedSpotifyPlaylist:
+    id: str
+    name: str
+    description: str
+    url: str
+    track_count: int
+
+
+class SessionSpotifyPlaylistExporter:
+    _NAME_PREFIX = "prompster · "
+    _NAME_MAX_LENGTH = 100
+    _DESCRIPTION_MAX_LENGTH = 300
+    _PLAYLIST_URL_TEMPLATE = "https://open.spotify.com/playlist/{playlist_id}"
+
+    def __init__(
+        self,
+        session_repository: SessionRepository,
+        user_repository: UserRepository,
+        metadata_generator: PlaylistMetadataGenerator,
+        spotify: Spotifyify,
+    ) -> None:
+        self._session_repository = session_repository
+        self._user_repository = user_repository
+        self._metadata_generator = metadata_generator
+        self._spotify = spotify
+
+    async def export(
+        self, *, session_id: UUID, user_id: UUID
+    ) -> ExportedSpotifyPlaylist:
+        await self._require_spotify_connection(user_id=user_id)
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        playlist = session.playlist
+        if playlist is None or not playlist.tracks:
+            raise SessionPlaylistEmptyError(
+                f"Session {session.id} has no playlist tracks to export."
+            )
+
+        track_uris = [
+            track.spotify_uri for track in playlist.tracks if track.spotify_uri
+        ]
+        if not track_uris:
+            raise SessionPlaylistMissingSpotifyTracksError(
+                f"Session {session.id} playlist has no tracks linked to Spotify."
+            )
+
+        metadata = await self._metadata_generator.generate(
+            [self._to_metadata_track(track) for track in playlist.tracks]
+        )
+        name = self._build_name(metadata.name)
+        description = metadata.description[: self._DESCRIPTION_MAX_LENGTH]
+
+        if playlist.spotify_playlist_id:
+            playlist_id = await self._update_existing_playlist(
+                playlist_id=playlist.spotify_playlist_id,
+                name=name,
+                description=description,
+                track_uris=track_uris,
+            )
+        else:
+            playlist_id = await self._create_new_playlist(
+                name=name,
+                description=description,
+                track_uris=track_uris,
+            )
+            playlist.spotify_playlist_id = playlist_id
+            await self._session_repository.save(session=session)
+
+        return ExportedSpotifyPlaylist(
+            id=playlist_id,
+            name=name,
+            description=description,
+            url=self._PLAYLIST_URL_TEMPLATE.format(playlist_id=playlist_id),
+            track_count=len(track_uris),
+        )
+
+    async def _require_spotify_connection(self, *, user_id: UUID) -> None:
+        user = await self._user_repository.get_by_id(user_id=user_id)
+        if user is None or not user.spotify_connected:
+            raise SessionExportRequiresSpotifyConnectionError(
+                f"User {user_id} has no connected Spotify account."
+            )
+
+    async def _create_new_playlist(
+        self,
+        *,
+        name: str,
+        description: str,
+        track_uris: list[str],
+    ) -> str:
+        created = await self._spotify.playlists.create(
+            name=name,
+            description=description,
+            public=False,
+        )
+        playlist_id = created.id or ""
+        if track_uris:
+            await self._spotify.playlists.add(playlist_id, track_uris)
+        return playlist_id
+
+    async def _update_existing_playlist(
+        self,
+        *,
+        playlist_id: str,
+        name: str,
+        description: str,
+        track_uris: list[str],
+    ) -> str:
+        await self._spotify.playlists.update(
+            playlist_id,
+            name=name,
+            description=description,
+        )
+        await self._spotify.http.put(
+            f"/playlists/{playlist_id}/tracks",
+            payload={"uris": track_uris},
+        )
+        return playlist_id
+
+    async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
+        session = await self._session_repository.get_by_id(session_id=session_id)
+        session.has_access(user_id)
+        return session
+
+    def _build_name(self, generated_name: str) -> str:
+        max_suffix = self._NAME_MAX_LENGTH - len(self._NAME_PREFIX)
+        return f"{self._NAME_PREFIX}{generated_name.strip()[:max_suffix]}"
+
+    def _to_metadata_track(self, track: PlaylistTrack) -> PlaylistMetadataTrack:
+        return PlaylistMetadataTrack(
+            title=track.title,
+            artist=track.artist,
+            year=track.year,
+        )

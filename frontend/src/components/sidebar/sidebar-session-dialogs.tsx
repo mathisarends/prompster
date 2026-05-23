@@ -131,6 +131,7 @@ type DeleteConfirmationDialogProps = {
   confirmLabel: string;
   pendingConfirmLabel: string;
   onConfirm: () => void;
+  confirmButtonClassName?: string;
 };
 
 const DeleteConfirmationDialog = ({
@@ -144,6 +145,7 @@ const DeleteConfirmationDialog = ({
   confirmLabel,
   pendingConfirmLabel,
   onConfirm,
+  confirmButtonClassName,
 }: DeleteConfirmationDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="max-w-xl p-8">
@@ -170,6 +172,7 @@ const DeleteConfirmationDialog = ({
           variant="destructive"
           onClick={onConfirm}
           disabled={isPending}
+          className={confirmButtonClassName}
         >
           {isPending ? pendingConfirmLabel : confirmLabel}
         </Button>
@@ -259,11 +262,10 @@ export const DeleteAccountDialog = ({
   };
 
   const sessionCountMessage =
-    typeof deleteInformation.data?.sessionCount === "number"
+    typeof deleteInformation.data?.sessionCount === "number" &&
+    deleteInformation.data.sessionCount > 0
       ? getSessionCountLabel(deleteInformation.data.sessionCount)
-      : deleteInformation.isLoading
-        ? "Session-Anzahl wird geladen..."
-        : "Deine Sessions werden ebenfalls dauerhaft gelöscht.";
+      : null;
 
   return (
     <DeleteConfirmationDialog
@@ -274,7 +276,11 @@ export const DeleteAccountDialog = ({
         <>
           Dein Account wird dauerhaft gelöscht. Diese Aktion kann nicht
           rückgängig gemacht werden.
-          <span className="mt-2 block font-medium">{sessionCountMessage}</span>
+          {sessionCountMessage ? (
+            <span className="mt-2 block font-medium">
+              {sessionCountMessage}
+            </span>
+          ) : null}
         </>
       }
       isPending={mutation.isPending}
@@ -283,6 +289,7 @@ export const DeleteAccountDialog = ({
       confirmLabel="Account löschen"
       pendingConfirmLabel="Account wird gelöscht..."
       onConfirm={handleConfirm}
+      confirmButtonClassName="bg-destructive text-white hover:bg-destructive/90"
     />
   );
 };

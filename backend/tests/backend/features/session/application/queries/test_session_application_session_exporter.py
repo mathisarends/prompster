@@ -7,7 +7,7 @@ from backend.features.session.application.ports import (
     PlaylistDeckGenerator,
     PlaylistDeckTrack,
 )
-from backend.features.session.application.queries.session_exporter import (
+from backend.features.session.application.session_exporter import (
     SessionPlaylistExporter,
 )
 from backend.features.session.domain import (

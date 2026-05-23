@@ -10,8 +10,12 @@ from backend.features.session.application import (
     SessionPlaylistExporter,
     SessionConversationService,
     SessionService,
+    SessionSpotifyPlaylistExporter,
 )
-from backend.features.session.application.ports import PlaylistDeckGenerator
+from backend.features.session.application.ports import (
+    PlaylistDeckGenerator,
+    PlaylistMetadataGenerator,
+)
 from backend.features.session.application.ports.session_runner import SessionRunner
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummaryQuery,
@@ -24,12 +28,16 @@ from backend.features.session.infrastructure.session_runner import AgentSessionR
 from backend.features.session.infrastructure.pdf_generator import (
     TypstPlaylistDeckGenerator,
 )
+from backend.features.session.infrastructure.playlist_metadata_generator import (
+    LLMPlaylistMetadataGenerator,
+)
 from backend.features.session.infrastructure.session_summary_query import (
     SqlSessionSummaryQuery,
 )
 from backend.features.session.infrastructure.title_generator import (
     LLMSessionTitleGenerator,
 )
+from backend.features.user.domain import UserRepository
 
 
 class SessionProvider(Provider):
@@ -105,3 +113,25 @@ class SessionProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_playlist_deck_generator(self) -> PlaylistDeckGenerator:
         return TypstPlaylistDeckGenerator()
+
+    @provide(scope=Scope.APP)
+    def provide_playlist_metadata_generator(
+        self,
+        llm: ChatModel,
+    ) -> PlaylistMetadataGenerator:
+        return LLMPlaylistMetadataGenerator(llm=llm)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_session_spotify_playlist_exporter(
+        self,
+        session_repository: SessionRepository,
+        user_repository: UserRepository,
+        metadata_generator: PlaylistMetadataGenerator,
+        spotify: Spotifyify,
+    ) -> SessionSpotifyPlaylistExporter:
+        return SessionSpotifyPlaylistExporter(
+            session_repository=session_repository,
+            user_repository=user_repository,
+            metadata_generator=metadata_generator,
+            spotify=spotify,
+        )

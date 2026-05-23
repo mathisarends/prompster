@@ -14,6 +14,14 @@ class SessionPlaylistEmptyError(Exception):
     pass
 
 
+class SessionPlaylistMissingSpotifyTracksError(Exception):
+    pass
+
+
+class SessionExportRequiresSpotifyConnectionError(Exception):
+    pass
+
+
 class ToolCallNotFoundError(Exception):
     pass
 

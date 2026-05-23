@@ -176,5 +176,13 @@ class AddPlaylistTrackRequest(Schema):
     cover_url: str | None = None
 
 
+class SpotifyPlaylistExportResponse(Schema):
+    id: str
+    name: str
+    description: str
+    url: str
+    track_count: int
+
+
 class ErrorResponse(Schema):
     detail: str

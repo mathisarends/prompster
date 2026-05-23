@@ -1,3 +1,4 @@
+from backend.features.session.application import ExportedSpotifyPlaylist
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
 )
@@ -26,6 +27,7 @@ from backend.features.session.presentation.schemas import (
     SessionEntryResponse,
     SessionResponse,
     SessionSummaryResponse,
+    SpotifyPlaylistExportResponse,
     ToolCallSequenceEntryResponse,
     ToolCallResponse,
     ToolFunctionResponse,
@@ -140,6 +142,18 @@ def to_playlist_track_response(track: PlaylistTrack) -> PlaylistTrackResponse:
         year=track.year,
         spotify_uri=track.spotify_uri,
         cover_url=track.cover_url,
+    )
+
+
+def to_spotify_playlist_export_response(
+    exported: ExportedSpotifyPlaylist,
+) -> SpotifyPlaylistExportResponse:
+    return SpotifyPlaylistExportResponse(
+        id=exported.id,
+        name=exported.name,
+        description=exported.description,
+        url=exported.url,
+        track_count=exported.track_count,
     )
 
 

@@ -407,6 +407,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         )
         orm_playlist.session_id = session_id
         orm_playlist.name = domain_playlist.name
+        orm_playlist.spotify_playlist_id = domain_playlist.spotify_playlist_id
         orm_playlist.created_at = domain_playlist.created_at
 
         existing_tracks = {track.id: track for track in orm_playlist.tracks}
@@ -432,6 +433,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         return Playlist(
             id=orm_playlist.id,
             name=orm_playlist.name,
+            spotify_playlist_id=orm_playlist.spotify_playlist_id,
             tracks=[self._to_domain_track(track) for track in tracks],
             created_time=orm_playlist.created_at,
         )
