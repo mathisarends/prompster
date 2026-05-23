@@ -6,9 +6,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { PlatformShortcutKey } from "@/hooks/usePlatform";
+import { usePlatform } from "@/hooks/usePlatform";
 import { cn } from "@/lib/utils";
 
-export type ShortcutKey = "mod" | "shift" | "alt" | "enter" | "escape" | string;
+export type ShortcutKey = PlatformShortcutKey;
 
 type KeyboardShortcutHintProps = {
   children: ReactElement;
@@ -19,45 +21,6 @@ type KeyboardShortcutHintProps = {
   className?: string;
 };
 
-const isApplePlatform = () => {
-  if (typeof navigator === "undefined") {
-    return false;
-  }
-
-  return /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-};
-
-export const formatShortcutKey = (key: ShortcutKey) => {
-  const normalizedKey = key.toLocaleLowerCase();
-  const applePlatform = isApplePlatform();
-
-  if (normalizedKey === "mod") {
-    return applePlatform ? "Cmd" : "Ctrl";
-  }
-
-  if (normalizedKey === "shift") {
-    return "Shift";
-  }
-
-  if (normalizedKey === "alt") {
-    return applePlatform ? "Option" : "Alt";
-  }
-
-  if (normalizedKey === "enter") {
-    return "Enter";
-  }
-
-  if (normalizedKey === "escape") {
-    return "Esc";
-  }
-
-  if (key.length === 1) {
-    return key.toLocaleUpperCase();
-  }
-
-  return key;
-};
-
 export const KeyboardShortcutHint = ({
   children,
   label,
@@ -66,6 +29,8 @@ export const KeyboardShortcutHint = ({
   align = "center",
   className,
 }: KeyboardShortcutHintProps) => {
+  const { formatShortcutKey } = usePlatform();
+
   return (
     <TooltipProvider delay={0}>
       <Tooltip>

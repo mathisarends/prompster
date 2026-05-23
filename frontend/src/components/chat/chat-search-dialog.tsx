@@ -5,6 +5,7 @@ import type { SessionSummaryResponse } from "@/api/generated/model";
 
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { useListKeyboardNavigation } from "@/hooks/useKeyboardShortcut";
+import { usePlatform } from "@/hooks/usePlatform";
 import {
   toSessionHistoryEntries,
   type SessionHistoryEntry,
@@ -42,6 +43,7 @@ export const ChatSearchDialog = ({
   onSelectChat,
   activeChatId,
 }: ChatSearchDialogProps) => {
+  const { shortcutCipher } = usePlatform();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -250,7 +252,7 @@ export const ChatSearchDialog = ({
           <div className="flex items-center gap-2">
             <span>Menü öffnen</span>
             <span className="flex items-center gap-1">
-              <ShortcutKey label="Ctrl" />
+              <ShortcutKey label={shortcutCipher.mod} />
               <ShortcutKey label="K" />
             </span>
           </div>
