@@ -96,7 +96,7 @@ class SessionSpotifyPlaylistExporter:
 
     async def _require_spotify_connection(self, *, user_id: UUID) -> None:
         user = await self._user_repository.get_by_id(user_id=user_id)
-        if user is None or not user.spotify_connected:
+        if user is None or not user.spotify.connected:
             raise SessionExportRequiresSpotifyConnectionError(
                 f"User {user_id} has no connected Spotify account."
             )

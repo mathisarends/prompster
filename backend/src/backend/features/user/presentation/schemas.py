@@ -10,6 +10,7 @@ class UserMeResponse(Schema):
     email: str
     created_at: datetime
     spotify_connected: bool
+    spotify_premium: bool
 
 
 class UserDeleteInformationResponse(Schema):

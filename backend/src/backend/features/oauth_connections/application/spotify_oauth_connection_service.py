@@ -74,7 +74,7 @@ class SpotifyOAuthConnectionService:
             )
             if tokens.refresh_token is None:
                 return SpotifyCallbackResult.error(reason="no_refresh_token")
-            spotify_user_id = await self._spotify_oauth_provider.fetch_spotify_user_id(
+            profile = await self._spotify_oauth_provider.fetch_spotify_user_profile(
                 access_token=tokens.access_token,
             )
         except ValueError:
@@ -87,15 +87,41 @@ class SpotifyOAuthConnectionService:
         connection = OAuthConnection(
             user_id=authenticated_user_id,
             provider=OAuthProvider.SPOTIFY,
-            provider_user_id=spotify_user_id,
+            provider_user_id=profile.spotify_user_id,
             encrypted_refresh_token=self._token_cipher.encrypt(tokens.refresh_token),
             scope=tokens.scope,
             connected_at=datetime.now(timezone.utc),
+            is_premium=profile.is_premium,
             id=existing.id if existing is not None else None,
             created_time=existing.created_at if existing is not None else None,
         )
         await self._connection_repository.save(connection=connection)
         return SpotifyCallbackResult.success()
+
+    async def refresh_premium_status(self, *, user_id: UUID) -> bool | None:
+        connection = await self._connection_repository.get(
+            user_id=user_id,
+            provider=OAuthProvider.SPOTIFY,
+        )
+        if connection is None:
+            return None
+
+        try:
+            refresh_token = self._token_cipher.decrypt(
+                connection.encrypted_refresh_token
+            )
+            tokens = await self._spotify_oauth_provider.refresh_access_token(
+                refresh_token=refresh_token,
+            )
+            profile = await self._spotify_oauth_provider.fetch_spotify_user_profile(
+                access_token=tokens.access_token,
+            )
+        except ValueError:
+            return None
+
+        connection.update_premium_status(is_premium=profile.is_premium)
+        await self._connection_repository.save(connection=connection)
+        return profile.is_premium
 
     async def disconnect(self, *, user_id: UUID) -> None:
         await self._connection_repository.delete(

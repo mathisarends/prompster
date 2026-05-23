@@ -8,6 +8,7 @@ from backend.features.oauth_connections.domain import OAuthProvider
 from backend.features.user.domain import (
     AuthIdentity,
     AuthProvider,
+    SpotifyAccount,
     User,
     UserRepository,
 )
@@ -24,13 +25,18 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session=session, model=UserModel)
 
-    def _to_domain(self, orm: UserModel, *, spotify_connected: bool = False) -> User:
+    def _to_domain(
+        self,
+        orm: UserModel,
+        *,
+        spotify: SpotifyAccount | None = None,
+    ) -> User:
         return User(
             id=orm.id,
             name=orm.name,
             email=orm.email,
             profile_image_url=orm.profile_image_url,
-            spotify_connected=spotify_connected,
+            spotify=spotify or SpotifyAccount.disconnected(),
             created_time=orm.created_at,
         )
 
@@ -51,11 +57,8 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
         if row is None:
             return None
 
-        user_orm, oauth_connection_id = self._split_user_with_connection(row)
-        return self._to_domain(
-            user_orm,
-            spotify_connected=oauth_connection_id is not None,
-        )
+        user_orm, spotify = self._split_user_with_connection(row)
+        return self._to_domain(user_orm, spotify=spotify)
 
     async def delete_by_id(self, *, user_id: UUID) -> bool:
         return await super().delete_by_id(user_id)
@@ -89,11 +92,8 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
         if row is None:
             return None
 
-        user_orm, oauth_connection_id = self._split_user_with_connection(row)
-        return self._to_domain(
-            user_orm,
-            spotify_connected=oauth_connection_id is not None,
-        )
+        user_orm, spotify = self._split_user_with_connection(row)
+        return self._to_domain(user_orm, spotify=spotify)
 
     async def create(self, *, user: User) -> User:
         return await self.save(user)
@@ -125,7 +125,11 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
 
     @staticmethod
     def _select_user_with_spotify_connection():
-        return select(UserModel, OAuthConnectionModel.id).outerjoin(
+        return select(
+            UserModel,
+            OAuthConnectionModel.id,
+            OAuthConnectionModel.is_premium,
+        ).outerjoin(
             OAuthConnectionModel,
             and_(
                 OAuthConnectionModel.user_id == UserModel.id,
@@ -135,6 +139,9 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
 
     @staticmethod
     def _split_user_with_connection(
-        row: Row[tuple[UserModel, UUID | None]],
-    ) -> tuple[UserModel, UUID | None]:
-        return row[0], row[1]
+        row: Row[tuple[UserModel, UUID | None, bool | None]],
+    ) -> tuple[UserModel, SpotifyAccount]:
+        user_orm, oauth_connection_id, is_premium = row[0], row[1], row[2]
+        if oauth_connection_id is None:
+            return user_orm, SpotifyAccount.disconnected()
+        return user_orm, SpotifyAccount.connected_with(is_premium=bool(is_premium))

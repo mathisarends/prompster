@@ -11,7 +11,10 @@ from backend.features.oauth_connections.application import (
     SpotifyTokenService,
 )
 from backend.features.oauth_connections.application.ports import OAuthTokenCipher
-from backend.features.oauth_connections.application.schemas import SpotifyTokens
+from backend.features.oauth_connections.application.schemas import (
+    SpotifyTokens,
+    SpotifyUserProfile,
+)
 from backend.features.oauth_connections.domain import (
     OAuthConnection,
     OAuthConnectionRepository,
@@ -67,8 +70,12 @@ class _SpotifyOAuthProviderStub(SpotifyOAuthProvider):
             "exchange_code_for_tokens is not used in token service tests"
         )
 
-    async def fetch_spotify_user_id(self, *, access_token: str) -> str:
-        raise AssertionError("fetch_spotify_user_id is not used in token service tests")
+    async def fetch_spotify_user_profile(
+        self, *, access_token: str
+    ) -> SpotifyUserProfile:
+        raise AssertionError(
+            "fetch_spotify_user_profile is not used in token service tests"
+        )
 
     async def refresh_access_token(self, *, refresh_token: str) -> SpotifyTokens:
         self.received_refresh_token = refresh_token

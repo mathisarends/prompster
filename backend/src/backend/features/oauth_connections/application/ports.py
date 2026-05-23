@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 
-from backend.features.oauth_connections.application.schemas import SpotifyTokens
+from backend.features.oauth_connections.application.schemas import (
+    SpotifyTokens,
+    SpotifyUserProfile,
+)
 
 
 class SpotifyOAuthProvider(ABC):
@@ -15,7 +18,9 @@ class SpotifyOAuthProvider(ABC):
     ) -> SpotifyTokens: ...
 
     @abstractmethod
-    async def fetch_spotify_user_id(self, *, access_token: str) -> str: ...
+    async def fetch_spotify_user_profile(
+        self, *, access_token: str
+    ) -> SpotifyUserProfile: ...
 
     @abstractmethod
     async def refresh_access_token(self, *, refresh_token: str) -> SpotifyTokens: ...

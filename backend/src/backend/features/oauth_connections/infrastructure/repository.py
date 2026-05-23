@@ -29,6 +29,7 @@ class SqlOAuthConnectionRepository(
             encrypted_refresh_token=orm.refresh_token_encrypted,
             scope=orm.scope,
             connected_at=orm.connected_at,
+            is_premium=orm.is_premium,
         )
 
     def _to_orm(self, domain: OAuthConnection) -> OAuthConnectionModel:
@@ -41,6 +42,7 @@ class SqlOAuthConnectionRepository(
             refresh_token_encrypted=domain.encrypted_refresh_token,
             scope=domain.scope,
             connected_at=domain.connected_at,
+            is_premium=domain.is_premium,
         )
 
     async def get(

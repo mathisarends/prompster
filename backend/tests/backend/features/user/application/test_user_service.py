@@ -8,6 +8,7 @@ from backend.features.user.application.user_service import UserService
 from backend.features.user.domain import (
     AuthIdentity,
     AuthProvider,
+    SpotifyAccount,
     User,
     UserRepository,
 )
@@ -72,7 +73,7 @@ class TestUserService:
         user = User(
             name="Mathis",
             email="mathis@example.com",
-            spotify_connected=True,
+            spotify=SpotifyAccount.connected_with(is_premium=True),
             id=uuid4(),
         )
         repository = _UserRepositoryStub(user=user)
@@ -81,7 +82,8 @@ class TestUserService:
         result = asyncio.run(service.get_me(user_id=user.id))
 
         assert result is user
-        assert result.spotify_connected is True
+        assert result.spotify.connected is True
+        assert result.spotify.is_premium is True
         assert repository.received_user_id == user.id
 
     def test_delete_me_raises_when_user_is_missing(self) -> None:

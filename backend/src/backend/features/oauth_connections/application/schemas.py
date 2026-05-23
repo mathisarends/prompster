@@ -41,3 +41,8 @@ class SpotifyAccessToken(BaseModel):
     access_token: str
     expires_in: int
     scope: str
+
+
+class SpotifyUserProfile(BaseModel):
+    spotify_user_id: str
+    is_premium: bool

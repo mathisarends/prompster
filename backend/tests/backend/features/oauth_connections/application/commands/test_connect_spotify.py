@@ -11,6 +11,7 @@ from backend.features.oauth_connections.application.schemas import (
     SpotifyAuthorizationRequest,
     SpotifyCallbackResult,
     SpotifyTokens,
+    SpotifyUserProfile,
 )
 from backend.features.oauth_connections.application.spotify_oauth_connection_service import (
     SpotifyOAuthConnectionService,
@@ -70,9 +71,14 @@ class _SpotifyOAuthProviderStub(SpotifyOAuthProvider):
         self.received_authorization_code = authorization_code
         return self.tokens
 
-    async def fetch_spotify_user_id(self, *, access_token: str) -> str:
+    async def fetch_spotify_user_profile(
+        self, *, access_token: str
+    ) -> SpotifyUserProfile:
         self.received_access_token = access_token
-        return "spotify-user-1"
+        return SpotifyUserProfile(
+            spotify_user_id="spotify-user-1",
+            is_premium=True,
+        )
 
     async def refresh_access_token(self, *, refresh_token: str) -> SpotifyTokens:
         raise AssertionError(
@@ -164,3 +170,4 @@ class TestSpotifyOAuthConnectionService:
         assert repository.saved_connection.provider == OAuthProvider.SPOTIFY
         assert repository.saved_connection.provider_user_id == "spotify-user-1"
         assert repository.saved_connection.encrypted_refresh_token == b"enc:refresh-1"
+        assert repository.saved_connection.is_premium is True

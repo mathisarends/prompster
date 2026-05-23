@@ -5,7 +5,10 @@ import httpx
 from pydantic import ValidationError
 
 from backend.features.oauth_connections.application.ports import SpotifyOAuthProvider
-from backend.features.oauth_connections.application.schemas import SpotifyTokens
+from backend.features.oauth_connections.application.schemas import (
+    SpotifyTokens,
+    SpotifyUserProfile,
+)
 from backend.features.oauth_connections.infrastructure.spotify_auth_settings import (
     SpotifyAuthSettings,
 )
@@ -58,7 +61,9 @@ class SpotifyOAuthClient(SpotifyOAuthProvider):
             }
         )
 
-    async def fetch_spotify_user_id(self, *, access_token: str) -> str:
+    async def fetch_spotify_user_profile(
+        self, *, access_token: str
+    ) -> SpotifyUserProfile:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
                 self._settings.userinfo_endpoint,
@@ -68,11 +73,15 @@ class SpotifyOAuthClient(SpotifyOAuthProvider):
         if response.status_code >= 400:
             raise ValueError("Spotify /me request failed")
 
-        spotify_user_id = response.json().get("id")
+        payload = response.json()
+        spotify_user_id = payload.get("id")
         if not isinstance(spotify_user_id, str) or not spotify_user_id:
             raise ValueError("Spotify /me response did not include id")
 
-        return spotify_user_id
+        return SpotifyUserProfile(
+            spotify_user_id=spotify_user_id,
+            is_premium=payload.get("product") == "premium",
+        )
 
     def _validate_configuration(self) -> None:
         if not self._settings.client_id:

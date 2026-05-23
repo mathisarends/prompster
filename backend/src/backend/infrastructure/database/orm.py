@@ -55,6 +55,11 @@ class OAuthConnectionModel(DatabaseEntity, table=True):
     refresh_token_encrypted: bytes = Field(sa_type=LargeBinary())
     scope: str
     connected_at: datetime = Field(sa_type=DateTime(timezone=True))
+    is_premium: bool = Field(
+        default=False,
+        sa_type=Boolean(),
+        sa_column_kwargs={"server_default": text("false")},
+    )
 
 
 class SessionModel(DatabaseEntity, table=True):
