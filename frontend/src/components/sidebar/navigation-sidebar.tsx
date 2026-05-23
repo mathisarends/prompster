@@ -8,7 +8,7 @@ import { getGetMeQueryKey, useGetMe } from "@/api/generated/user-api";
 import { useAuth } from "@/auth/use-auth";
 
 import { ChatSearchDialog } from "@/components/chat/chat-search-dialog";
-import { type ShortcutKey } from "@/components/sidebar/keyboard-shortcut-hint";
+import { type ShortcutKey } from "@/components/shared/keyboard-shortcut-hint";
 import { NavigationSidebarSessions } from "@/components/sidebar/navigation-sidebar-sessions";
 import { NavigationSidebarTop } from "@/components/sidebar/navigation-sidebar-top";
 import { NavigationSidebarUserMenu } from "@/components/sidebar/navigation-sidebar-user-menu";

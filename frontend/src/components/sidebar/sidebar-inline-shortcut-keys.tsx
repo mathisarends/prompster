@@ -1,4 +1,4 @@
-import type { ShortcutKey } from "@/components/sidebar/keyboard-shortcut-hint";
+import type { ShortcutKey } from "@/components/shared/keyboard-shortcut-hint";
 import { usePlatform } from "@/hooks/usePlatform";
 
 type SidebarInlineShortcutKeysProps = {

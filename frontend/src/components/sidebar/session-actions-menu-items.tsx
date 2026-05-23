@@ -10,6 +10,19 @@ type SessionActionsMenuItemsProps = {
   onDelete: () => void;
 };
 
+const getToggleStarLabel = (options: {
+  isStarred: boolean;
+  isTogglingStar: boolean;
+}) => {
+  const { isStarred, isTogglingStar } = options;
+
+  if (isTogglingStar) {
+    return isStarred ? "Stern wird entfernt..." : "Stern wird gesetzt...";
+  }
+
+  return isStarred ? "Stern entfernen" : "Mit Stern markieren";
+};
+
 export const SessionActionsMenuItems = ({
   isStarred,
   isTogglingStar = false,
@@ -20,15 +33,7 @@ export const SessionActionsMenuItems = ({
   <>
     <DropdownMenuItem onClick={onToggleStar} disabled={isTogglingStar}>
       <Star className={isStarred ? "fill-current" : undefined} />
-      <span>
-        {isStarred
-          ? isTogglingStar
-            ? "Stern wird entfernt..."
-            : "Stern entfernen"
-          : isTogglingStar
-            ? "Markiere..."
-            : "Markieren"}
-      </span>
+      <span>{getToggleStarLabel({ isStarred, isTogglingStar })}</span>
     </DropdownMenuItem>
     <DropdownMenuItem onClick={onRename}>
       <Pencil />

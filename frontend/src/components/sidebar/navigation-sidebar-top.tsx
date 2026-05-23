@@ -4,7 +4,7 @@ import { PanelLeft, Plus, Search } from "lucide-react";
 import {
   KeyboardShortcutHint,
   type ShortcutKey,
-} from "@/components/sidebar/keyboard-shortcut-hint";
+} from "@/components/shared/keyboard-shortcut-hint";
 import { SidebarInlineShortcutKeys } from "@/components/sidebar/sidebar-inline-shortcut-keys";
 import { PrompsterLogo } from "@/components/prompster-logo";
 import { Button } from "@/components/ui/button";
