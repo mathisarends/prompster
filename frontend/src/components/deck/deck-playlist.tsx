@@ -250,7 +250,7 @@ export const DeckPlaylist = ({
                 }}
                 placeholder={
                   isSpotifySearchActive
-                    ? "Spotify durchsuchen: Titel oder Artist..."
+                    ? "Fang an zu tippen, um bei Spotify zu suchen..."
                     : "Playlist durchsuchen: Titel, Artist, Jahr, Genre..."
                 }
                 containerClassName="px-0"

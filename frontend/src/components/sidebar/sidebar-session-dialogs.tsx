@@ -74,36 +74,36 @@ export const RenameChatDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl p-8">
-        <DialogTitle className="text-2xl">Chat umbenennen</DialogTitle>
-        <DialogDescription className="mt-0.5 text-base">
+      <DialogContent className="max-w-md p-6">
+        <DialogTitle className="text-base font-semibold">Chat umbenennen</DialogTitle>
+        <DialogDescription className="mt-0.5 text-sm">
           Gib deinem Chat einen neuen Namen.
         </DialogDescription>
-        <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+        <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
           <Input
             autoFocus
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             maxLength={MAX_TITLE_LENGTH}
             placeholder="Chat-Titel"
-            className="h-11 text-base"
+            className="h-9 text-sm"
           />
           {mutation.isError ? (
-            <p className="text-sm text-destructive">
+            <p className="text-xs text-destructive">
               Umbenennen fehlgeschlagen. Bitte erneut versuchen.
             </p>
           ) : null}
           <div className="flex justify-end gap-2">
             <Button
               type="button"
-              size="lg"
+              size="sm"
               variant="ghost"
               onClick={() => onOpenChange(false)}
               disabled={mutation.isPending}
             >
               Abbrechen
             </Button>
-            <Button type="submit" size="lg" disabled={!canSave}>
+            <Button type="submit" size="sm" disabled={!canSave}>
               {mutation.isPending ? "Speichern..." : "Speichern"}
             </Button>
           </div>
@@ -148,18 +148,18 @@ const DeleteConfirmationDialog = ({
   confirmButtonClassName,
 }: DeleteConfirmationDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-xl p-8">
-      <DialogTitle className="text-2xl">{title}</DialogTitle>
-      <DialogDescription className="mt-2 text-base">
+    <DialogContent className="max-w-md p-6">
+      <DialogTitle className="text-base font-semibold">{title}</DialogTitle>
+      <DialogDescription className="mt-1.5 text-sm">
         {description}
       </DialogDescription>
       {isError ? (
-        <p className="mt-4 text-sm text-destructive">{errorMessage}</p>
+        <p className="mt-3 text-xs text-destructive">{errorMessage}</p>
       ) : null}
-      <div className="mt-7 flex justify-end gap-2">
+      <div className="mt-5 flex justify-end gap-2">
         <Button
           type="button"
-          size="lg"
+          size="sm"
           variant="ghost"
           onClick={() => onOpenChange(false)}
           disabled={isPending}
@@ -168,7 +168,7 @@ const DeleteConfirmationDialog = ({
         </Button>
         <Button
           type="button"
-          size="lg"
+          size="sm"
           variant="destructive"
           onClick={onConfirm}
           disabled={isPending}

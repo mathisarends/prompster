@@ -6,7 +6,6 @@ import { useSearchSpotify } from "@/api/generated/spotify/spotify";
 import { SpotifySearchType } from "@/api/generated/model";
 import type { SpotifyTrackResponse } from "@/api/generated/model";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
@@ -76,18 +75,13 @@ export const SpotifyTrackSearchPanel = ({
       ref={panelRef}
       className="mb-4 overflow-hidden rounded-md border border-primary/20 bg-popover/95 shadow-[0_22px_54px_hsl(222_52%_4%/0.58)] ring-1 ring-primary/10 animate-in fade-in-0 slide-in-from-top-2 duration-150"
     >
-      <div className="border-b border-white/[0.07] px-3 py-2.5">
-        <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold tracking-tight">
-            Spotify-Suche
-          </h3>
-        </div>
-      </div>
-
-      <ScrollArea className="max-h-[min(42vh,27rem)] px-3">
+      <div className="prompster-scrollbar max-h-[min(42vh,27rem)] overflow-y-auto px-3 pr-1">
         <div className="space-y-4 py-3">
           {!canSearch ? (
-            <EmptySearchState icon={Search} text="Mindestens zwei Zeichen." />
+            <EmptySearchState
+              icon={Search}
+              text="Fang an zu tippen, um bei Spotify zu suchen."
+            />
           ) : search.isLoading ? (
             <EmptySearchState icon={Loader2} text="Spotify sucht..." spin />
           ) : search.isError ? (
@@ -111,7 +105,7 @@ export const SpotifyTrackSearchPanel = ({
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
     </section>
   );
 };
