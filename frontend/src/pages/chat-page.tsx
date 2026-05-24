@@ -231,6 +231,7 @@ export const ChatPage = () => {
             className="border-l border-white/[0.06]"
           >
             <DeckWorkspaceView
+              sessionId={sessionId}
               playlist={playlist}
               onRemoveTrack={removePlaylistTrack}
             />

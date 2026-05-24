@@ -220,6 +220,7 @@ async def add_session_playlist_track(
         title=body.title,
         artist=body.artist,
         year=body.year,
+        spotify_uri=body.spotify_uri,
         cover_url=body.cover_url,
         is_locked=body.is_locked,
     )

@@ -72,6 +72,7 @@ class SessionService:
         title: str,
         artist: str,
         year: int | None = None,
+        spotify_uri: str | None = None,
         cover_url: str | None = None,
         is_locked: bool = False,
     ) -> PlaylistTrack:
@@ -80,6 +81,7 @@ class SessionService:
             title=title,
             artist=artist,
             year=year,
+            spotify_uri=spotify_uri,
             cover_url=cover_url,
             is_locked=is_locked,
         )

@@ -5,6 +5,7 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
+import type { SpotifyAlbumResponse } from "./spotifyAlbumResponse";
 import type { SpotifyArtistResponse } from "./spotifyArtistResponse";
 import type { SpotifyPlaylistResponse } from "./spotifyPlaylistResponse";
 import type { SpotifyTrackResponse } from "./spotifyTrackResponse";
@@ -13,4 +14,5 @@ export interface SpotifyUnifiedSearchResponse {
   tracks: SpotifyTrackResponse[];
   playlists: SpotifyPlaylistResponse[];
   artists: SpotifyArtistResponse[];
+  albums: SpotifyAlbumResponse[];
 }
