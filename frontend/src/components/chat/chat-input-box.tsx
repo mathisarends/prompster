@@ -1,9 +1,10 @@
-import { Plus } from "lucide-react";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
 
+import { AttachmentList } from "@/components/chat/attachments/attachment-list";
+import { AttachmentPopover } from "@/components/chat/attachments/attachment-popover";
+import type { ChatAttachment } from "@/components/chat/attachments/attachment-types";
 import { SendButton } from "@/components/chat/send-button";
 import { TranscriptionButton } from "@/components/chat/transcription-button";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useRealtimeTranscription } from "@/hooks/useRealtimeTranscription";
 import { cn } from "@/lib/utils";
@@ -11,7 +12,7 @@ import { cn } from "@/lib/utils";
 type ChatInputBoxProps = {
   value: string;
   onChange: (value: string) => void;
-  onSubmit: (text: string) => void | Promise<void>;
+  onSubmit: (text: string, attachments: ChatAttachment[]) => void | Promise<void>;
   placeholder?: string;
   className?: string;
   textareaClassName?: string;
@@ -23,6 +24,8 @@ type ChatInputBoxProps = {
   focusOnTyping?: boolean;
   showDisclaimer?: boolean;
   disclaimerText?: string;
+  attachments?: ChatAttachment[];
+  onAttachmentsChange?: (attachments: ChatAttachment[]) => void;
 };
 
 const isEditableElement = (element: EventTarget | null) => {
@@ -67,6 +70,9 @@ const isInteractiveElement = (element: EventTarget | null) => {
   );
 };
 
+const attachmentKey = (attachment: ChatAttachment) =>
+  `${attachment.kind}:${attachment.id}`;
+
 export const ChatInputBox = ({
   value,
   onChange,
@@ -82,11 +88,24 @@ export const ChatInputBox = ({
   focusOnTyping = true,
   showDisclaimer = false,
   disclaimerText = "Prompster ist eine KI und kann Fehler machen. Bitte überprüfe die Antworten.",
+  attachments: controlledAttachments,
+  onAttachmentsChange,
 }: ChatInputBoxProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputContentRef = useRef<HTMLDivElement>(null);
   const textMirrorRef = useRef<HTMLDivElement>(null);
   const [isSingleLine, setIsSingleLine] = useState(true);
+  const [internalAttachments, setInternalAttachments] = useState<
+    ChatAttachment[]
+  >([]);
+  const attachments = controlledAttachments ?? internalAttachments;
+  const setAttachments = (next: ChatAttachment[]) => {
+    if (controlledAttachments === undefined) {
+      setInternalAttachments(next);
+    }
+    onAttachmentsChange?.(next);
+  };
+
   const {
     error: transcriptionError,
     isRecording,
@@ -99,9 +118,11 @@ export const ChatInputBox = ({
     disabled: disabled || isSubmitting,
   });
   const hasText = value.trim().length > 0;
-  const showSendButton = hasText && !isRecording && !isStartingRecording;
+  const hasAttachments = attachments.length > 0;
+  const canSend = hasText || hasAttachments;
+  const showSendButton = canSend && !isRecording && !isStartingRecording;
   const showTranscriptionButton =
-    !hasText || isRecording || isStartingRecording;
+    !canSend || isRecording || isStartingRecording;
 
   useEffect(() => {
     if (!focusOnTyping) return;
@@ -135,13 +156,16 @@ export const ChatInputBox = ({
 
   const submit = () => {
     const trimmed = value.trim();
-    if (!trimmed || disabled || isSubmitting) return;
+    if (!canSend || disabled || isSubmitting) return;
 
     if (isRecording || isStartingRecording) {
       void stopTranscription();
     }
-    onSubmit(trimmed);
-    if (clearOnSubmit) onChange("");
+    onSubmit(trimmed, attachments);
+    if (clearOnSubmit) {
+      onChange("");
+      setAttachments([]);
+    }
   };
 
   const toggleTranscription = () => {
@@ -151,6 +175,17 @@ export const ChatInputBox = ({
     }
 
     void startTranscription();
+  };
+
+  const addAttachment = (attachment: ChatAttachment) => {
+    const key = attachmentKey(attachment);
+    if (attachments.some((existing) => attachmentKey(existing) === key)) return;
+    setAttachments([...attachments, attachment]);
+  };
+
+  const removeAttachment = (attachment: ChatAttachment) => {
+    const key = attachmentKey(attachment);
+    setAttachments(attachments.filter((a) => attachmentKey(a) !== key));
   };
 
   const focusTextareaFromContainer = (event: MouseEvent<HTMLDivElement>) => {
@@ -198,6 +233,13 @@ export const ChatInputBox = ({
           className,
         )}
       >
+        {hasAttachments && (
+          <AttachmentList
+            attachments={attachments}
+            onRemove={removeAttachment}
+          />
+        )}
+
         <div
           ref={inputContentRef}
           className={cn(
@@ -217,15 +259,11 @@ export const ChatInputBox = ({
           </div>
 
           {isSingleLine && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Anhang hinzufügen"
-              className="shrink-0 rounded-full text-muted-foreground"
-            >
-              <Plus />
-            </Button>
+            <AttachmentPopover
+              attachments={attachments}
+              onAdd={addAttachment}
+              disabled={disabled || isSubmitting}
+            />
           )}
 
           <Textarea
@@ -255,32 +293,30 @@ export const ChatInputBox = ({
             )}
           >
             {!isSingleLine && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Anhang hinzufügen"
-                className="rounded-full text-muted-foreground"
-              >
-                <Plus />
-              </Button>
-            )}
-            {showTranscriptionButton && (
-              <TranscriptionButton
-                isRecording={isRecording}
-                isStarting={isStartingRecording}
+              <AttachmentPopover
+                attachments={attachments}
+                onAdd={addAttachment}
                 disabled={disabled || isSubmitting}
-                onClick={toggleTranscription}
               />
             )}
-            {showSendButton && (
-              <SendButton
-                onClick={submit}
-                disabled={disabled}
-                isLoading={isSubmitting}
-                ariaLabel={sendButtonAriaLabel}
-              />
-            )}
+            <div className="flex items-center gap-1.5">
+              {showTranscriptionButton && (
+                <TranscriptionButton
+                  isRecording={isRecording}
+                  isStarting={isStartingRecording}
+                  disabled={disabled || isSubmitting}
+                  onClick={toggleTranscription}
+                />
+              )}
+              {showSendButton && (
+                <SendButton
+                  onClick={submit}
+                  disabled={disabled}
+                  isLoading={isSubmitting}
+                  ariaLabel={sendButtonAriaLabel}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

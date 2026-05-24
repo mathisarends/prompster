@@ -1,4 +1,5 @@
 export * from "./assistant-chat-message";
+export * from "./attachments";
 export * from "./chat-input-box";
 export * from "./chat-page-header";
 export * from "./chat-search-dialog";
