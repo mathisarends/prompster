@@ -16,6 +16,7 @@ export * from "./doneEvent";
 export * from "./errorDto";
 export * from "./errorEvent";
 export * from "./errorResponse";
+export * from "./exportSessionPlaylistParams";
 export * from "./followUpAction";
 export * from "./followUpAnswerRequest";
 export * from "./followUpGroupAddedEvent";

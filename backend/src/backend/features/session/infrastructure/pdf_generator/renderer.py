@@ -18,7 +18,12 @@ from backend.features.session.application.ports import (
 class TypstPlaylistDeckGenerator(PlaylistDeckGenerator):
     _DECK_TEMPLATE = Path(__file__).parent / "deck.typ"
 
-    async def generate(self, tracks: list[PlaylistDeckTrack]) -> bytes:
+    async def generate(
+        self,
+        tracks: list[PlaylistDeckTrack],
+        *,
+        page_limit: int | None = None,
+    ) -> bytes:
         loop = asyncio.get_running_loop()
 
         with tempfile.TemporaryDirectory() as tmp:
@@ -44,12 +49,13 @@ class TypstPlaylistDeckGenerator(PlaylistDeckGenerator):
             shutil.copy(self._DECK_TEMPLATE, deck_typ)
 
             songs_json = json.dumps(songs_data, ensure_ascii=False)
+            max_pages = "" if page_limit is None else str(page_limit)
             await loop.run_in_executor(
                 None,
                 lambda: typst.compile(
                     str(deck_typ),
                     output=str(output),
-                    sys_inputs={"songs": songs_json},
+                    sys_inputs={"songs": songs_json, "max_pages": max_pages},
                 ),
             )
 

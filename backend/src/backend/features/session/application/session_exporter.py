@@ -12,6 +12,9 @@ from backend.features.session.domain import (
     SessionRepository,
 )
 
+_CARDS_PER_DECK_PAGE = 15
+_PDF_PAGES_PER_CARD_BATCH = 2
+
 
 class SessionPlaylistExporter:
     def __init__(
@@ -22,7 +25,13 @@ class SessionPlaylistExporter:
         self._session_repository = session_repository
         self._playlist_deck_generator = playlist_deck_generator
 
-    async def export(self, *, session_id: UUID, user_id: UUID) -> bytes:
+    async def export(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        page_limit: int | None = None,
+    ) -> bytes:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         playlist = session.playlist
         if playlist is None or not playlist.tracks:
@@ -30,8 +39,16 @@ class SessionPlaylistExporter:
                 f"Session {session.id} has no playlist tracks to export."
             )
 
-        tracks = [self._to_deck_track(track) for track in playlist.tracks]
-        return await self._playlist_deck_generator.generate(tracks)
+        playlist_tracks = playlist.tracks
+        if page_limit is not None:
+            deck_batches = (page_limit + _PDF_PAGES_PER_CARD_BATCH - 1) // 2
+            playlist_tracks = playlist_tracks[: deck_batches * _CARDS_PER_DECK_PAGE]
+
+        tracks = [self._to_deck_track(track) for track in playlist_tracks]
+        return await self._playlist_deck_generator.generate(
+            tracks,
+            page_limit=page_limit,
+        )
 
     async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
         session = await self._session_repository.get_by_id(session_id=session_id)

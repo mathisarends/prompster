@@ -43,9 +43,16 @@ class _DeckGeneratorStub(PlaylistDeckGenerator):
     def __init__(self, pdf_bytes: bytes = b"PDF") -> None:
         self._pdf_bytes = pdf_bytes
         self.received_tracks: list[PlaylistDeckTrack] | None = None
+        self.received_page_limit: int | None = None
 
-    async def generate(self, tracks: list[PlaylistDeckTrack]) -> bytes:
+    async def generate(
+        self,
+        tracks: list[PlaylistDeckTrack],
+        *,
+        page_limit: int | None = None,
+    ) -> bytes:
         self.received_tracks = tracks
+        self.received_page_limit = page_limit
         return self._pdf_bytes
 
 
@@ -77,6 +84,33 @@ class TestSessionPlaylistExporter:
         assert generator.received_tracks[0].spotify_url.startswith(
             "https://open.spotify.com/search/"
         )
+        assert generator.received_page_limit is None
+
+    def test_export_can_limit_generated_preview_pages(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        for index in range(39):
+            session.add_track(
+                title=f"Track {index}",
+                artist="Artist",
+                year=2000 + index,
+                cover_url=None,
+            )
+        repository = _SessionRepositoryStub(session=session)
+        generator = _DeckGeneratorStub(pdf_bytes=b"PDF_BYTES")
+        exporter = SessionPlaylistExporter(
+            session_repository=repository,
+            playlist_deck_generator=generator,
+        )
+
+        result = asyncio.run(
+            exporter.export(session_id=session.id, user_id=owner_id, page_limit=2)
+        )
+
+        assert result == b"PDF_BYTES"
+        assert generator.received_tracks is not None
+        assert len(generator.received_tracks) == 15
+        assert generator.received_page_limit == 2
 
     def test_export_raises_when_playlist_empty(self) -> None:
         owner_id = uuid4()

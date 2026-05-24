@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Download,
@@ -7,7 +7,6 @@ import {
   ListMusic,
   Loader2,
   Music2,
-  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -71,6 +70,7 @@ export const DeckWorkspaceView = ({
     url: string;
     blob: Blob;
   } | null>(null);
+  const [activeTab, setActiveTab] = useState("playlist");
   const {
     state: playerState,
     playTrack,
@@ -184,8 +184,19 @@ export const DeckWorkspaceView = ({
     },
   });
 
-  const exportPdfMutation = useMutation({
-    mutationFn: () => exportSessionPlaylist(sessionId),
+  const playlistPreviewKey = useMemo(
+    () =>
+      playlist.tracks
+        .map(
+          (track) =>
+            `${track.id}:${track.title}:${track.artist}:${track.year ?? ""}:${track.spotifyUri ?? ""}`,
+        )
+        .join("|"),
+    [playlist.tracks],
+  );
+
+  const pdfPreviewMutation = useMutation({
+    mutationFn: () => exportSessionPlaylist(sessionId, { pages: 2 }),
     onSuccess: (data) => {
       const blob =
         data instanceof Blob
@@ -213,7 +224,10 @@ export const DeckWorkspaceView = ({
 
       return null;
     });
-  }, [sessionId, playlist.tracks]);
+    if (tracks.length > 0) {
+      pdfPreviewMutation.mutate();
+    }
+  }, [sessionId, playlistPreviewKey]);
 
   useEffect(
     () => () => {
@@ -224,16 +238,30 @@ export const DeckWorkspaceView = ({
     [pdfPreview],
   );
 
-  const downloadPdfPreview = () => {
-    if (!pdfPreview) return;
-
+  const downloadPdfBlob = (blob: Blob) => {
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = pdfPreview.url;
+    link.href = url;
     link.download = `prompster-${sessionId}.pdf`;
     document.body.appendChild(link);
     link.click();
     link.remove();
+    window.URL.revokeObjectURL(url);
   };
+
+  const downloadPdfMutation = useMutation({
+    mutationFn: () => exportSessionPlaylist(sessionId),
+    onSuccess: (data) => {
+      const blob =
+        data instanceof Blob
+          ? data
+          : new Blob([data as BlobPart], { type: "application/pdf" });
+      downloadPdfBlob(blob);
+    },
+    onError: () => {
+      toast.error("PDF konnte nicht heruntergeladen werden.");
+    },
+  });
 
   const exportSpotifyMutation = useMutation({
     mutationFn: () => exportSessionPlaylistToSpotify(sessionId),
@@ -278,6 +306,7 @@ export const DeckWorkspaceView = ({
       <ChatWorkspacePanel>
         <Tabs
           defaultValue="playlist"
+          onValueChange={setActiveTab}
           className="h-full min-h-0 flex-1 gap-3 overflow-hidden"
         >
           <div className="flex shrink-0 items-center justify-between gap-3">
@@ -339,10 +368,11 @@ export const DeckWorkspaceView = ({
             <ExportActions
               trackCount={tracks.length}
               pdfPreview={pdfPreview}
-              isExportingPdf={exportPdfMutation.isPending}
+              isActive={activeTab === "export"}
+              isLoadingPdfPreview={pdfPreviewMutation.isPending}
+              isDownloadingPdf={downloadPdfMutation.isPending}
               isExportingSpotify={exportSpotifyMutation.isPending}
-              onLoadPdfPreview={() => exportPdfMutation.mutate()}
-              onDownloadPdf={downloadPdfPreview}
+              onDownloadPdf={() => downloadPdfMutation.mutate()}
               onExportSpotify={() => exportSpotifyMutation.mutate()}
             />
           </TabsContent>
@@ -366,9 +396,10 @@ type ExportActionsProps = {
     url: string;
     blob: Blob;
   } | null;
-  isExportingPdf: boolean;
+  isActive: boolean;
+  isLoadingPdfPreview: boolean;
+  isDownloadingPdf: boolean;
   isExportingSpotify: boolean;
-  onLoadPdfPreview: () => void;
   onDownloadPdf: () => void;
   onExportSpotify: () => void;
 };
@@ -376,42 +407,78 @@ type ExportActionsProps = {
 const ExportActions = ({
   trackCount,
   pdfPreview,
-  isExportingPdf,
+  isActive,
+  isLoadingPdfPreview,
+  isDownloadingPdf,
   isExportingSpotify,
-  onLoadPdfPreview,
   onDownloadPdf,
   onExportSpotify,
 }: ExportActionsProps) => {
   const disabled = trackCount === 0;
+  const previewShellRef = useRef<HTMLDivElement>(null);
+  const [previewWidth, setPreviewWidth] = useState(0);
+  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+  const pdfPreviewUrl = pdfPreview
+    ? `${pdfPreview.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`
+    : null;
+  const previewHeight = previewWidth > 0 ? Math.ceil(previewWidth * 2.86) : 0;
+  const showPreviewLoader =
+    isLoadingPdfPreview || (Boolean(pdfPreviewUrl) && !isPreviewVisible);
+
+  useEffect(() => {
+    const shell = previewShellRef.current;
+    if (!shell) return;
+
+    const updatePreviewWidth = () => {
+      setPreviewWidth(shell.clientWidth);
+    };
+    const resizeObserver = new ResizeObserver(updatePreviewWidth);
+    resizeObserver.observe(shell);
+    updatePreviewWidth();
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    setIsPreviewVisible(false);
+    if (!pdfPreviewUrl || !isActive) return;
+
+    const timer = window.setTimeout(() => {
+      setIsPreviewVisible(true);
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [pdfPreviewUrl, isActive]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden pt-1">
-      <div className="min-h-0 flex-1 overflow-hidden rounded-md border border-white/[0.08] bg-white/[0.025]">
-        {pdfPreview ? (
-          <iframe
-            src={pdfPreview.url}
-            title="PDF-Vorschau"
-            className="h-full min-h-[360px] w-full bg-white"
-          />
+      <div
+        ref={previewShellRef}
+        className="prompster-scrollbar relative min-h-0 flex-1 overflow-auto rounded-md border border-white/[0.08] bg-white/[0.025]"
+      >
+        {pdfPreviewUrl ? (
+          <>
+            <iframe
+              src={pdfPreviewUrl}
+              title="PDF-Vorschau"
+              className="block w-full bg-white transition-opacity duration-150"
+              style={{
+                height: previewHeight ? `${previewHeight}px` : "720px",
+                opacity: isPreviewVisible ? 1 : 0,
+              }}
+              scrolling="no"
+              onLoad={() => {
+                window.setTimeout(() => setIsPreviewVisible(true), 80);
+              }}
+            />
+            {showPreviewLoader ? <PdfPreviewLoader /> : null}
+          </>
         ) : (
-          <div className="grid h-full min-h-[360px] place-items-center px-6 text-center">
-            <div className="max-w-xs">
-              <div className="mx-auto grid size-14 place-items-center rounded-md bg-primary/12 text-primary">
-                {isExportingPdf ? (
-                  <Loader2 className="size-6 animate-spin" />
-                ) : (
-                  <FileText className="size-6" />
-                )}
-              </div>
-              <p className="mt-4 text-sm font-semibold">
-                PDF-Vorschau noch nicht erstellt
-              </p>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                Erzeuge zuerst die Vorschau, dann kannst du genau diese Datei
-                herunterladen.
-              </p>
-            </div>
-          </div>
+          <PdfPreviewEmptyState isLoading={isLoadingPdfPreview} />
         )}
       </div>
 
@@ -432,45 +499,32 @@ const ExportActions = ({
             </p>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">
               {pdfPreview
-                ? `${formatFileSize(pdfPreview.blob.size)} bereit zur Prüfung`
-                : `${trackCount} Songs als druckbares Deck`}
+                ? "Vorschau: erste 2 Seiten"
+                : "Vorschau wird geladen"}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Button
               type="button"
               variant="outline"
-              size="icon"
-              aria-label={
-                pdfPreview ? "PDF-Vorschau erneuern" : "PDF-Vorschau erstellen"
-              }
-              disabled={disabled || isExportingPdf || isExportingSpotify}
-              onClick={onLoadPdfPreview}
-            >
-              {isExportingPdf ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : pdfPreview ? (
-                <RefreshCw className="size-4" />
-              ) : (
-                <FileText className="size-4" />
-              )}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
+              size="sm"
               aria-label="PDF herunterladen"
-              disabled={!pdfPreview || disabled || isExportingPdf}
+              disabled={disabled || isDownloadingPdf || isExportingSpotify}
               onClick={onDownloadPdf}
             >
-              <Download className="size-4" />
+              {isDownloadingPdf ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
+              PDF herunterladen
             </Button>
             <Button
               type="button"
               variant="outline"
-              size="icon"
+              size="sm"
               aria-label="Spotify-Playlist erstellen"
-              disabled={disabled || isExportingPdf || isExportingSpotify}
+              disabled={disabled || isDownloadingPdf || isExportingSpotify}
               onClick={onExportSpotify}
             >
               {isExportingSpotify ? (
@@ -478,6 +532,7 @@ const ExportActions = ({
               ) : (
                 <Music2 className="size-4" />
               )}
+              Spotify exportieren
             </Button>
           </div>
         </div>
@@ -486,13 +541,38 @@ const ExportActions = ({
   );
 };
 
-const formatFileSize = (bytes: number) => {
-  if (bytes < 1024 * 1024) {
-    return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  }
+const PdfPreviewLoader = () => (
+  <div className="absolute inset-0 z-10 grid place-items-center bg-background/92 px-6 text-center backdrop-blur-sm">
+    <div className="max-w-xs">
+      <div className="mx-auto grid size-14 place-items-center rounded-md bg-primary/12 text-primary">
+        <Loader2 className="size-6 animate-spin" />
+      </div>
+      <p className="mt-4 text-sm font-semibold">PDF-Vorschau wird geladen</p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+        Die ersten zwei Seiten werden für die Vorschau vorbereitet.
+      </p>
+    </div>
+  </div>
+);
 
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-};
+const PdfPreviewEmptyState = ({ isLoading }: { isLoading: boolean }) => (
+  <div className="grid h-full min-h-[360px] place-items-center px-6 text-center">
+    <div className="max-w-xs">
+      <div className="mx-auto grid size-14 place-items-center rounded-md bg-primary/12 text-primary">
+        {isLoading ? (
+          <Loader2 className="size-6 animate-spin" />
+        ) : (
+          <FileText className="size-6" />
+        )}
+      </div>
+      <p className="mt-4 text-sm font-semibold">PDF-Vorschau wird erstellt</p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+        Die ersten zwei Seiten werden automatisch neu geladen, sobald sich die
+        Playlist ändert.
+      </p>
+    </div>
+  </div>
+);
 
 type SpotifyExportResultDialogProps = {
   playlist: SpotifyPlaylistExportResponse | null;

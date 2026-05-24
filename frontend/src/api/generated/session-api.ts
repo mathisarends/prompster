@@ -25,6 +25,7 @@ import type {
 import type {
   AddPlaylistTrackRequest,
   ErrorResponse,
+  ExportSessionPlaylistParams,
   FollowUpRequest,
   HTTPValidationError,
   ListSessionsParams,
@@ -2193,8 +2194,7 @@ export const getUnpinPlaylistTrackQueryOptions = <
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
-    queryOptions?.queryKey ??
-    getUnpinPlaylistTrackQueryKey(sessionId, trackId);
+    queryOptions?.queryKey ?? getUnpinPlaylistTrackQueryKey(sessionId, trackId);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof unpinPlaylistTrack>>
@@ -2534,6 +2534,7 @@ export function useRemovePlaylistTrack<
  */
 export const exportSessionPlaylist = (
   sessionId: string,
+  params?: ExportSessionPlaylistParams,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
@@ -2541,6 +2542,7 @@ export const exportSessionPlaylist = (
     {
       url: `/api/v1/sessions/${sessionId}/playlist/pdf`,
       method: "GET",
+      params,
       responseType: "blob",
       signal,
     },
@@ -2548,12 +2550,25 @@ export const exportSessionPlaylist = (
   );
 };
 
-export const getExportSessionPlaylistInfiniteQueryKey = (sessionId: string) => {
-  return ["infinite", `/api/v1/sessions/${sessionId}/playlist/pdf`] as const;
+export const getExportSessionPlaylistInfiniteQueryKey = (
+  sessionId: string,
+  params?: ExportSessionPlaylistParams,
+) => {
+  return [
+    "infinite",
+    `/api/v1/sessions/${sessionId}/playlist/pdf`,
+    ...(params ? [params] : []),
+  ] as const;
 };
 
-export const getExportSessionPlaylistQueryKey = (sessionId: string) => {
-  return [`/api/v1/sessions/${sessionId}/playlist/pdf`] as const;
+export const getExportSessionPlaylistQueryKey = (
+  sessionId: string,
+  params?: ExportSessionPlaylistParams,
+) => {
+  return [
+    `/api/v1/sessions/${sessionId}/playlist/pdf`,
+    ...(params ? [params] : []),
+  ] as const;
 };
 
 export const getExportSessionPlaylistInfiniteQueryOptions = <
@@ -2561,6 +2576,7 @@ export const getExportSessionPlaylistInfiniteQueryOptions = <
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
+  params?: ExportSessionPlaylistParams,
   options?: {
     query?: Partial<
       UseInfiniteQueryOptions<
@@ -2576,11 +2592,12 @@ export const getExportSessionPlaylistInfiniteQueryOptions = <
 
   const queryKey =
     queryOptions?.queryKey ??
-    getExportSessionPlaylistInfiniteQueryKey(sessionId);
+    getExportSessionPlaylistInfiniteQueryKey(sessionId, params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof exportSessionPlaylist>>
-  > = ({ signal }) => exportSessionPlaylist(sessionId, requestOptions, signal);
+  > = ({ signal }) =>
+    exportSessionPlaylist(sessionId, params, requestOptions, signal);
 
   return {
     queryKey,
@@ -2606,6 +2623,7 @@ export function useExportSessionPlaylistInfinite<
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
+  params: undefined | ExportSessionPlaylistParams,
   options: {
     query: Partial<
       UseInfiniteQueryOptions<
@@ -2633,6 +2651,7 @@ export function useExportSessionPlaylistInfinite<
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
+  params?: ExportSessionPlaylistParams,
   options?: {
     query?: Partial<
       UseInfiniteQueryOptions<
@@ -2660,6 +2679,7 @@ export function useExportSessionPlaylistInfinite<
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
+  params?: ExportSessionPlaylistParams,
   options?: {
     query?: Partial<
       UseInfiniteQueryOptions<
@@ -2683,6 +2703,7 @@ export function useExportSessionPlaylistInfinite<
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
+  params?: ExportSessionPlaylistParams,
   options?: {
     query?: Partial<
       UseInfiniteQueryOptions<
@@ -2699,6 +2720,7 @@ export function useExportSessionPlaylistInfinite<
 } {
   const queryOptions = getExportSessionPlaylistInfiniteQueryOptions(
     sessionId,
+    params,
     options,
   );
 
@@ -2717,6 +2739,7 @@ export const getExportSessionPlaylistQueryOptions = <
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
+  params?: ExportSessionPlaylistParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -2731,11 +2754,13 @@ export const getExportSessionPlaylistQueryOptions = <
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
-    queryOptions?.queryKey ?? getExportSessionPlaylistQueryKey(sessionId);
+    queryOptions?.queryKey ??
+    getExportSessionPlaylistQueryKey(sessionId, params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof exportSessionPlaylist>>
-  > = ({ signal }) => exportSessionPlaylist(sessionId, requestOptions, signal);
+  > = ({ signal }) =>
+    exportSessionPlaylist(sessionId, params, requestOptions, signal);
 
   return {
     queryKey,
@@ -2761,6 +2786,7 @@ export function useExportSessionPlaylist<
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
+  params: undefined | ExportSessionPlaylistParams,
   options: {
     query: Partial<
       UseQueryOptions<
@@ -2788,6 +2814,7 @@ export function useExportSessionPlaylist<
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
+  params?: ExportSessionPlaylistParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -2815,6 +2842,7 @@ export function useExportSessionPlaylist<
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
+  params?: ExportSessionPlaylistParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -2838,6 +2866,7 @@ export function useExportSessionPlaylist<
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
+  params?: ExportSessionPlaylistParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -2852,7 +2881,11 @@ export function useExportSessionPlaylist<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getExportSessionPlaylistQueryOptions(sessionId, options);
+  const queryOptions = getExportSessionPlaylistQueryOptions(
+    sessionId,
+    params,
+    options,
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

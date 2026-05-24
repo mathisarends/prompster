@@ -299,10 +299,12 @@ async def export_session_playlist(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     exporter: FromDishka[SessionPlaylistExporter],
+    pages: int | None = Query(default=None, ge=1, le=100),
 ) -> Response:
     pdf = await exporter.export(
         session_id=session_id,
         user_id=authenticated_user_id,
+        page_limit=pages,
     )
     return Response(
         content=pdf,

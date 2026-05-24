@@ -1,4 +1,6 @@
 #let songs = json.decode(sys.inputs.at("songs"))
+#let max_pages_input = sys.inputs.at("max_pages", default: "")
+#let max_pages = if max_pages_input == "" { none } else { int(max_pages_input) }
 
 #let page_width = 210mm
 #let page_height = 297mm
@@ -237,7 +239,10 @@
   return pages
 }
 
-#for (i, page) in get_pages(songs).enumerate() {
+#let pages = get_pages(songs)
+#let visible_pages = if max_pages == none { pages } else { pages.slice(0, calc.min(max_pages, pages.len())) }
+
+#for (i, page) in visible_pages.enumerate() {
   if i != 0 { pagebreak() }
   grid(
     columns: cols + 2,

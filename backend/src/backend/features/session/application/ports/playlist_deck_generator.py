@@ -12,5 +12,10 @@ class PlaylistDeckTrack:
 
 class PlaylistDeckGenerator(ABC):
     @abstractmethod
-    async def generate(self, tracks: list[PlaylistDeckTrack]) -> bytes:
+    async def generate(
+        self,
+        tracks: list[PlaylistDeckTrack],
+        *,
+        page_limit: int | None = None,
+    ) -> bytes:
         """Generates a playlist deck document from tracks."""

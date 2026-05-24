@@ -303,6 +303,279 @@ export function useGoogleLogin<
 }
 
 /**
+ * @summary Spotify Login
+ */
+export const spotifyLogin = (
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<unknown>(
+    { url: `/api/v1/auth/spotify/login`, method: "GET", signal },
+    options,
+  );
+};
+
+export const getSpotifyLoginInfiniteQueryKey = () => {
+  return ["infinite", `/api/v1/auth/spotify/login`] as const;
+};
+
+export const getSpotifyLoginQueryKey = () => {
+  return [`/api/v1/auth/spotify/login`] as const;
+};
+
+export const getSpotifyLoginInfiniteQueryOptions = <
+  TData = InfiniteData<Awaited<ReturnType<typeof spotifyLogin>>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseInfiniteQueryOptions<
+      Awaited<ReturnType<typeof spotifyLogin>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSpotifyLoginInfiniteQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof spotifyLogin>>> = ({
+    signal,
+  }) => spotifyLogin(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseInfiniteQueryOptions<
+    Awaited<ReturnType<typeof spotifyLogin>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SpotifyLoginInfiniteQueryResult = NonNullable<
+  Awaited<ReturnType<typeof spotifyLogin>>
+>;
+export type SpotifyLoginInfiniteQueryError = ErrorType<unknown>;
+
+export function useSpotifyLoginInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof spotifyLogin>>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof spotifyLogin>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof spotifyLogin>>,
+          TError,
+          Awaited<ReturnType<typeof spotifyLogin>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSpotifyLoginInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof spotifyLogin>>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof spotifyLogin>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof spotifyLogin>>,
+          TError,
+          Awaited<ReturnType<typeof spotifyLogin>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSpotifyLoginInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof spotifyLogin>>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof spotifyLogin>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Spotify Login
+ */
+
+export function useSpotifyLoginInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof spotifyLogin>>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof spotifyLogin>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getSpotifyLoginInfiniteQueryOptions(options);
+
+  const query = useInfiniteQuery(
+    queryOptions,
+    queryClient,
+  ) as UseInfiniteQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getSpotifyLoginQueryOptions = <
+  TData = Awaited<ReturnType<typeof spotifyLogin>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof spotifyLogin>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSpotifyLoginQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof spotifyLogin>>> = ({
+    signal,
+  }) => spotifyLogin(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof spotifyLogin>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SpotifyLoginQueryResult = NonNullable<
+  Awaited<ReturnType<typeof spotifyLogin>>
+>;
+export type SpotifyLoginQueryError = ErrorType<unknown>;
+
+export function useSpotifyLogin<
+  TData = Awaited<ReturnType<typeof spotifyLogin>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof spotifyLogin>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof spotifyLogin>>,
+          TError,
+          Awaited<ReturnType<typeof spotifyLogin>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSpotifyLogin<
+  TData = Awaited<ReturnType<typeof spotifyLogin>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof spotifyLogin>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof spotifyLogin>>,
+          TError,
+          Awaited<ReturnType<typeof spotifyLogin>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSpotifyLogin<
+  TData = Awaited<ReturnType<typeof spotifyLogin>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof spotifyLogin>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Spotify Login
+ */
+
+export function useSpotifyLogin<
+  TData = Awaited<ReturnType<typeof spotifyLogin>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof spotifyLogin>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getSpotifyLoginQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Logout
  */
 export const logout = (
