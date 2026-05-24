@@ -181,7 +181,7 @@ export const ChatSearchDialog = ({
           </DialogClose>
         </div>
 
-        <div className="max-h-[min(32rem,calc(100vh-13rem))] overflow-y-auto p-2">
+        <div className="prompster-scrollbar max-h-[min(32rem,calc(100vh-13rem))] overflow-y-auto p-2">
           {visibleChats.length > 0 ? (
             <>
               <SectionHeader label="Zuletzt verwendet" />

@@ -49,10 +49,16 @@
   --sidebar-accent-foreground: hsl(0 0% 93%);
   --sidebar-border: hsl(222 19% 21%);
   --sidebar-ring: hsl(141 70% 45%);
+  --prompster-scrollbar-size: 0.75rem;
+  --prompster-scrollbar-track-offset: 2rem;
+  --prompster-scrollbar-thumb: hsl(0 0% 100% / 0.22);
+  --prompster-scrollbar-thumb-hover: hsl(0 0% 100% / 0.34);
 }
 
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--prompster-scrollbar-thumb) transparent;
 }
 
 html,
@@ -65,42 +71,47 @@ html {
   direction: rtl;
   background-color: var(--background);
   scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: hsl(0 0% 100% / 0.3) transparent;
 }
 
 body {
   direction: ltr;
 }
 
-html::-webkit-scrollbar,
-body::-webkit-scrollbar {
-  width: 6px;
+*::-webkit-scrollbar {
+  width: var(--prompster-scrollbar-size);
+  height: var(--prompster-scrollbar-size);
 }
 
-html::-webkit-scrollbar-track,
-body::-webkit-scrollbar-track {
-  margin-block: 2rem;
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track-piece {
   background: transparent;
 }
 
-html::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb {
+*::-webkit-scrollbar-track:vertical {
+  margin-block: var(--prompster-scrollbar-track-offset);
+}
+
+*::-webkit-scrollbar-track:horizontal {
+  margin-inline: var(--prompster-scrollbar-track-offset);
+}
+
+*::-webkit-scrollbar-thumb {
   border-radius: 9999px;
-  background: hsl(0 0% 100% / 0.18);
+  border: 1px solid transparent;
+  background-color: var(--prompster-scrollbar-thumb);
+  background-clip: content-box;
 }
 
-html::-webkit-scrollbar-thumb:hover,
-body::-webkit-scrollbar-thumb:hover {
-  background: hsl(0 0% 100% / 0.32);
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--prompster-scrollbar-thumb-hover);
 }
 
-html::-webkit-scrollbar-button,
-body::-webkit-scrollbar-button,
-*::-webkit-scrollbar-button {
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-corner {
   display: none;
   width: 0;
   height: 0;
+  background: transparent;
 }
 
 body {
@@ -112,26 +123,28 @@ body {
 
 .prompster-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: hsl(0 0% 100% / 0.16) transparent;
+  scrollbar-color: var(--prompster-scrollbar-thumb) transparent;
 }
 
 .prompster-scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: var(--prompster-scrollbar-size);
+  height: var(--prompster-scrollbar-size);
 }
 
 .prompster-scrollbar::-webkit-scrollbar-track {
-  margin-block: 1.5rem;
+  margin-block: var(--prompster-scrollbar-track-offset);
   background: transparent;
 }
 
 .prompster-scrollbar::-webkit-scrollbar-thumb {
   border-radius: 9999px;
-  background: hsl(0 0% 100% / 0.14);
+  border: 1px solid transparent;
+  background-color: var(--prompster-scrollbar-thumb);
+  background-clip: content-box;
 }
 
 .prompster-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(0 0% 100% / 0.24);
+  background-color: var(--prompster-scrollbar-thumb-hover);
 }
 
 .prompster-scrollbar::-webkit-scrollbar-button {

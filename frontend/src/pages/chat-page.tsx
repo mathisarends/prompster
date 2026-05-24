@@ -19,6 +19,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserChatMessage } from "@/components/chat/user-chat-message";
 import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -157,27 +158,31 @@ export const ChatPage = () => {
         }
       />
 
-      <main className="prompster-scrollbar min-h-0 flex-1 overflow-y-auto px-4 sm:px-8">
-        <div className="mx-auto flex w-full max-w-4xl flex-col">
-          <div className="flex flex-col gap-4 px-1 pt-1 sm:px-2">
-            {isLoadingSession ? (
-              <>
-                <ChatMessageSkeleton variant="user" />
-                <ChatMessageSkeleton variant="assistant" />
-              </>
-            ) : (
-              <>
-                {isError && (
-                  <p className="px-1 py-2 text-sm text-destructive">
-                    Session konnte nicht geladen werden.
-                  </p>
+      <main className="min-h-0 flex-1 overflow-hidden">
+        <ScrollArea className="h-full min-h-0">
+          <div className="px-4 sm:px-8">
+            <div className="mx-auto flex w-full max-w-4xl flex-col">
+              <div className="flex flex-col gap-4 px-1 pt-1 sm:px-2">
+                {isLoadingSession ? (
+                  <>
+                    <ChatMessageSkeleton variant="user" />
+                    <ChatMessageSkeleton variant="assistant" />
+                  </>
+                ) : (
+                  <>
+                    {isError && (
+                      <p className="px-1 py-2 text-sm text-destructive">
+                        Session konnte nicht geladen werden.
+                      </p>
+                    )}
+                    {entries.map(renderEntry)}
+                  </>
                 )}
-                {entries.map(renderEntry)}
-              </>
-            )}
-            <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       </main>
 
       <div className="shrink-0 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-6 sm:px-8 sm:pb-3">

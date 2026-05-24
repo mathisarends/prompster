@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Download,
@@ -7,6 +7,7 @@ import {
   ListMusic,
   Loader2,
   Music2,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,7 +42,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSpotifyOAuthPopup } from "@/hooks/useSpotifyOAuthPopup";
 import { useSpotifyPlayer } from "@/hooks/useSpotifyPlayer";
-import { cn } from "@/lib/utils";
 
 type DeckWorkspaceViewProps = {
   sessionId: string;
@@ -67,6 +67,10 @@ export const DeckWorkspaceView = ({
   >(null);
   const [exportedPlaylist, setExportedPlaylist] =
     useState<SpotifyPlaylistExportResponse | null>(null);
+  const [pdfPreview, setPdfPreview] = useState<{
+    url: string;
+    blob: Blob;
+  } | null>(null);
   const {
     state: playerState,
     playTrack,
@@ -188,18 +192,48 @@ export const DeckWorkspaceView = ({
           ? data
           : new Blob([data as BlobPart], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `prompster-${sessionId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      setPdfPreview((currentPreview) => {
+        if (currentPreview) {
+          window.URL.revokeObjectURL(currentPreview.url);
+        }
+
+        return { url, blob };
+      });
     },
     onError: () => {
-      toast.error("PDF konnte nicht exportiert werden.");
+      toast.error("PDF-Vorschau konnte nicht erstellt werden.");
     },
   });
+
+  useEffect(() => {
+    setPdfPreview((currentPreview) => {
+      if (currentPreview) {
+        window.URL.revokeObjectURL(currentPreview.url);
+      }
+
+      return null;
+    });
+  }, [sessionId, playlist.tracks]);
+
+  useEffect(
+    () => () => {
+      if (pdfPreview) {
+        window.URL.revokeObjectURL(pdfPreview.url);
+      }
+    },
+    [pdfPreview],
+  );
+
+  const downloadPdfPreview = () => {
+    if (!pdfPreview) return;
+
+    const link = document.createElement("a");
+    link.href = pdfPreview.url;
+    link.download = `prompster-${sessionId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
 
   const exportSpotifyMutation = useMutation({
     mutationFn: () => exportSessionPlaylistToSpotify(sessionId),
@@ -304,9 +338,11 @@ export const DeckWorkspaceView = ({
           >
             <ExportActions
               trackCount={tracks.length}
+              pdfPreview={pdfPreview}
               isExportingPdf={exportPdfMutation.isPending}
               isExportingSpotify={exportSpotifyMutation.isPending}
-              onExportPdf={() => exportPdfMutation.mutate()}
+              onLoadPdfPreview={() => exportPdfMutation.mutate()}
+              onDownloadPdf={downloadPdfPreview}
               onExportSpotify={() => exportSpotifyMutation.mutate()}
             />
           </TabsContent>
@@ -326,89 +362,137 @@ export const DeckWorkspaceView = ({
 
 type ExportActionsProps = {
   trackCount: number;
+  pdfPreview: {
+    url: string;
+    blob: Blob;
+  } | null;
   isExportingPdf: boolean;
   isExportingSpotify: boolean;
-  onExportPdf: () => void;
+  onLoadPdfPreview: () => void;
+  onDownloadPdf: () => void;
   onExportSpotify: () => void;
 };
 
 const ExportActions = ({
   trackCount,
+  pdfPreview,
   isExportingPdf,
   isExportingSpotify,
-  onExportPdf,
+  onLoadPdfPreview,
+  onDownloadPdf,
   onExportSpotify,
 }: ExportActionsProps) => {
   const disabled = trackCount === 0;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 pt-1">
-      <ExportActionButton
-        icon={FileText}
-        title="PDF exportieren"
-        description="Deck als druckbare Playlist-Datei herunterladen."
-        isLoading={isExportingPdf}
-        disabled={disabled || isExportingPdf || isExportingSpotify}
-        onClick={onExportPdf}
-      />
-      <ExportActionButton
-        icon={Music2}
-        title="Spotify-Playlist erstellen"
-        description="Liste in Spotify anlegen oder aktualisieren."
-        isLoading={isExportingSpotify}
-        disabled={disabled || isExportingPdf || isExportingSpotify}
-        onClick={onExportSpotify}
-      />
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden pt-1">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-md border border-white/[0.08] bg-white/[0.025]">
+        {pdfPreview ? (
+          <iframe
+            src={pdfPreview.url}
+            title="PDF-Vorschau"
+            className="h-full min-h-[360px] w-full bg-white"
+          />
+        ) : (
+          <div className="grid h-full min-h-[360px] place-items-center px-6 text-center">
+            <div className="max-w-xs">
+              <div className="mx-auto grid size-14 place-items-center rounded-md bg-primary/12 text-primary">
+                {isExportingPdf ? (
+                  <Loader2 className="size-6 animate-spin" />
+                ) : (
+                  <FileText className="size-6" />
+                )}
+              </div>
+              <p className="mt-4 text-sm font-semibold">
+                PDF-Vorschau noch nicht erstellt
+              </p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Erzeuge zuerst die Vorschau, dann kannst du genau diese Datei
+                herunterladen.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
       {disabled ? (
-        <p className="px-1 text-xs text-muted-foreground">
+        <p className="px-1 py-3 text-xs text-muted-foreground">
           Füge mindestens einen Song hinzu, um die Liste zu exportieren.
         </p>
       ) : null}
+
+      <div className="deck-export-bar -mx-5 -mb-5 mt-3 shrink-0 border-t border-white/[0.08] bg-background/78 px-5 pb-3 pt-4 shadow-[0_-18px_46px_hsl(222_52%_4%/0.36)] backdrop-blur-xl">
+        <div className="flex min-h-16 items-center gap-3 px-1.5">
+          <div className="grid size-12 shrink-0 place-items-center rounded-[4px] bg-white/[0.06] text-primary shadow-[0_10px_28px_hsl(0_0%_0%/0.28)] ring-1 ring-white/[0.06]">
+            <FileText className="size-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold leading-tight text-foreground">
+              Karten-PDF
+            </p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {pdfPreview
+                ? `${formatFileSize(pdfPreview.blob.size)} bereit zur Prüfung`
+                : `${trackCount} Songs als druckbares Deck`}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label={
+                pdfPreview ? "PDF-Vorschau erneuern" : "PDF-Vorschau erstellen"
+              }
+              disabled={disabled || isExportingPdf || isExportingSpotify}
+              onClick={onLoadPdfPreview}
+            >
+              {isExportingPdf ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : pdfPreview ? (
+                <RefreshCw className="size-4" />
+              ) : (
+                <FileText className="size-4" />
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="PDF herunterladen"
+              disabled={!pdfPreview || disabled || isExportingPdf}
+              onClick={onDownloadPdf}
+            >
+              <Download className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Spotify-Playlist erstellen"
+              disabled={disabled || isExportingPdf || isExportingSpotify}
+              onClick={onExportSpotify}
+            >
+              {isExportingSpotify ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Music2 className="size-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
-type ExportActionButtonProps = {
-  icon: typeof FileText;
-  title: string;
-  description: string;
-  isLoading: boolean;
-  disabled: boolean;
-  onClick: () => void;
-};
+const formatFileSize = (bytes: number) => {
+  if (bytes < 1024 * 1024) {
+    return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  }
 
-const ExportActionButton = ({
-  icon: Icon,
-  title,
-  description,
-  isLoading,
-  disabled,
-  onClick,
-}: ExportActionButtonProps) => (
-  <button
-    type="button"
-    disabled={disabled}
-    onClick={onClick}
-    className={cn(
-      "grid w-full grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-3 text-left transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 disabled:cursor-not-allowed disabled:opacity-50",
-    )}
-  >
-    <span className="grid size-11 place-items-center rounded-md bg-primary/12 text-primary">
-      <Icon className="size-5" />
-    </span>
-    <span className="min-w-0">
-      <span className="block truncate text-sm font-semibold">{title}</span>
-      <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-        {description}
-      </span>
-    </span>
-    {isLoading ? (
-      <Loader2 className="size-4 animate-spin text-muted-foreground" />
-    ) : (
-      <ExternalLink className="size-4 text-muted-foreground" />
-    )}
-  </button>
-);
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+};
 
 type SpotifyExportResultDialogProps = {
   playlist: SpotifyPlaylistExportResponse | null;
