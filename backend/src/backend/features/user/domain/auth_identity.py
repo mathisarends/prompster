@@ -7,6 +7,7 @@ from backend.shared.ddd import Entity
 
 class AuthProvider(StrEnum):
     GOOGLE = "google"
+    SPOTIFY = "spotify"
 
 
 class AuthIdentity(Entity):

@@ -6,19 +6,29 @@ import { AXIOS_INSTANCE } from "@/api/http-client";
 import { useAuth } from "@/auth/use-auth";
 import { Sparkles } from "lucide-react";
 
-const OAUTH_MESSAGE_TYPE = "prompster-google-oauth";
+const OAUTH_GOOGLE_MESSAGE_TYPE = "prompster-google-oauth";
+const OAUTH_SPOTIFY_LOGIN_MESSAGE_TYPE = "prompster-spotify-login";
 
-type OAuthPopupMessage = {
-  type: typeof OAUTH_MESSAGE_TYPE;
+type GoogleOAuthPopupMessage = {
+  type: typeof OAUTH_GOOGLE_MESSAGE_TYPE;
   status: "success" | "error";
   reason?: string;
 };
+
+type SpotifyLoginOAuthPopupMessage = {
+  type: typeof OAUTH_SPOTIFY_LOGIN_MESSAGE_TYPE;
+  status: "success" | "error";
+  reason?: string;
+};
+
+type OAuthPopupMessage = GoogleOAuthPopupMessage | SpotifyLoginOAuthPopupMessage;
 
 const isOAuthPopupMessage = (data: unknown): data is OAuthPopupMessage => {
   if (typeof data !== "object" || data === null) return false;
   const candidate = data as { type?: unknown; status?: unknown };
   return (
-    candidate.type === OAUTH_MESSAGE_TYPE &&
+    (candidate.type === OAUTH_GOOGLE_MESSAGE_TYPE ||
+      candidate.type === OAUTH_SPOTIFY_LOGIN_MESSAGE_TYPE) &&
     (candidate.status === "success" || candidate.status === "error")
   );
 };
@@ -30,9 +40,22 @@ const resolveBackendOrigin = (): string => {
   return new URL(baseUrl, window.location.origin).origin;
 };
 
+const SpotifyIcon = () => (
+  <svg
+    role="img"
+    viewBox="0 0 24 24"
+    className="size-5"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+  </svg>
+);
+
 export const LandingPage = () => {
   const { signIn } = useAuth();
   const [isGoogleOAuthLoading, setIsGoogleOAuthLoading] = useState(false);
+  const [isSpotifyOAuthLoading, setIsSpotifyOAuthLoading] = useState(false);
   const [oauthError, setOAuthError] = useState<string | null>(null);
   const oauthPopupRef = useRef<Window | null>(null);
   const popupClosedCheckRef = useRef<number | null>(null);
@@ -42,6 +65,19 @@ export const LandingPage = () => {
       window.clearInterval(popupClosedCheckRef.current);
       popupClosedCheckRef.current = null;
     }
+  };
+
+  const startPopupClosedCheck = (
+    setLoading: (v: boolean) => void,
+  ) => {
+    stopPopupClosedCheck();
+    popupClosedCheckRef.current = window.setInterval(() => {
+      if (oauthPopupRef.current?.closed) {
+        stopPopupClosedCheck();
+        oauthPopupRef.current = null;
+        setLoading(false);
+      }
+    }, 500);
   };
 
   useEffect(() => {
@@ -54,7 +90,12 @@ export const LandingPage = () => {
       stopPopupClosedCheck();
       oauthPopupRef.current?.close();
       oauthPopupRef.current = null;
-      setIsGoogleOAuthLoading(false);
+
+      if (event.data.type === OAUTH_GOOGLE_MESSAGE_TYPE) {
+        setIsGoogleOAuthLoading(false);
+      } else {
+        setIsSpotifyOAuthLoading(false);
+      }
 
       if (event.data.status === "success") {
         setOAuthError(null);
@@ -64,11 +105,21 @@ export const LandingPage = () => {
           );
         });
       } else {
-        setOAuthError(
-          event.data.reason === "access_denied"
-            ? "Google-Anmeldung abgebrochen."
-            : "Google-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
-        );
+        if (event.data.type === OAUTH_GOOGLE_MESSAGE_TYPE) {
+          setOAuthError(
+            event.data.reason === "access_denied"
+              ? "Google-Anmeldung abgebrochen."
+              : "Google-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+          );
+        } else {
+          setOAuthError(
+            event.data.reason === "access_denied"
+              ? "Spotify-Anmeldung abgebrochen."
+              : event.data.reason === "email_taken"
+                ? "Diese E-Mail ist bereits mit einem anderen Konto verknuepft."
+                : "Spotify-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+          );
+        }
       }
     };
 
@@ -79,37 +130,55 @@ export const LandingPage = () => {
     };
   }, [signIn]);
 
+  const openOAuthPopup = (
+    url: string,
+    windowName: string,
+    setLoading: (v: boolean) => void,
+  ) => {
+    const popup = window.open(url, windowName, "popup,width=520,height=720");
+
+    if (!popup) {
+      window.location.assign(url);
+      return;
+    }
+
+    oauthPopupRef.current = popup;
+    setOAuthError(null);
+    setLoading(true);
+    startPopupClosedCheck(setLoading);
+  };
+
   const handleGoogleSignIn = () => {
-    if (isGoogleOAuthLoading) return;
+    if (isGoogleOAuthLoading || isSpotifyOAuthLoading) return;
 
     const googleLoginUrl = new URL(
       "/api/v1/auth/google/login",
       resolveBackendOrigin(),
     ).toString();
-    const oauthPopup = window.open(
+
+    openOAuthPopup(
       googleLoginUrl,
-      "prompster-google-oauth",
-      "popup,width=520,height=720",
+      OAUTH_GOOGLE_MESSAGE_TYPE,
+      setIsGoogleOAuthLoading,
     );
-
-    if (!oauthPopup) {
-      window.location.assign(googleLoginUrl);
-      return;
-    }
-
-    oauthPopupRef.current = oauthPopup;
-    setOAuthError(null);
-    setIsGoogleOAuthLoading(true);
-
-    stopPopupClosedCheck();
-    popupClosedCheckRef.current = window.setInterval(() => {
-      if (oauthPopupRef.current?.closed) {
-        stopPopupClosedCheck();
-        oauthPopupRef.current = null;
-        setIsGoogleOAuthLoading(false);
-      }
-    }, 500);
   };
+
+  const handleSpotifySignIn = () => {
+    if (isGoogleOAuthLoading || isSpotifyOAuthLoading) return;
+
+    const spotifyLoginUrl = new URL(
+      "/api/v1/auth/spotify/login",
+      resolveBackendOrigin(),
+    ).toString();
+
+    openOAuthPopup(
+      spotifyLoginUrl,
+      OAUTH_SPOTIFY_LOGIN_MESSAGE_TYPE,
+      setIsSpotifyOAuthLoading,
+    );
+  };
+
+  const isAnyLoading = isGoogleOAuthLoading || isSpotifyOAuthLoading;
 
   return (
     <div className="home-page-background min-h-dvh text-foreground">
@@ -132,12 +201,12 @@ export const LandingPage = () => {
               </p>
             </div>
 
-            <div className="space-y-4 rounded-2xl bg-card/55 p-5 backdrop-blur-md sm:p-6">
+            <div className="space-y-3 rounded-2xl bg-card/55 p-5 backdrop-blur-md sm:p-6">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleGoogleSignIn}
-                disabled={isGoogleOAuthLoading}
+                disabled={isAnyLoading}
                 className="h-10 w-full"
               >
                 <span className="grid size-5 place-items-center rounded-full bg-white text-xs font-bold text-[#4285f4]">
@@ -146,6 +215,18 @@ export const LandingPage = () => {
                 {isGoogleOAuthLoading
                   ? "Google-Anmeldung laeuft..."
                   : "Mit Google fortfahren"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSpotifySignIn}
+                disabled={isAnyLoading}
+                className="h-10 w-full"
+              >
+                <SpotifyIcon />
+                {isSpotifyOAuthLoading
+                  ? "Spotify-Anmeldung laeuft..."
+                  : "Mit Spotify fortfahren"}
               </Button>
               {oauthError ? (
                 <p className="text-center text-sm text-destructive">

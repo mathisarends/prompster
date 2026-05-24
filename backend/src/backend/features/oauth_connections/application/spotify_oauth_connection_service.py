@@ -9,6 +9,8 @@ from backend.features.oauth_connections.application.ports import (
 from backend.features.oauth_connections.application.schemas import (
     SpotifyAuthorizationRequest,
     SpotifyCallbackResult,
+    SpotifyTokens,
+    SpotifyUserProfile,
 )
 from backend.features.oauth_connections.domain import (
     OAuthConnection,
@@ -97,6 +99,38 @@ class SpotifyOAuthConnectionService:
         )
         await self._connection_repository.save(connection=connection)
         return SpotifyCallbackResult.success()
+
+    async def upsert_from_tokens(
+        self,
+        *,
+        user_id: UUID,
+        tokens: SpotifyTokens,
+        profile: SpotifyUserProfile,
+    ) -> None:
+        existing = await self._connection_repository.get(
+            user_id=user_id,
+            provider=OAuthProvider.SPOTIFY,
+        )
+
+        if tokens.refresh_token is not None:
+            encrypted_refresh = self._token_cipher.encrypt(tokens.refresh_token)
+        elif existing is not None:
+            encrypted_refresh = existing.encrypted_refresh_token
+        else:
+            raise ValueError("no_refresh_token")
+
+        connection = OAuthConnection(
+            user_id=user_id,
+            provider=OAuthProvider.SPOTIFY,
+            provider_user_id=profile.spotify_user_id,
+            encrypted_refresh_token=encrypted_refresh,
+            scope=tokens.scope,
+            connected_at=datetime.now(timezone.utc),
+            is_premium=profile.is_premium,
+            id=existing.id if existing is not None else None,
+            created_time=existing.created_at if existing is not None else None,
+        )
+        await self._connection_repository.save(connection=connection)
 
     async def refresh_premium_status(self, *, user_id: UUID) -> bool | None:
         connection = await self._connection_repository.get(

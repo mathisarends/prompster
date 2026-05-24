@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse
 
 _OAUTH_POPUP_MESSAGE_TYPE = "prompster-google-oauth"
 _SPOTIFY_OAUTH_POPUP_MESSAGE_TYPE = "prompster-spotify-oauth"
+_SPOTIFY_LOGIN_POPUP_MESSAGE_TYPE = "prompster-spotify-login"
 
 
 class OAuthPopupResponse:
@@ -51,6 +52,23 @@ class OAuthPopupResponse:
         return HTMLResponse(
             content=cls._build_html(
                 message_type=_SPOTIFY_OAUTH_POPUP_MESSAGE_TYPE,
+                target_origin=target_origin,
+                status_value="success" if succeeded else "error",
+                reason_value=reason,
+            )
+        )
+
+    @classmethod
+    def for_spotify_login(
+        cls,
+        *,
+        target_origin: str,
+        succeeded: bool,
+        reason: str | None,
+    ) -> HTMLResponse:
+        return HTMLResponse(
+            content=cls._build_html(
+                message_type=_SPOTIFY_LOGIN_POPUP_MESSAGE_TYPE,
                 target_origin=target_origin,
                 status_value="success" if succeeded else "error",
                 reason_value=reason,

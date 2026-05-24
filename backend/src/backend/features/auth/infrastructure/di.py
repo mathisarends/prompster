@@ -6,6 +6,7 @@ from backend.env import EnvSettings
 from backend.features.auth.application import (
     GoogleOAuthFlow,
     SessionRefresher,
+    SpotifyOAuthFlow,
 )
 from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
@@ -16,6 +17,16 @@ from backend.features.auth.infrastructure.oauth_state_settings import OAuthState
 from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.oauth_state_cookies import (
     GoogleOAuthStateCookies,
+    SpotifyLoginOAuthStateCookies,
+)
+from backend.features.oauth_connections.application.spotify_oauth_connection_service import (
+    SpotifyOAuthConnectionService,
+)
+from backend.features.oauth_connections.infrastructure.spotify_auth_settings import (
+    SpotifyAuthSettings,
+)
+from backend.features.oauth_connections.infrastructure.spotify_login_oauth_client import (
+    SpotifyLoginOAuthClient,
 )
 from backend.features.user.domain import UserRepository
 
@@ -51,6 +62,13 @@ class AuthProvider(Provider):
     ) -> GoogleOAuthProvider:
         return GoogleOAuthClient(google_auth_settings=google_auth_settings)
 
+    @provide(scope=Scope.APP)
+    def provide_spotify_login_oauth_client(
+        self,
+        spotify_auth_settings: SpotifyAuthSettings,
+    ) -> SpotifyLoginOAuthClient:
+        return SpotifyLoginOAuthClient(settings=spotify_auth_settings)
+
     @provide(scope=Scope.REQUEST)
     def provide_user_repository(self, session: AsyncSession) -> UserRepository:
         return SqlUserRepository(session=session)
@@ -66,6 +84,37 @@ class AuthProvider(Provider):
             user_repository=user_repository,
             google_oauth_provider=google_oauth_provider,
             token_issuer=token_issuer,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_spotify_oauth_flow(
+        self,
+        user_repository: UserRepository,
+        spotify_login_oauth_client: SpotifyLoginOAuthClient,
+        token_issuer: TokenIssuer,
+        connection_service: SpotifyOAuthConnectionService,
+    ) -> SpotifyOAuthFlow:
+        return SpotifyOAuthFlow(
+            user_repository=user_repository,
+            spotify_oauth_client=spotify_login_oauth_client,
+            token_issuer=token_issuer,
+            connection_service=connection_service,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_spotify_login_state_cookies(
+        self,
+        auth_settings: AuthSettings,
+        spotify_auth_settings: SpotifyAuthSettings,
+        oauth_state_settings: OAuthStateSettings,
+        env_config: EnvSettings,
+    ) -> SpotifyLoginOAuthStateCookies:
+        return SpotifyLoginOAuthStateCookies(
+            cookie_name=spotify_auth_settings.login_state_cookie_name,
+            ttl_seconds=oauth_state_settings.ttl_seconds,
+            signing_secret=auth_settings.jwt_secret,
+            frontend_base_url=auth_settings.frontend_base_url,
+            env_config=env_config,
         )
 
     @provide(scope=Scope.REQUEST)

@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from backend.features.auth.application import (
     GoogleOAuthFlow,
     SessionRefresher,
+    SpotifyOAuthFlow,
 )
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.presentation.cookies import AuthCookies
@@ -14,6 +15,7 @@ from backend.features.auth.presentation.dependencies import (
 from backend.features.auth.presentation.oauth_popup import OAuthPopupResponse
 from backend.features.auth.presentation.oauth_state_cookies import (
     GoogleOAuthStateCookies,
+    SpotifyLoginOAuthStateCookies,
 )
 from backend.presentation.errors import ErrorDto
 
@@ -89,6 +91,70 @@ async def google_callback(
         )
 
     google_oauth_state_cookies.clear(response)
+    return response
+
+
+@auth_router.get(
+    "/spotify/login",
+    status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    response_model=None,
+    operation_id="spotify_login",
+)
+async def spotify_login(
+    spotify_oauth_flow: FromDishka[SpotifyOAuthFlow],
+    spotify_login_state_cookies: FromDishka[SpotifyLoginOAuthStateCookies],
+) -> RedirectResponse:
+    authorization_request = spotify_oauth_flow.login()
+
+    redirect_response = RedirectResponse(
+        url=authorization_request.authorization_url,
+        status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    )
+    spotify_login_state_cookies.set(
+        response=redirect_response,
+        state=authorization_request.state,
+    )
+    return redirect_response
+
+
+@auth_router.get(
+    "/spotify/login/callback",
+    response_model=None,
+    operation_id="spotify_login_callback",
+    include_in_schema=False,
+)
+async def spotify_login_callback(
+    request: Request,
+    spotify_oauth_flow: FromDishka[SpotifyOAuthFlow],
+    auth_cookies: FromDishka[AuthCookies],
+    spotify_login_state_cookies: FromDishka[SpotifyLoginOAuthStateCookies],
+    auth_settings: FromDishka[AuthSettings],
+    code: str | None = Query(default=None, min_length=1, max_length=4096),
+    state: str = Query(min_length=1, max_length=4096),
+    error: str | None = Query(default=None, min_length=1, max_length=256),
+) -> HTMLResponse:
+    result = await spotify_oauth_flow.callback(
+        code=code,
+        state=state,
+        error=error,
+        expected_oauth_state=spotify_login_state_cookies.read(request=request),
+    )
+
+    if result.succeeded and result.session is not None:
+        response = OAuthPopupResponse.for_spotify_login(
+            target_origin=auth_settings.frontend_base_url,
+            succeeded=True,
+            reason=None,
+        )
+        auth_cookies.set(response, result.session)
+    else:
+        response = OAuthPopupResponse.for_spotify_login(
+            target_origin=auth_settings.frontend_base_url,
+            succeeded=False,
+            reason=result.error_reason or "invalid_credentials",
+        )
+
+    spotify_login_state_cookies.clear(response)
     return response
 
 

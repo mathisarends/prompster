@@ -119,3 +119,11 @@ class GoogleOAuthStateCookies(OAuthStateCookies):
 
     Subclass exists purely for DI type discrimination.
     """
+
+
+class SpotifyLoginOAuthStateCookies(OAuthStateCookies):
+    """OAuth state cookie for the Spotify SSO login flow.
+
+    Subclass exists purely for DI type discrimination.
+    Cookie name is distinct from the connect flow to prevent state collisions.
+    """

@@ -20,6 +20,9 @@ from backend.features.oauth_connections.infrastructure.spotify_scopes import (
 class _SpotifyUserProfileResponse(BaseModel):
     id: str = Field(min_length=1)
     product: str | None = None
+    email: str | None = None
+    display_name: str | None = None
+    images: list[dict] = Field(default_factory=list)
 
 
 class SpotifyOAuthClient(SpotifyOAuthProvider):
@@ -82,6 +85,9 @@ class SpotifyOAuthClient(SpotifyOAuthProvider):
         return SpotifyUserProfile(
             spotify_user_id=payload.id,
             is_premium=payload.product == "premium",
+            email=payload.email,
+            display_name=payload.display_name,
+            profile_image_url=payload.images[0]["url"] if payload.images else None,
         )
 
     async def _post_token(self, form: dict[str, str]) -> SpotifyTokens:

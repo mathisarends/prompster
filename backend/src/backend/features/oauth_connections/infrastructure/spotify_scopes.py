@@ -3,6 +3,7 @@ from enum import StrEnum
 
 class SpotifyScope(StrEnum):
     USER_READ_PRIVATE = "user-read-private"
+    USER_READ_EMAIL = "user-read-email"
     PLAYLIST_MODIFY_PUBLIC = "playlist-modify-public"
     PLAYLIST_MODIFY_PRIVATE = "playlist-modify-private"
     STREAMING = "streaming"
@@ -12,6 +13,7 @@ class SpotifyScope(StrEnum):
 
 REQUIRED_SPOTIFY_SCOPES: tuple[SpotifyScope, ...] = (
     SpotifyScope.USER_READ_PRIVATE,
+    SpotifyScope.USER_READ_EMAIL,
     SpotifyScope.PLAYLIST_MODIFY_PUBLIC,
     SpotifyScope.PLAYLIST_MODIFY_PRIVATE,
     SpotifyScope.STREAMING,
