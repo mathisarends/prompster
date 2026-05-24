@@ -171,7 +171,6 @@ export const DeckWorkspaceView = ({
     },
     onSuccess: async () => {
       await invalidateSessionQueries();
-      toast.success("Song wurde zur Playlist hinzugefügt.");
     },
     onError: () => {
       toast.error("Song konnte nicht hinzugefügt werden.");
