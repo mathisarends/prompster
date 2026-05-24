@@ -35,6 +35,7 @@ import type {
   SessionResponse,
   SessionSummaryListResponse,
   SessionUpdateRequest,
+  SpotifyPlaylistExportResponse,
 } from "./model";
 
 import { customInstance } from "../http-client";
@@ -1951,6 +1952,393 @@ export function useAddPlaylistTrack<
 }
 
 /**
+ * @summary Lock Session Playlist Track
+ */
+export const lockPlaylistTrack = (
+  sessionId: string,
+  trackId: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<PlaylistTrackResponse>(
+    {
+      url: `/api/v1/sessions/${sessionId}/tracks/${trackId}/lock`,
+      method: "POST",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getLockPlaylistTrackQueryKey = (
+  sessionId: string,
+  trackId: string,
+) => {
+  return [
+    "POST",
+    `/api/v1/sessions/${sessionId}/tracks/${trackId}/lock`,
+  ] as const;
+};
+
+export const getLockPlaylistTrackQueryOptions = <
+  TData = Awaited<ReturnType<typeof lockPlaylistTrack>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  trackId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof lockPlaylistTrack>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getLockPlaylistTrackQueryKey(sessionId, trackId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof lockPlaylistTrack>>
+  > = ({ signal }) =>
+    lockPlaylistTrack(sessionId, trackId, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled:
+      sessionId !== null &&
+      sessionId !== undefined &&
+      trackId !== null &&
+      trackId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof lockPlaylistTrack>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type LockPlaylistTrackQueryResult = NonNullable<
+  Awaited<ReturnType<typeof lockPlaylistTrack>>
+>;
+export type LockPlaylistTrackQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useLockPlaylistTrack<
+  TData = Awaited<ReturnType<typeof lockPlaylistTrack>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  trackId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof lockPlaylistTrack>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof lockPlaylistTrack>>,
+          TError,
+          Awaited<ReturnType<typeof lockPlaylistTrack>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useLockPlaylistTrack<
+  TData = Awaited<ReturnType<typeof lockPlaylistTrack>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  trackId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof lockPlaylistTrack>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof lockPlaylistTrack>>,
+          TError,
+          Awaited<ReturnType<typeof lockPlaylistTrack>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useLockPlaylistTrack<
+  TData = Awaited<ReturnType<typeof lockPlaylistTrack>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  trackId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof lockPlaylistTrack>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Lock Session Playlist Track
+ */
+
+export function useLockPlaylistTrack<
+  TData = Awaited<ReturnType<typeof lockPlaylistTrack>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  trackId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof lockPlaylistTrack>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getLockPlaylistTrackQueryOptions(
+    sessionId,
+    trackId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Unlock Session Playlist Track
+ */
+export const unlockPlaylistTrack = (
+  sessionId: string,
+  trackId: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<PlaylistTrackResponse>(
+    {
+      url: `/api/v1/sessions/${sessionId}/tracks/${trackId}/unlock`,
+      method: "POST",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getUnlockPlaylistTrackQueryKey = (
+  sessionId: string,
+  trackId: string,
+) => {
+  return [
+    "POST",
+    `/api/v1/sessions/${sessionId}/tracks/${trackId}/unlock`,
+  ] as const;
+};
+
+export const getUnlockPlaylistTrackQueryOptions = <
+  TData = Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  trackId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getUnlockPlaylistTrackQueryKey(sessionId, trackId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof unlockPlaylistTrack>>
+  > = ({ signal }) =>
+    unlockPlaylistTrack(sessionId, trackId, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled:
+      sessionId !== null &&
+      sessionId !== undefined &&
+      trackId !== null &&
+      trackId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type UnlockPlaylistTrackQueryResult = NonNullable<
+  Awaited<ReturnType<typeof unlockPlaylistTrack>>
+>;
+export type UnlockPlaylistTrackQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useUnlockPlaylistTrack<
+  TData = Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  trackId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+          TError,
+          Awaited<ReturnType<typeof unlockPlaylistTrack>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useUnlockPlaylistTrack<
+  TData = Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  trackId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+          TError,
+          Awaited<ReturnType<typeof unlockPlaylistTrack>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useUnlockPlaylistTrack<
+  TData = Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  trackId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Unlock Session Playlist Track
+ */
+
+export function useUnlockPlaylistTrack<
+  TData = Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  trackId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getUnlockPlaylistTrackQueryOptions(
+    sessionId,
+    trackId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Remove Session Playlist Track
  */
 export const removePlaylistTrack = (
@@ -2465,6 +2853,185 @@ export function useExportSessionPlaylist<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getExportSessionPlaylistQueryOptions(sessionId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Export Session Playlist To Spotify
+ */
+export const exportSessionPlaylistToSpotify = (
+  sessionId: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<SpotifyPlaylistExportResponse>(
+    {
+      url: `/api/v1/sessions/${sessionId}/playlist/spotify`,
+      method: "POST",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getExportSessionPlaylistToSpotifyQueryKey = (
+  sessionId: string,
+) => {
+  return ["POST", `/api/v1/sessions/${sessionId}/playlist/spotify`] as const;
+};
+
+export const getExportSessionPlaylistToSpotifyQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getExportSessionPlaylistToSpotifyQueryKey(sessionId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>
+  > = ({ signal }) =>
+    exportSessionPlaylistToSpotify(sessionId, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: sessionId !== null && sessionId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportSessionPlaylistToSpotifyQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>
+>;
+export type ExportSessionPlaylistToSpotifyQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useExportSessionPlaylistToSpotify<
+  TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+          TError,
+          Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useExportSessionPlaylistToSpotify<
+  TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+          TError,
+          Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useExportSessionPlaylistToSpotify<
+  TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Export Session Playlist To Spotify
+ */
+
+export function useExportSessionPlaylistToSpotify<
+  TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getExportSessionPlaylistToSpotifyQueryOptions(
+    sessionId,
+    options,
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

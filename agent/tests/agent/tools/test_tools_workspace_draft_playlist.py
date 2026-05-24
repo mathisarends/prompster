@@ -167,3 +167,81 @@ class TestWorkspaceDraftPlaylistTool:
 
         assert remove_update.kind == "tracks_removed"
         assert remove_update.track_ids == [added_track_id]
+
+    @pytest.mark.asyncio
+    async def test_locked_tracks_cannot_be_removed_replaced_or_rebuilt(
+        self,
+    ) -> None:
+        workspace_store = WorkspaceStore()
+        tools = Tools(ToolContext(workspace_store))
+
+        playlist = await tools.execute(
+            "create_draft_playlist",
+            {
+                "name": "80er Party",
+                "status": "Playlist-Entwurf bauen",
+                "tracks": [
+                    {
+                        "title": "Take On Me",
+                        "artist": "a-ha",
+                        "year": 1985,
+                        "spotify_uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+                        "cover_url": "https://i.scdn.co/image/take-on-me.jpg",
+                        "is_locked": True,
+                    }
+                ],
+            },
+        )
+        workspace_store.drain_playlist_draft_updates()
+        locked_track_id = playlist.tracks[0].id
+
+        remove_result = await tools.execute(
+            "remove_draft_playlist_tracks",
+            {
+                "status": "Song entfernen",
+                "track_ids": [str(locked_track_id)],
+            },
+        )
+        replace_result = await tools.execute(
+            "replace_draft_playlist_tracks",
+            {
+                "status": "Song ersetzen",
+                "replacements": [
+                    {
+                        "track_id": str(locked_track_id),
+                        "track": {
+                            "title": "Africa",
+                            "artist": "Toto",
+                            "year": 1982,
+                            "spotify_uri": "spotify:track:2374M0fQpWi3dLnB54qaLX",
+                            "cover_url": "https://i.scdn.co/image/africa.jpg",
+                        },
+                    }
+                ],
+            },
+        )
+        rebuild_result = await tools.execute(
+            "build_draft_playlist",
+            {
+                "name": "80er Party",
+                "status": "Playlist neu bauen",
+                "tracks": [
+                    {
+                        "title": "Billie Jean",
+                        "artist": "Michael Jackson",
+                        "year": 1982,
+                        "spotify_uri": "spotify:track:5ChkMS8OtdzJeqyybCc9R5",
+                        "cover_url": "https://i.scdn.co/image/billie-jean.jpg",
+                    }
+                ],
+            },
+        )
+
+        assert isinstance(remove_result, str)
+        assert "locked" in remove_result
+        assert isinstance(replace_result, str)
+        assert "locked" in replace_result
+        assert isinstance(rebuild_result, str)
+        assert "locked" in rebuild_result
+        assert workspace_store.playlist_draft == playlist
+        assert workspace_store.drain_playlist_draft_updates() == []

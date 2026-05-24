@@ -19,4 +19,5 @@ export interface AddPlaylistTrackRequest {
   artist: string;
   year?: number | null;
   coverUrl?: string | null;
+  isLocked?: boolean;
 }

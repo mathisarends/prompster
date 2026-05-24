@@ -12,4 +12,5 @@ export interface UserMeResponse {
   email: string;
   createdAt: string;
   spotifyConnected: boolean;
+  spotifyPremium: boolean;
 }

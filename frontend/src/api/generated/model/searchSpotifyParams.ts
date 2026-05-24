@@ -5,8 +5,9 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
+import type { SpotifySearchType } from "./spotifySearchType";
 
-export type SearchSpotifyTracksParams = {
+export type SearchSpotifyParams = {
   /**
    * Search query
    * @minLength 1
@@ -18,4 +19,8 @@ export type SearchSpotifyTracksParams = {
    * @maximum 50
    */
   limit?: number;
+  /**
+   * Search resource types
+   */
+  types?: SpotifySearchType[];
 };
