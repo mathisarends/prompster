@@ -209,7 +209,7 @@ def _to_playlist_track(track: PlaylistDraftTrack) -> PlaylistTrack:
         year=track.year,
         spotify_uri=track.spotify_uri,
         cover_url=track.cover_url,
-        is_locked=track.is_locked,
+        is_pinned=track.is_pinned,
     )
 
 
@@ -229,7 +229,7 @@ def _to_workspace_store(playlist: Playlist | None) -> WorkspaceStore:
                     year=track.year,
                     spotify_uri=track.spotify_uri,
                     cover_url=track.cover_url,
-                    is_locked=track.is_locked,
+                    is_pinned=track.is_pinned,
                 )
                 for track in playlist.tracks
             ],
@@ -249,7 +249,7 @@ def _to_playlist_context(playlist: Playlist | None) -> str | None:
             "year": track.year,
             "spotify_uri": track.spotify_uri,
             "cover_url": track.cover_url,
-            "is_locked": track.is_locked,
+            "is_pinned": track.is_pinned,
         }
         for track in playlist.tracks
     ]
@@ -258,7 +258,7 @@ def _to_playlist_context(playlist: Playlist | None) -> str | None:
             "current_playlist_context": {
                 "id": str(playlist.id),
                 "name": playlist.name,
-                "locked_tracks_are_hard_constraints": True,
+                "pinned_tracks_are_hard_constraints": True,
                 "tracks": tracks,
             }
         },

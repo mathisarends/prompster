@@ -9,7 +9,7 @@ from backend.features.session.domain.exceptions import (
     NoPendingToolCallSequenceError,
     PendingFollowUpQuestionsError,
     PendingToolCallsError,
-    PlaylistTrackLockedError,
+    PlaylistTrackPinnedError,
     PlaylistTrackNotFoundError,
     SessionAccessDeniedError,
 )
@@ -266,44 +266,44 @@ class TestSessionDomainSession:
         with pytest.raises(PlaylistTrackNotFoundError, match="not found in playlist"):
             session.remove_track(uuid4())
 
-    def test_lock_and_unlock_track_updates_track_state(self, session: Session) -> None:
+    def test_lock_and_unpin_track_updates_track_state(self, session: Session) -> None:
         track = session.add_track(title="Starlight", artist="Muse")
 
-        locked = session.lock_track(track.id)
-        unlocked = session.unlock_track(track.id)
+        pinned = session.pin_track(track.id)
+        unlocked = session.unpin_track(track.id)
 
-        assert locked is track
+        assert pinned is track
         assert unlocked is track
-        assert track.is_locked is False
+        assert track.is_pinned is False
 
-    def test_replace_track_rejects_locked_track(self, session: Session) -> None:
+    def test_replace_track_rejects_pinned_track(self, session: Session) -> None:
         track = session.add_track(
             title="Starlight",
             artist="Muse",
-            is_locked=True,
+            is_pinned=True,
         )
 
-        with pytest.raises(PlaylistTrackLockedError, match="locked"):
+        with pytest.raises(PlaylistTrackPinnedError, match="pinned"):
             session.replace_track(
                 track_id=track.id,
                 track=PlaylistTrack(title="Time Is Running Out", artist="Muse"),
             )
 
-    def test_set_playlist_preserves_locked_tracks(self, session: Session) -> None:
-        locked_track = session.add_track(
+    def test_set_playlist_preserves_pinned_tracks(self, session: Session) -> None:
+        pinned_track = session.add_track(
             title="Starlight",
             artist="Muse",
-            is_locked=True,
+            is_pinned=True,
         )
 
-        with pytest.raises(PlaylistTrackLockedError, match="locked"):
+        with pytest.raises(PlaylistTrackPinnedError, match="pinned"):
             session.set_playlist(
                 tracks=[PlaylistTrack(title="Teardrop", artist="Massive Attack")]
             )
 
-        playlist = session.set_playlist(tracks=[locked_track])
+        playlist = session.set_playlist(tracks=[pinned_track])
 
-        assert playlist.tracks == [locked_track]
+        assert playlist.tracks == [pinned_track]
 
     def test_resolve_tool_call_replaces_with_completed(self, session: Session) -> None:
         session.add_tool_call(make_pending_call("tc-1"))

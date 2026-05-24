@@ -1,11 +1,4 @@
-import {
-  Lock,
-  LockOpen,
-  MoreHorizontal,
-  Pause,
-  Play,
-  Trash2,
-} from "lucide-react";
+import { MoreHorizontal, Pause, Pin, PinOff, Play, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,13 +30,13 @@ type DeckPlaylistTrackItemProps = {
   isPlaying: boolean;
   isPlayable: boolean;
   canRemove: boolean;
-  canToggleLock: boolean;
+  canTogglePin: boolean;
   isRemoving: boolean;
-  isLocking: boolean;
+  isPinning: boolean;
   onActivateTrack: () => void;
   onTogglePlayPause: () => void;
   onRemoveTrack: () => void;
-  onToggleLock: () => void;
+  onTogglePin: () => void;
 };
 
 export const DeckPlaylistTrackItem = ({
@@ -52,16 +45,16 @@ export const DeckPlaylistTrackItem = ({
   isPlaying,
   isPlayable,
   canRemove,
-  canToggleLock,
+  canTogglePin,
   isRemoving,
-  isLocking,
+  isPinning,
   onActivateTrack,
   onTogglePlayPause,
   onRemoveTrack,
-  onToggleLock,
+  onTogglePin,
 }: DeckPlaylistTrackItemProps) => {
-  const hasTrackActions = canRemove || canToggleLock;
-  const lockLabel = track.isLocked ? "Track entsperren" : "Track sperren";
+  const hasTrackActions = canRemove || canTogglePin;
+  const pinLabel = track.isPinned ? "Track entpinnen" : "Track anpinnen";
 
   return (
     <div
@@ -165,10 +158,10 @@ export const DeckPlaylistTrackItem = ({
               </TooltipContent>
             </Tooltip>
             <DropdownMenuContent align="end" side="bottom" sideOffset={6}>
-              {canToggleLock ? (
-                <DropdownMenuItem onClick={onToggleLock} disabled={isLocking}>
-                  {track.isLocked ? <LockOpen /> : <Lock />}
-                  <span>{isLocking ? "Wird aktualisiert..." : lockLabel}</span>
+              {canTogglePin ? (
+                <DropdownMenuItem onClick={onTogglePin} disabled={isPinning}>
+                  {track.isPinned ? <PinOff /> : <Pin />}
+                  <span>{isPinning ? "Wird aktualisiert..." : pinLabel}</span>
                 </DropdownMenuItem>
               ) : null}
               {canRemove ? (

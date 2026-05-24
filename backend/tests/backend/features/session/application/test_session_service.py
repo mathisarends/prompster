@@ -370,7 +370,7 @@ class TestSessionServicePlaylistTrackLocks:
         service = _make_management_service(repository=repository)
 
         result = asyncio.run(
-            service.lock_playlist_track(
+            service.pin_playlist_track(
                 session_id=session.id,
                 user_id=owner_id,
                 track_id=track.id,
@@ -378,18 +378,18 @@ class TestSessionServicePlaylistTrackLocks:
         )
 
         assert result is track
-        assert track.is_locked is True
+        assert track.is_pinned is True
         assert repository.saved_sessions == [session]
 
     def test_unlocks_playlist_track_and_persists(self) -> None:
         owner_id = uuid4()
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
-        track = session.add_track(title="Starlight", artist="Muse", is_locked=True)
+        track = session.add_track(title="Starlight", artist="Muse", is_pinned=True)
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
         result = asyncio.run(
-            service.unlock_playlist_track(
+            service.unpin_playlist_track(
                 session_id=session.id,
                 user_id=owner_id,
                 track_id=track.id,
@@ -397,7 +397,7 @@ class TestSessionServicePlaylistTrackLocks:
         )
 
         assert result is track
-        assert track.is_locked is False
+        assert track.is_pinned is False
         assert repository.saved_sessions == [session]
 
 

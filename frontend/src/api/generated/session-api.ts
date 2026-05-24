@@ -1952,9 +1952,9 @@ export function useAddPlaylistTrack<
 }
 
 /**
- * @summary Lock Session Playlist Track
+ * @summary Pin Session Playlist Track
  */
-export const lockPlaylistTrack = (
+export const pinPlaylistTrack = (
   sessionId: string,
   trackId: string,
   options?: SecondParameter<typeof customInstance>,
@@ -1962,7 +1962,7 @@ export const lockPlaylistTrack = (
 ) => {
   return customInstance<PlaylistTrackResponse>(
     {
-      url: `/api/v1/sessions/${sessionId}/tracks/${trackId}/lock`,
+      url: `/api/v1/sessions/${sessionId}/tracks/${trackId}/pin`,
       method: "POST",
       signal,
     },
@@ -1970,18 +1970,18 @@ export const lockPlaylistTrack = (
   );
 };
 
-export const getLockPlaylistTrackQueryKey = (
+export const getPinPlaylistTrackQueryKey = (
   sessionId: string,
   trackId: string,
 ) => {
   return [
     "POST",
-    `/api/v1/sessions/${sessionId}/tracks/${trackId}/lock`,
+    `/api/v1/sessions/${sessionId}/tracks/${trackId}/pin`,
   ] as const;
 };
 
-export const getLockPlaylistTrackQueryOptions = <
-  TData = Awaited<ReturnType<typeof lockPlaylistTrack>>,
+export const getPinPlaylistTrackQueryOptions = <
+  TData = Awaited<ReturnType<typeof pinPlaylistTrack>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
@@ -1989,7 +1989,7 @@ export const getLockPlaylistTrackQueryOptions = <
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof lockPlaylistTrack>>,
+        Awaited<ReturnType<typeof pinPlaylistTrack>>,
         TError,
         TData
       >
@@ -2000,12 +2000,12 @@ export const getLockPlaylistTrackQueryOptions = <
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
-    queryOptions?.queryKey ?? getLockPlaylistTrackQueryKey(sessionId, trackId);
+    queryOptions?.queryKey ?? getPinPlaylistTrackQueryKey(sessionId, trackId);
 
   const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof lockPlaylistTrack>>
+    Awaited<ReturnType<typeof pinPlaylistTrack>>
   > = ({ signal }) =>
-    lockPlaylistTrack(sessionId, trackId, requestOptions, signal);
+    pinPlaylistTrack(sessionId, trackId, requestOptions, signal);
 
   return {
     queryKey,
@@ -2017,21 +2017,21 @@ export const getLockPlaylistTrackQueryOptions = <
       trackId !== undefined,
     ...queryOptions,
   } as UseQueryOptions<
-    Awaited<ReturnType<typeof lockPlaylistTrack>>,
+    Awaited<ReturnType<typeof pinPlaylistTrack>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type LockPlaylistTrackQueryResult = NonNullable<
-  Awaited<ReturnType<typeof lockPlaylistTrack>>
+export type PinPlaylistTrackQueryResult = NonNullable<
+  Awaited<ReturnType<typeof pinPlaylistTrack>>
 >;
-export type LockPlaylistTrackQueryError = ErrorType<
+export type PinPlaylistTrackQueryError = ErrorType<
   ErrorResponse | HTTPValidationError
 >;
 
-export function useLockPlaylistTrack<
-  TData = Awaited<ReturnType<typeof lockPlaylistTrack>>,
+export function usePinPlaylistTrack<
+  TData = Awaited<ReturnType<typeof pinPlaylistTrack>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
@@ -2039,16 +2039,16 @@ export function useLockPlaylistTrack<
   options: {
     query: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof lockPlaylistTrack>>,
+        Awaited<ReturnType<typeof pinPlaylistTrack>>,
         TError,
         TData
       >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof lockPlaylistTrack>>,
+          Awaited<ReturnType<typeof pinPlaylistTrack>>,
           TError,
-          Awaited<ReturnType<typeof lockPlaylistTrack>>
+          Awaited<ReturnType<typeof pinPlaylistTrack>>
         >,
         "initialData"
       >;
@@ -2058,8 +2058,8 @@ export function useLockPlaylistTrack<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useLockPlaylistTrack<
-  TData = Awaited<ReturnType<typeof lockPlaylistTrack>>,
+export function usePinPlaylistTrack<
+  TData = Awaited<ReturnType<typeof pinPlaylistTrack>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
@@ -2067,16 +2067,16 @@ export function useLockPlaylistTrack<
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof lockPlaylistTrack>>,
+        Awaited<ReturnType<typeof pinPlaylistTrack>>,
         TError,
         TData
       >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof lockPlaylistTrack>>,
+          Awaited<ReturnType<typeof pinPlaylistTrack>>,
           TError,
-          Awaited<ReturnType<typeof lockPlaylistTrack>>
+          Awaited<ReturnType<typeof pinPlaylistTrack>>
         >,
         "initialData"
       >;
@@ -2086,8 +2086,8 @@ export function useLockPlaylistTrack<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useLockPlaylistTrack<
-  TData = Awaited<ReturnType<typeof lockPlaylistTrack>>,
+export function usePinPlaylistTrack<
+  TData = Awaited<ReturnType<typeof pinPlaylistTrack>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
@@ -2095,7 +2095,7 @@ export function useLockPlaylistTrack<
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof lockPlaylistTrack>>,
+        Awaited<ReturnType<typeof pinPlaylistTrack>>,
         TError,
         TData
       >
@@ -2107,11 +2107,11 @@ export function useLockPlaylistTrack<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary Lock Session Playlist Track
+ * @summary Pin Session Playlist Track
  */
 
-export function useLockPlaylistTrack<
-  TData = Awaited<ReturnType<typeof lockPlaylistTrack>>,
+export function usePinPlaylistTrack<
+  TData = Awaited<ReturnType<typeof pinPlaylistTrack>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
@@ -2119,7 +2119,7 @@ export function useLockPlaylistTrack<
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof lockPlaylistTrack>>,
+        Awaited<ReturnType<typeof pinPlaylistTrack>>,
         TError,
         TData
       >
@@ -2130,7 +2130,7 @@ export function useLockPlaylistTrack<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getLockPlaylistTrackQueryOptions(
+  const queryOptions = getPinPlaylistTrackQueryOptions(
     sessionId,
     trackId,
     options,
@@ -2145,9 +2145,9 @@ export function useLockPlaylistTrack<
 }
 
 /**
- * @summary Unlock Session Playlist Track
+ * @summary Unpin Session Playlist Track
  */
-export const unlockPlaylistTrack = (
+export const unpinPlaylistTrack = (
   sessionId: string,
   trackId: string,
   options?: SecondParameter<typeof customInstance>,
@@ -2155,7 +2155,7 @@ export const unlockPlaylistTrack = (
 ) => {
   return customInstance<PlaylistTrackResponse>(
     {
-      url: `/api/v1/sessions/${sessionId}/tracks/${trackId}/unlock`,
+      url: `/api/v1/sessions/${sessionId}/tracks/${trackId}/unpin`,
       method: "POST",
       signal,
     },
@@ -2163,18 +2163,18 @@ export const unlockPlaylistTrack = (
   );
 };
 
-export const getUnlockPlaylistTrackQueryKey = (
+export const getUnpinPlaylistTrackQueryKey = (
   sessionId: string,
   trackId: string,
 ) => {
   return [
     "POST",
-    `/api/v1/sessions/${sessionId}/tracks/${trackId}/unlock`,
+    `/api/v1/sessions/${sessionId}/tracks/${trackId}/unpin`,
   ] as const;
 };
 
-export const getUnlockPlaylistTrackQueryOptions = <
-  TData = Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+export const getUnpinPlaylistTrackQueryOptions = <
+  TData = Awaited<ReturnType<typeof unpinPlaylistTrack>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
@@ -2182,7 +2182,7 @@ export const getUnlockPlaylistTrackQueryOptions = <
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+        Awaited<ReturnType<typeof unpinPlaylistTrack>>,
         TError,
         TData
       >
@@ -2194,12 +2194,12 @@ export const getUnlockPlaylistTrackQueryOptions = <
 
   const queryKey =
     queryOptions?.queryKey ??
-    getUnlockPlaylistTrackQueryKey(sessionId, trackId);
+    getUnpinPlaylistTrackQueryKey(sessionId, trackId);
 
   const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof unlockPlaylistTrack>>
+    Awaited<ReturnType<typeof unpinPlaylistTrack>>
   > = ({ signal }) =>
-    unlockPlaylistTrack(sessionId, trackId, requestOptions, signal);
+    unpinPlaylistTrack(sessionId, trackId, requestOptions, signal);
 
   return {
     queryKey,
@@ -2211,21 +2211,21 @@ export const getUnlockPlaylistTrackQueryOptions = <
       trackId !== undefined,
     ...queryOptions,
   } as UseQueryOptions<
-    Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+    Awaited<ReturnType<typeof unpinPlaylistTrack>>,
     TError,
     TData
   > & { queryKey: DataTag<QueryKey, TData, TError> };
 };
 
-export type UnlockPlaylistTrackQueryResult = NonNullable<
-  Awaited<ReturnType<typeof unlockPlaylistTrack>>
+export type UnpinPlaylistTrackQueryResult = NonNullable<
+  Awaited<ReturnType<typeof unpinPlaylistTrack>>
 >;
-export type UnlockPlaylistTrackQueryError = ErrorType<
+export type UnpinPlaylistTrackQueryError = ErrorType<
   ErrorResponse | HTTPValidationError
 >;
 
-export function useUnlockPlaylistTrack<
-  TData = Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+export function useUnpinPlaylistTrack<
+  TData = Awaited<ReturnType<typeof unpinPlaylistTrack>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
@@ -2233,16 +2233,16 @@ export function useUnlockPlaylistTrack<
   options: {
     query: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+        Awaited<ReturnType<typeof unpinPlaylistTrack>>,
         TError,
         TData
       >
     > &
       Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+          Awaited<ReturnType<typeof unpinPlaylistTrack>>,
           TError,
-          Awaited<ReturnType<typeof unlockPlaylistTrack>>
+          Awaited<ReturnType<typeof unpinPlaylistTrack>>
         >,
         "initialData"
       >;
@@ -2252,8 +2252,8 @@ export function useUnlockPlaylistTrack<
 ): DefinedUseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useUnlockPlaylistTrack<
-  TData = Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+export function useUnpinPlaylistTrack<
+  TData = Awaited<ReturnType<typeof unpinPlaylistTrack>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
@@ -2261,16 +2261,16 @@ export function useUnlockPlaylistTrack<
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+        Awaited<ReturnType<typeof unpinPlaylistTrack>>,
         TError,
         TData
       >
     > &
       Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+          Awaited<ReturnType<typeof unpinPlaylistTrack>>,
           TError,
-          Awaited<ReturnType<typeof unlockPlaylistTrack>>
+          Awaited<ReturnType<typeof unpinPlaylistTrack>>
         >,
         "initialData"
       >;
@@ -2280,8 +2280,8 @@ export function useUnlockPlaylistTrack<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 };
-export function useUnlockPlaylistTrack<
-  TData = Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+export function useUnpinPlaylistTrack<
+  TData = Awaited<ReturnType<typeof unpinPlaylistTrack>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
@@ -2289,7 +2289,7 @@ export function useUnlockPlaylistTrack<
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+        Awaited<ReturnType<typeof unpinPlaylistTrack>>,
         TError,
         TData
       >
@@ -2301,11 +2301,11 @@ export function useUnlockPlaylistTrack<
   queryKey: DataTag<QueryKey, TData, TError>;
 };
 /**
- * @summary Unlock Session Playlist Track
+ * @summary Unpin Session Playlist Track
  */
 
-export function useUnlockPlaylistTrack<
-  TData = Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+export function useUnpinPlaylistTrack<
+  TData = Awaited<ReturnType<typeof unpinPlaylistTrack>>,
   TError = ErrorType<ErrorResponse | HTTPValidationError>,
 >(
   sessionId: string,
@@ -2313,7 +2313,7 @@ export function useUnlockPlaylistTrack<
   options?: {
     query?: Partial<
       UseQueryOptions<
-        Awaited<ReturnType<typeof unlockPlaylistTrack>>,
+        Awaited<ReturnType<typeof unpinPlaylistTrack>>,
         TError,
         TData
       >
@@ -2324,7 +2324,7 @@ export function useUnlockPlaylistTrack<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getUnlockPlaylistTrackQueryOptions(
+  const queryOptions = getUnpinPlaylistTrackQueryOptions(
     sessionId,
     trackId,
     options,

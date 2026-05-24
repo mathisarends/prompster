@@ -74,7 +74,7 @@ class SessionService:
         year: int | None = None,
         spotify_uri: str | None = None,
         cover_url: str | None = None,
-        is_locked: bool = False,
+        is_pinned: bool = False,
     ) -> PlaylistTrack:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         track = session.add_track(
@@ -83,12 +83,12 @@ class SessionService:
             year=year,
             spotify_uri=spotify_uri,
             cover_url=cover_url,
-            is_locked=is_locked,
+            is_pinned=is_pinned,
         )
         await self._session_repository.save(session=session)
         return track
 
-    async def lock_playlist_track(
+    async def pin_playlist_track(
         self,
         *,
         session_id: UUID,
@@ -96,11 +96,11 @@ class SessionService:
         track_id: UUID,
     ) -> PlaylistTrack:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
-        track = session.lock_track(track_id=track_id)
+        track = session.pin_track(track_id=track_id)
         await self._session_repository.save(session=session)
         return track
 
-    async def unlock_playlist_track(
+    async def unpin_playlist_track(
         self,
         *,
         session_id: UUID,
@@ -108,7 +108,7 @@ class SessionService:
         track_id: UUID,
     ) -> PlaylistTrack:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
-        track = session.unlock_track(track_id=track_id)
+        track = session.unpin_track(track_id=track_id)
         await self._session_repository.save(session=session)
         return track
 

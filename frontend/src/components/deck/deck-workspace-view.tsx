@@ -21,8 +21,8 @@ import {
   exportSessionPlaylistToSpotify,
   getGetSessionQueryKey,
   getListSessionsQueryKey,
-  lockPlaylistTrack,
-  unlockPlaylistTrack,
+  pinPlaylistTrack,
+  unpinPlaylistTrack,
 } from "@/api/generated/session-api";
 import { useGetMe } from "@/api/generated/user-api";
 import { ChatWorkspacePanel } from "@/components/chat/chat-workspace-panel";
@@ -86,7 +86,7 @@ export const DeckWorkspaceView = ({
         durationSeconds: 0,
         coverUrl: track.coverUrl ?? "",
         spotifyUri: track.spotifyUri ?? null,
-        isLocked: track.isLocked,
+        isPinned: track.isPinned,
       })),
     [playlist.tracks],
   );
@@ -212,21 +212,21 @@ export const DeckWorkspaceView = ({
     },
   });
 
-  const toggleTrackLockMutation = useMutation({
+  const toggleTrackPinMutation = useMutation({
     mutationFn: ({
       trackId,
-      isLocked,
+      isPinned,
     }: {
       trackId: string;
-      isLocked: boolean;
+      isPinned: boolean;
     }) =>
-      isLocked
-        ? unlockPlaylistTrack(sessionId, trackId)
-        : lockPlaylistTrack(sessionId, trackId),
+      isPinned
+        ? unpinPlaylistTrack(sessionId, trackId)
+        : pinPlaylistTrack(sessionId, trackId),
     onSuccess: async (_data, variables) => {
       await invalidateSessionQueries();
       toast.success(
-        variables.isLocked ? "Song wurde entsperrt." : "Song wurde gesperrt.",
+        variables.isPinned ? "Song wurde entpinnt." : "Song wurde angepinnt.",
       );
     },
     onError: () => {
@@ -282,16 +282,16 @@ export const DeckWorkspaceView = ({
               onAddSpotifyTrack={async (track) => {
                 await addSpotifyTrackMutation.mutateAsync(track);
               }}
-              onToggleTrackLock={async (trackId, isLocked) => {
-                await toggleTrackLockMutation.mutateAsync({
+              onToggleTrackPin={async (trackId, isPinned) => {
+                await toggleTrackPinMutation.mutateAsync({
                   trackId,
-                  isLocked,
+                  isPinned,
                 });
               }}
               isAddingSpotifyTrack={addSpotifyTrackMutation.isPending}
-              lockingTrackId={
-                toggleTrackLockMutation.isPending
-                  ? toggleTrackLockMutation.variables?.trackId
+              pinningTrackId={
+                toggleTrackPinMutation.isPending
+                  ? toggleTrackPinMutation.variables?.trackId
                   : null
               }
               addingSpotifyTrackId={addingSpotifyTrackId}

@@ -222,25 +222,25 @@ async def add_session_playlist_track(
         year=body.year,
         spotify_uri=body.spotify_uri,
         cover_url=body.cover_url,
-        is_locked=body.is_locked,
+        is_pinned=body.is_pinned,
     )
     return to_playlist_track_response(track)
 
 
 @router.post(
-    "/{session_id}/tracks/{track_id}/lock",
+    "/{session_id}/tracks/{track_id}/pin",
     response_model=PlaylistTrackResponse,
     status_code=status.HTTP_200_OK,
-    operation_id="lock_playlist_track",
+    operation_id="pin_playlist_track",
     responses=_auth_errors | _not_found,
 )
-async def lock_session_playlist_track(
+async def pin_session_playlist_track(
     session_id: UUID,
     track_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
 ) -> PlaylistTrackResponse:
-    track = await service.lock_playlist_track(
+    track = await service.pin_playlist_track(
         session_id=session_id,
         user_id=authenticated_user_id,
         track_id=track_id,
@@ -249,19 +249,19 @@ async def lock_session_playlist_track(
 
 
 @router.post(
-    "/{session_id}/tracks/{track_id}/unlock",
+    "/{session_id}/tracks/{track_id}/unpin",
     response_model=PlaylistTrackResponse,
     status_code=status.HTTP_200_OK,
-    operation_id="unlock_playlist_track",
+    operation_id="unpin_playlist_track",
     responses=_auth_errors | _not_found,
 )
-async def unlock_session_playlist_track(
+async def unpin_session_playlist_track(
     session_id: UUID,
     track_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
 ) -> PlaylistTrackResponse:
-    track = await service.unlock_playlist_track(
+    track = await service.unpin_playlist_track(
         session_id=session_id,
         user_id=authenticated_user_id,
         track_id=track_id,

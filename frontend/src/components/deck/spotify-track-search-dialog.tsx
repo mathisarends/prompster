@@ -1,13 +1,10 @@
 import { Children, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Loader2, Plus, Search, UserRound } from "lucide-react";
+import { Loader2, Plus, Search } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { useSearchSpotify } from "@/api/generated/spotify/spotify";
 import { SpotifySearchType } from "@/api/generated/model";
-import type {
-  SpotifyArtistResponse,
-  SpotifyTrackResponse,
-} from "@/api/generated/model";
+import type { SpotifyTrackResponse } from "@/api/generated/model";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -50,7 +47,7 @@ export const SpotifyTrackSearchDialog = ({
     () => ({
       query: normalizedQuery || "_",
       limit: 8,
-      types: [SpotifySearchType.track, SpotifySearchType.artist],
+      types: [SpotifySearchType.track],
     }),
     [normalizedQuery],
   );
@@ -63,8 +60,7 @@ export const SpotifyTrackSearchDialog = ({
   });
 
   const tracks = search.data?.tracks ?? [];
-  const artists = search.data?.artists ?? [];
-  const hasResults = tracks.length > 0 || artists.length > 0;
+  const hasResults = tracks.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -72,7 +68,7 @@ export const SpotifyTrackSearchDialog = ({
         <div className="border-b border-white/[0.07] px-4 py-3">
           <DialogTitle>Spotify durchsuchen</DialogTitle>
           <DialogDescription className="mt-1">
-            Songs hinzufügen und nach Artists verfeinern.
+            Songs zur Playlist hinzufügen.
           </DialogDescription>
         </div>
 
@@ -111,32 +107,17 @@ export const SpotifyTrackSearchDialog = ({
                 text="Keine Treffer bei Spotify. Wir können es mit einer anderen Schreibweise suchen."
               />
             ) : (
-              <>
-                <ResultGroup title="Songs" emptyText="Keine Songs gefunden.">
-                  {tracks.map((track) => (
-                    <TrackResultRow
-                      key={track.id}
-                      track={track}
-                      isAdding={isAdding && addingTrackId === track.id}
-                      disabled={isAdding}
-                      onAdd={() => onAddTrack(track)}
-                    />
-                  ))}
-                </ResultGroup>
-
-                <ResultGroup
-                  title="Artists"
-                  emptyText="Keine Artists gefunden."
-                >
-                  {artists.map((artist) => (
-                    <ArtistResultRow
-                      key={artist.id}
-                      artist={artist}
-                      onSearch={() => setQuery(artist.name)}
-                    />
-                  ))}
-                </ResultGroup>
-              </>
+              <ResultGroup title="Songs" emptyText="Keine Songs gefunden.">
+                {tracks.map((track) => (
+                  <TrackResultRow
+                    key={track.id}
+                    track={track}
+                    isAdding={isAdding && addingTrackId === track.id}
+                    disabled={isAdding}
+                    onAdd={() => onAddTrack(track)}
+                  />
+                ))}
+              </ResultGroup>
             )}
           </div>
         </ScrollArea>
@@ -228,34 +209,6 @@ const TrackResultRow = ({
       )}
     </Button>
   </div>
-);
-
-type ArtistResultRowProps = {
-  artist: SpotifyArtistResponse;
-  onSearch: () => void;
-};
-
-const ArtistResultRow = ({ artist, onSearch }: ArtistResultRowProps) => (
-  <button
-    type="button"
-    onClick={onSearch}
-    className="grid w-full grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
-  >
-    <Cover
-      src={artist.imageUrl}
-      alt={`${artist.name} Bild`}
-      fallback={<UserRound className="size-4" />}
-    />
-    <div className="min-w-0">
-      <p className="truncate text-sm font-semibold leading-tight">
-        {artist.name}
-      </p>
-      <p className="mt-0.5 truncate text-xs text-muted-foreground">
-        {artist.genres.slice(0, 2).join(", ") || "Artist"}
-      </p>
-    </div>
-    <Search className="size-4 text-muted-foreground" />
-  </button>
 );
 
 type CoverProps = {

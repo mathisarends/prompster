@@ -58,7 +58,7 @@ def test_playlist_track_mapping_preserves_lock_state() -> None:
         year=2006,
         spotify_uri="spotify:track:abc",
         cover_url="https://example.com/cover.jpg",
-        is_locked=True,
+        is_pinned=True,
     )
 
     orm_track = repository._to_orm_track(
@@ -76,10 +76,10 @@ def test_playlist_track_mapping_preserves_lock_state() -> None:
             year=2006,
             spotify_uri="spotify:track:abc",
             cover_url="https://example.com/cover.jpg",
-            is_locked=True,
+            is_pinned=True,
             created_at=track.created_at,
         )
     )
 
-    assert orm_track.is_locked is True
-    assert roundtrip.is_locked is True
+    assert orm_track.is_pinned is True
+    assert roundtrip.is_pinned is True

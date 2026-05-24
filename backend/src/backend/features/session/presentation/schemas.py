@@ -88,7 +88,7 @@ class PlaylistTrackResponse(Schema):
     year: int | None = None
     spotify_uri: str | None = None
     cover_url: str | None = None
-    is_locked: bool
+    is_pinned: bool
 
 
 class PlaylistResponse(Schema):
@@ -176,7 +176,7 @@ class AddPlaylistTrackRequest(Schema):
     year: int | None = Field(default=None, ge=1900, le=2100)
     spotify_uri: str | None = None
     cover_url: str | None = None
-    is_locked: bool = False
+    is_pinned: bool = False
 
 
 class SpotifyPlaylistExportResponse(Schema):

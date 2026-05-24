@@ -169,7 +169,7 @@ class TestWorkspaceDraftPlaylistTool:
         assert remove_update.track_ids == [added_track_id]
 
     @pytest.mark.asyncio
-    async def test_locked_tracks_cannot_be_removed_replaced_or_rebuilt(
+    async def test_pinned_tracks_cannot_be_removed_replaced_or_rebuilt(
         self,
     ) -> None:
         workspace_store = WorkspaceStore()
@@ -187,19 +187,19 @@ class TestWorkspaceDraftPlaylistTool:
                         "year": 1985,
                         "spotify_uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
                         "cover_url": "https://i.scdn.co/image/take-on-me.jpg",
-                        "is_locked": True,
+                        "is_pinned": True,
                     }
                 ],
             },
         )
         workspace_store.drain_playlist_draft_updates()
-        locked_track_id = playlist.tracks[0].id
+        pinned_track_id = playlist.tracks[0].id
 
         remove_result = await tools.execute(
             "remove_draft_playlist_tracks",
             {
                 "status": "Song entfernen",
-                "track_ids": [str(locked_track_id)],
+                "track_ids": [str(pinned_track_id)],
             },
         )
         replace_result = await tools.execute(
@@ -208,7 +208,7 @@ class TestWorkspaceDraftPlaylistTool:
                 "status": "Song ersetzen",
                 "replacements": [
                     {
-                        "track_id": str(locked_track_id),
+                        "track_id": str(pinned_track_id),
                         "track": {
                             "title": "Africa",
                             "artist": "Toto",
@@ -238,10 +238,10 @@ class TestWorkspaceDraftPlaylistTool:
         )
 
         assert isinstance(remove_result, str)
-        assert "locked" in remove_result
+        assert "pinned" in remove_result
         assert isinstance(replace_result, str)
-        assert "locked" in replace_result
+        assert "pinned" in replace_result
         assert isinstance(rebuild_result, str)
-        assert "locked" in rebuild_result
+        assert "pinned" in rebuild_result
         assert workspace_store.playlist_draft == playlist
         assert workspace_store.drain_playlist_draft_updates() == []

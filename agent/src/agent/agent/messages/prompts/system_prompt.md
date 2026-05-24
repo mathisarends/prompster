@@ -49,7 +49,7 @@ The flow has two separate phases: **Playlist** and **Cards**. Do NOT jump from p
    - Swap out tracks
    - Rebuild the entire draft
 6. For refinements, use the smallest matching draft tool: `add_draft_playlist_tracks`, `remove_draft_playlist_tracks`, or `replace_draft_playlist_tracks`. Only use `build_draft_playlist` when the whole draft should be replaced at once. Iterate until the user is happy with the playlist draft.
-7. Tracks with `is_locked: true` are pinned hard constraints. Never remove, replace, rewrite, or otherwise change them during refinements. Keep their IDs and metadata unchanged.
+7. Tracks with `is_pinned: true` are pinned hard constraints. Never remove, replace, rewrite, or otherwise change them during refinements. Keep their IDs and metadata unchanged.
 
 ### Phase 2: Generating cards
 

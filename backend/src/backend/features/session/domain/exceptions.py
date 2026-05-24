@@ -10,7 +10,7 @@ class PlaylistTrackNotFoundError(Exception):
     pass
 
 
-class PlaylistTrackLockedError(Exception):
+class PlaylistTrackPinnedError(Exception):
     pass
 
 

@@ -28,10 +28,10 @@ compose() {
   MSYS_NO_PATHCONV=1 "${COMPOSE_CMD[@]}" "$@"
 }
 
-echo "[1/4] Starting postgres service..."
+echo "[1/5] Starting postgres service..."
 compose up -d postgres
 
-echo "[2/4] Waiting for postgres to become ready..."
+echo "[2/5] Waiting for postgres to become ready..."
 for _ in $(seq 1 60); do
   if compose exec -T postgres pg_isready -U "${POSTGRES_USER}" >/dev/null 2>&1; then
     break
@@ -44,7 +44,7 @@ if ! compose exec -T postgres pg_isready -U "${POSTGRES_USER}" >/dev/null 2>&1; 
   exit 1
 fi
 
-echo "[3/4] Fixing alembic_version column length (if needed)..."
+echo "[3/5] Fixing alembic_version column length (if needed)..."
 compose exec -T postgres psql -v ON_ERROR_STOP=1 -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" <<'SQL'
 DO $$
 BEGIN
@@ -65,7 +65,13 @@ END
 $$;
 SQL
 
-echo "[4/4] Running alembic migrations..."
-compose run --rm --no-deps migrate alembic -c /app/backend/alembic.ini upgrade head
+echo "[4/5] Removing stale migrate container (if present)..."
+compose rm -sf migrate >/dev/null 2>&1 || true
+
+echo "[5/5] Running alembic migrations..."
+compose run --rm --no-deps \
+  -v "${ROOT_DIR}/backend/src:/app/backend/src" \
+  -v "${ROOT_DIR}/backend/migrations:/app/backend/migrations" \
+  migrate alembic -c /app/backend/alembic.ini upgrade head
 
 echo "Done. Database migration completed."
