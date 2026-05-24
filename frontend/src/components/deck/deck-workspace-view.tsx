@@ -21,6 +21,8 @@ import {
   exportSessionPlaylistToSpotify,
   getGetSessionQueryKey,
   getListSessionsQueryKey,
+  lockPlaylistTrack,
+  unlockPlaylistTrack,
 } from "@/api/generated/session-api";
 import { useGetMe } from "@/api/generated/user-api";
 import { ChatWorkspacePanel } from "@/components/chat/chat-workspace-panel";
@@ -84,6 +86,7 @@ export const DeckWorkspaceView = ({
         durationSeconds: 0,
         coverUrl: track.coverUrl ?? "",
         spotifyUri: track.spotifyUri ?? null,
+        isLocked: track.isLocked,
       })),
     [playlist.tracks],
   );
@@ -209,6 +212,24 @@ export const DeckWorkspaceView = ({
     },
   });
 
+  const toggleTrackLockMutation = useMutation({
+    mutationFn: ({ trackId, isLocked }: { trackId: string; isLocked: boolean }) =>
+      isLocked
+        ? unlockPlaylistTrack(sessionId, trackId)
+        : lockPlaylistTrack(sessionId, trackId),
+    onSuccess: async (_data, variables) => {
+      await invalidateSessionQueries();
+      toast.success(
+        variables.isLocked
+          ? "Song wurde entsperrt."
+          : "Song wurde gesperrt.",
+      );
+    },
+    onError: () => {
+      toast.error("Song konnte nicht aktualisiert werden.");
+    },
+  });
+
   return (
     <>
       <SpotifyConnectDialog
@@ -257,7 +278,15 @@ export const DeckWorkspaceView = ({
               onAddSpotifyTrack={async (track) => {
                 await addSpotifyTrackMutation.mutateAsync(track);
               }}
+              onToggleTrackLock={async (trackId, isLocked) => {
+                await toggleTrackLockMutation.mutateAsync({ trackId, isLocked });
+              }}
               isAddingSpotifyTrack={addSpotifyTrackMutation.isPending}
+              lockingTrackId={
+                toggleTrackLockMutation.isPending
+                  ? toggleTrackLockMutation.variables?.trackId
+                  : null
+              }
               addingSpotifyTrackId={addingSpotifyTrackId}
               controller={controller}
             />

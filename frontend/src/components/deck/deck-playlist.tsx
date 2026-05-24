@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { DeckPlayer } from "@/components/deck/deck-player";
 import { DeckPlaylistTrackItem } from "@/components/deck/deck-playlist-track-item";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -31,9 +37,14 @@ type DeckPlaylistProps = {
   showHeader?: boolean;
   allowLocalRemoval?: boolean;
   onRemoveTrack?: (trackId: string) => Promise<void> | void;
+  onToggleTrackLock?: (
+    trackId: string,
+    isLocked: boolean,
+  ) => Promise<void> | void;
   onAddSpotifyTrack?: (track: SpotifyTrackResponse) => Promise<void> | void;
   isAddingSpotifyTrack?: boolean;
   addingSpotifyTrackId?: string | null;
+  lockingTrackId?: string | null;
   controller?: DeckPlaylistController;
 };
 
@@ -77,9 +88,11 @@ export const DeckPlaylist = ({
   showHeader = true,
   allowLocalRemoval = true,
   onRemoveTrack,
+  onToggleTrackLock,
   onAddSpotifyTrack,
   isAddingSpotifyTrack = false,
   addingSpotifyTrackId = null,
+  lockingTrackId = null,
   controller,
 }: DeckPlaylistProps) => {
   const [query, setQuery] = useState("");
@@ -91,6 +104,7 @@ export const DeckPlaylist = ({
   const optimistic = useOptimisticRemoval(onRemoveTrack);
 
   const canRemoveTracks = allowLocalRemoval || Boolean(onRemoveTrack);
+  const canToggleTrackLock = Boolean(onToggleTrackLock);
   const canAddSpotifyTrack = Boolean(onAddSpotifyTrack);
 
   const visibleTracks = useMemo(
@@ -152,6 +166,10 @@ export const DeckPlaylist = ({
     playback.removeTrackFromPlayback(trackId);
   };
 
+  const toggleTrackLock = (track: PlaylistTrack) => {
+    void onToggleTrackLock?.(track.id, track.isLocked);
+  };
+
   const openSpotifySearch = (initialQuery = "") => {
     setSpotifySearchInitialQuery(initialQuery.trim());
     setSpotifySearchOpen(true);
@@ -162,149 +180,164 @@ export const DeckPlaylist = ({
   }, [filteredTracks.length, onVisibleTrackCountChange]);
 
   return (
-    <div className={cn("flex h-full min-h-0 flex-1 flex-col", className)}>
-      <div className="shrink-0">
-        {showHeader ? (
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-semibold tracking-tight">Playlist</h3>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {filteredTracks.length} / 50 Songs
-              </p>
+    <TooltipProvider delay={0}>
+      <div className={cn("flex h-full min-h-0 flex-1 flex-col", className)}>
+        <div className="shrink-0">
+          {showHeader ? (
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold tracking-tight">
+                  Playlist
+                </h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {filteredTracks.length} / 50 Songs
+                </p>
+              </div>
             </div>
-          </div>
-        ) : null}
-
-        <div className="mb-4 flex items-center gap-2">
-          <SearchBar
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Playlist durchsuchen: Titel, Artist, Jahr, Genre..."
-            containerClassName="min-w-0 flex-1 px-0"
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              aria-label={`Playlist sortieren: ${activeSortOption.label}`}
-              title="Playlist sortieren"
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground shadow-xs outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=open]:bg-muted data-[state=open]:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50"
-            >
-              <ArrowDownAZ className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="bottom" sideOffset={6}>
-              {SORT_OPTIONS.map((option) => (
-                <DropdownMenuItem
-                  key={option.value}
-                  onClick={() => setSortMode(option.value)}
-                >
-                  <span className="min-w-0 flex-1">{option.label}</span>
-                  {option.value === sortMode ? (
-                    <Check className="size-4 text-primary" />
-                  ) : null}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {canAddSpotifyTrack ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label="Song über Spotify hinzufügen"
-              title="Song über Spotify hinzufügen"
-              onClick={() => openSpotifySearch(query)}
-            >
-              <Plus className="size-4" />
-            </Button>
           ) : null}
+
+          <div className="mb-4 flex items-center gap-2">
+            <SearchBar
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Playlist durchsuchen: Titel, Artist, Jahr, Genre..."
+              containerClassName="min-w-0 flex-1 px-0"
+            />
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <DropdownMenuTrigger
+                      aria-label={`Playlist sortieren: ${activeSortOption.label}`}
+                      className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground shadow-xs outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=open]:bg-muted data-[state=open]:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50"
+                    >
+                      <ArrowDownAZ className="size-4" />
+                    </DropdownMenuTrigger>
+                  }
+                />
+                <TooltipContent side="bottom" sideOffset={8}>
+                  Playlist sortieren
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end" side="bottom" sideOffset={6}>
+                {SORT_OPTIONS.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => setSortMode(option.value)}
+                  >
+                    <span className="min-w-0 flex-1">{option.label}</span>
+                    {option.value === sortMode ? (
+                      <Check className="size-4 text-primary" />
+                    ) : null}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {canAddSpotifyTrack ? (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="Song über Spotify hinzufügen"
+                      onClick={() => openSpotifySearch(query)}
+                    >
+                      <Plus className="size-4" />
+                    </Button>
+                  }
+                />
+                <TooltipContent side="bottom" sideOffset={8}>
+                  Song über Spotify hinzufügen
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
+          </div>
         </div>
 
-        <div className="grid grid-cols-[40px_minmax(0,1fr)_72px_40px] items-center gap-x-4 border-b border-white/[0.06] pb-3 pr-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          <span className="justify-self-center">#</span>
-          <span>Titel</span>
-          <span className="justify-self-end">Jahr</span>
-          <span />
-        </div>
-      </div>
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <ScrollArea className="h-full min-h-0 overflow-hidden">
+            {filteredTracks.length > 0 ? (
+              <div className="space-y-1 pb-3 pt-2">
+                {filteredTracks.map((track) => {
+                  const isActive = track.id === playback.activeTrackId;
+                  const isPlayable = controller
+                    ? Boolean(track.spotifyUri)
+                    : true;
 
-      <div className="min-h-0 flex-1 overflow-hidden">
-        <ScrollArea className="h-full min-h-0 overflow-hidden">
-          {filteredTracks.length > 0 ? (
-            <div className="space-y-1 pb-3 pt-2">
-              {filteredTracks.map((track, index) => {
-                const isActive = track.id === playback.activeTrackId;
-                const isPlayable = controller
-                  ? Boolean(track.spotifyUri)
-                  : true;
-
-                return (
-                  <DeckPlaylistTrackItem
-                    key={track.id}
-                    track={track}
-                    trackNumber={index + 1}
-                    isActive={isActive}
-                    isPlaying={playback.isPlaying}
-                    isPlayable={isPlayable}
-                    canRemove={canRemoveTracks}
-                    isRemoving={optimistic.loadingIds.has(track.id)}
-                    onActivateTrack={() => {
-                      if (isPlayable) playback.activateTrack(track.id);
-                    }}
-                    onTogglePlayPause={() => {
-                      if (isActive) {
-                        if (playback.isPlaying) {
-                          playback.onPause();
-                        } else {
-                          playback.onResume();
+                  return (
+                    <DeckPlaylistTrackItem
+                      key={track.id}
+                      track={track}
+                      isActive={isActive}
+                      isPlaying={playback.isPlaying}
+                      isPlayable={isPlayable}
+                      canRemove={canRemoveTracks}
+                      canToggleLock={canToggleTrackLock}
+                      isRemoving={optimistic.loadingIds.has(track.id)}
+                      isLocking={lockingTrackId === track.id}
+                      onActivateTrack={() => {
+                        if (isPlayable) playback.activateTrack(track.id);
+                      }}
+                      onTogglePlayPause={() => {
+                        if (isActive) {
+                          if (playback.isPlaying) {
+                            playback.onPause();
+                          } else {
+                            playback.onResume();
+                          }
+                        } else if (isPlayable) {
+                          playback.activateTrack(track.id);
                         }
-                      } else if (isPlayable) {
-                        playback.activateTrack(track.id);
-                      }
-                    }}
-                    onRemoveTrack={() => removeTrack(track.id)}
-                  />
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex min-h-full flex-col items-center justify-center gap-3 px-3 py-8 text-center text-sm text-muted-foreground">
-              <p>Keine Treffer in der Playlist.</p>
-              {canAddSpotifyTrack && query.trim() ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openSpotifySearch(query)}
-                >
-                  <Plus className="size-4" />
-                  Bei Spotify suchen
-                </Button>
-              ) : null}
-            </div>
-          )}
-        </ScrollArea>
-      </div>
+                      }}
+                      onRemoveTrack={() => removeTrack(track.id)}
+                      onToggleLock={() => toggleTrackLock(track)}
+                    />
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex min-h-full flex-col items-center justify-center gap-3 px-3 py-8 text-center text-sm text-muted-foreground">
+                <p>Keine Treffer in der Playlist.</p>
+                {canAddSpotifyTrack && query.trim() ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openSpotifySearch(query)}
+                  >
+                    <Plus className="size-4" />
+                    Bei Spotify suchen
+                  </Button>
+                ) : null}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
 
-      <DeckPlayer
-        activeTrack={activeTrack}
-        elapsedSeconds={playback.elapsedSeconds}
-        durationSeconds={playback.durationSeconds}
-        isPlaying={playback.isPlaying}
-        volume={playback.volume}
-        onPlayPause={playback.onPlayPause}
-        onSeek={playback.onSeek}
-        onVolumeChange={playback.onVolumeChange}
-      />
-
-      {onAddSpotifyTrack ? (
-        <SpotifyTrackSearchDialog
-          open={spotifySearchOpen}
-          initialQuery={spotifySearchInitialQuery}
-          isAdding={isAddingSpotifyTrack}
-          addingTrackId={addingSpotifyTrackId}
-          onOpenChange={setSpotifySearchOpen}
-          onAddTrack={onAddSpotifyTrack}
+        <DeckPlayer
+          activeTrack={activeTrack}
+          elapsedSeconds={playback.elapsedSeconds}
+          durationSeconds={playback.durationSeconds}
+          isPlaying={playback.isPlaying}
+          volume={playback.volume}
+          onPlayPause={playback.onPlayPause}
+          onSeek={playback.onSeek}
+          onVolumeChange={playback.onVolumeChange}
         />
-      ) : null}
-    </div>
+
+        {onAddSpotifyTrack ? (
+          <SpotifyTrackSearchDialog
+            open={spotifySearchOpen}
+            initialQuery={spotifySearchInitialQuery}
+            isAdding={isAddingSpotifyTrack}
+            addingTrackId={addingSpotifyTrackId}
+            onOpenChange={setSpotifySearchOpen}
+            onAddTrack={onAddSpotifyTrack}
+          />
+        ) : null}
+      </div>
+    </TooltipProvider>
   );
 };
