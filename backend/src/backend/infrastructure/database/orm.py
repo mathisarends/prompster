@@ -235,5 +235,10 @@ class PlaylistTrackModel(DatabaseEntity, table=True):
     year: int | None = None
     spotify_uri: str | None = Field(default=None, max_length=128)
     cover_url: str | None = None
+    is_locked: bool = Field(
+        default=False,
+        sa_type=Boolean(),
+        sa_column_kwargs={"server_default": text("false")},
+    )
 
     playlist: SessionPlaylistModel = Relationship(back_populates="tracks")

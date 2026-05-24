@@ -67,12 +67,18 @@ class AgentSessionRunner(SessionRunner):
         self._spotify = spotify
         self._system_prompt = system_prompt
 
-    async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
+    async def run(
+        self,
+        *,
+        session: Session,
+        instruction: str | None = None,
+    ) -> AsyncIterator[SessionRunnerEvent]:
         agent = Agent(
             llm=self._llm,
             messages=_to_message_manager(
                 session=session,
                 system_prompt=self._system_prompt,
+                instruction=instruction,
             ),
             spotify=Spotify(client=self._spotify),
             workspace_store=_to_workspace_store(session.playlist),
@@ -144,8 +150,14 @@ def _to_message_manager(
     *,
     session: Session,
     system_prompt: str | None,
+    instruction: str | None,
 ) -> MessageManager:
     manager = MessageManager(system_prompt=system_prompt)
+    playlist_context = _to_playlist_context(session.playlist)
+    if playlist_context is not None:
+        manager.add_user(playlist_context)
+    if instruction is not None:
+        manager.add_user(instruction)
     for entry in session.entries:
         if isinstance(entry, UserMessage):
             manager.add_user(entry.content)
@@ -206,6 +218,7 @@ def _to_playlist_track(track: PlaylistDraftTrack) -> PlaylistTrack:
         year=track.year,
         spotify_uri=track.spotify_uri,
         cover_url=track.cover_url,
+        is_locked=track.is_locked,
     )
 
 
@@ -225,8 +238,38 @@ def _to_workspace_store(playlist: Playlist | None) -> WorkspaceStore:
                     year=track.year,
                     spotify_uri=track.spotify_uri,
                     cover_url=track.cover_url,
+                    is_locked=track.is_locked,
                 )
                 for track in playlist.tracks
             ],
         )
+    )
+
+
+def _to_playlist_context(playlist: Playlist | None) -> str | None:
+    if playlist is None:
+        return None
+
+    tracks = [
+        {
+            "id": str(track.id),
+            "title": track.title,
+            "artist": track.artist,
+            "year": track.year,
+            "spotify_uri": track.spotify_uri,
+            "cover_url": track.cover_url,
+            "is_locked": track.is_locked,
+        }
+        for track in playlist.tracks
+    ]
+    return json.dumps(
+        {
+            "current_playlist_context": {
+                "id": str(playlist.id),
+                "name": playlist.name,
+                "locked_tracks_are_hard_constraints": True,
+                "tracks": tracks,
+            }
+        },
+        ensure_ascii=False,
     )

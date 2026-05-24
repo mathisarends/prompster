@@ -1,9 +1,13 @@
 from unittest.mock import Mock
 from uuid import uuid4
 
-from backend.features.session.domain import Session, UserMessage
+from backend.features.session.domain import PlaylistTrack, Session, UserMessage
 from backend.features.session.infrastructure.repository import SqlSessionRepository
-from backend.infrastructure.database.orm import SessionModel, SessionUserMessageModel
+from backend.infrastructure.database.orm import (
+    PlaylistTrackModel,
+    SessionModel,
+    SessionUserMessageModel,
+)
 
 
 def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
@@ -43,3 +47,39 @@ def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
     assert len(orm.user_messages) == 1
     assert orm.user_messages[0] is existing_row
     assert orm.user_messages[0].content == "hello"
+
+
+def test_playlist_track_mapping_preserves_lock_state() -> None:
+    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    playlist_id = uuid4()
+    track = PlaylistTrack(
+        title="Starlight",
+        artist="Muse",
+        year=2006,
+        spotify_uri="spotify:track:abc",
+        cover_url="https://example.com/cover.jpg",
+        is_locked=True,
+    )
+
+    orm_track = repository._to_orm_track(
+        track=track,
+        playlist_id=playlist_id,
+        position=0,
+    )
+    roundtrip = repository._to_domain_track(
+        PlaylistTrackModel(
+            id=track.id,
+            playlist_id=playlist_id,
+            position=0,
+            title="Starlight",
+            artist="Muse",
+            year=2006,
+            spotify_uri="spotify:track:abc",
+            cover_url="https://example.com/cover.jpg",
+            is_locked=True,
+            created_at=track.created_at,
+        )
+    )
+
+    assert orm_track.is_locked is True
+    assert roundtrip.is_locked is True

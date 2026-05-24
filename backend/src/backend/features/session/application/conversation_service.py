@@ -33,6 +33,7 @@ from backend.features.session.domain import (
     AssistantMessage,
     FollowUpQuestionGroup,
     NoPendingToolCallSequenceError,
+    PlaylistTrackLockedError,
     Session,
     SessionRepository,
     ToolCallSequence,
@@ -133,6 +134,33 @@ class SessionConversationService:
         async for event in self._run_agent(session=session):
             yield event
 
+    async def magic_swap_track(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        track_id: UUID,
+    ) -> AsyncIterator[SessionEvent]:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        track = session.require_track(track_id=track_id)
+        if track.is_locked:
+            raise PlaylistTrackLockedError(
+                f"Track {track_id} is locked and cannot be replaced."
+            )
+
+        resolved_tool_call = self._prepare_follow_up_context_for_message(
+            session=session
+        )
+        if resolved_tool_call is not None:
+            await self._session_repository.save(session=session)
+        for event in self._to_tool_call_resolution_events(resolved_tool_call):
+            yield event
+        async for event in self._run_agent(
+            session=session,
+            instruction=self._build_magic_swap_instruction(track_id=track_id),
+        ):
+            yield event
+
     async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
         session = await self._session_repository.get_by_id(session_id=session_id)
         session.has_access(user_id)
@@ -228,10 +256,15 @@ class SessionConversationService:
             )
         return tuple(events)
 
-    async def _run_agent(self, *, session: Session) -> AsyncIterator[SessionEvent]:
+    async def _run_agent(
+        self,
+        *,
+        session: Session,
+        instruction: str | None = None,
+    ) -> AsyncIterator[SessionEvent]:
         current_assistant_message: AssistantMessage | None = None
 
-        async for event in self._runner.run(session=session):
+        async for event in self._runner.run(session=session, instruction=instruction):
             if isinstance(event, SessionRunnerAssistantMessageChunk):
                 if current_assistant_message is None:
                     current_assistant_message = session.add_assistant_message()
@@ -347,3 +380,13 @@ class SessionConversationService:
                             track_id=replacement.track_id,
                             track=replacement.track,
                         )
+
+    def _build_magic_swap_instruction(self, *, track_id: UUID) -> str:
+        return (
+            "Ersetze genau diesen einen Track im bestehenden Playlist-Entwurf durch "
+            "einen semantisch ähnlichen Song: "
+            f"track_id={track_id}. Nutze nur replace_draft_playlist_tracks, "
+            "ersetze ausschließlich diese Track-ID und ändere, entferne oder "
+            "verschiebe keine anderen Tracks. Gesperrte Tracks sind Hard Constraints "
+            "und dürfen nicht verändert werden. Antworte kurz auf Deutsch."
+        )

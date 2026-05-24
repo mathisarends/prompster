@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { useWheel } from "@/hooks/useWheel";
 import { cn } from "@/lib/utils";
-import { type PlaylistTrack } from "@/lib/mockTracks";
+import { type PlaylistTrack } from "@/lib/playlist-track";
 
 const DEFAULT_AUDIBLE_VOLUME = 72;
 const VOLUME_WHEEL_STEP = 4;

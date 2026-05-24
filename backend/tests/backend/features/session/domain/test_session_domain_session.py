@@ -9,6 +9,7 @@ from backend.features.session.domain.exceptions import (
     NoPendingToolCallSequenceError,
     PendingFollowUpQuestionsError,
     PendingToolCallsError,
+    PlaylistTrackLockedError,
     PlaylistTrackNotFoundError,
     SessionAccessDeniedError,
 )
@@ -21,6 +22,7 @@ from backend.features.session.domain import (
     FollowUpQuestionGroup,
     FollowUpQuestionState,
     PendingCall,
+    PlaylistTrack,
     Session,
     ToolCallSequence,
     ToolFunction,
@@ -263,6 +265,45 @@ class TestSessionDomainSession:
 
         with pytest.raises(PlaylistTrackNotFoundError, match="not found in playlist"):
             session.remove_track(uuid4())
+
+    def test_lock_and_unlock_track_updates_track_state(self, session: Session) -> None:
+        track = session.add_track(title="Starlight", artist="Muse")
+
+        locked = session.lock_track(track.id)
+        unlocked = session.unlock_track(track.id)
+
+        assert locked is track
+        assert unlocked is track
+        assert track.is_locked is False
+
+    def test_replace_track_rejects_locked_track(self, session: Session) -> None:
+        track = session.add_track(
+            title="Starlight",
+            artist="Muse",
+            is_locked=True,
+        )
+
+        with pytest.raises(PlaylistTrackLockedError, match="locked"):
+            session.replace_track(
+                track_id=track.id,
+                track=PlaylistTrack(title="Time Is Running Out", artist="Muse"),
+            )
+
+    def test_set_playlist_preserves_locked_tracks(self, session: Session) -> None:
+        locked_track = session.add_track(
+            title="Starlight",
+            artist="Muse",
+            is_locked=True,
+        )
+
+        with pytest.raises(PlaylistTrackLockedError, match="locked"):
+            session.set_playlist(
+                tracks=[PlaylistTrack(title="Teardrop", artist="Massive Attack")]
+            )
+
+        playlist = session.set_playlist(tracks=[locked_track])
+
+        assert playlist.tracks == [locked_track]
 
     def test_resolve_tool_call_replaces_with_completed(self, session: Session) -> None:
         session.add_tool_call(make_pending_call("tc-1"))

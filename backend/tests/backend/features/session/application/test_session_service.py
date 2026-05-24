@@ -51,6 +51,7 @@ from backend.features.session.domain import (
     PendingCall,
     Playlist,
     PlaylistTrack,
+    PlaylistTrackLockedError,
     Session,
     SessionAccessDeniedError,
     SessionRepository,
@@ -150,8 +151,15 @@ class _SessionRunnerStub(SessionRunner):
     ) -> None:
         self._chunks = chunks or ["Hello", " world"]
         self._events = events
+        self.received_instruction: str | None = None
 
-    async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
+    async def run(
+        self,
+        *,
+        session: Session,
+        instruction: str | None = None,
+    ) -> AsyncIterator[SessionRunnerEvent]:
+        self.received_instruction = instruction
         if self._events is not None:
             for event in self._events:
                 yield event
@@ -359,6 +367,46 @@ class TestSessionServiceUnstar:
 
         with pytest.raises(SessionAccessDeniedError, match="does not have access"):
             asyncio.run(service.unstar(session_id=session.id, user_id=uuid4()))
+
+
+class TestSessionServicePlaylistTrackLocks:
+    def test_locks_playlist_track_and_persists(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        track = session.add_track(title="Starlight", artist="Muse")
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_management_service(repository=repository)
+
+        result = asyncio.run(
+            service.lock_playlist_track(
+                session_id=session.id,
+                user_id=owner_id,
+                track_id=track.id,
+            )
+        )
+
+        assert result is track
+        assert track.is_locked is True
+        assert repository.saved_sessions == [session]
+
+    def test_unlocks_playlist_track_and_persists(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        track = session.add_track(title="Starlight", artist="Muse", is_locked=True)
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_management_service(repository=repository)
+
+        result = asyncio.run(
+            service.unlock_playlist_track(
+                session_id=session.id,
+                user_id=owner_id,
+                track_id=track.id,
+            )
+        )
+
+        assert result is track
+        assert track.is_locked is False
+        assert repository.saved_sessions == [session]
 
 
 class TestSessionServiceList:
@@ -642,6 +690,92 @@ class TestSessionServiceSendMessage:
         )
         assert session.playlist is not None
         assert session.playlist.tracks == [replacement_track]
+
+    def test_magic_swap_runs_targeted_instruction_without_user_message(self) -> None:
+        owner_id = uuid4()
+        playlist_id = uuid4()
+        original_track = PlaylistTrack(
+            id=uuid4(),
+            title="Take On Me",
+            artist="a-ha",
+        )
+        replacement_track = PlaylistTrack(
+            id=uuid4(),
+            title="The Sun Always Shines on T.V.",
+            artist="a-ha",
+        )
+        session = Session(
+            title="80er Party",
+            entries=[],
+            owner_id=owner_id,
+            playlist=Playlist(id=playlist_id, tracks=[original_track]),
+        )
+        runner = _SessionRunnerStub(
+            events=[
+                SessionRunnerPlaylistTracksReplaced(
+                    playlist_id=playlist_id,
+                    replacements=[
+                        SessionRunnerPlaylistTrackReplacement(
+                            track_id=original_track.id,
+                            track=replacement_track,
+                        )
+                    ],
+                )
+            ]
+        )
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        events = asyncio.run(
+            _collect_events(
+                service.magic_swap_track(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    track_id=original_track.id,
+                )
+            )
+        )
+
+        assert runner.received_instruction is not None
+        assert str(original_track.id) in runner.received_instruction
+        assert not any(isinstance(entry, UserMessage) for entry in session.entries)
+        assert session.playlist is not None
+        assert session.playlist.tracks == [replacement_track]
+        assert any(
+            isinstance(event, SessionPlaylistTrackReplaced)
+            and event.track_id == original_track.id
+            and event.track is replacement_track
+            for event in events
+        )
+
+    def test_magic_swap_rejects_locked_track(self) -> None:
+        owner_id = uuid4()
+        track = PlaylistTrack(
+            id=uuid4(),
+            title="Take On Me",
+            artist="a-ha",
+            is_locked=True,
+        )
+        session = Session(
+            title="80er Party",
+            entries=[],
+            owner_id=owner_id,
+            playlist=Playlist(id=uuid4(), tracks=[track]),
+        )
+        service = _make_conversation_service(
+            repository=_SessionRepositoryStub(session_by_id=session)
+        )
+
+        with pytest.raises(PlaylistTrackLockedError, match="locked"):
+            asyncio.run(
+                _collect_events(
+                    service.magic_swap_track(
+                        session_id=session.id,
+                        user_id=owner_id,
+                        track_id=track.id,
+                    )
+                )
+            )
 
 
 class TestSessionServiceFollowUps:

@@ -12,6 +12,7 @@ class PlaylistTrack(Entity):
         year: int | None = None,
         spotify_uri: str | None = None,
         cover_url: str | None = None,
+        is_locked: bool = False,
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> None:
@@ -21,6 +22,7 @@ class PlaylistTrack(Entity):
         self.year = year
         self.spotify_uri = spotify_uri
         self.cover_url = cover_url
+        self.is_locked = is_locked
 
 
 class Playlist(Entity):

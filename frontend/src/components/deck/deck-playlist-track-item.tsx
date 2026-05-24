@@ -2,7 +2,7 @@ import { Pause, Play, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { PlaylistTrack } from "@/lib/mockTracks";
+import type { PlaylistTrack } from "@/lib/playlist-track";
 
 const SoundBars = () => (
   <span aria-hidden className="flex h-5 w-5 items-end justify-center gap-[2px]">

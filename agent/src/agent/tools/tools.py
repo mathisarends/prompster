@@ -182,7 +182,8 @@ class Tools:
             description=(
                 "Build or fully replace the current Hitster playlist draft in the "
                 "workspace. Prefer create_draft_playlist for the initial draft and "
-                "the add/remove/replace tools for refinements."
+                "the add/remove/replace tools for refinements. Locked tracks must "
+                "be preserved unchanged."
             ),
             params=BuildDraftPlaylistParams,
             status_label=lambda params: params.status,
@@ -206,7 +207,10 @@ class Tools:
             return workspace_store.add_tracks(params.tracks)
 
         @self.action(
-            description="Remove tracks from the current Hitster playlist draft by ID.",
+            description=(
+                "Remove tracks from the current Hitster playlist draft by ID. "
+                "Locked tracks cannot be removed."
+            ),
             params=RemoveDraftPlaylistTracksParams,
             status_label=lambda params: params.status,
         )
@@ -217,7 +221,10 @@ class Tools:
             return workspace_store.remove_tracks(params.track_ids)
 
         @self.action(
-            description="Replace tracks in the current Hitster playlist draft by ID.",
+            description=(
+                "Replace tracks in the current Hitster playlist draft by ID. "
+                "Locked tracks cannot be replaced."
+            ),
             params=ReplaceDraftPlaylistTracksParams,
             status_label=lambda params: params.status,
         )

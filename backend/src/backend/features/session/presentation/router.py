@@ -221,6 +221,70 @@ async def add_session_playlist_track(
         artist=body.artist,
         year=body.year,
         cover_url=body.cover_url,
+        is_locked=body.is_locked,
+    )
+    return to_playlist_track_response(track)
+
+
+@router.post(
+    "/{session_id}/tracks/{track_id}/magic-swap",
+    status_code=status.HTTP_200_OK,
+    operation_id="magic_swap_playlist_track",
+    responses=_event_stream_response | _auth_errors | _not_found | _conflict,
+)
+async def magic_swap_session_playlist_track(
+    session_id: UUID,
+    track_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    service: FromDishka[SessionConversationService],
+) -> StreamingResponse:
+    return stream_session_events(
+        service.magic_swap_track(
+            session_id=session_id,
+            user_id=authenticated_user_id,
+            track_id=track_id,
+        )
+    )
+
+
+@router.post(
+    "/{session_id}/tracks/{track_id}/lock",
+    response_model=PlaylistTrackResponse,
+    status_code=status.HTTP_200_OK,
+    operation_id="lock_playlist_track",
+    responses=_auth_errors | _not_found,
+)
+async def lock_session_playlist_track(
+    session_id: UUID,
+    track_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    service: FromDishka[SessionService],
+) -> PlaylistTrackResponse:
+    track = await service.lock_playlist_track(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+        track_id=track_id,
+    )
+    return to_playlist_track_response(track)
+
+
+@router.post(
+    "/{session_id}/tracks/{track_id}/unlock",
+    response_model=PlaylistTrackResponse,
+    status_code=status.HTTP_200_OK,
+    operation_id="unlock_playlist_track",
+    responses=_auth_errors | _not_found,
+)
+async def unlock_session_playlist_track(
+    session_id: UUID,
+    track_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    service: FromDishka[SessionService],
+) -> PlaylistTrackResponse:
+    track = await service.unlock_playlist_track(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+        track_id=track_id,
     )
     return to_playlist_track_response(track)
 

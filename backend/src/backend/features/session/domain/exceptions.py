@@ -10,6 +10,10 @@ class PlaylistTrackNotFoundError(Exception):
     pass
 
 
+class PlaylistTrackLockedError(Exception):
+    pass
+
+
 class SessionPlaylistEmptyError(Exception):
     pass
 

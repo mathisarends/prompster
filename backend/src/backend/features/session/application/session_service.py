@@ -73,6 +73,7 @@ class SessionService:
         artist: str,
         year: int | None = None,
         cover_url: str | None = None,
+        is_locked: bool = False,
     ) -> PlaylistTrack:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         track = session.add_track(
@@ -80,7 +81,32 @@ class SessionService:
             artist=artist,
             year=year,
             cover_url=cover_url,
+            is_locked=is_locked,
         )
+        await self._session_repository.save(session=session)
+        return track
+
+    async def lock_playlist_track(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        track_id: UUID,
+    ) -> PlaylistTrack:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        track = session.lock_track(track_id=track_id)
+        await self._session_repository.save(session=session)
+        return track
+
+    async def unlock_playlist_track(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        track_id: UUID,
+    ) -> PlaylistTrack:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        track = session.unlock_track(track_id=track_id)
         await self._session_repository.save(session=session)
         return track
 

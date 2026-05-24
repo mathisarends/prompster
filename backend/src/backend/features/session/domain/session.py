@@ -8,6 +8,7 @@ from backend.features.session.domain.exceptions import (
     NoPendingToolCallSequenceError,
     PendingFollowUpQuestionsError,
     PendingToolCallsError,
+    PlaylistTrackLockedError,
     PlaylistTrackNotFoundError,
     SessionAccessDeniedError,
 )
@@ -92,6 +93,7 @@ class Session(Aggregate):
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> Playlist:
+        self._assert_locked_tracks_preserved(tracks)
         self._playlist = Playlist(
             id=id,
             tracks=tracks,
@@ -112,6 +114,7 @@ class Session(Aggregate):
         artist: str,
         year: int | None = None,
         cover_url: str | None = None,
+        is_locked: bool = False,
     ) -> PlaylistTrack:
         if self._playlist is None:
             self._playlist = Playlist(tracks=[])
@@ -120,6 +123,7 @@ class Session(Aggregate):
             artist=artist,
             year=year,
             cover_url=cover_url,
+            is_locked=is_locked,
         )
         self._playlist.tracks.append(track)
         return track
@@ -140,11 +144,28 @@ class Session(Aggregate):
             raise PlaylistTrackNotFoundError(f"Session {self.id} has no playlist.")
         for index, existing_track in enumerate(self._playlist.tracks):
             if existing_track.id == track_id:
+                if existing_track.is_locked:
+                    raise PlaylistTrackLockedError(
+                        f"Track {track_id} is locked and cannot be replaced."
+                    )
                 self._playlist.tracks[index] = track
                 return self._playlist
         raise PlaylistTrackNotFoundError(
             f"Track {track_id} not found in playlist {self._playlist.id}."
         )
+
+    def lock_track(self, track_id: UUID) -> PlaylistTrack:
+        track = self._require_track(track_id)
+        track.is_locked = True
+        return track
+
+    def unlock_track(self, track_id: UUID) -> PlaylistTrack:
+        track = self._require_track(track_id)
+        track.is_locked = False
+        return track
+
+    def require_track(self, track_id: UUID) -> PlaylistTrack:
+        return self._require_track(track_id)
 
     def add_user_message(self, content: str) -> UserMessage:
         if self._find_pending_tool_call_sequence() is not None:
@@ -227,6 +248,41 @@ class Session(Aggregate):
 
     def require_pending_follow_up_group(self) -> FollowUpQuestionGroup:
         return self._require_pending_follow_up_group()
+
+    def _require_track(self, track_id: UUID) -> PlaylistTrack:
+        if self._playlist is None:
+            raise PlaylistTrackNotFoundError(f"Session {self.id} has no playlist.")
+        for track in self._playlist.tracks:
+            if track.id == track_id:
+                return track
+        raise PlaylistTrackNotFoundError(
+            f"Track {track_id} not found in playlist {self._playlist.id}."
+        )
+
+    def _assert_locked_tracks_preserved(self, tracks: list[PlaylistTrack]) -> None:
+        if self._playlist is None:
+            return
+
+        candidate_by_id = {track.id: track for track in tracks}
+        for existing_track in self._playlist.tracks:
+            if not existing_track.is_locked:
+                continue
+            candidate = candidate_by_id.get(existing_track.id)
+            if candidate is None or not self._same_track(existing_track, candidate):
+                raise PlaylistTrackLockedError(
+                    f"Track {existing_track.id} is locked and cannot be replaced."
+                )
+
+    def _same_track(self, left: PlaylistTrack, right: PlaylistTrack) -> bool:
+        return (
+            left.id == right.id
+            and left.title == right.title
+            and left.artist == right.artist
+            and left.year == right.year
+            and left.spotify_uri == right.spotify_uri
+            and left.cover_url == right.cover_url
+            and left.is_locked == right.is_locked
+        )
 
     def pending_tool_call_sequence(self) -> ToolCallSequence | None:
         return self._find_pending_tool_call_sequence()
