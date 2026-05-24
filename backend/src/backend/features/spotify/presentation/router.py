@@ -30,7 +30,7 @@ _auth_errors = {
     responses=_auth_errors,
 )
 async def search_spotify(
-    _authenticated_user_id: AuthenticatedUserId,  # keep to ensure authentication
+    authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SpotifyService],
     query: str = Query(min_length=1, max_length=200, description="Search query"),
     limit: int = Query(default=20, ge=1, le=50),
@@ -47,6 +47,7 @@ async def search_spotify(
         query=query,
         limit=limit,
         types=types,
+        requester_id=str(authenticated_user_id),
     )
 
     return SpotifyUnifiedSearchResponse(

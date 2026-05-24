@@ -4,6 +4,7 @@ import { useSearchSpotify } from "@/api/generated/spotify/spotify";
 import { SpotifySearchType } from "@/api/generated/model";
 import type { SpotifyTrackResponse } from "@/api/generated/model";
 import { SearchPanelContent } from "@/components/deck/search-panel/search-panel-content";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 type SpotifyTrackSearchPanelProps = {
   panelRef?: Ref<HTMLDivElement>;
@@ -14,6 +15,7 @@ type SpotifyTrackSearchPanelProps = {
 };
 
 const minSearchLength = 2;
+const searchDebounceMs = 220;
 
 export const SpotifyTrackSearchPanel = ({
   panelRef,
@@ -25,16 +27,17 @@ export const SpotifyTrackSearchPanel = ({
   const [addedTrackIds, setAddedTrackIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const normalizedQuery = query.trim();
-  const canSearch = normalizedQuery.length >= minSearchLength;
+  const debouncedQuery = useDebouncedValue(query.trim(), searchDebounceMs);
+
+  const canSearch = debouncedQuery.length >= minSearchLength;
 
   const searchParams = useMemo(
     () => ({
-      query: normalizedQuery || "_",
+      query: debouncedQuery || "_",
       limit: 8,
       types: [SpotifySearchType.track],
     }),
-    [normalizedQuery],
+    [debouncedQuery],
   );
 
   const search = useSearchSpotify(searchParams, {

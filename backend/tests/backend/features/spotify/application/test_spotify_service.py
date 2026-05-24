@@ -11,8 +11,10 @@ class _TracksStub:
         self._items = items
         self.received_query: str | None = None
         self.received_limit: int | None = None
+        self.call_count = 0
 
     async def find(self, query: str, *, limit: int) -> SimpleNamespace:
+        self.call_count += 1
         self.received_query = query
         self.received_limit = limit
         return SimpleNamespace(items=self._items)
@@ -23,8 +25,10 @@ class _ArtistsStub:
         self._items = items
         self.received_query: str | None = None
         self.received_limit: int | None = None
+        self.call_count = 0
 
     async def find(self, query: str, *, limit: int) -> SimpleNamespace:
+        self.call_count += 1
         self.received_query = query
         self.received_limit = limit
         return SimpleNamespace(items=self._items)
@@ -35,8 +39,10 @@ class _PlaylistsStub:
         self._items = items
         self.received_query: str | None = None
         self.received_limit: int | None = None
+        self.call_count = 0
 
     async def find(self, query: str, *, limit: int) -> SimpleNamespace:
+        self.call_count += 1
         self.received_query = query
         self.received_limit = limit
         return SimpleNamespace(items=self._items)
@@ -295,3 +301,65 @@ class TestSpotifyService:
                 "token-123",
             ),
         ]
+
+    def test_search_unified_debounces_superseded_requests(self) -> None:
+        spotify = _SpotifyStub(track_items=[_make_track()])
+        service = SpotifyService(spotify=cast(Any, spotify))
+
+        async def _run() -> tuple[Any, Any]:
+            first = asyncio.create_task(
+                service.search_unified(
+                    query="sk",
+                    limit=8,
+                    types={SpotifySearchType.TRACK},
+                    requester_id="user-1",
+                )
+            )
+            await asyncio.sleep(0.01)
+            second = asyncio.create_task(
+                service.search_unified(
+                    query="ski",
+                    limit=8,
+                    types={SpotifySearchType.TRACK},
+                    requester_id="user-1",
+                )
+            )
+            return await asyncio.gather(first, second)
+
+        first_result, second_result = asyncio.run(_run())
+
+        assert first_result.tracks == []
+        assert first_result.playlists == []
+        assert first_result.artists == []
+        assert len(second_result.tracks) == 1
+        assert spotify.tracks.call_count == 1
+        assert spotify.tracks.received_query == "ski"
+
+    def test_search_unified_coalesces_identical_inflight_requests(self) -> None:
+        spotify = _SpotifyStub(track_items=[_make_track()])
+        service = SpotifyService(spotify=cast(Any, spotify))
+
+        async def _run() -> tuple[Any, Any]:
+            first = asyncio.create_task(
+                service.search_unified(
+                    query="muse",
+                    limit=8,
+                    types={SpotifySearchType.TRACK},
+                    requester_id="user-1",
+                )
+            )
+            second = asyncio.create_task(
+                service.search_unified(
+                    query="muse",
+                    limit=8,
+                    types={SpotifySearchType.TRACK},
+                    requester_id="user-1",
+                )
+            )
+            return await asyncio.gather(first, second)
+
+        first_result, second_result = asyncio.run(_run())
+
+        assert len(first_result.tracks) == 1
+        assert len(second_result.tracks) == 1
+        assert spotify.tracks.call_count == 1

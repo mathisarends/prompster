@@ -13,15 +13,26 @@ from backend.features.spotify.application.ports import (
     SpotifyTrack,
     SpotifyUnifiedSearchResult,
 )
+from backend.features.spotify.infrastructure.spotify_search_cache import (
+    SpotifySearchCache,
+)
 
 type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[SpotifyArtist]
 
 
 class SpotifyService:
     _SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1"
+    _SEARCH_DEBOUNCE_SECONDS = 0.12
+    _SEARCH_CACHE_TTL_SECONDS = 6.0
+    _SEARCH_CACHE_MAX_ENTRIES = 256
 
     def __init__(self, spotify: Spotifyify) -> None:
         self._spotify = spotify
+        self._search_cache = SpotifySearchCache(
+            debounce_seconds=self._SEARCH_DEBOUNCE_SECONDS,
+            cache_ttl_seconds=self._SEARCH_CACHE_TTL_SECONDS,
+            max_entries=self._SEARCH_CACHE_MAX_ENTRIES,
+        )
 
     async def create_private_playlist(
         self,
@@ -85,27 +96,70 @@ class SpotifyService:
         query: str,
         limit: int = 20,
         types: set[SpotifySearchType] | None = None,
+        requester_id: str | None = None,
     ) -> SpotifyUnifiedSearchResult:
         normalized_query = query.strip()
         if not normalized_query:
             return SpotifyUnifiedSearchResult(tracks=[], playlists=[], artists=[])
 
         requested_types = types or set(DEFAULT_SPOTIFY_SEARCH_TYPES)
+
+        if not requested_types:
+            return SpotifyUnifiedSearchResult(tracks=[], playlists=[], artists=[])
+
+        cache_key = self._build_search_cache_key(
+            query=normalized_query,
+            limit=limit,
+            types=requested_types,
+        )
+        debounce_scope = self._build_debounce_scope(
+            requester_id=requester_id,
+            limit=limit,
+            types=requested_types,
+        )
+
+        if await self._search_cache.is_superseded_search(
+            debounce_scope=debounce_scope,
+            cache_key=cache_key,
+        ):
+            cached_result = await self._search_cache.get_cached_result(
+                cache_key=cache_key,
+            )
+            if cached_result is not None:
+                return cached_result
+            return SpotifyUnifiedSearchResult(tracks=[], playlists=[], artists=[])
+
+        return await self._search_cache.run_with_cache(
+            cache_key=cache_key,
+            producer=lambda: self._execute_unified_search(
+                query=normalized_query,
+                limit=limit,
+                types=requested_types,
+            ),
+        )
+
+    async def _execute_unified_search(
+        self,
+        *,
+        query: str,
+        limit: int,
+        types: set[SpotifySearchType],
+    ) -> SpotifyUnifiedSearchResult:
         search_tasks: dict[SpotifySearchType, Awaitable[SearchTaskResult]] = {}
 
-        if SpotifySearchType.TRACK in requested_types:
+        if SpotifySearchType.TRACK in types:
             search_tasks[SpotifySearchType.TRACK] = self._search_tracks(
-                query=normalized_query,
+                query=query,
                 limit=limit,
             )
-        if SpotifySearchType.PLAYLIST in requested_types:
+        if SpotifySearchType.PLAYLIST in types:
             search_tasks[SpotifySearchType.PLAYLIST] = self._search_playlists(
-                query=normalized_query,
+                query=query,
                 limit=limit,
             )
-        if SpotifySearchType.ARTIST in requested_types:
+        if SpotifySearchType.ARTIST in types:
             search_tasks[SpotifySearchType.ARTIST] = self._search_artists(
-                query=normalized_query,
+                query=query,
                 limit=limit,
             )
 
@@ -120,6 +174,28 @@ class SpotifyService:
             playlists=list(results_by_type.get(SpotifySearchType.PLAYLIST, [])),
             artists=list(results_by_type.get(SpotifySearchType.ARTIST, [])),
         )
+
+    def _build_debounce_scope(
+        self,
+        *,
+        requester_id: str | None,
+        limit: int,
+        types: set[SpotifySearchType],
+    ) -> str:
+        requester_scope = requester_id or "anonymous"
+        type_scope = ",".join(sorted(search_type.value for search_type in types))
+        return f"{requester_scope}|{limit}|{type_scope}"
+
+    def _build_search_cache_key(
+        self,
+        *,
+        query: str,
+        limit: int,
+        types: set[SpotifySearchType],
+    ) -> str:
+        normalized_query = " ".join(query.casefold().split())
+        type_scope = ",".join(sorted(search_type.value for search_type in types))
+        return f"{normalized_query}|{limit}|{type_scope}"
 
     async def _search_tracks(
         self, *, query: str, limit: int = 20
