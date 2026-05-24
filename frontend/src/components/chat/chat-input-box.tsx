@@ -12,7 +12,10 @@ import { cn } from "@/lib/utils";
 type ChatInputBoxProps = {
   value: string;
   onChange: (value: string) => void;
-  onSubmit: (text: string, attachments: ChatAttachment[]) => void | Promise<void>;
+  onSubmit: (
+    text: string,
+    attachments: ChatAttachment[],
+  ) => void | Promise<void>;
   placeholder?: string;
   className?: string;
   textareaClassName?: string;
@@ -21,43 +24,10 @@ type ChatInputBoxProps = {
   disabled?: boolean;
   isSubmitting?: boolean;
   clearOnSubmit?: boolean;
-  focusOnTyping?: boolean;
   showDisclaimer?: boolean;
   disclaimerText?: string;
   attachments?: ChatAttachment[];
   onAttachmentsChange?: (attachments: ChatAttachment[]) => void;
-};
-
-const isEditableElement = (element: EventTarget | null) => {
-  if (!(element instanceof HTMLElement)) return false;
-
-  return (
-    element.isContentEditable ||
-    element.closest("input, textarea, select, [contenteditable='true']") !==
-      null
-  );
-};
-
-const isVisible = (element: HTMLElement) => {
-  const rect = element.getBoundingClientRect();
-  const style = window.getComputedStyle(element);
-
-  return (
-    rect.width > 0 &&
-    rect.height > 0 &&
-    style.display !== "none" &&
-    style.visibility !== "hidden"
-  );
-};
-
-const isTextEntryKey = (event: KeyboardEvent) => {
-  return (
-    event.key.length === 1 &&
-    !event.ctrlKey &&
-    !event.metaKey &&
-    !event.altKey &&
-    !event.isComposing
-  );
 };
 
 const isInteractiveElement = (element: EventTarget | null) => {
@@ -85,7 +55,6 @@ export const ChatInputBox = ({
   disabled = false,
   isSubmitting = false,
   clearOnSubmit = true,
-  focusOnTyping = true,
   showDisclaimer = false,
   disclaimerText = "Prompster ist eine KI und kann Fehler machen. Bitte überprüfe die Antworten.",
   attachments: controlledAttachments,
@@ -123,36 +92,6 @@ export const ChatInputBox = ({
   const showSendButton = canSend && !isRecording && !isStartingRecording;
   const showTranscriptionButton =
     !canSend || isRecording || isStartingRecording;
-
-  useEffect(() => {
-    if (!focusOnTyping) return;
-
-    const focusChatInputOnTyping = (event: KeyboardEvent) => {
-      const textarea = textareaRef.current;
-      const dialogOpen = document.querySelector(
-        "[data-slot='dialog-content'][data-open]",
-      );
-
-      if (
-        !textarea ||
-        event.defaultPrevented ||
-        document.activeElement === textarea ||
-        dialogOpen ||
-        !isTextEntryKey(event) ||
-        !isVisible(textarea) ||
-        isEditableElement(event.target)
-      ) {
-        return;
-      }
-
-      textarea.focus();
-    };
-
-    window.addEventListener("keydown", focusChatInputOnTyping);
-    return () => {
-      window.removeEventListener("keydown", focusChatInputOnTyping);
-    };
-  }, [focusOnTyping]);
 
   const submit = () => {
     const trimmed = value.trim();

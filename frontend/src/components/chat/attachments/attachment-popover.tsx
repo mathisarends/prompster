@@ -1,13 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Music, Paperclip, Plus, Search } from "lucide-react";
+import { Paperclip, Search } from "lucide-react";
 
 import { useSearchSpotify } from "@/api/generated/spotify/spotify";
 import { SpotifySearchType } from "@/api/generated/model";
-import type {
-  SpotifyArtistResponse,
-  SpotifyPlaylistResponse,
-  SpotifyTrackResponse,
-} from "@/api/generated/model";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -20,10 +15,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { cn } from "@/lib/utils";
 
+import { AttachmentResultRow } from "./attachment-result-row";
+import { AttachmentSearchFilters } from "./attachment-search-filters";
+import type { AttachmentResultFilter } from "./attachment-search-filters";
+import { AttachmentSearchSkeleton } from "./attachment-search-skeleton";
+import { AttachmentSectionLabel } from "./attachment-section-label";
 import type { ChatAttachment } from "./attachment-types";
+import { ParsedSpotifyAttachmentRow } from "./parsed-spotify-attachment-row";
 import { parseSpotifyRef } from "./spotify-id-parser";
+import {
+  artistToAttachment,
+  playlistToAttachment,
+} from "./spotify-attachment-mappers";
 
 type AttachmentPopoverProps = {
   attachments: ChatAttachment[];
@@ -33,94 +39,7 @@ type AttachmentPopoverProps = {
 };
 
 const MIN_QUERY_LENGTH = 2;
-
-const trackToAttachment = (track: SpotifyTrackResponse): ChatAttachment => ({
-  id: track.id,
-  kind: "spotify-track",
-  title: track.title,
-  subtitle: track.artist,
-  imageUrl: track.coverUrl,
-  spotifyId: track.id,
-});
-
-const playlistToAttachment = (
-  playlist: SpotifyPlaylistResponse,
-): ChatAttachment => ({
-  id: playlist.id,
-  kind: "spotify-playlist",
-  title: playlist.name,
-  subtitle: playlist.owner ?? undefined,
-  imageUrl: playlist.coverUrl,
-  spotifyId: playlist.id,
-});
-
-const artistToAttachment = (artist: SpotifyArtistResponse): ChatAttachment => ({
-  id: artist.id,
-  kind: "spotify-artist",
-  title: artist.name,
-  subtitle: artist.genres?.slice(0, 2).join(", ") || undefined,
-  imageUrl: artist.imageUrl,
-  spotifyId: artist.id,
-});
-
-type ResultRowProps = {
-  attachment: ChatAttachment;
-  isAttached: boolean;
-  onPick: () => void;
-};
-
-const ResultRow = ({ attachment, isAttached, onPick }: ResultRowProps) => (
-  <button
-    type="button"
-    onClick={onPick}
-    disabled={isAttached}
-    className={cn(
-      "group/row flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-50",
-    )}
-  >
-    <div
-      className={cn(
-        "grid size-9 shrink-0 place-items-center overflow-hidden bg-white/[0.06] text-muted-foreground ring-1 ring-white/[0.04]",
-        attachment.kind === "spotify-artist" ? "rounded-full" : "rounded-[4px]",
-      )}
-    >
-      {attachment.imageUrl ? (
-        <img
-          src={attachment.imageUrl}
-          alt={attachment.title}
-          className="h-full w-full object-cover"
-          loading="lazy"
-        />
-      ) : (
-        <Music className="size-4" />
-      )}
-    </div>
-    <div className="min-w-0 flex-1">
-      <p className="truncate text-[13px] font-medium leading-tight">
-        {attachment.title}
-      </p>
-      {attachment.subtitle && (
-        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-          {attachment.subtitle}
-        </p>
-      )}
-    </div>
-    <Plus
-      className={cn(
-        "size-4 text-muted-foreground transition-opacity",
-        isAttached
-          ? "opacity-0"
-          : "opacity-0 group-hover/row:opacity-100",
-      )}
-    />
-  </button>
-);
-
-const SectionLabel = ({ label }: { label: string }) => (
-  <p className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80">
-    {label}
-  </p>
-);
+const SEARCH_DEBOUNCE_MS = 180;
 
 export const AttachmentPopover = ({
   attachments,
@@ -130,14 +49,15 @@ export const AttachmentPopover = ({
 }: AttachmentPopoverProps) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [resultFilter, setResultFilter] =
+    useState<AttachmentResultFilter>("all");
   const inputRef = useRef<HTMLInputElement>(null);
+  const debouncedQuery = useDebouncedValue(query.trim(), SEARCH_DEBOUNCE_MS);
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
     if (!next) {
       setQuery("");
-      setDebouncedQuery("");
     }
   };
 
@@ -147,12 +67,10 @@ export const AttachmentPopover = ({
     return () => window.clearTimeout(id);
   }, [open]);
 
-  useEffect(() => {
-    const id = window.setTimeout(() => setDebouncedQuery(query.trim()), 180);
-    return () => window.clearTimeout(id);
+  const parsedRef = useMemo(() => {
+    const ref = parseSpotifyRef(query);
+    return ref?.kind === "spotify-track" ? null : ref;
   }, [query]);
-
-  const parsedRef = useMemo(() => parseSpotifyRef(query), [query]);
 
   const canSearch = !parsedRef && debouncedQuery.length >= MIN_QUERY_LENGTH;
 
@@ -160,11 +78,7 @@ export const AttachmentPopover = ({
     () => ({
       query: debouncedQuery || "_",
       limit: 6,
-      types: [
-        SpotifySearchType.playlist,
-        SpotifySearchType.artist,
-        SpotifySearchType.track,
-      ],
+      types: [SpotifySearchType.playlist, SpotifySearchType.artist],
     }),
     [debouncedQuery],
   );
@@ -182,7 +96,6 @@ export const AttachmentPopover = ({
     if (attachedKey.has(`${attachment.kind}:${attachment.id}`)) return;
     onAdd(attachment);
     setQuery("");
-    setDebouncedQuery("");
     inputRef.current?.focus();
   };
 
@@ -199,9 +112,9 @@ export const AttachmentPopover = ({
 
   const playlists = search.data?.playlists ?? [];
   const artists = search.data?.artists ?? [];
-  const tracks = search.data?.tracks ?? [];
-  const hasResults =
-    playlists.length > 0 || artists.length > 0 || tracks.length > 0;
+  const visiblePlaylists = resultFilter === "artists" ? [] : playlists;
+  const visibleArtists = resultFilter === "playlists" ? [] : artists;
+  const hasResults = visiblePlaylists.length > 0 || visibleArtists.length > 0;
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -257,36 +170,25 @@ export const AttachmentPopover = ({
           />
         </div>
 
+        <AttachmentSearchFilters
+          value={resultFilter}
+          onChange={setResultFilter}
+        />
+
         <div className="prompster-scrollbar max-h-80 overflow-y-auto p-1.5">
           {parsedRef ? (
-            <button
-              type="button"
-              onClick={addParsedRef}
-              className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors hover:bg-white/[0.05]"
-            >
-              <div className="grid size-9 shrink-0 place-items-center rounded-[4px] bg-primary/15 text-primary ring-1 ring-primary/20">
-                <Plus className="size-4" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-medium leading-tight">
-                  Spotify-{parsedRef.kind.replace("spotify-", "")} anhängen
-                </p>
-                <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                  ID: {parsedRef.id}
-                </p>
-              </div>
-            </button>
+            <ParsedSpotifyAttachmentRow
+              parsedRef={parsedRef}
+              onPick={addParsedRef}
+            />
           ) : !canSearch ? (
             <div className="px-3 py-6 text-center text-[12px] text-muted-foreground">
-              Suche nach Playlists, Artists oder Tracks bei Spotify.
+              Suche nach Playlists oder Artists bei Spotify.
               <br />
-              Du kannst auch einen Spotify-Link oder eine ID einfügen.
+              Du kannst auch einen Spotify-Link einfügen.
             </div>
           ) : search.isLoading ? (
-            <div className="flex items-center justify-center gap-2 px-3 py-6 text-[12px] text-muted-foreground">
-              <Loader2 className="size-3.5 animate-spin" />
-              Suche bei Spotify ...
-            </div>
+            <AttachmentSearchSkeleton />
           ) : search.isError ? (
             <div className="px-3 py-6 text-center text-[12px] text-muted-foreground">
               Spotify-Suche nicht verfügbar.
@@ -297,13 +199,13 @@ export const AttachmentPopover = ({
             </div>
           ) : (
             <>
-              {playlists.length > 0 && (
+              {visiblePlaylists.length > 0 && (
                 <>
-                  <SectionLabel label="Playlists" />
-                  {playlists.map((playlist) => {
+                  <AttachmentSectionLabel label="Playlists" />
+                  {visiblePlaylists.map((playlist) => {
                     const attachment = playlistToAttachment(playlist);
                     return (
-                      <ResultRow
+                      <AttachmentResultRow
                         key={`p-${playlist.id}`}
                         attachment={attachment}
                         isAttached={attachedKey.has(
@@ -315,32 +217,14 @@ export const AttachmentPopover = ({
                   })}
                 </>
               )}
-              {artists.length > 0 && (
+              {visibleArtists.length > 0 && (
                 <>
-                  <SectionLabel label="Artists" />
-                  {artists.map((artist) => {
+                  <AttachmentSectionLabel label="Artists" />
+                  {visibleArtists.map((artist) => {
                     const attachment = artistToAttachment(artist);
                     return (
-                      <ResultRow
+                      <AttachmentResultRow
                         key={`a-${artist.id}`}
-                        attachment={attachment}
-                        isAttached={attachedKey.has(
-                          `${attachment.kind}:${attachment.id}`,
-                        )}
-                        onPick={() => pick(attachment)}
-                      />
-                    );
-                  })}
-                </>
-              )}
-              {tracks.length > 0 && (
-                <>
-                  <SectionLabel label="Tracks" />
-                  {tracks.map((track) => {
-                    const attachment = trackToAttachment(track);
-                    return (
-                      <ResultRow
-                        key={`t-${track.id}`}
                         attachment={attachment}
                         isAttached={attachedKey.has(
                           `${attachment.kind}:${attachment.id}`,
