@@ -5,7 +5,7 @@ type RetryableRequestConfig = AxiosRequestConfig & {
   skipAuthRefresh?: boolean;
 };
 
-const resolveApiBaseUrl = (): string => {
+export const resolveApiBaseUrl = (): string => {
   const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
   if (configuredApiBaseUrl) {
     return configuredApiBaseUrl;

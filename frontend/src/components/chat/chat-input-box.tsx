@@ -1,9 +1,10 @@
-import { Plus } from "lucide-react";
+import { LoaderCircle, Mic, Plus, Square } from "lucide-react";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
 
 import { SendButton } from "@/components/chat/send-button";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useRealtimeTranscription } from "@/hooks/useRealtimeTranscription";
 import { cn } from "@/lib/utils";
 
 type ChatInputBoxProps = {
@@ -85,6 +86,18 @@ export const ChatInputBox = ({
   const inputContentRef = useRef<HTMLDivElement>(null);
   const textMirrorRef = useRef<HTMLDivElement>(null);
   const [isSingleLine, setIsSingleLine] = useState(true);
+  const {
+    error: transcriptionError,
+    isRecording,
+    isStarting: isStartingRecording,
+    start: startTranscription,
+    stop: stopTranscription,
+  } = useRealtimeTranscription({
+    value,
+    onTranscriptChange: onChange,
+    disabled: disabled || isSubmitting,
+  });
+  const hasText = value.trim().length > 0;
 
   useEffect(() => {
     if (!focusOnTyping) return;
@@ -120,8 +133,20 @@ export const ChatInputBox = ({
     const trimmed = value.trim();
     if (!trimmed || disabled || isSubmitting) return;
 
+    if (isRecording || isStartingRecording) {
+      void stopTranscription();
+    }
     onSubmit(trimmed);
     if (clearOnSubmit) onChange("");
+  };
+
+  const toggleTranscription = () => {
+    if (isRecording || isStartingRecording) {
+      void stopTranscription();
+      return;
+    }
+
+    void startTranscription();
   };
 
   const focusTextareaFromContainer = (event: MouseEvent<HTMLDivElement>) => {
@@ -138,7 +163,10 @@ export const ChatInputBox = ({
 
     const measureSingleLine = () => {
       const styles = window.getComputedStyle(textarea);
-      const inlineTextareaWidth = Math.max(inputContent.clientWidth - 88, 0);
+      const inlineTextareaWidth = Math.max(
+        inputContent.clientWidth - (hasText && isRecording ? 136 : 88),
+        0,
+      );
       textMirror.style.width = `${inlineTextareaWidth}px`;
 
       const lineHeight =
@@ -158,7 +186,7 @@ export const ChatInputBox = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [placeholder, value]);
+  }, [hasText, isRecording, placeholder, value]);
 
   return (
     <div className="flex flex-col">
@@ -221,7 +249,7 @@ export const ChatInputBox = ({
 
           <div
             className={cn(
-              "flex items-center",
+              "flex items-center gap-1.5",
               isSingleLine ? "shrink-0" : "justify-between",
             )}
           >
@@ -236,15 +264,48 @@ export const ChatInputBox = ({
                 <Plus />
               </Button>
             )}
-            <SendButton
-              onClick={submit}
-              disabled={!value.trim() || disabled}
-              isLoading={isSubmitting}
-              ariaLabel={sendButtonAriaLabel}
-            />
+            {(!hasText || isRecording || isStartingRecording) && (
+              <Button
+                type="button"
+                size="icon"
+                variant={isRecording ? "destructive" : "default"}
+                onClick={toggleTranscription}
+                disabled={disabled || isSubmitting}
+                aria-label={
+                  isRecording || isStartingRecording
+                    ? "Spracheingabe beenden"
+                    : "Spracheingabe starten"
+                }
+                className={cn(
+                  isRecording &&
+                    "bg-destructive text-white hover:bg-destructive/90",
+                )}
+              >
+                {isStartingRecording ? (
+                  <LoaderCircle className="size-4 animate-spin text-white" />
+                ) : isRecording ? (
+                  <Square className="size-3.5 fill-current text-white" />
+                ) : (
+                  <Mic className="size-4 text-white" />
+                )}
+              </Button>
+            )}
+            {hasText && (
+              <SendButton
+                onClick={submit}
+                disabled={disabled}
+                isLoading={isSubmitting}
+                ariaLabel={sendButtonAriaLabel}
+              />
+            )}
           </div>
         </div>
       </div>
+      {transcriptionError && (
+        <p className="mt-2 text-center text-xs text-destructive">
+          {transcriptionError}
+        </p>
+      )}
       {showDisclaimer && (
         <p className="mt-2 text-center text-xs text-muted-foreground">
           {disclaimerText}
