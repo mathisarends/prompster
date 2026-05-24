@@ -114,7 +114,7 @@ export const DeckPlayer = ({
         />
       </div>
 
-      <div className="deck-player-content flex min-h-16 items-center gap-4">
+      <div className="deck-player-content flex min-h-16 items-center gap-4 px-2">
         <Button
           type="button"
           size="icon"

@@ -180,7 +180,7 @@ export const DeckPlaylist = ({
   }, [filteredTracks.length, onVisibleTrackCountChange]);
 
   return (
-    <TooltipProvider delay={0}>
+    <TooltipProvider delay={550}>
       <div className={cn("flex h-full min-h-0 flex-1 flex-col", className)}>
         <div className="shrink-0">
           {showHeader ? (
@@ -257,7 +257,7 @@ export const DeckPlaylist = ({
         </div>
 
         <div className="min-h-0 flex-1 overflow-hidden">
-          <ScrollArea className="h-full min-h-0 overflow-hidden">
+          <ScrollArea className="h-full min-h-0 overflow-hidden pr-3">
             {filteredTracks.length > 0 ? (
               <div className="space-y-1 pb-3 pt-2">
                 {filteredTracks.map((track) => {

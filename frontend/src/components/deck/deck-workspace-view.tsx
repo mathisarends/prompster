@@ -213,16 +213,20 @@ export const DeckWorkspaceView = ({
   });
 
   const toggleTrackLockMutation = useMutation({
-    mutationFn: ({ trackId, isLocked }: { trackId: string; isLocked: boolean }) =>
+    mutationFn: ({
+      trackId,
+      isLocked,
+    }: {
+      trackId: string;
+      isLocked: boolean;
+    }) =>
       isLocked
         ? unlockPlaylistTrack(sessionId, trackId)
         : lockPlaylistTrack(sessionId, trackId),
     onSuccess: async (_data, variables) => {
       await invalidateSessionQueries();
       toast.success(
-        variables.isLocked
-          ? "Song wurde entsperrt."
-          : "Song wurde gesperrt.",
+        variables.isLocked ? "Song wurde entsperrt." : "Song wurde gesperrt.",
       );
     },
     onError: () => {
@@ -279,7 +283,10 @@ export const DeckWorkspaceView = ({
                 await addSpotifyTrackMutation.mutateAsync(track);
               }}
               onToggleTrackLock={async (trackId, isLocked) => {
-                await toggleTrackLockMutation.mutateAsync({ trackId, isLocked });
+                await toggleTrackLockMutation.mutateAsync({
+                  trackId,
+                  isLocked,
+                });
               }}
               isAddingSpotifyTrack={addSpotifyTrackMutation.isPending}
               lockingTrackId={

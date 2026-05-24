@@ -1,4 +1,11 @@
-import { Lock, LockOpen, MoreHorizontal, Pause, Play, Trash2 } from "lucide-react";
+import {
+  Lock,
+  LockOpen,
+  MoreHorizontal,
+  Pause,
+  Play,
+  Trash2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -7,7 +14,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { PlaylistTrack } from "@/lib/playlist-track";
 
@@ -84,7 +95,7 @@ export const DeckPlaylistTrackItem = ({
               <TooltipTrigger
                 render={
                   <Button
-                    size="icon-xs"
+                    size="icon-sm"
                     variant="ghost"
                     className="text-white hover:bg-white/15 hover:text-white"
                     aria-label={
@@ -143,7 +154,7 @@ export const DeckPlaylistTrackItem = ({
                 render={
                   <DropdownMenuTrigger
                     aria-label={`Mehr Optionen für ${track.title}`}
-                    className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground opacity-0 outline-none transition-opacity hover:bg-white/[0.06] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100 data-[state=open]:bg-white/[0.08] data-[state=open]:text-foreground data-[state=open]:opacity-100"
+                    className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground opacity-0 outline-none transition-opacity hover:bg-white/[0.06] hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100 data-[state=open]:bg-white/[0.08] data-[state=open]:text-foreground data-[state=open]:opacity-100"
                   >
                     <MoreHorizontal className="size-4" />
                   </DropdownMenuTrigger>
@@ -167,7 +178,9 @@ export const DeckPlaylistTrackItem = ({
                   className="text-destructive data-highlighted:bg-destructive/10 data-highlighted:text-destructive"
                 >
                   <Trash2 />
-                  <span>{isRemoving ? "Wird gelöscht..." : "Track löschen"}</span>
+                  <span>
+                    {isRemoving ? "Wird gelöscht..." : "Track löschen"}
+                  </span>
                 </DropdownMenuItem>
               ) : null}
             </DropdownMenuContent>

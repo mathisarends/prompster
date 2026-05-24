@@ -80,6 +80,7 @@ body::-webkit-scrollbar {
 
 html::-webkit-scrollbar-track,
 body::-webkit-scrollbar-track {
+  margin-block: 2rem;
   background: transparent;
 }
 
@@ -92,6 +93,14 @@ body::-webkit-scrollbar-thumb {
 html::-webkit-scrollbar-thumb:hover,
 body::-webkit-scrollbar-thumb:hover {
   background: hsl(0 0% 100% / 0.32);
+}
+
+html::-webkit-scrollbar-button,
+body::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 body {
@@ -112,6 +121,7 @@ body {
 }
 
 .prompster-scrollbar::-webkit-scrollbar-track {
+  margin-block: 1.5rem;
   background: transparent;
 }
 
@@ -607,7 +617,8 @@ body {
 }
 
 .deck-player-progress .player-slider:hover::-webkit-slider-runnable-track,
-.deck-player-progress .player-slider:focus-visible::-webkit-slider-runnable-track {
+.deck-player-progress
+  .player-slider:focus-visible::-webkit-slider-runnable-track {
   height: 5px;
 }
 
