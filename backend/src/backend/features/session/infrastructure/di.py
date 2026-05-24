@@ -4,7 +4,9 @@ from llmify import ChatModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from spotifyify import Spotifyify
 
+from backend.features.oauth_connections.application import SpotifyTokenService
 from backend.features.session.infrastructure.repository import SqlSessionRepository
+from backend.features.spotify.infrastructure.spotify_service import SpotifyService
 
 from backend.features.session.application import (
     SessionPlaylistExporter,
@@ -127,11 +129,13 @@ class SessionProvider(Provider):
         session_repository: SessionRepository,
         user_repository: UserRepository,
         metadata_generator: PlaylistMetadataGenerator,
-        spotify: Spotifyify,
+        spotify_service: SpotifyService,
+        spotify_token_service: SpotifyTokenService,
     ) -> SessionSpotifyPlaylistExporter:
         return SessionSpotifyPlaylistExporter(
             session_repository=session_repository,
             user_repository=user_repository,
             metadata_generator=metadata_generator,
-            spotify=spotify,
+            spotify_service=spotify_service,
+            spotify_token_service=spotify_token_service,
         )

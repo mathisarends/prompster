@@ -1,7 +1,12 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from spotifyify import Spotifyify
+from backend.features.oauth_connections.application import (
+    SpotifyConnectionNotFoundException,
+    SpotifyTokenRevokedException,
+    SpotifyTokenService,
+)
+from backend.features.spotify.infrastructure.spotify_service import SpotifyService
 
 from backend.features.session.application.ports import (
     PlaylistMetadataGenerator,
@@ -38,12 +43,14 @@ class SessionSpotifyPlaylistExporter:
         session_repository: SessionRepository,
         user_repository: UserRepository,
         metadata_generator: PlaylistMetadataGenerator,
-        spotify: Spotifyify,
+        spotify_service: SpotifyService,
+        spotify_token_service: SpotifyTokenService,
     ) -> None:
         self._session_repository = session_repository
         self._user_repository = user_repository
         self._metadata_generator = metadata_generator
-        self._spotify = spotify
+        self._spotify_service = spotify_service
+        self._spotify_token_service = spotify_token_service
 
     async def export(
         self, *, session_id: UUID, user_id: UUID
@@ -64,6 +71,8 @@ class SessionSpotifyPlaylistExporter:
                 f"Session {session.id} playlist has no tracks linked to Spotify."
             )
 
+        access_token = await self._require_spotify_access_token(user_id=user_id)
+
         metadata = await self._metadata_generator.generate(
             [self._to_metadata_track(track) for track in playlist.tracks]
         )
@@ -73,12 +82,14 @@ class SessionSpotifyPlaylistExporter:
         if playlist.spotify_playlist_id:
             playlist_id = await self._update_existing_playlist(
                 playlist_id=playlist.spotify_playlist_id,
+                access_token=access_token,
                 name=name,
                 description=description,
                 track_uris=track_uris,
             )
         else:
             playlist_id = await self._create_new_playlist(
+                access_token=access_token,
                 name=name,
                 description=description,
                 track_uris=track_uris,
@@ -101,39 +112,59 @@ class SessionSpotifyPlaylistExporter:
                 f"User {user_id} has no connected Spotify account."
             )
 
+    async def _require_spotify_access_token(self, *, user_id: UUID) -> str:
+        try:
+            token = await self._spotify_token_service.get_valid_access_token(
+                user_id=user_id,
+            )
+        except (
+            SpotifyConnectionNotFoundException,
+            SpotifyTokenRevokedException,
+        ) as exc:
+            raise SessionExportRequiresSpotifyConnectionError(
+                f"User {user_id} has no connected Spotify account."
+            ) from exc
+        return token.access_token
+
     async def _create_new_playlist(
         self,
         *,
+        access_token: str,
         name: str,
         description: str,
         track_uris: list[str],
     ) -> str:
-        created = await self._spotify.playlists.create(
+        playlist_id = await self._spotify_service.create_private_playlist(
+            access_token=access_token,
             name=name,
             description=description,
-            public=False,
         )
-        playlist_id = created.id or ""
-        if track_uris:
-            await self._spotify.playlists.add(playlist_id, track_uris)
+        await self._spotify_service.replace_playlist_tracks(
+            access_token=access_token,
+            playlist_id=playlist_id,
+            track_uris=track_uris,
+        )
         return playlist_id
 
     async def _update_existing_playlist(
         self,
         *,
         playlist_id: str,
+        access_token: str,
         name: str,
         description: str,
         track_uris: list[str],
     ) -> str:
-        await self._spotify.playlists.update(
-            playlist_id,
+        await self._spotify_service.update_playlist_details(
+            access_token=access_token,
+            playlist_id=playlist_id,
             name=name,
             description=description,
         )
-        await self._spotify.http.put(
-            f"/playlists/{playlist_id}/tracks",
-            payload={"uris": track_uris},
+        await self._spotify_service.replace_playlist_tracks(
+            access_token=access_token,
+            playlist_id=playlist_id,
+            track_uris=track_uris,
         )
         return playlist_id
 

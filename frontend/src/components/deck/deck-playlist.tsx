@@ -20,6 +20,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchBar } from "@/components/deck/search-bar";
 import { SpotifyTrackSearchPanel } from "@/components/deck/spotify-track-search-panel";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
 import type { PlaylistTrack } from "@/lib/playlist-track";
 import { useOptimisticRemoval } from "@/hooks/useOptimisticRemoval";
@@ -96,7 +97,10 @@ export const DeckPlaylist = ({
   controller,
 }: DeckPlaylistProps) => {
   const [query, setQuery] = useState("");
-  const [sortMode, setSortMode] = useState<SortMode>("playlist");
+  const [sortMode, setSortMode] = useLocalStorage<SortMode>(
+    "deck-playlist-sort-mode",
+    "playlist",
+  );
   const [spotifySearchOpen, setSpotifySearchOpen] = useState(false);
   const [spotifySearchQuery, setSpotifySearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);

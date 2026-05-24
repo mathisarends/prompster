@@ -206,3 +206,92 @@ class TestSpotifyService:
         assert spotify.tracks.received_query is None
         assert spotify.playlists.received_query is None
         assert spotify.artists.received_query is None
+
+    def test_create_private_playlist_uses_user_token_flow(self) -> None:
+        spotify = _SpotifyStub()
+        service = SpotifyService(spotify=cast(Any, spotify))
+        calls: list[tuple[str, str, dict | None, str]] = []
+        responses: list[dict | None] = [{"id": "user-1"}, {"id": "playlist-1"}]
+
+        async def _request_user_api(
+            *,
+            access_token: str,
+            method: str,
+            path: str,
+            payload: dict | None = None,
+        ) -> dict | list | None:
+            calls.append((method, path, payload, access_token))
+            return responses.pop(0)
+
+        service._request_user_api = _request_user_api  # type: ignore[method-assign]
+
+        playlist_id = asyncio.run(
+            service.create_private_playlist(
+                access_token="token-123",
+                name="Roadtrip",
+                description="Late night drive",
+            )
+        )
+
+        assert playlist_id == "playlist-1"
+        assert calls == [
+            ("GET", "/me", None, "token-123"),
+            (
+                "POST",
+                "/users/user-1/playlists",
+                {
+                    "name": "Roadtrip",
+                    "description": "Late night drive",
+                    "public": False,
+                },
+                "token-123",
+            ),
+        ]
+
+    def test_update_playlist_and_replace_tracks_use_user_token(self) -> None:
+        spotify = _SpotifyStub()
+        service = SpotifyService(spotify=cast(Any, spotify))
+        calls: list[tuple[str, str, dict | None, str]] = []
+
+        async def _request_user_api(
+            *,
+            access_token: str,
+            method: str,
+            path: str,
+            payload: dict | None = None,
+        ) -> dict | list | None:
+            calls.append((method, path, payload, access_token))
+            return None
+
+        service._request_user_api = _request_user_api  # type: ignore[method-assign]
+
+        asyncio.run(
+            service.update_playlist_details(
+                access_token="token-123",
+                playlist_id="playlist-1",
+                name="Updated",
+                description="Updated description",
+            )
+        )
+        asyncio.run(
+            service.replace_playlist_tracks(
+                access_token="token-123",
+                playlist_id="playlist-1",
+                track_uris=["spotify:track:1", "spotify:track:2"],
+            )
+        )
+
+        assert calls == [
+            (
+                "PUT",
+                "/playlists/playlist-1",
+                {"name": "Updated", "description": "Updated description"},
+                "token-123",
+            ),
+            (
+                "PUT",
+                "/playlists/playlist-1/tracks",
+                {"uris": ["spotify:track:1", "spotify:track:2"]},
+                "token-123",
+            ),
+        ]

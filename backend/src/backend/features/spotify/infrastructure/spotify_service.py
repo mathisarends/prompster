@@ -1,6 +1,7 @@
 import asyncio
 from collections.abc import Awaitable
 
+import httpx
 from spotifyify import Image, Spotifyify, Track
 from spotifyify.schemas import Artist, SimplifiedPlaylist
 
@@ -17,8 +18,66 @@ type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[Spotif
 
 
 class SpotifyService:
+    _SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1"
+
     def __init__(self, spotify: Spotifyify) -> None:
         self._spotify = spotify
+
+    async def create_private_playlist(
+        self,
+        *,
+        access_token: str,
+        name: str,
+        description: str,
+    ) -> str:
+        user_id = await self._get_current_user_id(access_token=access_token)
+        payload = {
+            "name": name,
+            "description": description,
+            "public": False,
+        }
+        data = await self._request_user_api(
+            access_token=access_token,
+            method="POST",
+            path=f"/users/{user_id}/playlists",
+            payload=payload,
+        )
+        if not isinstance(data, dict):
+            raise ValueError("Spotify playlist creation failed")
+
+        playlist_id = data.get("id")
+        if not isinstance(playlist_id, str) or not playlist_id.strip():
+            raise ValueError("Spotify playlist creation did not return an id")
+        return playlist_id
+
+    async def update_playlist_details(
+        self,
+        *,
+        access_token: str,
+        playlist_id: str,
+        name: str,
+        description: str,
+    ) -> None:
+        await self._request_user_api(
+            access_token=access_token,
+            method="PUT",
+            path=f"/playlists/{playlist_id}",
+            payload={"name": name, "description": description},
+        )
+
+    async def replace_playlist_tracks(
+        self,
+        *,
+        access_token: str,
+        playlist_id: str,
+        track_uris: list[str],
+    ) -> None:
+        await self._request_user_api(
+            access_token=access_token,
+            method="PUT",
+            path=f"/playlists/{playlist_id}/tracks",
+            payload={"uris": track_uris},
+        )
 
     async def search_unified(
         self,
@@ -103,6 +162,65 @@ class SpotifyService:
             for artist in result.items or []
             if artist is not None and artist.id and artist.name
         ]
+
+    async def _get_current_user_id(self, *, access_token: str) -> str:
+        data = await self._request_user_api(
+            access_token=access_token,
+            method="GET",
+            path="/me",
+        )
+        if not isinstance(data, dict):
+            raise ValueError("Spotify user lookup failed")
+
+        user_id = data.get("id")
+        if not isinstance(user_id, str) or not user_id.strip():
+            raise ValueError("Spotify user lookup did not return an id")
+        return user_id
+
+    async def _request_user_api(
+        self,
+        *,
+        access_token: str,
+        method: str,
+        path: str,
+        payload: dict | None = None,
+    ) -> dict | list | None:
+        headers = {"Authorization": f"Bearer {access_token}"}
+        async with httpx.AsyncClient(
+            base_url=self._SPOTIFY_API_BASE_URL,
+            timeout=10.0,
+        ) as client:
+            response = await client.request(
+                method=method,
+                url=path,
+                headers=headers,
+                json=payload,
+            )
+
+        if response.status_code >= 400:
+            try:
+                response_payload = response.json()
+            except ValueError:
+                response_payload = None
+
+            detail = response.text
+            if isinstance(response_payload, dict):
+                error = response_payload.get("error")
+                if isinstance(error, dict):
+                    detail = str(error.get("message") or detail)
+                elif isinstance(error, str) and error.strip():
+                    detail = error
+            raise ValueError(
+                f"Spotify API request failed ({response.status_code}): {detail}"
+            )
+
+        if response.status_code == 204 or not response.content:
+            return None
+
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise ValueError("Spotify API response was not valid JSON") from exc
 
 
 def _to_spotify_playlist(playlist: SimplifiedPlaylist) -> SpotifyPlaylist:

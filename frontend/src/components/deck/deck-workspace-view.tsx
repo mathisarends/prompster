@@ -1,11 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Download,
-  ExternalLink,
-  ListMusic,
-  Music2,
-} from "lucide-react";
+import { Download, ExternalLink, ListMusic, Music2 } from "lucide-react";
 import { toast } from "sonner";
 
 import type {
@@ -28,10 +23,7 @@ import {
   DeckPlaylist,
   type DeckPlaylistController,
 } from "@/components/deck/deck-playlist";
-import {
-  DeckExportActions,
-  usePdfPreview,
-} from "@/components/deck/export";
+import { DeckExportActions, usePdfPreview } from "@/components/deck/export";
 import { SpotifyConnectDialog } from "@/components/deck/spotify-connect-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -233,11 +225,8 @@ export const DeckWorkspaceView = ({
       isPinned
         ? unpinPlaylistTrack(sessionId, trackId)
         : pinPlaylistTrack(sessionId, trackId),
-    onSuccess: async (_data, variables) => {
+    onSuccess: async () => {
       await invalidateSessionQueries();
-      toast.success(
-        variables.isPinned ? "Song wurde entpinnt." : "Song wurde angepinnt.",
-      );
     },
     onError: () => {
       toast.error("Song konnte nicht aktualisiert werden.");
