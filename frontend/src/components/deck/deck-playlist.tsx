@@ -421,7 +421,6 @@ export const DeckPlaylist = ({
           onSeek={playback.onSeek}
           onVolumeChange={playback.onVolumeChange}
         />
-
       </div>
     </TooltipProvider>
   );

@@ -121,14 +121,19 @@ export const DeckPlaylistTrackItem = ({
           </div>
         </div>
         <div className="min-w-0">
-          <p
-            className={cn(
-              "truncate text-sm font-semibold leading-tight",
-              isActive ? "text-primary" : "text-foreground",
-            )}
-          >
-            {track.title}
-          </p>
+          <div className="flex min-w-0 items-center gap-1">
+            {track.isPinned ? (
+              <Pin className="size-3 shrink-0 text-primary/70" />
+            ) : null}
+            <p
+              className={cn(
+                "truncate text-sm font-semibold leading-tight",
+                isActive ? "text-primary" : "text-foreground",
+              )}
+            >
+              {track.title}
+            </p>
+          </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {track.artist}
           </p>

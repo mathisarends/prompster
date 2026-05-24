@@ -115,7 +115,7 @@ class Session(Aggregate):
         year: int | None = None,
         spotify_uri: str | None = None,
         cover_url: str | None = None,
-        is_pinned: bool = False,
+        is_pinned: bool = True,
     ) -> PlaylistTrack:
         if self._playlist is None:
             self._playlist = Playlist(tracks=[])

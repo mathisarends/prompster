@@ -91,7 +91,10 @@ export const SpotifyTrackSearchPanel = ({
           ) : search.isLoading ? (
             <EmptySearchState icon={Loader2} text="Spotify sucht..." spin />
           ) : search.isError ? (
-            <EmptySearchState icon={Search} text="Spotify-Suche nicht verfügbar." />
+            <EmptySearchState
+              icon={Search}
+              text="Spotify-Suche nicht verfügbar."
+            />
           ) : !hasResults ? (
             <EmptySearchState icon={Search} text="Keine Treffer bei Spotify." />
           ) : (

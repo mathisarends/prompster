@@ -176,7 +176,7 @@ class AddPlaylistTrackRequest(Schema):
     year: int | None = Field(default=None, ge=1900, le=2100)
     spotify_uri: str | None = None
     cover_url: str | None = None
-    is_pinned: bool = False
+    is_pinned: bool = True
 
 
 class SpotifyPlaylistExportResponse(Schema):
