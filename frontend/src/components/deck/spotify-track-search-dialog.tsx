@@ -1,11 +1,10 @@
 import { Children, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Disc3, Loader2, Plus, Search, UserRound } from "lucide-react";
+import { Loader2, Plus, Search, UserRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { useSearchSpotify } from "@/api/generated/spotify/spotify";
 import { SpotifySearchType } from "@/api/generated/model";
 import type {
-  SpotifyAlbumResponse,
   SpotifyArtistResponse,
   SpotifyTrackResponse,
 } from "@/api/generated/model";
@@ -51,11 +50,7 @@ export const SpotifyTrackSearchDialog = ({
     () => ({
       query: normalizedQuery || "_",
       limit: 8,
-      types: [
-        SpotifySearchType.track,
-        SpotifySearchType.artist,
-        SpotifySearchType.album,
-      ],
+      types: [SpotifySearchType.track, SpotifySearchType.artist],
     }),
     [normalizedQuery],
   );
@@ -69,9 +64,7 @@ export const SpotifyTrackSearchDialog = ({
 
   const tracks = search.data?.tracks ?? [];
   const artists = search.data?.artists ?? [];
-  const albums = search.data?.albums ?? [];
-  const hasResults =
-    tracks.length > 0 || artists.length > 0 || albums.length > 0;
+  const hasResults = tracks.length > 0 || artists.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -79,7 +72,7 @@ export const SpotifyTrackSearchDialog = ({
         <div className="border-b border-white/[0.07] px-4 py-3">
           <DialogTitle>Spotify durchsuchen</DialogTitle>
           <DialogDescription className="mt-1">
-            Songs hinzufügen, nach Artists und Alben verfeinern.
+            Songs hinzufügen und nach Artists verfeinern.
           </DialogDescription>
         </div>
 
@@ -88,7 +81,7 @@ export const SpotifyTrackSearchDialog = ({
             value={query}
             autoFocus
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Titel, Artist oder Album suchen..."
+            placeholder="Titel oder Artist suchen..."
             containerClassName="px-0"
             inputClassName="h-11 bg-white/[0.06] text-base"
           />
@@ -140,18 +133,6 @@ export const SpotifyTrackSearchDialog = ({
                       key={artist.id}
                       artist={artist}
                       onSearch={() => setQuery(artist.name)}
-                    />
-                  ))}
-                </ResultGroup>
-
-                <ResultGroup title="Alben" emptyText="Keine Alben gefunden.">
-                  {albums.map((album) => (
-                    <AlbumResultRow
-                      key={album.id}
-                      album={album}
-                      onSearch={() =>
-                        setQuery(`${album.name} ${album.artist}`.trim())
-                      }
                     />
                   ))}
                 </ResultGroup>
@@ -271,36 +252,6 @@ const ArtistResultRow = ({ artist, onSearch }: ArtistResultRowProps) => (
       </p>
       <p className="mt-0.5 truncate text-xs text-muted-foreground">
         {artist.genres.slice(0, 2).join(", ") || "Artist"}
-      </p>
-    </div>
-    <Search className="size-4 text-muted-foreground" />
-  </button>
-);
-
-type AlbumResultRowProps = {
-  album: SpotifyAlbumResponse;
-  onSearch: () => void;
-};
-
-const AlbumResultRow = ({ album, onSearch }: AlbumResultRowProps) => (
-  <button
-    type="button"
-    onClick={onSearch}
-    className="grid w-full grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
-  >
-    <Cover
-      src={album.coverUrl}
-      alt={`${album.name} Cover`}
-      fallback={<Disc3 className="size-4" />}
-    />
-    <div className="min-w-0">
-      <p className="truncate text-sm font-semibold leading-tight">
-        {album.name}
-      </p>
-      <p className="mt-0.5 truncate text-xs text-muted-foreground">
-        {album.artist}
-        {album.year ? ` · ${album.year}` : ""}
-        {album.totalTracks ? ` · ${album.totalTracks} Tracks` : ""}
       </p>
     </div>
     <Search className="size-4 text-muted-foreground" />

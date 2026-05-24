@@ -44,7 +44,6 @@ export * from "./sessionSummaryListResponse";
 export * from "./sessionSummaryResponse";
 export * from "./sessionUpdateRequest";
 export * from "./spotifyAccessTokenResponse";
-export * from "./spotifyAlbumResponse";
 export * from "./spotifyArtistResponse";
 export * from "./spotifyPlaylistExportResponse";
 export * from "./spotifyPlaylistResponse";

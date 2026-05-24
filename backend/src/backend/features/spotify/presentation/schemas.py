@@ -36,17 +36,7 @@ class SpotifyArtistResponse(Schema):
     image_url: str | None = None
 
 
-class SpotifyAlbumResponse(Schema):
-    id: str
-    name: str
-    artist: str
-    year: int | None = None
-    cover_url: str | None = None
-    total_tracks: int | None = None
-
-
 class SpotifyUnifiedSearchResponse(Schema):
     tracks: list[SpotifyTrackResponse]
     playlists: list[SpotifyPlaylistResponse]
     artists: list[SpotifyArtistResponse]
-    albums: list[SpotifyAlbumResponse]

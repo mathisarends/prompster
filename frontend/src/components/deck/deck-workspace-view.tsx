@@ -218,7 +218,10 @@ export const DeckWorkspaceView = ({
       />
 
       <ChatWorkspacePanel>
-        <Tabs defaultValue="playlist" className="min-h-0 flex-1 gap-3">
+        <Tabs
+          defaultValue="playlist"
+          className="h-full min-h-0 flex-1 gap-3 overflow-hidden"
+        >
           <div className="flex shrink-0 items-center justify-between gap-3">
             <TabsList variant="line" className="h-9">
               <TabsTrigger value="playlist">
@@ -235,7 +238,10 @@ export const DeckWorkspaceView = ({
             </span>
           </div>
 
-          <TabsContent value="playlist" className="min-h-0 flex-1 flex-col">
+          <TabsContent
+            value="playlist"
+            className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          >
             {playerState.status === "premium-required" ? (
               <div className="mb-3 rounded-md border border-amber-300/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
                 Spotify Premium ist erforderlich, um Web-Playback im Browser zu
@@ -257,7 +263,10 @@ export const DeckWorkspaceView = ({
             />
           </TabsContent>
 
-          <TabsContent value="export" className="min-h-0 flex-1 flex-col">
+          <TabsContent
+            value="export"
+            className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          >
             <ExportActions
               trackCount={tracks.length}
               isExportingPdf={exportPdfMutation.isPending}

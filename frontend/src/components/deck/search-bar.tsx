@@ -34,6 +34,10 @@ export const SearchBar = ({
       <Input
         ref={inputRef}
         onChange={onChange}
+        autoCapitalize="none"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
         className={cn(
           "rounded-md border-transparent bg-white/[0.04] pl-9 text-sm shadow-none placeholder:text-muted-foreground/70 focus-visible:border-transparent",
           inputClassName,

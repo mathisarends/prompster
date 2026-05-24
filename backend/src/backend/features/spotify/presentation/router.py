@@ -5,7 +5,6 @@ from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.spotify.application import SpotifySearchType
 from backend.features.spotify.infrastructure.spotify_service import SpotifyService
 from backend.features.spotify.presentation.mapper import (
-    to_spotify_album_response,
     to_spotify_artist_response,
     to_spotify_playlist_response,
     to_spotify_track_response,
@@ -40,7 +39,6 @@ async def search_spotify(
             SpotifySearchType.TRACK,
             SpotifySearchType.PLAYLIST,
             SpotifySearchType.ARTIST,
-            SpotifySearchType.ALBUM,
         },
         description="Search resource types",
     ),
@@ -60,5 +58,4 @@ async def search_spotify(
         artists=[
             to_spotify_artist_response(artist) for artist in search_results.artists
         ],
-        albums=[to_spotify_album_response(album) for album in search_results.albums],
     )

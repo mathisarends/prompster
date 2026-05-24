@@ -2,24 +2,18 @@ import asyncio
 from collections.abc import Awaitable
 
 from spotifyify import Image, Spotifyify, Track
-from spotifyify.schemas import Artist, SimplifiedAlbum, SimplifiedPlaylist
+from spotifyify.schemas import Artist, SimplifiedPlaylist
 
 from backend.features.spotify.application.ports import (
     DEFAULT_SPOTIFY_SEARCH_TYPES,
     SpotifyArtist,
-    SpotifyAlbum,
     SpotifyPlaylist,
     SpotifySearchType,
     SpotifyTrack,
     SpotifyUnifiedSearchResult,
 )
 
-type SearchTaskResult = (
-    list[SpotifyTrack]
-    | list[SpotifyPlaylist]
-    | list[SpotifyArtist]
-    | list[SpotifyAlbum]
-)
+type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[SpotifyArtist]
 
 
 class SpotifyService:
@@ -35,9 +29,7 @@ class SpotifyService:
     ) -> SpotifyUnifiedSearchResult:
         normalized_query = query.strip()
         if not normalized_query:
-            return SpotifyUnifiedSearchResult(
-                tracks=[], playlists=[], artists=[], albums=[]
-            )
+            return SpotifyUnifiedSearchResult(tracks=[], playlists=[], artists=[])
 
         requested_types = types or set(DEFAULT_SPOTIFY_SEARCH_TYPES)
         search_tasks: dict[SpotifySearchType, Awaitable[SearchTaskResult]] = {}
@@ -57,16 +49,9 @@ class SpotifyService:
                 query=normalized_query,
                 limit=limit,
             )
-        if SpotifySearchType.ALBUM in requested_types:
-            search_tasks[SpotifySearchType.ALBUM] = self._search_albums(
-                query=normalized_query,
-                limit=limit,
-            )
 
         if not search_tasks:
-            return SpotifyUnifiedSearchResult(
-                tracks=[], playlists=[], artists=[], albums=[]
-            )
+            return SpotifyUnifiedSearchResult(tracks=[], playlists=[], artists=[])
 
         task_results = await asyncio.gather(*search_tasks.values())
         results_by_type = dict(zip(search_tasks, task_results, strict=False))
@@ -75,7 +60,6 @@ class SpotifyService:
             tracks=list(results_by_type.get(SpotifySearchType.TRACK, [])),
             playlists=list(results_by_type.get(SpotifySearchType.PLAYLIST, [])),
             artists=list(results_by_type.get(SpotifySearchType.ARTIST, [])),
-            albums=list(results_by_type.get(SpotifySearchType.ALBUM, [])),
         )
 
     async def _search_tracks(
@@ -120,20 +104,6 @@ class SpotifyService:
             if artist is not None and artist.id and artist.name
         ]
 
-    async def _search_albums(
-        self, *, query: str, limit: int = 20
-    ) -> list[SpotifyAlbum]:
-        normalized_query = query.strip()
-        if not normalized_query:
-            return []
-
-        result = await self._spotify.albums.find(normalized_query, limit=limit)
-        return [
-            _to_spotify_album(album)
-            for album in result.items or []
-            if album is not None and album.id and album.name
-        ]
-
 
 def _to_spotify_playlist(playlist: SimplifiedPlaylist) -> SpotifyPlaylist:
     total = playlist.items.total if playlist.items else None
@@ -173,18 +143,6 @@ def _to_spotify_artist(artist: Artist) -> SpotifyArtist:
         followers=followers,
         popularity=artist.popularity,
         image_url=image_url,
-    )
-
-
-def _to_spotify_album(album: SimplifiedAlbum) -> SpotifyAlbum:
-    artists = ", ".join(artist.name for artist in album.artists or [] if artist.name)
-    return SpotifyAlbum(
-        id=album.id or "",
-        name=album.name or "",
-        artist=artists,
-        year=_release_year(album.release_date),
-        cover_url=_cover_url(album.images),
-        total_tracks=album.total_tracks,
     )
 
 

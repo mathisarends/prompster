@@ -13,5 +13,4 @@ export const SpotifySearchType = {
   track: "track",
   playlist: "playlist",
   artist: "artist",
-  album: "album",
 } as const;
