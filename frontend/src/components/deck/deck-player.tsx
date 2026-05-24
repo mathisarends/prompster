@@ -100,7 +100,7 @@ export const DeckPlayer = ({
   const durationLabel = formatDuration(durationSeconds);
 
   return (
-    <div className="deck-player -mx-5 -mb-5 shrink-0 overflow-visible border-t border-white/[0.08] bg-background/95 px-5 pb-3 pt-4 shadow-[0_-18px_48px_hsl(222_52%_4%/0.5)] backdrop-blur-xl">
+    <div className="deck-player group/player isolate -mx-5 -mb-5 mt-2 shrink-0 overflow-visible border-t border-white/[0.08] bg-background/78 px-5 pb-3 pt-4 shadow-[0_-18px_46px_hsl(222_52%_4%/0.36)] backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-200 hover:border-white/[0.12] hover:bg-background/86 focus-within:border-white/[0.12] focus-within:bg-background/86">
       <div className="deck-player-progress absolute inset-x-0 top-0">
         <PlayerSlider
           min={0}
@@ -114,21 +114,29 @@ export const DeckPlayer = ({
         />
       </div>
 
-      <div className="deck-player-content flex min-h-16 items-center gap-4 px-2">
-        <Button
+      <div className="deck-player-content flex min-h-16 items-center gap-4 px-1.5">
+        <button
           type="button"
-          size="icon"
-          className="size-10 shrink-0 rounded-full bg-foreground text-background shadow-[0_10px_24px_hsl(0_0%_0%/0.28)] hover:scale-[1.03] hover:bg-foreground"
-          aria-label={isPlaying ? "Pause" : "Abspielen"}
+          className="deck-player-cover group/cover relative h-12 w-12 shrink-0 overflow-hidden rounded-[4px] bg-white/[0.06] text-white shadow-[0_10px_28px_hsl(0_0%_0%/0.28)] ring-1 ring-white/[0.06] transition hover:ring-primary/55 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-60"
+          aria-label={isPlaying ? "Track pausieren" : "Track fortsetzen"}
           disabled={!activeTrack}
           onClick={handlePlayPause}
         >
-          {isPlaying ? (
-            <Pause className="size-5 fill-current" />
-          ) : (
-            <Play className="ml-0.5 size-5 fill-current" />
-          )}
-        </Button>
+          {activeTrack?.coverUrl ? (
+            <img
+              src={activeTrack.coverUrl}
+              alt={`${activeTrack.title} Cover`}
+              className="h-full w-full object-cover"
+            />
+          ) : null}
+          <span className="absolute inset-0 grid place-items-center bg-black/55 opacity-0 transition-opacity group-hover/cover:opacity-100 group-focus-visible/cover:opacity-100">
+            {isPlaying ? (
+              <Pause className="size-5 fill-current" />
+            ) : (
+              <Play className="ml-0.5 size-5 fill-current" />
+            )}
+          </span>
+        </button>
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold leading-tight text-foreground">
@@ -179,16 +187,6 @@ export const DeckPlayer = ({
               }
             />
           </div>
-        </div>
-
-        <div className="deck-player-cover h-12 w-12 shrink-0 overflow-hidden rounded-[4px] bg-white/[0.06] shadow-[0_10px_28px_hsl(0_0%_0%/0.28)] ring-1 ring-white/[0.06]">
-          {activeTrack?.coverUrl ? (
-            <img
-              src={activeTrack.coverUrl}
-              alt={`${activeTrack.title} Cover`}
-              className="h-full w-full object-cover"
-            />
-          ) : null}
         </div>
       </div>
     </div>

@@ -1,12 +1,9 @@
 import { useMemo, useState, type Ref } from "react";
-import { Search } from "lucide-react";
 
 import { useSearchSpotify } from "@/api/generated/spotify/spotify";
 import { SpotifySearchType } from "@/api/generated/model";
 import type { SpotifyTrackResponse } from "@/api/generated/model";
-import { EmptySearchState } from "@/components/deck/search-panel/empty-search-state";
-import { SearchResultsSkeleton } from "@/components/deck/search-panel/search-results-skeleton";
-import { TrackResultRow } from "@/components/deck/search-panel/track-result-row";
+import { SearchPanelContent } from "@/components/deck/search-panel/search-panel-content";
 
 type SpotifyTrackSearchPanelProps = {
   panelRef?: Ref<HTMLDivElement>;
@@ -54,7 +51,6 @@ export const SpotifyTrackSearchPanel = ({
       ),
     [addedTrackIds, search.data?.tracks],
   );
-  const hasResults = tracks.length > 0;
 
   const addTrack = async (track: SpotifyTrackResponse) => {
     await onAddTrack(track);
@@ -72,33 +68,17 @@ export const SpotifyTrackSearchPanel = ({
     >
       <div className="prompster-scrollbar max-h-[min(42vh,27rem)] overflow-y-auto px-3 pr-1">
         <div className="space-y-4 py-3">
-          {!canSearch ? (
-            <EmptySearchState
-              icon={Search}
-              text="Fang an zu tippen, um bei Spotify zu suchen."
-            />
-          ) : search.isLoading ? (
-            <SearchResultsSkeleton />
-          ) : search.isError ? (
-            <EmptySearchState
-              icon={Search}
-              text="Spotify-Suche nicht verfügbar."
-            />
-          ) : !hasResults ? (
-            <EmptySearchState icon={Search} text="Keine Treffer bei Spotify." />
-          ) : (
-            <div className="space-y-1">
-              {tracks.map((track) => (
-                <TrackResultRow
-                  key={track.id}
-                  track={track}
-                  isAdding={isAdding && addingTrackId === track.id}
-                  disabled={isAdding}
-                  onAdd={() => void addTrack(track)}
-                />
-              ))}
-            </div>
-          )}
+          <SearchPanelContent
+            canSearch={canSearch}
+            isLoading={search.isLoading}
+            isError={search.isError}
+            tracks={tracks}
+            isAdding={isAdding}
+            addingTrackId={addingTrackId}
+            onAddTrack={(track) => {
+              void addTrack(track);
+            }}
+          />
         </div>
       </div>
     </section>

@@ -25,7 +25,9 @@ export const TrackResultRow = ({
   <div className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-white/[0.04]">
     <TrackCover src={track.coverUrl} alt={`${track.title} Cover`} />
     <div className="min-w-0">
-      <p className="truncate text-sm font-semibold leading-tight">{track.title}</p>
+      <p className="truncate text-sm font-semibold leading-tight">
+        {track.title}
+      </p>
       <p className="mt-0.5 truncate text-xs text-muted-foreground">
         {track.artist}
         {track.album ? ` · ${track.album}` : ""}
