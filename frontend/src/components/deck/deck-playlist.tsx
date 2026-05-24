@@ -43,6 +43,8 @@ type DeckPlaylistProps = {
     isPinned: boolean,
   ) => Promise<void> | void;
   onAddSpotifyTrack?: (track: SpotifyTrackResponse) => Promise<void> | void;
+  onPreviewSpotifyTrack?: (track: SpotifyTrackResponse) => void;
+  previewTrack?: PlaylistTrack | null;
   isAddingSpotifyTrack?: boolean;
   addingSpotifyTrackId?: string | null;
   pinningTrackId?: string | null;
@@ -91,6 +93,8 @@ export const DeckPlaylist = ({
   onRemoveTrack,
   onToggleTrackPin,
   onAddSpotifyTrack,
+  onPreviewSpotifyTrack,
+  previewTrack = null,
   isAddingSpotifyTrack = false,
   addingSpotifyTrackId = null,
   pinningTrackId = null,
@@ -144,12 +148,15 @@ export const DeckPlaylist = ({
       .map(({ track }) => track);
   }, [sortMode, visibleTracks]);
 
-  const activeTrack = useMemo(
-    () =>
+  const activeTrack = useMemo(() => {
+    if (previewTrack && previewTrack.id === playback.activeTrackId) {
+      return previewTrack;
+    }
+    return (
       playback.tracks.find((track) => track.id === playback.activeTrackId) ??
-      null,
-    [playback.activeTrackId, playback.tracks],
-  );
+      null
+    );
+  }, [playback.activeTrackId, playback.tracks, previewTrack]);
 
   const filteredTracks = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -181,7 +188,8 @@ export const DeckPlaylist = ({
   const searchValue = isSpotifySearchActive ? spotifySearchQuery : query;
 
   const openSpotifySearch = (initialQuery = "") => {
-    setSpotifySearchQuery(initialQuery.trim());
+    const trimmed = initialQuery.trim();
+    setSpotifySearchQuery((current) => current || trimmed);
     setSpotifySearchOpen(true);
   };
 
@@ -251,6 +259,14 @@ export const DeckPlaylist = ({
                   } else {
                     setQuery(event.target.value);
                   }
+                }}
+                onClear={() => {
+                  if (isSpotifySearchActive) {
+                    setSpotifySearchQuery("");
+                  } else {
+                    setQuery("");
+                  }
+                  searchInputRef.current?.focus();
                 }}
                 placeholder={
                   isSpotifySearchActive
@@ -350,7 +366,11 @@ export const DeckPlaylist = ({
               query={spotifySearchQuery}
               isAdding={isAddingSpotifyTrack}
               addingTrackId={addingSpotifyTrackId}
+              activeTrackId={playback.activeTrackId}
+              isPlaying={playback.isPlaying}
               onAddTrack={onAddSpotifyTrack}
+              onPreviewTrack={onPreviewSpotifyTrack}
+              onTogglePreviewPlayPause={playback.onPlayPause}
             />
           ) : null}
         </div>

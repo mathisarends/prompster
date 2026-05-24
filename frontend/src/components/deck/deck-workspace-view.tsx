@@ -35,6 +35,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSpotifyOAuthPopup } from "@/hooks/useSpotifyOAuthPopup";
 import { useSpotifyPlayer } from "@/hooks/useSpotifyPlayer";
+import type { PlaylistTrack } from "@/lib/playlist-track";
 
 type DeckWorkspaceViewProps = {
   sessionId: string;
@@ -58,6 +59,7 @@ export const DeckWorkspaceView = ({
   const [addingSpotifyTrackId, setAddingSpotifyTrackId] = useState<
     string | null
   >(null);
+  const [previewTrack, setPreviewTrack] = useState<PlaylistTrack | null>(null);
   const [exportedPlaylist, setExportedPlaylist] =
     useState<SpotifyPlaylistExportResponse | null>(null);
   const [activeTab, setActiveTab] = useState("playlist");
@@ -85,12 +87,20 @@ export const DeckWorkspaceView = ({
     [playlist.tracks],
   );
 
-  const activeTrackId = useMemo(
-    () =>
-      tracks.find((track) => track.spotifyUri === playerState.currentTrackUri)
-        ?.id ?? null,
-    [playerState.currentTrackUri, tracks],
-  );
+  const activeTrackId = useMemo(() => {
+    const playlistMatch = tracks.find(
+      (track) => track.spotifyUri === playerState.currentTrackUri,
+    );
+    if (playlistMatch) return playlistMatch.id;
+
+    if (
+      previewTrack &&
+      previewTrack.spotifyUri === playerState.currentTrackUri
+    ) {
+      return previewTrack.id;
+    }
+    return null;
+  }, [playerState.currentTrackUri, previewTrack, tracks]);
 
   const controller = useMemo<DeckPlaylistController>(
     () => ({
@@ -100,7 +110,9 @@ export const DeckWorkspaceView = ({
       durationSeconds: playerState.durationMs / 1000,
       volume,
       onPlayTrack: (trackId: string) => {
-        const track = tracks.find((candidate) => candidate.id === trackId);
+        const track =
+          tracks.find((candidate) => candidate.id === trackId) ??
+          (previewTrack?.id === trackId ? previewTrack : null);
         if (!track?.spotifyUri) {
           return;
         }
@@ -129,6 +141,7 @@ export const DeckWorkspaceView = ({
       playerState.durationMs,
       playerState.isPaused,
       playerState.positionMs,
+      previewTrack,
       resume,
       seek,
       setSpotifyVolume,
@@ -136,6 +149,21 @@ export const DeckWorkspaceView = ({
       volume,
     ],
   );
+
+  const previewSpotifyTrack = (track: SpotifyTrackResponse) => {
+    const uri = `spotify:track:${track.id}`;
+    setPreviewTrack({
+      id: track.id,
+      title: track.title,
+      artist: track.artist,
+      year: track.year?.toString() ?? "",
+      durationSeconds: 0,
+      coverUrl: track.coverUrl ?? "",
+      spotifyUri: uri,
+      isPinned: false,
+    });
+    void playTrack(uri);
+  };
 
   const connectRequired =
     (!isMeLoading && !me?.spotifyConnected) ||
@@ -288,6 +316,8 @@ export const DeckWorkspaceView = ({
                   isPinned,
                 });
               }}
+              onPreviewSpotifyTrack={previewSpotifyTrack}
+              previewTrack={previewTrack}
               isAddingSpotifyTrack={addSpotifyTrackMutation.isPending}
               pinningTrackId={
                 toggleTrackPinMutation.isPending

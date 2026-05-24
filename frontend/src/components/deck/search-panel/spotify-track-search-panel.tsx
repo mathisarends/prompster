@@ -11,7 +11,11 @@ type SpotifyTrackSearchPanelProps = {
   query: string;
   isAdding?: boolean;
   addingTrackId?: string | null;
+  activeTrackId?: string | null;
+  isPlaying?: boolean;
   onAddTrack: (track: SpotifyTrackResponse) => Promise<void> | void;
+  onPreviewTrack?: (track: SpotifyTrackResponse) => void;
+  onTogglePreviewPlayPause?: () => void;
 };
 
 const minSearchLength = 2;
@@ -22,7 +26,11 @@ export const SpotifyTrackSearchPanel = ({
   query,
   isAdding = false,
   addingTrackId,
+  activeTrackId,
+  isPlaying = false,
   onAddTrack,
+  onPreviewTrack,
+  onTogglePreviewPlayPause,
 }: SpotifyTrackSearchPanelProps) => {
   const [addedTrackIds, setAddedTrackIds] = useState<Set<string>>(
     () => new Set(),
@@ -78,8 +86,17 @@ export const SpotifyTrackSearchPanel = ({
             tracks={tracks}
             isAdding={isAdding}
             addingTrackId={addingTrackId}
+            activeTrackId={activeTrackId}
+            isPlaying={isPlaying}
             onAddTrack={(track) => {
               void addTrack(track);
+            }}
+            onPreviewTrack={(track) => {
+              if (activeTrackId === track.id) {
+                onTogglePreviewPlayPause?.();
+                return;
+              }
+              onPreviewTrack?.(track);
             }}
           />
         </div>
