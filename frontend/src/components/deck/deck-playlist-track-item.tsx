@@ -69,7 +69,8 @@ export const DeckPlaylistTrackItem = ({
       )}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-[4px] bg-white/[0.06] shadow-sm">
+        <div className="relative shrink-0">
+        <div className="relative h-10 w-10 overflow-hidden rounded-[4px] bg-white/[0.06] shadow-sm">
           {track.coverUrl ? (
             <img
               src={track.coverUrl}
@@ -120,20 +121,30 @@ export const DeckPlaylistTrackItem = ({
             </Tooltip>
           </div>
         </div>
+        {track.isPinned ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <span className="absolute -right-1 -top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-primary shadow-sm">
+                  <Pin className="size-2.5 fill-current text-white" />
+                </span>
+              }
+            />
+            <TooltipContent side="top" sideOffset={8}>
+              Gepinnt – die KI kann diesen Track nicht entfernen
+            </TooltipContent>
+          </Tooltip>
+        ) : null}
+        </div>
         <div className="min-w-0">
-          <div className="flex min-w-0 items-center gap-1">
-            {track.isPinned ? (
-              <Pin className="size-3 shrink-0 text-primary/70" />
-            ) : null}
-            <p
-              className={cn(
-                "truncate text-sm font-semibold leading-tight",
-                isActive ? "text-primary" : "text-foreground",
-              )}
-            >
-              {track.title}
-            </p>
-          </div>
+          <p
+            className={cn(
+              "truncate text-sm font-semibold leading-tight",
+              isActive ? "text-primary" : "text-foreground",
+            )}
+          >
+            {track.title}
+          </p>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {track.artist}
           </p>
