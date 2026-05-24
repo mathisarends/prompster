@@ -7,5 +7,6 @@ export * from "./follow-up-question-flow";
 export * from "./follow-up-question-group";
 export * from "./markdown-renderer";
 export * from "./send-button";
+export * from "./transcription-button";
 export * from "./tool-call-accordion";
 export * from "./user-chat-message";

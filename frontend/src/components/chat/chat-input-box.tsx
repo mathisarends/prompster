@@ -1,7 +1,8 @@
-import { LoaderCircle, Mic, Plus, Square } from "lucide-react";
+import { Plus } from "lucide-react";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
 
 import { SendButton } from "@/components/chat/send-button";
+import { TranscriptionButton } from "@/components/chat/transcription-button";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useRealtimeTranscription } from "@/hooks/useRealtimeTranscription";
@@ -98,6 +99,9 @@ export const ChatInputBox = ({
     disabled: disabled || isSubmitting,
   });
   const hasText = value.trim().length > 0;
+  const showSendButton = hasText && !isRecording && !isStartingRecording;
+  const showTranscriptionButton =
+    !hasText || isRecording || isStartingRecording;
 
   useEffect(() => {
     if (!focusOnTyping) return;
@@ -163,10 +167,7 @@ export const ChatInputBox = ({
 
     const measureSingleLine = () => {
       const styles = window.getComputedStyle(textarea);
-      const inlineTextareaWidth = Math.max(
-        inputContent.clientWidth - (hasText && isRecording ? 136 : 88),
-        0,
-      );
+      const inlineTextareaWidth = Math.max(inputContent.clientWidth - 88, 0);
       textMirror.style.width = `${inlineTextareaWidth}px`;
 
       const lineHeight =
@@ -264,33 +265,15 @@ export const ChatInputBox = ({
                 <Plus />
               </Button>
             )}
-            {(!hasText || isRecording || isStartingRecording) && (
-              <Button
-                type="button"
-                size="icon"
-                variant={isRecording ? "destructive" : "default"}
-                onClick={toggleTranscription}
+            {showTranscriptionButton && (
+              <TranscriptionButton
+                isRecording={isRecording}
+                isStarting={isStartingRecording}
                 disabled={disabled || isSubmitting}
-                aria-label={
-                  isRecording || isStartingRecording
-                    ? "Spracheingabe beenden"
-                    : "Spracheingabe starten"
-                }
-                className={cn(
-                  isRecording &&
-                    "bg-destructive text-white hover:bg-destructive/90",
-                )}
-              >
-                {isStartingRecording ? (
-                  <LoaderCircle className="size-4 animate-spin text-white" />
-                ) : isRecording ? (
-                  <Square className="size-3.5 fill-current text-white" />
-                ) : (
-                  <Mic className="size-4 text-white" />
-                )}
-              </Button>
+                onClick={toggleTranscription}
+              />
             )}
-            {hasText && (
+            {showSendButton && (
               <SendButton
                 onClick={submit}
                 disabled={disabled}
