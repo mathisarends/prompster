@@ -13,7 +13,6 @@ from backend.features.spotify.application.ports import (
     SpotifyUnifiedSearchResult,
 )
 
-
 type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[SpotifyArtist]
 
 

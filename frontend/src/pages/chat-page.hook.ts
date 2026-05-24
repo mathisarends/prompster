@@ -9,6 +9,7 @@ import type {
 import {
   getGetSessionQueryKey,
   getListSessionsQueryKey,
+  removePlaylistTrack,
   useGetSession,
 } from "@/api/generated/session-api";
 import { streamFollowUp, streamSendMessage } from "@/api/session-stream";
@@ -50,6 +51,7 @@ export type UseChatSessionResult = {
   ) => void;
   skipFollowUps: (groupId: string) => void;
   updateFollowUpDraft: (questionId: string, value: string) => void;
+  removePlaylistTrack: (trackId: string) => Promise<void>;
 };
 
 const getStreamErrorMessage = (error: unknown) => {
@@ -264,6 +266,18 @@ export const useChatSession = ({
     [],
   );
 
+  const removePlaylistTrackFromSession = useCallback(
+    async (trackId: string) => {
+      if (!sessionId) {
+        return;
+      }
+
+      await removePlaylistTrack(sessionId, trackId);
+      await invalidateSessionQueries();
+    },
+    [invalidateSessionQueries, sessionId],
+  );
+
   return {
     session,
     title: state.title ?? session?.title,
@@ -278,5 +292,6 @@ export const useChatSession = ({
     answerFollowUp,
     skipFollowUps,
     updateFollowUpDraft,
+    removePlaylistTrack: removePlaylistTrackFromSession,
   };
 };

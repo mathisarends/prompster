@@ -63,6 +63,7 @@ export const ChatPage = () => {
     answerFollowUp,
     skipFollowUps,
     updateFollowUpDraft,
+    removePlaylistTrack,
   } = useChatSession({
     sessionId,
     initialSession,
@@ -229,7 +230,10 @@ export const ChatPage = () => {
             maxSize="52%"
             className="border-l border-white/[0.06]"
           >
-            <DeckWorkspaceView playlist={playlist} />
+            <DeckWorkspaceView
+              playlist={playlist}
+              onRemoveTrack={removePlaylistTrack}
+            />
           </ResizablePanel>
         </ResizablePanelGroup>
       ) : (

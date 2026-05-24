@@ -17,9 +17,13 @@ type DeckWorkspaceViewProps = {
     name?: string | null;
     tracks: PlaylistTrackResponse[];
   };
+  onRemoveTrack?: (trackId: string) => Promise<void>;
 };
 
-export const DeckWorkspaceView = ({ playlist }: DeckWorkspaceViewProps) => {
+export const DeckWorkspaceView = ({
+  playlist,
+  onRemoveTrack,
+}: DeckWorkspaceViewProps) => {
   const { data: me, isLoading: isMeLoading } = useGetMe();
   const { isSpotifyOAuthLoading, openSpotifyOAuthPopup } =
     useSpotifyOAuthPopup();
@@ -131,6 +135,7 @@ export const DeckWorkspaceView = ({ playlist }: DeckWorkspaceViewProps) => {
             initialTracks={tracks}
             showHeader={false}
             allowLocalRemoval={false}
+            onRemoveTrack={onRemoveTrack}
             controller={controller}
           />
         </div>

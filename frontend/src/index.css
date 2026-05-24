@@ -249,7 +249,8 @@ body {
   --tw-prose-invert-td-borders: hsl(0 0% 20%);
 }
 
-.chat-assistant-prose :where(p, ul, ol, h1, h2, h3, h4, blockquote):first-child {
+.chat-assistant-prose
+  :where(p, ul, ol, h1, h2, h3, h4, blockquote):first-child {
   margin-top: 0;
 }
 
@@ -301,7 +302,9 @@ body {
 .chat-assistant-prose.is-streaming > h4:last-child::after,
 .chat-assistant-prose.is-streaming > ul:last-child > li:last-child::after,
 .chat-assistant-prose.is-streaming > ol:last-child > li:last-child::after,
-.chat-assistant-prose.is-streaming > blockquote:last-child > :last-child::after {
+.chat-assistant-prose.is-streaming
+  > blockquote:last-child
+  > :last-child::after {
   content: "";
   display: inline-block;
   width: 0.42em;
@@ -577,4 +580,118 @@ body {
 .player-slider:hover::-moz-range-thumb,
 .player-slider:focus-visible::-moz-range-thumb {
   opacity: 1;
+}
+
+.deck-player {
+  position: relative;
+  container: deck-player / inline-size;
+}
+
+.deck-player-progress {
+  height: 12px;
+}
+
+.deck-player-progress .player-slider-shell {
+  height: 12px;
+  align-items: flex-start;
+}
+
+.deck-player-progress .player-slider {
+  height: 12px;
+}
+
+.deck-player-progress .player-slider::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: 0;
+  transition: height 120ms ease;
+}
+
+.deck-player-progress .player-slider:hover::-webkit-slider-runnable-track,
+.deck-player-progress .player-slider:focus-visible::-webkit-slider-runnable-track {
+  height: 5px;
+}
+
+.deck-player-progress .player-slider::-webkit-slider-thumb {
+  width: 10px;
+  height: 10px;
+  margin-top: -4px;
+}
+
+.deck-player-progress .player-slider:hover::-webkit-slider-thumb,
+.deck-player-progress .player-slider:focus-visible::-webkit-slider-thumb {
+  margin-top: -3px;
+}
+
+.deck-player-progress .player-slider::-moz-range-track,
+.deck-player-progress .player-slider::-moz-range-progress {
+  height: 2px;
+  border-radius: 0;
+  transition: height 120ms ease;
+}
+
+.deck-player-progress .player-slider:hover::-moz-range-track,
+.deck-player-progress .player-slider:focus-visible::-moz-range-track,
+.deck-player-progress .player-slider:hover::-moz-range-progress,
+.deck-player-progress .player-slider:focus-visible::-moz-range-progress {
+  height: 5px;
+}
+
+.deck-player-progress .player-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+}
+
+.deck-player-volume-popover .player-slider-shell {
+  width: 100%;
+}
+
+.deck-player-volume-popover .player-slider::-webkit-slider-runnable-track,
+.deck-player-volume-popover .player-slider::-moz-range-track,
+.deck-player-volume-popover .player-slider::-moz-range-progress {
+  height: 3px;
+}
+
+.deck-player-volume-popover .player-slider::-webkit-slider-thumb,
+.deck-player-volume-popover .player-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  opacity: 1;
+}
+
+.deck-player-volume-popover .player-slider::-webkit-slider-thumb {
+  margin-top: -3.5px;
+}
+
+.deck-player-volume-popover::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 100%;
+  width: 0.5rem;
+  height: 100%;
+}
+
+@container deck-player (max-width: 430px) {
+  .deck-player-content {
+    gap: 0.625rem;
+  }
+
+  .deck-player-cover {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .deck-player-time {
+    display: none;
+  }
+}
+
+@container deck-player (max-width: 330px) {
+  .deck-player-artist {
+    display: none;
+  }
+
+  .deck-player-volume {
+    display: none;
+  }
 }

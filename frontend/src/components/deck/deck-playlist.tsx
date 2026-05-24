@@ -1,21 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pause, Play, X } from "lucide-react";
+import { toast } from "sonner";
 
 import { DeckPlayer } from "@/components/deck/deck-player";
-import { Button } from "@/components/ui/button";
+import { DeckPlaylistTrackItem } from "@/components/deck/deck-playlist-track-item";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchBar } from "@/components/deck/search-bar";
 import { cn } from "@/lib/utils";
 import { mockTracks, type PlaylistTrack } from "@/lib/mockTracks";
-
-const SoundBars = () => (
-  <span aria-hidden className="flex h-5 w-5 items-end justify-center gap-[2px]">
-    <span className="sound-bar h-[70%] w-[2px] rounded-full bg-primary [--sound-bar-high:1] [--sound-bar-low:0.35] [animation-delay:-0.12s] [animation-duration:0.72s]" />
-    <span className="sound-bar h-full w-[2px] rounded-full bg-primary [--sound-bar-high:0.86] [--sound-bar-low:0.18] [animation-delay:-0.44s] [animation-duration:0.94s]" />
-    <span className="sound-bar h-[58%] w-[2px] rounded-full bg-primary [--sound-bar-high:1] [--sound-bar-low:0.28] [animation-delay:-0.28s] [animation-duration:0.82s]" />
-    <span className="sound-bar h-[82%] w-[2px] rounded-full bg-primary [--sound-bar-high:0.92] [--sound-bar-low:0.22] [animation-delay:-0.62s] [animation-duration:1.02s]" />
-  </span>
-);
 
 type DeckPlaylistProps = {
   className?: string;
@@ -23,6 +14,7 @@ type DeckPlaylistProps = {
   onVisibleTrackCountChange?: (count: number) => void;
   showHeader?: boolean;
   allowLocalRemoval?: boolean;
+  onRemoveTrack?: (trackId: string) => Promise<void> | void;
   controller?: DeckPlaylistController;
 };
 
@@ -45,9 +37,15 @@ export const DeckPlaylist = ({
   onVisibleTrackCountChange,
   showHeader = true,
   allowLocalRemoval = true,
+  onRemoveTrack,
   controller,
 }: DeckPlaylistProps) => {
   const [localTracks, setLocalTracks] = useState(initialTracks);
+  const [optimisticallyRemovedTrackIds, setOptimisticallyRemovedTrackIds] =
+    useState<Set<string>>(() => new Set());
+  const [removingTrackIds, setRemovingTrackIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [query, setQuery] = useState("");
   const [localActiveTrackId, setLocalActiveTrackId] = useState<string | null>(
     initialTracks[0]?.id ?? null,
@@ -63,14 +61,16 @@ export const DeckPlaylist = ({
   const activeTrackId = controller?.activeTrackId ?? localActiveTrackId;
   const isPlaying = controller?.isPlaying ?? localIsPlaying;
   const tracks = controller ? initialTracks : localTracks;
+  const canRemoveTracks = allowLocalRemoval || Boolean(onRemoveTrack);
+
+  const visibleTracks = useMemo(
+    () =>
+      tracks.filter((track) => !optimisticallyRemovedTrackIds.has(track.id)),
+    [optimisticallyRemovedTrackIds, tracks],
+  );
 
   const activeTrack = useMemo(
     () => tracks.find((track) => track.id === activeTrackId) ?? null,
-    [activeTrackId, tracks],
-  );
-
-  const activeTrackIndex = useMemo(
-    () => tracks.findIndex((track) => track.id === activeTrackId),
     [activeTrackId, tracks],
   );
 
@@ -91,17 +91,45 @@ export const DeckPlaylist = ({
     const normalized = query.trim().toLowerCase();
 
     if (!normalized) {
-      return tracks;
+      return visibleTracks;
     }
 
-    return tracks.filter((track) =>
+    return visibleTracks.filter((track) =>
       `${track.title} ${track.artist} ${track.year}`
         .toLowerCase()
         .includes(normalized),
     );
-  }, [query, tracks]);
+  }, [query, visibleTracks]);
 
   const removeTrack = (trackId: string) => {
+    if (onRemoveTrack) {
+      if (removingTrackIds.has(trackId)) {
+        return;
+      }
+
+      setRemovingTrackIds((prev) => new Set(prev).add(trackId));
+      setOptimisticallyRemovedTrackIds((prev) => new Set(prev).add(trackId));
+
+      Promise.resolve(onRemoveTrack(trackId))
+        .catch(() => {
+          setOptimisticallyRemovedTrackIds((prev) => {
+            const next = new Set(prev);
+            next.delete(trackId);
+            return next;
+          });
+          toast.error("Track konnte nicht aus der Playlist entfernt werden.");
+        })
+        .finally(() => {
+          setRemovingTrackIds((prev) => {
+            const next = new Set(prev);
+            next.delete(trackId);
+            return next;
+          });
+        });
+
+      return;
+    }
+
     if (controller || !allowLocalRemoval) return;
     setLocalTracks((prev) => prev.filter((track) => track.id !== trackId));
     if (trackId === activeTrackId) {
@@ -126,20 +154,6 @@ export const DeckPlaylist = ({
     setLocalActiveTrackId(trackId);
     setLocalRemainingSeconds(selectedTrack.durationSeconds);
     setLocalIsPlaying(true);
-  };
-
-  const selectTrackByOffset = (offset: number) => {
-    if (tracks.length === 0) {
-      return;
-    }
-
-    const currentIndex = activeTrackIndex >= 0 ? activeTrackIndex : 0;
-    const nextIndex = (currentIndex + offset + tracks.length) % tracks.length;
-    const nextTrack = tracks[nextIndex];
-    if (!nextTrack) {
-      return;
-    }
-    activateTrack(nextTrack.id);
   };
 
   useEffect(() => {
@@ -192,119 +206,41 @@ export const DeckPlaylist = ({
             const isPlayable = controller ? Boolean(track.spotifyUri) : true;
 
             return (
-              <div
+              <DeckPlaylistTrackItem
                 key={track.id}
-                role="button"
-                tabIndex={0}
-                onDoubleClick={() => {
+                track={track}
+                trackNumber={index + 1}
+                isActive={isActive}
+                isPlaying={isPlaying}
+                isPlayable={isPlayable}
+                canRemove={canRemoveTracks}
+                isRemoving={removingTrackIds.has(track.id)}
+                onActivateTrack={() => {
                   if (isPlayable) {
                     activateTrack(track.id);
                   }
                 }}
-                className={cn(
-                  "group grid grid-cols-[40px_minmax(0,1fr)_72px_40px] gap-x-4 px-2 items-center rounded-md py-3 transition-colors",
-                  isActive ? "bg-white/[0.07]" : "hover:bg-white/[0.04]",
-                  !isPlayable ? "opacity-55" : null,
-                )}
-              >
-                <div className="relative grid h-7 place-items-center text-sm tabular-nums text-muted-foreground">
-                  {isActive && isPlaying ? (
-                    <span className="group-hover:hidden">
-                      <SoundBars />
-                    </span>
-                  ) : (
-                    <span className="group-hover:hidden">{index + 1}</span>
-                  )}
-                  <Button
-                    size="icon-xs"
-                    variant="ghost"
-                    className="absolute hidden text-foreground hover:bg-transparent group-hover:inline-flex"
-                    aria-label={
-                      isActive && isPlaying
-                        ? `${track.title} pausieren`
-                        : `${track.title} abspielen`
+                onTogglePlayPause={() => {
+                  if (isActive && isPlaying) {
+                    if (controller) {
+                      controller.onPause();
+                    } else {
+                      setLocalIsPlaying(false);
                     }
-                    onClick={() => {
-                      if (isActive && isPlaying) {
-                        if (controller) {
-                          controller.onPause();
-                        } else {
-                          setLocalIsPlaying(false);
-                        }
-                      } else if (isActive) {
-                        if (controller) {
-                          controller.onResume();
-                        } else {
-                          setLocalIsPlaying(true);
-                        }
-                      } else {
-                        if (isPlayable) {
-                          activateTrack(track.id);
-                        }
-                      }
-                    }}
-                    disabled={!isPlayable}
-                    title={
-                      !isPlayable
-                        ? "Track ist ohne Spotify-URI nicht abspielbar"
-                        : undefined
+                  } else if (isActive) {
+                    if (controller) {
+                      controller.onResume();
+                    } else {
+                      setLocalIsPlaying(true);
                     }
-                  >
-                    {isActive && isPlaying ? (
-                      <Pause className="size-3.5 fill-current" />
-                    ) : (
-                      <Play className="size-3.5 fill-current" />
-                    )}
-                  </Button>
-                </div>
-
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-[4px] bg-white/[0.06] shadow-sm">
-                    {track.coverUrl ? (
-                      <img
-                        src={track.coverUrl}
-                        alt={`${track.title} Cover`}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : null}
-                  </div>
-                  <div className="min-w-0">
-                    <p
-                      className={cn(
-                        "truncate text-sm font-semibold leading-tight",
-                        isActive ? "text-primary" : "text-foreground",
-                      )}
-                    >
-                      {track.title}
-                    </p>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {track.artist}
-                    </p>
-                  </div>
-                </div>
-
-                <span className="justify-self-end text-xs font-medium tabular-nums text-muted-foreground">
-                  {track.year}
-                </span>
-
-                <div className="flex items-center justify-end">
-                  {allowLocalRemoval ? (
-                    <Button
-                      size="icon-xs"
-                      variant="ghost"
-                      className="text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100"
-                      aria-label={`${track.title} entfernen`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        removeTrack(track.id);
-                      }}
-                    >
-                      <X className="size-3.5" />
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
+                  } else {
+                    if (isPlayable) {
+                      activateTrack(track.id);
+                    }
+                  }
+                }}
+                onRemoveTrack={() => removeTrack(track.id)}
+              />
             );
           })}
         </div>
@@ -320,7 +256,6 @@ export const DeckPlaylist = ({
         elapsedSeconds={elapsedSeconds}
         durationSeconds={currentDurationSeconds}
         isPlaying={isPlaying}
-        trackCount={tracks.length}
         volume={volume}
         onPlayPause={() => {
           if (controller) {
@@ -333,7 +268,6 @@ export const DeckPlaylist = ({
           }
           setLocalIsPlaying((playing) => !playing);
         }}
-        onSelectTrackByOffset={selectTrackByOffset}
         onSeek={(nextElapsedSeconds) => {
           if (controller) {
             controller.onSeek(nextElapsedSeconds);
