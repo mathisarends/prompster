@@ -3,7 +3,17 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 from backend.features.spotify.application import SpotifySearchType
+from backend.features.spotify.infrastructure.spotify_search_cache import (
+    SpotifySearchCache,
+)
 from backend.features.spotify.infrastructure.spotify_service import SpotifyService
+
+
+def _make_service(spotify: Any) -> SpotifyService:
+    return SpotifyService(
+        spotify=spotify,
+        search_cache=SpotifySearchCache(),
+    )
 
 
 class _TracksStub:
@@ -71,7 +81,9 @@ def _make_track() -> SimpleNamespace:
             release_date="2006-01-01",
             images=[SimpleNamespace(url="https://example.com/cover.jpg")],
         ),
-        preview_url="https://example.com/preview.mp3",
+        external_urls=SimpleNamespace(
+            spotify="https://open.spotify.com/track/1",
+        ),
     )
 
 
@@ -99,7 +111,7 @@ def _make_playlist() -> SimpleNamespace:
 class TestSpotifyService:
     def test_search_tracks_uses_default_limit(self) -> None:
         spotify = _SpotifyStub(track_items=[_make_track()])
-        service = SpotifyService(spotify=cast(Any, spotify))
+        service = _make_service(cast(Any, spotify))
 
         result = asyncio.run(service._search_tracks(query="muse"))
 
@@ -111,7 +123,7 @@ class TestSpotifyService:
 
     def test_search_tracks_uses_explicit_limit(self) -> None:
         spotify = _SpotifyStub(track_items=[_make_track()])
-        service = SpotifyService(spotify=cast(Any, spotify))
+        service = _make_service(cast(Any, spotify))
 
         result = asyncio.run(service._search_tracks(query="muse", limit=7))
 
@@ -121,7 +133,7 @@ class TestSpotifyService:
 
     def test_search_tracks_short_circuits_blank_query(self) -> None:
         spotify = _SpotifyStub(track_items=[_make_track()])
-        service = SpotifyService(spotify=cast(Any, spotify))
+        service = _make_service(cast(Any, spotify))
 
         result = asyncio.run(service._search_tracks(query="   "))
 
@@ -131,7 +143,7 @@ class TestSpotifyService:
 
     def test_search_artists_uses_default_limit(self) -> None:
         spotify = _SpotifyStub(artist_items=[_make_artist()])
-        service = SpotifyService(spotify=cast(Any, spotify))
+        service = _make_service(cast(Any, spotify))
 
         result = asyncio.run(service._search_artists(query="muse"))
 
@@ -146,7 +158,7 @@ class TestSpotifyService:
 
     def test_search_artists_short_circuits_blank_query(self) -> None:
         spotify = _SpotifyStub(artist_items=[_make_artist()])
-        service = SpotifyService(spotify=cast(Any, spotify))
+        service = _make_service(cast(Any, spotify))
 
         result = asyncio.run(service._search_artists(query="   "))
 
@@ -160,7 +172,7 @@ class TestSpotifyService:
             playlist_items=[_make_playlist()],
             artist_items=[_make_artist()],
         )
-        service = SpotifyService(spotify=cast(Any, spotify))
+        service = _make_service(cast(Any, spotify))
 
         result = asyncio.run(
             service.search_unified(
@@ -185,7 +197,7 @@ class TestSpotifyService:
             playlist_items=[_make_playlist()],
             artist_items=[_make_artist()],
         )
-        service = SpotifyService(spotify=cast(Any, spotify))
+        service = _make_service(cast(Any, spotify))
 
         result = asyncio.run(service.search_unified(query="muse"))
 
@@ -202,7 +214,7 @@ class TestSpotifyService:
             playlist_items=[_make_playlist()],
             artist_items=[_make_artist()],
         )
-        service = SpotifyService(spotify=cast(Any, spotify))
+        service = _make_service(cast(Any, spotify))
 
         result = asyncio.run(service.search_unified(query="  "))
 
@@ -215,7 +227,7 @@ class TestSpotifyService:
 
     def test_create_private_playlist_uses_user_token_flow(self) -> None:
         spotify = _SpotifyStub()
-        service = SpotifyService(spotify=cast(Any, spotify))
+        service = _make_service(cast(Any, spotify))
         calls: list[tuple[str, str, dict | None, str]] = []
         responses: list[dict | None] = [{"id": "user-1"}, {"id": "playlist-1"}]
 
@@ -256,7 +268,7 @@ class TestSpotifyService:
 
     def test_update_playlist_and_replace_tracks_use_user_token(self) -> None:
         spotify = _SpotifyStub()
-        service = SpotifyService(spotify=cast(Any, spotify))
+        service = _make_service(cast(Any, spotify))
         calls: list[tuple[str, str, dict | None, str]] = []
 
         async def _request_user_api(
@@ -304,7 +316,7 @@ class TestSpotifyService:
 
     def test_search_unified_debounces_superseded_requests(self) -> None:
         spotify = _SpotifyStub(track_items=[_make_track()])
-        service = SpotifyService(spotify=cast(Any, spotify))
+        service = _make_service(cast(Any, spotify))
 
         async def _run() -> tuple[Any, Any]:
             first = asyncio.create_task(
@@ -337,7 +349,7 @@ class TestSpotifyService:
 
     def test_search_unified_coalesces_identical_inflight_requests(self) -> None:
         spotify = _SpotifyStub(track_items=[_make_track()])
-        service = SpotifyService(spotify=cast(Any, spotify))
+        service = _make_service(cast(Any, spotify))
 
         async def _run() -> tuple[Any, Any]:
             first = asyncio.create_task(

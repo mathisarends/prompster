@@ -4,6 +4,9 @@ from dishka import Provider, Scope, provide
 from spotifyify import SpotifyCredentials, Spotifyify
 from spotifyify.cache_handler import MemoryCacheHandler
 
+from backend.features.spotify.infrastructure.spotify_search_cache import (
+    SpotifySearchCache,
+)
 from backend.features.spotify.infrastructure.spotify_service import (
     SpotifyService,
 )
@@ -29,8 +32,13 @@ class SpotifyProvider(Provider):
             await spotify.close()
 
     @provide(scope=Scope.APP)
+    def provide_spotify_search_cache(self) -> SpotifySearchCache:
+        return SpotifySearchCache()
+
+    @provide(scope=Scope.APP)
     def provide_spotify_service(
         self,
         spotify: Spotifyify,
+        search_cache: SpotifySearchCache,
     ) -> SpotifyService:
-        return SpotifyService(spotify=spotify)
+        return SpotifyService(spotify=spotify, search_cache=search_cache)

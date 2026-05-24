@@ -22,17 +22,14 @@ type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[Spotif
 
 class SpotifyService:
     _SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1"
-    _SEARCH_DEBOUNCE_SECONDS = 0.12
-    _SEARCH_CACHE_TTL_SECONDS = 6.0
-    _SEARCH_CACHE_MAX_ENTRIES = 256
 
-    def __init__(self, spotify: Spotifyify) -> None:
+    def __init__(
+        self,
+        spotify: Spotifyify,
+        search_cache: SpotifySearchCache,
+    ) -> None:
         self._spotify = spotify
-        self._search_cache = SpotifySearchCache(
-            debounce_seconds=self._SEARCH_DEBOUNCE_SECONDS,
-            cache_ttl_seconds=self._SEARCH_CACHE_TTL_SECONDS,
-            max_entries=self._SEARCH_CACHE_MAX_ENTRIES,
-        )
+        self._search_cache = search_cache
 
     async def create_private_playlist(
         self,
@@ -315,6 +312,7 @@ def _to_spotify_playlist(playlist: SimplifiedPlaylist) -> SpotifyPlaylist:
 def _to_spotify_track(track: Track) -> SpotifyTrack:
     album = track.album
     artists = ", ".join(artist.name for artist in track.artists or [] if artist.name)
+    external_urls = track.external_urls
     return SpotifyTrack(
         id=track.id or "",
         title=track.name or "",
@@ -322,7 +320,7 @@ def _to_spotify_track(track: Track) -> SpotifyTrack:
         album=album.name if album else None,
         year=_release_year(album.release_date if album else None),
         cover_url=_cover_url(album.images if album else None),
-        preview_url=track.preview_url,
+        url=external_urls.spotify if external_urls else None,
     )
 
 

@@ -25,7 +25,7 @@ class SpotifyTrack:
     album: str | None = None
     year: int | None = None
     cover_url: str | None = None
-    preview_url: str | None = None
+    url: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

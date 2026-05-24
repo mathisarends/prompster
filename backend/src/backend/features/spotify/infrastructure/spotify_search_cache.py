@@ -13,12 +13,16 @@ class _SearchCacheEntry:
 
 
 class SpotifySearchCache:
+    DEFAULT_DEBOUNCE_SECONDS = 0.12
+    DEFAULT_CACHE_TTL_SECONDS = 6.0
+    DEFAULT_MAX_ENTRIES = 256
+
     def __init__(
         self,
         *,
-        debounce_seconds: float,
-        cache_ttl_seconds: float,
-        max_entries: int,
+        debounce_seconds: float = DEFAULT_DEBOUNCE_SECONDS,
+        cache_ttl_seconds: float = DEFAULT_CACHE_TTL_SECONDS,
+        max_entries: int = DEFAULT_MAX_ENTRIES,
         clock: Callable[[], float] = monotonic,
     ) -> None:
         self._debounce_seconds = debounce_seconds

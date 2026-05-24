@@ -18,7 +18,7 @@ def to_spotify_track_response(track: SpotifyTrack) -> SpotifyTrackResponse:
         album=track.album,
         year=track.year,
         cover_url=track.cover_url,
-        preview_url=track.preview_url,
+        url=track.url,
     )
 
 
