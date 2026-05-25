@@ -12,6 +12,7 @@ from agent.tools.handler import Spotify
 from agent.tools.schemas import ToolSchema
 from agent.tools.views import (
     ActionType,
+    ActionResult,
     Tool,
     AddDraftPlaylistTracksParams,
     AlbumTracksParams,
@@ -80,14 +81,13 @@ class Tools:
     def _register(self, tool: Tool) -> None:
         self._tools[tool.name] = tool
 
-    async def execute(self, name: str, args: dict) -> Any:
+    async def execute(self, name: str, args: dict) -> ActionResult:
         return await self._executor.execute(name, args)
 
     def to_schema(self) -> list[ToolSchema]:
         return [t.to_schema() for t in self._tools.values()]
 
-    @staticmethod
-    def parse_args(call: ToolCall) -> dict[str, Any]:
+    def parse_args(self, call: ToolCall) -> dict[str, Any]:
         raw = call.function.arguments
         if not raw:
             return {}
@@ -97,13 +97,10 @@ class Tools:
             logger.error("Failed to parse tool args JSON: %s", error)
             return {}
 
-    @staticmethod
-    def serialize_result(result: Any) -> str:
-        if isinstance(result, str):
-            return result
-        if hasattr(result, "model_dump_json"):
-            return result.model_dump_json()
-        return json.dumps(result, ensure_ascii=False, default=str)
+    def serialize_result(self, result: ActionResult) -> str:
+        if not isinstance(result, ActionResult):
+            raise TypeError(f"Expected ActionResult, received {type(result).__name__}")
+        return result.model_dump_json()
 
     def _register_default_tools(self) -> None:
         @self.action(
@@ -112,8 +109,15 @@ class Tools:
             status_label=lambda params: params.status,
             action_type=ActionType.SEARCH,
         )
-        async def search_tracks(spotify: Inject[Spotify], params: SearchParams) -> str:
-            return await spotify.search_tracks(params)
+        async def search_tracks(
+            spotify: Inject[Spotify],
+            params: SearchParams,
+        ) -> ActionResult:
+            try:
+                tracks = await spotify.search_tracks(params)
+                return ActionResult.ok(tracks)
+            except Exception as error:
+                return ActionResult.fail(error)
 
         @self.action(
             description="",
@@ -121,8 +125,15 @@ class Tools:
             status_label=lambda params: params.status,
             action_type=ActionType.SEARCH,
         )
-        async def search_albums(spotify: Inject[Spotify], params: SearchParams) -> str:
-            return await spotify.search_albums(params)
+        async def search_albums(
+            spotify: Inject[Spotify],
+            params: SearchParams,
+        ) -> ActionResult:
+            try:
+                albums = await spotify.search_albums(params)
+                return ActionResult.ok(albums)
+            except Exception as error:
+                return ActionResult.fail(error)
 
         @self.action(
             description="",
@@ -133,8 +144,12 @@ class Tools:
         async def search_playlists(
             spotify: Inject[Spotify],
             params: SearchParams,
-        ) -> str:
-            return await spotify.search_playlists(params)
+        ) -> ActionResult:
+            try:
+                playlists = await spotify.search_playlists(params)
+                return ActionResult.ok(playlists)
+            except Exception as error:
+                return ActionResult.fail(error)
 
         @self.action(
             description="",
@@ -145,8 +160,12 @@ class Tools:
         async def get_artist_albums(
             spotify: Inject[Spotify],
             params: ArtistAlbumsParams,
-        ) -> str:
-            return await spotify.get_artist_albums(params)
+        ) -> ActionResult:
+            try:
+                artist_albums = await spotify.get_artist_albums(params)
+                return ActionResult.ok(artist_albums)
+            except Exception as error:
+                return ActionResult.fail(error)
 
         @self.action(
             description="",
@@ -157,8 +176,12 @@ class Tools:
         async def get_artist_top_tracks(
             spotify: Inject[Spotify],
             params: ArtistTopTracksParams,
-        ) -> str:
-            return await spotify.get_artist_top_tracks(params)
+        ) -> ActionResult:
+            try:
+                top_tracks = await spotify.get_artist_top_tracks(params)
+                return ActionResult.ok(top_tracks)
+            except Exception as error:
+                return ActionResult.fail(error)
 
         @self.action(
             description="",
@@ -169,8 +192,12 @@ class Tools:
         async def get_album_tracks(
             spotify: Inject[Spotify],
             params: AlbumTracksParams,
-        ) -> str:
-            return await spotify.get_album_tracks(params)
+        ) -> ActionResult:
+            try:
+                album_tracks = await spotify.get_album_tracks(params)
+                return ActionResult.ok(album_tracks)
+            except Exception as error:
+                return ActionResult.fail(error)
 
         @self.action(
             description=(
@@ -184,9 +211,13 @@ class Tools:
         async def create_draft_playlist(
             workspace_store: Inject[WorkspaceStore],
             params: BuildDraftPlaylistParams,
-        ) -> PlaylistDraft:
-            playlist_draft = PlaylistDraft(name=params.name, tracks=params.tracks)
-            return workspace_store.save_playlist_draft(playlist_draft)
+        ) -> ActionResult:
+            try:
+                playlist_draft = PlaylistDraft(name=params.name, tracks=params.tracks)
+                saved_playlist = workspace_store.save_playlist_draft(playlist_draft)
+                return ActionResult.ok(saved_playlist)
+            except Exception as error:
+                return ActionResult.fail(error)
 
         @self.action(
             description=(
@@ -202,9 +233,13 @@ class Tools:
         async def build_draft_playlist(
             workspace_store: Inject[WorkspaceStore],
             params: BuildDraftPlaylistParams,
-        ) -> PlaylistDraft:
-            playlist_draft = PlaylistDraft(name=params.name, tracks=params.tracks)
-            return workspace_store.save_playlist_draft(playlist_draft)
+        ) -> ActionResult:
+            try:
+                playlist_draft = PlaylistDraft(name=params.name, tracks=params.tracks)
+                saved_playlist = workspace_store.save_playlist_draft(playlist_draft)
+                return ActionResult.ok(saved_playlist)
+            except Exception as error:
+                return ActionResult.fail(error)
 
         @self.action(
             description="Add tracks to the current Hitster playlist draft.",
@@ -215,8 +250,12 @@ class Tools:
         async def add_draft_playlist_tracks(
             workspace_store: Inject[WorkspaceStore],
             params: AddDraftPlaylistTracksParams,
-        ) -> PlaylistDraft:
-            return workspace_store.add_tracks(params.tracks)
+        ) -> ActionResult:
+            try:
+                updated_playlist = workspace_store.add_tracks(params.tracks)
+                return ActionResult.ok(updated_playlist)
+            except Exception as error:
+                return ActionResult.fail(error)
 
         @self.action(
             description=(
@@ -230,8 +269,12 @@ class Tools:
         async def remove_draft_playlist_tracks(
             workspace_store: Inject[WorkspaceStore],
             params: RemoveDraftPlaylistTracksParams,
-        ) -> PlaylistDraft:
-            return workspace_store.remove_tracks(params.track_ids)
+        ) -> ActionResult:
+            try:
+                updated_playlist = workspace_store.remove_tracks(params.track_ids)
+                return ActionResult.ok(updated_playlist)
+            except Exception as error:
+                return ActionResult.fail(error)
 
         @self.action(
             description=(
@@ -245,8 +288,12 @@ class Tools:
         async def replace_draft_playlist_tracks(
             workspace_store: Inject[WorkspaceStore],
             params: ReplaceDraftPlaylistTracksParams,
-        ) -> PlaylistDraft:
-            return workspace_store.replace_tracks(params.replacements)
+        ) -> ActionResult:
+            try:
+                updated_playlist = workspace_store.replace_tracks(params.replacements)
+                return ActionResult.ok(updated_playlist)
+            except Exception as error:
+                return ActionResult.fail(error)
 
         @self.action(
             description="",
@@ -257,8 +304,12 @@ class Tools:
         async def get_playlist_tracks(
             spotify: Inject[Spotify],
             params: PlaylistIdParams,
-        ) -> str:
-            return await spotify.get_playlist_tracks(params)
+        ) -> ActionResult:
+            try:
+                playlist_tracks = await spotify.get_playlist_tracks(params)
+                return ActionResult.ok(playlist_tracks)
+            except Exception as error:
+                return ActionResult.fail(error)
 
         @self.action(
             description=(
@@ -272,5 +323,9 @@ class Tools:
             action_type=ActionType.INTERACT,
             suspends_for_input=True,
         )
-        async def ask_follow_up(params: AskFollowUpParams) -> str:
-            return params.model_dump_json()
+        async def ask_follow_up(params: AskFollowUpParams) -> ActionResult:
+            try:
+                follow_up_payload = params.model_dump_json()
+                return ActionResult.ok(follow_up_payload)
+            except Exception as error:
+                return ActionResult.fail(error)

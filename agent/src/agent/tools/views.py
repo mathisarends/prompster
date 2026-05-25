@@ -28,6 +28,20 @@ class ToolParams(BaseModel):
     )
 
 
+class ActionResult(BaseModel):
+    success: bool
+    extracted_content: Any = ""
+    error: str | None = None
+
+    @classmethod
+    def ok(cls, extracted_content: Any = "") -> "ActionResult":
+        return cls(success=True, extracted_content=extracted_content)
+
+    @classmethod
+    def fail(cls, error: Exception | str) -> "ActionResult":
+        return cls(success=False, extracted_content="", error=str(error))
+
+
 class Tool:
     def __init__(
         self,
@@ -61,15 +75,18 @@ class Tool:
             return None
         return self._status_label(params)
 
-    async def execute(self, args: dict[str, Any]) -> Any:
+    async def execute(self, args: dict[str, Any]) -> ActionResult:
         if inspect.iscoroutinefunction(self.fn):
             result = await self.fn(**args)
         else:
             result = self.fn(**args)
-        return result if result is not None else ""
 
-    def format_error(self, error: Exception) -> str:
-        return f"Error: {error}"
+        if not isinstance(result, ActionResult):
+            raise TypeError(
+                f"Tool '{self.name}' must return ActionResult, "
+                f"received {type(result).__name__}"
+            )
+        return result
 
     def to_schema(self) -> ToolSchema:
         parameters = self._schema if self._schema else self._schema_builder.build()

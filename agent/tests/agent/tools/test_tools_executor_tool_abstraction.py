@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
-from agent.tools.views import Tool
+from agent.tools.views import ActionResult, Tool
 
 
 class _Service:
@@ -15,21 +15,33 @@ class _Params(BaseModel):
     value: int
 
 
-async def _combine(service: Inject[_Service], params: _Params) -> str:
-    return f"{service.prefix}:{params.value}"
+async def _combine(service: Inject[_Service], params: _Params) -> ActionResult:
+    return ActionResult(
+        success=True, extracted_content=f"{service.prefix}:{params.value}"
+    )
 
 
-async def _explode(params: _Params) -> str:
+async def _explode(params: _Params) -> ActionResult:
     raise RuntimeError("boom")
 
 
-async def _optional_injected(params: _Params, service: Inject[_Service] = None) -> str:
+async def _handled_failure(params: _Params) -> ActionResult:
+    try:
+        raise RuntimeError("boom")
+    except Exception as error:
+        return ActionResult(success=False, extracted_content="", error=str(error))
+
+
+async def _optional_injected(
+    params: _Params,
+    service: Inject[_Service] = None,
+) -> ActionResult:
     prefix = service.prefix if service is not None else "none"
-    return f"{prefix}:{params.value}"
+    return ActionResult(success=True, extracted_content=f"{prefix}:{params.value}")
 
 
-async def _invalid_param_target(first: str, second: str) -> str:
-    return f"{first}:{second}"
+async def _invalid_param_target(first: str, second: str) -> ActionResult:
+    return ActionResult(success=True, extracted_content=f"{first}:{second}")
 
 
 class TestToolExecutorAbstraction:
@@ -45,17 +57,19 @@ class TestToolExecutorAbstraction:
 
         result = await executor.execute("combine", {"value": 7})
 
-        assert result == "svc:7"
+        assert result == ActionResult(success=True, extracted_content="svc:7")
 
     @pytest.mark.asyncio
-    async def test_execute_unknown_tool_raises_value_error(self) -> None:
+    async def test_execute_unknown_tool_returns_failed_action_result(self) -> None:
         executor = ToolExecutor({}, ToolContext())
 
-        with pytest.raises(ValueError, match="Unknown tool 'missing'"):
-            await executor.execute("missing", {})
+        result = await executor.execute("missing", {})
+
+        assert result.success is False
+        assert "Unknown tool 'missing'" in (result.error or "")
 
     @pytest.mark.asyncio
-    async def test_execute_returns_formatted_error_when_tool_raises(self) -> None:
+    async def test_execute_propagates_runtime_error_when_tool_raises(self) -> None:
         tool = Tool(
             name="explode",
             description="Explode",
@@ -64,9 +78,26 @@ class TestToolExecutorAbstraction:
         )
         executor = ToolExecutor({"explode": tool}, ToolContext())
 
-        result = await executor.execute("explode", {"value": 1})
+        with pytest.raises(RuntimeError, match="boom"):
+            await executor.execute("explode", {"value": 1})
 
-        assert result == "Error: boom"
+    @pytest.mark.asyncio
+    async def test_execute_returns_failed_action_result_from_handler(self) -> None:
+        tool = Tool(
+            name="handled_failure",
+            description="Handled failure",
+            fn=_handled_failure,
+            param_model=_Params,
+        )
+        executor = ToolExecutor({"handled_failure": tool}, ToolContext())
+
+        result = await executor.execute("handled_failure", {"value": 1})
+
+        assert result == ActionResult(
+            success=False,
+            extracted_content="",
+            error="boom",
+        )
 
     @pytest.mark.asyncio
     async def test_execute_returns_error_when_required_injected_dep_missing(
@@ -82,8 +113,9 @@ class TestToolExecutorAbstraction:
 
         result = await executor.execute("combine", {"value": 4})
 
-        assert "Missing injected dependency" in result
-        assert "service" in result
+        assert result.success is False
+        assert "Missing injected dependency" in (result.error or "")
+        assert "service" in (result.error or "")
 
     @pytest.mark.asyncio
     async def test_execute_uses_default_for_optional_injected_dep(self) -> None:
@@ -97,7 +129,7 @@ class TestToolExecutorAbstraction:
 
         result = await executor.execute("optional", {"value": 9})
 
-        assert result == "none:9"
+        assert result == ActionResult(success=True, extracted_content="none:9")
 
     @pytest.mark.asyncio
     async def test_execute_returns_error_when_param_model_has_no_target_parameter(
@@ -113,4 +145,5 @@ class TestToolExecutorAbstraction:
 
         result = await executor.execute("invalid", {"value": 3})
 
-        assert "has no parameter that can receive it" in result
+        assert result.success is False
+        assert "has no parameter that can receive it" in (result.error or "")

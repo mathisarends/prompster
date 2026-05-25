@@ -122,7 +122,9 @@ class TestAgentWorkspaceUpdateEvents:
         assert workspace_update_index == tool_result_index + 1
         assert isinstance(tool_result, ToolResultEvent)
         assert isinstance(workspace_update, WorkspaceUpdatedEvent)
-        assert json.loads(tool_result.result)["name"] == "80er Party"
+        serialized_result = json.loads(tool_result.result)
+        assert serialized_result["success"] is True
+        assert serialized_result["extracted_content"]["name"] == "80er Party"
         assert workspace_update.playlist_draft.name == "80er Party"
         assert workspace_update.playlist_draft.tracks[0].title == "Take On Me"
         assert workspace_store.drain_playlist_draft_updates() == []

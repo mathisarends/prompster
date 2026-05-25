@@ -46,15 +46,17 @@ class TestWorkspaceDraftPlaylistTool:
             },
         )
 
-        assert isinstance(result, PlaylistDraft)
-        assert result.name == "80er Party"
-        assert result.tracks[0].title == "Take On Me"
-        assert result.tracks[0].cover_url == "https://i.scdn.co/image/take-on-me.jpg"
-        assert workspace_store.playlist_draft == result
+        assert result.success is True
+        playlist = result.extracted_content
+        assert isinstance(playlist, PlaylistDraft)
+        assert playlist.name == "80er Party"
+        assert playlist.tracks[0].title == "Take On Me"
+        assert playlist.tracks[0].cover_url == "https://i.scdn.co/image/take-on-me.jpg"
+        assert workspace_store.playlist_draft == playlist
         updates = workspace_store.drain_playlist_draft_updates()
         assert len(updates) == 1
         assert updates[0].kind == "created"
-        assert updates[0].playlist_draft == result
+        assert updates[0].playlist_draft == playlist
 
     @pytest.mark.asyncio
     async def test_build_draft_playlist_rejects_non_track_spotify_uri(
@@ -79,8 +81,8 @@ class TestWorkspaceDraftPlaylistTool:
             },
         )
 
-        assert isinstance(result, str)
-        assert "spotify_uri must start with 'spotify:track:'" in result
+        assert result.success is False
+        assert "spotify_uri must start with 'spotify:track:'" in (result.error or "")
         assert workspace_store.playlist_draft is None
         assert workspace_store.drain_playlist_draft_updates() == []
 
@@ -91,7 +93,7 @@ class TestWorkspaceDraftPlaylistTool:
         workspace_store = WorkspaceStore()
         tools = Tools(ToolContext(workspace_store))
 
-        playlist = await tools.execute(
+        create_result = await tools.execute(
             "create_draft_playlist",
             {
                 "name": "80er Party",
@@ -107,6 +109,8 @@ class TestWorkspaceDraftPlaylistTool:
                 ],
             },
         )
+        assert create_result.success is True
+        playlist = create_result.extracted_content
         workspace_store.drain_playlist_draft_updates()
 
         added_playlist = await tools.execute(
@@ -126,7 +130,8 @@ class TestWorkspaceDraftPlaylistTool:
         )
         add_update = workspace_store.drain_playlist_draft_updates()[0]
 
-        assert added_playlist.tracks[-1].title == "Billie Jean"
+        assert added_playlist.success is True
+        assert added_playlist.extracted_content.tracks[-1].title == "Billie Jean"
         assert add_update.kind == "tracks_added"
         assert add_update.tracks[0].title == "Billie Jean"
 
@@ -155,7 +160,7 @@ class TestWorkspaceDraftPlaylistTool:
         assert replace_update.replacements[0].track_id == first_track_id
         assert replace_update.replacements[0].track.title == "Africa"
 
-        added_track_id = added_playlist.tracks[-1].id
+        added_track_id = added_playlist.extracted_content.tracks[-1].id
         await tools.execute(
             "remove_draft_playlist_tracks",
             {
@@ -175,7 +180,7 @@ class TestWorkspaceDraftPlaylistTool:
         workspace_store = WorkspaceStore()
         tools = Tools(ToolContext(workspace_store))
 
-        playlist = await tools.execute(
+        create_result = await tools.execute(
             "create_draft_playlist",
             {
                 "name": "80er Party",
@@ -192,6 +197,8 @@ class TestWorkspaceDraftPlaylistTool:
                 ],
             },
         )
+        assert create_result.success is True
+        playlist = create_result.extracted_content
         workspace_store.drain_playlist_draft_updates()
         pinned_track_id = playlist.tracks[0].id
 
@@ -237,11 +244,11 @@ class TestWorkspaceDraftPlaylistTool:
             },
         )
 
-        assert isinstance(remove_result, str)
-        assert "pinned" in remove_result
-        assert isinstance(replace_result, str)
-        assert "pinned" in replace_result
-        assert isinstance(rebuild_result, str)
-        assert "pinned" in rebuild_result
+        assert remove_result.success is False
+        assert "pinned" in (remove_result.error or "")
+        assert replace_result.success is False
+        assert "pinned" in (replace_result.error or "")
+        assert rebuild_result.success is False
+        assert "pinned" in (rebuild_result.error or "")
         assert workspace_store.playlist_draft == playlist
         assert workspace_store.drain_playlist_draft_updates() == []

@@ -162,75 +162,130 @@ export const DeckPlayer = ({
         </div>
 
         <div className="deck-player-transport flex items-center gap-1">
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            className={cn(
-              "rounded-full text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
-              shuffleEnabled ? "text-primary hover:text-primary" : null,
-            )}
-            aria-label={
-              shuffleEnabled ? "Shuffle ausschalten" : "Shuffle einschalten"
-            }
-            aria-pressed={shuffleEnabled}
-            onClick={onToggleShuffle}
-          >
-            <Shuffle className="size-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  className={cn(
+                    "rounded-full text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
+                    shuffleEnabled ? "text-primary hover:text-primary" : null,
+                  )}
+                  aria-label={
+                    shuffleEnabled
+                      ? "Shuffle ausschalten"
+                      : "Shuffle einschalten"
+                  }
+                  aria-pressed={shuffleEnabled}
+                  onClick={onToggleShuffle}
+                >
+                  <Shuffle className="size-4" />
+                </Button>
+              }
+            />
+            <TooltipContent side="top" sideOffset={8} showArrow={false}>
+              {shuffleEnabled
+                ? "Zufallswiedergabe ausschalten"
+                : "Zufallswiedergabe einschalten"}
+            </TooltipContent>
+          </Tooltip>
 
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            className="rounded-full text-foreground/85 hover:bg-white/[0.06] hover:text-foreground disabled:opacity-40"
-            aria-label="Vorheriger Track"
-            disabled={!hasAdjacentTracks}
-            onClick={onPreviousTrack}
-          >
-            <SkipBack className="size-[1.125rem] fill-current" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  className="rounded-full text-foreground/85 hover:bg-white/[0.06] hover:text-foreground disabled:opacity-40"
+                  aria-label="Vorheriger Track"
+                  disabled={!hasAdjacentTracks}
+                  onClick={onPreviousTrack}
+                >
+                  <SkipBack className="size-[1.125rem] fill-current" />
+                </Button>
+              }
+            />
+            <TooltipContent side="top" sideOffset={8} showArrow={false}>
+              Vorheriger Track
+            </TooltipContent>
+          </Tooltip>
 
-          <button
-            type="button"
-            className="deck-player-play grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_10px_28px_hsl(141_73%_42%/0.32)] transition hover:scale-[1.04] hover:bg-primary/95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-default disabled:bg-white/[0.06] disabled:text-muted-foreground disabled:shadow-none disabled:hover:scale-100"
-            aria-label={isPlaying ? "Track pausieren" : "Track fortsetzen"}
-            disabled={!activeTrack}
-            onClick={handlePlayPause}
-          >
-            {isPlaying ? (
-              <Pause className="size-[1.125rem] fill-current" />
-            ) : (
-              <Play className="ml-0.5 size-[1.125rem] fill-current" />
-            )}
-          </button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  className="deck-player-play grid size-10 shrink-0 place-items-center rounded-full bg-white text-slate-950 shadow-[0_10px_24px_hsl(0_0%_0%/0.42)] transition hover:scale-[1.04] hover:bg-white/95 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-default disabled:bg-white/[0.06] disabled:text-muted-foreground disabled:shadow-none disabled:hover:scale-100"
+                  aria-label={
+                    isPlaying ? "Track pausieren" : "Track fortsetzen"
+                  }
+                  disabled={!activeTrack}
+                  onClick={handlePlayPause}
+                >
+                  {isPlaying ? (
+                    <Pause className="size-[1.125rem] fill-current" />
+                  ) : (
+                    <Play className="ml-0.5 size-[1.125rem] fill-current" />
+                  )}
+                </button>
+              }
+            />
+            <TooltipContent side="top" sideOffset={8} showArrow={false}>
+              {isPlaying ? "Pause (Leertaste)" : "Abspielen (Leertaste)"}
+            </TooltipContent>
+          </Tooltip>
 
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            className="rounded-full text-foreground/85 hover:bg-white/[0.06] hover:text-foreground disabled:opacity-40"
-            aria-label="Nächster Track"
-            disabled={!hasAdjacentTracks}
-            onClick={onNextTrack}
-          >
-            <SkipForward className="size-[1.125rem] fill-current" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  className="rounded-full text-foreground/85 hover:bg-white/[0.06] hover:text-foreground disabled:opacity-40"
+                  aria-label="Nächster Track"
+                  disabled={!hasAdjacentTracks}
+                  onClick={onNextTrack}
+                >
+                  <SkipForward className="size-[1.125rem] fill-current" />
+                </Button>
+              }
+            />
+            <TooltipContent side="top" sideOffset={8} showArrow={false}>
+              Nächster Track
+            </TooltipContent>
+          </Tooltip>
 
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            className={cn(
-              "rounded-full text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
-              repeatActive ? "text-primary hover:text-primary" : null,
-            )}
-            aria-label={repeatLabel}
-            aria-pressed={repeatActive}
-            onClick={onCycleRepeat}
-          >
-            <RepeatIcon className="size-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  className={cn(
+                    "rounded-full text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
+                    repeatActive ? "text-primary hover:text-primary" : null,
+                  )}
+                  aria-label={repeatLabel}
+                  aria-pressed={repeatActive}
+                  onClick={onCycleRepeat}
+                >
+                  <RepeatIcon className="size-4" />
+                </Button>
+              }
+            />
+            <TooltipContent side="top" sideOffset={8} showArrow={false}>
+              {repeatMode === "off"
+                ? "Playlist wiederholen"
+                : repeatMode === "playlist"
+                  ? "Aktuellen Track wiederholen"
+                  : "Wiederholung ausschalten"}
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         <div className="deck-player-volume-slot flex items-center justify-end">

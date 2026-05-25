@@ -5,7 +5,7 @@ from typing import Annotated, Any, get_args, get_origin, get_type_hints
 from pydantic import BaseModel
 
 from agent.tools.di import ToolContext, _InjectMarker
-from agent.tools.views import Tool
+from agent.tools.views import ActionResult, Tool
 
 logger = logging.getLogger(__name__)
 
@@ -18,15 +18,20 @@ class ToolExecutor:
     def set_context(self, context: ToolContext) -> None:
         self._context = context
 
-    async def execute(self, name: str, args: dict) -> Any:
+    async def execute(self, name: str, args: dict) -> ActionResult:
         tool = self._tools.get(name)
         if tool is None:
-            raise ValueError(f"Unknown tool '{name}'. Available: {list(self._tools)}")
+            return ActionResult.fail(
+                f"Unknown tool '{name}'. Available: {list(self._tools)}"
+            )
+
         try:
-            return await tool.execute(self._resolve_args(tool, args))
-        except Exception as e:
-            logger.exception("Tool '%s' raised an exception", name)
-            return tool.format_error(e)
+            resolved_args = self._resolve_args(tool, args)
+        except Exception as error:
+            logger.exception("Failed to resolve args for tool '%s'", name)
+            return ActionResult.fail(error)
+
+        return await tool.execute(resolved_args)
 
     def _resolve_args(self, tool: Tool, args: dict) -> dict[str, Any]:
         kwargs = self._resolve_non_injected_args(tool, args)

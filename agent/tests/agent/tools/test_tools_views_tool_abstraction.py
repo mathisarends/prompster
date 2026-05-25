@@ -1,7 +1,7 @@
 import pytest
 from pydantic import BaseModel
 
-from agent.tools.views import ActionType, Tool, ToolParams
+from agent.tools.views import ActionResult, ActionType, Tool, ToolParams
 
 
 class _Params(BaseModel):
@@ -9,12 +9,12 @@ class _Params(BaseModel):
     limit: int = 10
 
 
-async def _async_returns_none() -> None:
-    return None
+async def _async_returns_empty_result() -> ActionResult:
+    return ActionResult(success=True, extracted_content="")
 
 
-def _sync_returns_none() -> None:
-    return None
+def _sync_returns_empty_result() -> ActionResult:
+    return ActionResult(success=True, extracted_content="")
 
 
 def _read_query(params: _Params) -> str:
@@ -71,19 +71,19 @@ class TestToolAbstraction:
 
     @pytest.mark.asyncio
     async def test_execute_async_none_becomes_empty_string(self) -> None:
-        tool = Tool(name="demo", description="Demo", fn=_async_returns_none)
+        tool = Tool(name="demo", description="Demo", fn=_async_returns_empty_result)
 
         result = await tool.execute({})
 
-        assert result == ""
+        assert result == ActionResult(success=True, extracted_content="")
 
     @pytest.mark.asyncio
     async def test_execute_sync_none_becomes_empty_string(self) -> None:
-        tool = Tool(name="demo", description="Demo", fn=_sync_returns_none)
+        tool = Tool(name="demo", description="Demo", fn=_sync_returns_empty_result)
 
         result = await tool.execute({})
 
-        assert result == ""
+        assert result == ActionResult(success=True, extracted_content="")
 
     def test_to_schema_uses_explicit_schema_if_provided(self) -> None:
         explicit_schema = {
@@ -103,17 +103,34 @@ class TestToolAbstraction:
 
         assert schema["function"]["parameters"] == explicit_schema
 
-    def test_format_error_prefixes_exception_message(self) -> None:
+    @pytest.mark.asyncio
+    async def test_execute_propagates_exception_from_tool_handler(self) -> None:
+        async def _explode() -> None:
+            raise RuntimeError("boom")
+
         tool = Tool(
-            name="demo", description="Demo", fn=_read_query, param_model=_Params
+            name="demo",
+            description="Demo",
+            fn=_explode,
         )
 
-        error_text = tool.format_error(RuntimeError("boom"))
+        with pytest.raises(RuntimeError, match="boom"):
+            await tool.execute({})
 
-        assert error_text == "Error: boom"
+    @pytest.mark.asyncio
+    async def test_execute_raises_when_handler_does_not_return_action_result(
+        self,
+    ) -> None:
+        async def _invalid() -> str:
+            return "not-an-action-result"
+
+        tool = Tool(name="demo", description="Demo", fn=_invalid)
+
+        with pytest.raises(TypeError, match="must return ActionResult"):
+            await tool.execute({})
 
     def test_action_type_defaults_to_fetch(self) -> None:
-        tool = Tool(name="demo", description="Demo", fn=_sync_returns_none)
+        tool = Tool(name="demo", description="Demo", fn=_sync_returns_empty_result)
 
         assert tool.action_type == ActionType.FETCH
 
@@ -121,7 +138,7 @@ class TestToolAbstraction:
         tool = Tool(
             name="demo",
             description="Demo",
-            fn=_sync_returns_none,
+            fn=_sync_returns_empty_result,
             action_type=ActionType.SEARCH,
         )
 

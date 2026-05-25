@@ -1,12 +1,11 @@
 import json
-from datetime import datetime, timezone
 
 from llmify.messages import ToolCall
 import pytest
 from pydantic import BaseModel
 
 from agent.tools import ToolContext, Tools
-from agent.tools.views import ActionType
+from agent.tools.views import ActionResult, ActionType
 from agent.workspace import WorkspaceStore
 
 
@@ -36,44 +35,49 @@ class TestToolsFacadeAbstraction:
         tools = Tools()
 
         @tools.action(description="Echo value", params=_EchoParams)
-        async def echo(params: _EchoParams) -> str:
-            return params.value
+        async def echo(params: _EchoParams) -> ActionResult:
+            return ActionResult(success=True, extracted_content=params.value)
 
         result = await tools.execute("echo", {"value": "ok"})
 
-        assert result == "ok"
+        assert result == ActionResult(success=True, extracted_content="ok")
 
     def test_parse_args_returns_dict_for_valid_json(self) -> None:
+        tools = Tools()
         tool_call = ToolCall(
             id="call-1",
             function={"name": "search_tracks", "arguments": '{"query": "abba"}'},
         )
 
-        parsed = Tools.parse_args(tool_call)
+        parsed = tools.parse_args(tool_call)
 
         assert parsed == {"query": "abba"}
 
     def test_parse_args_returns_empty_dict_for_invalid_json(self) -> None:
+        tools = Tools()
         tool_call = ToolCall(
             id="call-1",
             function={"name": "search_tracks", "arguments": "{not-json"},
         )
 
-        parsed = Tools.parse_args(tool_call)
+        parsed = tools.parse_args(tool_call)
 
         assert parsed == {}
 
-    def test_serialize_result_handles_string_model_and_dict(self) -> None:
-        model_result = _ResultModel(value=3)
-        dict_result = {"now": datetime(2026, 5, 19, tzinfo=timezone.utc)}
+    def test_serialize_result_serializes_action_result_contract(self) -> None:
+        tools = Tools()
+        serialized = tools.serialize_result(
+            ActionResult(
+                success=True,
+                extracted_content=_ResultModel(value=3),
+            )
+        )
 
-        serialized_string = Tools.serialize_result("plain")
-        serialized_model = Tools.serialize_result(model_result)
-        serialized_dict = Tools.serialize_result(dict_result)
-
-        assert serialized_string == "plain"
-        assert json.loads(serialized_model) == {"value": 3}
-        assert "2026-05-19" in serialized_dict
+        assert json.loads(serialized) == {
+            "success": True,
+            "extracted_content": {"value": 3},
+            "error": None,
+        }
 
     @pytest.mark.asyncio
     async def test_set_context_updates_executor_dependency_resolution(self) -> None:
@@ -99,7 +103,9 @@ class TestToolsFacadeAbstraction:
             },
         )
 
-        assert result.name == "Context Switch"
+        assert result.success is True
+        playlist_draft = result.extracted_content
+        assert playlist_draft.name == "Context Switch"
         assert old_store.playlist_draft is None
         assert new_store.playlist_draft is not None
         assert new_store.playlist_draft.name == "Context Switch"
