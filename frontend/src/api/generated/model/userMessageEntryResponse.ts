@@ -5,10 +5,12 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
+import type { SessionMessageAttachmentResponse } from "./sessionMessageAttachmentResponse";
 
 export interface UserMessageEntryResponse {
   kind?: "user_message";
   id: string;
   content: string;
+  attachments?: SessionMessageAttachmentResponse[];
   createdAt: string;
 }

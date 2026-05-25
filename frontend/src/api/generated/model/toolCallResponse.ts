@@ -5,13 +5,13 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { ToolCallResponseState } from "./toolCallResponseState";
+import type { ToolCallState } from "./toolCallState";
 import type { ToolFunctionResponse } from "./toolFunctionResponse";
 
 export interface ToolCallResponse {
   id: string;
   function: ToolFunctionResponse;
-  state: ToolCallResponseState;
+  state: ToolCallState;
   result?: string | null;
   error?: string | null;
 }

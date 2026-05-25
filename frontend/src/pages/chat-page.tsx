@@ -13,7 +13,7 @@ import { ChatMessageSkeleton } from "@/components/chat/chat-message-skeleton";
 import { ChatPageHeader } from "@/components/chat/chat-page-header";
 import { DeckWorkspaceView } from "@/components/deck/deck-workspace-view";
 import { FollowUpQuestionGroup } from "@/components/chat/follow-up-question-group";
-import { ToolCallAccordion } from "@/components/chat/tool-call-accordion";
+import { ToolCallAccordion } from "@/components/chat/tool-call-sequence";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -98,7 +98,7 @@ export const ChatPage = () => {
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  const renderEntry = (entry: ChatEntry) => {
+  const renderEntry = (entry: ChatEntry, previousEntry?: ChatEntry) => {
     switch (entry.kind) {
       case "user_message":
         return <UserChatMessage key={entry.id} text={entry.content} />;
@@ -109,6 +109,7 @@ export const ChatPage = () => {
             key={entry.id}
             text={entry.content}
             isStreaming={entry.isStreaming}
+            attachedAbove={previousEntry?.kind === "tool_call_group"}
           />
         );
 
@@ -175,7 +176,9 @@ export const ChatPage = () => {
                         Session konnte nicht geladen werden.
                       </p>
                     )}
-                    {entries.map(renderEntry)}
+                    {entries.map((entry, index) =>
+                      renderEntry(entry, entries[index - 1]),
+                    )}
                   </>
                 )}
                 <div ref={messagesEndRef} />

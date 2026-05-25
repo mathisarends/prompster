@@ -11,4 +11,5 @@ export interface ToolFunctionResponse {
   name: string;
   arguments: ToolFunctionResponseArguments;
   statusLabel?: string | null;
+  actionType?: string | null;
 }

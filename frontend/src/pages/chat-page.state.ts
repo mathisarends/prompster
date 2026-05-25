@@ -760,6 +760,7 @@ const toToolCallItem = (call: ToolCallResponse): ToolCallItem => ({
   id: call.id,
   text: formatToolCallName(call),
   status: toToolCallStatus(call),
+  actionType: call.function.actionType,
   detail: getToolCallDetail(call),
 });
 

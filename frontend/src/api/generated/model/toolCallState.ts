@@ -6,10 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ToolCallResponseState =
-  (typeof ToolCallResponseState)[keyof typeof ToolCallResponseState];
+export type ToolCallState = (typeof ToolCallState)[keyof typeof ToolCallState];
 
-export const ToolCallResponseState = {
+export const ToolCallState = {
   pending: "pending",
   completed: "completed",
   failed: "failed",
