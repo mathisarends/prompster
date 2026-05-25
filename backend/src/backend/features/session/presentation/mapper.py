@@ -16,6 +16,7 @@ from backend.features.session.domain import (
     ToolCall,
     ToolCallSequence,
     UserMessage,
+    UserMessageAttachment,
 )
 from backend.features.session.presentation.schemas import (
     AssistantMessageEntryResponse,
@@ -31,6 +32,7 @@ from backend.features.session.presentation.schemas import (
     ToolCallSequenceEntryResponse,
     ToolCallResponse,
     ToolFunctionResponse,
+    SessionMessageAttachmentResponse,
     UserMessageEntryResponse,
 )
 
@@ -51,6 +53,10 @@ def to_entry_response(entry: SessionEntry) -> SessionEntryResponse:
         return UserMessageEntryResponse(
             id=entry.id,
             content=entry.content,
+            attachments=[
+                to_user_message_attachment_response(attachment)
+                for attachment in entry.attachments
+            ],
             created_at=entry.created_at,
         )
     if isinstance(entry, AssistantMessage):
@@ -165,4 +171,17 @@ def to_playlist_response(playlist: Playlist | None) -> PlaylistResponse | None:
         id=playlist.id,
         name=playlist.name,
         tracks=[to_playlist_track_response(track) for track in playlist.tracks],
+    )
+
+
+def to_user_message_attachment_response(
+    attachment: UserMessageAttachment,
+) -> SessionMessageAttachmentResponse:
+    return SessionMessageAttachmentResponse(
+        kind=attachment.kind.value,
+        external_id=attachment.external_id,
+        title=attachment.title,
+        subtitle=attachment.subtitle,
+        image_url=attachment.image_url,
+        spotify_id=attachment.spotify_id,
     )

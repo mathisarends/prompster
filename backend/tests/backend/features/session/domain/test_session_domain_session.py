@@ -27,6 +27,8 @@ from backend.features.session.domain import (
     ToolCallSequence,
     ToolFunction,
     UserMessage,
+    UserMessageAttachment,
+    UserMessageAttachmentKind,
     WorkspaceEventType,
 )
 
@@ -127,6 +129,27 @@ class TestSessionDomainSession:
         assert len(session.entries) == 1
         assert session.entries[0] is created
         assert isinstance(created, UserMessage)
+
+    def test_add_user_message_keeps_attachment_references(
+        self, session: Session
+    ) -> None:
+        created = session.add_user_message(
+            "nimm diese artist referenz",
+            attachments=[
+                UserMessageAttachment(
+                    kind=UserMessageAttachmentKind.SPOTIFY_ARTIST,
+                    external_id="1dfeR4HaWDbWqFHLkxsg1d",
+                    title="Queen",
+                    subtitle="Artist",
+                    image_url="https://example.com/queen.jpg",
+                    spotify_id="1dfeR4HaWDbWqFHLkxsg1d",
+                )
+            ],
+        )
+
+        assert len(created.attachments) == 1
+        assert created.attachments[0].kind == UserMessageAttachmentKind.SPOTIFY_ARTIST
+        assert created.attachments[0].title == "Queen"
 
     def test_add_user_message_raises_when_tool_calls_pending(
         self, session: Session

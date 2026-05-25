@@ -24,6 +24,7 @@ from backend.features.session.domain.entities import (
     SessionEntry,
     ToolCallSequence,
     UserMessage,
+    UserMessageAttachment,
     WorkspaceEvent,
     WorkspaceEventType,
 )
@@ -189,7 +190,11 @@ class Session(Aggregate):
     def require_track(self, track_id: UUID) -> PlaylistTrack:
         return self._require_track(track_id)
 
-    def add_user_message(self, content: str) -> UserMessage:
+    def add_user_message(
+        self,
+        content: str,
+        attachments: list[UserMessageAttachment] | None = None,
+    ) -> UserMessage:
         if self._find_pending_tool_call_sequence() is not None:
             raise PendingToolCallsError(
                 f"Cannot add user message to session {self.id} "
@@ -200,7 +205,7 @@ class Session(Aggregate):
                 f"Cannot add user message to session {self.id} "
                 "while follow-up questions are pending."
             )
-        message = UserMessage(content=content)
+        message = UserMessage(content=content, attachments=attachments)
         self._entries.append(message)
         return message
 

@@ -1,4 +1,8 @@
-from .conversation_service import FollowUpAnswer, SessionConversationService
+from .conversation_service import (
+    FollowUpAnswer,
+    SessionConversationService,
+    SessionMessageAttachment,
+)
 from .events import (
     SessionAssistantMessageChunk,
     SessionAssistantMessageCompleted,
@@ -40,5 +44,6 @@ __all__ = [
     "SessionToolCallSequenceCompleted",
     "SessionToolCallResolved",
     "SessionConversationService",
+    "SessionMessageAttachment",
     "SessionService",
 ]

@@ -23,10 +23,34 @@ class EntryKind(StrEnum):
     FOLLOW_UP_QUESTION_GROUP = "follow_up_question_group"
 
 
+class SessionMessageAttachmentKind(StrEnum):
+    SPOTIFY_PLAYLIST = "spotify-playlist"
+    SPOTIFY_ARTIST = "spotify-artist"
+
+
+class SessionMessageAttachmentRequest(Schema):
+    kind: SessionMessageAttachmentKind
+    external_id: str = Field(min_length=1, max_length=128)
+    title: str = Field(min_length=1, max_length=300)
+    subtitle: str | None = Field(default=None, max_length=300)
+    image_url: str | None = Field(default=None, max_length=2048)
+    spotify_id: str | None = Field(default=None, min_length=1, max_length=128)
+
+
+class SessionMessageAttachmentResponse(Schema):
+    kind: SessionMessageAttachmentKind
+    external_id: str
+    title: str
+    subtitle: str | None = None
+    image_url: str | None = None
+    spotify_id: str | None = None
+
+
 class UserMessageEntryResponse(Schema):
     kind: Literal[EntryKind.USER_MESSAGE] = EntryKind.USER_MESSAGE
     id: UUID
     content: str
+    attachments: list[SessionMessageAttachmentResponse] = Field(default_factory=list)
     created_at: datetime
 
 
@@ -131,6 +155,20 @@ class SessionSummaryListResponse(Schema):
 
 class SendMessageRequest(Schema):
     content: str = Field(min_length=1, max_length=4000)
+    attachments: list[SessionMessageAttachmentRequest] = Field(
+        default_factory=list,
+        max_length=25,
+    )
+
+    @model_validator(mode="after")
+    def validate_unique_attachments(self) -> Self:
+        seen: set[tuple[str, str]] = set()
+        for attachment in self.attachments:
+            key = (attachment.kind.value, attachment.external_id)
+            if key in seen:
+                raise ValueError("Duplicate attachments are not allowed.")
+            seen.add(key)
+        return self
 
 
 class FollowUpAction(StrEnum):

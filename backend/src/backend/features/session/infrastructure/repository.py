@@ -24,6 +24,8 @@ from backend.features.session.domain import (
     ToolCallSequence,
     ToolFunction,
     UserMessage,
+    UserMessageAttachment,
+    UserMessageAttachmentKind,
     WorkspaceEvent,
     WorkspaceEventType,
 )
@@ -37,6 +39,7 @@ from backend.infrastructure.database.orm import (
     SessionToolCallSequenceModel,
     SessionToolCallModel,
     SessionUserMessageModel,
+    SessionUserMessageAttachmentModel,
     SessionWorkspaceEventModel,
 )
 from backend.infrastructure.database.repository import Repository
@@ -177,14 +180,14 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
 
         for position, entry in enumerate(entries):
             if isinstance(entry, UserMessage):
-                row = existing_user_rows.get(entry.id)
-                if row is None:
-                    row = SessionUserMessageModel(id=entry.id)
-                row.session_id = session_id
-                row.position = position
-                row.content = entry.content
-                row.created_at = entry.created_at
-                user_rows.append(row)
+                user_rows.append(
+                    self._to_orm_user_message(
+                        message=entry,
+                        session_id=session_id,
+                        position=position,
+                        existing_message=existing_user_rows.get(entry.id),
+                    )
+                )
             elif isinstance(entry, AssistantMessage):
                 row = existing_assistant_rows.get(entry.id)
                 if row is None:
@@ -217,6 +220,51 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm.assistant_messages = assistant_rows
         orm.tool_call_sequences = tool_sequence_rows
         orm.follow_up_question_groups = follow_group_rows
+
+    def _to_orm_user_message(
+        self,
+        *,
+        message: UserMessage,
+        session_id: UUID,
+        position: int,
+        existing_message: SessionUserMessageModel | None = None,
+    ) -> SessionUserMessageModel:
+        orm_message = existing_message or SessionUserMessageModel(id=message.id)
+        orm_message.session_id = session_id
+        orm_message.position = position
+        orm_message.content = message.content
+        orm_message.created_at = message.created_at
+
+        existing_attachments = {row.position: row for row in orm_message.attachments}
+        orm_message.attachments = [
+            self._to_orm_user_message_attachment(
+                attachment=attachment,
+                user_message_id=message.id,
+                position=attachment_position,
+                existing_attachment=existing_attachments.get(attachment_position),
+            )
+            for attachment_position, attachment in enumerate(message.attachments)
+        ]
+        return orm_message
+
+    def _to_orm_user_message_attachment(
+        self,
+        *,
+        attachment: UserMessageAttachment,
+        user_message_id: UUID,
+        position: int,
+        existing_attachment: SessionUserMessageAttachmentModel | None = None,
+    ) -> SessionUserMessageAttachmentModel:
+        orm_attachment = existing_attachment or SessionUserMessageAttachmentModel()
+        orm_attachment.user_message_id = user_message_id
+        orm_attachment.position = position
+        orm_attachment.kind = attachment.kind.value
+        orm_attachment.external_id = attachment.external_id
+        orm_attachment.title = attachment.title
+        orm_attachment.subtitle = attachment.subtitle
+        orm_attachment.image_url = attachment.image_url
+        orm_attachment.spotify_id = attachment.spotify_id
+        return orm_attachment
 
     def _sync_workspace_events(
         self,
@@ -252,7 +300,9 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             select(SessionModel)
             .where(SessionModel.id == session_id)
             .options(
-                selectinload(SessionModel.user_messages),
+                selectinload(SessionModel.user_messages).selectinload(
+                    SessionUserMessageModel.attachments
+                ),
                 selectinload(SessionModel.assistant_messages),
                 selectinload(SessionModel.workspace_events),
                 selectinload(SessionModel.tool_call_sequences).selectinload(
@@ -294,7 +344,29 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         )
 
     def _to_domain_user_message(self, row: SessionUserMessageModel) -> UserMessage:
-        return UserMessage(id=row.id, content=row.content, created_time=row.created_at)
+        attachments = sorted(row.attachments, key=lambda item: item.position)
+        return UserMessage(
+            id=row.id,
+            content=row.content,
+            attachments=[
+                self._to_domain_user_message_attachment(attachment)
+                for attachment in attachments
+            ],
+            created_time=row.created_at,
+        )
+
+    def _to_domain_user_message_attachment(
+        self,
+        row: SessionUserMessageAttachmentModel,
+    ) -> UserMessageAttachment:
+        return UserMessageAttachment(
+            kind=UserMessageAttachmentKind(row.kind),
+            external_id=row.external_id,
+            title=row.title,
+            subtitle=row.subtitle,
+            image_url=row.image_url,
+            spotify_id=row.spotify_id,
+        )
 
     def _to_domain_assistant_message(
         self, row: SessionAssistantMessageModel

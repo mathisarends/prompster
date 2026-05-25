@@ -7,6 +7,7 @@ from starlette.responses import StreamingResponse
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.session.application import (
     FollowUpAnswer,
+    SessionMessageAttachment,
     SessionConversationService,
     SessionService,
     SessionPlaylistExporter,
@@ -162,6 +163,17 @@ async def send_message(
             session_id=session_id,
             user_id=authenticated_user_id,
             content=body.content,
+            attachments=[
+                SessionMessageAttachment(
+                    kind=attachment.kind.value,
+                    external_id=attachment.external_id,
+                    title=attachment.title,
+                    subtitle=attachment.subtitle,
+                    image_url=attachment.image_url,
+                    spotify_id=attachment.spotify_id,
+                )
+                for attachment in body.attachments
+            ],
         )
     )
 

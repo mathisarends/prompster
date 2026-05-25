@@ -36,6 +36,8 @@ from backend.features.session.domain import (
     Session,
     SessionRepository,
     ToolCallSequence,
+    UserMessageAttachment,
+    UserMessageAttachmentKind,
 )
 
 
@@ -44,6 +46,16 @@ class FollowUpAnswer:
     question_id: UUID
     option_id: str | None
     text: str | None
+
+
+@dataclass(frozen=True)
+class SessionMessageAttachment:
+    kind: str
+    external_id: str
+    title: str
+    subtitle: str | None = None
+    image_url: str | None = None
+    spotify_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -69,12 +81,26 @@ class SessionConversationService:
         session_id: UUID,
         user_id: UUID,
         content: str,
+        attachments: list[SessionMessageAttachment] | None = None,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         resolved_tool_call = self._prepare_follow_up_context_for_message(
             session=session
         )
-        session.add_user_message(content=content)
+        session.add_user_message(
+            content=content,
+            attachments=[
+                UserMessageAttachment(
+                    kind=UserMessageAttachmentKind(attachment.kind),
+                    external_id=attachment.external_id,
+                    title=attachment.title,
+                    subtitle=attachment.subtitle,
+                    image_url=attachment.image_url,
+                    spotify_id=attachment.spotify_id,
+                )
+                for attachment in (attachments or [])
+            ],
+        )
         await self._session_repository.save(session=session)
         for event in self._to_tool_call_resolution_events(resolved_tool_call):
             yield event

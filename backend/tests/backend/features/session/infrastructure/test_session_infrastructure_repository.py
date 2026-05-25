@@ -7,6 +7,8 @@ from backend.features.session.domain import (
     PlaylistTrack,
     Session,
     UserMessage,
+    UserMessageAttachment,
+    UserMessageAttachmentKind,
     WorkspaceEvent,
     WorkspaceEventType,
 )
@@ -15,6 +17,7 @@ from backend.infrastructure.database.orm import (
     PlaylistTrackModel,
     SessionWorkspaceEventModel,
     SessionModel,
+    SessionUserMessageAttachmentModel,
     SessionUserMessageModel,
 )
 
@@ -56,6 +59,65 @@ def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
     assert len(orm.user_messages) == 1
     assert orm.user_messages[0] is existing_row
     assert orm.user_messages[0].content == "hello"
+
+
+def test_user_message_attachment_mapping_roundtrip() -> None:
+    owner_id = uuid4()
+    session_id = uuid4()
+    message_id = uuid4()
+    attachment = UserMessageAttachment(
+        kind=UserMessageAttachmentKind.SPOTIFY_PLAYLIST,
+        external_id="37i9dQZF1DX4dyzvuaRJ0n",
+        title="Lo-Fi Beats",
+        subtitle="Spotify",
+        image_url="https://example.com/image.jpg",
+        spotify_id="37i9dQZF1DX4dyzvuaRJ0n",
+    )
+
+    session = Session(title="Roadtrip", entries=[], owner_id=owner_id, id=session_id)
+    session.add_user_message("nutze diese playlist", attachments=[attachment])
+    message = session.entries[0]
+    assert isinstance(message, UserMessage)
+    message.id = message_id
+
+    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    orm_message = repository._to_orm_user_message(
+        message=message,
+        session_id=session_id,
+        position=0,
+    )
+
+    assert len(orm_message.attachments) == 1
+    assert orm_message.attachments[0].kind == "spotify-playlist"
+    assert orm_message.attachments[0].external_id == "37i9dQZF1DX4dyzvuaRJ0n"
+
+    domain_message = repository._to_domain_user_message(
+        SessionUserMessageModel(
+            id=message_id,
+            session_id=session_id,
+            position=0,
+            content="nutze diese playlist",
+            created_at=message.created_at,
+            attachments=[
+                SessionUserMessageAttachmentModel(
+                    user_message_id=message_id,
+                    position=0,
+                    kind="spotify-playlist",
+                    external_id="37i9dQZF1DX4dyzvuaRJ0n",
+                    title="Lo-Fi Beats",
+                    subtitle="Spotify",
+                    image_url="https://example.com/image.jpg",
+                    spotify_id="37i9dQZF1DX4dyzvuaRJ0n",
+                )
+            ],
+        )
+    )
+
+    assert len(domain_message.attachments) == 1
+    assert (
+        domain_message.attachments[0].kind == UserMessageAttachmentKind.SPOTIFY_PLAYLIST
+    )
+    assert domain_message.attachments[0].title == "Lo-Fi Beats"
 
 
 def test_playlist_track_mapping_preserves_lock_state() -> None:

@@ -53,6 +53,7 @@ from backend.features.session.domain import (
     ToolCallSequence,
     ToolFunction,
     UserMessage,
+    UserMessageAttachment,
 )
 
 
@@ -148,7 +149,7 @@ def _to_message_manager(
     manager = MessageManager(system_prompt=system_prompt)
     for entry in session.entries:
         if isinstance(entry, UserMessage):
-            manager.add_user(entry.content)
+            manager.add_user(_to_user_message_content(entry))
         elif isinstance(entry, AssistantMessage):
             manager.add_assistant(entry.content)
         elif isinstance(entry, ToolCallSequence):
@@ -168,6 +169,32 @@ def _to_message_manager(
     if playlist_context is not None:
         manager.add_user(playlist_context)
     return manager
+
+
+def _to_user_message_content(message: UserMessage) -> str:
+    if not message.attachments:
+        return message.content
+
+    payload = {
+        "attachment_references": [
+            _to_attachment_payload(attachment) for attachment in message.attachments
+        ]
+    }
+    attachment_context = json.dumps(payload, ensure_ascii=False)
+    if message.content.strip():
+        return f"{message.content}\n\n{attachment_context}"
+    return attachment_context
+
+
+def _to_attachment_payload(attachment: UserMessageAttachment) -> dict[str, str | None]:
+    return {
+        "kind": attachment.kind.value,
+        "external_id": attachment.external_id,
+        "title": attachment.title,
+        "subtitle": attachment.subtitle,
+        "image_url": attachment.image_url,
+        "spotify_id": attachment.spotify_id,
+    }
 
 
 def _to_llm_tool_call(call: ToolCall) -> LLMToolCall:
