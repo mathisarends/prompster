@@ -2,6 +2,10 @@ from enum import StrEnum
 from typing import Final, TypeGuard
 
 
+class LLMProvider(StrEnum):
+    OPENAI = "openai"
+
+
 class OpenAIModelName(StrEnum):
     GPT_5_4 = "gpt-5.4"
     GPT_5_4_MINI = "gpt-5.4-mini"

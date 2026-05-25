@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.env import EnvSettings
 from backend.features import (
     auth,
+    llm_options,
     oauth_connections,
     session,
     spotify,
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 _FEATURES = [
     auth.feature,
+    llm_options.feature,
     oauth_connections.feature,
     spotify.feature,
     transcription.feature,
