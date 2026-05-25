@@ -61,16 +61,23 @@ class AssistantMessageEntryResponse(Schema):
     created_at: datetime
 
 
+class ToolCallState(StrEnum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class ToolFunctionResponse(Schema):
     name: str
     arguments: dict[str, object]
     status_label: str | None = None
+    action_type: str | None = None
 
 
 class ToolCallResponse(Schema):
     id: str
     function: ToolFunctionResponse
-    state: Literal["pending", "completed", "failed"]
+    state: ToolCallState
     result: str | None = None
     error: str | None = None
 

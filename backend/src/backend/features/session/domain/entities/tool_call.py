@@ -1,4 +1,12 @@
 from dataclasses import dataclass
+from enum import StrEnum
+
+
+class ToolActionType(StrEnum):
+    SEARCH = "search"
+    FETCH = "fetch"
+    MUTATE = "mutate"
+    INTERACT = "interact"
 
 
 @dataclass(frozen=True)
@@ -6,6 +14,7 @@ class ToolFunction:
     name: str
     arguments: dict[str, object]
     status_label: str | None = None
+    action_type: ToolActionType | None = None
 
 
 @dataclass(frozen=True)

@@ -1,10 +1,14 @@
+from __future__ import annotations
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from agent.tools.views import AskFollowUpQuestion
 from agent.playlist import PlaylistDraft, PlaylistDraftUpdate
+
+if TYPE_CHECKING:
+    from agent.tools.views import ActionType
 
 
 @dataclass(kw_only=True)
@@ -39,6 +43,7 @@ class ToolCallEvent(AgentEvent):
     name: str
     args: dict[str, Any]
     status_label: str | None = None
+    action_type: ActionType | None = None
 
 
 @dataclass(kw_only=True)

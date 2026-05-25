@@ -4,8 +4,11 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 from backend.features.session.domain import (
+    PendingCall,
     PlaylistTrack,
     Session,
+    ToolActionType,
+    ToolFunction,
     UserMessage,
     UserMessageAttachment,
     UserMessageAttachmentKind,
@@ -252,3 +255,29 @@ def test_workspace_event_mapping_roundtrip() -> None:
     assert mapped.track_title == "Starlight"
     assert mapped.track_artist == "Muse"
     assert mapped.track_spotify_uri == "spotify:track:abc"
+
+
+def test_tool_call_action_type_mapping_roundtrip() -> None:
+    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    sequence_id = uuid4()
+    call = PendingCall(
+        id="call-1",
+        function=ToolFunction(
+            name="search_tracks",
+            arguments={"query": "abba"},
+            status_label="Suche nach 'Abba'",
+            action_type=ToolActionType.SEARCH,
+        ),
+    )
+
+    orm_call = repository._to_orm_tool_call(
+        call=call,
+        sequence_id=sequence_id,
+        position=0,
+    )
+
+    assert orm_call.function_action_type == "search"
+
+    mapped_call = repository._to_domain_tool_call(orm_call)
+
+    assert mapped_call.function.action_type == ToolActionType.SEARCH

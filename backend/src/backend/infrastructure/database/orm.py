@@ -228,6 +228,7 @@ class SessionToolCallModel(DatabaseEntity, table=True):
         sa_column=Column(JSON, nullable=False)
     )
     function_status_label: str | None = None
+    function_action_type: str | None = Field(default=None, max_length=32)
     state: str
     result: str | None = None
     error: str | None = None

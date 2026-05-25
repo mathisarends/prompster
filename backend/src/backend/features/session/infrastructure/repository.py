@@ -20,6 +20,7 @@ from backend.features.session.domain import (
     SessionEntry,
     SessionNotFoundError,
     SessionRepository,
+    ToolActionType,
     ToolCall,
     ToolCallSequence,
     ToolFunction,
@@ -390,6 +391,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             name=row.function_name,
             arguments=row.function_arguments or {},
             status_label=row.function_status_label,
+            action_type=self._to_tool_action_type(row.function_action_type),
         )
         if row.state == _COMPLETED_STATE:
             return CompletedCall(
@@ -446,10 +448,21 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm.function_name = call.function.name
         orm.function_arguments = dict(call.function.arguments)
         orm.function_status_label = call.function.status_label
+        orm.function_action_type = (
+            call.function.action_type.value if call.function.action_type else None
+        )
         orm.state = state
         orm.result = result
         orm.error = error
         return orm
+
+    def _to_tool_action_type(self, value: str | None) -> ToolActionType | None:
+        if value is None:
+            return None
+        try:
+            return ToolActionType(value)
+        except ValueError:
+            return None
 
     def _to_domain_follow_up_group(
         self, row: SessionFollowUpQuestionGroupModel

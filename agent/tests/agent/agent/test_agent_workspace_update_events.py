@@ -10,10 +10,12 @@ from agent.agent import (
     Agent,
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
+    ToolCallEvent,
     ToolResultEvent,
     WorkspaceUpdatedEvent,
 )
 from agent.tools import ToolContext, Tools
+from agent.tools.views import ActionType
 from agent.playlist import PlaylistDraftStore, PlaylistDraftTrack
 
 
@@ -118,6 +120,7 @@ class TestAgentWorkspaceUpdateEvents:
             for index, event in enumerate(events)
             if isinstance(event, ToolResultEvent)
         )
+        tool_call = next(event for event in events if isinstance(event, ToolCallEvent))
         workspace_update_index = next(
             index
             for index, event in enumerate(events)
@@ -127,6 +130,8 @@ class TestAgentWorkspaceUpdateEvents:
         workspace_update = events[workspace_update_index]
 
         assert workspace_update_index == tool_result_index + 1
+        assert tool_call.action_type == ActionType.MUTATE
+        assert tool_call.status_label == "Playlist-Entwurf bauen: '80er Party'"
         assert isinstance(tool_result, ToolResultEvent)
         assert isinstance(workspace_update, WorkspaceUpdatedEvent)
         serialized_result = json.loads(tool_result.result)

@@ -31,6 +31,7 @@ from backend.features.session.presentation.schemas import (
     SpotifyPlaylistExportResponse,
     ToolCallSequenceEntryResponse,
     ToolCallResponse,
+    ToolCallState,
     ToolFunctionResponse,
     SessionMessageAttachmentResponse,
     UserMessageEntryResponse,
@@ -84,11 +85,11 @@ def to_tool_call_sequence_response(
 
 def to_tool_call_response(call: ToolCall) -> ToolCallResponse:
     if isinstance(call, CompletedCall):
-        state, result, error = "completed", call.result, None
+        state, result, error = ToolCallState.COMPLETED, call.result, None
     elif isinstance(call, FailedCall):
-        state, result, error = "failed", None, call.error
+        state, result, error = ToolCallState.FAILED, None, call.error
     elif isinstance(call, PendingCall):
-        state, result, error = "pending", None, None
+        state, result, error = ToolCallState.PENDING, None, None
     else:
         raise TypeError(f"Unsupported tool call: {type(call).__name__}")
     return ToolCallResponse(
@@ -97,6 +98,11 @@ def to_tool_call_response(call: ToolCall) -> ToolCallResponse:
             name=call.function.name,
             arguments=call.function.arguments,
             status_label=call.function.status_label,
+            action_type=(
+                call.function.action_type.value
+                if call.function.action_type is not None
+                else None
+            ),
         ),
         state=state,
         result=result,

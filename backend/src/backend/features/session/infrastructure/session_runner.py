@@ -49,6 +49,7 @@ from backend.features.session.domain import (
     Playlist,
     PlaylistTrack,
     Session,
+    ToolActionType,
     ToolCall,
     ToolCallSequence,
     ToolFunction,
@@ -93,6 +94,7 @@ class AgentSessionRunner(SessionRunner):
                                 name=event.name,
                                 arguments=dict(event.args),
                                 status_label=event.status_label,
+                                action_type=_to_tool_action_type(event.action_type),
                             ),
                         )
                     )
@@ -169,6 +171,15 @@ def _to_message_manager(
     if playlist_context is not None:
         manager.add_user(playlist_context)
     return manager
+
+
+def _to_tool_action_type(value: str | None) -> ToolActionType | None:
+    if value is None:
+        return None
+    try:
+        return ToolActionType(value)
+    except ValueError:
+        return None
 
 
 def _to_user_message_content(message: UserMessage) -> str:

@@ -123,6 +123,7 @@ class Agent:
                     name=call.function.name,
                     args=args,
                     status_label=tool.render_status(args) if tool else None,
+                    action_type=tool.action_type if tool else None,
                 )
 
                 if tool is not None and tool.suspends_for_input:
