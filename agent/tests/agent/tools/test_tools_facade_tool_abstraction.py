@@ -6,6 +6,7 @@ import pytest
 from pydantic import BaseModel
 
 from agent.tools import ToolContext, Tools
+from agent.tools.views import ActionType
 from agent.workspace import WorkspaceStore
 
 
@@ -18,6 +19,18 @@ class _ResultModel(BaseModel):
 
 
 class TestToolsFacadeAbstraction:
+    def test_default_tools_include_action_type_metadata(self) -> None:
+        tools = Tools()
+
+        assert tools.get("search_tracks") is not None
+        assert tools.get("search_tracks").action_type == ActionType.SEARCH
+        assert tools.get("get_album_tracks") is not None
+        assert tools.get("get_album_tracks").action_type == ActionType.FETCH
+        assert tools.get("build_draft_playlist") is not None
+        assert tools.get("build_draft_playlist").action_type == ActionType.MUTATE
+        assert tools.get("ask_follow_up") is not None
+        assert tools.get("ask_follow_up").action_type == ActionType.INTERACT
+
     @pytest.mark.asyncio
     async def test_action_registers_and_executes_custom_tool(self) -> None:
         tools = Tools()

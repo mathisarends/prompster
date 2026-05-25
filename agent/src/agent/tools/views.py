@@ -1,5 +1,6 @@
 import inspect
 from collections.abc import Callable
+from enum import Enum
 from typing import Any
 from uuid import UUID
 
@@ -8,6 +9,13 @@ from pydantic import BaseModel, Field
 
 from agent.tools.schema_builder import ToolSchemaBuilder
 from agent.tools.schemas import ToolSchema
+
+
+class ActionType(str, Enum):
+    SEARCH = "search"
+    FETCH = "fetch"
+    MUTATE = "mutate"
+    INTERACT = "interact"
 
 
 class ToolParams(BaseModel):
@@ -27,6 +35,7 @@ class Tool:
         description: str,
         fn: Callable[..., Any],
         status_label: Callable[[Any], str] | None = None,
+        action_type: ActionType = ActionType.FETCH,
         schema: dict | None = None,
         param_model: type[BaseModel] | None = None,
         suspends_for_input: bool = False,
@@ -34,6 +43,7 @@ class Tool:
         self.name = name
         self.description = description
         self.fn = fn
+        self.action_type = action_type
         self._schema = schema
         self.param_model = param_model
         self.suspends_for_input = suspends_for_input

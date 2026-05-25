@@ -11,6 +11,7 @@ from agent.tools.executor import ToolExecutor
 from agent.tools.handler import Spotify
 from agent.tools.schemas import ToolSchema
 from agent.tools.views import (
+    ActionType,
     Tool,
     AddDraftPlaylistTracksParams,
     AlbumTracksParams,
@@ -57,6 +58,7 @@ class Tools:
         *,
         params: type[P] | None = None,
         status_label: Callable[[P], str] | None = None,
+        action_type: ActionType = ActionType.FETCH,
         suspends_for_input: bool = False,
     ) -> Callable:
         def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
@@ -66,6 +68,7 @@ class Tools:
                     description=description,
                     fn=fn,
                     status_label=status_label,
+                    action_type=action_type,
                     param_model=params,
                     suspends_for_input=suspends_for_input,
                 )
@@ -107,6 +110,7 @@ class Tools:
             description="",
             params=SearchParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.SEARCH,
         )
         async def search_tracks(spotify: Inject[Spotify], params: SearchParams) -> str:
             return await spotify.search_tracks(params)
@@ -115,6 +119,7 @@ class Tools:
             description="",
             params=SearchParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.SEARCH,
         )
         async def search_albums(spotify: Inject[Spotify], params: SearchParams) -> str:
             return await spotify.search_albums(params)
@@ -123,6 +128,7 @@ class Tools:
             description="",
             params=SearchParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.SEARCH,
         )
         async def search_playlists(
             spotify: Inject[Spotify],
@@ -134,6 +140,7 @@ class Tools:
             description="",
             params=ArtistAlbumsParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.FETCH,
         )
         async def get_artist_albums(
             spotify: Inject[Spotify],
@@ -145,6 +152,7 @@ class Tools:
             description="",
             params=ArtistTopTracksParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.FETCH,
         )
         async def get_artist_top_tracks(
             spotify: Inject[Spotify],
@@ -156,6 +164,7 @@ class Tools:
             description="",
             params=AlbumTracksParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.FETCH,
         )
         async def get_album_tracks(
             spotify: Inject[Spotify],
@@ -170,6 +179,7 @@ class Tools:
             ),
             params=BuildDraftPlaylistParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.MUTATE,
         )
         async def create_draft_playlist(
             workspace_store: Inject[WorkspaceStore],
@@ -187,6 +197,7 @@ class Tools:
             ),
             params=BuildDraftPlaylistParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.MUTATE,
         )
         async def build_draft_playlist(
             workspace_store: Inject[WorkspaceStore],
@@ -199,6 +210,7 @@ class Tools:
             description="Add tracks to the current Hitster playlist draft.",
             params=AddDraftPlaylistTracksParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.MUTATE,
         )
         async def add_draft_playlist_tracks(
             workspace_store: Inject[WorkspaceStore],
@@ -213,6 +225,7 @@ class Tools:
             ),
             params=RemoveDraftPlaylistTracksParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.MUTATE,
         )
         async def remove_draft_playlist_tracks(
             workspace_store: Inject[WorkspaceStore],
@@ -227,6 +240,7 @@ class Tools:
             ),
             params=ReplaceDraftPlaylistTracksParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.MUTATE,
         )
         async def replace_draft_playlist_tracks(
             workspace_store: Inject[WorkspaceStore],
@@ -238,6 +252,7 @@ class Tools:
             description="",
             params=PlaylistIdParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.FETCH,
         )
         async def get_playlist_tracks(
             spotify: Inject[Spotify],
@@ -254,6 +269,7 @@ class Tools:
             ),
             params=AskFollowUpParams,
             status_label=lambda params: params.status,
+            action_type=ActionType.INTERACT,
             suspends_for_input=True,
         )
         async def ask_follow_up(params: AskFollowUpParams) -> str:

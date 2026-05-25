@@ -223,7 +223,7 @@ export const DeckPlaylist = ({
   return (
     <TooltipProvider delay={550}>
       <div className={cn("flex h-full min-h-0 flex-1 flex-col", className)}>
-        <div className="shrink-0">
+        <div className="shrink-0 pt-0.5 px-0.5">
           {showHeader ? (
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
@@ -256,11 +256,12 @@ export const DeckPlaylist = ({
                 }
                 containerClassName="px-0"
                 inputClassName={cn(
+                  "focus-visible:border-white/40 focus-visible:ring-white/30",
                   isSearchActive
-                    ? "border-primary/35 bg-background/85 text-foreground shadow-[0_0_0_1px_hsl(141_73%_42%/0.12)] focus-visible:border-primary/60"
+                    ? "border-white/25 bg-background/90 text-foreground shadow-[0_0_0_1px_rgba(255,255,255,0.16)] focus-visible:border-white/40"
                     : "",
                 )}
-                iconClassName={isSearchActive ? "text-primary" : ""}
+                iconClassName={isSearchActive ? "text-foreground/85" : ""}
               />
             </div>
             <DropdownMenu>
@@ -353,9 +354,16 @@ export const DeckPlaylist = ({
           durationSeconds={playback.durationSeconds}
           isPlaying={playback.isPlaying}
           volume={playback.volume}
+          shuffleEnabled={playback.shuffleEnabled}
+          repeatMode={playback.repeatMode}
+          hasAdjacentTracks={playback.hasAdjacentTracks}
           onPlayPause={playback.onPlayPause}
           onSeek={playback.onSeek}
           onVolumeChange={playback.onVolumeChange}
+          onNextTrack={playback.onNextTrack}
+          onPreviousTrack={playback.onPreviousTrack}
+          onToggleShuffle={playback.onToggleShuffle}
+          onCycleRepeat={playback.onCycleRepeat}
         />
       </div>
     </TooltipProvider>

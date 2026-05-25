@@ -1,7 +1,7 @@
 import pytest
 from pydantic import BaseModel
 
-from agent.tools.views import Tool, ToolParams
+from agent.tools.views import ActionType, Tool, ToolParams
 
 
 class _Params(BaseModel):
@@ -111,3 +111,18 @@ class TestToolAbstraction:
         error_text = tool.format_error(RuntimeError("boom"))
 
         assert error_text == "Error: boom"
+
+    def test_action_type_defaults_to_fetch(self) -> None:
+        tool = Tool(name="demo", description="Demo", fn=_sync_returns_none)
+
+        assert tool.action_type == ActionType.FETCH
+
+    def test_action_type_can_be_overridden(self) -> None:
+        tool = Tool(
+            name="demo",
+            description="Demo",
+            fn=_sync_returns_none,
+            action_type=ActionType.SEARCH,
+        )
+
+        assert tool.action_type == ActionType.SEARCH
