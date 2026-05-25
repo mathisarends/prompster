@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from spotifyify import PagingPlaylistTrack, Spotifyify, Track
 from spotifyify.exceptions import SpotifyAPIError
 
-from agent.workspace import PlaylistDraftTrack
+from agent.playlist import PlaylistDraftTrack
 from agent.tools.views import (
     AlbumTracksParams,
     ArtistAlbumsParams,

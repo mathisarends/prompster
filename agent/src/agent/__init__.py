@@ -14,7 +14,7 @@ from .agent import (
 )
 from .tools import Spotify
 from .tools.views import AskFollowUpOption, AskFollowUpQuestion
-from .workspace import (
+from .playlist import (
     PlaylistDraft,
     PlaylistDraftCreated,
     PlaylistDraftOperationStatus,
@@ -29,7 +29,7 @@ from .workspace import (
     PlaylistDraftUpdateKind,
     TrackRef,
     TrackRefReplacement,
-    WorkspaceStore,
+    PlaylistDraftStore,
 )
 
 
@@ -63,5 +63,5 @@ __all__ = [
     "PlaylistDraftUpdateKind",
     "TrackRef",
     "TrackRefReplacement",
-    "WorkspaceStore",
+    "PlaylistDraftStore",
 ]

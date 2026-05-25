@@ -8,7 +8,7 @@ Encapsulates:
 - Streaming event model (`AgentEvent` subclasses)
 - Tool registry with DI-injected dependencies (`Tools`, `ToolContext`)
 - Spotify interaction via `spotifyify` (`Spotify`)
-- Workspace state for playlist drafts (`WorkspaceStore`)
+- Workspace state for playlist drafts (`PlaylistDraftStore`)
 
 Both `backend` and standalone scripts depend on this package so agent logic and tool definitions live in one place.
 
@@ -24,7 +24,7 @@ class Agent:
         max_iterations: int = 10,
         system_prompt: str | None = None,
         spotify: Spotify | None = None,
-        workspace_store: WorkspaceStore | None = None,
+        playlist_store: PlaylistDraftStore | None = None,
     ) -> None: ...
 
     async def prepare(self) -> None          # opens Spotify session
@@ -71,4 +71,4 @@ async def search_tracks(spotify: Inject[Spotify], params: SearchParams) -> str:
 
 Default tools cover: `search_tracks`, `search_albums`, `search_playlists`, `get_artist_albums`, `get_artist_top_tracks`, `get_album_tracks`, `get_playlist_tracks`, `build_draft_playlist`, `ask_follow_up`.
 
-Dependencies (`Spotify`, `WorkspaceStore`) are resolved at call time via `ToolContext`.
+Dependencies (`Spotify`, `PlaylistDraftStore`) are resolved at call time via `ToolContext`.

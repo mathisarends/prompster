@@ -6,7 +6,11 @@ from pydantic import BaseModel
 
 from agent.tools import ToolContext, Tools
 from agent.tools.views import ActionResult, ActionType
-from agent.workspace import PlaylistDraftToolResult, PlaylistDraftTrack, WorkspaceStore
+from agent.playlist import (
+    PlaylistDraftStore,
+    PlaylistDraftToolResult,
+    PlaylistDraftTrack,
+)
 
 
 class _EchoParams(BaseModel):
@@ -81,8 +85,8 @@ class TestToolsFacadeAbstraction:
 
     @pytest.mark.asyncio
     async def test_set_context_updates_executor_dependency_resolution(self) -> None:
-        old_store = WorkspaceStore()
-        new_store = WorkspaceStore()
+        old_store = PlaylistDraftStore()
+        new_store = PlaylistDraftStore()
         new_store.cache_tracks(
             [
                 PlaylistDraftTrack(

@@ -12,13 +12,13 @@ from agent.agent import (
 )
 from agent import MessageManager, Spotify
 from agent.tools.views import AskFollowUpQuestion
-from agent.workspace import (
+from agent.playlist import (
     PlaylistDraft,
     PlaylistDraftTrack,
     PlaylistDraftTracksAdded,
     PlaylistDraftTracksRemoved,
     PlaylistDraftTracksReplaced,
-    WorkspaceStore,
+    PlaylistDraftStore,
 )
 
 from llmify import ChatModel
@@ -76,7 +76,7 @@ class AgentSessionRunner(SessionRunner):
                 system_prompt=self._system_prompt,
             ),
             spotify=Spotify(client=self._spotify),
-            workspace_store=_to_workspace_store(session.playlist),
+            playlist_store=_to_playlist_draft_store(session.playlist),
         )
 
         try:
@@ -240,11 +240,11 @@ def _to_playlist_track(track: PlaylistDraftTrack) -> PlaylistTrack:
     )
 
 
-def _to_workspace_store(playlist: Playlist | None) -> WorkspaceStore:
+def _to_playlist_draft_store(playlist: Playlist | None) -> PlaylistDraftStore:
     if playlist is None:
-        return WorkspaceStore()
+        return PlaylistDraftStore()
 
-    return WorkspaceStore(
+    return PlaylistDraftStore(
         PlaylistDraft(
             id=playlist.id,
             name=playlist.name or "Playlist",

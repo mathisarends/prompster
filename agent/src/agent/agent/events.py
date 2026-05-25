@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from agent.tools.views import AskFollowUpQuestion
-from agent.workspace import PlaylistDraft, PlaylistDraftUpdate
+from agent.playlist import PlaylistDraft, PlaylistDraftUpdate
 
 
 @dataclass(kw_only=True)

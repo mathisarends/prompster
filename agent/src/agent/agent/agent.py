@@ -18,7 +18,7 @@ from agent.agent.events import (
 from agent.agent.messages import MessageManager
 from agent.tools import Tools, Spotify
 from agent.tools.views import AskFollowUpParams
-from agent.workspace import WorkspaceStore
+from agent.playlist import PlaylistDraftStore
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class Agent:
         max_iterations: int = 10,
         system_prompt: str | None = None,
         spotify: Spotify | None = None,
-        workspace_store: WorkspaceStore | None = None,
+        playlist_store: PlaylistDraftStore | None = None,
     ) -> None:
         self._llm = llm
         self._tools = tools or Tools()
@@ -47,12 +47,10 @@ class Agent:
             self._owns_spotify = True
         self._tools.get_context().provide(self._spotify)
 
-        existing_workspace_store = self._tools.get_context().resolve(WorkspaceStore)
-        self._workspace_store = (
-            workspace_store or existing_workspace_store or WorkspaceStore()
-        )
-        if existing_workspace_store is None:
-            self._tools.get_context().provide(self._workspace_store)
+        existing_store = self._tools.get_context().resolve(PlaylistDraftStore)
+        self._playlist_store = playlist_store or existing_store or PlaylistDraftStore()
+        if existing_store is None:
+            self._tools.get_context().provide(self._playlist_store)
 
         self._tool_schema = self._tools.to_schema()
 
@@ -142,7 +140,7 @@ class Agent:
                     name=call.function.name,
                     result=serialized,
                 )
-                for update in self._workspace_store.drain_playlist_draft_updates():
+                for update in self._playlist_store.drain_playlist_draft_updates():
                     yield WorkspaceUpdatedEvent(
                         playlist_draft=update.playlist_draft,
                         update=update,

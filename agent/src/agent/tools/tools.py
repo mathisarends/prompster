@@ -26,11 +26,11 @@ from agent.tools.views import (
     SearchParams,
 )
 
-from agent.workspace import (
+from agent.playlist import (
     PlaylistDraft,
     PlaylistDraftOperationStatus,
     PlaylistDraftToolResult,
-    WorkspaceStore,
+    PlaylistDraftStore,
 )
 
 logger = logging.getLogger(__name__)
@@ -127,13 +127,13 @@ class Tools:
     def _draft_failure(
         self,
         operation: str,
-        workspace_store: WorkspaceStore,
+        store: PlaylistDraftStore,
         error: Exception,
     ) -> ActionResult:
         return ActionResult(
             success=False,
             extracted_content=PlaylistDraftToolResult(
-                playlist_draft=workspace_store.playlist_draft,
+                playlist_draft=store.playlist_draft,
                 operations=[
                     PlaylistDraftOperationStatus(
                         operation=operation,
@@ -154,12 +154,12 @@ class Tools:
         )
         async def search_tracks(
             spotify: Inject[Spotify],
-            workspace_store: Inject[WorkspaceStore],
+            store: Inject[PlaylistDraftStore],
             params: SearchParams,
         ) -> ActionResult:
             try:
                 tracks = await spotify.search_tracks(params)
-                workspace_store.cache_tracks(tracks.tracks)
+                store.cache_tracks(tracks.tracks)
                 return ActionResult.ok(tracks.content)
             except Exception as error:
                 return ActionResult.fail(error)
@@ -220,12 +220,12 @@ class Tools:
         )
         async def get_artist_top_tracks(
             spotify: Inject[Spotify],
-            workspace_store: Inject[WorkspaceStore],
+            store: Inject[PlaylistDraftStore],
             params: ArtistTopTracksParams,
         ) -> ActionResult:
             try:
                 top_tracks = await spotify.get_artist_top_tracks(params)
-                workspace_store.cache_tracks(top_tracks.tracks)
+                store.cache_tracks(top_tracks.tracks)
                 return ActionResult.ok(top_tracks.content)
             except Exception as error:
                 return ActionResult.fail(error)
@@ -238,12 +238,12 @@ class Tools:
         )
         async def get_album_tracks(
             spotify: Inject[Spotify],
-            workspace_store: Inject[WorkspaceStore],
+            store: Inject[PlaylistDraftStore],
             params: AlbumTracksParams,
         ) -> ActionResult:
             try:
                 album_tracks = await spotify.get_album_tracks(params)
-                workspace_store.cache_tracks(album_tracks.tracks)
+                store.cache_tracks(album_tracks.tracks)
                 return ActionResult.ok(album_tracks.content)
             except Exception as error:
                 return ActionResult.fail(error)
@@ -259,11 +259,11 @@ class Tools:
             action_type=ActionType.MUTATE,
         )
         async def build_draft_playlist(
-            workspace_store: Inject[WorkspaceStore],
+            store: Inject[PlaylistDraftStore],
             params: BuildDraftPlaylistParams,
         ) -> ActionResult:
             try:
-                saved_playlist = workspace_store.save_playlist_draft_from_refs(
+                saved_playlist = store.save_playlist_draft_from_refs(
                     params.name,
                     params.tracks,
                 )
@@ -271,7 +271,7 @@ class Tools:
             except Exception as error:
                 return self._draft_failure(
                     "build_draft_playlist",
-                    workspace_store,
+                    store,
                     error,
                 )
 
@@ -282,11 +282,11 @@ class Tools:
             action_type=ActionType.MUTATE,
         )
         async def add_draft_playlist_tracks(
-            workspace_store: Inject[WorkspaceStore],
+            store: Inject[PlaylistDraftStore],
             params: AddDraftPlaylistTracksParams,
         ) -> ActionResult:
             try:
-                updated_playlist = workspace_store.add_track_refs(params.tracks)
+                updated_playlist = store.add_track_refs(params.tracks)
                 return self._draft_success(
                     "add_draft_playlist_tracks",
                     updated_playlist,
@@ -294,7 +294,7 @@ class Tools:
             except Exception as error:
                 return self._draft_failure(
                     "add_draft_playlist_tracks",
-                    workspace_store,
+                    store,
                     error,
                 )
 
@@ -308,11 +308,11 @@ class Tools:
             action_type=ActionType.MUTATE,
         )
         async def remove_draft_playlist_tracks(
-            workspace_store: Inject[WorkspaceStore],
+            store: Inject[PlaylistDraftStore],
             params: RemoveDraftPlaylistTracksParams,
         ) -> ActionResult:
             try:
-                updated_playlist = workspace_store.remove_tracks(params.track_ids)
+                updated_playlist = store.remove_tracks(params.track_ids)
                 return self._draft_success(
                     "remove_draft_playlist_tracks",
                     updated_playlist,
@@ -320,7 +320,7 @@ class Tools:
             except Exception as error:
                 return self._draft_failure(
                     "remove_draft_playlist_tracks",
-                    workspace_store,
+                    store,
                     error,
                 )
 
@@ -334,13 +334,11 @@ class Tools:
             action_type=ActionType.MUTATE,
         )
         async def replace_draft_playlist_tracks(
-            workspace_store: Inject[WorkspaceStore],
+            store: Inject[PlaylistDraftStore],
             params: ReplaceDraftPlaylistTracksParams,
         ) -> ActionResult:
             try:
-                updated_playlist = workspace_store.replace_track_refs(
-                    params.replacements
-                )
+                updated_playlist = store.replace_track_refs(params.replacements)
                 return self._draft_success(
                     "replace_draft_playlist_tracks",
                     updated_playlist,
@@ -348,7 +346,7 @@ class Tools:
             except Exception as error:
                 return self._draft_failure(
                     "replace_draft_playlist_tracks",
-                    workspace_store,
+                    store,
                     error,
                 )
 
@@ -360,12 +358,12 @@ class Tools:
         )
         async def get_playlist_tracks(
             spotify: Inject[Spotify],
-            workspace_store: Inject[WorkspaceStore],
+            store: Inject[PlaylistDraftStore],
             params: PlaylistIdParams,
         ) -> ActionResult:
             try:
                 playlist_tracks = await spotify.get_playlist_tracks(params)
-                workspace_store.cache_tracks(playlist_tracks.tracks)
+                store.cache_tracks(playlist_tracks.tracks)
                 return ActionResult.ok(playlist_tracks.content)
             except Exception as error:
                 return ActionResult.fail(error)

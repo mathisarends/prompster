@@ -4,13 +4,13 @@ AI-powered Hitster playlist builder. Users describe a playlist in natural langua
 
 ### packages
 
-| Package | Role |
-|---|---|
-| `llm` | Thin factory for OpenAI `ChatModel` instances, shared credential loading |
-| `agent` | Tool-calling agent loop, Spotify tools, workspace state, streaming events |
-| `backend` | FastAPI HTTP/SSE API, auth, sessions, PDF export, DB + S3 |
-| `frontend` | React SPA — chat UI, live SSE event rendering, Spotify deck player |
-| `tokens` | Standalone token utilities |
+| Package    | Role                                                                      |
+| ---------- | ------------------------------------------------------------------------- |
+| `llm`      | Thin factory for OpenAI `ChatModel` instances, shared credential loading  |
+| `agent`    | Tool-calling agent loop, Spotify tools, workspace state, streaming events |
+| `backend`  | FastAPI HTTP/SSE API, auth, sessions, PDF export, DB + S3                 |
+| `frontend` | React SPA — chat UI, live SSE event rendering, Spotify deck player        |
+| `tokens`   | Standalone token utilities                                                |
 
 ### how the pieces fit together
 
@@ -23,7 +23,7 @@ frontend  ──SSE──►  backend  ──────►  agent  ──►  
 
 1. **frontend** sends a user message to `backend` and opens an SSE stream.
 2. **backend** creates or resumes a `Session`, delegates to the `agent` package, and maps each `AgentEvent` to a server-sent event.
-3. **agent** runs a tool-calling loop: it calls Spotify APIs, builds a `PlaylistDraft` in the `WorkspaceStore`, and may suspend to ask clarifying questions (`FollowUpRequestedEvent`).
+3. **agent** runs a tool-calling loop: it calls Spotify APIs, builds a `PlaylistDraft` in the `PlaylistDraftStore`, and may suspend to ask clarifying questions (`FollowUpRequestedEvent`).
 4. **llm** provides the `ChatModel` used by both `agent` (tool calls) and `backend` (simple session chat).
 5. Once the draft is finalised the user can export a PDF deck or write the playlist back to their Spotify account — both handled by `backend`.
 

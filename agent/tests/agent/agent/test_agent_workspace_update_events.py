@@ -14,7 +14,7 @@ from agent.agent import (
     WorkspaceUpdatedEvent,
 )
 from agent.tools import ToolContext, Tools
-from agent.workspace import PlaylistDraftTrack, WorkspaceStore
+from agent.playlist import PlaylistDraftStore, PlaylistDraftTrack
 
 
 @dataclass
@@ -70,8 +70,8 @@ class TestAgentWorkspaceUpdateEvents:
 
     @pytest.mark.asyncio
     async def test_stream_emits_workspace_update_after_tool_result(self) -> None:
-        workspace_store = WorkspaceStore()
-        workspace_store.cache_tracks(
+        store = PlaylistDraftStore()
+        store.cache_tracks(
             [
                 PlaylistDraftTrack(
                     title="Take On Me",
@@ -82,7 +82,7 @@ class TestAgentWorkspaceUpdateEvents:
                 )
             ]
         )
-        tools = Tools(ToolContext(workspace_store))
+        tools = Tools(ToolContext(store))
         tool_args = {
             "name": "80er Party",
             "status": "Playlist-Entwurf bauen: '80er Party'",
@@ -140,4 +140,4 @@ class TestAgentWorkspaceUpdateEvents:
         )
         assert workspace_update.playlist_draft.name == "80er Party"
         assert workspace_update.playlist_draft.tracks[0].title == "Take On Me"
-        assert workspace_store.drain_playlist_draft_updates() == []
+        assert store.drain_playlist_draft_updates() == []

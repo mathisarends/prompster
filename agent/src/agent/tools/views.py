@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from agent.workspace import TrackRef, TrackRefReplacement
+from agent.playlist import TrackRef, TrackRefReplacement
 from pydantic import BaseModel, Field
 
 from agent.tools.schema_builder import ToolSchemaBuilder
