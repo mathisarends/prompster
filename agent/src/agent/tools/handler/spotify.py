@@ -1,6 +1,9 @@
+import asyncio
+from collections.abc import Awaitable, Callable
 from typing import Self
 
 from spotifyify import PagingPlaylistTrack, Spotifyify, Track
+from spotifyify.exceptions import SpotifyAPIError
 
 from agent.tools.views import (
     AlbumTracksParams,
@@ -9,6 +12,10 @@ from agent.tools.views import (
     PlaylistIdParams,
     SearchParams,
 )
+
+_RETRYABLE_STATUS_CODES = {429, 503}
+_MAX_RETRIES = 3
+_DEFAULT_BACKOFF_SECONDS = 1.0
 
 
 class Spotify:
@@ -37,7 +44,9 @@ class Spotify:
 
     async def search_tracks(self, params: SearchParams) -> str:
         await self.open()
-        page = await self._client.tracks.find(params.query, limit=min(params.limit, 50))
+        page = await self._call_with_retry(
+            lambda: self._client.tracks.find(params.query, limit=min(params.limit, 50)),
+        )
         tracks = page.items or []
         if not tracks:
             return "No tracks found."
@@ -53,7 +62,9 @@ class Spotify:
 
     async def search_albums(self, params: SearchParams) -> str:
         await self.open()
-        page = await self._client.albums.find(params.query, limit=min(params.limit, 50))
+        page = await self._call_with_retry(
+            lambda: self._client.albums.find(params.query, limit=min(params.limit, 50)),
+        )
         albums = page.items or []
         if not albums:
             return "No albums found."
@@ -63,9 +74,11 @@ class Spotify:
 
     async def search_playlists(self, params: SearchParams) -> str:
         await self.open()
-        page = await self._client.playlists.find(
-            params.query,
-            limit=min(params.limit, 50),
+        page = await self._call_with_retry(
+            lambda: self._client.playlists.find(
+                params.query,
+                limit=min(params.limit, 50),
+            ),
         )
         playlists = [playlist for playlist in (page.items or []) if playlist]
         if not playlists:
@@ -79,10 +92,12 @@ class Spotify:
     async def get_artist_albums(self, params: ArtistAlbumsParams) -> str:
         artist_id = _normalize_spotify_id(params.artist_id, "artist")
         await self.open()
-        page = await self._client.artists.albums(
-            artist_id,
-            include_groups=params.include_groups,
-            limit=params.limit,
+        page = await self._call_with_retry(
+            lambda: self._client.artists.albums(
+                artist_id,
+                include_groups=params.include_groups,
+                limit=params.limit,
+            ),
         )
         albums = page.items or []
         if not albums:
@@ -94,7 +109,9 @@ class Spotify:
     async def get_artist_top_tracks(self, params: ArtistTopTracksParams) -> str:
         artist_id = _normalize_spotify_id(params.artist_id, "artist")
         await self.open()
-        tracks = await self._client.artists.top_tracks(artist_id, market=params.country)
+        tracks = await self._call_with_retry(
+            lambda: self._client.artists.top_tracks(artist_id, market=params.country),
+        )
         if not tracks:
             return "No top tracks found."
         return "\n".join(
@@ -110,8 +127,12 @@ class Spotify:
     async def get_album_tracks(self, params: AlbumTracksParams) -> str:
         album_id = _normalize_spotify_id(params.album_id, "album")
         await self.open()
-        album = await self._client.albums.get(album_id)
-        page = await self._client.albums.tracks(album_id, limit=50, offset=0)
+        album = await self._call_with_retry(
+            lambda: self._client.albums.get(album_id),
+        )
+        page = await self._call_with_retry(
+            lambda: self._client.albums.tracks(album_id, limit=50, offset=0),
+        )
         tracks = page.items or []
         if not tracks:
             return "No tracks found."
@@ -144,14 +165,16 @@ class Spotify:
 
         while True:
             data = (
-                await self._client.http.get(
-                    f"/playlists/{playlist_id}/tracks",
-                    params={
-                        "offset": offset,
-                        "limit": limit,
-                        "additional_types": "track",
-                    },
-                    require_user=False,
+                await self._call_with_retry(
+                    lambda: self._client.http.get(
+                        f"/playlists/{playlist_id}/tracks",
+                        params={
+                            "offset": offset,
+                            "limit": limit,
+                            "additional_types": "track",
+                        },
+                        require_user=False,
+                    ),
                 )
                 or {}
             )
@@ -166,6 +189,21 @@ class Spotify:
             offset += limit
 
         return tracks
+
+    async def _call_with_retry[T](
+        self,
+        operation: Callable[[], Awaitable[T]],
+        *,
+        retries: int = _MAX_RETRIES,
+    ) -> T:
+        for attempt in range(retries + 1):
+            try:
+                return await operation()
+            except SpotifyAPIError as exc:
+                if exc.status_code not in _RETRYABLE_STATUS_CODES or attempt == retries:
+                    raise
+                await asyncio.sleep(_DEFAULT_BACKOFF_SECONDS * (2**attempt))
+        raise RuntimeError("unreachable")
 
 
 def _playlist_track_count(playlist) -> int:

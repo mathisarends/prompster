@@ -1,8 +1,9 @@
 import asyncio
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Callable
 
 import httpx
 from spotifyify import Image, Spotifyify, Track
+from spotifyify.exceptions import SpotifyAPIError
 from spotifyify.schemas import Artist, SimplifiedPlaylist
 
 from backend.features.spotify.application.ports import (
@@ -19,6 +20,10 @@ from backend.features.spotify.infrastructure.spotify_search_cache import (
 
 type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[SpotifyArtist]
 
+_RETRYABLE_STATUS_CODES = {429, 503}
+_MAX_RETRIES = 3
+_DEFAULT_BACKOFF_SECONDS = 1.0
+
 
 class SpotifyService:
     _SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1"
@@ -30,6 +35,13 @@ class SpotifyService:
     ) -> None:
         self._spotify = spotify
         self._search_cache = search_cache
+        self._http_client = httpx.AsyncClient(
+            base_url=self._SPOTIFY_API_BASE_URL,
+            timeout=10.0,
+        )
+
+    async def aclose(self) -> None:
+        await self._http_client.aclose()
 
     async def create_private_playlist(
         self,
@@ -201,7 +213,9 @@ class SpotifyService:
         if not normalized_query:
             return []
 
-        result = await self._spotify.tracks.find(normalized_query, limit=limit)
+        result = await self._call_spotifyify_with_retry(
+            lambda: self._spotify.tracks.find(normalized_query, limit=limit),
+        )
         return [
             _to_spotify_track(track)
             for track in result.items or []
@@ -215,7 +229,9 @@ class SpotifyService:
         if not normalized_query:
             return []
 
-        result = await self._spotify.playlists.find(normalized_query, limit=limit)
+        result = await self._call_spotifyify_with_retry(
+            lambda: self._spotify.playlists.find(normalized_query, limit=limit),
+        )
         return [
             _to_spotify_playlist(playlist)
             for playlist in result.items or []
@@ -229,12 +245,29 @@ class SpotifyService:
         if not normalized_query:
             return []
 
-        result = await self._spotify.artists.find(normalized_query, limit=limit)
+        result = await self._call_spotifyify_with_retry(
+            lambda: self._spotify.artists.find(normalized_query, limit=limit),
+        )
         return [
             _to_spotify_artist(artist)
             for artist in result.items or []
             if artist is not None and artist.id and artist.name
         ]
+
+    async def _call_spotifyify_with_retry[T](
+        self,
+        operation: Callable[[], Awaitable[T]],
+        *,
+        retries: int = _MAX_RETRIES,
+    ) -> T:
+        for attempt in range(retries + 1):
+            try:
+                return await operation()
+            except SpotifyAPIError as exc:
+                if exc.status_code not in _RETRYABLE_STATUS_CODES or attempt == retries:
+                    raise
+                await asyncio.sleep(_DEFAULT_BACKOFF_SECONDS * (2**attempt))
+        raise RuntimeError("unreachable")
 
     async def _get_current_user_id(self, *, access_token: str) -> str:
         data = await self._request_user_api(
@@ -259,16 +292,12 @@ class SpotifyService:
         payload: dict | None = None,
     ) -> dict | list | None:
         headers = {"Authorization": f"Bearer {access_token}"}
-        async with httpx.AsyncClient(
-            base_url=self._SPOTIFY_API_BASE_URL,
-            timeout=10.0,
-        ) as client:
-            response = await client.request(
-                method=method,
-                url=path,
-                headers=headers,
-                json=payload,
-            )
+        response = await self._send_with_retry(
+            method=method,
+            path=path,
+            headers=headers,
+            payload=payload,
+        )
 
         if response.status_code >= 400:
             try:
@@ -294,6 +323,47 @@ class SpotifyService:
             return response.json()
         except ValueError as exc:
             raise ValueError("Spotify API response was not valid JSON") from exc
+
+    async def _send_with_retry(
+        self,
+        *,
+        method: str,
+        path: str,
+        headers: dict,
+        payload: dict | None = None,
+        retries: int = _MAX_RETRIES,
+    ) -> httpx.Response:
+        response: httpx.Response | None = None
+        for attempt in range(retries + 1):
+            response = await self._http_client.request(
+                method=method,
+                url=path,
+                headers=headers,
+                json=payload,
+            )
+
+            if (
+                response.status_code not in _RETRYABLE_STATUS_CODES
+                or attempt == retries
+            ):
+                return response
+
+            await asyncio.sleep(
+                _parse_retry_after(response.headers.get("Retry-After"))
+                or _DEFAULT_BACKOFF_SECONDS * (2**attempt)
+            )
+
+        assert response is not None
+        return response
+
+
+def _parse_retry_after(value: str | None) -> float | None:
+    if not value:
+        return None
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        return None
 
 
 def _to_spotify_playlist(playlist: SimplifiedPlaylist) -> SpotifyPlaylist:

@@ -36,9 +36,13 @@ class SpotifyProvider(Provider):
         return SpotifySearchCache()
 
     @provide(scope=Scope.APP)
-    def provide_spotify_service(
+    async def provide_spotify_service(
         self,
         spotify: Spotifyify,
         search_cache: SpotifySearchCache,
-    ) -> SpotifyService:
-        return SpotifyService(spotify=spotify, search_cache=search_cache)
+    ) -> AsyncGenerator[SpotifyService, None]:
+        service = SpotifyService(spotify=spotify, search_cache=search_cache)
+        try:
+            yield service
+        finally:
+            await service.aclose()
