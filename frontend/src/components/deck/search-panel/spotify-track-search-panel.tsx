@@ -18,6 +18,11 @@ type SpotifyTrackSearchPanelProps = {
   onTogglePreviewPlayPause?: () => void;
 };
 
+type SpotifyTrackSearchResultsProps = Omit<
+  SpotifyTrackSearchPanelProps,
+  "panelRef"
+>;
+
 const minSearchLength = 2;
 const searchDebounceMs = 220;
 
@@ -32,6 +37,39 @@ export const SpotifyTrackSearchPanel = ({
   onPreviewTrack,
   onTogglePreviewPlayPause,
 }: SpotifyTrackSearchPanelProps) => {
+  return (
+    <section
+      ref={panelRef}
+      className="mb-4 overflow-hidden rounded-md border border-primary/20 bg-popover/95 shadow-[0_22px_54px_hsl(222_52%_4%/0.58)] ring-1 ring-primary/10 animate-in fade-in-0 slide-in-from-top-2 duration-150"
+    >
+      <div className="prompster-scrollbar max-h-[min(42vh,27rem)] overflow-y-auto px-3 pr-1">
+        <div className="space-y-4 py-3">
+          <SpotifyTrackSearchResults
+            query={query}
+            isAdding={isAdding}
+            addingTrackId={addingTrackId}
+            activeTrackId={activeTrackId}
+            isPlaying={isPlaying}
+            onAddTrack={onAddTrack}
+            onPreviewTrack={onPreviewTrack}
+            onTogglePreviewPlayPause={onTogglePreviewPlayPause}
+          />
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export const SpotifyTrackSearchResults = ({
+  query,
+  isAdding = false,
+  addingTrackId,
+  activeTrackId,
+  isPlaying = false,
+  onAddTrack,
+  onPreviewTrack,
+  onTogglePreviewPlayPause,
+}: SpotifyTrackSearchResultsProps) => {
   const [addedTrackIds, setAddedTrackIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -73,34 +111,25 @@ export const SpotifyTrackSearchPanel = ({
   };
 
   return (
-    <section
-      ref={panelRef}
-      className="mb-4 overflow-hidden rounded-md border border-primary/20 bg-popover/95 shadow-[0_22px_54px_hsl(222_52%_4%/0.58)] ring-1 ring-primary/10 animate-in fade-in-0 slide-in-from-top-2 duration-150"
-    >
-      <div className="prompster-scrollbar max-h-[min(42vh,27rem)] overflow-y-auto px-3 pr-1">
-        <div className="space-y-4 py-3">
-          <SearchPanelContent
-            canSearch={canSearch}
-            isLoading={search.isLoading}
-            isError={search.isError}
-            tracks={tracks}
-            isAdding={isAdding}
-            addingTrackId={addingTrackId}
-            activeTrackId={activeTrackId}
-            isPlaying={isPlaying}
-            onAddTrack={(track) => {
-              void addTrack(track);
-            }}
-            onPreviewTrack={(track) => {
-              if (activeTrackId === track.id) {
-                onTogglePreviewPlayPause?.();
-                return;
-              }
-              onPreviewTrack?.(track);
-            }}
-          />
-        </div>
-      </div>
-    </section>
+    <SearchPanelContent
+      canSearch={canSearch}
+      isLoading={search.isLoading}
+      isError={search.isError}
+      tracks={tracks}
+      isAdding={isAdding}
+      addingTrackId={addingTrackId}
+      activeTrackId={activeTrackId}
+      isPlaying={isPlaying}
+      onAddTrack={(track) => {
+        void addTrack(track);
+      }}
+      onPreviewTrack={(track) => {
+        if (activeTrackId === track.id) {
+          onTogglePreviewPlayPause?.();
+          return;
+        }
+        onPreviewTrack?.(track);
+      }}
+    />
   );
 };

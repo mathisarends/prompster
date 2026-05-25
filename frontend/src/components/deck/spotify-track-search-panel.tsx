@@ -1,1 +1,4 @@
-export { SpotifyTrackSearchPanel } from "@/components/deck/search-panel";
+export {
+  SpotifyTrackSearchPanel,
+  SpotifyTrackSearchResults,
+} from "@/components/deck/search-panel";

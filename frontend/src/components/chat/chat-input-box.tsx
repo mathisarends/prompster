@@ -84,6 +84,7 @@ export const ChatInputBox = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputContentRef = useRef<HTMLDivElement>(null);
   const textMirrorRef = useRef<HTMLDivElement>(null);
+  const textareaSelectionRef = useRef({ start: 0, end: 0 });
   const [isSingleLine, setIsSingleLine] = useState(true);
   const [attachmentPopoverOpen, setAttachmentPopoverOpen] = useState(false);
   const [attachmentMention, setAttachmentMention] =
@@ -115,6 +116,20 @@ export const ChatInputBox = ({
     setAttachmentPopoverOpen(nextMention !== null);
   };
 
+  const rememberTextareaSelection = (textarea: HTMLTextAreaElement) => {
+    textareaSelectionRef.current = {
+      start: textarea.selectionStart,
+      end: textarea.selectionEnd,
+    };
+  };
+
+  const focusTextareaAt = (position: number) => {
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(position, position);
+    });
+  };
+
   const submit = () => {
     const trimmed = value.trim();
     if (!canSend || disabled || isSubmitting) return;
@@ -144,13 +159,48 @@ export const ChatInputBox = ({
     setAttachmentMention(null);
     setAttachmentPopoverOpen(false);
 
-    requestAnimationFrame(() => {
-      textareaRef.current?.focus();
-      textareaRef.current?.setSelectionRange(
-        nextCursorPosition,
-        nextCursorPosition,
-      );
-    });
+    focusTextareaAt(nextCursorPosition);
+  };
+
+  const closeAttachmentMention = () => {
+    const cursorPosition = attachmentMention?.end ?? value.length;
+
+    setAttachmentPopoverOpen(false);
+    setAttachmentMention(null);
+    focusTextareaAt(cursorPosition);
+  };
+
+  const startAttachmentMentionFromTrigger = () => {
+    if (isAttachmentMentionActive) {
+      closeAttachmentMention();
+      return;
+    }
+
+    const textarea = textareaRef.current;
+    const storedSelection = textareaSelectionRef.current;
+    const selectionStart = Math.min(
+      textarea?.selectionStart ?? storedSelection.start,
+      value.length,
+    );
+    const selectionEnd = Math.min(
+      textarea?.selectionEnd ?? storedSelection.end,
+      value.length,
+    );
+    const characterBeforeCursor =
+      selectionStart > 0 ? value[selectionStart - 1] : "";
+    const leadingSpace =
+      characterBeforeCursor && !/\s/.test(characterBeforeCursor) ? " " : "";
+    const mentionStart = selectionStart + leadingSpace.length;
+    const mentionEnd = mentionStart + 1;
+    const nextValue = `${value.slice(
+      0,
+      selectionStart,
+    )}${leadingSpace}@${value.slice(selectionEnd)}`;
+
+    onChange(nextValue);
+    setAttachmentMention({ start: mentionStart, end: mentionEnd, query: "" });
+    setAttachmentPopoverOpen(true);
+    textareaSelectionRef.current = { start: mentionEnd, end: mentionEnd };
   };
 
   const syncAttachmentMentionQuery = (nextQuery: string) => {
@@ -178,8 +228,7 @@ export const ChatInputBox = ({
       return;
     }
 
-    setAttachmentPopoverOpen(false);
-    setAttachmentMention(null);
+    closeAttachmentMention();
   };
 
   const removeAttachment = (attachment: ChatAttachment) => {
@@ -262,10 +311,9 @@ export const ChatInputBox = ({
               attachments={attachments}
               onAdd={addAttachment}
               disabled={disabled || isSubmitting}
-              open={
-                isAttachmentMentionActive ? attachmentPopoverOpen : undefined
-              }
+              open={attachmentPopoverOpen}
               onOpenChange={handleAttachmentPopoverOpenChange}
+              onTriggerClick={startAttachmentMentionFromTrigger}
               query={
                 isAttachmentMentionActive ? attachmentMention.query : undefined
               }
@@ -286,10 +334,12 @@ export const ChatInputBox = ({
             value={value}
             disabled={disabled || isSubmitting}
             onChange={(e) => {
+              rememberTextareaSelection(e.target);
               onChange(e.target.value);
               updateAttachmentMention(e.target.value, e.target.selectionStart);
             }}
             onSelect={(e) => {
+              rememberTextareaSelection(e.currentTarget);
               updateAttachmentMention(
                 e.currentTarget.value,
                 e.currentTarget.selectionStart,
@@ -310,6 +360,7 @@ export const ChatInputBox = ({
                   e.preventDefault();
                   setAttachmentPopoverOpen(false);
                   setAttachmentMention(null);
+                  focusTextareaAt(e.currentTarget.selectionStart);
                   return;
                 }
               }
@@ -338,10 +389,9 @@ export const ChatInputBox = ({
                 attachments={attachments}
                 onAdd={addAttachment}
                 disabled={disabled || isSubmitting}
-                open={
-                  isAttachmentMentionActive ? attachmentPopoverOpen : undefined
-                }
+                open={attachmentPopoverOpen}
                 onOpenChange={handleAttachmentPopoverOpenChange}
+                onTriggerClick={startAttachmentMentionFromTrigger}
                 query={
                   isAttachmentMentionActive
                     ? attachmentMention.query

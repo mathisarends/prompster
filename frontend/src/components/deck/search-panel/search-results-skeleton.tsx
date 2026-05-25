@@ -28,17 +28,20 @@ export const SearchResultsSkeleton = () => (
     {Array.from({ length: ROW_COUNT }).map((_, index) => (
       <div
         key={`search-track-skeleton-${index}`}
-        className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 rounded-md px-2 py-2"
+        className="grid grid-cols-[minmax(0,1fr)_64px_36px] items-center gap-x-3 rounded-md px-2 py-2.5"
       >
-        <Skeleton className="size-10 rounded-[4px]" />
-        <div className="space-y-2">
-          <Skeleton
-            className={`h-4 ${titleWidths[index % titleWidths.length]}`}
-          />
-          <Skeleton
-            className={`h-3 ${subtitleWidths[index % subtitleWidths.length]}`}
-          />
+        <div className="flex min-w-0 items-center gap-3">
+          <Skeleton className="size-10 shrink-0 rounded-[4px]" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton
+              className={`h-4 ${titleWidths[index % titleWidths.length]}`}
+            />
+            <Skeleton
+              className={`h-3 ${subtitleWidths[index % subtitleWidths.length]}`}
+            />
+          </div>
         </div>
+        <Skeleton className="h-4 w-9 justify-self-center" />
         <Skeleton className="size-8 rounded-md bg-foreground/15" />
       </div>
     ))}

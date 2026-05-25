@@ -48,6 +48,7 @@ type AttachmentPopoverProps = {
   onOpenChange?: (open: boolean) => void;
   query?: string;
   onQueryChange?: (query: string) => void;
+  onTriggerClick?: () => void;
   hideSearchInput?: boolean;
   onPick?: () => void;
 };
@@ -64,6 +65,7 @@ export const AttachmentPopover = ({
   onAdd,
   disabled,
   triggerClassName,
+  onTriggerClick,
   open: controlledOpen,
   onOpenChange,
   query: controlledQuery,
@@ -261,6 +263,12 @@ export const AttachmentPopover = ({
                       "shrink-0 rounded-full text-muted-foreground hover:text-foreground",
                       triggerClassName,
                     )}
+                    onClick={(event) => {
+                      if (!onTriggerClick) return;
+
+                      event.preventDefault();
+                      onTriggerClick();
+                    }}
                   >
                     <Paperclip className="size-4" />
                   </Button>
@@ -269,7 +277,7 @@ export const AttachmentPopover = ({
             }
           />
           <TooltipContent side="top" sideOffset={6} showArrow={false}>
-            Anhang hinzufügen - oder @ eingeben
+            Anhang hinzufügen - Shortcut: @
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
