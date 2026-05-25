@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from agent.tools import ToolContext, Tools
 from agent.tools.views import ActionResult, ActionType
-from agent.workspace import WorkspaceStore
+from agent.workspace import PlaylistDraftToolResult, PlaylistDraftTrack, WorkspaceStore
 
 
 class _EchoParams(BaseModel):
@@ -83,6 +83,17 @@ class TestToolsFacadeAbstraction:
     async def test_set_context_updates_executor_dependency_resolution(self) -> None:
         old_store = WorkspaceStore()
         new_store = WorkspaceStore()
+        new_store.cache_tracks(
+            [
+                PlaylistDraftTrack(
+                    title="Take On Me",
+                    artist="a-ha",
+                    year=1985,
+                    spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+                    cover_url="https://i.scdn.co/image/take-on-me.jpg",
+                )
+            ]
+        )
         tools = Tools(ToolContext(old_store))
         tools.set_context(ToolContext(new_store))
 
@@ -93,18 +104,17 @@ class TestToolsFacadeAbstraction:
                 "status": "Playlist-Entwurf bauen",
                 "tracks": [
                     {
-                        "title": "Take On Me",
-                        "artist": "a-ha",
-                        "year": 1985,
-                        "spotify_uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-                        "cover_url": "https://i.scdn.co/image/take-on-me.jpg",
+                        "uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
                     }
                 ],
             },
         )
 
         assert result.success is True
-        playlist_draft = result.extracted_content
+        tool_result = result.extracted_content
+        assert isinstance(tool_result, PlaylistDraftToolResult)
+        playlist_draft = tool_result.playlist_draft
+        assert playlist_draft is not None
         assert playlist_draft.name == "Context Switch"
         assert old_store.playlist_draft is None
         assert new_store.playlist_draft is not None

@@ -1,7 +1,42 @@
 import pytest
 
 from agent.tools import ToolContext, Tools
-from agent.workspace import PlaylistDraft, WorkspaceStore
+from agent.tools.handler import Spotify
+from agent.tools.handler.spotify import SpotifyTrackLookupResult
+from agent.tools.views import SearchParams
+from agent.workspace import (
+    PlaylistDraft,
+    PlaylistDraftToolResult,
+    PlaylistDraftTrack,
+    WorkspaceStore,
+)
+
+
+def _track(
+    title: str,
+    artist: str,
+    spotify_uri: str,
+    *,
+    year: int | None = None,
+    cover_url: str | None = None,
+    is_pinned: bool = False,
+) -> PlaylistDraftTrack:
+    return PlaylistDraftTrack(
+        title=title,
+        artist=artist,
+        year=year,
+        spotify_uri=spotify_uri,
+        cover_url=cover_url,
+        is_pinned=is_pinned,
+    )
+
+
+class _FakeSpotify(Spotify):
+    def __init__(self, lookup_result: SpotifyTrackLookupResult) -> None:
+        self.lookup_result = lookup_result
+
+    async def search_tracks(self, params: SearchParams) -> SpotifyTrackLookupResult:
+        return self.lookup_result
 
 
 class TestWorkspaceDraftPlaylistTool:
@@ -12,7 +47,7 @@ class TestWorkspaceDraftPlaylistTool:
 
         tool_names = [schema["function"]["name"] for schema in tools.to_schema()]
 
-        assert "create_draft_playlist" in tool_names
+        assert "create_draft_playlist" not in tool_names
         assert "build_draft_playlist" in tool_names
         assert "add_draft_playlist_tracks" in tool_names
         assert "remove_draft_playlist_tracks" in tool_names
@@ -27,6 +62,17 @@ class TestWorkspaceDraftPlaylistTool:
         self,
     ) -> None:
         workspace_store = WorkspaceStore()
+        workspace_store.cache_tracks(
+            [
+                _track(
+                    title="Take On Me",
+                    artist="a-ha",
+                    year=1985,
+                    spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+                    cover_url="https://i.scdn.co/image/take-on-me.jpg",
+                )
+            ]
+        )
         tools = Tools(ToolContext(workspace_store))
 
         result = await tools.execute(
@@ -36,19 +82,19 @@ class TestWorkspaceDraftPlaylistTool:
                 "status": "Playlist-Entwurf bauen: '80er Party'",
                 "tracks": [
                     {
-                        "title": "Take On Me",
-                        "artist": "a-ha",
-                        "year": 1985,
-                        "spotify_uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-                        "cover_url": "https://i.scdn.co/image/take-on-me.jpg",
+                        "uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
                     }
                 ],
             },
         )
 
         assert result.success is True
-        playlist = result.extracted_content
+        tool_result = result.extracted_content
+        assert isinstance(tool_result, PlaylistDraftToolResult)
+        playlist = tool_result.playlist_draft
         assert isinstance(playlist, PlaylistDraft)
+        assert tool_result.operations[0].operation == "build_draft_playlist"
+        assert tool_result.operations[0].success is True
         assert playlist.name == "80er Party"
         assert playlist.tracks[0].title == "Take On Me"
         assert playlist.tracks[0].cover_url == "https://i.scdn.co/image/take-on-me.jpg"
@@ -59,7 +105,7 @@ class TestWorkspaceDraftPlaylistTool:
         assert updates[0].playlist_draft == playlist
 
     @pytest.mark.asyncio
-    async def test_build_draft_playlist_rejects_non_track_spotify_uri(
+    async def test_build_draft_playlist_rejects_non_track_uri_ref(
         self,
     ) -> None:
         workspace_store = WorkspaceStore()
@@ -72,45 +118,112 @@ class TestWorkspaceDraftPlaylistTool:
                 "status": "Playlist-Entwurf bauen",
                 "tracks": [
                     {
-                        "title": "Not a Track",
-                        "artist": "Nobody",
-                        "spotify_uri": "spotify:album:not-a-track",
-                        "cover_url": "https://i.scdn.co/image/whatever.jpg",
+                        "uri": "spotify:album:not-a-track",
                     }
                 ],
             },
         )
 
         assert result.success is False
-        assert "spotify_uri must start with 'spotify:track:'" in (result.error or "")
+        assert "uri must start with 'spotify:track:'" in (result.error or "")
         assert workspace_store.playlist_draft is None
         assert workspace_store.drain_playlist_draft_updates() == []
+
+    @pytest.mark.asyncio
+    async def test_search_tracks_caches_tracks_for_draft_refs(
+        self,
+    ) -> None:
+        cached_track = _track(
+            title="Take On Me",
+            artist="a-ha",
+            year=1985,
+            spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+            cover_url="https://i.scdn.co/image/take-on-me.jpg",
+        )
+        workspace_store = WorkspaceStore()
+        spotify = _FakeSpotify(
+            SpotifyTrackLookupResult(
+                content=(
+                    "1. Take On Me - a-ha (1985) "
+                    "uri=spotify:track:2WfaOiMkCvy7F5fcp2zZ8L"
+                ),
+                tracks=[cached_track],
+            )
+        )
+        tools = Tools(ToolContext(workspace_store, spotify))
+
+        search_result = await tools.execute(
+            "search_tracks",
+            {
+                "query": "Take On Me",
+                "status": "Suche nach 'Take On Me'",
+            },
+        )
+        build_result = await tools.execute(
+            "build_draft_playlist",
+            {
+                "name": "80er Party",
+                "status": "Playlist-Entwurf bauen",
+                "tracks": [{"uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L"}],
+            },
+        )
+
+        assert search_result.success is True
+        assert build_result.success is True
+        tool_result = build_result.extracted_content
+        assert isinstance(tool_result, PlaylistDraftToolResult)
+        assert tool_result.playlist_draft is not None
+        assert tool_result.playlist_draft.tracks[0].title == "Take On Me"
 
     @pytest.mark.asyncio
     async def test_add_remove_and_replace_draft_playlist_tracks_emit_diffs(
         self,
     ) -> None:
         workspace_store = WorkspaceStore()
+        workspace_store.cache_tracks(
+            [
+                _track(
+                    title="Take On Me",
+                    artist="a-ha",
+                    year=1985,
+                    spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+                    cover_url="https://i.scdn.co/image/take-on-me.jpg",
+                ),
+                _track(
+                    title="Billie Jean",
+                    artist="Michael Jackson",
+                    year=1982,
+                    spotify_uri="spotify:track:5ChkMS8OtdzJeqyybCc9R5",
+                    cover_url="https://i.scdn.co/image/billie-jean.jpg",
+                ),
+                _track(
+                    title="Africa",
+                    artist="Toto",
+                    year=1982,
+                    spotify_uri="spotify:track:2374M0fQpWi3dLnB54qaLX",
+                    cover_url="https://i.scdn.co/image/africa.jpg",
+                ),
+            ]
+        )
         tools = Tools(ToolContext(workspace_store))
 
         create_result = await tools.execute(
-            "create_draft_playlist",
+            "build_draft_playlist",
             {
                 "name": "80er Party",
                 "status": "Playlist-Entwurf bauen",
                 "tracks": [
                     {
-                        "title": "Take On Me",
-                        "artist": "a-ha",
-                        "year": 1985,
-                        "spotify_uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-                        "cover_url": "https://i.scdn.co/image/take-on-me.jpg",
+                        "uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
                     }
                 ],
             },
         )
         assert create_result.success is True
-        playlist = create_result.extracted_content
+        create_tool_result = create_result.extracted_content
+        assert isinstance(create_tool_result, PlaylistDraftToolResult)
+        playlist = create_tool_result.playlist_draft
+        assert playlist is not None
         workspace_store.drain_playlist_draft_updates()
 
         added_playlist = await tools.execute(
@@ -119,11 +232,7 @@ class TestWorkspaceDraftPlaylistTool:
                 "status": "Songs hinzufügen",
                 "tracks": [
                     {
-                        "title": "Billie Jean",
-                        "artist": "Michael Jackson",
-                        "year": 1982,
-                        "spotify_uri": "spotify:track:5ChkMS8OtdzJeqyybCc9R5",
-                        "cover_url": "https://i.scdn.co/image/billie-jean.jpg",
+                        "uri": "spotify:track:5ChkMS8OtdzJeqyybCc9R5",
                     }
                 ],
             },
@@ -131,7 +240,10 @@ class TestWorkspaceDraftPlaylistTool:
         add_update = workspace_store.drain_playlist_draft_updates()[0]
 
         assert added_playlist.success is True
-        assert added_playlist.extracted_content.tracks[-1].title == "Billie Jean"
+        added_tool_result = added_playlist.extracted_content
+        assert isinstance(added_tool_result, PlaylistDraftToolResult)
+        assert added_tool_result.playlist_draft is not None
+        assert added_tool_result.playlist_draft.tracks[-1].title == "Billie Jean"
         assert add_update.kind == "tracks_added"
         assert add_update.tracks[0].title == "Billie Jean"
 
@@ -142,14 +254,8 @@ class TestWorkspaceDraftPlaylistTool:
                 "status": "Song ersetzen",
                 "replacements": [
                     {
-                        "track_id": str(first_track_id),
-                        "track": {
-                            "title": "Africa",
-                            "artist": "Toto",
-                            "year": 1982,
-                            "spotify_uri": "spotify:track:2374M0fQpWi3dLnB54qaLX",
-                            "cover_url": "https://i.scdn.co/image/africa.jpg",
-                        },
+                        "old_id": str(first_track_id),
+                        "new_uri": "spotify:track:2374M0fQpWi3dLnB54qaLX",
                     }
                 ],
             },
@@ -160,7 +266,7 @@ class TestWorkspaceDraftPlaylistTool:
         assert replace_update.replacements[0].track_id == first_track_id
         assert replace_update.replacements[0].track.title == "Africa"
 
-        added_track_id = added_playlist.extracted_content.tracks[-1].id
+        added_track_id = added_tool_result.playlist_draft.tracks[-1].id
         await tools.execute(
             "remove_draft_playlist_tracks",
             {
@@ -174,31 +280,55 @@ class TestWorkspaceDraftPlaylistTool:
         assert remove_update.track_ids == [added_track_id]
 
     @pytest.mark.asyncio
-    async def test_pinned_tracks_cannot_be_removed_replaced_or_rebuilt(
+    async def test_pinned_tracks_cannot_be_removed_or_replaced_and_survive_rebuild(
         self,
     ) -> None:
         workspace_store = WorkspaceStore()
+        workspace_store.cache_tracks(
+            [
+                _track(
+                    title="Take On Me",
+                    artist="a-ha",
+                    year=1985,
+                    spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+                    cover_url="https://i.scdn.co/image/take-on-me.jpg",
+                ),
+                _track(
+                    title="Billie Jean",
+                    artist="Michael Jackson",
+                    year=1982,
+                    spotify_uri="spotify:track:5ChkMS8OtdzJeqyybCc9R5",
+                    cover_url="https://i.scdn.co/image/billie-jean.jpg",
+                ),
+                _track(
+                    title="Africa",
+                    artist="Toto",
+                    year=1982,
+                    spotify_uri="spotify:track:2374M0fQpWi3dLnB54qaLX",
+                    cover_url="https://i.scdn.co/image/africa.jpg",
+                ),
+            ]
+        )
         tools = Tools(ToolContext(workspace_store))
 
         create_result = await tools.execute(
-            "create_draft_playlist",
+            "build_draft_playlist",
             {
                 "name": "80er Party",
                 "status": "Playlist-Entwurf bauen",
                 "tracks": [
                     {
-                        "title": "Take On Me",
-                        "artist": "a-ha",
-                        "year": 1985,
-                        "spotify_uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-                        "cover_url": "https://i.scdn.co/image/take-on-me.jpg",
-                        "is_pinned": True,
+                        "uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+                        "pinned": True,
                     }
                 ],
             },
         )
         assert create_result.success is True
-        playlist = create_result.extracted_content
+        create_tool_result = create_result.extracted_content
+        assert isinstance(create_tool_result, PlaylistDraftToolResult)
+        playlist = create_tool_result.playlist_draft
+        assert playlist is not None
         workspace_store.drain_playlist_draft_updates()
         pinned_track_id = playlist.tracks[0].id
 
@@ -215,14 +345,8 @@ class TestWorkspaceDraftPlaylistTool:
                 "status": "Song ersetzen",
                 "replacements": [
                     {
-                        "track_id": str(pinned_track_id),
-                        "track": {
-                            "title": "Africa",
-                            "artist": "Toto",
-                            "year": 1982,
-                            "spotify_uri": "spotify:track:2374M0fQpWi3dLnB54qaLX",
-                            "cover_url": "https://i.scdn.co/image/africa.jpg",
-                        },
+                        "old_id": str(pinned_track_id),
+                        "new_uri": "spotify:track:2374M0fQpWi3dLnB54qaLX",
                     }
                 ],
             },
@@ -234,11 +358,7 @@ class TestWorkspaceDraftPlaylistTool:
                 "status": "Playlist neu bauen",
                 "tracks": [
                     {
-                        "title": "Billie Jean",
-                        "artist": "Michael Jackson",
-                        "year": 1982,
-                        "spotify_uri": "spotify:track:5ChkMS8OtdzJeqyybCc9R5",
-                        "cover_url": "https://i.scdn.co/image/billie-jean.jpg",
+                        "uri": "spotify:track:5ChkMS8OtdzJeqyybCc9R5",
                     }
                 ],
             },
@@ -246,9 +366,20 @@ class TestWorkspaceDraftPlaylistTool:
 
         assert remove_result.success is False
         assert "pinned" in (remove_result.error or "")
+        remove_tool_result = remove_result.extracted_content
+        assert isinstance(remove_tool_result, PlaylistDraftToolResult)
+        assert remove_tool_result.operations[0].success is False
+        assert "pinned" in (remove_tool_result.operations[0].reason or "")
         assert replace_result.success is False
         assert "pinned" in (replace_result.error or "")
-        assert rebuild_result.success is False
-        assert "pinned" in (rebuild_result.error or "")
-        assert workspace_store.playlist_draft == playlist
-        assert workspace_store.drain_playlist_draft_updates() == []
+        replace_tool_result = replace_result.extracted_content
+        assert isinstance(replace_tool_result, PlaylistDraftToolResult)
+        assert replace_tool_result.operations[0].success is False
+        assert "pinned" in (replace_tool_result.operations[0].reason or "")
+        assert rebuild_result.success is True
+        rebuild_tool_result = rebuild_result.extracted_content
+        assert isinstance(rebuild_tool_result, PlaylistDraftToolResult)
+        assert rebuild_tool_result.playlist_draft is not None
+        assert rebuild_tool_result.playlist_draft.tracks[0] == playlist.tracks[0]
+        assert workspace_store.playlist_draft == rebuild_tool_result.playlist_draft
+        assert workspace_store.drain_playlist_draft_updates()[0].kind == "replaced"

@@ -2,9 +2,11 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Self
 
+from pydantic import BaseModel
 from spotifyify import PagingPlaylistTrack, Spotifyify, Track
 from spotifyify.exceptions import SpotifyAPIError
 
+from agent.workspace import PlaylistDraftTrack
 from agent.tools.views import (
     AlbumTracksParams,
     ArtistAlbumsParams,
@@ -16,6 +18,11 @@ from agent.tools.views import (
 _RETRYABLE_STATUS_CODES = {429, 503}
 _MAX_RETRIES = 3
 _DEFAULT_BACKOFF_SECONDS = 1.0
+
+
+class SpotifyTrackLookupResult(BaseModel):
+    content: str
+    tracks: list[PlaylistDraftTrack]
 
 
 class Spotify:
@@ -42,22 +49,18 @@ class Spotify:
     async def __aexit__(self, *_) -> None:
         await self.close()
 
-    async def search_tracks(self, params: SearchParams) -> str:
+    async def search_tracks(self, params: SearchParams) -> SpotifyTrackLookupResult:
         await self.open()
         page = await self._call_with_retry(
             lambda: self._client.tracks.find(params.query, limit=min(params.limit, 50)),
         )
         tracks = page.items or []
         if not tracks:
-            return "No tracks found."
-        return "\n".join(
-            _format_track(
-                index + 1,
-                track,
-                _track_release_date(track),
-                _track_cover_url(track),
-            )
-            for index, track in enumerate(tracks)
+            return SpotifyTrackLookupResult(content="No tracks found.", tracks=[])
+        return _track_lookup_result(
+            tracks,
+            release_date_for=_track_release_date,
+            cover_url_for=_track_cover_url,
         )
 
     async def search_albums(self, params: SearchParams) -> str:
@@ -106,25 +109,27 @@ class Spotify:
             _format_album(index + 1, album) for index, album in enumerate(albums)
         )
 
-    async def get_artist_top_tracks(self, params: ArtistTopTracksParams) -> str:
+    async def get_artist_top_tracks(
+        self,
+        params: ArtistTopTracksParams,
+    ) -> SpotifyTrackLookupResult:
         artist_id = _normalize_spotify_id(params.artist_id, "artist")
         await self.open()
         tracks = await self._call_with_retry(
             lambda: self._client.artists.top_tracks(artist_id, market=params.country),
         )
         if not tracks:
-            return "No top tracks found."
-        return "\n".join(
-            _format_track(
-                index + 1,
-                track,
-                _track_release_date(track),
-                _track_cover_url(track),
-            )
-            for index, track in enumerate(tracks)
+            return SpotifyTrackLookupResult(content="No top tracks found.", tracks=[])
+        return _track_lookup_result(
+            tracks,
+            release_date_for=_track_release_date,
+            cover_url_for=_track_cover_url,
         )
 
-    async def get_album_tracks(self, params: AlbumTracksParams) -> str:
+    async def get_album_tracks(
+        self,
+        params: AlbumTracksParams,
+    ) -> SpotifyTrackLookupResult:
         album_id = _normalize_spotify_id(params.album_id, "album")
         await self.open()
         album = await self._call_with_retry(
@@ -135,27 +140,27 @@ class Spotify:
         )
         tracks = page.items or []
         if not tracks:
-            return "No tracks found."
+            return SpotifyTrackLookupResult(content="No tracks found.", tracks=[])
         album_cover_url = _cover_url(album.images)
-        return "\n".join(
-            _format_track(index + 1, track, album.release_date, album_cover_url)
-            for index, track in enumerate(tracks)
+        return _track_lookup_result(
+            tracks,
+            release_date_for=lambda _: album.release_date,
+            cover_url_for=lambda _: album_cover_url,
         )
 
-    async def get_playlist_tracks(self, params: PlaylistIdParams) -> str:
+    async def get_playlist_tracks(
+        self,
+        params: PlaylistIdParams,
+    ) -> SpotifyTrackLookupResult:
         playlist_id = _normalize_spotify_id(params.playlist_id, "playlist")
         await self.open()
         tracks = await self._get_playlist_tracks(playlist_id)
         if not tracks:
-            return "Playlist is empty."
-        return "\n".join(
-            _format_track(
-                index + 1,
-                track,
-                _track_release_date(track),
-                _track_cover_url(track),
-            )
-            for index, track in enumerate(tracks)
+            return SpotifyTrackLookupResult(content="Playlist is empty.", tracks=[])
+        return _track_lookup_result(
+            tracks,
+            release_date_for=_track_release_date,
+            cover_url_for=_track_cover_url,
         )
 
     async def _get_playlist_tracks(self, playlist_id: str) -> list[Track]:
@@ -268,6 +273,42 @@ def _cover_url(images) -> str | None:
     if not images:
         return None
     return images[0].url
+
+
+def _track_lookup_result(
+    tracks: list[Track],
+    *,
+    release_date_for: Callable[[Track], str | None],
+    cover_url_for: Callable[[Track], str | None],
+) -> SpotifyTrackLookupResult:
+    lines: list[str] = []
+    draft_tracks: list[PlaylistDraftTrack] = []
+
+    for index, track in enumerate(tracks):
+        release_date = release_date_for(track)
+        cover_url = cover_url_for(track)
+        lines.append(_format_track(index + 1, track, release_date, cover_url))
+        draft_track = _playlist_draft_track(track, release_date, cover_url)
+        if draft_track.spotify_uri is not None:
+            draft_tracks.append(draft_track)
+
+    return SpotifyTrackLookupResult(content="\n".join(lines), tracks=draft_tracks)
+
+
+def _playlist_draft_track(
+    track: Track,
+    release_date: str | None,
+    cover_url: str | None,
+) -> PlaylistDraftTrack:
+    return PlaylistDraftTrack(
+        title=_track_title(track),
+        artist=_artist_names(track.artists),
+        year=_release_year(release_date) or None,
+        spotify_uri=(
+            track.uri if track.uri and track.uri.startswith("spotify:track:") else None
+        ),
+        cover_url=cover_url,
+    )
 
 
 def _format_track(

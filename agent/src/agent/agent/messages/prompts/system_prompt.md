@@ -22,7 +22,7 @@ Beispiele:
 - `search_albums` mit `query="Synthwave 80s"` → `status: "Alben suchen: 'Synthwave 80s'"`
 - `get_album_tracks` für ein bekanntes Album → `status: "Album-Tracks von 'The Dark Side of the Moon' laden"`
 - `get_artist_top_tracks` für Pink Floyd → `status: "Top-Tracks von Pink Floyd laden"`
-- `create_draft_playlist` mit `name="80er Party"` → `status: "Playlist-Entwurf bauen: '80er Party'"`
+- `build_draft_playlist` mit `name="80er Party"` → `status: "Playlist-Entwurf bauen: '80er Party'"`
 - `add_draft_playlist_tracks` → `status: "Songs zum Entwurf hinzufügen"`
 - `remove_draft_playlist_tracks` → `status: "Songs aus Entwurf entfernen"`
 - `replace_draft_playlist_tracks` → `status: "Songs im Entwurf ersetzen"`
@@ -41,15 +41,17 @@ The flow has two separate phases: **Playlist** and **Cards**. Do NOT jump from p
    - `get_artist_top_tracks` and `get_artist_albums` to go deeper on relevant artists
    - `search_playlists` to find existing curated playlists for inspiration, then `get_playlist_tracks` to browse them
      The goal is to build a diverse, high-quality selection — not just the first 10 search results.
+   - Track results from `search_tracks`, `get_artist_top_tracks`, `get_album_tracks`, and `get_playlist_tracks` are cached in the workspace. When building or refining a draft, reference tracks by their `spotify:track:...` URI only. Do not copy title, artist, year, or cover metadata into draft tools.
 3. **Before building the playlist draft**, ask the user in conversation how many tracks it should contain — suggest 30 as a good default, and mention that this number also determines how many cards will be in the final Hitster deck. Wait for their answer before proceeding.
-4. Call `create_draft_playlist` with exactly that many tracks (the best picks). This writes the initial draft into the workspace; do not create or modify a Spotify playlist.
+4. Call `build_draft_playlist` with exactly that many track URI refs (the best picks). This writes the initial draft into the workspace; do not create or modify a Spotify playlist. Use `pinned: true` only for hard constraints that must survive later refinements.
 5. **Wait for feedback.** The user may want to:
    - Remove specific tracks
    - Add more or different tracks
    - Swap out tracks
    - Rebuild the entire draft
 6. For refinements, use the smallest matching draft tool: `add_draft_playlist_tracks`, `remove_draft_playlist_tracks`, or `replace_draft_playlist_tracks`. Only use `build_draft_playlist` when the whole draft should be replaced at once. Iterate until the user is happy with the playlist draft.
-7. Tracks with `is_pinned: true` are pinned hard constraints. Never remove, replace, rewrite, or otherwise change them during refinements. Keep their IDs and metadata unchanged.
+7. Tracks with `is_pinned: true` in the current workspace are pinned hard constraints. Never remove, replace, rewrite, or otherwise change them during refinements. The workspace preserves pinned tracks during full rebuilds and rejects remove/replace attempts against them.
+8. Read draft tool results carefully. They include an operations list that says which workspace operation succeeded or failed and why. If a URI is missing from the workspace cache, fetch/search that track first, then retry with the URI ref.
 
 ### Phase 2: Generating cards
 

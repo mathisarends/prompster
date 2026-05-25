@@ -14,7 +14,7 @@ from agent.agent import (
     WorkspaceUpdatedEvent,
 )
 from agent.tools import ToolContext, Tools
-from agent.workspace import WorkspaceStore
+from agent.workspace import PlaylistDraftTrack, WorkspaceStore
 
 
 @dataclass
@@ -71,17 +71,24 @@ class TestAgentWorkspaceUpdateEvents:
     @pytest.mark.asyncio
     async def test_stream_emits_workspace_update_after_tool_result(self) -> None:
         workspace_store = WorkspaceStore()
+        workspace_store.cache_tracks(
+            [
+                PlaylistDraftTrack(
+                    title="Take On Me",
+                    artist="a-ha",
+                    year=1985,
+                    spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+                    cover_url="https://i.scdn.co/image/take-on-me.jpg",
+                )
+            ]
+        )
         tools = Tools(ToolContext(workspace_store))
         tool_args = {
             "name": "80er Party",
             "status": "Playlist-Entwurf bauen: '80er Party'",
             "tracks": [
                 {
-                    "title": "Take On Me",
-                    "artist": "a-ha",
-                    "year": 1985,
-                    "spotify_uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-                    "cover_url": "https://i.scdn.co/image/take-on-me.jpg",
+                    "uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
                 }
             ],
         }
@@ -124,7 +131,13 @@ class TestAgentWorkspaceUpdateEvents:
         assert isinstance(workspace_update, WorkspaceUpdatedEvent)
         serialized_result = json.loads(tool_result.result)
         assert serialized_result["success"] is True
-        assert serialized_result["extracted_content"]["name"] == "80er Party"
+        assert (
+            serialized_result["extracted_content"]["playlist_draft"]["name"]
+            == "80er Party"
+        )
+        assert (
+            serialized_result["extracted_content"]["operations"][0]["success"] is True
+        )
         assert workspace_update.playlist_draft.name == "80er Party"
         assert workspace_update.playlist_draft.tracks[0].title == "Take On Me"
         assert workspace_store.drain_playlist_draft_updates() == []

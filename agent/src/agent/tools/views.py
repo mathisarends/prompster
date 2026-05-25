@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from agent.workspace import PlaylistDraftTrack, PlaylistDraftTrackReplacement
+from agent.workspace import TrackRef, TrackRefReplacement
 from pydantic import BaseModel, Field
 
 from agent.tools.schema_builder import ToolSchemaBuilder
@@ -128,11 +128,11 @@ class AlbumTracksParams(ToolParams):
 
 class BuildDraftPlaylistParams(ToolParams):
     name: str
-    tracks: list[PlaylistDraftTrack] = Field(min_length=1)
+    tracks: list[TrackRef] = Field(min_length=1)
 
 
 class AddDraftPlaylistTracksParams(ToolParams):
-    tracks: list[PlaylistDraftTrack] = Field(min_length=1)
+    tracks: list[TrackRef] = Field(min_length=1)
 
 
 class RemoveDraftPlaylistTracksParams(ToolParams):
@@ -140,7 +140,7 @@ class RemoveDraftPlaylistTracksParams(ToolParams):
 
 
 class ReplaceDraftPlaylistTracksParams(ToolParams):
-    replacements: list[PlaylistDraftTrackReplacement] = Field(min_length=1)
+    replacements: list[TrackRefReplacement] = Field(min_length=1)
 
 
 class PlaylistIdParams(ToolParams):

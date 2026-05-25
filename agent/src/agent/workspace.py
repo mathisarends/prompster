@@ -5,6 +5,33 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, field_validator
 
 
+class TrackRef(BaseModel):
+    uri: str = Field(description="Spotify track URI, e.g. spotify:track:...")
+    pinned: bool = Field(
+        default=False,
+        description="Whether this track should be pinned in the playlist draft.",
+    )
+
+    @field_validator("uri")
+    @classmethod
+    def require_track_uri(cls, value: str) -> str:
+        if not value.startswith("spotify:track:"):
+            raise ValueError("uri must start with 'spotify:track:'")
+        return value
+
+
+class TrackRefReplacement(BaseModel):
+    old_id: UUID
+    new_uri: str = Field(description="Spotify track URI, e.g. spotify:track:...")
+
+    @field_validator("new_uri")
+    @classmethod
+    def require_track_uri(cls, value: str) -> str:
+        if not value.startswith("spotify:track:"):
+            raise ValueError("new_uri must start with 'spotify:track:'")
+        return value
+
+
 class PlaylistDraftTrack(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     title: str = Field(description="Track title.")
@@ -81,6 +108,17 @@ class PlaylistDraftTracksReplaced(BaseModel):
     replacements: list[PlaylistDraftTrackReplacement]
 
 
+class PlaylistDraftOperationStatus(BaseModel):
+    operation: str
+    success: bool
+    reason: str | None = None
+
+
+class PlaylistDraftToolResult(BaseModel):
+    playlist_draft: PlaylistDraft | None
+    operations: list[PlaylistDraftOperationStatus]
+
+
 type PlaylistDraftUpdate = (
     PlaylistDraftCreated
     | PlaylistDraftReplaced
@@ -93,7 +131,10 @@ type PlaylistDraftUpdate = (
 class WorkspaceStore:
     def __init__(self, playlist_draft: PlaylistDraft | None = None) -> None:
         self._playlist_draft = playlist_draft
+        self._track_cache: dict[str, PlaylistDraftTrack] = {}
         self._pending_playlist_draft_updates: list[PlaylistDraftUpdate] = []
+        if playlist_draft is not None:
+            self.cache_tracks(playlist_draft.tracks)
 
     @property
     def playlist_draft(self) -> PlaylistDraft | None:
@@ -107,12 +148,30 @@ class WorkspaceStore:
             else PlaylistDraftReplaced(playlist_draft=playlist_draft)
         )
         self._playlist_draft = playlist_draft
+        self.cache_tracks(playlist_draft.tracks)
         self._pending_playlist_draft_updates.append(update)
         return playlist_draft
+
+    def save_playlist_draft_from_refs(
+        self,
+        name: str,
+        track_refs: list[TrackRef],
+    ) -> PlaylistDraft:
+        tracks = self.resolve_track_refs(track_refs)
+        if self._playlist_draft is not None:
+            pinned_tracks = [
+                track for track in self._playlist_draft.tracks if track.is_pinned
+            ]
+            pinned_uris = {track.spotify_uri for track in pinned_tracks}
+            tracks = pinned_tracks + [
+                track for track in tracks if track.spotify_uri not in pinned_uris
+            ]
+        return self.save_playlist_draft(PlaylistDraft(name=name, tracks=tracks))
 
     def add_tracks(self, tracks: list[PlaylistDraftTrack]) -> PlaylistDraft:
         playlist_draft = self._require_playlist_draft()
         playlist_draft.tracks.extend(tracks)
+        self.cache_tracks(tracks)
         self._pending_playlist_draft_updates.append(
             PlaylistDraftTracksAdded(
                 playlist_draft=playlist_draft,
@@ -120,6 +179,9 @@ class WorkspaceStore:
             )
         )
         return playlist_draft
+
+    def add_track_refs(self, track_refs: list[TrackRef]) -> PlaylistDraft:
+        return self.add_tracks(self.resolve_track_refs(track_refs))
 
     def remove_tracks(self, track_ids: list[UUID]) -> PlaylistDraft:
         playlist_draft = self._require_playlist_draft()
@@ -163,6 +225,7 @@ class WorkspaceStore:
             else track
             for track in playlist_draft.tracks
         ]
+        self.cache_tracks([replacement.track for replacement in replacements])
         self._pending_playlist_draft_updates.append(
             PlaylistDraftTracksReplaced(
                 playlist_draft=playlist_draft,
@@ -170,6 +233,46 @@ class WorkspaceStore:
             )
         )
         return playlist_draft
+
+    def replace_track_refs(
+        self,
+        replacements: list[TrackRefReplacement],
+    ) -> PlaylistDraft:
+        resolved_replacements = [
+            PlaylistDraftTrackReplacement(
+                track_id=replacement.old_id,
+                track=self.resolve_track_uri(replacement.new_uri),
+            )
+            for replacement in replacements
+        ]
+        return self.replace_tracks(resolved_replacements)
+
+    def cache_tracks(self, tracks: list[PlaylistDraftTrack]) -> None:
+        for track in tracks:
+            if track.spotify_uri is not None:
+                self._track_cache[track.spotify_uri] = track
+
+    def resolve_track_refs(
+        self, track_refs: list[TrackRef]
+    ) -> list[PlaylistDraftTrack]:
+        return [self.resolve_track_ref(track_ref) for track_ref in track_refs]
+
+    def resolve_track_ref(self, track_ref: TrackRef) -> PlaylistDraftTrack:
+        return self.resolve_track_uri(
+            track_ref.uri,
+            is_pinned=track_ref.pinned,
+        )
+
+    def resolve_track_uri(
+        self,
+        uri: str,
+        *,
+        is_pinned: bool = False,
+    ) -> PlaylistDraftTrack:
+        track = self._track_cache.get(uri)
+        if track is None:
+            raise ValueError(f"Spotify track URI is not in the workspace cache: {uri}")
+        return track.model_copy(update={"id": uuid4(), "is_pinned": is_pinned})
 
     def drain_playlist_draft_updates(self) -> list[PlaylistDraftUpdate]:
         updates = self._pending_playlist_draft_updates.copy()

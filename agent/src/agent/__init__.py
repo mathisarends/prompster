@@ -17,7 +17,9 @@ from .tools.views import AskFollowUpOption, AskFollowUpQuestion
 from .workspace import (
     PlaylistDraft,
     PlaylistDraftCreated,
+    PlaylistDraftOperationStatus,
     PlaylistDraftReplaced,
+    PlaylistDraftToolResult,
     PlaylistDraftTrack,
     PlaylistDraftTrackReplacement,
     PlaylistDraftTracksAdded,
@@ -25,6 +27,8 @@ from .workspace import (
     PlaylistDraftTracksReplaced,
     PlaylistDraftUpdate,
     PlaylistDraftUpdateKind,
+    TrackRef,
+    TrackRefReplacement,
     WorkspaceStore,
 )
 
@@ -47,7 +51,9 @@ __all__ = [
     "Spotify",
     "PlaylistDraft",
     "PlaylistDraftCreated",
+    "PlaylistDraftOperationStatus",
     "PlaylistDraftReplaced",
+    "PlaylistDraftToolResult",
     "PlaylistDraftTrack",
     "PlaylistDraftTrackReplacement",
     "PlaylistDraftTracksAdded",
@@ -55,5 +61,7 @@ __all__ = [
     "PlaylistDraftTracksReplaced",
     "PlaylistDraftUpdate",
     "PlaylistDraftUpdateKind",
+    "TrackRef",
+    "TrackRefReplacement",
     "WorkspaceStore",
 ]
