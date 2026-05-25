@@ -113,6 +113,7 @@ type UseListKeyboardNavigationOptions<T> = {
   onConfirm: (item: T) => void;
   getInitialIndex?: () => number;
   global?: boolean;
+  ignoreEditableGlobal?: boolean;
 };
 
 export const useListKeyboardNavigation = <
@@ -124,6 +125,7 @@ export const useListKeyboardNavigation = <
   onConfirm,
   getInitialIndex,
   global = false,
+  ignoreEditableGlobal = true,
 }: UseListKeyboardNavigationOptions<T>) => {
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
@@ -200,7 +202,7 @@ export const useListKeyboardNavigation = <
     }
 
     const handleGlobalKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (isEditableTarget(event.target)) {
+      if (ignoreEditableGlobal && isEditableTarget(event.target)) {
         return;
       }
 
@@ -213,7 +215,7 @@ export const useListKeyboardNavigation = <
     return () => {
       window.removeEventListener("keydown", handleGlobalKeyDown);
     };
-  }, [global, handleNavigationKey, open]);
+  }, [global, handleNavigationKey, ignoreEditableGlobal, open]);
 
   return {
     highlightedIndex,

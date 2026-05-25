@@ -4,10 +4,14 @@ import { AttachmentList } from "@/components/chat/attachments/attachment-list";
 import { AttachmentPopover } from "@/components/chat/attachments/attachment-popover";
 import type { ChatAttachment } from "@/components/chat/attachments/attachment-types";
 import { SendButton } from "@/components/chat/send-button";
-import { TranscriptionButton } from "@/components/chat/transcription-button";
 import { Textarea } from "@/components/ui/textarea";
-import { useRealtimeTranscription } from "@/hooks/useRealtimeTranscription";
 import { cn } from "@/lib/utils";
+
+type AttachmentMention = {
+  start: number;
+  end: number;
+  query: string;
+};
 
 type ChatInputBoxProps = {
   value: string;
@@ -43,6 +47,23 @@ const isInteractiveElement = (element: EventTarget | null) => {
 const attachmentKey = (attachment: ChatAttachment) =>
   `${attachment.kind}:${attachment.id}`;
 
+const findAttachmentMention = (
+  text: string,
+  cursorPosition: number,
+): AttachmentMention | null => {
+  const beforeCursor = text.slice(0, cursorPosition);
+  const start = beforeCursor.lastIndexOf("@");
+  if (start < 0) return null;
+
+  const previousCharacter = start > 0 ? text[start - 1] : "";
+  if (previousCharacter && !/\s/.test(previousCharacter)) return null;
+
+  const query = beforeCursor.slice(start + 1);
+  if (query.includes("\n")) return null;
+
+  return { start, end: cursorPosition, query };
+};
+
 export const ChatInputBox = ({
   value,
   onChange,
@@ -64,6 +85,9 @@ export const ChatInputBox = ({
   const inputContentRef = useRef<HTMLDivElement>(null);
   const textMirrorRef = useRef<HTMLDivElement>(null);
   const [isSingleLine, setIsSingleLine] = useState(true);
+  const [attachmentPopoverOpen, setAttachmentPopoverOpen] = useState(false);
+  const [attachmentMention, setAttachmentMention] =
+    useState<AttachmentMention | null>(null);
   const [internalAttachments, setInternalAttachments] = useState<
     ChatAttachment[]
   >([]);
@@ -74,32 +98,27 @@ export const ChatInputBox = ({
     }
     onAttachmentsChange?.(next);
   };
-
-  const {
-    error: transcriptionError,
-    isRecording,
-    isStarting: isStartingRecording,
-    start: startTranscription,
-    stop: stopTranscription,
-  } = useRealtimeTranscription({
-    value,
-    onTranscriptChange: onChange,
-    disabled: disabled || isSubmitting,
-  });
   const hasText = value.trim().length > 0;
   const hasAttachments = attachments.length > 0;
   const canSend = hasText || hasAttachments;
-  const showSendButton = canSend && !isRecording && !isStartingRecording;
-  const showTranscriptionButton =
-    !canSend || isRecording || isStartingRecording;
+  const isAttachmentMentionActive =
+    attachmentPopoverOpen && !!attachmentMention;
+
+  const updateAttachmentMention = (
+    nextValue: string,
+    cursorPosition: number | null,
+  ) => {
+    if (cursorPosition === null) return;
+
+    const nextMention = findAttachmentMention(nextValue, cursorPosition);
+    setAttachmentMention(nextMention);
+    setAttachmentPopoverOpen(nextMention !== null);
+  };
 
   const submit = () => {
     const trimmed = value.trim();
     if (!canSend || disabled || isSubmitting) return;
 
-    if (isRecording || isStartingRecording) {
-      void stopTranscription();
-    }
     onSubmit(trimmed, attachments);
     if (clearOnSubmit) {
       onChange("");
@@ -107,19 +126,60 @@ export const ChatInputBox = ({
     }
   };
 
-  const toggleTranscription = () => {
-    if (isRecording || isStartingRecording) {
-      void stopTranscription();
-      return;
-    }
-
-    void startTranscription();
-  };
-
   const addAttachment = (attachment: ChatAttachment) => {
     const key = attachmentKey(attachment);
     if (attachments.some((existing) => attachmentKey(existing) === key)) return;
     setAttachments([...attachments, attachment]);
+  };
+
+  const removeAttachmentMention = () => {
+    if (!attachmentMention) return;
+
+    const nextValue = `${value.slice(0, attachmentMention.start)}${value.slice(
+      attachmentMention.end,
+    )}`;
+    const nextCursorPosition = attachmentMention.start;
+
+    onChange(nextValue);
+    setAttachmentMention(null);
+    setAttachmentPopoverOpen(false);
+
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(
+        nextCursorPosition,
+        nextCursorPosition,
+      );
+    });
+  };
+
+  const syncAttachmentMentionQuery = (nextQuery: string) => {
+    if (!attachmentMention) return;
+
+    const nextEnd = attachmentMention.start + 1 + nextQuery.length;
+    const nextValue = `${value.slice(0, attachmentMention.start + 1)}${nextQuery}${value.slice(
+      attachmentMention.end,
+    )}`;
+
+    onChange(nextValue);
+    setAttachmentMention({
+      ...attachmentMention,
+      end: nextEnd,
+      query: nextQuery,
+    });
+    setAttachmentPopoverOpen(true);
+  };
+
+  const handleAttachmentPopoverOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      if (attachmentMention) {
+        setAttachmentPopoverOpen(true);
+      }
+      return;
+    }
+
+    setAttachmentPopoverOpen(false);
+    setAttachmentMention(null);
   };
 
   const removeAttachment = (attachment: ChatAttachment) => {
@@ -161,7 +221,7 @@ export const ChatInputBox = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [hasText, isRecording, placeholder, value]);
+  }, [hasText, placeholder, value]);
 
   return (
     <div className="flex flex-col">
@@ -202,6 +262,21 @@ export const ChatInputBox = ({
               attachments={attachments}
               onAdd={addAttachment}
               disabled={disabled || isSubmitting}
+              open={
+                isAttachmentMentionActive ? attachmentPopoverOpen : undefined
+              }
+              onOpenChange={handleAttachmentPopoverOpenChange}
+              query={
+                isAttachmentMentionActive ? attachmentMention.query : undefined
+              }
+              onQueryChange={
+                isAttachmentMentionActive
+                  ? syncAttachmentMentionQuery
+                  : undefined
+              }
+              onPick={
+                isAttachmentMentionActive ? removeAttachmentMention : undefined
+              }
             />
           )}
 
@@ -210,8 +285,35 @@ export const ChatInputBox = ({
             rows={rows ?? 1}
             value={value}
             disabled={disabled || isSubmitting}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => {
+              onChange(e.target.value);
+              updateAttachmentMention(e.target.value, e.target.selectionStart);
+            }}
+            onSelect={(e) => {
+              updateAttachmentMention(
+                e.currentTarget.value,
+                e.currentTarget.selectionStart,
+              );
+            }}
             onKeyDown={(e) => {
+              if (isAttachmentMentionActive) {
+                if (
+                  e.key === "ArrowDown" ||
+                  e.key === "ArrowUp" ||
+                  e.key === "Enter"
+                ) {
+                  e.preventDefault();
+                  return;
+                }
+
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setAttachmentPopoverOpen(false);
+                  setAttachmentMention(null);
+                  return;
+                }
+              }
+
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 submit();
@@ -236,34 +338,38 @@ export const ChatInputBox = ({
                 attachments={attachments}
                 onAdd={addAttachment}
                 disabled={disabled || isSubmitting}
+                open={
+                  isAttachmentMentionActive ? attachmentPopoverOpen : undefined
+                }
+                onOpenChange={handleAttachmentPopoverOpenChange}
+                query={
+                  isAttachmentMentionActive
+                    ? attachmentMention.query
+                    : undefined
+                }
+                onQueryChange={
+                  isAttachmentMentionActive
+                    ? syncAttachmentMentionQuery
+                    : undefined
+                }
+                onPick={
+                  isAttachmentMentionActive
+                    ? removeAttachmentMention
+                    : undefined
+                }
               />
             )}
             <div className="flex items-center gap-1.5">
-              {showTranscriptionButton && (
-                <TranscriptionButton
-                  isRecording={isRecording}
-                  isStarting={isStartingRecording}
-                  disabled={disabled || isSubmitting}
-                  onClick={toggleTranscription}
-                />
-              )}
-              {showSendButton && (
-                <SendButton
-                  onClick={submit}
-                  disabled={disabled}
-                  isLoading={isSubmitting}
-                  ariaLabel={sendButtonAriaLabel}
-                />
-              )}
+              <SendButton
+                onClick={submit}
+                disabled={disabled || !canSend}
+                isLoading={isSubmitting}
+                ariaLabel={sendButtonAriaLabel}
+              />
             </div>
           </div>
         </div>
       </div>
-      {transcriptionError && (
-        <p className="mt-2 text-center text-xs text-destructive">
-          {transcriptionError}
-        </p>
-      )}
       {showDisclaimer && (
         <p className="mt-2 text-center text-xs text-muted-foreground">
           {disclaimerText}
