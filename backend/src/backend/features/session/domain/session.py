@@ -24,6 +24,8 @@ from backend.features.session.domain.entities import (
     SessionEntry,
     ToolCallSequence,
     UserMessage,
+    WorkspaceEvent,
+    WorkspaceEventType,
 )
 from backend.shared.ddd import Aggregate
 
@@ -36,6 +38,7 @@ class Session(Aggregate):
         owner_id: UUID,
         is_starred: bool = False,
         playlist: Playlist | None = None,
+        workspace_events: list[WorkspaceEvent] | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> None:
@@ -45,6 +48,7 @@ class Session(Aggregate):
         self._owner_id = owner_id
         self._is_starred = is_starred
         self._playlist = playlist
+        self._workspace_events: list[WorkspaceEvent] = workspace_events or []
 
     @property
     def title(self) -> str:
@@ -69,6 +73,10 @@ class Session(Aggregate):
     @property
     def playlist(self) -> Playlist | None:
         return self._playlist
+
+    @property
+    def workspace_events(self) -> tuple[WorkspaceEvent, ...]:
+        return tuple(self._workspace_events)
 
     @classmethod
     def create_with_initial_prompt(
@@ -128,6 +136,7 @@ class Session(Aggregate):
             is_pinned=is_pinned,
         )
         self._playlist.tracks.append(track)
+        self._record_event(WorkspaceEventType.TRACK_ADDED, track)
         return track
 
     def remove_track(self, track_id: UUID) -> None:
@@ -136,6 +145,7 @@ class Session(Aggregate):
         for index, track in enumerate(self._playlist.tracks):
             if track.id == track_id:
                 self._playlist.tracks.pop(index)
+                self._record_event(WorkspaceEventType.TRACK_REMOVED, track)
                 return
         raise PlaylistTrackNotFoundError(
             f"Track {track_id} not found in playlist {self._playlist.id}."
@@ -158,13 +168,23 @@ class Session(Aggregate):
 
     def pin_track(self, track_id: UUID) -> PlaylistTrack:
         track = self._require_track(track_id)
+        was_pinned = track.is_pinned
         track.is_pinned = True
+        if not was_pinned:
+            self._record_event(WorkspaceEventType.TRACK_PINNED, track)
         return track
 
     def unpin_track(self, track_id: UUID) -> PlaylistTrack:
         track = self._require_track(track_id)
+        was_pinned = track.is_pinned
         track.is_pinned = False
+        if was_pinned:
+            self._record_event(WorkspaceEventType.TRACK_UNPINNED, track)
         return track
+
+    @property
+    def unconsumed_workspace_events(self) -> list[WorkspaceEvent]:
+        return [event for event in self._workspace_events if not event.consumed]
 
     def require_track(self, track_id: UUID) -> PlaylistTrack:
         return self._require_track(track_id)
@@ -285,6 +305,19 @@ class Session(Aggregate):
             and left.cover_url == right.cover_url
             and left.is_pinned == right.is_pinned
         )
+
+    def _record_event(
+        self, event_type: WorkspaceEventType, track: PlaylistTrack
+    ) -> WorkspaceEvent:
+        event = WorkspaceEvent(
+            event_type=event_type,
+            track_id=track.id,
+            track_title=track.title,
+            track_artist=track.artist,
+            track_spotify_uri=track.spotify_uri,
+        )
+        self._workspace_events.append(event)
+        return event
 
     def pending_tool_call_sequence(self) -> ToolCallSequence | None:
         return self._find_pending_tool_call_sequence()

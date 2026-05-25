@@ -38,6 +38,8 @@ from .entities import (
     ToolCallSequence,
     ToolFunction,
     UserMessage,
+    WorkspaceEvent,
+    WorkspaceEventType,
     is_pending,
     is_resolved,
 )
@@ -80,6 +82,8 @@ __all__ = [
     "ToolCallNotFoundError",
     "ToolFunction",
     "UserMessage",
+    "WorkspaceEvent",
+    "WorkspaceEventType",
     "is_pending",
     "is_resolved",
 ]

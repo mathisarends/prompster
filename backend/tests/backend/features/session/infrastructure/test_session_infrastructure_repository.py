@@ -1,10 +1,19 @@
+from datetime import timedelta
+from datetime import timezone
 from unittest.mock import Mock
 from uuid import uuid4
 
-from backend.features.session.domain import PlaylistTrack, Session, UserMessage
+from backend.features.session.domain import (
+    PlaylistTrack,
+    Session,
+    UserMessage,
+    WorkspaceEvent,
+    WorkspaceEventType,
+)
 from backend.features.session.infrastructure.repository import SqlSessionRepository
 from backend.infrastructure.database.orm import (
     PlaylistTrackModel,
+    SessionWorkspaceEventModel,
     SessionModel,
     SessionUserMessageModel,
 )
@@ -83,3 +92,101 @@ def test_playlist_track_mapping_preserves_lock_state() -> None:
 
     assert orm_track.is_pinned is True
     assert roundtrip.is_pinned is True
+
+
+def test_sync_workspace_events_reuses_existing_row_by_id() -> None:
+    owner_id = uuid4()
+    session_id = uuid4()
+    event = WorkspaceEvent(
+        event_type=WorkspaceEventType.TRACK_ADDED,
+        track_id=uuid4(),
+        track_title="Starlight",
+        track_artist="Muse",
+        track_spotify_uri="spotify:track:abc",
+    )
+    session = Session(
+        title="Roadtrip",
+        entries=[],
+        owner_id=owner_id,
+        id=session_id,
+        workspace_events=[event],
+    )
+
+    orm = SessionModel(
+        id=session_id,
+        title=session.title,
+        owner_id=session.owner_id,
+        is_starred=False,
+        last_activity_at=session.created_at,
+        created_at=session.created_at,
+    )
+    existing_row = SessionWorkspaceEventModel(
+        id=event.id,
+        session_id=session_id,
+        position=0,
+        event_type="track_removed",
+        track_id=uuid4(),
+        track_title="old",
+        track_artist="old",
+        track_spotify_uri=None,
+        consumed=True,
+        created_at=event.created_at,
+    )
+    orm.workspace_events = [existing_row]
+
+    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    repository._sync_workspace_events(
+        orm=orm,
+        session_id=session_id,
+        events=session.workspace_events,
+    )
+
+    assert len(orm.workspace_events) == 1
+    assert orm.workspace_events[0] is existing_row
+    assert orm.workspace_events[0].event_type == "track_added"
+    assert orm.workspace_events[0].track_title == "Starlight"
+    assert orm.workspace_events[0].consumed is False
+
+
+def test_resolve_last_activity_at_includes_workspace_events() -> None:
+    owner_id = uuid4()
+    session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+    session.add_track(title="Starlight", artist="Muse")
+    session.workspace_events[0].created_at = session.created_at + timedelta(minutes=5)
+
+    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    last_activity = repository._resolve_last_activity_at(session)
+
+    assert last_activity == session.workspace_events[0].created_at
+
+
+def test_workspace_event_mapping_roundtrip() -> None:
+    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    event = WorkspaceEvent(
+        event_type=WorkspaceEventType.TRACK_PINNED,
+        track_id=uuid4(),
+        track_title="Starlight",
+        track_artist="Muse",
+        track_spotify_uri="spotify:track:abc",
+    )
+    row = SessionWorkspaceEventModel(
+        id=event.id,
+        session_id=uuid4(),
+        position=3,
+        event_type=event.event_type.value,
+        track_id=event.track_id,
+        track_title=event.track_title,
+        track_artist=event.track_artist,
+        track_spotify_uri=event.track_spotify_uri,
+        consumed=False,
+        created_at=event.created_at,
+    )
+
+    mapped = repository._to_domain_workspace_event(row)
+
+    assert mapped.id == event.id
+    assert mapped.event_type == WorkspaceEventType.TRACK_PINNED
+    assert mapped.track_id == event.track_id
+    assert mapped.track_title == "Starlight"
+    assert mapped.track_artist == "Muse"
+    assert mapped.track_spotify_uri == "spotify:track:abc"

@@ -27,6 +27,7 @@ from backend.features.session.domain import (
     ToolCallSequence,
     ToolFunction,
     UserMessage,
+    WorkspaceEventType,
 )
 
 
@@ -246,6 +247,22 @@ class TestSessionDomainSession:
         assert len(session.playlist.tracks) == 1
         assert session.playlist.tracks[0] is track
 
+    def test_add_track_records_workspace_event_snapshot(self, session: Session) -> None:
+        track = session.add_track(
+            title="Starlight",
+            artist="Muse",
+            spotify_uri="spotify:track:abc",
+        )
+
+        assert len(session.workspace_events) == 1
+        event = session.workspace_events[0]
+        assert event.event_type == WorkspaceEventType.TRACK_ADDED
+        assert event.track_id == track.id
+        assert event.track_title == "Starlight"
+        assert event.track_artist == "Muse"
+        assert event.track_spotify_uri == "spotify:track:abc"
+        assert event.consumed is False
+
     def test_remove_track_removes_matching_track(self, session: Session) -> None:
         first_track = session.add_track(title="Starlight", artist="Muse")
         second_track = session.add_track(title="Teardrop", artist="Massive Attack")
@@ -255,6 +272,25 @@ class TestSessionDomainSession:
         assert session.playlist is not None
         assert len(session.playlist.tracks) == 1
         assert session.playlist.tracks[0] is second_track
+
+    def test_remove_track_records_workspace_event_snapshot(
+        self, session: Session
+    ) -> None:
+        track = session.add_track(
+            title="Starlight",
+            artist="Muse",
+            spotify_uri="spotify:track:abc",
+        )
+
+        session.remove_track(track.id)
+
+        assert len(session.workspace_events) == 2
+        event = session.workspace_events[1]
+        assert event.event_type == WorkspaceEventType.TRACK_REMOVED
+        assert event.track_id == track.id
+        assert event.track_title == "Starlight"
+        assert event.track_artist == "Muse"
+        assert event.track_spotify_uri == "spotify:track:abc"
 
     def test_remove_track_raises_when_playlist_missing(self, session: Session) -> None:
         with pytest.raises(PlaylistTrackNotFoundError, match="has no playlist"):
@@ -275,6 +311,47 @@ class TestSessionDomainSession:
         assert pinned is track
         assert unlocked is track
         assert track.is_pinned is False
+
+    def test_pin_track_records_event_only_on_state_change(
+        self, session: Session
+    ) -> None:
+        track = session.add_track(title="Starlight", artist="Muse", is_pinned=False)
+
+        session.pin_track(track.id)
+        session.pin_track(track.id)
+
+        event_types = [event.event_type for event in session.workspace_events]
+        assert event_types == [
+            WorkspaceEventType.TRACK_ADDED,
+            WorkspaceEventType.TRACK_PINNED,
+        ]
+
+    def test_unpin_track_records_event_only_on_state_change(
+        self, session: Session
+    ) -> None:
+        track = session.add_track(title="Starlight", artist="Muse", is_pinned=True)
+
+        session.unpin_track(track.id)
+        session.unpin_track(track.id)
+
+        event_types = [event.event_type for event in session.workspace_events]
+        assert event_types == [
+            WorkspaceEventType.TRACK_ADDED,
+            WorkspaceEventType.TRACK_UNPINNED,
+        ]
+
+    def test_unconsumed_workspace_events_filters_consumed(
+        self, session: Session
+    ) -> None:
+        track = session.add_track(title="Starlight", artist="Muse", is_pinned=False)
+        session.pin_track(track.id)
+        first_event = session.workspace_events[0]
+        first_event.mark_consumed()
+
+        unconsumed = session.unconsumed_workspace_events
+
+        assert len(unconsumed) == 1
+        assert unconsumed[0].event_type == WorkspaceEventType.TRACK_PINNED
 
     def test_replace_track_rejects_pinned_track(self, session: Session) -> None:
         track = session.add_track(

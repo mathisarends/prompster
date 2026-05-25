@@ -18,6 +18,7 @@ from .tool_call import (
     is_resolved,
 )
 from .tool_call_sequence import ToolCallSequence
+from .workspace_event import WorkspaceEvent, WorkspaceEventType
 
 __all__ = [
     "AssistantMessage",
@@ -36,6 +37,8 @@ __all__ = [
     "ToolCallSequence",
     "ToolFunction",
     "UserMessage",
+    "WorkspaceEvent",
+    "WorkspaceEventType",
     "is_pending",
     "is_resolved",
 ]

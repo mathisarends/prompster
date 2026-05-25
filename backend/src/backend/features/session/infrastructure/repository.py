@@ -24,6 +24,8 @@ from backend.features.session.domain import (
     ToolCallSequence,
     ToolFunction,
     UserMessage,
+    WorkspaceEvent,
+    WorkspaceEventType,
 )
 from backend.infrastructure.database.orm import (
     PlaylistTrackModel,
@@ -35,6 +37,7 @@ from backend.infrastructure.database.orm import (
     SessionToolCallSequenceModel,
     SessionToolCallModel,
     SessionUserMessageModel,
+    SessionWorkspaceEventModel,
 )
 from backend.infrastructure.database.repository import Repository
 
@@ -84,6 +87,11 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
 
         session_id = orm.id or session.id
         self._sync_entries(orm=orm, session_id=session_id, entries=session.entries)
+        self._sync_workspace_events(
+            orm=orm,
+            session_id=session_id,
+            events=session.workspace_events,
+        )
         orm.playlist = self._to_orm_playlist(
             domain_playlist=session.playlist,
             session_id=session_id,
@@ -104,6 +112,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         for row in orm.follow_up_question_groups:
             entries.append((row.position, self._to_domain_follow_up_group(row)))
         entries.sort(key=lambda item: item[0])
+        workspace_events = sorted(orm.workspace_events, key=lambda item: item.position)
 
         return Session(
             id=orm.id,
@@ -112,6 +121,9 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             owner_id=orm.owner_id,
             is_starred=orm.is_starred,
             playlist=self._to_domain_playlist(orm.playlist),
+            workspace_events=[
+                self._to_domain_workspace_event(event) for event in workspace_events
+            ],
             created_time=orm.created_at,
         )
 
@@ -126,6 +138,11 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         )
         session_id = domain.id
         self._sync_entries(orm=orm, session_id=session_id, entries=domain.entries)
+        self._sync_workspace_events(
+            orm=orm,
+            session_id=session_id,
+            events=domain.workspace_events,
+        )
         orm.playlist = self._to_orm_playlist(
             domain_playlist=domain.playlist,
             session_id=session_id,
@@ -201,6 +218,35 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm.tool_call_sequences = tool_sequence_rows
         orm.follow_up_question_groups = follow_group_rows
 
+    def _sync_workspace_events(
+        self,
+        *,
+        orm: SessionModel,
+        session_id: UUID,
+        events: tuple[WorkspaceEvent, ...],
+    ) -> None:
+        existing_workspace_event_rows = {
+            row.id: row for row in orm.workspace_events if row.id is not None
+        }
+
+        workspace_event_rows: list[SessionWorkspaceEventModel] = []
+        for position, event in enumerate(events):
+            row = existing_workspace_event_rows.get(event.id)
+            if row is None:
+                row = SessionWorkspaceEventModel(id=event.id)
+            row.session_id = session_id
+            row.position = position
+            row.event_type = event.event_type.value
+            row.track_id = event.track_id
+            row.track_title = event.track_title
+            row.track_artist = event.track_artist
+            row.track_spotify_uri = event.track_spotify_uri
+            row.consumed = event.consumed
+            row.created_at = event.created_at
+            workspace_event_rows.append(row)
+
+        orm.workspace_events = workspace_event_rows
+
     def _detail_query(self, *, session_id: UUID):
         return (
             select(SessionModel)
@@ -208,6 +254,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             .options(
                 selectinload(SessionModel.user_messages),
                 selectinload(SessionModel.assistant_messages),
+                selectinload(SessionModel.workspace_events),
                 selectinload(SessionModel.tool_call_sequences).selectinload(
                     SessionToolCallSequenceModel.calls
                 ),
@@ -226,7 +273,25 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             created_at = getattr(entry, "created_at", None)
             if isinstance(created_at, datetime) and created_at > latest:
                 latest = created_at
+        for event in session.workspace_events:
+            created_at = getattr(event, "created_at", None)
+            if isinstance(created_at, datetime) and created_at > latest:
+                latest = created_at
         return latest
+
+    def _to_domain_workspace_event(
+        self, row: SessionWorkspaceEventModel
+    ) -> WorkspaceEvent:
+        return WorkspaceEvent(
+            id=row.id,
+            event_type=WorkspaceEventType(row.event_type),
+            track_id=row.track_id,
+            track_title=row.track_title,
+            track_artist=row.track_artist,
+            track_spotify_uri=row.track_spotify_uri,
+            consumed=row.consumed,
+            created_time=row.created_at,
+        )
 
     def _to_domain_user_message(self, row: SessionUserMessageModel) -> UserMessage:
         return UserMessage(id=row.id, content=row.content, created_time=row.created_at)
