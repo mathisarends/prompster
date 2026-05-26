@@ -1,5 +1,7 @@
 import json
+from bisect import bisect_right
 from collections.abc import AsyncIterator
+from datetime import datetime
 
 from agent.agent import (
     Agent,
@@ -10,7 +12,7 @@ from agent.agent import (
     ToolResultEvent,
     WorkspaceUpdatedEvent,
 )
-from agent import MessageManager, Spotify
+from agent import Spotify, UserEvent
 from agent.tools.views import AskFollowUpQuestion
 from agent.playlist import (
     PlaylistDraft,
@@ -22,7 +24,13 @@ from agent.playlist import (
 )
 
 from llmify import ChatModel
-from llmify.messages import ToolCall as LLMToolCall
+from llmify.messages import (
+    AssistantMessage as LLMAssistantMessage,
+    Message as LLMMessage,
+    ToolCall as LLMToolCall,
+    ToolResultMessage as LLMToolResultMessage,
+    UserMessage as LLMUserMessage,
+)
 from spotifyify import Spotifyify
 
 from backend.features.session.application.ports.session_runner import (
@@ -73,10 +81,11 @@ class AgentSessionRunner(SessionRunner):
     async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
         agent = Agent(
             llm=self._llm,
-            messages=_to_message_manager(
+            history=_to_history_messages(
                 session=session,
-                system_prompt=self._system_prompt,
             ),
+            user_events=_to_user_events(session=session),
+            system_prompt=self._system_prompt,
             spotify=Spotify(client=self._spotify),
             playlist_store=_to_playlist_draft_store(session.playlist),
         )
@@ -144,39 +153,41 @@ class AgentSessionRunner(SessionRunner):
             await agent.close()
 
 
-def _to_message_manager(
+def _to_history_messages(
     *,
     session: Session,
-    system_prompt: str | None,
-) -> MessageManager:
-    manager = MessageManager(system_prompt=system_prompt)
+) -> list[LLMMessage]:
+    messages: list[LLMMessage] = []
     for entry in session.entries:
         if isinstance(entry, UserMessage):
-            manager.add_user(_to_user_message_content(entry))
+            messages.append(LLMUserMessage(content=_to_user_message_content(entry)))
         elif isinstance(entry, AssistantMessage):
-            manager.add_assistant(entry.content)
+            messages.append(LLMAssistantMessage(content=entry.content))
         elif isinstance(entry, ToolCallSequence):
             for call in entry.calls:
-                manager.add_assistant("", tool_calls=[_to_llm_tool_call(call)])
+                messages.append(
+                    LLMAssistantMessage(
+                        content="", tool_calls=[_to_llm_tool_call(call)]
+                    )
+                )
                 if isinstance(call, CompletedCall):
-                    manager.add_tool_result(
-                        tool_call_id=call.id,
-                        content=call.result,
+                    messages.append(
+                        LLMToolResultMessage(
+                            tool_call_id=call.id,
+                            content=call.result,
+                        )
                     )
                 elif isinstance(call, FailedCall):
-                    manager.add_tool_result(
-                        tool_call_id=call.id,
-                        content=call.error,
+                    messages.append(
+                        LLMToolResultMessage(
+                            tool_call_id=call.id,
+                            content=call.error,
+                        )
                     )
     playlist_context = _to_playlist_context(session.playlist)
     if playlist_context is not None:
-        manager.add_user(playlist_context)
-    workspace_event_context = _to_workspace_event_context(
-        session.unconsumed_workspace_events
-    )
-    if workspace_event_context is not None:
-        manager.add_user(workspace_event_context)
-    return manager
+        messages.append(LLMUserMessage(content=playlist_context))
+    return messages
 
 
 def _to_tool_action_type(value: str | None) -> ToolActionType | None:
@@ -310,29 +321,29 @@ def _to_playlist_context(playlist: Playlist | None) -> str | None:
     )
 
 
-def _to_workspace_event_context(events: list[WorkspaceEvent]) -> str | None:
+def _to_user_events(*, session: Session) -> list[UserEvent]:
+    events = session.unconsumed_workspace_events
     if not events:
-        return None
+        return []
 
-    return json.dumps(
-        {
-            "manual_playlist_changes_since_last_response": {
-                "treat_as_user_intent": True,
-                "track_removed_means_do_not_readd_unless_requested": True,
-                "track_pinned_means_hard_constraint": True,
-                "events": [
-                    {
-                        "type": event.event_type.value,
-                        "track_id": str(event.track_id),
-                        "track_title": event.track_title,
-                        "track_artist": event.track_artist,
-                        "track_spotify_uri": event.track_spotify_uri,
-                        "track_cover_url": event.track_cover_url,
-                        "occurred_at": event.occurred_at.isoformat(),
-                    }
-                    for event in events
-                ],
-            }
-        },
-        ensure_ascii=False,
-    )
+    history_timestamps = _to_history_timestamps(session=session)
+    return [
+        UserEvent(
+            type=event.event_type.value,
+            track_title=event.track_title,
+            track_artist=event.track_artist,
+            occurred_at=event.occurred_at,
+            history_index=bisect_right(history_timestamps, event.occurred_at),
+        )
+        for event in events
+    ]
+
+
+def _to_history_timestamps(*, session: Session) -> list[datetime]:
+    timestamps: list[datetime] = []
+    for entry in session.entries:
+        if isinstance(entry, UserMessage):
+            timestamps.append(entry.created_at)
+        elif isinstance(entry, AssistantMessage) and entry.content.strip():
+            timestamps.append(entry.created_at)
+    return timestamps

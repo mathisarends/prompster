@@ -1,7 +1,7 @@
 import logging
 from collections.abc import AsyncGenerator
 
-from llmify import ChatModel, StreamEventType
+from llmify import ChatModel, Message, StreamEventType
 
 from agent.agent.events import (
     AgentEvent,
@@ -19,6 +19,7 @@ from agent.agent.messages import MessageManager
 from agent.tools import Tools, Spotify
 from agent.tools.views import AskFollowUpParams
 from agent.playlist import PlaylistDraftStore
+from agent.agent.views import UserEvents
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,8 @@ class Agent:
         self,
         llm: ChatModel,
         tools: Tools | None = None,
-        messages: MessageManager | None = None,
+        history: list[Message] | None = None,
+        user_events: UserEvents | None = None,
         max_iterations: int = 10,
         system_prompt: str | None = None,
         spotify: Spotify | None = None,
@@ -37,29 +39,27 @@ class Agent:
         self._llm = llm
         self._tools = tools or Tools()
         self._max_iterations = max_iterations
-        self._messages = messages or MessageManager(system_prompt=system_prompt)
 
-        if spotify is not None:
-            self._spotify = spotify
-            self._owns_spotify = False
-        else:
-            self._spotify = Spotify()
-            self._owns_spotify = True
-        self._tools.get_context().provide(self._spotify)
+        self._spotify = spotify or Spotify()
+        self._tools.provide(self._spotify)
 
-        existing_store = self._tools.get_context().resolve(PlaylistDraftStore)
+        existing_store = self._tools.resolve(PlaylistDraftStore)
         self._playlist_store = playlist_store or existing_store or PlaylistDraftStore()
         if existing_store is None:
-            self._tools.get_context().provide(self._playlist_store)
+            self._tools.provide(self._playlist_store)
+        self._user_events = list(user_events or [])
+
+        self._messages = MessageManager(
+            system_prompt=system_prompt,
+            playlist_draft_provider=lambda: self._playlist_store.playlist_draft,
+            user_events_provider=lambda: self._user_events,
+            history=history,
+        )
 
         self._tool_schema = self._tools.to_schema()
 
-    async def prepare(self) -> None:
-        await self._spotify.open()
-
     async def close(self) -> None:
-        if self._owns_spotify:
-            await self._spotify.close()
+        await self._spotify.close()
 
     async def stream(self, message: str) -> AsyncGenerator[AgentEvent, None]:
         self._messages.add_user(message)

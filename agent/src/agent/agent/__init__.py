@@ -11,7 +11,7 @@ from .events import (
     ToolResultEvent,
     WorkspaceUpdatedEvent,
 )
-from .messages import MessageManager
+from .views import UserEvent, UserEvents
 
 __all__ = [
     "Agent",
@@ -25,5 +25,6 @@ __all__ = [
     "ToolCallEvent",
     "ToolResultEvent",
     "WorkspaceUpdatedEvent",
-    "MessageManager",
+    "UserEvent",
+    "UserEvents",
 ]

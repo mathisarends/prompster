@@ -9,8 +9,9 @@ from .agent import (
     StepStartedEvent,
     ToolCallEvent,
     ToolResultEvent,
+    UserEvent,
+    UserEvents,
     WorkspaceUpdatedEvent,
-    MessageManager,
 )
 from .tools import Spotify
 from .tools.views import AskFollowUpOption, AskFollowUpQuestion
@@ -46,8 +47,9 @@ __all__ = [
     "StepStartedEvent",
     "ToolCallEvent",
     "ToolResultEvent",
+    "UserEvent",
+    "UserEvents",
     "WorkspaceUpdatedEvent",
-    "MessageManager",
     "Spotify",
     "PlaylistDraft",
     "PlaylistDraftCreated",

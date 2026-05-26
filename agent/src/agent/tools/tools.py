@@ -51,8 +51,11 @@ class Tools:
         self._context = context
         self._executor.set_context(context)
 
-    def get_context(self) -> ToolContext:
-        return self._context
+    def provide(self, *dependencies: object) -> None:
+        self._context.provide(*dependencies)
+
+    def resolve[T](self, expected_type: type[T]) -> T | None:
+        return self._context.resolve(expected_type)
 
     def get(self, name: str) -> Tool | None:
         return self._tools.get(name)

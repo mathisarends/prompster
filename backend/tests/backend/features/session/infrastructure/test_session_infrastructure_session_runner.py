@@ -1,10 +1,10 @@
 import asyncio
-import json
 from collections.abc import AsyncIterator
 from datetime import datetime, timezone
 from uuid import uuid4
 
 from llmify.messages import UserMessage
+from agent import UserEvent
 
 from backend.features.session.application import SessionConversationService
 from backend.features.session.application.ports.session_runner import (
@@ -17,7 +17,10 @@ from backend.features.session.domain import (
     WorkspaceEvent,
     WorkspaceEventType,
 )
-from backend.features.session.infrastructure.session_runner import _to_message_manager
+from backend.features.session.infrastructure.session_runner import (
+    _to_history_messages,
+    _to_user_events,
+)
 
 
 class _SessionRepositoryStub(SessionRepository):
@@ -72,25 +75,21 @@ class TestSessionRunnerMessageContext:
             workspace_events=[event, consumed_event],
         )
 
-        manager = _to_message_manager(session=session, system_prompt="System")
+        history = _to_history_messages(session=session)
+        user_events = _to_user_events(session=session)
 
         user_messages = [
-            message for message in manager.all() if isinstance(message, UserMessage)
+            message for message in history if isinstance(message, UserMessage)
         ]
-        payload = json.loads(user_messages[-1].content)
-        context = payload["manual_playlist_changes_since_last_response"]
-        assert context["track_removed_means_do_not_readd_unless_requested"] is True
-        assert context["track_pinned_means_hard_constraint"] is True
-        assert context["events"] == [
-            {
-                "type": "track_removed",
-                "track_id": str(event.track_id),
-                "track_title": "Umbrella",
-                "track_artist": "Rihanna",
-                "track_spotify_uri": "spotify:track:1",
-                "track_cover_url": "https://example.com/cover.jpg",
-                "occurred_at": "2026-01-01T00:00:00+00:00",
-            }
+        assert user_messages == []
+        assert user_events == [
+            UserEvent(
+                type="track_removed",
+                track_title="Umbrella",
+                track_artist="Rihanna",
+                occurred_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+                history_index=0,
+            )
         ]
 
     def test_send_message_consumes_workspace_events_after_runner(self) -> None:
