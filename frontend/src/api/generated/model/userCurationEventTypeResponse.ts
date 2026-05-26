@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type WorkspaceEventTypeResponse =
-  (typeof WorkspaceEventTypeResponse)[keyof typeof WorkspaceEventTypeResponse];
+export type UserCurationEventTypeResponse =
+  (typeof UserCurationEventTypeResponse)[keyof typeof UserCurationEventTypeResponse];
 
-export const WorkspaceEventTypeResponse = {
+export const UserCurationEventTypeResponse = {
   track_pinned: "track_pinned",
   track_unpinned: "track_unpinned",
   track_added: "track_added",

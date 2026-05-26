@@ -20,7 +20,7 @@ from .tool_call import (
     is_resolved,
 )
 from .tool_call_sequence import ToolCallSequence
-from .workspace_event import WorkspaceEvent, WorkspaceEventType
+from .user_curation_event import UserCurationEvent, UserCurationEventType
 
 __all__ = [
     "AssistantMessage",
@@ -42,8 +42,8 @@ __all__ = [
     "UserMessage",
     "UserMessageAttachment",
     "UserMessageAttachmentKind",
-    "WorkspaceEvent",
-    "WorkspaceEventType",
+    "UserCurationEvent",
+    "UserCurationEventType",
     "is_pending",
     "is_resolved",
 ]

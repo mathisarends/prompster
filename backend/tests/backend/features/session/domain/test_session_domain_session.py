@@ -29,7 +29,7 @@ from backend.features.session.domain import (
     UserMessage,
     UserMessageAttachment,
     UserMessageAttachmentKind,
-    WorkspaceEventType,
+    UserCurationEventType,
 )
 
 
@@ -270,7 +270,9 @@ class TestSessionDomainSession:
         assert len(session.playlist.tracks) == 1
         assert session.playlist.tracks[0] is track
 
-    def test_add_track_records_workspace_event_snapshot(self, session: Session) -> None:
+    def test_add_track_records_user_curation_event_snapshot(
+        self, session: Session
+    ) -> None:
         track = session.add_track(
             title="Starlight",
             artist="Muse",
@@ -278,15 +280,16 @@ class TestSessionDomainSession:
             cover_url="https://example.com/cover.jpg",
         )
 
-        assert len(session.workspace_events) == 1
-        event = session.workspace_events[0]
-        assert event.event_type == WorkspaceEventType.TRACK_ADDED
+        assert len(session.user_curation_events) == 1
+        event = session.user_curation_events[0]
+        assert event.event_type == UserCurationEventType.TRACK_ADDED
         assert event.track_id == track.id
         assert event.track_title == "Starlight"
         assert event.track_artist == "Muse"
         assert event.track_spotify_uri == "spotify:track:abc"
         assert event.track_cover_url == "https://example.com/cover.jpg"
         assert event.consumed is False
+        assert event.history_index == 0
 
     def test_remove_track_removes_matching_track(self, session: Session) -> None:
         first_track = session.add_track(title="Starlight", artist="Muse")
@@ -298,7 +301,7 @@ class TestSessionDomainSession:
         assert len(session.playlist.tracks) == 1
         assert session.playlist.tracks[0] is second_track
 
-    def test_remove_track_records_workspace_event_snapshot(
+    def test_remove_track_records_user_curation_event_snapshot(
         self, session: Session
     ) -> None:
         track = session.add_track(
@@ -310,9 +313,9 @@ class TestSessionDomainSession:
 
         session.remove_track(track.id)
 
-        assert len(session.workspace_events) == 2
-        event = session.workspace_events[1]
-        assert event.event_type == WorkspaceEventType.TRACK_REMOVED
+        assert len(session.user_curation_events) == 2
+        event = session.user_curation_events[1]
+        assert event.event_type == UserCurationEventType.TRACK_REMOVED
         assert event.track_id == track.id
         assert event.track_title == "Starlight"
         assert event.track_artist == "Muse"
@@ -347,10 +350,10 @@ class TestSessionDomainSession:
         session.pin_track(track.id)
         session.pin_track(track.id)
 
-        event_types = [event.event_type for event in session.workspace_events]
+        event_types = [event.event_type for event in session.user_curation_events]
         assert event_types == [
-            WorkspaceEventType.TRACK_ADDED,
-            WorkspaceEventType.TRACK_PINNED,
+            UserCurationEventType.TRACK_ADDED,
+            UserCurationEventType.TRACK_PINNED,
         ]
 
     def test_unpin_track_records_event_only_on_state_change(
@@ -361,24 +364,35 @@ class TestSessionDomainSession:
         session.unpin_track(track.id)
         session.unpin_track(track.id)
 
-        event_types = [event.event_type for event in session.workspace_events]
+        event_types = [event.event_type for event in session.user_curation_events]
         assert event_types == [
-            WorkspaceEventType.TRACK_ADDED,
-            WorkspaceEventType.TRACK_UNPINNED,
+            UserCurationEventType.TRACK_ADDED,
+            UserCurationEventType.TRACK_UNPINNED,
         ]
 
-    def test_unconsumed_workspace_events_filters_consumed(
+    def test_unconsumed_user_curation_events_filters_consumed(
         self, session: Session
     ) -> None:
         track = session.add_track(title="Starlight", artist="Muse", is_pinned=False)
         session.pin_track(track.id)
-        first_event = session.workspace_events[0]
+        first_event = session.user_curation_events[0]
         first_event.mark_consumed()
 
-        unconsumed = session.unconsumed_workspace_events
+        unconsumed = session.unconsumed_user_curation_events
 
         assert len(unconsumed) == 1
-        assert unconsumed[0].event_type == WorkspaceEventType.TRACK_PINNED
+        assert unconsumed[0].event_type == UserCurationEventType.TRACK_PINNED
+
+    def test_user_curation_event_history_index_anchors_between_turns(
+        self, session: Session
+    ) -> None:
+        session.add_user_message("suche was mit synth")
+        session.add_assistant_message("Hier sind ein paar Ideen")
+
+        session.add_track(title="Starlight", artist="Muse", is_pinned=False)
+
+        assert len(session.user_curation_events) == 1
+        assert session.user_curation_events[0].history_index == 2
 
     def test_replace_track_rejects_pinned_track(self, session: Session) -> None:
         track = session.add_track(

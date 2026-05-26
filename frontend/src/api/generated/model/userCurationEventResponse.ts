@@ -5,15 +5,16 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { WorkspaceEventTypeResponse } from "./workspaceEventTypeResponse";
+import type { UserCurationEventTypeResponse } from "./userCurationEventTypeResponse";
 
-export interface WorkspaceEventResponse {
+export interface UserCurationEventResponse {
   id: string;
-  eventType: WorkspaceEventTypeResponse;
+  eventType: UserCurationEventTypeResponse;
   trackId: string;
   trackTitle: string;
   trackArtist: string;
   trackSpotifyUri?: string | null;
   trackCoverUrl?: string | null;
+  historyIndex?: number | null;
   occurredAt: string;
 }

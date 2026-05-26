@@ -85,7 +85,7 @@ class SessionModel(DatabaseEntity, table=True):
         back_populates="session",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    workspace_events: list["SessionWorkspaceEventModel"] = Relationship(
+    user_curation_events: list["SessionUserCurationEventModel"] = Relationship(
         back_populates="session",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
@@ -163,16 +163,16 @@ class SessionAssistantMessageModel(DatabaseEntity, table=True):
     session: SessionModel = Relationship(back_populates="assistant_messages")
 
 
-class SessionWorkspaceEventModel(DatabaseEntity, table=True):
-    __tablename__ = "session_workspace_events"
+class SessionUserCurationEventModel(DatabaseEntity, table=True):
+    __tablename__ = "session_user_curation_events"
     __table_args__ = (
         Index(
-            "ix_session_workspace_events_session_position",
+            "ix_session_user_curation_events_session_position",
             "session_id",
             "position",
         ),
         Index(
-            "ix_session_workspace_events_session_consumed",
+            "ix_session_user_curation_events_session_consumed",
             "session_id",
             "consumed",
         ),
@@ -186,13 +186,14 @@ class SessionWorkspaceEventModel(DatabaseEntity, table=True):
     track_artist: str
     track_spotify_uri: str | None = Field(default=None, max_length=128)
     track_cover_url: str | None = None
+    history_index: int | None = None
     consumed: bool = Field(
         default=False,
         sa_type=Boolean(),
         sa_column_kwargs={"server_default": text("false")},
     )
 
-    session: SessionModel = Relationship(back_populates="workspace_events")
+    session: SessionModel = Relationship(back_populates="user_curation_events")
 
 
 class SessionToolCallSequenceModel(DatabaseEntity, table=True):

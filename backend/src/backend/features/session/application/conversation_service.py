@@ -104,7 +104,7 @@ class SessionConversationService:
         await self._session_repository.save(session=session)
         for event in self._to_tool_call_resolution_events(resolved_tool_call):
             yield event
-        async for event in self._run_agent_and_consume_workspace_events(
+        async for event in self._run_agent_and_consume_user_curation_events(
             session=session
         ):
             yield event
@@ -140,7 +140,7 @@ class SessionConversationService:
         await self._session_repository.save(session=session)
         for event in self._to_tool_call_resolution_events(resolved_tool_call):
             yield event
-        async for event in self._run_agent_and_consume_workspace_events(
+        async for event in self._run_agent_and_consume_user_curation_events(
             session=session
         ):
             yield event
@@ -160,7 +160,7 @@ class SessionConversationService:
         await self._session_repository.save(session=session)
         for event in self._to_tool_call_resolution_events(resolved_tool_call):
             yield event
-        async for event in self._run_agent_and_consume_workspace_events(
+        async for event in self._run_agent_and_consume_user_curation_events(
             session=session
         ):
             yield event
@@ -358,7 +358,10 @@ class SessionConversationService:
             elif isinstance(event, SessionRunnerPlaylistTracksRemoved):
                 playlist = session.playlist
                 for track_id in event.track_ids:
-                    session.remove_track(track_id=track_id)
+                    session.remove_track(
+                        track_id=track_id,
+                        record_user_curation_event=False,
+                    )
                 if playlist is None:
                     playlist = session.playlist
                 await self._session_repository.save(session=session)
@@ -384,7 +387,7 @@ class SessionConversationService:
                             track=replacement.track,
                         )
 
-    async def _run_agent_and_consume_workspace_events(
+    async def _run_agent_and_consume_user_curation_events(
         self,
         *,
         session: Session,
@@ -392,7 +395,7 @@ class SessionConversationService:
         async for event in self._run_agent(session=session):
             yield event
 
-        events = session.unconsumed_workspace_events
+        events = session.unconsumed_user_curation_events
         if not events:
             return
 

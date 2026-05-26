@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserChatMessage } from "@/components/chat/user-chat-message";
-import { WorkspaceEventContext } from "@/components/chat/workspace-event-context";
+import { UserCurationEventContext } from "@/components/chat/user-curation-event-context";
 import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
@@ -191,8 +191,8 @@ export const ChatPage = () => {
 
       <div className="shrink-0 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-6 sm:px-8 sm:pb-3">
         <div className="mx-auto w-full max-w-4xl">
-          <WorkspaceEventContext
-            events={session?.unconsumedWorkspaceEvents ?? []}
+          <UserCurationEventContext
+            events={session?.unconsumedUserCurationEvents ?? []}
           />
           <ChatInputBox
             value={prompt}

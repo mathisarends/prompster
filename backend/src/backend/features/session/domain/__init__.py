@@ -41,8 +41,8 @@ from .entities import (
     UserMessage,
     UserMessageAttachment,
     UserMessageAttachmentKind,
-    WorkspaceEvent,
-    WorkspaceEventType,
+    UserCurationEvent,
+    UserCurationEventType,
     is_pending,
     is_resolved,
 )
@@ -88,8 +88,8 @@ __all__ = [
     "UserMessage",
     "UserMessageAttachment",
     "UserMessageAttachmentKind",
-    "WorkspaceEvent",
-    "WorkspaceEventType",
+    "UserCurationEvent",
+    "UserCurationEventType",
     "is_pending",
     "is_resolved",
 ]

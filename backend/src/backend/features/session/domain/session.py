@@ -23,10 +23,10 @@ from backend.features.session.domain.entities import (
     PlaylistTrack,
     SessionEntry,
     ToolCallSequence,
+    UserCurationEvent,
+    UserCurationEventType,
     UserMessage,
     UserMessageAttachment,
-    WorkspaceEvent,
-    WorkspaceEventType,
 )
 from backend.shared.ddd import Aggregate
 
@@ -39,7 +39,7 @@ class Session(Aggregate):
         owner_id: UUID,
         is_starred: bool = False,
         playlist: Playlist | None = None,
-        workspace_events: list[WorkspaceEvent] | None = None,
+        user_curation_events: list[UserCurationEvent] | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> None:
@@ -49,7 +49,7 @@ class Session(Aggregate):
         self._owner_id = owner_id
         self._is_starred = is_starred
         self._playlist = playlist
-        self._workspace_events: list[WorkspaceEvent] = workspace_events or []
+        self._user_curation_events: list[UserCurationEvent] = user_curation_events or []
 
     @property
     def title(self) -> str:
@@ -76,12 +76,12 @@ class Session(Aggregate):
         return self._playlist
 
     @property
-    def workspace_events(self) -> tuple[WorkspaceEvent, ...]:
-        return tuple(self._workspace_events)
+    def user_curation_events(self) -> tuple[UserCurationEvent, ...]:
+        return tuple(self._user_curation_events)
 
     @property
-    def unconsumed_workspace_events(self) -> list[WorkspaceEvent]:
-        return [event for event in self._workspace_events if not event.consumed]
+    def unconsumed_user_curation_events(self) -> list[UserCurationEvent]:
+        return [event for event in self._user_curation_events if not event.consumed]
 
     @classmethod
     def create_with_initial_prompt(
@@ -129,6 +129,7 @@ class Session(Aggregate):
         spotify_uri: str | None = None,
         cover_url: str | None = None,
         is_pinned: bool = True,
+        record_user_curation_event: bool = True,
     ) -> PlaylistTrack:
         if self._playlist is None:
             self._playlist = Playlist(tracks=[])
@@ -141,16 +142,23 @@ class Session(Aggregate):
             is_pinned=is_pinned,
         )
         self._playlist.tracks.append(track)
-        self._record_event(WorkspaceEventType.TRACK_ADDED, track)
+        if record_user_curation_event:
+            self._record_user_curation_event(UserCurationEventType.TRACK_ADDED, track)
         return track
 
-    def remove_track(self, track_id: UUID) -> None:
+    def remove_track(
+        self, track_id: UUID, record_user_curation_event: bool = True
+    ) -> None:
         if self._playlist is None:
             raise PlaylistTrackNotFoundError(f"Session {self.id} has no playlist.")
         for index, track in enumerate(self._playlist.tracks):
             if track.id == track_id:
                 self._playlist.tracks.pop(index)
-                self._record_event(WorkspaceEventType.TRACK_REMOVED, track)
+                if record_user_curation_event:
+                    self._record_user_curation_event(
+                        UserCurationEventType.TRACK_REMOVED,
+                        track,
+                    )
                 return
         raise PlaylistTrackNotFoundError(
             f"Track {track_id} not found in playlist {self._playlist.id}."
@@ -171,20 +179,27 @@ class Session(Aggregate):
             f"Track {track_id} not found in playlist {self._playlist.id}."
         )
 
-    def pin_track(self, track_id: UUID) -> PlaylistTrack:
+    def pin_track(
+        self, track_id: UUID, record_user_curation_event: bool = True
+    ) -> PlaylistTrack:
         track = self._require_track(track_id)
         was_pinned = track.is_pinned
         track.is_pinned = True
-        if not was_pinned:
-            self._record_event(WorkspaceEventType.TRACK_PINNED, track)
+        if not was_pinned and record_user_curation_event:
+            self._record_user_curation_event(UserCurationEventType.TRACK_PINNED, track)
         return track
 
-    def unpin_track(self, track_id: UUID) -> PlaylistTrack:
+    def unpin_track(
+        self, track_id: UUID, record_user_curation_event: bool = True
+    ) -> PlaylistTrack:
         track = self._require_track(track_id)
         was_pinned = track.is_pinned
         track.is_pinned = False
-        if was_pinned:
-            self._record_event(WorkspaceEventType.TRACK_UNPINNED, track)
+        if was_pinned and record_user_curation_event:
+            self._record_user_curation_event(
+                UserCurationEventType.TRACK_UNPINNED,
+                track,
+            )
         return track
 
     def require_track(self, track_id: UUID) -> PlaylistTrack:
@@ -311,19 +326,30 @@ class Session(Aggregate):
             and left.is_pinned == right.is_pinned
         )
 
-    def _record_event(
-        self, event_type: WorkspaceEventType, track: PlaylistTrack
-    ) -> WorkspaceEvent:
-        event = WorkspaceEvent(
+    def _record_user_curation_event(
+        self, event_type: UserCurationEventType, track: PlaylistTrack
+    ) -> UserCurationEvent:
+        event = UserCurationEvent(
             event_type=event_type,
             track_id=track.id,
             track_title=track.title,
             track_artist=track.artist,
             track_spotify_uri=track.spotify_uri,
             track_cover_url=track.cover_url,
+            history_index=self._current_history_index(),
         )
-        self._workspace_events.append(event)
+        self._user_curation_events.append(event)
         return event
+
+    def _current_history_index(self) -> int:
+        history_index = 0
+        for entry in self._entries:
+            if isinstance(entry, UserMessage):
+                history_index += 1
+                continue
+            if isinstance(entry, AssistantMessage) and entry.content.strip():
+                history_index += 1
+        return history_index
 
     def pending_tool_call_sequence(self) -> ToolCallSequence | None:
         return self._find_pending_tool_call_sequence()

@@ -1,59 +1,59 @@
 import { ChevronDown, Music2, Pin, PinOff, Plus, Trash2 } from "lucide-react";
 
 import {
-  WorkspaceEventTypeResponse,
-  type WorkspaceEventResponse,
+  UserCurationEventTypeResponse,
+  type UserCurationEventResponse,
 } from "@/api/generated/model";
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
 
-type WorkspaceEventContextProps = {
-  events: WorkspaceEventResponse[];
+type UserCurationEventContextProps = {
+  events: UserCurationEventResponse[];
   className?: string;
 };
 
-type WorkspaceEventMeta = {
+type UserCurationEventMeta = {
   label: string;
   Icon: typeof Music2;
   className: string;
 };
 
 const eventMeta: Record<
-  WorkspaceEventResponse["eventType"],
-  WorkspaceEventMeta
+  UserCurationEventResponse["eventType"],
+  UserCurationEventMeta
 > = {
-  [WorkspaceEventTypeResponse.track_added]: {
-    label: "Hinzugefügt",
+  [UserCurationEventTypeResponse.track_added]: {
+    label: "Hinzugefuegt",
     Icon: Plus,
     className: "border-emerald-400/20 bg-emerald-400/10 text-emerald-200",
   },
-  [WorkspaceEventTypeResponse.track_removed]: {
+  [UserCurationEventTypeResponse.track_removed]: {
     label: "Entfernt",
     Icon: Trash2,
     className: "border-rose-400/20 bg-rose-400/10 text-rose-200",
   },
-  [WorkspaceEventTypeResponse.track_pinned]: {
+  [UserCurationEventTypeResponse.track_pinned]: {
     label: "Gepinnt",
     Icon: Pin,
     className: "border-amber-300/25 bg-amber-300/10 text-amber-100",
   },
-  [WorkspaceEventTypeResponse.track_unpinned]: {
-    label: "Pin gelöst",
+  [UserCurationEventTypeResponse.track_unpinned]: {
+    label: "Pin geloest",
     Icon: PinOff,
     className: "border-sky-300/20 bg-sky-300/10 text-sky-100",
   },
 };
 
 const formatEventCount = (count: number) =>
-  count === 1 ? "1 Änderung" : `${count} Änderungen`;
+  count === 1 ? "1 Aenderung" : `${count} Aenderungen`;
 
-export const WorkspaceEventContext = ({
+export const UserCurationEventContext = ({
   events,
   className,
-}: WorkspaceEventContextProps) => {
+}: UserCurationEventContextProps) => {
   const [isExpanded, setIsExpanded] = useLocalStorage(
-    "prompster.chat.workspace-events-expanded",
+    "prompster.chat.user-curation-events-expanded",
     true,
   );
 
@@ -71,7 +71,7 @@ export const WorkspaceEventContext = ({
               Playlist-Kontext
             </p>
             <p className="truncate">
-              {formatEventCount(events.length)} für die nächste Antwort
+              {formatEventCount(events.length)} fuer die naechste Antwort
             </p>
           </div>
         </div>
@@ -101,7 +101,7 @@ export const WorkspaceEventContext = ({
       {isExpanded ? (
         <div className="mt-2 flex max-h-36 flex-wrap gap-2 overflow-y-auto pr-1">
           {events.map((event) => (
-            <WorkspaceEventChip key={event.id} event={event} />
+            <UserCurationEventChip key={event.id} event={event} />
           ))}
         </div>
       ) : null}
@@ -109,7 +109,11 @@ export const WorkspaceEventContext = ({
   );
 };
 
-const WorkspaceEventChip = ({ event }: { event: WorkspaceEventResponse }) => {
+const UserCurationEventChip = ({
+  event,
+}: {
+  event: UserCurationEventResponse;
+}) => {
   const meta = eventMeta[event.eventType];
   const Icon = meta.Icon;
 

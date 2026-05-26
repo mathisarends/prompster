@@ -78,9 +78,6 @@ class Agent:
         async for event in self._run_loop():
             yield event
 
-    def reset(self) -> None:
-        self._messages.reset()
-
     async def _run_loop(self) -> AsyncGenerator[AgentEvent, None]:
         for iteration in range(1, self._max_iterations + 1):
             yield StepStartedEvent(step=iteration)

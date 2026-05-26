@@ -14,8 +14,8 @@ from backend.features.session.application.ports.session_runner import (
 from backend.features.session.domain import (
     Session,
     SessionRepository,
-    WorkspaceEvent,
-    WorkspaceEventType,
+    UserCurationEvent,
+    UserCurationEventType,
 )
 from backend.features.session.infrastructure.session_runner import (
     _to_history_messages,
@@ -50,10 +50,10 @@ class _EmptyRunner(SessionRunner):
 
 
 class TestSessionRunnerMessageContext:
-    def test_adds_unconsumed_workspace_events_to_message_context(self) -> None:
-        event = WorkspaceEvent(
+    def test_adds_unconsumed_user_curation_events_to_message_context(self) -> None:
+        event = UserCurationEvent(
             id=uuid4(),
-            event_type=WorkspaceEventType.TRACK_REMOVED,
+            event_type=UserCurationEventType.TRACK_REMOVED,
             track_id=uuid4(),
             track_title="Umbrella",
             track_artist="Rihanna",
@@ -61,8 +61,8 @@ class TestSessionRunnerMessageContext:
             track_cover_url="https://example.com/cover.jpg",
             created_time=datetime(2026, 1, 1, tzinfo=timezone.utc),
         )
-        consumed_event = WorkspaceEvent(
-            event_type=WorkspaceEventType.TRACK_PINNED,
+        consumed_event = UserCurationEvent(
+            event_type=UserCurationEventType.TRACK_PINNED,
             track_id=uuid4(),
             track_title="Consumed",
             track_artist="Artist",
@@ -72,7 +72,7 @@ class TestSessionRunnerMessageContext:
             title="Deck",
             entries=[],
             owner_id=uuid4(),
-            workspace_events=[event, consumed_event],
+            user_curation_events=[event, consumed_event],
         )
 
         history = _to_history_messages(session=session)
@@ -92,10 +92,10 @@ class TestSessionRunnerMessageContext:
             )
         ]
 
-    def test_send_message_consumes_workspace_events_after_runner(self) -> None:
+    def test_send_message_consumes_user_curation_events_after_runner(self) -> None:
         user_id = uuid4()
-        event = WorkspaceEvent(
-            event_type=WorkspaceEventType.TRACK_PINNED,
+        event = UserCurationEvent(
+            event_type=UserCurationEventType.TRACK_PINNED,
             track_id=uuid4(),
             track_title="Umbrella",
             track_artist="Rihanna",
@@ -104,7 +104,7 @@ class TestSessionRunnerMessageContext:
             title="Deck",
             entries=[],
             owner_id=user_id,
-            workspace_events=[event],
+            user_curation_events=[event],
         )
         repository = _SessionRepositoryStub(session=session)
         service = SessionConversationService(

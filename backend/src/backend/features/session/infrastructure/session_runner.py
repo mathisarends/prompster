@@ -63,7 +63,6 @@ from backend.features.session.domain import (
     ToolFunction,
     UserMessage,
     UserMessageAttachment,
-    WorkspaceEvent,
 )
 
 
@@ -322,7 +321,7 @@ def _to_playlist_context(playlist: Playlist | None) -> str | None:
 
 
 def _to_user_events(*, session: Session) -> list[UserEvent]:
-    events = session.unconsumed_workspace_events
+    events = session.unconsumed_user_curation_events
     if not events:
         return []
 
@@ -333,7 +332,11 @@ def _to_user_events(*, session: Session) -> list[UserEvent]:
             track_title=event.track_title,
             track_artist=event.track_artist,
             occurred_at=event.occurred_at,
-            history_index=bisect_right(history_timestamps, event.occurred_at),
+            history_index=(
+                event.history_index
+                if event.history_index is not None
+                else bisect_right(history_timestamps, event.occurred_at)
+            ),
         )
         for event in events
     ]
