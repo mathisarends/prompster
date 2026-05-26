@@ -56,12 +56,18 @@ class SessionPlaylistExporter:
         return session
 
     def _to_deck_track(self, track: PlaylistTrack) -> PlaylistDeckTrack:
-        query = quote_plus(f"{track.title} {track.artist}".strip())
-        spotify_search_url = f"https://open.spotify.com/search/{query}"
         year = str(track.year) if track.year is not None else ""
         return PlaylistDeckTrack(
             title=track.title,
             artist_names=track.artist,
             release_year=year,
-            spotify_url=spotify_search_url,
+            spotify_url=self._build_spotify_url(track),
         )
+
+    @staticmethod
+    def _build_spotify_url(track: PlaylistTrack) -> str:
+        if track.spotify_uri and track.spotify_uri.startswith("spotify:track:"):
+            track_id = track.spotify_uri.removeprefix("spotify:track:")
+            return f"https://open.spotify.com/track/{track_id}"
+        query = quote_plus(f"{track.title} {track.artist}".strip())
+        return f"https://open.spotify.com/search/{query}"

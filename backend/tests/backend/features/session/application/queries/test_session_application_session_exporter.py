@@ -64,6 +64,7 @@ class TestSessionPlaylistExporter:
             title="Insomnia",
             artist="Faithless",
             year=1995,
+            spotify_uri="spotify:track:7uv632EkfwYhXoqf8rhYrg",
             cover_url=None,
         )
         repository = _SessionRepositoryStub(session=session)
@@ -81,10 +82,36 @@ class TestSessionPlaylistExporter:
         assert generator.received_tracks[0].title == "Insomnia"
         assert generator.received_tracks[0].artist_names == "Faithless"
         assert generator.received_tracks[0].release_year == "1995"
+        assert (
+            generator.received_tracks[0].spotify_url
+            == "https://open.spotify.com/track/7uv632EkfwYhXoqf8rhYrg"
+        )
+        assert generator.received_page_limit is None
+
+    def test_export_falls_back_to_search_url_when_track_has_no_spotify_uri(
+        self,
+    ) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session.add_track(
+            title="Insomnia",
+            artist="Faithless",
+            year=1995,
+            cover_url=None,
+        )
+        repository = _SessionRepositoryStub(session=session)
+        generator = _DeckGeneratorStub(pdf_bytes=b"PDF_BYTES")
+        exporter = SessionPlaylistExporter(
+            session_repository=repository,
+            playlist_deck_generator=generator,
+        )
+
+        asyncio.run(exporter.export(session_id=session.id, user_id=owner_id))
+
+        assert generator.received_tracks is not None
         assert generator.received_tracks[0].spotify_url.startswith(
             "https://open.spotify.com/search/"
         )
-        assert generator.received_page_limit is None
 
     def test_export_can_limit_generated_preview_pages(self) -> None:
         owner_id = uuid4()
