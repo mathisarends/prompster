@@ -51,6 +51,9 @@ class UserMessageEntryResponse(Schema):
     id: UUID
     content: str
     attachments: list[SessionMessageAttachmentResponse] = Field(default_factory=list)
+    user_curation_events: list["UserCurationEventResponse"] = Field(
+        default_factory=list
+    )
     created_at: datetime
 
 
@@ -145,6 +148,9 @@ class UserCurationEventResponse(Schema):
     track_cover_url: str | None = None
     history_index: int | None = Field(default=None, ge=0)
     occurred_at: datetime
+
+
+UserMessageEntryResponse.model_rebuild()
 
 
 SessionEntryResponse = Annotated[

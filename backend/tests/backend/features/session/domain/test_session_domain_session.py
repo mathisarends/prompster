@@ -31,6 +31,7 @@ from backend.features.session.domain import (
     UserMessage,
     UserMessageAttachment,
     UserMessageAttachmentKind,
+    UserCurationEvent,
     UserCurationEventType,
 )
 
@@ -292,6 +293,53 @@ class TestSessionDomainSession:
         assert event.track_cover_url == "https://example.com/cover.jpg"
         assert event.consumed is False
         assert event.history_index == 0
+
+    def test_add_user_message_binds_pending_user_curation_events(
+        self, session: Session
+    ) -> None:
+        session.add_track(title="Starlight", artist="Muse", is_pinned=False)
+
+        message = session.add_user_message("weiter")
+
+        assert len(message.user_curation_events) == 1
+        assert (
+            message.user_curation_events[0].event_type
+            == UserCurationEventType.TRACK_ADDED
+        )
+
+    def test_constructor_does_not_hydrate_user_message_curation_events(
+        self, owner_id: UUID
+    ) -> None:
+        message_time = datetime(2026, 7, 7, 12, 0, tzinfo=timezone.utc)
+        message = UserMessage(content="weiter", created_time=message_time)
+        event = UserCurationEvent(
+            event_type=UserCurationEventType.TRACK_ADDED,
+            track_id=uuid4(),
+            track_title="Starlight",
+            track_artist="Muse",
+            history_index=0,
+            created_time=message_time,
+        )
+
+        Session(
+            title="Roadtrip",
+            entries=[message],
+            owner_id=owner_id,
+            user_curation_events=[event],
+        )
+
+        assert message.user_curation_events == ()
+
+    def test_restore_user_curation_event_detaches_from_bound_user_message(
+        self, session: Session
+    ) -> None:
+        session.add_track(title="Starlight", artist="Muse", is_pinned=False)
+        message = session.add_user_message("weiter")
+        event = message.user_curation_events[0]
+
+        session.restore_user_curation_event(event.id)
+
+        assert message.user_curation_events == ()
 
     def test_remove_track_removes_matching_track(self, session: Session) -> None:
         first_track = session.add_track(title="Starlight", artist="Muse")

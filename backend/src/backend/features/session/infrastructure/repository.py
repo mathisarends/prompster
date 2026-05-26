@@ -120,20 +120,97 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             orm.user_curation_events,
             key=lambda item: item.position,
         )
+        ordered_entries = [entry for _, entry in entries]
+        domain_user_curation_events = [
+            self._to_domain_user_curation_event(event) for event in user_curation_events
+        ]
+        self._hydrate_user_message_curation_events(
+            entries=ordered_entries,
+            events=domain_user_curation_events,
+        )
 
         return Session(
             id=orm.id,
             title=orm.title,
-            entries=[entry for _, entry in entries],
+            entries=ordered_entries,
             owner_id=orm.owner_id,
             is_starred=orm.is_starred,
             playlist=self._to_domain_playlist(orm.playlist),
-            user_curation_events=[
-                self._to_domain_user_curation_event(event)
-                for event in user_curation_events
-            ],
+            user_curation_events=domain_user_curation_events,
             created_time=orm.created_at,
         )
+
+    def _hydrate_user_message_curation_events(
+        self,
+        *,
+        entries: list[SessionEntry],
+        events: list[UserCurationEvent],
+    ) -> None:
+        for event in events:
+            self._bind_user_curation_event_to_message(entries=entries, event=event)
+
+    def _bind_user_curation_event_to_message(
+        self,
+        *,
+        entries: list[SessionEntry],
+        event: UserCurationEvent,
+    ) -> None:
+        if self._is_user_curation_event_bound(entries=entries, event_id=event.id):
+            return
+
+        message = self._find_target_user_message_for_event(entries=entries, event=event)
+        if message is None:
+            return
+
+        message.user_curation_events = (*message.user_curation_events, event)
+
+    def _find_target_user_message_for_event(
+        self,
+        *,
+        entries: list[SessionEntry],
+        event: UserCurationEvent,
+    ) -> UserMessage | None:
+        for entry in entries:
+            if isinstance(entry, UserMessage) and entry.created_at >= event.created_at:
+                return entry
+
+        if event.history_index is None:
+            return None
+
+        return self._find_target_user_message_by_history_index(
+            entries=entries,
+            event_history_index=event.history_index,
+        )
+
+    def _find_target_user_message_by_history_index(
+        self,
+        *,
+        entries: list[SessionEntry],
+        event_history_index: int,
+    ) -> UserMessage | None:
+        history_index = 0
+        for entry in entries:
+            if isinstance(entry, UserMessage):
+                if history_index >= event_history_index:
+                    return entry
+                history_index += 1
+                continue
+            if isinstance(entry, AssistantMessage) and entry.content.strip():
+                history_index += 1
+        return None
+
+    def _is_user_curation_event_bound(
+        self,
+        *,
+        entries: list[SessionEntry],
+        event_id: UUID,
+    ) -> bool:
+        for entry in entries:
+            if not isinstance(entry, UserMessage):
+                continue
+            if any(event.id == event_id for event in entry.user_curation_events):
+                return True
+        return False
 
     def _to_orm(self, domain: Session) -> SessionModel:
         orm = SessionModel(

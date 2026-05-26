@@ -1,5 +1,4 @@
-from datetime import timedelta
-from datetime import timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -270,6 +269,61 @@ def test_user_curation_event_mapping_roundtrip() -> None:
     assert mapped.track_spotify_uri == "spotify:track:abc"
     assert mapped.track_cover_url == "https://example.com/cover.jpg"
     assert mapped.history_index == 4
+
+
+def test_to_domain_hydrates_user_message_curation_events() -> None:
+    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    owner_id = uuid4()
+    session_id = uuid4()
+    message_id = uuid4()
+    message_created_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    event_created_at = message_created_at + timedelta(seconds=5)
+
+    orm = SessionModel(
+        id=session_id,
+        title="Roadtrip",
+        owner_id=owner_id,
+        is_starred=False,
+        last_activity_at=event_created_at,
+        created_at=message_created_at,
+    )
+    orm.user_messages = [
+        SessionUserMessageModel(
+            id=message_id,
+            session_id=session_id,
+            position=0,
+            content="weiter",
+            created_at=message_created_at,
+            attachments=[],
+        )
+    ]
+    orm.assistant_messages = []
+    orm.tool_call_sequences = []
+    orm.follow_up_question_groups = []
+    orm.user_curation_events = [
+        SessionUserCurationEventModel(
+            id=uuid4(),
+            session_id=session_id,
+            position=0,
+            event_type=UserCurationEventType.TRACK_ADDED.value,
+            track_id=uuid4(),
+            track_title="Starlight",
+            track_artist="Muse",
+            history_index=0,
+            consumed=False,
+            created_at=event_created_at,
+        )
+    ]
+
+    mapped = repository._to_domain(orm)
+
+    message = mapped.entries[0]
+    assert isinstance(message, UserMessage)
+    assert len(message.user_curation_events) == 1
+    assert (
+        message.user_curation_events[0].event_type == UserCurationEventType.TRACK_ADDED
+    )
+    assert message.user_curation_events[0].history_index == 0
 
 
 def test_tool_call_action_type_mapping_roundtrip() -> None:

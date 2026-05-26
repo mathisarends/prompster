@@ -64,6 +64,10 @@ def to_entry_response(entry: SessionEntry) -> SessionEntryResponse:
                 to_user_message_attachment_response(attachment)
                 for attachment in entry.attachments
             ],
+            user_curation_events=[
+                to_user_curation_event_response(event)
+                for event in entry.user_curation_events
+            ],
             created_at=entry.created_at,
         )
     if isinstance(entry, AssistantMessage):

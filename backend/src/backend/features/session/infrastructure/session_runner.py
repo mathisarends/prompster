@@ -1,7 +1,6 @@
 import json
-from bisect import bisect_right
 from collections.abc import AsyncIterator
-from datetime import datetime
+from uuid import UUID
 
 from agent.agent import (
     Agent,
@@ -61,6 +60,7 @@ from backend.features.session.domain import (
     ToolCall,
     ToolCallSequence,
     ToolFunction,
+    UserCurationEvent,
     UserMessage,
     UserMessageAttachment,
 )
@@ -321,32 +321,47 @@ def _to_playlist_context(playlist: Playlist | None) -> str | None:
 
 
 def _to_user_events(*, session: Session) -> list[UserEvent]:
-    events = session.unconsumed_user_curation_events
-    if not events:
-        return []
+    user_events: list[UserEvent] = []
+    bound_event_ids: set[UUID] = set()
+    history_index = 0
 
-    history_timestamps = _to_history_timestamps(session=session)
-    return [
-        UserEvent(
-            type=event.event_type.value,
-            track_title=event.track_title,
-            track_artist=event.track_artist,
-            occurred_at=event.occurred_at,
-            history_index=(
-                event.history_index
-                if event.history_index is not None
-                else bisect_right(history_timestamps, event.occurred_at)
-            ),
-        )
-        for event in events
-    ]
-
-
-def _to_history_timestamps(*, session: Session) -> list[datetime]:
-    timestamps: list[datetime] = []
     for entry in session.entries:
         if isinstance(entry, UserMessage):
-            timestamps.append(entry.created_at)
-        elif isinstance(entry, AssistantMessage) and entry.content.strip():
-            timestamps.append(entry.created_at)
-    return timestamps
+            for event in entry.user_curation_events:
+                if event.consumed:
+                    continue
+                user_events.append(
+                    _to_user_event(event=event, history_index=history_index)
+                )
+                bound_event_ids.add(event.id)
+            history_index += 1
+            continue
+
+        if isinstance(entry, AssistantMessage) and entry.content.strip():
+            history_index += 1
+
+    for event in session.unconsumed_user_curation_events:
+        if event.id in bound_event_ids:
+            continue
+        user_events.append(
+            _to_user_event(
+                event=event,
+                history_index=(
+                    event.history_index
+                    if event.history_index is not None
+                    else history_index
+                ),
+            )
+        )
+
+    return user_events
+
+
+def _to_user_event(*, event: UserCurationEvent, history_index: int) -> UserEvent:
+    return UserEvent(
+        type=event.event_type.value,
+        track_title=event.track_title,
+        track_artist=event.track_artist,
+        occurred_at=event.occurred_at,
+        history_index=history_index,
+    )

@@ -4,8 +4,14 @@ from .follow_up_question import (
     FollowUpQuestionState,
 )
 from .follow_up_question_group import FollowUpQuestionGroup
-from .messages import AssistantMessage, UserMessage
-from .messages import UserMessageAttachment, UserMessageAttachmentKind
+from .messages import (
+    AssistantMessage,
+    UserCurationEvent,
+    UserCurationEventType,
+    UserMessage,
+    UserMessageAttachment,
+    UserMessageAttachmentKind,
+)
 from .playlist import Playlist, PlaylistTrack
 from .session_entry import SessionEntry
 from .tool_call import (
@@ -20,7 +26,6 @@ from .tool_call import (
     is_resolved,
 )
 from .tool_call_sequence import ToolCallSequence
-from .user_curation_event import UserCurationEvent, UserCurationEventType
 
 __all__ = [
     "AssistantMessage",

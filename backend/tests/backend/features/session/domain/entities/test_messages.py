@@ -3,6 +3,8 @@ from uuid import uuid4
 
 from backend.features.session.domain import (
     AssistantMessage,
+    UserCurationEvent,
+    UserCurationEventType,
     UserMessage,
     UserMessageAttachment,
     UserMessageAttachmentKind,
@@ -23,6 +25,7 @@ class TestUserMessage:
         assert message.id == message_id
         assert message.created_at == created_time
         assert message.content == "hello"
+        assert message.user_curation_events == ()
 
     def test_keeps_attachment_references(self) -> None:
         attachment = UserMessageAttachment(
@@ -39,6 +42,19 @@ class TestUserMessage:
         assert len(message.attachments) == 1
         assert message.attachments[0].kind == UserMessageAttachmentKind.SPOTIFY_PLAYLIST
         assert message.attachments[0].external_id == "37i9dQZF1DX4dyzvuaRJ0n"
+
+    def test_keeps_user_curation_event_references(self) -> None:
+        event = UserCurationEvent(
+            event_type=UserCurationEventType.TRACK_PINNED,
+            track_id=uuid4(),
+            track_title="Starlight",
+            track_artist="Muse",
+        )
+
+        message = UserMessage(content="fix die playlist", user_curation_events=[event])
+
+        assert len(message.user_curation_events) == 1
+        assert message.user_curation_events[0] is event
 
 
 class TestAssistantMessage:

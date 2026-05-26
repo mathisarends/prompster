@@ -92,6 +92,19 @@ class TestSessionRunnerMessageContext:
             )
         ]
 
+    def test_uses_user_message_bound_event_history_position(self) -> None:
+        session = Session(title="Deck", entries=[], owner_id=uuid4())
+        session.add_user_message("start")
+        session.add_assistant_message("ok")
+        session.add_track(title="Umbrella", artist="Rihanna", is_pinned=False)
+        session.add_user_message("mach weiter")
+
+        user_events = _to_user_events(session=session)
+
+        assert len(user_events) == 1
+        assert user_events[0].type == "track_added"
+        assert user_events[0].history_index == 2
+
     def test_send_message_consumes_user_curation_events_after_runner(self) -> None:
         user_id = uuid4()
         event = UserCurationEvent(

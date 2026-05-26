@@ -75,7 +75,7 @@ const eventMeta: Record<
 };
 
 const formatEventCount = (count: number) =>
-  count === 1 ? "1 Aenderung" : `${count} Aenderungen`;
+  count === 1 ? "1 Änderung" : `${count} Änderungen`;
 
 export const UserCurationEventContext = ({
   sessionId,
@@ -96,8 +96,13 @@ export const UserCurationEventContext = ({
       setRestoringEventId(eventId);
     },
     onSuccess: async (updatedSession) => {
-      queryClient.setQueryData(getGetSessionQueryKey(sessionId), updatedSession);
-      await queryClient.invalidateQueries({ queryKey: getListSessionsQueryKey() });
+      queryClient.setQueryData(
+        getGetSessionQueryKey(sessionId),
+        updatedSession,
+      );
+      await queryClient.invalidateQueries({
+        queryKey: getListSessionsQueryKey(),
+      });
     },
     onError: () => {
       toast.error("Aenderung konnte nicht rueckgaengig gemacht werden.");
@@ -118,10 +123,10 @@ export const UserCurationEventContext = ({
           </span>
           <div className="min-w-0">
             <p className="truncate font-semibold text-foreground">
-              Playlist-Kontext
+              Deine Änderungen
             </p>
             <p className="truncate">
-              {formatEventCount(events.length)} fuer die naechste Antwort
+              KI bezieht {formatEventCount(events.length)} mit ein
             </p>
           </div>
         </div>

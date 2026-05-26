@@ -211,6 +211,7 @@ class Session(Aggregate):
         event = self._require_unconsumed_user_curation_event(event_id)
         self._apply_user_curation_event_reversal(event)
         self._user_curation_events.remove(event)
+        self._detach_user_curation_event_from_messages(event_id=event.id)
 
     def add_user_message(
         self,
@@ -227,7 +228,11 @@ class Session(Aggregate):
                 f"Cannot add user message to session {self.id} "
                 "while follow-up questions are pending."
             )
-        message = UserMessage(content=content, attachments=attachments)
+        message = UserMessage(
+            content=content,
+            attachments=attachments,
+            user_curation_events=self._unbound_unconsumed_user_curation_events(),
+        )
         self._entries.append(message)
         return message
 
@@ -390,7 +395,72 @@ class Session(Aggregate):
             history_index=self._current_history_index(),
         )
         self._user_curation_events.append(event)
+        self._bind_user_curation_event_to_message(event)
         return event
+
+    def _bind_user_curation_event_to_message(self, event: UserCurationEvent) -> None:
+        if self._is_user_curation_event_bound(event_id=event.id):
+            return
+
+        message = self._find_target_user_message_for_event(event)
+        if message is None:
+            return
+
+        message.user_curation_events = (*message.user_curation_events, event)
+
+    def _find_target_user_message_for_event(
+        self, event: UserCurationEvent
+    ) -> UserMessage | None:
+        for entry in self._entries:
+            if isinstance(entry, UserMessage) and entry.created_at >= event.created_at:
+                return entry
+
+        if event.history_index is None:
+            return None
+
+        return self._find_target_user_message_by_history_index(event.history_index)
+
+    def _find_target_user_message_by_history_index(
+        self, event_history_index: int
+    ) -> UserMessage | None:
+        history_index = 0
+        for entry in self._entries:
+            if isinstance(entry, UserMessage):
+                if history_index >= event_history_index:
+                    return entry
+                history_index += 1
+                continue
+            if isinstance(entry, AssistantMessage) and entry.content.strip():
+                history_index += 1
+        return None
+
+    def _is_user_curation_event_bound(self, *, event_id: UUID) -> bool:
+        for entry in self._entries:
+            if not isinstance(entry, UserMessage):
+                continue
+            if any(event.id == event_id for event in entry.user_curation_events):
+                return True
+        return False
+
+    def _unbound_unconsumed_user_curation_events(self) -> list[UserCurationEvent]:
+        return [
+            event
+            for event in self.unconsumed_user_curation_events
+            if not self._is_user_curation_event_bound(event_id=event.id)
+        ]
+
+    def _detach_user_curation_event_from_messages(self, *, event_id: UUID) -> None:
+        for entry in self._entries:
+            if not isinstance(entry, UserMessage):
+                continue
+            if not entry.user_curation_events:
+                continue
+
+            remaining_events = tuple(
+                event for event in entry.user_curation_events if event.id != event_id
+            )
+            if len(remaining_events) != len(entry.user_curation_events):
+                entry.user_curation_events = remaining_events
 
     def _current_history_index(self) -> int:
         history_index = 0
