@@ -14,7 +14,7 @@ import type { SessionServerEvent } from "@/api/session-stream";
 import type {
   ToolCallItem,
   ToolCallStatus,
-} from "@/components/chat/tool-call-accordion";
+} from "@/components/chat/tool-call-sequence";
 
 type SessionLike =
   | Pick<SessionResponse, "id" | "title" | "entries" | "playlist">

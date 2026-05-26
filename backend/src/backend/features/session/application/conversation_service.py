@@ -104,7 +104,9 @@ class SessionConversationService:
         await self._session_repository.save(session=session)
         for event in self._to_tool_call_resolution_events(resolved_tool_call):
             yield event
-        async for event in self._run_agent(session=session):
+        async for event in self._run_agent_and_consume_workspace_events(
+            session=session
+        ):
             yield event
 
     async def answer_follow_ups(
@@ -138,7 +140,9 @@ class SessionConversationService:
         await self._session_repository.save(session=session)
         for event in self._to_tool_call_resolution_events(resolved_tool_call):
             yield event
-        async for event in self._run_agent(session=session):
+        async for event in self._run_agent_and_consume_workspace_events(
+            session=session
+        ):
             yield event
 
     async def skip_remaining_follow_ups(
@@ -156,7 +160,9 @@ class SessionConversationService:
         await self._session_repository.save(session=session)
         for event in self._to_tool_call_resolution_events(resolved_tool_call):
             yield event
-        async for event in self._run_agent(session=session):
+        async for event in self._run_agent_and_consume_workspace_events(
+            session=session
+        ):
             yield event
 
     async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
@@ -377,3 +383,19 @@ class SessionConversationService:
                             track_id=replacement.track_id,
                             track=replacement.track,
                         )
+
+    async def _run_agent_and_consume_workspace_events(
+        self,
+        *,
+        session: Session,
+    ) -> AsyncIterator[SessionEvent]:
+        async for event in self._run_agent(session=session):
+            yield event
+
+        events = session.unconsumed_workspace_events
+        if not events:
+            return
+
+        for event in events:
+            event.mark_consumed()
+        await self._session_repository.save(session=session)

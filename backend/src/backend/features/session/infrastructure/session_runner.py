@@ -55,6 +55,7 @@ from backend.features.session.domain import (
     ToolFunction,
     UserMessage,
     UserMessageAttachment,
+    WorkspaceEvent,
 )
 
 
@@ -170,6 +171,11 @@ def _to_message_manager(
     playlist_context = _to_playlist_context(session.playlist)
     if playlist_context is not None:
         manager.add_user(playlist_context)
+    workspace_event_context = _to_workspace_event_context(
+        session.unconsumed_workspace_events
+    )
+    if workspace_event_context is not None:
+        manager.add_user(workspace_event_context)
     return manager
 
 
@@ -298,6 +304,34 @@ def _to_playlist_context(playlist: Playlist | None) -> str | None:
                 "name": playlist.name,
                 "pinned_tracks_are_hard_constraints": True,
                 "tracks": tracks,
+            }
+        },
+        ensure_ascii=False,
+    )
+
+
+def _to_workspace_event_context(events: list[WorkspaceEvent]) -> str | None:
+    if not events:
+        return None
+
+    return json.dumps(
+        {
+            "manual_playlist_changes_since_last_response": {
+                "treat_as_user_intent": True,
+                "track_removed_means_do_not_readd_unless_requested": True,
+                "track_pinned_means_hard_constraint": True,
+                "events": [
+                    {
+                        "type": event.event_type.value,
+                        "track_id": str(event.track_id),
+                        "track_title": event.track_title,
+                        "track_artist": event.track_artist,
+                        "track_spotify_uri": event.track_spotify_uri,
+                        "track_cover_url": event.track_cover_url,
+                        "occurred_at": event.occurred_at.isoformat(),
+                    }
+                    for event in events
+                ],
             }
         },
         ensure_ascii=False,
