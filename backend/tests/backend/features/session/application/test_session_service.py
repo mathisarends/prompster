@@ -365,7 +365,7 @@ class TestSessionServicePlaylistTrackLocks:
     def test_locks_playlist_track_and_persists(self) -> None:
         owner_id = uuid4()
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
-        track = session.add_track(title="Starlight", artist="Muse")
+        track = session.add_track(title="Starlight", artist="Muse", year=2006)
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
@@ -384,7 +384,9 @@ class TestSessionServicePlaylistTrackLocks:
     def test_unlocks_playlist_track_and_persists(self) -> None:
         owner_id = uuid4()
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
-        track = session.add_track(title="Starlight", artist="Muse", is_pinned=True)
+        track = session.add_track(
+            title="Starlight", artist="Muse", year=2006, is_pinned=True
+        )
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
@@ -576,7 +578,7 @@ class TestSessionServiceSendMessage:
     def test_emits_playlist_set_for_initial_runner_playlist(self) -> None:
         owner_id = uuid4()
         playlist_id = uuid4()
-        track = PlaylistTrack(id=uuid4(), title="Take On Me", artist="a-ha")
+        track = PlaylistTrack(id=uuid4(), title="Take On Me", artist="a-ha", year=1985)
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
         runner = _SessionRunnerStub(
             events=[
@@ -614,16 +616,19 @@ class TestSessionServiceSendMessage:
             id=uuid4(),
             title="Take On Me",
             artist="a-ha",
+            year=1985,
         )
         added_track = PlaylistTrack(
             id=uuid4(),
             title="Billie Jean",
             artist="Michael Jackson",
+            year=1982,
         )
         replacement_track = PlaylistTrack(
             id=uuid4(),
             title="Africa",
             artist="Toto",
+            year=1982,
         )
         session = Session(
             title="Roadtrip",

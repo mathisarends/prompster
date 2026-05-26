@@ -166,9 +166,9 @@ def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:
         track_id=uuid4(),
         track_title="Starlight",
         track_artist="Muse",
+        track_year=2006,
         track_spotify_uri="spotify:track:abc",
         track_cover_url="https://example.com/cover.jpg",
-        history_index=2,
     )
     session = Session(
         title="Roadtrip",
@@ -195,7 +195,7 @@ def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:
         track_title="old",
         track_artist="old",
         track_spotify_uri=None,
-        history_index=0,
+        track_year=1999,
         consumed=True,
         created_at=event.created_at,
     )
@@ -215,14 +215,14 @@ def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:
     assert (
         orm.user_curation_events[0].track_cover_url == "https://example.com/cover.jpg"
     )
-    assert orm.user_curation_events[0].history_index == 2
+    assert orm.user_curation_events[0].track_year == 2006
     assert orm.user_curation_events[0].consumed is False
 
 
 def test_resolve_last_activity_at_includes_user_curation_events() -> None:
     owner_id = uuid4()
     session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
-    session.add_track(title="Starlight", artist="Muse")
+    session.add_track(title="Starlight", artist="Muse", year=2006)
     session.user_curation_events[0].created_at = session.created_at + timedelta(
         minutes=5
     )
@@ -240,9 +240,9 @@ def test_user_curation_event_mapping_roundtrip() -> None:
         track_id=uuid4(),
         track_title="Starlight",
         track_artist="Muse",
+        track_year=2006,
         track_spotify_uri="spotify:track:abc",
         track_cover_url="https://example.com/cover.jpg",
-        history_index=4,
     )
     row = SessionUserCurationEventModel(
         id=event.id,
@@ -254,7 +254,7 @@ def test_user_curation_event_mapping_roundtrip() -> None:
         track_artist=event.track_artist,
         track_spotify_uri=event.track_spotify_uri,
         track_cover_url=event.track_cover_url,
-        history_index=event.history_index,
+        track_year=event.track_year,
         consumed=False,
         created_at=event.created_at,
     )
@@ -268,7 +268,7 @@ def test_user_curation_event_mapping_roundtrip() -> None:
     assert mapped.track_artist == "Muse"
     assert mapped.track_spotify_uri == "spotify:track:abc"
     assert mapped.track_cover_url == "https://example.com/cover.jpg"
-    assert mapped.history_index == 4
+    assert mapped.track_year == 2006
 
 
 def test_to_domain_hydrates_user_message_curation_events() -> None:
@@ -277,7 +277,7 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
     session_id = uuid4()
     message_id = uuid4()
     message_created_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    event_created_at = message_created_at + timedelta(seconds=5)
+    event_created_at = message_created_at - timedelta(seconds=5)
 
     orm = SessionModel(
         id=session_id,
@@ -309,7 +309,7 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
             track_id=uuid4(),
             track_title="Starlight",
             track_artist="Muse",
-            history_index=0,
+            track_year=2006,
             consumed=False,
             created_at=event_created_at,
         )
@@ -323,7 +323,7 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
     assert (
         message.user_curation_events[0].event_type == UserCurationEventType.TRACK_ADDED
     )
-    assert message.user_curation_events[0].history_index == 0
+    assert message.user_curation_events[0].track_year == 2006
 
 
 def test_tool_call_action_type_mapping_roundtrip() -> None:

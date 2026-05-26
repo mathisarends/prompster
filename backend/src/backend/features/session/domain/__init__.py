@@ -19,6 +19,7 @@ from .exceptions import (
     ToolCallAlreadyResolvedError,
     ToolCallNotFoundError,
     UserCurationEventAlreadyConsumedError,
+    UserCurationEventMissingTrackYearError,
     UserCurationEventNotFoundError,
 )
 from .repository import SessionRepository
@@ -92,6 +93,7 @@ __all__ = [
     "UserMessageAttachmentKind",
     "UserCurationEvent",
     "UserCurationEventAlreadyConsumedError",
+    "UserCurationEventMissingTrackYearError",
     "UserCurationEventNotFoundError",
     "UserCurationEventType",
     "is_pending",

@@ -10,6 +10,7 @@ from backend.features.session.domain.exceptions import (
     SessionPlaylistMissingSpotifyTracksError,
     SessionNotFoundError,
     UserCurationEventAlreadyConsumedError,
+    UserCurationEventMissingTrackYearError,
     UserCurationEventNotFoundError,
 )
 
@@ -128,6 +129,21 @@ async def _user_curation_event_already_consumed_handler(
     )
 
 
+async def _user_curation_event_missing_track_year_handler(
+    _: Request,
+    exc: UserCurationEventMissingTrackYearError,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={
+            "detail": _exception_detail(
+                exc,
+                fallback="Curation event cannot be restored because track year is missing",
+            ),
+        },
+    )
+
+
 async def _bad_request_handler(_: Request, exc: ValueError) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
@@ -160,5 +176,9 @@ def register_session_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(
         UserCurationEventAlreadyConsumedError,
         _user_curation_event_already_consumed_handler,
+    )
+    app.add_exception_handler(
+        UserCurationEventMissingTrackYearError,
+        _user_curation_event_missing_track_year_handler,
     )
     app.add_exception_handler(ValueError, _bad_request_handler)

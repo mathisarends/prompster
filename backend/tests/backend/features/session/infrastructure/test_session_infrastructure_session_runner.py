@@ -57,6 +57,7 @@ class TestSessionRunnerMessageContext:
             track_id=uuid4(),
             track_title="Umbrella",
             track_artist="Rihanna",
+            track_year=2007,
             track_spotify_uri="spotify:track:1",
             track_cover_url="https://example.com/cover.jpg",
             created_time=datetime(2026, 1, 1, tzinfo=timezone.utc),
@@ -96,7 +97,9 @@ class TestSessionRunnerMessageContext:
         session = Session(title="Deck", entries=[], owner_id=uuid4())
         session.add_user_message("start")
         session.add_assistant_message("ok")
-        session.add_track(title="Umbrella", artist="Rihanna", is_pinned=False)
+        session.add_track(
+            title="Umbrella", artist="Rihanna", year=2007, is_pinned=False
+        )
         session.add_user_message("mach weiter")
 
         user_events = _to_user_events(session=session)

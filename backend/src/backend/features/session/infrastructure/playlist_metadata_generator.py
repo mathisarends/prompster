@@ -40,6 +40,6 @@ class LLMPlaylistMetadataGenerator(PlaylistMetadataGenerator):
     def _format_tracks(self, tracks: list[PlaylistMetadataTrack]) -> str:
         lines = []
         for track in tracks:
-            year = f" ({track.year})" if track.year is not None else ""
+            year = f" ({track.year})"
             lines.append(f"- {track.title} — {track.artist}{year}")
         return "\n".join(lines)

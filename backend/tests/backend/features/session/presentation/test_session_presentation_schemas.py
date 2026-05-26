@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from backend.features.session.presentation.schemas import (
+    AddPlaylistTrackRequest,
     FollowUpAction,
     FollowUpAnswerRequest,
     FollowUpRequest,
@@ -101,3 +102,13 @@ class TestFollowUpRequest:
                     )
                 ],
             )
+
+
+class TestAddPlaylistTrackRequest:
+    def test_requires_year(self) -> None:
+        with pytest.raises(ValidationError, match="year"):
+            AddPlaylistTrackRequest(title="Starlight", artist="Muse")
+
+    def test_rejects_year_out_of_range(self) -> None:
+        with pytest.raises(ValidationError, match="greater than or equal to 1900"):
+            AddPlaylistTrackRequest(title="Starlight", artist="Muse", year=1899)

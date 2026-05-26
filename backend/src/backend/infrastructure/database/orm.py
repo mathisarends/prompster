@@ -184,9 +184,9 @@ class SessionUserCurationEventModel(DatabaseEntity, table=True):
     track_id: UUID
     track_title: str
     track_artist: str
+    track_year: int | None = None
     track_spotify_uri: str | None = Field(default=None, max_length=128)
     track_cover_url: str | None = None
-    history_index: int | None = None
     consumed: bool = Field(
         default=False,
         sa_type=Boolean(),
@@ -299,7 +299,7 @@ class PlaylistTrackModel(DatabaseEntity, table=True):
     position: int
     title: str
     artist: str
-    year: int | None = None
+    year: int
     spotify_uri: str | None = Field(default=None, max_length=128)
     cover_url: str | None = None
     is_pinned: bool = Field(

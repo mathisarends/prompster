@@ -173,30 +173,6 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         for entry in entries:
             if isinstance(entry, UserMessage) and entry.created_at >= event.created_at:
                 return entry
-
-        if event.history_index is None:
-            return None
-
-        return self._find_target_user_message_by_history_index(
-            entries=entries,
-            event_history_index=event.history_index,
-        )
-
-    def _find_target_user_message_by_history_index(
-        self,
-        *,
-        entries: list[SessionEntry],
-        event_history_index: int,
-    ) -> UserMessage | None:
-        history_index = 0
-        for entry in entries:
-            if isinstance(entry, UserMessage):
-                if history_index >= event_history_index:
-                    return entry
-                history_index += 1
-                continue
-            if isinstance(entry, AssistantMessage) and entry.content.strip():
-                history_index += 1
         return None
 
     def _is_user_curation_event_bound(
@@ -370,9 +346,9 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             row.track_id = event.track_id
             row.track_title = event.track_title
             row.track_artist = event.track_artist
+            row.track_year = event.track_year
             row.track_spotify_uri = event.track_spotify_uri
             row.track_cover_url = event.track_cover_url
-            row.history_index = event.history_index
             row.consumed = event.consumed
             row.created_at = event.created_at
             user_curation_event_rows.append(row)
@@ -422,9 +398,9 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             track_id=row.track_id,
             track_title=row.track_title,
             track_artist=row.track_artist,
+            track_year=row.track_year,
             track_spotify_uri=row.track_spotify_uri,
             track_cover_url=row.track_cover_url,
-            history_index=row.history_index,
             consumed=row.consumed,
             created_time=row.created_at,
         )
@@ -694,6 +670,9 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         return orm
 
     def _to_domain_track(self, orm_track: PlaylistTrackModel) -> PlaylistTrack:
+        if orm_track.year is None:
+            raise ValueError(f"Playlist track {orm_track.id} is missing required year.")
+
         return PlaylistTrack(
             id=orm_track.id,
             title=orm_track.title,

@@ -343,16 +343,7 @@ def _to_user_events(*, session: Session) -> list[UserEvent]:
     for event in session.unconsumed_user_curation_events:
         if event.id in bound_event_ids:
             continue
-        user_events.append(
-            _to_user_event(
-                event=event,
-                history_index=(
-                    event.history_index
-                    if event.history_index is not None
-                    else history_index
-                ),
-            )
-        )
+        user_events.append(_to_user_event(event=event, history_index=history_index))
 
     return user_events
 

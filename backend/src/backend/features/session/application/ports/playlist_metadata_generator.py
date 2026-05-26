@@ -6,7 +6,7 @@ from dataclasses import dataclass
 class PlaylistMetadataTrack:
     title: str
     artist: str
-    year: int | None = None
+    year: int
 
 
 @dataclass(frozen=True, slots=True)

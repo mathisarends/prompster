@@ -212,8 +212,8 @@ def to_user_curation_event_response(
         track_id=event.track_id,
         track_title=event.track_title,
         track_artist=event.track_artist,
+        track_year=event.track_year,
         track_spotify_uri=event.track_spotify_uri,
         track_cover_url=event.track_cover_url,
-        history_index=event.history_index,
         occurred_at=event.occurred_at,
     )

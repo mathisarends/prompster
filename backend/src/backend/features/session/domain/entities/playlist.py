@@ -4,12 +4,16 @@ from uuid import UUID
 from backend.shared.ddd import Entity
 
 
+_MIN_TRACK_YEAR = 1900
+_MAX_TRACK_YEAR = 2100
+
+
 class PlaylistTrack(Entity):
     def __init__(
         self,
         title: str,
         artist: str,
-        year: int | None = None,
+        year: int,
         spotify_uri: str | None = None,
         cover_url: str | None = None,
         is_pinned: bool = False,
@@ -17,6 +21,11 @@ class PlaylistTrack(Entity):
         created_time: datetime | None = None,
     ) -> None:
         super().__init__(id=id, created_time=created_time)
+        if year < _MIN_TRACK_YEAR or year > _MAX_TRACK_YEAR:
+            raise ValueError(
+                f"year must be between {_MIN_TRACK_YEAR} and {_MAX_TRACK_YEAR}."
+            )
+
         self.title = title
         self.artist = artist
         self.year = year

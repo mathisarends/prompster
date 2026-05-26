@@ -142,7 +142,7 @@ class TestSessionEventMapper:
     def test_to_server_event_maps_playlist_set(self) -> None:
         playlist = Playlist(
             name="80er Party",
-            tracks=[PlaylistTrack(title="Take On Me", artist="a-ha")],
+            tracks=[PlaylistTrack(title="Take On Me", artist="a-ha", year=1985)],
         )
 
         event = to_server_event(SessionPlaylistSet(playlist=playlist))
@@ -155,7 +155,11 @@ class TestSessionEventMapper:
 
     def test_to_server_event_maps_playlist_track_added(self) -> None:
         playlist_id = uuid4()
-        track = PlaylistTrack(title="Billie Jean", artist="Michael Jackson")
+        track = PlaylistTrack(
+            title="Billie Jean",
+            artist="Michael Jackson",
+            year=1982,
+        )
 
         event = to_server_event(
             SessionPlaylistTrackAdded(playlist_id=playlist_id, track=track)
@@ -182,7 +186,7 @@ class TestSessionEventMapper:
     def test_to_server_event_maps_playlist_track_replaced(self) -> None:
         playlist_id = uuid4()
         track_id = uuid4()
-        track = PlaylistTrack(title="Africa", artist="Toto")
+        track = PlaylistTrack(title="Africa", artist="Toto", year=1982)
 
         event = to_server_event(
             SessionPlaylistTrackReplaced(

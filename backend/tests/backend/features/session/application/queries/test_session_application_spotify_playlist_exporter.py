@@ -156,6 +156,7 @@ class TestSessionSpotifyPlaylistExporter:
         session.add_track(
             title="Starlight",
             artist="Muse",
+            year=2006,
             spotify_uri="spotify:track:123",
         )
 
@@ -206,6 +207,7 @@ class TestSessionSpotifyPlaylistExporter:
         track = session.add_track(
             title="Starlight",
             artist="Muse",
+            year=2006,
             spotify_uri="spotify:track:123",
         )
         assert track.spotify_uri == "spotify:track:123"
@@ -254,6 +256,7 @@ class TestSessionSpotifyPlaylistExporter:
         session.add_track(
             title="Starlight",
             artist="Muse",
+            year=2006,
             spotify_uri="spotify:track:123",
         )
 

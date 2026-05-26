@@ -119,7 +119,7 @@ class PlaylistTrackResponse(Schema):
     id: UUID
     title: str
     artist: str
-    year: int | None = None
+    year: int
     spotify_uri: str | None = None
     cover_url: str | None = None
     is_pinned: bool
@@ -144,9 +144,9 @@ class UserCurationEventResponse(Schema):
     track_id: UUID
     track_title: str
     track_artist: str
+    track_year: int | None = Field(default=None, ge=1900, le=2100)
     track_spotify_uri: str | None = None
     track_cover_url: str | None = None
-    history_index: int | None = Field(default=None, ge=0)
     occurred_at: datetime
 
 
@@ -246,7 +246,7 @@ class FollowUpRequest(Schema):
 class AddPlaylistTrackRequest(Schema):
     title: str = Field(min_length=1, max_length=300)
     artist: str = Field(min_length=1, max_length=300)
-    year: int | None = Field(default=None, ge=1900, le=2100)
+    year: int = Field(ge=1900, le=2100)
     spotify_uri: str | None = None
     cover_url: str | None = None
     is_pinned: bool = True

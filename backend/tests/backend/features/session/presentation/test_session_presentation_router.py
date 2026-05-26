@@ -96,7 +96,12 @@ class TestRestoreUserCurationEventRoute:
             entries=[],
             owner_id=user_id,
         )
-        track = session.add_track(title="Starlight", artist="Muse", is_pinned=False)
+        track = session.add_track(
+            title="Starlight",
+            artist="Muse",
+            year=2006,
+            is_pinned=False,
+        )
         event = session.user_curation_events[0]
         service = _SessionServiceStub(session=session)
 

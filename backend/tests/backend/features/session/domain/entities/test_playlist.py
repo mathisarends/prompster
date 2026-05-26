@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
+import pytest
+
 from backend.features.session.domain import Playlist, PlaylistTrack
 
 
@@ -11,7 +13,7 @@ def assert_utc_datetime(value: datetime) -> None:
 
 class TestSessionDomainPlaylistEntities:
     def test_playlist_track_generates_id_and_utc_created_at_by_default(self) -> None:
-        track = PlaylistTrack(title="Starlight", artist="Muse")
+        track = PlaylistTrack(title="Starlight", artist="Muse", year=2006)
 
         assert isinstance(track.id, UUID)
         assert_utc_datetime(track.created_at)
@@ -37,7 +39,7 @@ class TestSessionDomainPlaylistEntities:
         assert track.cover_url == "https://example.com/starlight.jpg"
 
     def test_playlist_assigns_tracks_and_name(self) -> None:
-        track = PlaylistTrack(title="Teardrop", artist="Massive Attack")
+        track = PlaylistTrack(title="Teardrop", artist="Massive Attack", year=1998)
 
         playlist = Playlist(tracks=[track], name="Favorites")
 
@@ -52,3 +54,11 @@ class TestSessionDomainPlaylistEntities:
 
         assert playlist.id == playlist_id
         assert playlist.created_at == created_time
+
+    def test_playlist_track_rejects_year_below_supported_range(self) -> None:
+        with pytest.raises(ValueError, match="year must be between"):
+            PlaylistTrack(title="Teardrop", artist="Massive Attack", year=1899)
+
+    def test_playlist_track_rejects_year_above_supported_range(self) -> None:
+        with pytest.raises(ValueError, match="year must be between"):
+            PlaylistTrack(title="Teardrop", artist="Massive Attack", year=2101)

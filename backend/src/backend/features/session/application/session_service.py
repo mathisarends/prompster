@@ -71,7 +71,7 @@ class SessionService:
         user_id: UUID,
         title: str,
         artist: str,
-        year: int | None = None,
+        year: int,
         spotify_uri: str | None = None,
         cover_url: str | None = None,
         is_pinned: bool = False,

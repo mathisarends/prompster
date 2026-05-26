@@ -80,3 +80,7 @@ class UserCurationEventNotFoundError(Exception):
 
 class UserCurationEventAlreadyConsumedError(Exception):
     pass
+
+
+class UserCurationEventMissingTrackYearError(Exception):
+    pass

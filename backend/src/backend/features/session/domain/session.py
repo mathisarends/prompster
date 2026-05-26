@@ -12,6 +12,7 @@ from backend.features.session.domain.exceptions import (
     PlaylistTrackNotFoundError,
     SessionAccessDeniedError,
     UserCurationEventAlreadyConsumedError,
+    UserCurationEventMissingTrackYearError,
     UserCurationEventNotFoundError,
 )
 from backend.features.session.domain.entities import (
@@ -127,7 +128,7 @@ class Session(Aggregate):
         self,
         title: str,
         artist: str,
-        year: int | None = None,
+        year: int,
         spotify_uri: str | None = None,
         cover_url: str | None = None,
         is_pinned: bool = True,
@@ -371,10 +372,16 @@ class Session(Aggregate):
     def _restore_removed_track(self, event: UserCurationEvent) -> PlaylistTrack:
         if self._playlist is None:
             self._playlist = Playlist(tracks=[])
+        if event.track_year is None:
+            raise UserCurationEventMissingTrackYearError(
+                f"User curation event {event.id} cannot restore track "
+                f"{event.track_id} because track_year is missing."
+            )
         track = PlaylistTrack(
             id=event.track_id,
             title=event.track_title,
             artist=event.track_artist,
+            year=event.track_year,
             spotify_uri=event.track_spotify_uri,
             cover_url=event.track_cover_url,
             is_pinned=False,
@@ -390,9 +397,9 @@ class Session(Aggregate):
             track_id=track.id,
             track_title=track.title,
             track_artist=track.artist,
+            track_year=track.year,
             track_spotify_uri=track.spotify_uri,
             track_cover_url=track.cover_url,
-            history_index=self._current_history_index(),
         )
         self._user_curation_events.append(event)
         self._bind_user_curation_event_to_message(event)
@@ -414,24 +421,6 @@ class Session(Aggregate):
         for entry in self._entries:
             if isinstance(entry, UserMessage) and entry.created_at >= event.created_at:
                 return entry
-
-        if event.history_index is None:
-            return None
-
-        return self._find_target_user_message_by_history_index(event.history_index)
-
-    def _find_target_user_message_by_history_index(
-        self, event_history_index: int
-    ) -> UserMessage | None:
-        history_index = 0
-        for entry in self._entries:
-            if isinstance(entry, UserMessage):
-                if history_index >= event_history_index:
-                    return entry
-                history_index += 1
-                continue
-            if isinstance(entry, AssistantMessage) and entry.content.strip():
-                history_index += 1
         return None
 
     def _is_user_curation_event_bound(self, *, event_id: UUID) -> bool:
@@ -461,16 +450,6 @@ class Session(Aggregate):
             )
             if len(remaining_events) != len(entry.user_curation_events):
                 entry.user_curation_events = remaining_events
-
-    def _current_history_index(self) -> int:
-        history_index = 0
-        for entry in self._entries:
-            if isinstance(entry, UserMessage):
-                history_index += 1
-                continue
-            if isinstance(entry, AssistantMessage) and entry.content.strip():
-                history_index += 1
-        return history_index
 
     def pending_tool_call_sequence(self) -> ToolCallSequence | None:
         return self._find_pending_tool_call_sequence()
