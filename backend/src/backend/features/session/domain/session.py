@@ -79,6 +79,10 @@ class Session(Aggregate):
     def workspace_events(self) -> tuple[WorkspaceEvent, ...]:
         return tuple(self._workspace_events)
 
+    @property
+    def unconsumed_workspace_events(self) -> list[WorkspaceEvent]:
+        return [event for event in self._workspace_events if not event.consumed]
+
     @classmethod
     def create_with_initial_prompt(
         cls,
@@ -182,10 +186,6 @@ class Session(Aggregate):
         if was_pinned:
             self._record_event(WorkspaceEventType.TRACK_UNPINNED, track)
         return track
-
-    @property
-    def unconsumed_workspace_events(self) -> list[WorkspaceEvent]:
-        return [event for event in self._workspace_events if not event.consumed]
 
     def require_track(self, track_id: UUID) -> PlaylistTrack:
         return self._require_track(track_id)

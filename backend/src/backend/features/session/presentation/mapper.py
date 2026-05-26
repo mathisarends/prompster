@@ -17,6 +17,7 @@ from backend.features.session.domain import (
     ToolCallSequence,
     UserMessage,
     UserMessageAttachment,
+    WorkspaceEvent,
 )
 from backend.features.session.presentation.schemas import (
     AssistantMessageEntryResponse,
@@ -35,6 +36,7 @@ from backend.features.session.presentation.schemas import (
     ToolFunctionResponse,
     SessionMessageAttachmentResponse,
     UserMessageEntryResponse,
+    WorkspaceEventResponse,
 )
 
 
@@ -46,6 +48,10 @@ def to_session_response(session: Session) -> SessionResponse:
         created_at=session.created_at,
         entries=[to_entry_response(entry) for entry in session.entries],
         playlist=to_playlist_response(session.playlist),
+        unconsumed_workspace_events=[
+            to_workspace_event_response(event)
+            for event in session.unconsumed_workspace_events
+        ],
     )
 
 
@@ -190,4 +196,16 @@ def to_user_message_attachment_response(
         subtitle=attachment.subtitle,
         image_url=attachment.image_url,
         spotify_id=attachment.spotify_id,
+    )
+
+
+def to_workspace_event_response(event: WorkspaceEvent) -> WorkspaceEventResponse:
+    return WorkspaceEventResponse(
+        id=event.id,
+        event_type=event.event_type.value,
+        track_id=event.track_id,
+        track_title=event.track_title,
+        track_artist=event.track_artist,
+        track_spotify_uri=event.track_spotify_uri,
+        occurred_at=event.occurred_at,
     )

@@ -10,6 +10,7 @@ import type { FollowUpQuestionGroupEntryResponse } from "./followUpQuestionGroup
 import type { PlaylistResponse } from "./playlistResponse";
 import type { ToolCallSequenceEntryResponse } from "./toolCallSequenceEntryResponse";
 import type { UserMessageEntryResponse } from "./userMessageEntryResponse";
+import type { WorkspaceEventResponse } from "./workspaceEventResponse";
 
 export interface SessionResponse {
   id: string;
@@ -23,4 +24,5 @@ export interface SessionResponse {
     | FollowUpQuestionGroupEntryResponse
   )[];
   playlist?: PlaylistResponse | null;
+  unconsumedWorkspaceEvents?: WorkspaceEventResponse[];
 }

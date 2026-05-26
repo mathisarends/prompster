@@ -128,6 +128,23 @@ class PlaylistResponse(Schema):
     tracks: list[PlaylistTrackResponse]
 
 
+class WorkspaceEventTypeResponse(StrEnum):
+    TRACK_PINNED = "track_pinned"
+    TRACK_UNPINNED = "track_unpinned"
+    TRACK_ADDED = "track_added"
+    TRACK_REMOVED = "track_removed"
+
+
+class WorkspaceEventResponse(Schema):
+    id: UUID
+    event_type: WorkspaceEventTypeResponse
+    track_id: UUID
+    track_title: str
+    track_artist: str
+    track_spotify_uri: str | None = None
+    occurred_at: datetime
+
+
 SessionEntryResponse = Annotated[
     Union[
         UserMessageEntryResponse,
@@ -146,6 +163,9 @@ class SessionResponse(Schema):
     created_at: datetime
     entries: list[SessionEntryResponse]
     playlist: PlaylistResponse | None = None
+    unconsumed_workspace_events: list[WorkspaceEventResponse] = Field(
+        default_factory=list
+    )
 
 
 class SessionSummaryResponse(Schema):

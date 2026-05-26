@@ -71,3 +71,5 @@ export * from "./userMeResponse";
 export * from "./userMessageEntryResponse";
 export * from "./validationError";
 export * from "./validationErrorCtx";
+export * from "./workspaceEventResponse";
+export * from "./workspaceEventTypeResponse";
