@@ -301,6 +301,27 @@ async def remove_session_playlist_track(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@router.post(
+    "/{session_id}/curation-events/{event_id}/restore",
+    response_model=SessionResponse,
+    status_code=status.HTTP_200_OK,
+    operation_id="restore_user_curation_event",
+    responses=_auth_errors | _not_found | _conflict,
+)
+async def restore_session_user_curation_event(
+    session_id: UUID,
+    event_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    service: FromDishka[SessionService],
+) -> SessionResponse:
+    session = await service.restore_user_curation_event(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+        event_id=event_id,
+    )
+    return to_session_response(session)
+
+
 @router.get(
     "/{session_id}/playlist/pdf",
     status_code=status.HTTP_200_OK,

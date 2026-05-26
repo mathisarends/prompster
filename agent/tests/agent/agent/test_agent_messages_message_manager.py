@@ -14,11 +14,12 @@ class TestMessageManager:
 
         messages = manager.all()
 
-        assert len(messages) == 1
+        assert len(messages) == 2
         assert isinstance(messages[0], SystemMessage)
-        assert messages[0].content.startswith("You are a helper")
-        assert "<created_playlist>" in messages[0].content
-        assert "<history>" in messages[0].content
+        assert messages[0].content == "You are a helper"
+        assert isinstance(messages[1], UserMessage)
+        assert "<created_playlist>" in messages[1].content
+        assert "<exists>false</exists>" in messages[1].content
 
     def test_add_methods_append_expected_message_types(self) -> None:
         manager = MessageManager(system_prompt="Prompt")
@@ -33,15 +34,14 @@ class TestMessageManager:
 
         messages = manager.all()
 
-        assert len(messages) == 4
-        assert isinstance(messages[1], UserMessage)
-        assert isinstance(messages[2], AssistantMessage)
-        assert isinstance(messages[3], ToolResultMessage)
-        assert messages[2].tool_calls[0].id == "call-1"
-        assert messages[3].tool_call_id == "call-1"
-        assert '<message role="user">' in messages[0].content
-        assert "Find tracks" in messages[0].content
-        assert "Searching" in messages[0].content
+        assert len(messages) == 5
+        assert isinstance(messages[2], UserMessage)
+        assert isinstance(messages[3], AssistantMessage)
+        assert isinstance(messages[4], ToolResultMessage)
+        assert messages[3].tool_calls[0].id == "call-1"
+        assert messages[4].tool_call_id == "call-1"
+        assert "Find tracks" in messages[2].content
+        assert "Searching" in messages[3].content
 
     def test_reset_keeps_only_system_message(self) -> None:
         manager = MessageManager(system_prompt="Prompt")
@@ -51,9 +51,10 @@ class TestMessageManager:
         manager.reset()
 
         messages = manager.all()
-        assert len(messages) == 1
+        assert len(messages) == 2
         assert isinstance(messages[0], SystemMessage)
-        assert messages[0].content.startswith("Prompt")
+        assert messages[0].content == "Prompt"
+        assert isinstance(messages[1], UserMessage)
 
     def test_renders_created_playlist_context(self) -> None:
         playlist = PlaylistDraft(
@@ -72,7 +73,7 @@ class TestMessageManager:
             playlist_draft_provider=lambda: playlist,
         )
 
-        content = manager.all()[0].content
+        content = manager.all()[1].content
 
         assert "<created_playlist>" in content
         assert "<exists>true</exists>" in content
@@ -83,7 +84,7 @@ class TestMessageManager:
             "a-ha - Take On Me (1985)</track>"
         ) in content
 
-    def test_renders_user_events_context(self) -> None:
+    def test_injects_user_events_as_synthetic_user_messages(self) -> None:
         manager = MessageManager(
             system_prompt="Prompt",
             user_events_provider=lambda: [
@@ -96,17 +97,16 @@ class TestMessageManager:
             ],
         )
 
-        content = manager.all()[0].content
+        messages = manager.all()
 
-        assert "<user_events>" in content
-        assert "<exists>true</exists>" in content
-        assert "<event_count>1</event_count>" in content
+        assert len(messages) == 3
+        assert isinstance(messages[2], UserMessage)
         assert (
-            '<event index="1" type="track_removed" at="2026-01-01T00:00:00+00:00">'
+            '<event type="track_removed" at="2026-01-01T00:00:00+00:00">'
             "Rihanna - Umbrella</event>"
-        ) in content
+        ) == messages[2].content
 
-    def test_renders_user_events_inside_history_timeline(self) -> None:
+    def test_injects_user_events_inside_history_timeline(self) -> None:
         manager = MessageManager(
             system_prompt="Prompt",
             user_events_provider=lambda: [
@@ -122,20 +122,15 @@ class TestMessageManager:
         manager.add_user("Bitte mach die Playlist kürzer")
         manager.add_assistant("Klar, ich nehme ein paar Songs raus")
 
-        content = manager.all()[0].content
+        messages = manager.all()
 
-        assert "<history>" in content
-        assert '<message role="user">' in content
-        assert '<message role="assistant">' in content
-        history_fragment = (
-            "<history>\n"
-            '<message role="user">\n'
-            "Bitte mach die Playlist kürzer\n"
-            "</message>\n"
-            '<event type="track_removed" at="2026-01-01T00:00:00+00:00">Rihanna - Umbrella</event>\n'
-            '<message role="assistant">\n'
-            "Klar, ich nehme ein paar Songs raus\n"
-            "</message>\n"
-            "</history>"
+        assert len(messages) == 5
+        assert isinstance(messages[2], UserMessage)
+        assert messages[2].content == "Bitte mach die Playlist kürzer"
+        assert isinstance(messages[3], UserMessage)
+        assert (
+            messages[3].content
+            == '<event type="track_removed" at="2026-01-01T00:00:00+00:00">Rihanna - Umbrella</event>'
         )
-        assert history_fragment in content
+        assert isinstance(messages[4], AssistantMessage)
+        assert messages[4].content == "Klar, ich nehme ein paar Songs raus"

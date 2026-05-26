@@ -18,16 +18,16 @@ _SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "system_prompt.md").read_t
     encoding="utf-8"
 )
 
-type PlaylistDraftProvider = Callable[[], PlaylistDraft | None]
-type UserEventsProvider = Callable[[], UserEvents]
+type _PlaylistDraftProvider = Callable[[], PlaylistDraft | None]
+type _UserEventsProvider = Callable[[], UserEvents]
 
 
 class MessageManager:
     def __init__(
         self,
         system_prompt: str | None = None,
-        playlist_draft_provider: PlaylistDraftProvider | None = None,
-        user_events_provider: UserEventsProvider | None = None,
+        playlist_draft_provider: _PlaylistDraftProvider | None = None,
+        user_events_provider: _UserEventsProvider | None = None,
         history: list[Message] | None = None,
     ) -> None:
         self._system_prompt = system_prompt or _SYSTEM_PROMPT
@@ -39,7 +39,17 @@ class MessageManager:
             self._messages.extend(history)
 
     def all(self) -> list[Message]:
-        return [SystemMessage(content=self._compose_system_prompt()), *self._messages]
+        messages: list[Message] = [SystemMessage(content=self._system_prompt)]
+
+        playlist_context = self._render_created_playlist_context()
+        if playlist_context:
+            messages.append(UserMessage(content=playlist_context))
+            messages.append(
+                AssistantMessage(content="Understood.")
+            )  # antrophic api needs user-assistant turns
+
+        messages.extend(self._messages_with_injected_user_events())
+        return messages
 
     def add_user(self, content: str) -> None:
         self._messages.append(UserMessage(content=content))
@@ -60,16 +70,7 @@ class MessageManager:
         self._messages = []
 
     def _compose_system_prompt(self) -> str:
-        return "\n\n".join(
-            [
-                self._system_prompt,
-                "<context>",
-                self._render_created_playlist_context(),
-                self._render_user_events_context(),
-                self._render_history_context(),
-                "</context>",
-            ]
-        )
+        return self._system_prompt
 
     def _render_created_playlist_context(self) -> str:
         playlist_draft = (
@@ -105,60 +106,6 @@ class MessageManager:
         lines.append("</created_playlist>")
         return "\n".join(lines)
 
-    def _render_user_events_context(self) -> str:
-        user_events = self._get_user_events()
-
-        lines = ["<user_events>"]
-        if not user_events:
-            lines.append("<exists>false</exists>")
-            lines.append("</user_events>")
-            return "\n".join(lines)
-
-        lines.extend(
-            [
-                "<exists>true</exists>",
-                f"<event_count>{len(user_events)}</event_count>",
-            ]
-        )
-
-        for index, event in enumerate(user_events, start=1):
-            lines.append(self._render_user_event_entry(event=event, index=index))
-
-        lines.append("</user_events>")
-        return "\n".join(lines)
-
-    def _render_history_context(self) -> str:
-        entries: list[str] = []
-        history_messages = self._get_history_messages()
-
-        events_by_history_index: dict[int, list[UserEvent]] = {}
-        for event in self._get_user_events():
-            history_index = (
-                event.history_index
-                if event.history_index is not None
-                else len(history_messages)
-            )
-            history_index = max(0, min(history_index, len(history_messages)))
-            events_by_history_index.setdefault(history_index, []).append(event)
-
-        for index, history_message in enumerate(history_messages):
-            for event in events_by_history_index.get(index, []):
-                entries.append(self._render_history_event_entry(event=event))
-            entries.append(
-                self._render_history_entry(
-                    role=history_message["role"],
-                    content=history_message["content"],
-                )
-            )
-
-        for event in events_by_history_index.get(len(history_messages), []):
-            entries.append(self._render_history_event_entry(event=event))
-
-        if not entries:
-            return "<history>\n<empty>true</empty>\n</history>"
-
-        return "<history>\n" + "\n".join(entries) + "\n</history>"
-
     def _get_user_events(self) -> UserEvents:
         return (
             self._user_events_provider()
@@ -166,34 +113,55 @@ class MessageManager:
             else []
         )
 
-    def _get_history_messages(self) -> list[dict[str, str]]:
-        history_messages: list[dict[str, str]] = []
-        for message in self._messages:
-            if isinstance(message, UserMessage):
-                history_messages.append({"role": "user", "content": message.content})
-            elif isinstance(message, AssistantMessage) and message.content.strip():
-                history_messages.append(
-                    {"role": "assistant", "content": message.content}
-                )
-        return history_messages
-
-    def _render_user_event_entry(self, *, event: UserEvent, index: int) -> str:
-        return (
-            f'<event index="{index}" type="{escape(event.type, quote=True)}" '
-            f'at="{escape(event.occurred_at.isoformat(), quote=True)}">'
-            f"{escape(event.label)}</event>"
+    def _messages_with_injected_user_events(self) -> list[Message]:
+        history_count = self._count_history_messages()
+        events_by_history_index = self._group_user_events_by_history_index(
+            history_count=history_count
         )
 
-    def _render_history_event_entry(self, *, event: UserEvent) -> str:
+        messages: list[Message] = []
+        history_index = 0
+        for message in self._messages:
+            for event in events_by_history_index.get(history_index, []):
+                messages.append(
+                    UserMessage(content=self._render_user_event_entry(event))
+                )
+
+            messages.append(message)
+
+            if self._is_history_message(message):
+                history_index += 1
+
+        for event in events_by_history_index.get(history_index, []):
+            messages.append(UserMessage(content=self._render_user_event_entry(event)))
+
+        return messages
+
+    def _count_history_messages(self) -> int:
+        return sum(1 for message in self._messages if self._is_history_message(message))
+
+    def _group_user_events_by_history_index(
+        self, *, history_count: int
+    ) -> dict[int, list[UserEvent]]:
+        events_by_history_index: dict[int, list[UserEvent]] = {}
+        for event in self._get_user_events():
+            history_index = (
+                event.history_index
+                if event.history_index is not None
+                else history_count
+            )
+            history_index = max(0, min(history_index, history_count))
+            events_by_history_index.setdefault(history_index, []).append(event)
+        return events_by_history_index
+
+    def _is_history_message(self, message: Message) -> bool:
+        if isinstance(message, UserMessage):
+            return True
+        return isinstance(message, AssistantMessage) and bool(message.content.strip())
+
+    def _render_user_event_entry(self, event: UserEvent) -> str:
         return (
             f'<event type="{escape(event.type, quote=True)}" '
             f'at="{escape(event.occurred_at.isoformat(), quote=True)}">'
             f"{escape(event.label)}</event>"
         )
-
-    def _render_history_entry(self, *, role: str, content: str) -> str:
-        escaped_lines = escape(content).splitlines() or [""]
-        lines = [f'<message role="{role}">']
-        lines.extend(escaped_lines)
-        lines.append("</message>")
-        return "\n".join(lines)

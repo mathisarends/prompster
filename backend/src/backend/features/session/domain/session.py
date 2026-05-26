@@ -11,6 +11,8 @@ from backend.features.session.domain.exceptions import (
     PlaylistTrackPinnedError,
     PlaylistTrackNotFoundError,
     SessionAccessDeniedError,
+    UserCurationEventAlreadyConsumedError,
+    UserCurationEventNotFoundError,
 )
 from backend.features.session.domain.entities import (
     AssistantMessage,
@@ -205,6 +207,11 @@ class Session(Aggregate):
     def require_track(self, track_id: UUID) -> PlaylistTrack:
         return self._require_track(track_id)
 
+    def restore_user_curation_event(self, event_id: UUID) -> None:
+        event = self._require_unconsumed_user_curation_event(event_id)
+        self._apply_user_curation_event_reversal(event)
+        self._user_curation_events.remove(event)
+
     def add_user_message(
         self,
         content: str,
@@ -325,6 +332,50 @@ class Session(Aggregate):
             and left.cover_url == right.cover_url
             and left.is_pinned == right.is_pinned
         )
+
+    def _require_unconsumed_user_curation_event(
+        self, event_id: UUID
+    ) -> UserCurationEvent:
+        for event in self._user_curation_events:
+            if event.id != event_id:
+                continue
+            if event.consumed:
+                raise UserCurationEventAlreadyConsumedError(
+                    f"User curation event {event_id} has already been consumed "
+                    "and cannot be restored."
+                )
+            return event
+        raise UserCurationEventNotFoundError(
+            f"User curation event {event_id} not found in session {self.id}."
+        )
+
+    def _apply_user_curation_event_reversal(self, event: UserCurationEvent) -> None:
+        if event.event_type == UserCurationEventType.TRACK_PINNED:
+            self.unpin_track(event.track_id, record_user_curation_event=False)
+            return
+        if event.event_type == UserCurationEventType.TRACK_UNPINNED:
+            self.pin_track(event.track_id, record_user_curation_event=False)
+            return
+        if event.event_type == UserCurationEventType.TRACK_ADDED:
+            self.remove_track(event.track_id, record_user_curation_event=False)
+            return
+        if event.event_type == UserCurationEventType.TRACK_REMOVED:
+            self._restore_removed_track(event)
+            return
+
+    def _restore_removed_track(self, event: UserCurationEvent) -> PlaylistTrack:
+        if self._playlist is None:
+            self._playlist = Playlist(tracks=[])
+        track = PlaylistTrack(
+            id=event.track_id,
+            title=event.track_title,
+            artist=event.track_artist,
+            spotify_uri=event.track_spotify_uri,
+            cover_url=event.track_cover_url,
+            is_pinned=False,
+        )
+        self._playlist.tracks.append(track)
+        return track
 
     def _record_user_curation_event(
         self, event_type: UserCurationEventType, track: PlaylistTrack

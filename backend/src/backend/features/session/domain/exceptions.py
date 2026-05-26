@@ -72,3 +72,11 @@ class NoPendingFollowUpGroupError(Exception):
 
 class PendingFollowUpQuestionsError(Exception):
     pass
+
+
+class UserCurationEventNotFoundError(Exception):
+    pass
+
+
+class UserCurationEventAlreadyConsumedError(Exception):
+    pass

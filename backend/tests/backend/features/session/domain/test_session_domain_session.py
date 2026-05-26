@@ -12,6 +12,8 @@ from backend.features.session.domain.exceptions import (
     PlaylistTrackPinnedError,
     PlaylistTrackNotFoundError,
     SessionAccessDeniedError,
+    UserCurationEventAlreadyConsumedError,
+    UserCurationEventNotFoundError,
 )
 from backend.features.session.domain import (
     AssistantMessage,
@@ -393,6 +395,99 @@ class TestSessionDomainSession:
 
         assert len(session.user_curation_events) == 1
         assert session.user_curation_events[0].history_index == 2
+
+    def test_restore_user_curation_event_for_track_added_removes_track_and_event(
+        self, session: Session
+    ) -> None:
+        track = session.add_track(title="Starlight", artist="Muse", is_pinned=False)
+        event = session.user_curation_events[0]
+
+        session.restore_user_curation_event(event.id)
+
+        assert session.user_curation_events == ()
+        assert session.playlist is not None
+        assert all(t.id != track.id for t in session.playlist.tracks)
+
+    def test_restore_user_curation_event_for_track_removed_readds_track(
+        self, session: Session
+    ) -> None:
+        track = session.add_track(
+            title="Starlight",
+            artist="Muse",
+            spotify_uri="spotify:track:abc",
+            cover_url="https://example.com/cover.jpg",
+            is_pinned=False,
+        )
+        session.remove_track(track.id)
+        remove_event = session.user_curation_events[-1]
+
+        session.restore_user_curation_event(remove_event.id)
+
+        assert session.playlist is not None
+        restored = session.playlist.tracks[-1]
+        assert restored.id == track.id
+        assert restored.title == "Starlight"
+        assert restored.artist == "Muse"
+        assert restored.spotify_uri == "spotify:track:abc"
+        assert restored.cover_url == "https://example.com/cover.jpg"
+        assert restored.is_pinned is False
+        event_types = [event.event_type for event in session.user_curation_events]
+        assert event_types == [UserCurationEventType.TRACK_ADDED]
+
+    def test_restore_user_curation_event_for_track_pinned_unpins_track(
+        self, session: Session
+    ) -> None:
+        track = session.add_track(title="Starlight", artist="Muse", is_pinned=False)
+        session.pin_track(track.id)
+        pin_event = session.user_curation_events[-1]
+
+        session.restore_user_curation_event(pin_event.id)
+
+        assert track.is_pinned is False
+        event_types = [event.event_type for event in session.user_curation_events]
+        assert event_types == [UserCurationEventType.TRACK_ADDED]
+
+    def test_restore_user_curation_event_for_track_unpinned_pins_track(
+        self, session: Session
+    ) -> None:
+        track = session.add_track(title="Starlight", artist="Muse", is_pinned=True)
+        session.unpin_track(track.id)
+        unpin_event = session.user_curation_events[-1]
+
+        session.restore_user_curation_event(unpin_event.id)
+
+        assert track.is_pinned is True
+        event_types = [event.event_type for event in session.user_curation_events]
+        assert event_types == [UserCurationEventType.TRACK_ADDED]
+
+    def test_restore_user_curation_event_raises_when_event_missing(
+        self, session: Session
+    ) -> None:
+        with pytest.raises(UserCurationEventNotFoundError, match="not found"):
+            session.restore_user_curation_event(uuid4())
+
+    def test_restore_user_curation_event_raises_when_event_already_consumed(
+        self, session: Session
+    ) -> None:
+        session.add_track(title="Starlight", artist="Muse", is_pinned=False)
+        event = session.user_curation_events[0]
+        event.mark_consumed()
+
+        with pytest.raises(
+            UserCurationEventAlreadyConsumedError, match="already been consumed"
+        ):
+            session.restore_user_curation_event(event.id)
+
+    def test_restore_user_curation_event_for_pin_raises_when_track_was_removed(
+        self, session: Session
+    ) -> None:
+        track = session.add_track(title="Starlight", artist="Muse", is_pinned=False)
+        session.pin_track(track.id)
+        pin_event = session.user_curation_events[-1]
+        session.remove_track(track.id)
+
+        with pytest.raises(PlaylistTrackNotFoundError, match="not found"):
+            session.restore_user_curation_event(pin_event.id)
 
     def test_replace_track_rejects_pinned_track(self, session: Session) -> None:
         track = session.add_track(

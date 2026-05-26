@@ -18,6 +18,8 @@ from .exceptions import (
     SessionNotFoundError,
     ToolCallAlreadyResolvedError,
     ToolCallNotFoundError,
+    UserCurationEventAlreadyConsumedError,
+    UserCurationEventNotFoundError,
 )
 from .repository import SessionRepository
 from .session import Session
@@ -89,6 +91,8 @@ __all__ = [
     "UserMessageAttachment",
     "UserMessageAttachmentKind",
     "UserCurationEvent",
+    "UserCurationEventAlreadyConsumedError",
+    "UserCurationEventNotFoundError",
     "UserCurationEventType",
     "is_pending",
     "is_resolved",

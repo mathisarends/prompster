@@ -123,6 +123,17 @@ class SessionService:
         session.remove_track(track_id=track_id)
         await self._session_repository.save(session=session)
 
+    async def restore_user_curation_event(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        event_id: UUID,
+    ) -> Session:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        session.restore_user_curation_event(event_id=event_id)
+        return await self._session_repository.save(session=session)
+
     async def list(
         self,
         *,
