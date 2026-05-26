@@ -41,12 +41,13 @@ class MessageManager:
     def all(self) -> list[Message]:
         messages: list[Message] = [SystemMessage(content=self._system_prompt)]
 
-        playlist_context = self._render_created_playlist_context()
-        if playlist_context:
+        playlist_context = self._render_playlist_context()
+        if playlist_context is not None:
+            # Context Injection Pattern: UserMessage + AssistantMessage("Understood.")
+            # Prevents consecutive UserMessages and ensures the model treats the
+            # state as confirmed context rather than an open question.
             messages.append(UserMessage(content=playlist_context))
-            messages.append(
-                AssistantMessage(content="Understood.")
-            )  # antrophic api needs user-assistant turns
+            messages.append(AssistantMessage(content="Understood."))
 
         messages.extend(self._messages_with_injected_user_events())
         return messages
@@ -69,30 +70,23 @@ class MessageManager:
     def reset(self) -> None:
         self._messages = []
 
-    def _compose_system_prompt(self) -> str:
-        return self._system_prompt
-
-    def _render_created_playlist_context(self) -> str:
+    def _render_playlist_context(self) -> str | None:
+        """Gibt None zurück wenn kein Playlist-Draft existiert — dann wird
+        kein Context-Turn in die Message-History injiziert."""
         playlist_draft = (
             self._playlist_draft_provider()
             if self._playlist_draft_provider is not None
             else None
         )
-
-        lines = ["<created_playlist>"]
         if playlist_draft is None:
-            lines.append("<exists>false</exists>")
-            lines.append("</created_playlist>")
-            return "\n".join(lines)
+            return None
 
-        lines.extend(
-            [
-                "<exists>true</exists>",
-                f"<id>{playlist_draft.id}</id>",
-                f"<name>{escape(playlist_draft.name)}</name>",
-                f"<track_count>{len(playlist_draft.tracks)}</track_count>",
-            ]
-        )
+        lines = [
+            "<created_playlist>",
+            f"<id>{playlist_draft.id}</id>",
+            f"<name>{escape(playlist_draft.name)}</name>",
+            f"<track_count>{len(playlist_draft.tracks)}</track_count>",
+        ]
         for index, track in enumerate(playlist_draft.tracks, start=1):
             track_text = (
                 f"{escape(track.artist)} - {escape(track.title)}"
@@ -100,9 +94,9 @@ class MessageManager:
                 else f"{escape(track.artist)} - {escape(track.title)} ({track.year})"
             )
             lines.append(
-                f'<track index="{index}" id="{track.id}" pinned="{str(track.is_pinned).lower()}">{track_text}</track>'
+                f'<track index="{index}" id="{track.id}" pinned="{str(track.is_pinned).lower()}">'
+                f"{track_text}</track>"
             )
-
         lines.append("</created_playlist>")
         return "\n".join(lines)
 
@@ -121,17 +115,33 @@ class MessageManager:
 
         messages: list[Message] = []
         history_index = 0
-        for message in self._messages:
-            for event in events_by_history_index.get(history_index, []):
-                messages.append(
-                    UserMessage(content=self._render_user_event_entry(event))
-                )
 
-            messages.append(message)
+        for message in self._messages:
+            pending_events = events_by_history_index.get(history_index, [])
+
+            if pending_events and isinstance(message, UserMessage):
+                # Append events to the next real UserMessage —
+                # prevents consecutive UserMessages from separate event messages.
+                event_block = "\n".join(
+                    self._render_user_event_entry(e) for e in pending_events
+                )
+                messages.append(
+                    UserMessage(content=f"{event_block}\n\n{message.content}")
+                )
+            else:
+                if pending_events:
+                    # Should not happen (events always land before a UserMessage),
+                    # but as a fallback: emit events as a separate UserMessage before the turn.
+                    event_block = "\n".join(
+                        self._render_user_event_entry(e) for e in pending_events
+                    )
+                    messages.append(UserMessage(content=event_block))
+                messages.append(message)
 
             if self._is_history_message(message):
                 history_index += 1
 
+        # Trailing events ohne nachfolgende Message (am Ende der History)
         for event in events_by_history_index.get(history_index, []):
             messages.append(UserMessage(content=self._render_user_event_entry(event)))
 

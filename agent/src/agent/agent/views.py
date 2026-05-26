@@ -1,10 +1,18 @@
 from datetime import datetime
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
+class UserCurationEventType(StrEnum):
+    TRACK_PINNED = "track_pinned"
+    TRACK_UNPINNED = "track_unpinned"
+    TRACK_ADDED = "track_added"
+    TRACK_REMOVED = "track_removed"
+
+
 class UserEvent(BaseModel):
-    type: str
+    type: UserCurationEventType
     occurred_at: datetime
     track_title: str | None = None
     track_artist: str | None = None

@@ -4,7 +4,7 @@ from llmify import AssistantMessage, SystemMessage, ToolResultMessage, UserMessa
 from llmify.messages import ToolCall
 
 from agent.agent.messages import MessageManager
-from agent.agent.views import UserEvent
+from agent.agent.views import UserCurationEventType, UserEvent
 from agent.playlist import PlaylistDraft, PlaylistDraftTrack
 
 
@@ -14,12 +14,9 @@ class TestMessageManager:
 
         messages = manager.all()
 
-        assert len(messages) == 2
+        assert len(messages) == 1
         assert isinstance(messages[0], SystemMessage)
         assert messages[0].content == "You are a helper"
-        assert isinstance(messages[1], UserMessage)
-        assert "<created_playlist>" in messages[1].content
-        assert "<exists>false</exists>" in messages[1].content
 
     def test_add_methods_append_expected_message_types(self) -> None:
         manager = MessageManager(system_prompt="Prompt")
@@ -34,14 +31,14 @@ class TestMessageManager:
 
         messages = manager.all()
 
-        assert len(messages) == 5
-        assert isinstance(messages[2], UserMessage)
-        assert isinstance(messages[3], AssistantMessage)
-        assert isinstance(messages[4], ToolResultMessage)
-        assert messages[3].tool_calls[0].id == "call-1"
-        assert messages[4].tool_call_id == "call-1"
-        assert "Find tracks" in messages[2].content
-        assert "Searching" in messages[3].content
+        assert len(messages) == 4
+        assert isinstance(messages[1], UserMessage)
+        assert isinstance(messages[2], AssistantMessage)
+        assert isinstance(messages[3], ToolResultMessage)
+        assert messages[2].tool_calls[0].id == "call-1"
+        assert messages[3].tool_call_id == "call-1"
+        assert "Find tracks" in messages[1].content
+        assert "Searching" in messages[2].content
 
     def test_reset_keeps_only_system_message(self) -> None:
         manager = MessageManager(system_prompt="Prompt")
@@ -51,10 +48,9 @@ class TestMessageManager:
         manager.reset()
 
         messages = manager.all()
-        assert len(messages) == 2
+        assert len(messages) == 1
         assert isinstance(messages[0], SystemMessage)
         assert messages[0].content == "Prompt"
-        assert isinstance(messages[1], UserMessage)
 
     def test_renders_created_playlist_context(self) -> None:
         playlist = PlaylistDraft(
@@ -73,10 +69,15 @@ class TestMessageManager:
             playlist_draft_provider=lambda: playlist,
         )
 
-        content = manager.all()[1].content
+        messages = manager.all()
 
+        assert len(messages) == 3
+        assert isinstance(messages[1], UserMessage)
+        assert isinstance(messages[2], AssistantMessage)
+        assert messages[2].content == "Understood."
+
+        content = messages[1].content
         assert "<created_playlist>" in content
-        assert "<exists>true</exists>" in content
         assert "<name>80er Party</name>" in content
         assert "<track_count>1</track_count>" in content
         assert (
@@ -89,7 +90,7 @@ class TestMessageManager:
             system_prompt="Prompt",
             user_events_provider=lambda: [
                 UserEvent(
-                    type="track_removed",
+                    type=UserCurationEventType.TRACK_REMOVED,
                     track_title="Umbrella",
                     track_artist="Rihanna",
                     occurred_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
@@ -99,19 +100,19 @@ class TestMessageManager:
 
         messages = manager.all()
 
-        assert len(messages) == 3
-        assert isinstance(messages[2], UserMessage)
+        assert len(messages) == 2
+        assert isinstance(messages[1], UserMessage)
         assert (
             '<event type="track_removed" at="2026-01-01T00:00:00+00:00">'
             "Rihanna - Umbrella</event>"
-        ) == messages[2].content
+        ) == messages[1].content
 
     def test_injects_user_events_inside_history_timeline(self) -> None:
         manager = MessageManager(
             system_prompt="Prompt",
             user_events_provider=lambda: [
                 UserEvent(
-                    type="track_removed",
+                    type=UserCurationEventType.TRACK_REMOVED,
                     track_title="Umbrella",
                     track_artist="Rihanna",
                     occurred_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
@@ -124,13 +125,13 @@ class TestMessageManager:
 
         messages = manager.all()
 
-        assert len(messages) == 5
+        assert len(messages) == 4
+        assert isinstance(messages[1], UserMessage)
+        assert messages[1].content == "Bitte mach die Playlist kürzer"
         assert isinstance(messages[2], UserMessage)
-        assert messages[2].content == "Bitte mach die Playlist kürzer"
-        assert isinstance(messages[3], UserMessage)
         assert (
-            messages[3].content
+            messages[2].content
             == '<event type="track_removed" at="2026-01-01T00:00:00+00:00">Rihanna - Umbrella</event>'
         )
-        assert isinstance(messages[4], AssistantMessage)
-        assert messages[4].content == "Klar, ich nehme ein paar Songs raus"
+        assert isinstance(messages[3], AssistantMessage)
+        assert messages[3].content == "Klar, ich nehme ein paar Songs raus"

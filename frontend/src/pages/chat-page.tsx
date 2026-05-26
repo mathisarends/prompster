@@ -192,6 +192,7 @@ export const ChatPage = () => {
       <div className="shrink-0 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-6 sm:px-8 sm:pb-3">
         <div className="mx-auto w-full max-w-4xl">
           <UserCurationEventContext
+            sessionId={sessionId}
             events={session?.unconsumedUserCurationEvents ?? []}
           />
           <ChatInputBox

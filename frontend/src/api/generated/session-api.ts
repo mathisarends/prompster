@@ -2530,6 +2530,200 @@ export function useRemovePlaylistTrack<
 }
 
 /**
+ * @summary Restore Session User Curation Event
+ */
+export const restoreUserCurationEvent = (
+  sessionId: string,
+  eventId: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<SessionResponse>(
+    {
+      url: `/api/v1/sessions/${sessionId}/curation-events/${eventId}/restore`,
+      method: "POST",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getRestoreUserCurationEventQueryKey = (
+  sessionId: string,
+  eventId: string,
+) => {
+  return [
+    "POST",
+    `/api/v1/sessions/${sessionId}/curation-events/${eventId}/restore`,
+  ] as const;
+};
+
+export const getRestoreUserCurationEventQueryOptions = <
+  TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  eventId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getRestoreUserCurationEventQueryKey(sessionId, eventId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof restoreUserCurationEvent>>
+  > = ({ signal }) =>
+    restoreUserCurationEvent(sessionId, eventId, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled:
+      sessionId !== null &&
+      sessionId !== undefined &&
+      eventId !== null &&
+      eventId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type RestoreUserCurationEventQueryResult = NonNullable<
+  Awaited<ReturnType<typeof restoreUserCurationEvent>>
+>;
+export type RestoreUserCurationEventQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useRestoreUserCurationEvent<
+  TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  eventId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+          TError,
+          Awaited<ReturnType<typeof restoreUserCurationEvent>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useRestoreUserCurationEvent<
+  TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  eventId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+          TError,
+          Awaited<ReturnType<typeof restoreUserCurationEvent>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useRestoreUserCurationEvent<
+  TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  eventId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Restore Session User Curation Event
+ */
+
+export function useRestoreUserCurationEvent<
+  TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  eventId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof restoreUserCurationEvent>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getRestoreUserCurationEventQueryOptions(
+    sessionId,
+    eventId,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Export Session Playlist
  */
 export const exportSessionPlaylist = (
