@@ -5,7 +5,7 @@ import type {
 import {
   FollowUpQuestionFlow,
   type FollowUpQuestionOption,
-} from "@/components/chat/follow-up-question-flow";
+} from "./follow-up-question-flow";
 import { cn } from "@/lib/utils";
 
 type FollowUpQuestionGroupProps = {
@@ -55,7 +55,7 @@ export const FollowUpQuestionGroup = ({
   if (group.questions.length === 0) return null;
 
   return (
-    <div className={cn("flex max-w-[82%] flex-col gap-2 px-1 py-2", className)}>
+    <div className={cn("flex w-full flex-col gap-2 px-1 py-2", className)}>
       {resolvedQuestions.length > 0 ? (
         <section className="space-y-2" aria-label="Beantwortete Rueckfragen">
           {resolvedQuestions.map((question) => (

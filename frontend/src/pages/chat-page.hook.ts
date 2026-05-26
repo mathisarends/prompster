@@ -13,7 +13,7 @@ import {
   useGetSession,
 } from "@/api/generated/session-api";
 import { streamFollowUp, streamSendMessage } from "@/api/session-stream";
-import type { FollowUpQuestionOption } from "@/components/chat/follow-up-question-flow";
+import type { FollowUpQuestionOption } from "@/components/chat/follow-up-questions";
 
 import {
   chatReducer,

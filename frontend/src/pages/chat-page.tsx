@@ -12,7 +12,7 @@ import { ChatInputBox } from "@/components/chat/chat-input-box";
 import { ChatMessageSkeleton } from "@/components/chat/chat-message-skeleton";
 import { ChatPageHeader } from "@/components/chat/chat-page-header";
 import { DeckWorkspaceView } from "@/components/deck/deck-workspace-view";
-import { FollowUpQuestionGroup } from "@/components/chat/follow-up-question-group";
+import { FollowUpQuestionGroup } from "@/components/chat/follow-up-questions";
 import { ToolCallAccordion } from "@/components/chat/tool-call-sequence";
 import {
   ResizableHandle,
@@ -27,6 +27,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
 
 import {
+  getPendingFollowUpQuestion,
   getScrollKey,
   toToolCallItems,
   type ChatEntry,
@@ -88,6 +89,7 @@ export const ChatPage = () => {
   const scrollDependency = entries.map(getScrollKey).join("|");
   const messagesEndRef =
     useAutoScrollToBottom<HTMLDivElement>(scrollDependency);
+  const pendingFollowUp = getPendingFollowUpQuestion(entries);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");
@@ -125,6 +127,12 @@ export const ChatPage = () => {
         );
 
       case "follow_up_question_group": {
+        const hasPendingQuestion = entry.questions.some(
+          (question) => question.state === "pending",
+        );
+
+        if (hasPendingQuestion) return null;
+
         const currentQuestion = entry.questions.find(
           (question) => question.state === "pending",
         );
@@ -142,6 +150,7 @@ export const ChatPage = () => {
               answerFollowUp(entry.id, question, answer, option)
             }
             onSkip={() => skipFollowUps(entry.id)}
+            className="max-w-[82%]"
           />
         );
       }
@@ -195,6 +204,24 @@ export const ChatPage = () => {
             sessionId={sessionId}
             events={session?.unconsumedUserCurationEvents ?? []}
           />
+          {pendingFollowUp ? (
+            <FollowUpQuestionGroup
+              group={pendingFollowUp.group}
+              draftValue={followUpDrafts[pendingFollowUp.question.id] ?? ""}
+              disabled={isStreaming}
+              onDraftChange={updateFollowUpDraft}
+              onAnswer={(question, answer, option) =>
+                answerFollowUp(
+                  pendingFollowUp.group.id,
+                  question,
+                  answer,
+                  option,
+                )
+              }
+              onSkip={() => skipFollowUps(pendingFollowUp.group.id)}
+              className="px-0 pt-0"
+            />
+          ) : null}
           <ChatInputBox
             value={prompt}
             onChange={setPrompt}
