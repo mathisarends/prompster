@@ -20,6 +20,7 @@ class WorkspaceEvent(Entity):
         track_title: str,
         track_artist: str,
         track_spotify_uri: str | None = None,
+        track_cover_url: str | None = None,
         consumed: bool = False,
         id: UUID | None = None,
         created_time: datetime | None = None,
@@ -30,6 +31,7 @@ class WorkspaceEvent(Entity):
         self.track_title = track_title
         self.track_artist = track_artist
         self.track_spotify_uri = track_spotify_uri
+        self.track_cover_url = track_cover_url
         self.consumed = consumed
 
     @property

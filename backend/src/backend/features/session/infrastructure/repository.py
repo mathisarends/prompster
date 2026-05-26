@@ -290,6 +290,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             row.track_title = event.track_title
             row.track_artist = event.track_artist
             row.track_spotify_uri = event.track_spotify_uri
+            row.track_cover_url = event.track_cover_url
             row.consumed = event.consumed
             row.created_at = event.created_at
             workspace_event_rows.append(row)
@@ -340,6 +341,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             track_title=row.track_title,
             track_artist=row.track_artist,
             track_spotify_uri=row.track_spotify_uri,
+            track_cover_url=row.track_cover_url,
             consumed=row.consumed,
             created_time=row.created_at,
         )

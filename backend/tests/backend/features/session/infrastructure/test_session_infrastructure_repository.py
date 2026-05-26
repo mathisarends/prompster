@@ -168,6 +168,7 @@ def test_sync_workspace_events_reuses_existing_row_by_id() -> None:
         track_title="Starlight",
         track_artist="Muse",
         track_spotify_uri="spotify:track:abc",
+        track_cover_url="https://example.com/cover.jpg",
     )
     session = Session(
         title="Roadtrip",
@@ -210,6 +211,7 @@ def test_sync_workspace_events_reuses_existing_row_by_id() -> None:
     assert orm.workspace_events[0] is existing_row
     assert orm.workspace_events[0].event_type == "track_added"
     assert orm.workspace_events[0].track_title == "Starlight"
+    assert orm.workspace_events[0].track_cover_url == "https://example.com/cover.jpg"
     assert orm.workspace_events[0].consumed is False
 
 
@@ -233,6 +235,7 @@ def test_workspace_event_mapping_roundtrip() -> None:
         track_title="Starlight",
         track_artist="Muse",
         track_spotify_uri="spotify:track:abc",
+        track_cover_url="https://example.com/cover.jpg",
     )
     row = SessionWorkspaceEventModel(
         id=event.id,
@@ -243,6 +246,7 @@ def test_workspace_event_mapping_roundtrip() -> None:
         track_title=event.track_title,
         track_artist=event.track_artist,
         track_spotify_uri=event.track_spotify_uri,
+        track_cover_url=event.track_cover_url,
         consumed=False,
         created_at=event.created_at,
     )
@@ -255,6 +259,7 @@ def test_workspace_event_mapping_roundtrip() -> None:
     assert mapped.track_title == "Starlight"
     assert mapped.track_artist == "Muse"
     assert mapped.track_spotify_uri == "spotify:track:abc"
+    assert mapped.track_cover_url == "https://example.com/cover.jpg"
 
 
 def test_tool_call_action_type_mapping_roundtrip() -> None:

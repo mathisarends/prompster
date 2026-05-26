@@ -185,6 +185,7 @@ class SessionWorkspaceEventModel(DatabaseEntity, table=True):
     track_title: str
     track_artist: str
     track_spotify_uri: str | None = Field(default=None, max_length=128)
+    track_cover_url: str | None = None
     consumed: bool = Field(
         default=False,
         sa_type=Boolean(),

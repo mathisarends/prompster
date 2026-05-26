@@ -320,6 +320,7 @@ class Session(Aggregate):
             track_title=track.title,
             track_artist=track.artist,
             track_spotify_uri=track.spotify_uri,
+            track_cover_url=track.cover_url,
         )
         self._workspace_events.append(event)
         return event

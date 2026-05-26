@@ -142,6 +142,7 @@ class WorkspaceEventResponse(Schema):
     track_title: str
     track_artist: str
     track_spotify_uri: str | None = None
+    track_cover_url: str | None = None
     occurred_at: datetime
 
 

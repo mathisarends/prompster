@@ -14,5 +14,6 @@ export interface WorkspaceEventResponse {
   trackTitle: string;
   trackArtist: string;
   trackSpotifyUri?: string | null;
+  trackCoverUrl?: string | null;
   occurredAt: string;
 }

@@ -275,6 +275,7 @@ class TestSessionDomainSession:
             title="Starlight",
             artist="Muse",
             spotify_uri="spotify:track:abc",
+            cover_url="https://example.com/cover.jpg",
         )
 
         assert len(session.workspace_events) == 1
@@ -284,6 +285,7 @@ class TestSessionDomainSession:
         assert event.track_title == "Starlight"
         assert event.track_artist == "Muse"
         assert event.track_spotify_uri == "spotify:track:abc"
+        assert event.track_cover_url == "https://example.com/cover.jpg"
         assert event.consumed is False
 
     def test_remove_track_removes_matching_track(self, session: Session) -> None:
@@ -303,6 +305,7 @@ class TestSessionDomainSession:
             title="Starlight",
             artist="Muse",
             spotify_uri="spotify:track:abc",
+            cover_url="https://example.com/cover.jpg",
         )
 
         session.remove_track(track.id)
@@ -314,6 +317,7 @@ class TestSessionDomainSession:
         assert event.track_title == "Starlight"
         assert event.track_artist == "Muse"
         assert event.track_spotify_uri == "spotify:track:abc"
+        assert event.track_cover_url == "https://example.com/cover.jpg"
 
     def test_remove_track_raises_when_playlist_missing(self, session: Session) -> None:
         with pytest.raises(PlaylistTrackNotFoundError, match="has no playlist"):

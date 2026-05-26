@@ -207,5 +207,6 @@ def to_workspace_event_response(event: WorkspaceEvent) -> WorkspaceEventResponse
         track_title=event.track_title,
         track_artist=event.track_artist,
         track_spotify_uri=event.track_spotify_uri,
+        track_cover_url=event.track_cover_url,
         occurred_at=event.occurred_at,
     )
