@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
 const BOTTOM_THRESHOLD_PX = 48;
-const SHOW_SCROLL_BUTTON_THRESHOLD_PX = 160;
 
 const getDistanceFromBottom = (element: HTMLElement) =>
   element.scrollHeight - element.scrollTop - element.clientHeight;
@@ -24,14 +23,21 @@ export const useStickyScroll = <T extends HTMLElement>(
       const atBottom = distanceFromBottom <= BOTTOM_THRESHOLD_PX;
       stickToBottomRef.current = atBottom;
       setIsAtBottom(atBottom);
-      setShowScrollToBottomButton(
-        distanceFromBottom > SHOW_SCROLL_BUTTON_THRESHOLD_PX,
-      );
+      setShowScrollToBottomButton(!atBottom);
     };
 
     syncScrollState();
     viewport.addEventListener("scroll", syncScrollState, { passive: true });
-    return () => viewport.removeEventListener("scroll", syncScrollState);
+
+    const resizeObserver = new ResizeObserver(() => {
+      syncScrollState();
+    });
+    resizeObserver.observe(viewport);
+
+    return () => {
+      viewport.removeEventListener("scroll", syncScrollState);
+      resizeObserver.disconnect();
+    };
   }, [viewportRef]);
 
   useEffect(() => {
@@ -44,10 +50,9 @@ export const useStickyScroll = <T extends HTMLElement>(
     }
 
     const distanceFromBottom = getDistanceFromBottom(viewport);
-    setIsAtBottom(distanceFromBottom <= BOTTOM_THRESHOLD_PX);
-    setShowScrollToBottomButton(
-      distanceFromBottom > SHOW_SCROLL_BUTTON_THRESHOLD_PX,
-    );
+    const atBottom = distanceFromBottom <= BOTTOM_THRESHOLD_PX;
+    setIsAtBottom(atBottom);
+    setShowScrollToBottomButton(!atBottom);
   }, [dependency, viewportRef]);
 
   const scrollToBottom = useCallback(

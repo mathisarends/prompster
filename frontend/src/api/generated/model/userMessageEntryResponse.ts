@@ -6,11 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { SessionMessageAttachmentResponse } from "./sessionMessageAttachmentResponse";
+import type { UserCurationEventResponse } from "./userCurationEventResponse";
 
 export interface UserMessageEntryResponse {
   kind?: "user_message";
   id: string;
   content: string;
   attachments?: SessionMessageAttachmentResponse[];
+  userCurationEvents?: UserCurationEventResponse[];
   createdAt: string;
 }

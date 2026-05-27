@@ -13,8 +13,8 @@ export interface UserCurationEventResponse {
   trackId: string;
   trackTitle: string;
   trackArtist: string;
+  trackYear?: number | null;
   trackSpotifyUri?: string | null;
   trackCoverUrl?: string | null;
-  historyIndex?: number | null;
   occurredAt: string;
 }

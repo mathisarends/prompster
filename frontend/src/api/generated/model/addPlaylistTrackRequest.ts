@@ -17,7 +17,11 @@ export interface AddPlaylistTrackRequest {
    * @maxLength 300
    */
   artist: string;
-  year?: number | null;
+  /**
+   * @minimum 1900
+   * @maximum 2100
+   */
+  year: number;
   spotifyUri?: string | null;
   coverUrl?: string | null;
   isPinned?: boolean;

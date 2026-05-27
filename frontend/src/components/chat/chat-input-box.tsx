@@ -20,6 +20,7 @@ type ChatInputBoxProps = {
     text: string,
     attachments: ChatAttachment[],
   ) => void | Promise<void>;
+  onStop?: () => void;
   placeholder?: string;
   className?: string;
   textareaClassName?: string;
@@ -27,6 +28,7 @@ type ChatInputBoxProps = {
   sendButtonAriaLabel?: string;
   disabled?: boolean;
   isSubmitting?: boolean;
+  isStopping?: boolean;
   clearOnSubmit?: boolean;
   showDisclaimer?: boolean;
   disclaimerText?: string;
@@ -68,6 +70,7 @@ export const ChatInputBox = ({
   value,
   onChange,
   onSubmit,
+  onStop,
   placeholder,
   className,
   textareaClassName,
@@ -75,6 +78,7 @@ export const ChatInputBox = ({
   sendButtonAriaLabel = "Nachricht senden",
   disabled = false,
   isSubmitting = false,
+  isStopping = false,
   clearOnSubmit = true,
   showDisclaimer = false,
   disclaimerText = "Prompster ist eine KI und kann Fehler machen. Bitte überprüfe die Antworten.",
@@ -102,6 +106,7 @@ export const ChatInputBox = ({
   const hasText = value.trim().length > 0;
   const hasAttachments = attachments.length > 0;
   const canSend = hasText || hasAttachments;
+  const canStop = isSubmitting && !!onStop;
   const isAttachmentMentionActive =
     attachmentPopoverOpen && !!attachmentMention;
 
@@ -139,6 +144,15 @@ export const ChatInputBox = ({
       onChange("");
       setAttachments([]);
     }
+  };
+
+  const handleSendButtonClick = () => {
+    if (canStop) {
+      onStop();
+      return;
+    }
+
+    submit();
   };
 
   const addAttachment = (attachment: ChatAttachment) => {
@@ -411,10 +425,16 @@ export const ChatInputBox = ({
             )}
             <div className="flex items-center gap-1.5">
               <SendButton
-                onClick={submit}
-                disabled={disabled || !canSend}
+                onClick={handleSendButtonClick}
+                disabled={
+                  disabled ||
+                  (isSubmitting && !canStop) ||
+                  (!canStop && !canSend)
+                }
                 isLoading={isSubmitting}
-                ariaLabel={sendButtonAriaLabel}
+                isStopMode={canStop}
+                isStopping={isStopping}
+                ariaLabel={canStop ? "Antwort stoppen" : sendButtonAriaLabel}
               />
             </div>
           </div>

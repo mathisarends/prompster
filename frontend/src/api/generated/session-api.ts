@@ -1583,6 +1583,157 @@ export function useSendMessage<
 }
 
 /**
+ * @summary Stop Message
+ */
+export const stopMessage = (
+  sessionId: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<void>(
+    {
+      url: `/api/v1/sessions/${sessionId}/messages/stop`,
+      method: "POST",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getStopMessageQueryKey = (sessionId: string) => {
+  return ["POST", `/api/v1/sessions/${sessionId}/messages/stop`] as const;
+};
+
+export const getStopMessageQueryOptions = <
+  TData = Awaited<ReturnType<typeof stopMessage>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof stopMessage>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getStopMessageQueryKey(sessionId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof stopMessage>>> = ({
+    signal,
+  }) => stopMessage(sessionId, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: sessionId !== null && sessionId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof stopMessage>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type StopMessageQueryResult = NonNullable<
+  Awaited<ReturnType<typeof stopMessage>>
+>;
+export type StopMessageQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useStopMessage<
+  TData = Awaited<ReturnType<typeof stopMessage>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof stopMessage>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof stopMessage>>,
+          TError,
+          Awaited<ReturnType<typeof stopMessage>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useStopMessage<
+  TData = Awaited<ReturnType<typeof stopMessage>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof stopMessage>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof stopMessage>>,
+          TError,
+          Awaited<ReturnType<typeof stopMessage>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useStopMessage<
+  TData = Awaited<ReturnType<typeof stopMessage>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof stopMessage>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Stop Message
+ */
+
+export function useStopMessage<
+  TData = Awaited<ReturnType<typeof stopMessage>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof stopMessage>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getStopMessageQueryOptions(sessionId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Handle Follow Up
  */
 export const handleFollowUp = (

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import type {
@@ -10,6 +10,7 @@ import {
   getGetSessionQueryKey,
   getListSessionsQueryKey,
   removePlaylistTrack,
+  stopMessage as stopSessionMessage,
   useGetSession,
 } from "@/api/generated/session-api";
 import { streamFollowUp, streamSendMessage } from "@/api/session-stream";
@@ -39,10 +40,12 @@ export type UseChatSessionResult = {
   playlist: ChatPlaylist | null;
   followUpDrafts: Record<string, string>;
   isStreaming: boolean;
+  isStopping: boolean;
   errorMessage?: string;
   isLoadingSession: boolean;
   isError: boolean;
   sendMessage: (text: string) => void;
+  stopMessage: () => void;
   answerFollowUp: (
     groupId: string,
     question: FollowUpQuestionResponse,
@@ -71,9 +74,12 @@ export const useChatSession = ({
     undefined,
     createInitialChatState,
   );
+  const [isStopping, setIsStopping] = useState(false);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const stopAbortTimeoutRef = useRef<number | null>(null);
   const isStreamingRef = useRef(false);
+  const isStoppingRef = useRef(false);
   const initialStreamStartedRef = useRef(false);
   const hasStreamedSinceLoadRef = useRef(false);
 
@@ -90,15 +96,24 @@ export const useChatSession = ({
 
   useEffect(
     () => () => {
+      if (stopAbortTimeoutRef.current !== null) {
+        window.clearTimeout(stopAbortTimeoutRef.current);
+      }
       abortControllerRef.current?.abort();
     },
     [],
   );
 
   useEffect(() => {
+    if (stopAbortTimeoutRef.current !== null) {
+      window.clearTimeout(stopAbortTimeoutRef.current);
+      stopAbortTimeoutRef.current = null;
+    }
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
     isStreamingRef.current = false;
+    isStoppingRef.current = false;
+    setIsStopping(false);
     initialStreamStartedRef.current = false;
     hasStreamedSinceLoadRef.current = false;
     dispatch({ type: "session/reset" });
@@ -157,10 +172,16 @@ export const useChatSession = ({
           });
         }
       } finally {
+        if (stopAbortTimeoutRef.current !== null) {
+          window.clearTimeout(stopAbortTimeoutRef.current);
+          stopAbortTimeoutRef.current = null;
+        }
         if (abortControllerRef.current === controller) {
           abortControllerRef.current = null;
         }
         isStreamingRef.current = false;
+        isStoppingRef.current = false;
+        setIsStopping(false);
         dispatch({ type: "stream/finished" });
       }
     },
@@ -226,6 +247,32 @@ export const useChatSession = ({
     [streamAssistantResponse],
   );
 
+  const stopMessage = useCallback(() => {
+    if (!sessionId || !isStreamingRef.current || isStoppingRef.current) return;
+
+    isStoppingRef.current = true;
+    setIsStopping(true);
+
+    void (async () => {
+      try {
+        await stopSessionMessage(sessionId);
+      } catch {
+        abortControllerRef.current?.abort();
+        return;
+      }
+
+      if (!abortControllerRef.current) {
+        isStoppingRef.current = false;
+        setIsStopping(false);
+        return;
+      }
+
+      stopAbortTimeoutRef.current = window.setTimeout(() => {
+        abortControllerRef.current?.abort();
+      }, 1500);
+    })();
+  }, [sessionId]);
+
   const answerFollowUp = useCallback(
     (
       groupId: string,
@@ -289,10 +336,12 @@ export const useChatSession = ({
     playlist: state.playlist,
     followUpDrafts: state.followUpDrafts,
     isStreaming: state.isStreaming,
+    isStopping,
     errorMessage: state.errorMessage,
     isLoadingSession: isLoading && state.entries.length === 0,
     isError,
     sendMessage,
+    stopMessage,
     answerFollowUp,
     skipFollowUps,
     updateFollowUpDraft,

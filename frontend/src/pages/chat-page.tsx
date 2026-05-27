@@ -77,9 +77,11 @@ export const ChatPage = () => {
     playlist,
     followUpDrafts,
     isStreaming,
+    isStopping,
     isLoadingSession,
     isError,
     sendMessage,
+    stopMessage,
     answerFollowUp,
     skipFollowUps,
     updateFollowUpDraft,
@@ -267,6 +269,7 @@ export const ChatPage = () => {
             value={prompt}
             onChange={setPrompt}
             onSubmit={sendMessage}
+            onStop={stopMessage}
             placeholder="Deine Antwort ..."
             sendButtonAriaLabel="Nachricht senden"
             className={cn(
@@ -276,6 +279,7 @@ export const ChatPage = () => {
             rows={1}
             disabled={!sessionId || isLoadingSession || isError}
             isSubmitting={isStreaming}
+            isStopping={isStopping}
           />
         </div>
       </div>

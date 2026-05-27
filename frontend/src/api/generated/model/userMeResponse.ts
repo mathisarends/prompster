@@ -5,6 +5,7 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
+import type { UserMessageRateLimitResponse } from "./userMessageRateLimitResponse";
 
 export interface UserMeResponse {
   id: string;
@@ -13,4 +14,5 @@ export interface UserMeResponse {
   createdAt: string;
   spotifyConnected: boolean;
   spotifyPremium: boolean;
+  messageRateLimit: UserMessageRateLimitResponse;
 }

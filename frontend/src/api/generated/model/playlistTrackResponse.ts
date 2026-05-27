@@ -10,7 +10,7 @@ export interface PlaylistTrackResponse {
   id: string;
   title: string;
   artist: string;
-  year?: number | null;
+  year: number;
   spotifyUri?: string | null;
   coverUrl?: string | null;
   isPinned: boolean;
