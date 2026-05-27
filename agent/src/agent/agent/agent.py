@@ -1,5 +1,5 @@
 import logging
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Sequence
 
 from llmify import ChatModel, Message, StreamEventType
 
@@ -19,7 +19,7 @@ from agent.agent.messages import MessageManager
 from agent.tools import Tools, Spotify
 from agent.tools.views import AskFollowUpParams
 from agent.playlist import PlaylistDraftStore
-from agent.agent.views import UserEvents
+from agent.agent.views import UserEvent
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,6 @@ class Agent:
         llm: ChatModel,
         tools: Tools | None = None,
         history: list[Message] | None = None,
-        user_events: UserEvents | None = None,
         max_iterations: int = 10,
         system_prompt: str | None = None,
         spotify: Spotify | None = None,
@@ -47,12 +46,10 @@ class Agent:
         self._playlist_store = playlist_store or existing_store or PlaylistDraftStore()
         if existing_store is None:
             self._tools.provide(self._playlist_store)
-        self._user_events = list(user_events or [])
 
         self._messages = MessageManager(
             system_prompt=system_prompt,
             playlist_draft_provider=lambda: self._playlist_store.playlist_draft,
-            user_events_provider=lambda: self._user_events,
             history=history,
         )
 
@@ -62,11 +59,13 @@ class Agent:
         await self._spotify.close()
 
     async def stream(
-        self, message: str | None = None
+        self,
+        message: str | None = None,
+        curation_events: Sequence[UserEvent] | None = None,
     ) -> AsyncGenerator[AgentEvent, None]:
-        if message is not None:
-            self._messages.add_user(message)
-            yield RunStartedEvent(message=message)
+        if message is not None or curation_events:
+            self._messages.add_user(message or "", curation_events)
+            yield RunStartedEvent(message=message or "")
 
         async for event in self._run_loop():
             yield event

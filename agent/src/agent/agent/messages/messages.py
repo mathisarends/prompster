@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from html import escape
 from pathlib import Path
 
@@ -11,16 +11,16 @@ from llmify import (
     UserMessage,
 )
 
-from agent.agent.views import UserEvent, UserEvents
+from agent.agent.views import UserEvent
 from agent.playlist import PlaylistDraft
-from agent.playlist.rendering import render_track_tag
+from agent.agent.messages.rendering import render_track_tag
+from .rendering import render_user_message_content
 
 _SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "system_prompt.md").read_text(
     encoding="utf-8"
 )
 
 type _PlaylistDraftProvider = Callable[[], PlaylistDraft | None]
-type _UserEventsProvider = Callable[[], UserEvents]
 
 
 class MessageManager:
@@ -28,12 +28,10 @@ class MessageManager:
         self,
         system_prompt: str | None = None,
         playlist_draft_provider: _PlaylistDraftProvider | None = None,
-        user_events_provider: _UserEventsProvider | None = None,
         history: list[Message] | None = None,
     ) -> None:
         self._system_prompt = system_prompt or _SYSTEM_PROMPT
         self._playlist_draft_provider = playlist_draft_provider
-        self._user_events_provider = user_events_provider
         self._messages: list[Message] = []
         self.reset()
         if history:
@@ -50,11 +48,16 @@ class MessageManager:
             messages.append(UserMessage(content=playlist_context))
             messages.append(AssistantMessage(content="Understood."))
 
-        messages.extend(self._messages_with_injected_user_events())
+        messages.extend(self._messages)
         return messages
 
-    def add_user(self, content: str) -> None:
-        self._messages.append(UserMessage(content=content))
+    def add_user(
+        self,
+        content: str,
+        curation_events: Sequence[UserEvent] | None = None,
+    ) -> None:
+        rendered = render_user_message_content(content, curation_events)
+        self._messages.append(UserMessage(content=rendered))
 
     def add_assistant(
         self, content: str, tool_calls: list[ToolCall] | None = None
@@ -94,79 +97,3 @@ class MessageManager:
         )
         lines.append("</created_playlist>")
         return "\n".join(lines)
-
-    def _get_user_events(self) -> UserEvents:
-        return (
-            self._user_events_provider()
-            if self._user_events_provider is not None
-            else []
-        )
-
-    def _messages_with_injected_user_events(self) -> list[Message]:
-        history_count = self._count_history_messages()
-        events_by_history_index = self._group_user_events_by_history_index(
-            history_count=history_count
-        )
-
-        messages: list[Message] = []
-        history_index = 0
-
-        for message in self._messages:
-            pending_events = events_by_history_index.get(history_index, [])
-
-            if pending_events and isinstance(message, UserMessage):
-                # Append events to the next real UserMessage —
-                # prevents consecutive UserMessages from separate event messages.
-                event_block = "\n".join(
-                    self._render_user_event_entry(e) for e in pending_events
-                )
-                messages.append(
-                    UserMessage(content=f"{event_block}\n\n{message.content}")
-                )
-            else:
-                if pending_events:
-                    # Should not happen (events always land before a UserMessage),
-                    # but as a fallback: emit events as a separate UserMessage before the turn.
-                    event_block = "\n".join(
-                        self._render_user_event_entry(e) for e in pending_events
-                    )
-                    messages.append(UserMessage(content=event_block))
-                messages.append(message)
-
-            if self._is_history_message(message):
-                history_index += 1
-
-        # Trailing events ohne nachfolgende Message (am Ende der History)
-        for event in events_by_history_index.get(history_index, []):
-            messages.append(UserMessage(content=self._render_user_event_entry(event)))
-
-        return messages
-
-    def _count_history_messages(self) -> int:
-        return sum(1 for message in self._messages if self._is_history_message(message))
-
-    def _group_user_events_by_history_index(
-        self, *, history_count: int
-    ) -> dict[int, list[UserEvent]]:
-        events_by_history_index: dict[int, list[UserEvent]] = {}
-        for event in self._get_user_events():
-            history_index = (
-                event.history_index
-                if event.history_index is not None
-                else history_count
-            )
-            history_index = max(0, min(history_index, history_count))
-            events_by_history_index.setdefault(history_index, []).append(event)
-        return events_by_history_index
-
-    def _is_history_message(self, message: Message) -> bool:
-        if isinstance(message, UserMessage):
-            return True
-        return isinstance(message, AssistantMessage) and bool(message.content.strip())
-
-    def _render_user_event_entry(self, event: UserEvent) -> str:
-        return (
-            f'<event type="{escape(event.type, quote=True)}" '
-            f'at="{escape(event.occurred_at.isoformat(), quote=True)}">'
-            f"{escape(event.label)}</event>"
-        )

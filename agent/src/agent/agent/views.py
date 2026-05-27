@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class UserCurationEventType(StrEnum):
@@ -12,11 +12,16 @@ class UserCurationEventType(StrEnum):
 
 
 class UserEvent(BaseModel):
+    """A manual playlist change the user made outside of the agent's tools.
+
+    Bound to a single user turn — events represent what the user changed
+    between the previous turn and the moment they sent their next message.
+    """
+
     type: UserCurationEventType
     occurred_at: datetime
     track_title: str | None = None
     track_artist: str | None = None
-    history_index: int | None = Field(default=None, ge=0)
 
     @property
     def label(self) -> str:

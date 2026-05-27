@@ -3,8 +3,7 @@ from collections.abc import AsyncIterator
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from llmify.messages import UserMessage
-from agent import UserEvent
+from llmify.messages import UserMessage as LLMUserMessage
 
 from backend.features.session.application import SessionConversationService
 from backend.features.session.application.ports.session_runner import (
@@ -19,7 +18,6 @@ from backend.features.session.domain import (
 )
 from backend.features.session.infrastructure.session_runner import (
     _to_history_messages,
-    _to_user_events,
 )
 
 
@@ -54,51 +52,14 @@ class _NoOpQuotaService:
         return None
 
 
-class TestSessionRunnerMessageContext:
-    def test_adds_unconsumed_user_curation_events_to_message_context(self) -> None:
-        event = UserCurationEvent(
-            id=uuid4(),
-            event_type=UserCurationEventType.TRACK_REMOVED,
-            track_id=uuid4(),
-            track_title="Umbrella",
-            track_artist="Rihanna",
-            track_year=2007,
-            track_spotify_uri="spotify:track:1",
-            track_cover_url="https://example.com/cover.jpg",
-            created_time=datetime(2026, 1, 1, tzinfo=timezone.utc),
-        )
-        consumed_event = UserCurationEvent(
-            event_type=UserCurationEventType.TRACK_PINNED,
-            track_id=uuid4(),
-            track_title="Consumed",
-            track_artist="Artist",
-            consumed=True,
-        )
-        session = Session(
-            title="Deck",
-            entries=[],
-            owner_id=uuid4(),
-            user_curation_events=[event, consumed_event],
-        )
+class TestSessionRunnerHistoryRendering:
+    """``_to_history_messages`` produces the exact LLM message sequence the
+    agent will replay. Curation events bind to the user message they belong
+    to and appear inline in its content — mirroring the domain model where
+    ``UserMessage.user_curation_events`` is part of the user entity.
+    """
 
-        history = _to_history_messages(session=session)
-        user_events = _to_user_events(session=session)
-
-        user_messages = [
-            message for message in history if isinstance(message, UserMessage)
-        ]
-        assert user_messages == []
-        assert user_events == [
-            UserEvent(
-                type="track_removed",
-                track_title="Umbrella",
-                track_artist="Rihanna",
-                occurred_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
-                history_index=0,
-            )
-        ]
-
-    def test_uses_user_message_bound_event_history_position(self) -> None:
+    def test_bound_event_renders_inside_its_user_message(self) -> None:
         session = Session(title="Deck", entries=[], owner_id=uuid4())
         session.add_user_message("start")
         session.add_assistant_message("ok")
@@ -107,12 +68,76 @@ class TestSessionRunnerMessageContext:
         )
         session.add_user_message("mach weiter")
 
-        user_events = _to_user_events(session=session)
+        history = _to_history_messages(session=session)
 
-        assert len(user_events) == 1
-        assert user_events[0].type == "track_added"
-        assert user_events[0].history_index == 2
+        user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
+        assert len(user_messages) == 2
+        assert user_messages[0].content == "start"
+        assert "<user_events>" in user_messages[1].content
+        assert "track_added" in user_messages[1].content
+        assert "Rihanna - Umbrella" in user_messages[1].content
+        assert user_messages[1].content.endswith("mach weiter")
 
+    def test_trailing_unbound_event_becomes_a_synthetic_user_message(self) -> None:
+        # Curation event recorded without a following user message
+        # (e.g. resuming after follow-up answers) gets a synthetic UserMessage
+        # so the LLM still sees the manual change in turn order.
+        event = UserCurationEvent(
+            id=uuid4(),
+            event_type=UserCurationEventType.TRACK_REMOVED,
+            track_id=uuid4(),
+            track_title="Umbrella",
+            track_artist="Rihanna",
+            track_year=2007,
+            created_time=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        )
+        session = Session(
+            title="Deck",
+            entries=[],
+            owner_id=uuid4(),
+            user_curation_events=[event],
+        )
+
+        history = _to_history_messages(session=session)
+
+        assert len(history) == 1
+        assert isinstance(history[0], LLMUserMessage)
+        assert history[0].content == (
+            "<user_events>\n"
+            '<event type="track_removed" at="2026-01-01T00:00:00+00:00">'
+            "Rihanna - Umbrella</event>\n"
+            "</user_events>"
+        )
+
+    def test_consumed_bound_events_are_not_resurfaced(self) -> None:
+        # Events the agent has already acknowledged on a previous run are
+        # marked consumed — they must not appear in the next history rebuild.
+        session = Session(title="Deck", entries=[], owner_id=uuid4())
+        session.add_user_message("start")
+        session.add_track(
+            title="Umbrella", artist="Rihanna", year=2007, is_pinned=False
+        )
+        session.add_user_message("weiter")
+        for event in session.unconsumed_user_curation_events:
+            event.mark_consumed()
+
+        history = _to_history_messages(session=session)
+
+        user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
+        assert all("<user_events>" not in m.content for m in user_messages)
+
+    def test_session_without_curation_events_emits_plain_user_messages(self) -> None:
+        session = Session(title="Deck", entries=[], owner_id=uuid4())
+        session.add_user_message("hi")
+        session.add_assistant_message("hey")
+
+        history = _to_history_messages(session=session)
+
+        user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
+        assert [m.content for m in user_messages] == ["hi"]
+
+
+class TestSendMessageConsumesCurationEvents:
     def test_send_message_consumes_user_curation_events_after_runner(self) -> None:
         user_id = uuid4()
         event = UserCurationEvent(

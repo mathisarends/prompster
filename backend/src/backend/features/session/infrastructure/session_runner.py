@@ -11,6 +11,7 @@ from agent.agent import (
     ToolResultEvent,
     WorkspaceUpdatedEvent,
 )
+from agent.agent.messages import render_user_message_content
 from agent import Spotify, UserEvent
 from agent.tools.views import AskFollowUpQuestion
 from agent.playlist import (
@@ -83,7 +84,6 @@ class AgentSessionRunner(SessionRunner):
             history=_to_history_messages(
                 session=session,
             ),
-            user_events=_to_user_events(session=session),
             system_prompt=self._system_prompt,
             spotify=Spotify(client=self._spotify),
             playlist_store=_to_playlist_draft_store(session.playlist),
@@ -156,10 +156,21 @@ def _to_history_messages(
     *,
     session: Session,
 ) -> list[LLMMessage]:
+    bound_event_ids: set[UUID] = set()
     messages: list[LLMMessage] = []
     for entry in session.entries:
         if isinstance(entry, UserMessage):
-            messages.append(LLMUserMessage(content=_to_user_message_content(entry)))
+            curation_events = _to_user_events_for_message(message=entry)
+            for event in entry.user_curation_events:
+                bound_event_ids.add(event.id)
+            messages.append(
+                LLMUserMessage(
+                    content=render_user_message_content(
+                        _to_user_message_content(entry),
+                        curation_events,
+                    )
+                )
+            )
         elif isinstance(entry, AssistantMessage):
             messages.append(LLMAssistantMessage(content=entry.content))
         elif isinstance(entry, ToolCallSequence):
@@ -183,6 +194,18 @@ def _to_history_messages(
                             content=call.error,
                         )
                     )
+
+    trailing_events = _to_trailing_user_events(
+        session=session, bound_event_ids=bound_event_ids
+    )
+    if trailing_events:
+        # No user message followed these manual changes yet (e.g. agent is resuming
+        # after follow-up answers). Surface them in a synthetic UserMessage so the
+        # LLM still sees the curation block in turn order.
+        messages.append(
+            LLMUserMessage(content=render_user_message_content("", trailing_events))
+        )
+
     return messages
 
 
@@ -288,39 +311,28 @@ def _to_playlist_draft_store(playlist: Playlist | None) -> PlaylistDraftStore:
     )
 
 
-def _to_user_events(*, session: Session) -> list[UserEvent]:
-    user_events: list[UserEvent] = []
-    bound_event_ids: set[UUID] = set()
-    history_index = 0
-
-    for entry in session.entries:
-        if isinstance(entry, UserMessage):
-            for event in entry.user_curation_events:
-                if event.consumed:
-                    continue
-                user_events.append(
-                    _to_user_event(event=event, history_index=history_index)
-                )
-                bound_event_ids.add(event.id)
-            history_index += 1
-            continue
-
-        if isinstance(entry, AssistantMessage) and entry.content.strip():
-            history_index += 1
-
-    for event in session.unconsumed_user_curation_events:
-        if event.id in bound_event_ids:
-            continue
-        user_events.append(_to_user_event(event=event, history_index=history_index))
-
-    return user_events
+def _to_user_events_for_message(*, message: UserMessage) -> list[UserEvent]:
+    return [
+        _to_user_event(event=event)
+        for event in message.user_curation_events
+        if not event.consumed
+    ]
 
 
-def _to_user_event(*, event: UserCurationEvent, history_index: int) -> UserEvent:
+def _to_trailing_user_events(
+    *, session: Session, bound_event_ids: set[UUID]
+) -> list[UserEvent]:
+    return [
+        _to_user_event(event=event)
+        for event in session.unconsumed_user_curation_events
+        if event.id not in bound_event_ids
+    ]
+
+
+def _to_user_event(*, event: UserCurationEvent) -> UserEvent:
     return UserEvent(
         type=event.event_type.value,
         track_title=event.track_title,
         track_artist=event.track_artist,
         occurred_at=event.occurred_at,
-        history_index=history_index,
     )

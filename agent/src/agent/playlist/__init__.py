@@ -32,4 +32,7 @@ __all__ = [
     "PlaylistDraftUpdateKind",
     "TrackRef",
     "TrackRefReplacement",
+    "render_album_tag",
+    "render_playlist_tag",
+    "render_track_tag",
 ]
