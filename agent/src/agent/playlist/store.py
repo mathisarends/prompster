@@ -40,17 +40,16 @@ class PlaylistDraftStore:
         self._pending_playlist_draft_updates.append(update)
         return playlist_draft
 
-    def create_playlist_draft_from_refs(
+    def create_empty_playlist_draft(
         self,
         name: str,
-        track_refs: list[TrackRef],
     ) -> PlaylistDraft:
         if self._playlist_draft is not None:
             raise ValueError("Playlist draft already exists.")
         return self.save_playlist_draft(
             PlaylistDraft(
                 name=name,
-                tracks=self._deduplicate_tracks(self.resolve_track_refs(track_refs)),
+                tracks=[],
             )
         )
 

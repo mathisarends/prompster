@@ -1,22 +1,10 @@
 from collections.abc import AsyncIterator
 
-from agent.agent import (
-    Agent,
-    AssistantMessageChunkEvent,
-    AssistantMessageEvent,
-    FollowUpRequestedEvent,
-    ToolCallEvent,
-    ToolResultEvent,
-    WorkspaceUpdatedEvent,
-)
+from agent.agent import Agent
 from agent import Spotify
-from agent.tools.views import AskFollowUpQuestion
 from agent.playlist import (
     PlaylistDraft,
     PlaylistDraftTrack,
-    PlaylistDraftTracksAdded,
-    PlaylistDraftTracksRemoved,
-    PlaylistDraftTracksReplaced,
     PlaylistDraftStore,
 )
 
@@ -25,29 +13,13 @@ from spotifyify import Spotifyify
 
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
-    SessionRunnerAssistantMessage,
-    SessionRunnerAssistantMessageChunk,
     SessionRunnerEvent,
-    SessionRunnerFollowUpRequested,
-    SessionRunnerPlaylistTrackReplacement,
-    SessionRunnerPlaylistTracksAdded,
-    SessionRunnerPlaylistTracksRemoved,
-    SessionRunnerPlaylistTracksReplaced,
-    SessionRunnerPlaylistUpdated,
-    SessionRunnerToolCallCompleted,
-    SessionRunnerToolCallStarted,
 )
-from backend.features.session.domain import (
-    FollowUpOption,
-    FollowUpQuestion,
-    PendingCall,
-    Playlist,
-    PlaylistTrack,
-    Session,
-    ToolActionType,
-    ToolFunction,
+from backend.features.session.domain import Playlist, Session
+from backend.features.session.infrastructure.agent_event_mapper import (
+    AgentSessionEventMapper,
 )
-from backend.features.session.infrastructure.agent_history import build_agent_history
+from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
 
 
 class AgentSessionRunner(SessionRunner):
@@ -55,121 +27,33 @@ class AgentSessionRunner(SessionRunner):
         self,
         llm: ChatModel,
         spotify: Spotifyify,
+        event_mapper: AgentSessionEventMapper | None = None,
+        history_builder: AgentHistoryBuilder | None = None,
         system_prompt: str | None = None,
     ) -> None:
         self._llm = llm
         self._spotify = spotify
+        self._event_mapper = event_mapper or AgentSessionEventMapper()
+        self._history_builder = history_builder or AgentHistoryBuilder()
         self._system_prompt = system_prompt
 
     async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
-        agent = Agent(
+        agent = self._create_agent(session=session)
+        try:
+            async for event in agent.stream():
+                for session_event in self._event_mapper.map(event):
+                    yield session_event
+        finally:
+            await agent.close()
+
+    def _create_agent(self, *, session: Session) -> Agent:
+        return Agent(
             llm=self._llm,
-            history=build_agent_history(session=session),
+            history=self._history_builder.build(session=session),
             system_prompt=self._system_prompt,
             spotify=Spotify(client=self._spotify),
             playlist_store=_to_playlist_draft_store(session.playlist),
         )
-
-        try:
-            async for event in agent.stream():
-                if isinstance(event, AssistantMessageChunkEvent):
-                    yield SessionRunnerAssistantMessageChunk(chunk=event.chunk)
-                elif isinstance(event, AssistantMessageEvent):
-                    yield SessionRunnerAssistantMessage(content=event.content)
-                elif isinstance(event, ToolCallEvent):
-                    yield SessionRunnerToolCallStarted(
-                        call=PendingCall(
-                            id=event.tool_call_id,
-                            function=ToolFunction(
-                                name=event.name,
-                                arguments=dict(event.args),
-                                status_label=event.status_label,
-                                action_type=_to_tool_action_type(event.action_type),
-                            ),
-                        )
-                    )
-                elif isinstance(event, ToolResultEvent):
-                    yield SessionRunnerToolCallCompleted(
-                        tool_call_id=event.tool_call_id,
-                        result=event.result,
-                    )
-                elif isinstance(event, FollowUpRequestedEvent):
-                    yield SessionRunnerFollowUpRequested(
-                        questions=[
-                            _to_follow_up_question(question)
-                            for question in event.questions
-                        ]
-                    )
-                elif isinstance(event, WorkspaceUpdatedEvent):
-                    update = event.update
-                    if isinstance(update, PlaylistDraftTracksAdded):
-                        yield SessionRunnerPlaylistTracksAdded(
-                            playlist_id=update.playlist_draft.id,
-                            tracks=[
-                                _to_playlist_track(track) for track in update.tracks
-                            ],
-                        )
-                    elif isinstance(update, PlaylistDraftTracksRemoved):
-                        yield SessionRunnerPlaylistTracksRemoved(
-                            playlist_id=update.playlist_draft.id,
-                            track_ids=update.track_ids,
-                        )
-                    elif isinstance(update, PlaylistDraftTracksReplaced):
-                        yield SessionRunnerPlaylistTracksReplaced(
-                            playlist_id=update.playlist_draft.id,
-                            replacements=[
-                                SessionRunnerPlaylistTrackReplacement(
-                                    track_id=replacement.track_id,
-                                    track=_to_playlist_track(replacement.track),
-                                )
-                                for replacement in update.replacements
-                            ],
-                        )
-                    else:
-                        yield SessionRunnerPlaylistUpdated(
-                            playlist=_to_playlist(event.playlist_draft)
-                        )
-        finally:
-            await agent.close()
-
-
-def _to_tool_action_type(value: str | None) -> ToolActionType | None:
-    if value is None:
-        return None
-    try:
-        return ToolActionType(value)
-    except ValueError:
-        return None
-
-
-def _to_follow_up_question(question: AskFollowUpQuestion) -> FollowUpQuestion:
-    return FollowUpQuestion(
-        question=question.question,
-        options=[
-            FollowUpOption(id=str(index + 1), label=option.label)
-            for index, option in enumerate(question.options)
-        ],
-    )
-
-
-def _to_playlist(playlist_draft: PlaylistDraft) -> Playlist:
-    return Playlist(
-        id=playlist_draft.id,
-        name=playlist_draft.name,
-        tracks=[_to_playlist_track(track) for track in playlist_draft.tracks],
-    )
-
-
-def _to_playlist_track(track: PlaylistDraftTrack) -> PlaylistTrack:
-    return PlaylistTrack(
-        id=track.id,
-        title=track.title,
-        artist=track.artist,
-        year=track.year,
-        spotify_uri=track.spotify_uri,
-        cover_url=track.cover_url,
-        is_pinned=track.is_pinned,
-    )
 
 
 def _to_playlist_draft_store(playlist: Playlist | None) -> PlaylistDraftStore:

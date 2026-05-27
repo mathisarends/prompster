@@ -29,10 +29,10 @@ class TestToolsFacadeAbstraction:
         assert tools.get("search_tracks").action_type == ActionType.SEARCH
         assert tools.get("get_album_tracks") is not None
         assert tools.get("get_album_tracks").action_type == ActionType.FETCH
-        assert tools.get("create_draft_playlist") is not None
-        assert tools.get("create_draft_playlist").action_type == ActionType.MUTATE
-        assert tools.get("add_draft_playlist_tracks") is not None
-        assert tools.get("add_draft_playlist_tracks").action_type == ActionType.MUTATE
+        assert tools.get("create_playlist") is not None
+        assert tools.get("create_playlist").action_type == ActionType.MUTATE
+        assert tools.get("add_playlist_tracks") is not None
+        assert tools.get("add_playlist_tracks").action_type == ActionType.MUTATE
         assert tools.get("ask_follow_up") is not None
         assert tools.get("ask_follow_up").action_type == ActionType.INTERACT
 
@@ -104,15 +104,10 @@ class TestToolsFacadeAbstraction:
         tools.set_context(ToolContext(new_store))
 
         result = await tools.execute(
-            "create_draft_playlist",
+            "create_playlist",
             {
                 "name": "Context Switch",
                 "status": "Tracks ins Deck legen",
-                "tracks": [
-                    {
-                        "uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-                    }
-                ],
             },
         )
 
@@ -125,4 +120,4 @@ class TestToolsFacadeAbstraction:
         assert old_store.playlist_draft is None
         assert new_store.playlist_draft is not None
         assert new_store.playlist_draft.name == "Context Switch"
-        assert new_store.playlist_draft.tracks[0].title == "Take On Me"
+        assert new_store.playlist_draft.tracks == []

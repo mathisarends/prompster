@@ -47,43 +47,43 @@ class TestWorkspaceDraftPlaylistTool:
 
         tool_names = [schema["function"]["name"] for schema in tools.to_schema()]
 
-        assert "create_draft_playlist" in tool_names
-        assert "add_draft_playlist_tracks" in tool_names
-        assert "remove_draft_playlist_tracks" in tool_names
-        assert "replace_draft_playlist_tracks" in tool_names
-        assert "create_playlist" not in tool_names
+        assert "create_playlist" in tool_names
+        assert "add_playlist_tracks" in tool_names
+        assert "remove_playlist_tracks" in tool_names
+        assert "replace_playlist_tracks" in tool_names
+        assert "create_draft_playlist" not in tool_names
+        assert "add_draft_playlist_tracks" not in tool_names
+        assert "remove_draft_playlist_tracks" not in tool_names
+        assert "replace_draft_playlist_tracks" not in tool_names
         assert "add_tracks_to_playlist" not in tool_names
         assert "remove_tracks_from_playlist" not in tool_names
         assert "clear_playlist" not in tool_names
 
+    def test_create_playlist_schema_does_not_accept_tracks(self) -> None:
+        tools = Tools(ToolContext(PlaylistDraftStore()))
+
+        schema = next(
+            schema
+            for schema in tools.to_schema()
+            if schema["function"]["name"] == "create_playlist"
+        )
+
+        properties = schema["function"]["parameters"]["properties"]
+        assert "name" in properties
+        assert "tracks" not in properties
+
     @pytest.mark.asyncio
-    async def test_create_draft_playlist_saves_and_returns_playlist_draft(
+    async def test_create_playlist_saves_empty_draft(
         self,
     ) -> None:
         store = PlaylistDraftStore()
-        store.cache_tracks(
-            [
-                _track(
-                    title="Take On Me",
-                    artist="a-ha",
-                    year=1985,
-                    spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-                    cover_url="https://i.scdn.co/image/take-on-me.jpg",
-                )
-            ]
-        )
         tools = Tools(ToolContext(store))
 
         result = await tools.execute(
-            "create_draft_playlist",
+            "create_playlist",
             {
                 "name": "80er Party",
                 "status": "Baue das 80er-Deck",
-                "tracks": [
-                    {
-                        "uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-                    }
-                ],
             },
         )
 
@@ -92,11 +92,10 @@ class TestWorkspaceDraftPlaylistTool:
         assert isinstance(tool_result, PlaylistDraftToolResult)
         playlist = tool_result.playlist_draft
         assert isinstance(playlist, PlaylistDraft)
-        assert tool_result.operations[0].operation == "create_draft_playlist"
+        assert tool_result.operations[0].operation == "create_playlist"
         assert tool_result.operations[0].success is True
         assert playlist.name == "80er Party"
-        assert playlist.tracks[0].title == "Take On Me"
-        assert playlist.tracks[0].cover_url == "https://i.scdn.co/image/take-on-me.jpg"
+        assert playlist.tracks == []
         assert store.playlist_draft == playlist
         updates = store.drain_playlist_draft_updates()
         assert len(updates) == 1
@@ -104,22 +103,17 @@ class TestWorkspaceDraftPlaylistTool:
         assert updates[0].playlist_draft == playlist
 
     @pytest.mark.asyncio
-    async def test_create_draft_playlist_rejects_existing_draft(
+    async def test_create_playlist_rejects_existing_draft(
         self,
     ) -> None:
         store = PlaylistDraftStore(PlaylistDraft(name="Existing", tracks=[]))
         tools = Tools(ToolContext(store))
 
         result = await tools.execute(
-            "create_draft_playlist",
+            "create_playlist",
             {
                 "name": "80er Party",
                 "status": "Baue das 80er-Deck",
-                "tracks": [
-                    {
-                        "uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-                    }
-                ],
             },
         )
 
@@ -130,14 +124,14 @@ class TestWorkspaceDraftPlaylistTool:
         assert store.drain_playlist_draft_updates() == []
 
     @pytest.mark.asyncio
-    async def test_add_draft_playlist_tracks_rejects_non_track_uri_ref(
+    async def test_add_playlist_tracks_rejects_non_track_uri_ref(
         self,
     ) -> None:
         store = PlaylistDraftStore()
         tools = Tools(ToolContext(store))
 
         result = await tools.execute(
-            "add_draft_playlist_tracks",
+            "add_playlist_tracks",
             {
                 "status": "Tracks ins Deck legen",
                 "tracks": [
@@ -154,14 +148,14 @@ class TestWorkspaceDraftPlaylistTool:
         assert store.drain_playlist_draft_updates() == []
 
     @pytest.mark.asyncio
-    async def test_add_draft_playlist_tracks_rejects_agent_pinned_flag(
+    async def test_add_playlist_tracks_rejects_agent_pinned_flag(
         self,
     ) -> None:
         store = PlaylistDraftStore()
         tools = Tools(ToolContext(store))
 
         result = await tools.execute(
-            "add_draft_playlist_tracks",
+            "add_playlist_tracks",
             {
                 "status": "Tracks ins Deck legen",
                 "tracks": [
@@ -209,7 +203,7 @@ class TestWorkspaceDraftPlaylistTool:
             },
         )
         add_result = await tools.execute(
-            "add_draft_playlist_tracks",
+            "add_playlist_tracks",
             {
                 "status": "Tracks ins Deck legen",
                 "tracks": [{"uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L"}],
@@ -224,7 +218,7 @@ class TestWorkspaceDraftPlaylistTool:
         assert tool_result.playlist_draft.tracks[0].title == "Take On Me"
 
     @pytest.mark.asyncio
-    async def test_add_remove_and_replace_draft_playlist_tracks_emit_diffs(
+    async def test_add_remove_and_replace_playlist_tracks_emit_diffs(
         self,
     ) -> None:
         store = PlaylistDraftStore()
@@ -256,7 +250,7 @@ class TestWorkspaceDraftPlaylistTool:
         tools = Tools(ToolContext(store))
 
         create_result = await tools.execute(
-            "add_draft_playlist_tracks",
+            "add_playlist_tracks",
             {
                 "status": "Tracks ins Deck legen",
                 "tracks": [
@@ -274,7 +268,7 @@ class TestWorkspaceDraftPlaylistTool:
         store.drain_playlist_draft_updates()
 
         added_playlist = await tools.execute(
-            "add_draft_playlist_tracks",
+            "add_playlist_tracks",
             {
                 "status": "Songs hinzufügen",
                 "tracks": [
@@ -296,7 +290,7 @@ class TestWorkspaceDraftPlaylistTool:
 
         first_track_id = playlist.tracks[0].id
         await tools.execute(
-            "replace_draft_playlist_tracks",
+            "replace_playlist_tracks",
             {
                 "status": "Song ersetzen",
                 "replacements": [
@@ -315,7 +309,7 @@ class TestWorkspaceDraftPlaylistTool:
 
         added_track_id = added_tool_result.playlist_draft.tracks[-1].id
         await tools.execute(
-            "remove_draft_playlist_tracks",
+            "remove_playlist_tracks",
             {
                 "status": "Song entfernen",
                 "track_ids": [str(added_track_id)],
@@ -327,7 +321,7 @@ class TestWorkspaceDraftPlaylistTool:
         assert remove_update.track_ids == [added_track_id]
 
     @pytest.mark.asyncio
-    async def test_add_draft_playlist_tracks_creates_missing_draft_and_skips_duplicates(
+    async def test_add_playlist_tracks_creates_missing_draft_and_skips_duplicates(
         self,
     ) -> None:
         store = PlaylistDraftStore()
@@ -350,7 +344,7 @@ class TestWorkspaceDraftPlaylistTool:
         tools = Tools(ToolContext(store))
 
         create_result = await tools.execute(
-            "add_draft_playlist_tracks",
+            "add_playlist_tracks",
             {
                 "status": "Songs ins Deck legen",
                 "tracks": [
@@ -372,7 +366,7 @@ class TestWorkspaceDraftPlaylistTool:
         assert create_update.kind == "created"
 
         add_result = await tools.execute(
-            "add_draft_playlist_tracks",
+            "add_playlist_tracks",
             {
                 "status": "Songs ins Deck legen",
                 "tracks": [
@@ -397,7 +391,7 @@ class TestWorkspaceDraftPlaylistTool:
         assert add_updates[0].tracks[0].title == "Billie Jean"
 
         duplicate_result = await tools.execute(
-            "add_draft_playlist_tracks",
+            "add_playlist_tracks",
             {
                 "status": "Songs ins Deck legen",
                 "tracks": [
@@ -440,14 +434,14 @@ class TestWorkspaceDraftPlaylistTool:
         pinned_track_id = pinned_track.id
 
         remove_result = await tools.execute(
-            "remove_draft_playlist_tracks",
+            "remove_playlist_tracks",
             {
                 "status": "Song entfernen",
                 "track_ids": [str(pinned_track_id)],
             },
         )
         replace_result = await tools.execute(
-            "replace_draft_playlist_tracks",
+            "replace_playlist_tracks",
             {
                 "status": "Song ersetzen",
                 "replacements": [

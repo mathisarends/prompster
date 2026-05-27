@@ -26,6 +26,10 @@ from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
 from backend.features.session.domain import SessionRepository
+from backend.features.session.infrastructure.agent_event_mapper import (
+    AgentSessionEventMapper,
+)
+from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
 from backend.features.session.infrastructure.session_runner import AgentSessionRunner
 from backend.features.session.infrastructure.pdf_generator import (
     TypstPlaylistDeckGenerator,
@@ -60,12 +64,27 @@ class SessionProvider(Provider):
         return LLMSessionTitleGenerator(llm=llm)
 
     @provide(scope=Scope.APP)
+    def provide_agent_session_event_mapper(self) -> AgentSessionEventMapper:
+        return AgentSessionEventMapper()
+
+    @provide(scope=Scope.APP)
+    def provide_agent_history_builder(self) -> AgentHistoryBuilder:
+        return AgentHistoryBuilder()
+
+    @provide(scope=Scope.APP)
     def provide_session_runner(
         self,
         llm: ChatModel,
         spotify: Spotifyify,
+        event_mapper: AgentSessionEventMapper,
+        history_builder: AgentHistoryBuilder,
     ) -> SessionRunner:
-        return AgentSessionRunner(llm=llm, spotify=spotify)
+        return AgentSessionRunner(
+            llm=llm,
+            spotify=spotify,
+            event_mapper=event_mapper,
+            history_builder=history_builder,
+        )
 
     @provide(scope=Scope.REQUEST)
     def provide_session_repository(self, session: AsyncSession) -> SessionRepository:

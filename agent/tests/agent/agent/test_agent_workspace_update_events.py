@@ -88,11 +88,6 @@ class TestAgentWorkspaceUpdateEvents:
         tool_args = {
             "name": "80er Party",
             "status": "Baue das 80er-Deck",
-            "tracks": [
-                {
-                    "uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-                }
-            ],
         }
         llm = _FakeLlm(
             [
@@ -102,7 +97,7 @@ class TestAgentWorkspaceUpdateEvents:
                         ToolCall(
                             id="call-1",
                             function={
-                                "name": "create_draft_playlist",
+                                "name": "create_playlist",
                                 "arguments": json.dumps(tool_args),
                             },
                         )
@@ -144,5 +139,5 @@ class TestAgentWorkspaceUpdateEvents:
             serialized_result["extracted_content"]["operations"][0]["success"] is True
         )
         assert workspace_update.playlist_draft.name == "80er Party"
-        assert workspace_update.playlist_draft.tracks[0].title == "Take On Me"
+        assert workspace_update.playlist_draft.tracks == []
         assert store.drain_playlist_draft_updates() == []

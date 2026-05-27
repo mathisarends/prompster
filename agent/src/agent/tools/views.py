@@ -128,7 +128,6 @@ class AlbumTracksParams(ToolParams):
 
 class CreateDraftPlaylistParams(ToolParams):
     name: str
-    tracks: list[TrackRef] = Field(min_length=1)
 
 
 class AddDraftPlaylistTracksParams(ToolParams):

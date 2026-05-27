@@ -253,106 +253,103 @@ class Tools:
 
         @self.action(
             description=(
-                "Create the Hitster playlist draft in the workspace from Spotify "
-                "track URI refs previously returned by search/fetch tools. Use this "
-                "for the initial draft; it fails if a draft already exists."
+                "Create an empty Hitster playlist in the workspace. Use this "
+                "before adding tracks incrementally; it fails if a playlist "
+                "already exists."
             ),
             params=CreateDraftPlaylistParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
         )
-        async def create_draft_playlist(
+        async def create_playlist(
             store: Inject[PlaylistDraftStore],
             params: CreateDraftPlaylistParams,
         ) -> ActionResult:
             try:
-                playlist = store.create_playlist_draft_from_refs(
-                    params.name,
-                    params.tracks,
-                )
-                return self._draft_success("create_draft_playlist", playlist)
+                playlist = store.create_empty_playlist_draft(params.name)
+                return self._draft_success("create_playlist", playlist)
             except Exception as error:
                 return self._draft_failure(
-                    "create_draft_playlist",
+                    "create_playlist",
                     store,
                     error,
                 )
 
         @self.action(
             description=(
-                "Put Spotify track URI refs into the Hitster playlist draft. Creates "
-                "a draft when none exists, otherwise appends only tracks that are not "
-                "already present by Spotify URI."
+                "Put Spotify track URI refs into the Hitster playlist. Creates "
+                "a playlist when none exists, otherwise appends only tracks that are "
+                "not already present by Spotify URI."
             ),
             params=AddDraftPlaylistTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
         )
-        async def add_draft_playlist_tracks(
+        async def add_playlist_tracks(
             store: Inject[PlaylistDraftStore],
             params: AddDraftPlaylistTracksParams,
         ) -> ActionResult:
             try:
                 updated_playlist = store.add_track_refs(params.tracks)
                 return self._draft_success(
-                    "add_draft_playlist_tracks",
+                    "add_playlist_tracks",
                     updated_playlist,
                 )
             except Exception as error:
                 return self._draft_failure(
-                    "add_draft_playlist_tracks",
+                    "add_playlist_tracks",
                     store,
                     error,
                 )
 
         @self.action(
             description=(
-                "Remove tracks from the current Hitster playlist draft by ID. "
+                "Remove tracks from the current Hitster playlist by ID. "
                 "Pinned tracks cannot be removed."
             ),
             params=RemoveDraftPlaylistTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
         )
-        async def remove_draft_playlist_tracks(
+        async def remove_playlist_tracks(
             store: Inject[PlaylistDraftStore],
             params: RemoveDraftPlaylistTracksParams,
         ) -> ActionResult:
             try:
                 updated_playlist = store.remove_tracks(params.track_ids)
                 return self._draft_success(
-                    "remove_draft_playlist_tracks",
+                    "remove_playlist_tracks",
                     updated_playlist,
                 )
             except Exception as error:
                 return self._draft_failure(
-                    "remove_draft_playlist_tracks",
+                    "remove_playlist_tracks",
                     store,
                     error,
                 )
 
         @self.action(
             description=(
-                "Replace tracks in the current Hitster playlist draft by ID. "
+                "Replace tracks in the current Hitster playlist by ID. "
                 "Pinned tracks cannot be replaced."
             ),
             params=ReplaceDraftPlaylistTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
         )
-        async def replace_draft_playlist_tracks(
+        async def replace_playlist_tracks(
             store: Inject[PlaylistDraftStore],
             params: ReplaceDraftPlaylistTracksParams,
         ) -> ActionResult:
             try:
                 updated_playlist = store.replace_track_refs(params.replacements)
                 return self._draft_success(
-                    "replace_draft_playlist_tracks",
+                    "replace_playlist_tracks",
                     updated_playlist,
                 )
             except Exception as error:
                 return self._draft_failure(
-                    "replace_draft_playlist_tracks",
+                    "replace_playlist_tracks",
                     store,
                     error,
                 )
@@ -360,8 +357,8 @@ class Tools:
         @self.action(
             description=(
                 "Fetch tracks from an external Spotify playlist by playlist ID or URI "
-                "for research. The returned tracks are cached for later draft tools; "
-                "this does not read or mutate the current workspace draft."
+                "for research. The returned tracks are cached for later playlist tools; "
+                "this does not read or mutate the current workspace playlist."
             ),
             params=PlaylistIdParams,
             status_label=lambda params: params.status,

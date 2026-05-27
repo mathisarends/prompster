@@ -19,9 +19,7 @@ from backend.features.session.domain import (
     UserCurationEvent,
     UserCurationEventType,
 )
-from backend.features.session.infrastructure.agent_history import (
-    build_agent_history,
-)
+from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
 
 
 class _SessionRepositoryStub(SessionRepository):
@@ -56,7 +54,7 @@ class _NoOpQuotaService:
 
 
 class TestSessionRunnerHistoryRendering:
-    """``build_agent_history`` produces the exact LLM message sequence the
+    """``AgentHistoryBuilder.build`` produces the exact LLM message sequence the
     agent will replay. Curation events bind to the user message they belong
     to and appear inline in its content — mirroring the domain model where
     ``UserMessage.user_curation_events`` is part of the user entity.
@@ -71,7 +69,7 @@ class TestSessionRunnerHistoryRendering:
         )
         session.add_user_message("mach weiter")
 
-        history = build_agent_history(session=session)
+        history = AgentHistoryBuilder().build(session=session)
 
         user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
         assert len(user_messages) == 2
@@ -101,7 +99,7 @@ class TestSessionRunnerHistoryRendering:
             user_curation_events=[event],
         )
 
-        history = build_agent_history(session=session)
+        history = AgentHistoryBuilder().build(session=session)
 
         assert len(history) == 1
         assert isinstance(history[0], LLMUserMessage)
@@ -127,7 +125,7 @@ class TestSessionRunnerHistoryRendering:
         for event in session.unconsumed_user_curation_events:
             event.mark_consumed()
 
-        history = build_agent_history(session=session)
+        history = AgentHistoryBuilder().build(session=session)
 
         user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
         assert "<user_events>" in user_messages[1].content
@@ -138,7 +136,7 @@ class TestSessionRunnerHistoryRendering:
         session.add_user_message("hi")
         session.add_assistant_message("hey")
 
-        history = build_agent_history(session=session)
+        history = AgentHistoryBuilder().build(session=session)
 
         user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
         assert [m.content for m in user_messages] == ["hi"]
@@ -173,7 +171,7 @@ class TestSessionRunnerHistoryRendering:
         for event in session.user_curation_events:
             event.mark_consumed()
 
-        history = build_agent_history(session=session)
+        history = AgentHistoryBuilder().build(session=session)
 
         # The pin event's timestamp is generated at runtime — pull it out so
         # the golden output below stays deterministic.
