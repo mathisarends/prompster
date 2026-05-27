@@ -61,20 +61,20 @@ class Agent:
     async def close(self) -> None:
         await self._spotify.close()
 
-    async def stream(self, message: str) -> AsyncGenerator[AgentEvent, None]:
-        self._messages.add_user(message)
-        yield RunStartedEvent(message=message)
-        async for event in self.continue_stream():
+    async def stream(
+        self, message: str | None = None
+    ) -> AsyncGenerator[AgentEvent, None]:
+        if message is not None:
+            self._messages.add_user(message)
+            yield RunStartedEvent(message=message)
+
+        async for event in self._run_loop():
             yield event
 
     async def resume(
         self, tool_call_id: str, answer: str
     ) -> AsyncGenerator[AgentEvent, None]:
         self._messages.add_tool_result(tool_call_id=tool_call_id, content=answer)
-        async for event in self.continue_stream():
-            yield event
-
-    async def continue_stream(self) -> AsyncGenerator[AgentEvent, None]:
         async for event in self._run_loop():
             yield event
 

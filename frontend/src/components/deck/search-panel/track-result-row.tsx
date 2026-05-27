@@ -15,8 +15,9 @@ type TrackResultRowProps = {
   disabled: boolean;
   isActive: boolean;
   isPlaying: boolean;
+  previewDisabled?: boolean;
   onAdd: () => void;
-  onTogglePreview: () => void;
+  onTogglePreview?: () => void;
 };
 
 export const TrackResultRow = ({
@@ -25,6 +26,7 @@ export const TrackResultRow = ({
   disabled,
   isActive,
   isPlaying,
+  previewDisabled = false,
   onAdd,
   onTogglePreview,
 }: TrackResultRowProps) => {
@@ -47,10 +49,14 @@ export const TrackResultRow = ({
               <button
                 type="button"
                 onClick={onTogglePreview}
+                disabled={previewDisabled}
                 aria-label={previewLabel}
                 className={cn(
                   "relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-[4px] bg-white/[0.06] text-muted-foreground shadow-sm outline-none ring-1 transition focus-visible:ring-2 focus-visible:ring-ring",
                   isActive ? "ring-primary/55" : "ring-white/[0.06]",
+                  previewDisabled
+                    ? "cursor-not-allowed opacity-55"
+                    : "cursor-pointer",
                 )}
               >
                 {track.coverUrl ? (

@@ -15,7 +15,7 @@ type SearchPanelContentProps = {
   activeTrackId?: string | null;
   isPlaying?: boolean;
   onAddTrack: (track: SpotifyTrackResponse) => void;
-  onPreviewTrack: (track: SpotifyTrackResponse) => void;
+  onPreviewTrack?: (track: SpotifyTrackResponse) => void;
 };
 
 export const SearchPanelContent = ({
@@ -63,8 +63,11 @@ export const SearchPanelContent = ({
           disabled={isAdding}
           isActive={activeTrackId === track.id}
           isPlaying={isPlaying}
+          previewDisabled={!onPreviewTrack}
           onAdd={() => onAddTrack(track)}
-          onTogglePreview={() => onPreviewTrack(track)}
+          onTogglePreview={
+            onPreviewTrack ? () => onPreviewTrack(track) : undefined
+          }
         />
       ))}
     </div>

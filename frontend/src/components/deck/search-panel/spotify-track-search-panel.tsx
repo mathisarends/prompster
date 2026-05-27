@@ -123,13 +123,17 @@ export const SpotifyTrackSearchResults = ({
       onAddTrack={(track) => {
         void addTrack(track);
       }}
-      onPreviewTrack={(track) => {
-        if (activeTrackId === track.id) {
-          onTogglePreviewPlayPause?.();
-          return;
-        }
-        onPreviewTrack?.(track);
-      }}
+      onPreviewTrack={
+        onPreviewTrack
+          ? (track) => {
+              if (activeTrackId === track.id) {
+                onTogglePreviewPlayPause?.();
+                return;
+              }
+              onPreviewTrack(track);
+            }
+          : undefined
+      }
     />
   );
 };

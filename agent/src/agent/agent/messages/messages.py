@@ -12,7 +12,7 @@ from llmify import (
 )
 
 from agent.agent.views import UserEvent, UserEvents
-from agent.playlist import PlaylistDraft
+from agent.playlist import PlaylistDraft, PlaylistDraftTrack
 
 _SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "system_prompt.md").read_text(
     encoding="utf-8"
@@ -71,8 +71,6 @@ class MessageManager:
         self._messages = []
 
     def _render_playlist_context(self) -> str | None:
-        """Gibt None zurück wenn kein Playlist-Draft existiert — dann wird
-        kein Context-Turn in die Message-History injiziert."""
         playlist_draft = (
             self._playlist_draft_provider()
             if self._playlist_draft_provider is not None
@@ -82,23 +80,33 @@ class MessageManager:
             return None
 
         lines = [
-            "<created_playlist>",
-            f"<id>{playlist_draft.id}</id>",
-            f"<name>{escape(playlist_draft.name)}</name>",
-            f"<track_count>{len(playlist_draft.tracks)}</track_count>",
+            (
+                f'<created_playlist id="{playlist_draft.id}" '
+                f'name="{escape(playlist_draft.name, quote=True)}" '
+                f'track_count="{len(playlist_draft.tracks)}" '
+                'pinned_tracks="hard_constraints">'
+            ),
         ]
-        for index, track in enumerate(playlist_draft.tracks, start=1):
-            track_text = (
-                f"{escape(track.artist)} - {escape(track.title)}"
-                if track.year is None
-                else f"{escape(track.artist)} - {escape(track.title)} ({track.year})"
-            )
-            lines.append(
-                f'<track index="{index}" id="{track.id}" pinned="{str(track.is_pinned).lower()}">'
-                f"{track_text}</track>"
-            )
+        lines.extend(
+            self._render_playlist_track(track) for track in playlist_draft.tracks
+        )
         lines.append("</created_playlist>")
         return "\n".join(lines)
+
+    def _render_playlist_track(self, track: PlaylistDraftTrack) -> str:
+        attrs = [
+            f'id="{track.id}"',
+            f'label="{self._render_track_label(track)}"',
+        ]
+        if track.is_pinned:
+            attrs.append('pinned="true"')
+        return f"<track {' '.join(attrs)} />"
+
+    def _render_track_label(self, track: PlaylistDraftTrack) -> str:
+        label = f"{track.artist} - {track.title}"
+        if track.year is not None:
+            label = f"{label} ({track.year})"
+        return escape(label, quote=True)
 
     def _get_user_events(self) -> UserEvents:
         return (

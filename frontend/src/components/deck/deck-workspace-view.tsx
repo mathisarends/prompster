@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Download, ListMusic } from "lucide-react";
 import { toast } from "sonner";
@@ -17,7 +17,7 @@ import {
   pinPlaylistTrack,
   unpinPlaylistTrack,
 } from "@/api/generated/session-api";
-import { useGetMe } from "@/api/generated/user-api";
+import { getGetMeQueryKey, useGetMe } from "@/api/generated/user-api";
 import { ChatWorkspacePanel } from "@/components/chat/chat-workspace-panel";
 import {
   DeckPlaylist,
@@ -43,11 +43,14 @@ type DeckWorkspaceViewProps = {
   onRemoveTrack?: (trackId: string) => Promise<void>;
 };
 
+type SpotifyMode = "loading" | "disconnected" | "non-premium" | "ready";
+
 export const DeckWorkspaceView = ({
   sessionId,
   playlist,
   onRemoveTrack,
 }: DeckWorkspaceViewProps) => {
+  const showSpotifyConnectDialog = false;
   const queryClient = useQueryClient();
   const { data: me, isLoading: isMeLoading } = useGetMe();
   const { isSpotifyOAuthLoading, openSpotifyOAuthPopup } =
@@ -60,6 +63,13 @@ export const DeckWorkspaceView = ({
   const [exportedPlaylist, setExportedPlaylist] =
     useState<SpotifyPlaylistExportResponse | null>(null);
   const [activeTab, setActiveTab] = useState("playlist");
+  const spotifyMode = useMemo<SpotifyMode>(() => {
+    if (isMeLoading || !me) return "loading";
+    if (!me.spotifyConnected) return "disconnected";
+    if (!me.spotifyPremium) return "non-premium";
+    return "ready";
+  }, [isMeLoading, me]);
+
   const {
     state: playerState,
     playTrack,
@@ -67,7 +77,7 @@ export const DeckWorkspaceView = ({
     resume,
     seek,
     setVolume: setSpotifyVolume,
-  } = useSpotifyPlayer({ enabled: Boolean(me?.spotifyConnected) });
+  } = useSpotifyPlayer({ enabled: spotifyMode === "ready" });
 
   const tracks = useMemo(
     () =>
@@ -99,6 +109,15 @@ export const DeckWorkspaceView = ({
     return null;
   }, [playerState.currentTrackUri, previewTrack, tracks]);
 
+  const runtimePlaybackBlocked =
+    spotifyMode === "ready" &&
+    (playerState.status === "premium-required" ||
+      playerState.status === "auth-error");
+  const showPlaybackControls =
+    spotifyMode === "ready" && !runtimePlaybackBlocked;
+  const showPremiumRequiredHint =
+    spotifyMode === "non-premium" || runtimePlaybackBlocked;
+
   const playSpotifyUri = useCallback(
     (uri: string) => {
       void playTrack(uri).catch(() => {
@@ -108,37 +127,43 @@ export const DeckWorkspaceView = ({
     [playTrack],
   );
 
-  const controller = useMemo<DeckPlaylistController>(
-    () => ({
-      isPlaying: !playerState.isPaused && Boolean(playerState.currentTrackUri),
-      activeTrackId,
-      positionSeconds: playerState.positionMs / 1000,
-      durationSeconds: playerState.durationMs / 1000,
-      volume,
-      onPlayTrack: (trackId: string) => {
-        const track =
-          tracks.find((candidate) => candidate.id === trackId) ??
-          (previewTrack?.id === trackId ? previewTrack : null);
-        if (!track?.spotifyUri) {
-          return;
-        }
+  const controller = useMemo<DeckPlaylistController | undefined>(
+    () => {
+      if (!showPlaybackControls) {
+        return undefined;
+      }
 
-        playSpotifyUri(track.spotifyUri);
-      },
-      onPause: () => {
-        void pause();
-      },
-      onResume: () => {
-        void resume();
-      },
-      onSeek: (seconds: number) => {
-        void seek(Math.round(seconds * 1000));
-      },
-      onVolumeChange: (nextVolume: number) => {
-        setVolume(nextVolume);
-        void setSpotifyVolume(nextVolume / 100);
-      },
-    }),
+      return {
+        isPlaying: !playerState.isPaused && Boolean(playerState.currentTrackUri),
+        activeTrackId,
+        positionSeconds: playerState.positionMs / 1000,
+        durationSeconds: playerState.durationMs / 1000,
+        volume,
+        onPlayTrack: (trackId: string) => {
+          const track =
+            tracks.find((candidate) => candidate.id === trackId) ??
+            (previewTrack?.id === trackId ? previewTrack : null);
+          if (!track?.spotifyUri) {
+            return;
+          }
+
+          playSpotifyUri(track.spotifyUri);
+        },
+        onPause: () => {
+          void pause();
+        },
+        onResume: () => {
+          void resume();
+        },
+        onSeek: (seconds: number) => {
+          void seek(Math.round(seconds * 1000));
+        },
+        onVolumeChange: (nextVolume: number) => {
+          setVolume(nextVolume);
+          void setSpotifyVolume(nextVolume / 100);
+        },
+      };
+    },
     [
       activeTrackId,
       pause,
@@ -151,6 +176,7 @@ export const DeckWorkspaceView = ({
       resume,
       seek,
       setSpotifyVolume,
+      showPlaybackControls,
       tracks,
       volume,
     ],
@@ -171,9 +197,17 @@ export const DeckWorkspaceView = ({
     playSpotifyUri(uri);
   };
 
-  const connectRequired =
-    (!isMeLoading && !me?.spotifyConnected) ||
-    playerState.status === "auth-error";
+  useEffect(() => {
+    if (spotifyMode !== "ready") return;
+    if (
+      playerState.status !== "premium-required" &&
+      playerState.status !== "auth-error"
+    ) {
+      return;
+    }
+
+    void queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+  }, [playerState.status, queryClient, spotifyMode]);
 
   const { pdfPreview, isLoadingPdfPreview } = usePdfPreview({
     sessionId,
@@ -269,11 +303,13 @@ export const DeckWorkspaceView = ({
 
   return (
     <>
-      <SpotifyConnectDialog
-        open={connectRequired}
-        onConnect={openSpotifyOAuthPopup}
-        isConnecting={isSpotifyOAuthLoading}
-      />
+      {showSpotifyConnectDialog ? (
+        <SpotifyConnectDialog
+          open={spotifyMode === "disconnected"}
+          onConnect={openSpotifyOAuthPopup}
+          isConnecting={isSpotifyOAuthLoading}
+        />
+      ) : null}
 
       <ChatWorkspacePanel>
         <Tabs
@@ -301,10 +337,11 @@ export const DeckWorkspaceView = ({
             value="playlist"
             className="flex min-h-0 flex-1 flex-col overflow-hidden"
           >
-            {playerState.status === "premium-required" ? (
+            {showPremiumRequiredHint ? (
               <div className="mb-3 rounded-md border border-amber-300/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-                Spotify Premium ist erforderlich, um Web-Playback im Browser zu
-                nutzen.
+                Spotify Premium ist erforderlich fuer In-Browser-Wiedergabe. Du
+                kannst die Playlist weiterhin kuratieren und nach Spotify
+                exportieren.
               </div>
             ) : null}
 
@@ -322,7 +359,9 @@ export const DeckWorkspaceView = ({
                   isPinned,
                 });
               }}
-              onPreviewSpotifyTrack={previewSpotifyTrack}
+              onPreviewSpotifyTrack={
+                showPlaybackControls ? previewSpotifyTrack : undefined
+              }
               previewTrack={previewTrack}
               isAddingSpotifyTrack={addSpotifyTrackMutation.isPending}
               pinningTrackId={

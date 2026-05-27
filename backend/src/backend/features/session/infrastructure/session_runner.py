@@ -90,7 +90,7 @@ class AgentSessionRunner(SessionRunner):
         )
 
         try:
-            async for event in agent.continue_stream():
+            async for event in agent.stream():
                 if isinstance(event, AssistantMessageChunkEvent):
                     yield SessionRunnerAssistantMessageChunk(chunk=event.chunk)
                 elif isinstance(event, AssistantMessageEvent):
@@ -183,9 +183,6 @@ def _to_history_messages(
                             content=call.error,
                         )
                     )
-    playlist_context = _to_playlist_context(session.playlist)
-    if playlist_context is not None:
-        messages.append(LLMUserMessage(content=playlist_context))
     return messages
 
 
@@ -288,35 +285,6 @@ def _to_playlist_draft_store(playlist: Playlist | None) -> PlaylistDraftStore:
                 for track in playlist.tracks
             ],
         )
-    )
-
-
-def _to_playlist_context(playlist: Playlist | None) -> str | None:
-    if playlist is None:
-        return None
-
-    tracks = [
-        {
-            "id": str(track.id),
-            "title": track.title,
-            "artist": track.artist,
-            "year": track.year,
-            "spotify_uri": track.spotify_uri,
-            "cover_url": track.cover_url,
-            "is_pinned": track.is_pinned,
-        }
-        for track in playlist.tracks
-    ]
-    return json.dumps(
-        {
-            "current_playlist_context": {
-                "id": str(playlist.id),
-                "name": playlist.name,
-                "pinned_tracks_are_hard_constraints": True,
-                "tracks": tracks,
-            }
-        },
-        ensure_ascii=False,
     )
 
 

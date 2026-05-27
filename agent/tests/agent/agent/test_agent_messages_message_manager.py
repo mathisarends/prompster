@@ -77,12 +77,12 @@ class TestMessageManager:
         assert messages[2].content == "Understood."
 
         content = messages[1].content
-        assert "<created_playlist>" in content
-        assert "<name>80er Party</name>" in content
-        assert "<track_count>1</track_count>" in content
         assert (
-            f'<track index="1" id="{playlist.tracks[0].id}" pinned="false">'
-            "a-ha - Take On Me (1985)</track>"
+            f'<created_playlist id="{playlist.id}" name="80er Party" '
+            'track_count="1" pinned_tracks="hard_constraints">'
+        ) in content
+        assert (
+            f'<track id="{playlist.tracks[0].id}" label="a-ha - Take On Me (1985)" />'
         ) in content
 
     def test_injects_user_events_as_synthetic_user_messages(self) -> None:

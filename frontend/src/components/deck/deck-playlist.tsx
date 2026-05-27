@@ -83,6 +83,16 @@ const compareYear = (
   return direction === "asc" ? leftYear - rightYear : rightYear - leftYear;
 };
 
+const toSpotifyWebUrl = (spotifyUri: string): string | null => {
+  const match = /^spotify:(track|album|artist|playlist):([A-Za-z0-9]+)$/.exec(
+    spotifyUri,
+  );
+  if (!match) return null;
+
+  const [, type, id] = match;
+  return `https://open.spotify.com/${type}/${id}`;
+};
+
 export const DeckPlaylist = ({
   className,
   initialTracks = [],
@@ -111,6 +121,17 @@ export const DeckPlaylist = ({
   const canRemoveTracks = allowLocalRemoval || Boolean(onRemoveTrack);
   const canToggleTrackPin = Boolean(onToggleTrackPin);
   const canAddSpotifyTrack = Boolean(onAddSpotifyTrack);
+  const hasPlaybackController = Boolean(controller);
+
+  const openTrackOnSpotify = (track: PlaylistTrack) => {
+    if (!track.spotifyUri) return;
+
+    const spotifyUrl =
+      toSpotifyWebUrl(track.spotifyUri) ??
+      `https://open.spotify.com/search/${encodeURIComponent(`${track.title} ${track.artist}`)}`;
+
+    window.open(spotifyUrl, "_blank", "noopener,noreferrer");
+  };
 
   const visibleTracks = useMemo(
     () =>
@@ -187,7 +208,7 @@ export const DeckPlaylist = ({
   const renderPlaylistTracks = (tracks: PlaylistTrack[]) =>
     tracks.map((track) => {
       const isActive = track.id === playback.activeTrackId;
-      const isPlayable = controller ? Boolean(track.spotifyUri) : true;
+      const isPlayable = Boolean(track.spotifyUri);
 
       return (
         <DeckPlaylistTrackItem
@@ -204,13 +225,20 @@ export const DeckPlaylist = ({
             if (isPlayable) playback.activateTrack(track.id);
           }}
           onTogglePlayPause={() => {
+            if (!isPlayable) return;
+
+            if (!hasPlaybackController) {
+              openTrackOnSpotify(track);
+              return;
+            }
+
             if (isActive) {
               if (playback.isPlaying) {
                 playback.onPause();
               } else {
                 playback.onResume();
               }
-            } else if (isPlayable) {
+            } else {
               playback.activateTrack(track.id);
             }
           }}
@@ -330,8 +358,14 @@ export const DeckPlaylist = ({
                       activeTrackId={playback.activeTrackId}
                       isPlaying={playback.isPlaying}
                       onAddTrack={onAddSpotifyTrack}
-                      onPreviewTrack={onPreviewSpotifyTrack}
-                      onTogglePreviewPlayPause={playback.onPlayPause}
+                      onPreviewTrack={
+                        hasPlaybackController
+                          ? onPreviewSpotifyTrack
+                          : undefined
+                      }
+                      onTogglePreviewPlayPause={
+                        hasPlaybackController ? playback.onPlayPause : undefined
+                      }
                     />
                   </section>
                 ) : null}
@@ -348,23 +382,25 @@ export const DeckPlaylist = ({
           </ScrollArea>
         </div>
 
-        <DeckPlayer
-          activeTrack={activeTrack}
-          elapsedSeconds={playback.elapsedSeconds}
-          durationSeconds={playback.durationSeconds}
-          isPlaying={playback.isPlaying}
-          volume={playback.volume}
-          shuffleEnabled={playback.shuffleEnabled}
-          repeatMode={playback.repeatMode}
-          hasAdjacentTracks={playback.hasAdjacentTracks}
-          onPlayPause={playback.onPlayPause}
-          onSeek={playback.onSeek}
-          onVolumeChange={playback.onVolumeChange}
-          onNextTrack={playback.onNextTrack}
-          onPreviousTrack={playback.onPreviousTrack}
-          onToggleShuffle={playback.onToggleShuffle}
-          onCycleRepeat={playback.onCycleRepeat}
-        />
+        {hasPlaybackController ? (
+          <DeckPlayer
+            activeTrack={activeTrack}
+            elapsedSeconds={playback.elapsedSeconds}
+            durationSeconds={playback.durationSeconds}
+            isPlaying={playback.isPlaying}
+            volume={playback.volume}
+            shuffleEnabled={playback.shuffleEnabled}
+            repeatMode={playback.repeatMode}
+            hasAdjacentTracks={playback.hasAdjacentTracks}
+            onPlayPause={playback.onPlayPause}
+            onSeek={playback.onSeek}
+            onVolumeChange={playback.onVolumeChange}
+            onNextTrack={playback.onNextTrack}
+            onPreviousTrack={playback.onPreviousTrack}
+            onToggleShuffle={playback.onToggleShuffle}
+            onCycleRepeat={playback.onCycleRepeat}
+          />
+        ) : null}
       </div>
     </TooltipProvider>
   );
