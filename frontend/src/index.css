@@ -248,14 +248,14 @@ body {
 @keyframes chat-tool-running-flash {
   0% {
     background-position: 140% 50%;
-    filter: brightness(0.9);
+    filter: brightness(0.96);
   }
   45% {
-    filter: brightness(1.18);
+    filter: brightness(1.08);
   }
   100% {
     background-position: -140% 50%;
-    filter: brightness(0.95);
+    filter: brightness(0.98);
   }
 }
 
@@ -392,8 +392,8 @@ body {
   background-size: 260% 100%;
   background-clip: text;
   -webkit-background-clip: text;
-  text-shadow: 0 0 18px hsl(141 80% 50% / 0.18);
-  animation: chat-tool-running-flash 2.2s ease-in-out infinite;
+  text-shadow: 0 0 14px hsl(141 80% 50% / 0.12);
+  animation: chat-tool-running-flash 3.8s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
