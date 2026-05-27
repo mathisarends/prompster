@@ -4,24 +4,34 @@ from typing import cast
 from uuid import UUID, uuid4
 
 from backend.features.user.application import UserDeleteInformation
-from backend.features.user.application import UserMessageQuotaSnapshot
-from backend.features.user.application import UserMessageQuotaService
+from backend.features.user.application import UserMessageRateLimitService
+from backend.features.user.application import UserMessageRateLimitSnapshot
 from backend.features.user.application import UserService
+from backend.features.user.domain import SpotifyAccount, User
 from backend.features.user.presentation.router import (
     delete_me,
     get_delete_information,
-    get_my_message_quota,
+    get_me,
 )
 
 
 class _UserServiceStub:
     def __init__(self) -> None:
+        self.received_get_me_user_id: UUID | None = None
         self.received_delete_user_id: UUID | None = None
         self.received_delete_information_user_id: UUID | None = None
         self.session_count = 0
+        self.user = User(
+            id=uuid4(),
+            name="Mathis",
+            email="mathis@example.com",
+            spotify=SpotifyAccount.connected_with(is_premium=True),
+            created_time=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        )
 
     async def get_me(self, *, user_id: UUID):
-        raise AssertionError("delete_me route must not call get_me")
+        self.received_get_me_user_id = user_id
+        return self.user
 
     async def delete_me(self, *, user_id: UUID) -> None:
         self.received_delete_user_id = user_id
@@ -31,18 +41,48 @@ class _UserServiceStub:
         return UserDeleteInformation(session_count=self.session_count)
 
 
-class _UserMessageQuotaServiceStub:
+class _UserMessageRateLimitServiceStub:
     def __init__(self) -> None:
         self.received_user_id: UUID | None = None
-        self.snapshot = UserMessageQuotaSnapshot(
+        self.snapshot = UserMessageRateLimitSnapshot(
             limit=50,
             remaining=49,
             reset_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
         )
 
-    async def inspect(self, *, user_id: UUID) -> UserMessageQuotaSnapshot:
+    async def inspect(self, *, user_id: UUID) -> UserMessageRateLimitSnapshot:
         self.received_user_id = user_id
         return self.snapshot
+
+
+class TestGetMeRoute:
+    def test_get_me_returns_user_with_message_rate_limit(self) -> None:
+        user_service = _UserServiceStub()
+        rate_limit_service = _UserMessageRateLimitServiceStub()
+        authenticated_user_id = uuid4()
+
+        response = asyncio.run(
+            get_me(
+                authenticated_user_id=authenticated_user_id,
+                service=cast(UserService, user_service),
+                message_rate_limit_service=cast(
+                    UserMessageRateLimitService,
+                    rate_limit_service,
+                ),
+            )
+        )
+
+        assert response.id == user_service.user.id
+        assert response.name == "Mathis"
+        assert response.spotify_connected is True
+        assert response.spotify_premium is True
+        assert response.message_rate_limit.limit == 50
+        assert response.message_rate_limit.remaining == 49
+        assert response.message_rate_limit.reset_at == datetime(
+            2026, 1, 2, tzinfo=timezone.utc
+        )
+        assert user_service.received_get_me_user_id == authenticated_user_id
+        assert rate_limit_service.received_user_id == authenticated_user_id
 
 
 class TestDeleteMeRoute:
@@ -76,21 +116,3 @@ class TestGetDeleteInformationRoute:
 
         assert response.session_count == 5
         assert service.received_delete_information_user_id == authenticated_user_id
-
-
-class TestGetMyMessageQuotaRoute:
-    def test_get_my_message_quota_returns_snapshot_for_authenticated_user(self) -> None:
-        service = _UserMessageQuotaServiceStub()
-        authenticated_user_id = uuid4()
-
-        response = asyncio.run(
-            get_my_message_quota(
-                authenticated_user_id=authenticated_user_id,
-                service=cast(UserMessageQuotaService, service),
-            )
-        )
-
-        assert response.limit == 50
-        assert response.remaining == 49
-        assert response.reset_at == datetime(2026, 1, 2, tzinfo=timezone.utc)
-        assert service.received_user_id == authenticated_user_id

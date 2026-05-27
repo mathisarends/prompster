@@ -3,7 +3,7 @@ from datetime import timedelta
 
 
 @dataclass(frozen=True)
-class UserMessageQuotaPolicy:
+class UserMessageRateLimitPolicy:
     daily_message_limit: int
     window: timedelta = timedelta(hours=24)
 

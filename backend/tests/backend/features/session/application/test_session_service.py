@@ -197,7 +197,7 @@ def _make_conversation_service(
     return SessionConversationService(
         session_repository=repository or _SessionRepositoryStub(),
         runner=runner or _SessionRunnerStub(),
-        user_message_quota_service=quota_service or _UserMessageQuotaServiceStub(),
+        user_message_rate_limit_service=quota_service or _UserMessageQuotaServiceStub(),
     )
 
 

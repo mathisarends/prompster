@@ -6,7 +6,7 @@ from uuid import UUID
 
 from backend.features.user.domain import (
     UserMessageQuotaExceededError,
-    UserMessageQuotaPolicy,
+    UserMessageRateLimitPolicy,
     UserMessageQuotaRepository,
 )
 
@@ -14,17 +14,17 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
-class UserMessageQuotaSnapshot:
+class UserMessageRateLimitSnapshot:
     limit: int
     remaining: int
     reset_at: datetime
 
 
-class UserMessageQuotaService:
+class UserMessageRateLimitService:
     def __init__(
         self,
         quota_repository: UserMessageQuotaRepository,
-        policy: UserMessageQuotaPolicy,
+        policy: UserMessageRateLimitPolicy,
     ) -> None:
         self._quota_repository = quota_repository
         self._policy = policy
@@ -54,17 +54,17 @@ class UserMessageQuotaService:
                 self._policy.daily_message_limit,
             )
 
-    async def inspect(self, *, user_id: UUID) -> UserMessageQuotaSnapshot:
+    async def inspect(self, *, user_id: UUID) -> UserMessageRateLimitSnapshot:
         quota = await self._quota_repository.get_by_user_id(user_id=user_id)
         now = datetime.now(timezone.utc)
         if quota is None or quota.is_window_expired(policy=self._policy, now=now):
-            return UserMessageQuotaSnapshot(
+            return UserMessageRateLimitSnapshot(
                 limit=self._policy.daily_message_limit,
                 remaining=self._policy.daily_message_limit,
                 reset_at=now + self._policy.window,
             )
 
-        return UserMessageQuotaSnapshot(
+        return UserMessageRateLimitSnapshot(
             limit=self._policy.daily_message_limit,
             remaining=quota.remaining(policy=self._policy),
             reset_at=quota.reset_at(policy=self._policy),

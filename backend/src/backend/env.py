@@ -38,3 +38,14 @@ class EnvSettings(BaseSettings):
         if not value.startswith(("http://", "https://")):
             raise ValueError("Frontend URL must start with http:// or https://")
         return value.rstrip("/")
+
+
+class RateLimitSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        populate_by_name=True,
+    )
+
+    agent_message_daily_limit: int = 50

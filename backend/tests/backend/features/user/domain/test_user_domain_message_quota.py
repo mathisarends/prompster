@@ -6,20 +6,20 @@ import pytest
 from backend.features.user.domain import (
     UserMessageQuota,
     UserMessageQuotaExceededError,
-    UserMessageQuotaPolicy,
+    UserMessageRateLimitPolicy,
 )
 
 
-class TestUserMessageQuotaPolicy:
+class TestUserMessageRateLimitPolicy:
     def test_rejects_non_positive_daily_limit(self) -> None:
         with pytest.raises(ValueError, match="daily_message_limit must be positive"):
-            UserMessageQuotaPolicy(daily_message_limit=0)
+            UserMessageRateLimitPolicy(daily_message_limit=0)
 
 
 class TestUserMessageQuota:
     def test_consume_increments_messages_consumed(self) -> None:
         user_id = uuid4()
-        policy = UserMessageQuotaPolicy(daily_message_limit=3)
+        policy = UserMessageRateLimitPolicy(daily_message_limit=3)
         quota = UserMessageQuota.fresh(
             user_id=user_id,
             now=datetime(2026, 1, 1, tzinfo=timezone.utc),
@@ -33,7 +33,7 @@ class TestUserMessageQuota:
     def test_consume_raises_when_limit_is_reached(self) -> None:
         user_id = uuid4()
         now = datetime(2026, 1, 1, tzinfo=timezone.utc)
-        policy = UserMessageQuotaPolicy(daily_message_limit=1)
+        policy = UserMessageRateLimitPolicy(daily_message_limit=1)
         quota = UserMessageQuota(
             user_id=user_id,
             window_started_at=now,
@@ -50,7 +50,7 @@ class TestUserMessageQuota:
         user_id = uuid4()
         started_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
         now = datetime(2026, 1, 2, tzinfo=timezone.utc)
-        policy = UserMessageQuotaPolicy(daily_message_limit=5)
+        policy = UserMessageRateLimitPolicy(daily_message_limit=5)
         quota = UserMessageQuota(
             user_id=user_id,
             window_started_at=started_at,

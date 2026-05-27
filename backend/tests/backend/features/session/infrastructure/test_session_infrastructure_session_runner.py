@@ -131,7 +131,7 @@ class TestSessionRunnerMessageContext:
         service = SessionConversationService(
             session_repository=repository,
             runner=_EmptyRunner(),
-            user_message_quota_service=_NoOpQuotaService(),
+            user_message_rate_limit_service=_NoOpQuotaService(),
         )
 
         async def run() -> None:

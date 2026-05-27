@@ -4,7 +4,7 @@ from uuid import UUID
 
 from backend.features.user.domain.exceptions import UserMessageQuotaExceededError
 from backend.features.user.domain.user_message_quota_policy import (
-    UserMessageQuotaPolicy,
+    UserMessageRateLimitPolicy,
 )
 from backend.shared.ddd import Aggregate
 
@@ -38,16 +38,16 @@ class UserMessageQuota(Aggregate):
             messages_consumed=0,
         )
 
-    def reset_at(self, *, policy: UserMessageQuotaPolicy) -> datetime:
+    def reset_at(self, *, policy: UserMessageRateLimitPolicy) -> datetime:
         return self.window_started_at + policy.window
 
-    def remaining(self, *, policy: UserMessageQuotaPolicy) -> int:
+    def remaining(self, *, policy: UserMessageRateLimitPolicy) -> int:
         return max(0, policy.daily_message_limit - self.messages_consumed)
 
     def is_window_expired(
         self,
         *,
-        policy: UserMessageQuotaPolicy,
+        policy: UserMessageRateLimitPolicy,
         now: datetime,
     ) -> bool:
         return now >= self.reset_at(policy=policy)
@@ -55,7 +55,7 @@ class UserMessageQuota(Aggregate):
     def consume(
         self,
         *,
-        policy: UserMessageQuotaPolicy,
+        policy: UserMessageRateLimitPolicy,
         now: datetime,
     ) -> None:
         if self.is_window_expired(policy=policy, now=now):

@@ -11,13 +11,14 @@ class UserMeResponse(Schema):
     created_at: datetime
     spotify_connected: bool
     spotify_premium: bool
+    message_rate_limit: "UserMessageRateLimitResponse"
 
 
 class UserDeleteInformationResponse(Schema):
     session_count: int
 
 
-class UserMessageQuotaResponse(Schema):
+class UserMessageRateLimitResponse(Schema):
     limit: int
     remaining: int
     reset_at: datetime

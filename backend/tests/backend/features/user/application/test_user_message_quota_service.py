@@ -2,10 +2,10 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
-from backend.features.user.application import UserMessageQuotaService
+from backend.features.user.application import UserMessageRateLimitService
 from backend.features.user.domain import (
     UserMessageQuota,
-    UserMessageQuotaPolicy,
+    UserMessageRateLimitPolicy,
     UserMessageQuotaRepository,
 )
 
@@ -32,7 +32,7 @@ class _UserMessageQuotaRepositoryStub(UserMessageQuotaRepository):
         return quota
 
 
-class TestUserMessageQuotaService:
+class TestUserMessageRateLimitService:
     def test_consume_increments_and_persists(self) -> None:
         user_id = uuid4()
         repository = _UserMessageQuotaRepositoryStub()
@@ -40,9 +40,9 @@ class TestUserMessageQuotaService:
             user_id=user_id,
             now=datetime(2026, 1, 1, tzinfo=timezone.utc),
         )
-        service = UserMessageQuotaService(
+        service = UserMessageRateLimitService(
             quota_repository=repository,
-            policy=UserMessageQuotaPolicy(daily_message_limit=50),
+            policy=UserMessageRateLimitPolicy(daily_message_limit=50),
         )
 
         asyncio.run(service.consume(user_id=user_id))
@@ -55,9 +55,9 @@ class TestUserMessageQuotaService:
     def test_inspect_returns_full_limit_for_new_user(self) -> None:
         user_id = uuid4()
         repository = _UserMessageQuotaRepositoryStub()
-        service = UserMessageQuotaService(
+        service = UserMessageRateLimitService(
             quota_repository=repository,
-            policy=UserMessageQuotaPolicy(daily_message_limit=50),
+            policy=UserMessageRateLimitPolicy(daily_message_limit=50),
         )
 
         snapshot = asyncio.run(service.inspect(user_id=user_id))
@@ -76,9 +76,9 @@ class TestUserMessageQuotaService:
             window_started_at=now - timedelta(days=2),
             messages_consumed=50,
         )
-        service = UserMessageQuotaService(
+        service = UserMessageRateLimitService(
             quota_repository=repository,
-            policy=UserMessageQuotaPolicy(daily_message_limit=50),
+            policy=UserMessageRateLimitPolicy(daily_message_limit=50),
         )
 
         snapshot = asyncio.run(service.inspect(user_id=user_id))
