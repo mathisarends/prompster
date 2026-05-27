@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { HeaderStatusIcon, TimelineIcon } from "./tool-call-sequence-icons";
+import { TimelineIcon } from "./tool-call-sequence-icons";
 import type {
   ToolCallAccordionProps,
   ToolCallItem,
@@ -47,17 +46,14 @@ export const ToolCallAccordion = ({
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        className="group flex w-full items-center gap-2.5 rounded-md py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        className="group flex w-full items-center rounded-md py-1 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
         aria-expanded={isOpen}
       >
-        <HeaderStatusIcon
-          status={isRunning ? "running" : hasFailed ? "failed" : "completed"}
-        />
         <span
           className={cn(
             "min-w-0 flex-1 truncate text-sm leading-5",
             isRunning
-              ? "font-medium text-foreground"
+              ? "chat-tool-running-text font-medium text-foreground"
               : hasFailed
                 ? "font-medium text-destructive"
                 : "text-foreground/80 group-hover:text-foreground",
@@ -65,12 +61,6 @@ export const ToolCallAccordion = ({
         >
           {headerLabel}
         </span>
-        <ChevronDown
-          className={cn(
-            "size-4 shrink-0 text-muted-foreground/50 transition-transform duration-200 group-hover:text-muted-foreground",
-            isOpen && "rotate-180",
-          )}
-        />
       </button>
 
       {isOpen && (

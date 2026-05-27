@@ -413,11 +413,14 @@ class SessionConversationService:
             elif isinstance(event, SessionRunnerCancelled):
                 if on_cancelled is not None:
                     on_cancelled()
+                session.remove_last_pending_tool_call()
                 if current_assistant_message is not None:
                     await self._session_repository.save(session=session)
                     yield SessionAssistantMessageCancelled(
                         message_id=current_assistant_message.id
                     )
+                else:
+                    await self._session_repository.save(session=session)
                 return
 
     async def _run_agent_and_consume_user_curation_events(

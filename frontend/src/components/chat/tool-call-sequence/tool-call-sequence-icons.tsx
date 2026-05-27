@@ -1,5 +1,4 @@
 import {
-  Check,
   CircleAlert,
   Download,
   Loader2,
@@ -56,35 +55,6 @@ const renderActionIcon = (actionType: ToolCallItem["actionType"]) => {
       className="size-[14px] shrink-0 text-muted-foreground/80"
       strokeWidth={2}
     />
-  );
-};
-
-export const HeaderStatusIcon = ({ status }: { status: ToolCallStatus }) => {
-  if (status === "running") {
-    return (
-      <span className="relative flex size-[18px] shrink-0 items-center justify-center">
-        <span
-          aria-hidden="true"
-          className="absolute inset-0 animate-ping rounded-full bg-primary/25 opacity-70"
-        />
-        <Loader2 className="relative size-[14px] animate-spin text-primary" />
-      </span>
-    );
-  }
-
-  if (status === "failed") {
-    return (
-      <CircleAlert
-        className="size-[16px] shrink-0 text-destructive"
-        strokeWidth={2.25}
-      />
-    );
-  }
-
-  return (
-    <span className="flex size-[16px] shrink-0 items-center justify-center rounded-full border border-primary/50 bg-primary/[0.08]">
-      <Check className="size-[10px] text-primary" strokeWidth={3} />
-    </span>
   );
 };
 

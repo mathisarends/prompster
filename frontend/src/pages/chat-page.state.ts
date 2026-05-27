@@ -83,6 +83,7 @@ export type ChatAction =
       skipPendingFollowUps?: boolean;
     }
   | { type: "stream/finished" }
+  | { type: "stream/stopped" }
   | { type: "stream/failed"; message: string }
   | { type: "stream/event"; event: SessionServerEvent }
   | { type: "follow-up/draft-changed"; questionId: string; value: string }
@@ -139,6 +140,12 @@ export const chatReducer = (
         ...state,
         entries: finishStreamingAssistantEntries(state.entries),
         isStreaming: false,
+      };
+
+    case "stream/stopped":
+      return {
+        ...state,
+        entries: removeLastPendingToolCall(state.entries),
       };
 
     case "stream/failed":
@@ -646,6 +653,31 @@ const completeToolCallGroup = (entries: ChatEntry[], groupId: string) =>
       ),
     };
   });
+
+const removeLastPendingToolCall = (entries: ChatEntry[]): ChatEntry[] => {
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (entry.kind !== "tool_call_group") continue;
+
+    const pendingIndex = entry.calls.findLastIndex(
+      (call) => call.state === "pending",
+    );
+    if (pendingIndex === -1) continue;
+
+    const calls = entry.calls.filter(
+      (_call, callIndex) => callIndex !== pendingIndex,
+    );
+    if (calls.length === 0) {
+      return entries.filter((_candidate, entryIndex) => entryIndex !== index);
+    }
+
+    const nextEntries = [...entries];
+    nextEntries[index] = { ...entry, calls };
+    return nextEntries;
+  }
+
+  return entries;
+};
 
 const answerFollowUpQuestion = (
   entries: ChatEntry[],

@@ -245,6 +245,20 @@ body {
   }
 }
 
+@keyframes chat-tool-running-flash {
+  0% {
+    background-position: 140% 50%;
+    filter: brightness(0.9);
+  }
+  45% {
+    filter: brightness(1.18);
+  }
+  100% {
+    background-position: -140% 50%;
+    filter: brightness(0.95);
+  }
+}
+
 .chat-assistant-message {
   animation: chat-message-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -364,12 +378,31 @@ body {
   animation-delay: 0.32s;
 }
 
+.chat-tool-running-text {
+  color: transparent;
+  background-image: linear-gradient(
+    90deg,
+    hsl(0 0% 72%) 0%,
+    hsl(0 0% 96%) 22%,
+    hsl(141 74% 58%) 38%,
+    hsl(0 0% 98%) 52%,
+    hsl(0 0% 76%) 74%,
+    hsl(0 0% 92%) 100%
+  );
+  background-size: 260% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  text-shadow: 0 0 18px hsl(141 80% 50% / 0.18);
+  animation: chat-tool-running-flash 2.2s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .chat-assistant-message {
     animation: none;
   }
   .chat-assistant-prose.is-streaming > :last-child::after,
-  .chat-thinking-dot {
+  .chat-thinking-dot,
+  .chat-tool-running-text {
     animation: none;
   }
 }

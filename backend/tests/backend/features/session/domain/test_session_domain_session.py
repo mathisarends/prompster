@@ -628,6 +628,31 @@ class TestSessionDomainSession:
         assert isinstance(failed, FailedCall)
         assert failed.error == "timeout"
 
+    def test_remove_last_pending_tool_call_removes_empty_sequence(
+        self, session: Session
+    ) -> None:
+        session.add_tool_call(make_pending_call("tc-1"))
+
+        removed = session.remove_last_pending_tool_call()
+
+        assert removed is not None
+        assert removed.id == "tc-1"
+        assert session.entries == ()
+
+    def test_remove_last_pending_tool_call_keeps_resolved_calls(
+        self, session: Session
+    ) -> None:
+        sequence = session.add_tool_call(make_pending_call("tc-1"))
+        session.resolve_tool_call("tc-1", "ok")
+        session.add_tool_call(make_pending_call("tc-2"))
+
+        removed = session.remove_last_pending_tool_call()
+
+        assert removed is not None
+        assert removed.id == "tc-2"
+        assert session.entries == (sequence,)
+        assert [call.id for call in sequence.calls] == ["tc-1"]
+
     def test_resolve_tool_call_raises_without_pending_group(
         self, session: Session
     ) -> None:

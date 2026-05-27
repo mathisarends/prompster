@@ -38,6 +38,13 @@ class ToolCallSequence(Entity):
         self.calls.append(call)
         return call
 
+    def remove_last_pending(self) -> PendingCall | None:
+        for index in range(len(self.calls) - 1, -1, -1):
+            call = self.calls[index]
+            if isinstance(call, PendingCall):
+                return self.calls.pop(index)
+        return None
+
     def resolve(self, tool_call_id: str, result: str) -> CompletedCall:
         index, pending = self._require_pending(tool_call_id)
         completed = CompletedCall(

@@ -813,6 +813,37 @@ class TestSessionServiceSendMessage:
         assert assistant_messages[0].content == "Hi"
         assert len(repository.saved_sessions) == 3
 
+    def test_removes_pending_tool_call_when_runner_is_cancelled(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        pending_call = PendingCall(
+            id="call-1",
+            function=ToolFunction(name="search_tracks", arguments={"query": "ski"}),
+        )
+        repository = _SessionRepositoryStub(session_by_id=session)
+        runner = _SessionRunnerStub(
+            events=[
+                SessionRunnerToolCallStarted(call=pending_call),
+                SessionRunnerCancelled(),
+            ]
+        )
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="weiter",
+                )
+            )
+        )
+
+        assert [
+            entry for entry in session.entries if isinstance(entry, ToolCallSequence)
+        ] == []
+        assert len(repository.saved_sessions) == 3
+
     def test_stop_message_delegates_to_runner(self) -> None:
         owner_id = uuid4()
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)

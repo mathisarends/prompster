@@ -66,3 +66,18 @@ class TestSessionDomainToolCallSequence:
 
         assert appended.id == "tc-1"
         assert len(sequence.calls) == 1
+
+    def test_remove_last_pending_removes_latest_unresolved_call(self) -> None:
+        sequence = ToolCallSequence(
+            calls=[
+                make_pending_call("tc-1"),
+                make_pending_call("tc-2"),
+            ]
+        )
+        sequence.resolve("tc-1", "ok")
+
+        removed = sequence.remove_last_pending()
+
+        assert removed is not None
+        assert removed.id == "tc-2"
+        assert [call.id for call in sequence.calls] == ["tc-1"]

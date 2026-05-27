@@ -269,6 +269,16 @@ class Session(Aggregate):
         sequence = self._require_pending_tool_call_sequence()
         return sequence.fail(tool_call_id, error)
 
+    def remove_last_pending_tool_call(self) -> PendingCall | None:
+        sequence = self._find_pending_tool_call_sequence()
+        if sequence is None:
+            return None
+
+        removed = sequence.remove_last_pending()
+        if removed is not None and not sequence.calls:
+            self._entries.remove(sequence)
+        return removed
+
     def add_follow_up_questions(
         self, questions: list[FollowUpQuestion]
     ) -> FollowUpQuestionGroup:

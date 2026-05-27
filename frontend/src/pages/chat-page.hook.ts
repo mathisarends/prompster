@@ -256,6 +256,7 @@ export const useChatSession = ({
     void (async () => {
       try {
         await stopSessionMessage(sessionId);
+        dispatch({ type: "stream/stopped" });
       } catch {
         abortControllerRef.current?.abort();
         return;
