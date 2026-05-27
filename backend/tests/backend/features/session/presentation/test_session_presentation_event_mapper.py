@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from backend.features.session.application import (
     SessionAssistantMessageChunk,
+    SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionFollowUpGroupAdded,
@@ -27,6 +28,7 @@ from backend.features.session.domain import (
 )
 from backend.features.session.presentation.sse.events import (
     AssistantMessageChunkEvent,
+    AssistantMessageCancelledEvent,
     AssistantMessageCompletedEvent,
     AssistantMessageStartedEvent,
     FollowUpGroupAddedEvent,
@@ -82,6 +84,15 @@ class TestSessionEventMapper:
         assert event.type == SessionEventType.ASSISTANT_MESSAGE_COMPLETED
         assert event.message.id == message.id
         assert event.message.content == "Hello world"
+
+    def test_to_server_event_maps_assistant_message_cancelled(self) -> None:
+        message_id = uuid4()
+
+        event = to_server_event(SessionAssistantMessageCancelled(message_id=message_id))
+
+        assert isinstance(event, AssistantMessageCancelledEvent)
+        assert event.type == SessionEventType.ASSISTANT_MESSAGE_CANCELLED
+        assert event.message_id == message_id
 
     def test_to_server_event_maps_tool_call_sequence_added(self) -> None:
         sequence = ToolCallSequence(

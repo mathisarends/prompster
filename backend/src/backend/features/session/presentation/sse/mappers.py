@@ -1,5 +1,6 @@
 from backend.features.session.application import (
     SessionAssistantMessageChunk,
+    SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionEvent,
@@ -24,6 +25,7 @@ from backend.features.session.presentation.schemas import (
 )
 from backend.features.session.presentation.sse.events import (
     AssistantMessageChunkEvent,
+    AssistantMessageCancelledEvent,
     AssistantMessageCompletedEvent,
     AssistantMessageStartedEvent,
     FollowUpGroupAddedEvent,
@@ -61,6 +63,9 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
                 created_at=event.message.created_at,
             ),
         )
+
+    if isinstance(event, SessionAssistantMessageCancelled):
+        return AssistantMessageCancelledEvent(message_id=event.message_id)
 
     if isinstance(event, SessionToolCallSequenceAdded):
         return ToolCallSequenceAddedEvent(

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import {
   useLocation,
   useNavigate,
@@ -11,6 +12,7 @@ import { AssistantChatMessage } from "@/components/chat/assistant-chat-message";
 import { ChatInputBox } from "@/components/chat/chat-input-box";
 import { ChatMessageSkeleton } from "@/components/chat/chat-message-skeleton";
 import { ChatPageHeader } from "@/components/chat/chat-page-header";
+import { ChatThinkingIndicator } from "@/components/chat/chat-thinking-indicator";
 import { DeckWorkspaceView } from "@/components/deck/deck-workspace-view";
 import { FollowUpQuestionGroup } from "@/components/chat/follow-up-questions";
 import { ToolCallAccordion } from "@/components/chat/tool-call-sequence";
@@ -22,8 +24,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserChatMessage } from "@/components/chat/user-chat-message";
 import { UserCurationEventContext } from "@/components/chat/user-curation-event-context";
-import { useAutoScrollToBottom } from "@/hooks/useAutoScrollToBottom";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useStickyScroll } from "@/hooks/useStickyScroll";
 import { cn } from "@/lib/utils";
 
 import {
@@ -33,6 +35,21 @@ import {
   type ChatEntry,
 } from "./chat-page.state";
 import { useChatSession } from "./chat-page.hook";
+
+const shouldShowThinkingPlaceholder = (
+  entries: ChatEntry[],
+  isStreaming: boolean,
+) => {
+  if (!isStreaming) return false;
+
+  const lastEntry = entries[entries.length - 1];
+  if (!lastEntry) return true;
+  if (lastEntry.kind === "assistant_message") return !lastEntry.isStreaming;
+  if (lastEntry.kind === "tool_call_group") {
+    return lastEntry.calls.every((call) => call.state !== "pending");
+  }
+  return true;
+};
 
 type ChatRouteState = {
   session?: SessionResponse;
@@ -87,9 +104,16 @@ export const ChatPage = () => {
       : window.matchMedia("(min-width: 1024px)").matches,
   );
   const scrollDependency = entries.map(getScrollKey).join("|");
-  const messagesEndRef =
-    useAutoScrollToBottom<HTMLDivElement>(scrollDependency);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
+  const { isAtBottom, scrollToBottom } = useStickyScroll(
+    scrollViewportRef,
+    scrollDependency,
+  );
   const pendingFollowUp = getPendingFollowUpQuestion(entries);
+  const showThinkingPlaceholder = shouldShowThinkingPlaceholder(
+    entries,
+    isStreaming,
+  );
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");
@@ -254,7 +278,7 @@ export const ChatPage = () => {
           onLayoutChanged={(layout) =>
             setWorkspaceLayout([layout.chat ?? 62, layout.workspace ?? 38])
           }
-        >
+        >was m
           <ResizablePanel
             id="chat"
             defaultSize={workspaceLayout[0] ?? 62}

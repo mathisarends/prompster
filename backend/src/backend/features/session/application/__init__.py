@@ -5,6 +5,7 @@ from .conversation_service import (
 )
 from .events import (
     SessionAssistantMessageChunk,
+    SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionEvent,
@@ -29,6 +30,7 @@ __all__ = [
     "ExportedSpotifyPlaylist",
     "FollowUpAnswer",
     "SessionAssistantMessageChunk",
+    "SessionAssistantMessageCancelled",
     "SessionAssistantMessageCompleted",
     "SessionAssistantMessageStarted",
     "SessionEvent",

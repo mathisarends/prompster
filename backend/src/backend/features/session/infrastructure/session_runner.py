@@ -1,4 +1,7 @@
+import asyncio
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
+from uuid import UUID
 
 from agent.agent import Agent
 from agent import Spotify
@@ -13,6 +16,7 @@ from spotifyify import Spotifyify
 
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
+    SessionRunnerCancelled,
     SessionRunnerEvent,
 )
 from backend.features.session.domain import Playlist, Session
@@ -22,29 +26,74 @@ from backend.features.session.infrastructure.agent_event_mapper import (
 from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
 
 
+@dataclass
+class _ActiveRun:
+    cancellation: asyncio.Event
+    agent: Agent
+
+
+class _ActiveRunRegistry:
+    def __init__(self) -> None:
+        self._runs: dict[UUID, _ActiveRun] = {}
+        self._lock = asyncio.Lock()
+
+    async def register(self, *, session_id: UUID, run: _ActiveRun) -> None:
+        async with self._lock:
+            self._runs[session_id] = run
+
+    async def unregister_if_current(self, *, session_id: UUID, run: _ActiveRun) -> None:
+        async with self._lock:
+            if self._runs.get(session_id) is run:
+                self._runs.pop(session_id, None)
+
+    async def stop(self, *, session_id: UUID) -> bool:
+        async with self._lock:
+            active_run = self._runs.get(session_id)
+            if active_run is None:
+                return False
+            active_run.cancellation.set()
+            active_run.agent.request_stop()
+            return True
+
+
 class AgentSessionRunner(SessionRunner):
     def __init__(
         self,
         llm: ChatModel,
         spotify: Spotifyify,
-        event_mapper: AgentSessionEventMapper | None = None,
-        history_builder: AgentHistoryBuilder | None = None,
+        event_mapper: AgentSessionEventMapper,
+        history_builder: AgentHistoryBuilder,
         system_prompt: str | None = None,
     ) -> None:
         self._llm = llm
         self._spotify = spotify
-        self._event_mapper = event_mapper or AgentSessionEventMapper()
-        self._history_builder = history_builder or AgentHistoryBuilder()
+        self._event_mapper = event_mapper
+        self._history_builder = history_builder
         self._system_prompt = system_prompt
+        self._active_runs = _ActiveRunRegistry()
 
     async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
         agent = self._create_agent(session=session)
+        active_run = _ActiveRun(cancellation=asyncio.Event(), agent=agent)
+        await self._active_runs.register(session_id=session.id, run=active_run)
         try:
             async for event in agent.stream():
+                if active_run.cancellation.is_set():
+                    yield SessionRunnerCancelled()
+                    return
                 for session_event in self._event_mapper.map(event):
                     yield session_event
+                    if active_run.cancellation.is_set():
+                        yield SessionRunnerCancelled()
+                        return
         finally:
+            await self._active_runs.unregister_if_current(
+                session_id=session.id, run=active_run
+            )
             await agent.close()
+
+    async def stop(self, *, session_id: UUID) -> bool:
+        return await self._active_runs.stop(session_id=session_id)
 
     def _create_agent(self, *, session: Session) -> Agent:
         return Agent(

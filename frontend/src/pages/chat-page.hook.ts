@@ -75,6 +75,7 @@ export const useChatSession = ({
   const abortControllerRef = useRef<AbortController | null>(null);
   const isStreamingRef = useRef(false);
   const initialStreamStartedRef = useRef(false);
+  const hasStreamedSinceLoadRef = useRef(false);
 
   const {
     data: session,
@@ -99,6 +100,7 @@ export const useChatSession = ({
     abortControllerRef.current = null;
     isStreamingRef.current = false;
     initialStreamStartedRef.current = false;
+    hasStreamedSinceLoadRef.current = false;
     dispatch({ type: "session/reset" });
   }, [sessionId]);
 
@@ -108,6 +110,7 @@ export const useChatSession = ({
 
   useEffect(() => {
     if (!session || session.id !== sessionId || state.isStreaming) return;
+    if (hasStreamedSinceLoadRef.current) return;
     dispatch({ type: "session/loaded", session });
   }, [session, sessionId, state.isStreaming]);
 
@@ -132,6 +135,7 @@ export const useChatSession = ({
       let streamErrorReceived = false;
 
       isStreamingRef.current = true;
+      hasStreamedSinceLoadRef.current = true;
       abortControllerRef.current = controller;
       dispatch(startAction);
 

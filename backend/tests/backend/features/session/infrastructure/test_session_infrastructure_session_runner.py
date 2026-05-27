@@ -11,6 +11,7 @@ from llmify.messages import (
 from backend.features.session.application import SessionConversationService
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
+    SessionRunnerCancelled,
     SessionRunnerEvent,
 )
 from backend.features.session.domain import (
@@ -51,6 +52,11 @@ class _EmptyRunner(SessionRunner):
 class _NoOpQuotaService:
     async def consume(self, *, user_id):
         return None
+
+
+class _CancelledRunner(SessionRunner):
+    async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
+        yield SessionRunnerCancelled()
 
 
 class TestSessionRunnerHistoryRendering:
@@ -232,3 +238,38 @@ class TestSendMessageConsumesCurationEvents:
         asyncio.run(run())
 
         assert event.consumed is True
+
+    def test_send_message_does_not_consume_user_curation_events_when_cancelled(
+        self,
+    ) -> None:
+        user_id = uuid4()
+        event = UserCurationEvent(
+            event_type=UserCurationEventType.TRACK_PINNED,
+            track_id=uuid4(),
+            track_title="Umbrella",
+            track_artist="Rihanna",
+        )
+        session = Session(
+            title="Deck",
+            entries=[],
+            owner_id=user_id,
+            user_curation_events=[event],
+        )
+        repository = _SessionRepositoryStub(session=session)
+        service = SessionConversationService(
+            session_repository=repository,
+            runner=_CancelledRunner(),
+            user_message_rate_limit_service=_NoOpQuotaService(),
+        )
+
+        async def run() -> None:
+            async for _ in service.send_message(
+                session_id=session.id,
+                user_id=user_id,
+                content="weiter",
+            ):
+                pass
+
+        asyncio.run(run())
+
+        assert event.consumed is False

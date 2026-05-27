@@ -1,11 +1,12 @@
 import json
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
 from uuid import UUID
 
 from backend.features.user.application import UserMessageRateLimitService
 from backend.features.session.application.events import (
     SessionAssistantMessageChunk,
+    SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionEvent,
@@ -22,6 +23,7 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunner,
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
+    SessionRunnerCancelled,
     SessionRunnerFollowUpRequested,
     SessionRunnerPlaylistTracksAdded,
     SessionRunnerPlaylistTracksRemoved,
@@ -112,6 +114,15 @@ class SessionConversationService:
             session=session
         ):
             yield event
+
+    async def stop_message(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+    ) -> bool:
+        await self._get_authorized(session_id=session_id, user_id=user_id)
+        return await self._runner.stop(session_id=session_id)
 
     async def answer_follow_ups(
         self,
@@ -270,6 +281,7 @@ class SessionConversationService:
         self,
         *,
         session: Session,
+        on_cancelled: Callable[[], None] | None = None,
     ) -> AsyncIterator[SessionEvent]:
         current_assistant_message: AssistantMessage | None = None
 
@@ -398,14 +410,34 @@ class SessionConversationService:
                             track_id=replacement.track_id,
                             track=replacement.track,
                         )
+            elif isinstance(event, SessionRunnerCancelled):
+                if on_cancelled is not None:
+                    on_cancelled()
+                if current_assistant_message is not None:
+                    await self._session_repository.save(session=session)
+                    yield SessionAssistantMessageCancelled(
+                        message_id=current_assistant_message.id
+                    )
+                return
 
     async def _run_agent_and_consume_user_curation_events(
         self,
         *,
         session: Session,
     ) -> AsyncIterator[SessionEvent]:
-        async for event in self._run_agent(session=session):
+        cancelled = False
+
+        def _mark_cancelled() -> None:
+            nonlocal cancelled
+            cancelled = True
+
+        async for event in self._run_agent(
+            session=session, on_cancelled=_mark_cancelled
+        ):
             yield event
+
+        if cancelled:
+            return
 
         events = session.unconsumed_user_curation_events
         if not events:

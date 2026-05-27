@@ -184,6 +184,24 @@ async def send_message(
 
 
 @router.post(
+    "/{session_id}/messages/stop",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="stop_message",
+    responses=_auth_errors | _not_found,
+)
+async def stop_message(
+    session_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    service: FromDishka[SessionConversationService],
+) -> Response:
+    await service.stop_message(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
     "/{session_id}/follow-ups",
     status_code=status.HTTP_200_OK,
     operation_id="handle_follow_up",

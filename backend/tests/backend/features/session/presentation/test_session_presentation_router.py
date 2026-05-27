@@ -2,7 +2,10 @@ import asyncio
 from typing import cast
 from uuid import UUID, uuid4
 
-from backend.features.session.application import SessionService
+from backend.features.session.application import (
+    SessionConversationService,
+    SessionService,
+)
 from backend.features.session.domain import (
     Session,
     UserCurationEvent,
@@ -11,6 +14,7 @@ from backend.features.session.domain import (
 from backend.features.session.presentation.router import (
     get_session_by_id,
     restore_session_user_curation_event,
+    stop_message,
 )
 from backend.features.session.presentation.schemas import UserCurationEventTypeResponse
 
@@ -35,6 +39,17 @@ class _SessionServiceStub:
         self.received_restore_event_id = event_id
         self._session.restore_user_curation_event(event_id=event_id)
         return self._session
+
+
+class _SessionConversationServiceStub:
+    def __init__(self) -> None:
+        self.received_session_id: UUID | None = None
+        self.received_user_id: UUID | None = None
+
+    async def stop_message(self, *, session_id: UUID, user_id: UUID) -> bool:
+        self.received_session_id = session_id
+        self.received_user_id = user_id
+        return True
 
 
 class TestGetSessionByIdRoute:
@@ -120,3 +135,22 @@ class TestRestoreUserCurationEventRoute:
         assert response.unconsumed_user_curation_events == []
         assert response.playlist is not None
         assert all(t.id != track.id for t in response.playlist.tracks)
+
+
+class TestStopMessageRoute:
+    def test_stops_running_message_stream(self) -> None:
+        session_id = uuid4()
+        user_id = uuid4()
+        service = _SessionConversationServiceStub()
+
+        response = asyncio.run(
+            stop_message(
+                session_id=session_id,
+                authenticated_user_id=user_id,
+                service=cast(SessionConversationService, service),
+            )
+        )
+
+        assert response.status_code == 204
+        assert service.received_session_id == session_id
+        assert service.received_user_id == user_id

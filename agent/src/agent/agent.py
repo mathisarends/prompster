@@ -54,15 +54,20 @@ class Agent:
         )
 
         self._tool_schema = self._tools.to_schema()
+        self._stop_requested = False
 
     async def close(self) -> None:
         await self._spotify.close()
+
+    def request_stop(self) -> None:
+        self._stop_requested = True
 
     async def stream(
         self,
         message: str | None = None,
         curation_events: Sequence[UserEvent] | None = None,
     ) -> AsyncGenerator[AgentEvent, None]:
+        self._stop_requested = False
         if message is not None or curation_events:
             self._messages.add_user(message or "", curation_events)
             yield RunStartedEvent(message=message or "")
@@ -79,6 +84,8 @@ class Agent:
 
     async def _run_loop(self) -> AsyncGenerator[AgentEvent, None]:
         for iteration in range(1, self._max_iterations + 1):
+            if self._stop_requested:
+                return
             yield StepStartedEvent(step=iteration)
             completion = ""
             tool_calls = []
@@ -86,6 +93,8 @@ class Agent:
             async for response_event in self._llm.stream(
                 self._messages.all(), tools=self._tool_schema
             ):
+                if self._stop_requested:
+                    return
                 if response_event.type == StreamEventType.TEXT:
                     if response_event.delta:
                         completion += response_event.delta
@@ -112,6 +121,8 @@ class Agent:
             )
 
             for call in tool_calls:
+                if self._stop_requested:
+                    return
                 args = self._tools.parse_args(call)
                 tool = self._tools.get(call.function.name)
                 yield ToolCallEvent(

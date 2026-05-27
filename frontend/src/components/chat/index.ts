@@ -3,6 +3,7 @@ export * from "./attachments";
 export * from "./chat-input-box";
 export * from "./chat-page-header";
 export * from "./chat-search-dialog";
+export * from "./chat-thinking-indicator";
 export * from "./chat-workspace-panel";
 export * from "./follow-up-questions";
 export * from "./markdown-renderer";

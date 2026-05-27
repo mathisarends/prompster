@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 
+import { ChatThinkingIndicator } from "./chat-thinking-indicator";
 import { MarkdownRenderer } from "./markdown-renderer";
 import { ToolCallAccordion, type ToolCallItem } from "./tool-call-sequence";
 
@@ -29,15 +30,7 @@ export const AssistantChatMessage = ({
           className={cn("chat-assistant-prose", isStreaming && "is-streaming")}
         />
       ) : isStreaming ? (
-        <div
-          className="chat-thinking-dots flex items-center gap-1.5 py-1"
-          aria-label="Antwort wird erstellt"
-          role="status"
-        >
-          <span className="chat-thinking-dot" />
-          <span className="chat-thinking-dot" />
-          <span className="chat-thinking-dot" />
-        </div>
+        <ChatThinkingIndicator />
       ) : null}
       {toolCalls && <ToolCallAccordion calls={toolCalls} />}
     </div>

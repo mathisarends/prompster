@@ -27,6 +27,11 @@ class SessionAssistantMessageCompleted:
 
 
 @dataclass(frozen=True)
+class SessionAssistantMessageCancelled:
+    message_id: UUID
+
+
+@dataclass(frozen=True)
 class SessionToolCallSequenceAdded:
     sequence: ToolCallSequence
 
@@ -83,6 +88,7 @@ type SessionEvent = (
     SessionAssistantMessageStarted
     | SessionAssistantMessageChunk
     | SessionAssistantMessageCompleted
+    | SessionAssistantMessageCancelled
     | SessionToolCallSequenceAdded
     | SessionToolCallResolved
     | SessionToolCallFailed

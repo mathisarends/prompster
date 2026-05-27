@@ -5,6 +5,7 @@ from .playlist_metadata_generator import (
     PlaylistMetadataTrack,
 )
 from .session_runner import (
+    SessionRunnerCancelled,
     SessionRunner,
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
@@ -28,6 +29,7 @@ __all__ = [
     "PlaylistMetadataGenerator",
     "PlaylistMetadataTrack",
     "SessionRunner",
+    "SessionRunnerCancelled",
     "SessionRunnerAssistantMessage",
     "SessionRunnerAssistantMessageChunk",
     "SessionRunnerEvent",

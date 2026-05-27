@@ -7,6 +7,7 @@ import pytest
 
 from backend.features.session.application.events import (
     SessionAssistantMessageChunk,
+    SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionPlaylistSet,
@@ -20,6 +21,7 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunner,
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
+    SessionRunnerCancelled,
     SessionRunnerEvent,
     SessionRunnerPlaylistTrackReplacement,
     SessionRunnerPlaylistTracksAdded,
@@ -44,6 +46,7 @@ from backend.features.session.application.session_service import (
     SessionService,
 )
 from backend.features.session.domain import (
+    AssistantMessage,
     CompletedCall,
     FollowUpOption,
     FollowUpQuestion,
@@ -151,6 +154,7 @@ class _SessionRunnerStub(SessionRunner):
     ) -> None:
         self._chunks = chunks or ["Hello", " world"]
         self._events = events
+        self.stopped_session_ids: list[UUID] = []
 
     async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
         if self._events is not None:
@@ -161,6 +165,10 @@ class _SessionRunnerStub(SessionRunner):
         for chunk in self._chunks:
             yield SessionRunnerAssistantMessageChunk(chunk=chunk)
         yield SessionRunnerAssistantMessage(content="".join(self._chunks))
+
+    async def stop(self, *, session_id: UUID) -> bool:
+        self.stopped_session_ids.append(session_id)
+        return True
 
 
 class _UserMessageQuotaServiceStub:
@@ -772,6 +780,52 @@ class TestSessionServiceSendMessage:
         )
         assert session.playlist is not None
         assert session.playlist.tracks == [replacement_track]
+
+    def test_persists_partial_assistant_message_when_runner_is_cancelled(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        repository = _SessionRepositoryStub(session_by_id=session)
+        runner = _SessionRunnerStub(
+            events=[
+                SessionRunnerAssistantMessageChunk(chunk="Hi"),
+                SessionRunnerCancelled(),
+            ]
+        )
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        events = asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="weiter",
+                )
+            )
+        )
+
+        assert any(
+            isinstance(event, SessionAssistantMessageCancelled) for event in events
+        )
+        assistant_messages = [
+            entry for entry in session.entries if isinstance(entry, AssistantMessage)
+        ]
+        assert len(assistant_messages) == 1
+        assert assistant_messages[0].content == "Hi"
+        assert len(repository.saved_sessions) == 3
+
+    def test_stop_message_delegates_to_runner(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        repository = _SessionRepositoryStub(session_by_id=session)
+        runner = _SessionRunnerStub()
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        stopped = asyncio.run(
+            service.stop_message(session_id=session.id, user_id=owner_id)
+        )
+
+        assert stopped is True
+        assert runner.stopped_session_ids == [session.id]
 
 
 class TestSessionServiceFollowUps:

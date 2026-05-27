@@ -67,6 +67,11 @@ class SessionRunnerPlaylistTracksReplaced:
     replacements: list[SessionRunnerPlaylistTrackReplacement]
 
 
+@dataclass(frozen=True)
+class SessionRunnerCancelled:
+    pass
+
+
 type SessionRunnerEvent = (
     SessionRunnerAssistantMessage
     | SessionRunnerAssistantMessageChunk
@@ -77,6 +82,7 @@ type SessionRunnerEvent = (
     | SessionRunnerPlaylistTracksAdded
     | SessionRunnerPlaylistTracksRemoved
     | SessionRunnerPlaylistTracksReplaced
+    | SessionRunnerCancelled
 )
 
 
@@ -84,3 +90,7 @@ class SessionRunner(ABC):
     @abstractmethod
     def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
         """Runs the agent with the session context and yields runner events."""
+
+    async def stop(self, *, session_id: UUID) -> bool:
+        """Requests a running session execution to stop."""
+        return False
