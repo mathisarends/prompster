@@ -2,10 +2,11 @@ from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Response, status
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.user.application import UserService
+from backend.features.user.application import UserMessageQuotaService, UserService
 from backend.features.user.presentation.mapper import to_user_me_response
 from backend.features.user.presentation.schemas import (
     UserDeleteInformationResponse,
+    UserMessageQuotaResponse,
     UserMeResponse,
 )
 from backend.presentation.errors import ErrorDto
@@ -46,6 +47,25 @@ async def get_delete_information(
     )
     return UserDeleteInformationResponse(
         session_count=delete_information.session_count,
+    )
+
+
+@user_router.get(
+    "/me/quota",
+    response_model=UserMessageQuotaResponse,
+    status_code=status.HTTP_200_OK,
+    operation_id="get_my_message_quota",
+    responses=_unauthorized,
+)
+async def get_my_message_quota(
+    authenticated_user_id: AuthenticatedUserId,
+    service: FromDishka[UserMessageQuotaService],
+) -> UserMessageQuotaResponse:
+    quota = await service.inspect(user_id=authenticated_user_id)
+    return UserMessageQuotaResponse(
+        limit=quota.limit,
+        remaining=quota.remaining,
+        reset_at=quota.reset_at,
     )
 
 

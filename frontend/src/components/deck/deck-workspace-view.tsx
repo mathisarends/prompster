@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Download, ExternalLink, ListMusic, Music2 } from "lucide-react";
+import { Download, ListMusic } from "lucide-react";
 import { toast } from "sonner";
 
 import type {
@@ -23,15 +23,12 @@ import {
   DeckPlaylist,
   type DeckPlaylistController,
 } from "@/components/deck/deck-playlist";
-import { DeckExportActions, usePdfPreview } from "@/components/deck/export";
-import { SpotifyConnectDialog } from "@/components/deck/spotify-connect-dialog";
-import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DeckExportActions,
+  SpotifyExportResultDialog,
+  usePdfPreview,
+} from "@/components/deck/export";
+import { SpotifyConnectDialog } from "@/components/deck/spotify-connect-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSpotifyOAuthPopup } from "@/hooks/useSpotifyOAuthPopup";
 import { useSpotifyPlayer } from "@/hooks/useSpotifyPlayer";
@@ -355,71 +352,5 @@ export const DeckWorkspaceView = ({
         }}
       />
     </>
-  );
-};
-
-type SpotifyExportResultDialogProps = {
-  playlist: SpotifyPlaylistExportResponse | null;
-  tracks: Array<{
-    title: string;
-    coverUrl: string;
-  }>;
-  onOpenChange: (open: boolean) => void;
-};
-
-const SpotifyExportResultDialog = ({
-  playlist,
-  tracks,
-  onOpenChange,
-}: SpotifyExportResultDialogProps) => {
-  const covers = tracks.filter((track) => track.coverUrl).slice(0, 4);
-
-  return (
-    <Dialog open={Boolean(playlist)} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md overflow-hidden rounded-lg">
-        <div className="flex gap-4 p-4">
-          <div className="grid size-28 shrink-0 grid-cols-2 overflow-hidden rounded-md bg-white/[0.06]">
-            {covers.length > 0 ? (
-              covers.map((track) => (
-                <img
-                  key={`${track.title}-${track.coverUrl}`}
-                  src={track.coverUrl}
-                  alt={`${track.title} Cover`}
-                  className="h-full w-full object-cover"
-                />
-              ))
-            ) : (
-              <div className="col-span-2 grid h-full place-items-center text-muted-foreground">
-                <Music2 className="size-8" />
-              </div>
-            )}
-          </div>
-          <div className="min-w-0 flex-1 pt-1">
-            <DialogTitle>Spotify-Playlist bereit</DialogTitle>
-            <DialogDescription className="mt-1">
-              {playlist?.trackCount ?? 0} Songs wurden exportiert.
-            </DialogDescription>
-            <p className="mt-4 truncate text-sm font-semibold">
-              {playlist?.name}
-            </p>
-            <p className="mt-1 truncate text-xs text-muted-foreground">
-              {playlist?.url}
-            </p>
-            <Button
-              type="button"
-              size="sm"
-              className="mt-4"
-              onClick={() => {
-                if (playlist?.url)
-                  window.open(playlist.url, "_blank", "noopener");
-              }}
-            >
-              <ExternalLink className="size-4" />
-              Öffnen
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 };

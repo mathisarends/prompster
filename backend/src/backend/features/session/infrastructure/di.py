@@ -39,6 +39,7 @@ from backend.features.session.infrastructure.session_summary_query import (
 from backend.features.session.infrastructure.title_generator import (
     LLMSessionTitleGenerator,
 )
+from backend.features.user.application import UserMessageQuotaService
 from backend.features.user.domain import UserRepository
 
 
@@ -95,10 +96,12 @@ class SessionProvider(Provider):
         self,
         session_repository: SessionRepository,
         runner: SessionRunner,
+        user_message_quota_service: UserMessageQuotaService,
     ) -> SessionConversationService:
         return SessionConversationService(
             session_repository=session_repository,
             runner=runner,
+            user_message_quota_service=user_message_quota_service,
         )
 
     @provide(scope=Scope.REQUEST)

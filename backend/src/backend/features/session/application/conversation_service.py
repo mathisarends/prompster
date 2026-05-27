@@ -3,6 +3,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from uuid import UUID
 
+from backend.features.user.application import UserMessageQuotaService
 from backend.features.session.application.events import (
     SessionAssistantMessageChunk,
     SessionAssistantMessageCompleted,
@@ -71,9 +72,11 @@ class SessionConversationService:
         self,
         session_repository: SessionRepository,
         runner: SessionRunner,
+        user_message_quota_service: UserMessageQuotaService,
     ) -> None:
         self._session_repository = session_repository
         self._runner = runner
+        self._user_message_quota_service = user_message_quota_service
 
     async def send_message(
         self,
@@ -84,6 +87,7 @@ class SessionConversationService:
         attachments: list[SessionMessageAttachment] | None = None,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        await self._user_message_quota_service.consume(user_id=user_id)
         resolved_tool_call = self._prepare_follow_up_context_for_message(
             session=session
         )
@@ -133,6 +137,7 @@ class SessionConversationService:
             await self._session_repository.save(session=session)
             return
 
+        await self._user_message_quota_service.consume(user_id=user_id)
         resolved_tool_call = self._resolve_pending_tool_call(
             session=session,
             result=self._serialize_follow_up_answers(pending_group),
@@ -153,6 +158,7 @@ class SessionConversationService:
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         pending_group = session.require_pending_follow_up_group()
+        await self._user_message_quota_service.consume(user_id=user_id)
         resolved_tool_call = self._skip_remaining_follow_ups(
             session=session,
             pending_group=pending_group,

@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from sqlalchemy import and_, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Row
 
@@ -10,12 +11,15 @@ from backend.features.user.domain import (
     AuthProvider,
     SpotifyAccount,
     User,
+    UserMessageQuota,
+    UserMessageQuotaRepository,
     UserRepository,
 )
 from backend.infrastructure.database.orm import (
     AuthIdentityModel,
     OAuthConnectionModel,
     SessionModel,
+    UserMessageQuotaModel,
     UserModel,
 )
 from backend.infrastructure.database.repository import Repository
@@ -145,3 +149,66 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
         if oauth_connection_id is None:
             return user_orm, SpotifyAccount.disconnected()
         return user_orm, SpotifyAccount.connected_with(is_premium=bool(is_premium))
+
+
+class SqlUserMessageQuotaRepository(
+    Repository[UserMessageQuotaModel, UserMessageQuota],
+    UserMessageQuotaRepository,
+):
+    def __init__(self, session: AsyncSession) -> None:
+        super().__init__(session=session, model=UserMessageQuotaModel)
+
+    def _to_domain(self, orm: UserMessageQuotaModel) -> UserMessageQuota:
+        return UserMessageQuota(
+            id=orm.id,
+            created_time=orm.created_at,
+            user_id=orm.user_id,
+            window_started_at=orm.window_started_at,
+            messages_consumed=orm.messages_consumed,
+        )
+
+    def _to_orm(self, domain: UserMessageQuota) -> UserMessageQuotaModel:
+        return UserMessageQuotaModel(
+            id=domain.id,
+            created_at=domain.created_at,
+            user_id=domain.user_id,
+            window_started_at=domain.window_started_at,
+            messages_consumed=domain.messages_consumed,
+        )
+
+    async def get_or_create_for_update(self, *, user_id: UUID) -> UserMessageQuota:
+        stmt = self._select_by_user_id(user_id=user_id, with_for_update=True)
+        orm = (await self.session.execute(stmt)).scalar_one_or_none()
+        if orm is not None:
+            return self._to_domain(orm)
+
+        quota = UserMessageQuota.fresh(user_id=user_id)
+        try:
+            async with self.session.begin_nested():
+                self.session.add(self._to_orm(quota))
+                await self.session.flush()
+        except IntegrityError:
+            # Parallel first-write race: another request inserted the row.
+            pass
+
+        orm = (await self.session.execute(stmt)).scalar_one()
+        return self._to_domain(orm)
+
+    async def get_by_user_id(self, *, user_id: UUID) -> UserMessageQuota | None:
+        stmt = self._select_by_user_id(user_id=user_id, with_for_update=False)
+        orm = (await self.session.execute(stmt)).scalar_one_or_none()
+        if orm is None:
+            return None
+        return self._to_domain(orm)
+
+    async def save(self, *, quota: UserMessageQuota) -> UserMessageQuota:
+        return await super().save(quota)
+
+    @staticmethod
+    def _select_by_user_id(*, user_id: UUID, with_for_update: bool):
+        stmt = select(UserMessageQuotaModel).where(
+            UserMessageQuotaModel.user_id == user_id
+        )
+        if with_for_update:
+            stmt = stmt.with_for_update()
+        return stmt

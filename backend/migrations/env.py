@@ -11,6 +11,7 @@ from backend.infrastructure.database.orm import (
     AuthIdentityModel,
     OAuthConnectionModel,
     SessionModel,
+    UserMessageQuotaModel,
     UserModel,
 )
 from backend.infrastructure.database.settings import DatabaseSettings
@@ -31,7 +32,13 @@ except Exception:
     pass
 
 # Ensure model modules are imported so SQLModel metadata is populated.
-_ = (UserModel, AuthIdentityModel, SessionModel, OAuthConnectionModel)
+_ = (
+    UserModel,
+    UserMessageQuotaModel,
+    AuthIdentityModel,
+    SessionModel,
+    OAuthConnectionModel,
+)
 
 target_metadata = SQLModel.metadata
 

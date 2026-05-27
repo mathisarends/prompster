@@ -49,6 +49,11 @@ class _EmptyRunner(SessionRunner):
             yield
 
 
+class _NoOpQuotaService:
+    async def consume(self, *, user_id):
+        return None
+
+
 class TestSessionRunnerMessageContext:
     def test_adds_unconsumed_user_curation_events_to_message_context(self) -> None:
         event = UserCurationEvent(
@@ -126,6 +131,7 @@ class TestSessionRunnerMessageContext:
         service = SessionConversationService(
             session_repository=repository,
             runner=_EmptyRunner(),
+            user_message_quota_service=_NoOpQuotaService(),
         )
 
         async def run() -> None:

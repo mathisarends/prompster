@@ -46,6 +46,7 @@ _auth_errors = {
 _not_found = {status.HTTP_404_NOT_FOUND: {"model": ErrorResponse}}
 _bad_request = {status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse}}
 _conflict = {status.HTTP_409_CONFLICT: {"model": ErrorResponse}}
+_too_many = {status.HTTP_429_TOO_MANY_REQUESTS: {"model": ErrorResponse}}
 _event_stream_response = {
     status.HTTP_200_OK: {
         "description": "Server-sent session events.",
@@ -150,7 +151,11 @@ async def create_session(
     "/{session_id}/messages",
     status_code=status.HTTP_200_OK,
     operation_id="send_message",
-    responses=_event_stream_response | _auth_errors | _bad_request | _not_found,
+    responses=_event_stream_response
+    | _auth_errors
+    | _bad_request
+    | _not_found
+    | _too_many,
 )
 async def send_message(
     session_id: UUID,
@@ -182,7 +187,11 @@ async def send_message(
     "/{session_id}/follow-ups",
     status_code=status.HTTP_200_OK,
     operation_id="handle_follow_up",
-    responses=_event_stream_response | _auth_errors | _bad_request | _not_found,
+    responses=_event_stream_response
+    | _auth_errors
+    | _bad_request
+    | _not_found
+    | _too_many,
 )
 async def handle_follow_up(
     session_id: UUID,

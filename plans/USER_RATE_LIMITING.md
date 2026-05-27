@@ -71,7 +71,7 @@ Borderline cases that ARE in scope:
 | Default-Limit? | Konfigurierbar via Env `AGENT_MESSAGE_DAILY_LIMIT`, Default `50` | Großzügig genug für realistische Deck-Building-Sessions (5–15 Messages pro Session, ≈3–4 Sessions/Tag), bietet Schutz vor Missbrauch. |
 | Eine Tabelle oder Spalten an `users`? | **Eigene Tabelle `agent_usage_quotas`** mit FK auf `users` | Trennt Identity von Usage; ermöglicht später weitere Quoten (Token-Limit, Tool-Call-Limit) ohne `users` aufzublähen; ermöglicht `SELECT … FOR UPDATE` ohne den User-Row zu locken. |
 | Atomicity? | `SELECT … FOR UPDATE` auf der Quota-Row + Increment in derselben Transaktion | Verhindert Race Conditions bei parallelen Tabs / Doppel-Clicks. |
-| Bei Limit-Überschreitung? | Domain-Exception `AgentMessageQuotaExceededError` → HTTP `429` mit `Retry-After`-Header und JSON-Body `{ limit, remaining: 0, reset_at }` | Standardkonform; Frontend kann Reset-Zeitpunkt sauber anzeigen. |
+| Bei Limit-Überschreitung? | Domain-Exception `AgentMessageQuotaExceededError` → HTTP `429` mit `Retry-After`-Header und JSON-Body `{ limit, remaining: 0, reset_at }` | Standardkonform; Frontend kann Reset-Zeitpunkt sauber anzeigen. |s
 
 ### 2.2 Domain
 

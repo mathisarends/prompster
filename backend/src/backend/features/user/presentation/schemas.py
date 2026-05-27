@@ -15,3 +15,9 @@ class UserMeResponse(Schema):
 
 class UserDeleteInformationResponse(Schema):
     session_count: int
+
+
+class UserMessageQuotaResponse(Schema):
+    limit: int
+    remaining: int
+    reset_at: datetime

@@ -58,6 +58,7 @@ from backend.features.session.domain import (
     ToolFunction,
     UserMessage,
 )
+from backend.features.user.domain import UserMessageQuotaExceededError
 
 
 class _SessionRepositoryStub(SessionRepository):
@@ -162,6 +163,17 @@ class _SessionRunnerStub(SessionRunner):
         yield SessionRunnerAssistantMessage(content="".join(self._chunks))
 
 
+class _UserMessageQuotaServiceStub:
+    def __init__(self, *, error: Exception | None = None) -> None:
+        self._error = error
+        self.consumed_user_ids: list[UUID] = []
+
+    async def consume(self, *, user_id: UUID) -> None:
+        if self._error is not None:
+            raise self._error
+        self.consumed_user_ids.append(user_id)
+
+
 def _make_management_service(
     *,
     repository: _SessionRepositoryStub | None = None,
@@ -180,10 +192,12 @@ def _make_conversation_service(
     *,
     repository: _SessionRepositoryStub | None = None,
     runner: _SessionRunnerStub | None = None,
+    quota_service: _UserMessageQuotaServiceStub | None = None,
 ) -> SessionConversationService:
     return SessionConversationService(
         session_repository=repository or _SessionRepositoryStub(),
         runner=runner or _SessionRunnerStub(),
+        user_message_quota_service=quota_service or _UserMessageQuotaServiceStub(),
     )
 
 
@@ -459,7 +473,12 @@ class TestSessionServiceSendMessage:
         session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub(chunks=["Hi"])
-        service = _make_conversation_service(repository=repository, runner=runner)
+        quota_service = _UserMessageQuotaServiceStub()
+        service = _make_conversation_service(
+            repository=repository,
+            runner=runner,
+            quota_service=quota_service,
+        )
 
         events = asyncio.run(
             _collect_events(
@@ -480,6 +499,37 @@ class TestSessionServiceSendMessage:
             isinstance(event, SessionAssistantMessageStarted) for event in events
         )
         assert isinstance(events[-1], SessionAssistantMessageCompleted)
+        assert quota_service.consumed_user_ids == [owner_id]
+
+    def test_does_not_persist_when_quota_is_exceeded(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        repository = _SessionRepositoryStub(session_by_id=session)
+        quota_error = UserMessageQuotaExceededError(
+            limit=50,
+            reset_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        )
+        service = _make_conversation_service(
+            repository=repository,
+            quota_service=_UserMessageQuotaServiceStub(error=quota_error),
+        )
+
+        with pytest.raises(UserMessageQuotaExceededError):
+            asyncio.run(
+                _collect_events(
+                    service.send_message(
+                        session_id=session.id,
+                        user_id=owner_id,
+                        content="spiele rihanna hits",
+                    )
+                )
+            )
+
+        user_messages = [
+            entry for entry in session.entries if isinstance(entry, UserMessage)
+        ]
+        assert user_messages == []
+        assert repository.saved_sessions == []
 
     def test_skips_pending_follow_ups_then_streams_llm(self) -> None:
         owner_id = uuid4()
@@ -726,6 +776,40 @@ class TestSessionServiceFollowUps:
         assert isinstance(events[5], SessionAssistantMessageCompleted)
         assert len(repository.saved_sessions) == 3
 
+    def test_answer_follow_ups_does_not_consume_quota_until_group_is_complete(
+        self,
+    ) -> None:
+        owner_id = uuid4()
+        first_question = _make_follow_up_question("Welches Genre?")
+        second_question = _make_follow_up_question("Welche Stimmung?")
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        _add_pending_follow_up_tool_call(session)
+        session.add_follow_up_questions([first_question, second_question])
+        quota_service = _UserMessageQuotaServiceStub()
+        service = _make_conversation_service(
+            repository=_SessionRepositoryStub(session_by_id=session),
+            quota_service=quota_service,
+        )
+
+        events = asyncio.run(
+            _collect_events(
+                service.answer_follow_ups(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    answers=[
+                        FollowUpAnswer(
+                            question_id=first_question.id,
+                            option_id="house",
+                            text=None,
+                        )
+                    ],
+                )
+            )
+        )
+
+        assert events == []
+        assert quota_service.consumed_user_ids == []
+
     def test_answer_follow_ups_with_text_and_streams_llm(self) -> None:
         owner_id = uuid4()
         question = _make_follow_up_question()
@@ -769,7 +853,11 @@ class TestSessionServiceFollowUps:
         )
         first_question.answer_with_text("house")
         repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_conversation_service(repository=repository)
+        quota_service = _UserMessageQuotaServiceStub()
+        service = _make_conversation_service(
+            repository=repository,
+            quota_service=quota_service,
+        )
 
         events = asyncio.run(
             _collect_events(
@@ -785,3 +873,4 @@ class TestSessionServiceFollowUps:
         assert third_question.state == FollowUpQuestionState.SKIPPED
         assert isinstance(events[0], SessionToolCallResolved)
         assert isinstance(events[-1], SessionAssistantMessageCompleted)
+        assert quota_service.consumed_user_ids == [owner_id]
