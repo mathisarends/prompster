@@ -358,7 +358,7 @@ class Tools:
             status_label=lambda params: params.status,
             action_type=ActionType.FETCH,
         )
-        async def get_playlist_tracks(
+        async def get_spotify_playlist_tracks(
             spotify: Inject[Spotify],
             store: Inject[PlaylistDraftStore],
             params: PlaylistIdParams,

@@ -69,6 +69,6 @@ async def search_tracks(spotify: Inject[Spotify], params: SearchParams) -> str:
     return await spotify.search_tracks(params)
 ```
 
-Default tools cover: `search_tracks`, `search_albums`, `search_playlists`, `get_artist_albums`, `get_artist_top_tracks`, `get_album_tracks`, `get_playlist_tracks`, `build_draft_playlist`, `ask_follow_up`.
+Default tools cover: `search_tracks`, `search_albums`, `search_playlists`, `get_artist_albums`, `get_artist_top_tracks`, `get_album_tracks`, `get_spotify_playlist_tracks`, `build_draft_playlist`, `ask_follow_up`.
 
 Dependencies (`Spotify`, `PlaylistDraftStore`) are resolved at call time via `ToolContext`.

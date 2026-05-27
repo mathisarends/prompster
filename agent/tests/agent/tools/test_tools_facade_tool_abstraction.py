@@ -29,6 +29,8 @@ class TestToolsFacadeAbstraction:
         assert tools.get("search_tracks").action_type == ActionType.SEARCH
         assert tools.get("get_album_tracks") is not None
         assert tools.get("get_album_tracks").action_type == ActionType.FETCH
+        assert tools.get("get_spotify_playlist_tracks") is not None
+        assert tools.get("get_spotify_playlist_tracks").action_type == ActionType.FETCH
         assert tools.get("create_playlist") is not None
         assert tools.get("create_playlist").action_type == ActionType.MUTATE
         assert tools.get("add_playlist_tracks") is not None

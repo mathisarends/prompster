@@ -1,6 +1,6 @@
 import inspect
 from collections.abc import Callable
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
@@ -11,7 +11,7 @@ from agent.tools.schema_builder import ToolSchemaBuilder
 from agent.tools.schemas import ToolSchema
 
 
-class ActionType(str, Enum):
+class ActionType(StrEnum):
     SEARCH = "search"
     FETCH = "fetch"
     MUTATE = "mutate"
