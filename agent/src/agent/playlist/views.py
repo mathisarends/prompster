@@ -2,15 +2,13 @@ from enum import StrEnum
 from typing import Literal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class TrackRef(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     uri: str = Field(description="Spotify track URI, e.g. spotify:track:...")
-    pinned: bool = Field(
-        default=False,
-        description="Whether this track should be pinned in the playlist draft.",
-    )
 
     @field_validator("uri")
     @classmethod

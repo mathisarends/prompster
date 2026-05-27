@@ -19,7 +19,7 @@ from agent.tools.views import (
     ArtistAlbumsParams,
     ArtistTopTracksParams,
     AskFollowUpParams,
-    BuildDraftPlaylistParams,
+    CreateDraftPlaylistParams,
     PlaylistIdParams,
     RemoveDraftPlaylistTracksParams,
     ReplaceDraftPlaylistTracksParams,
@@ -253,33 +253,37 @@ class Tools:
 
         @self.action(
             description=(
-                "Build the Hitster playlist draft in the workspace from Spotify track "
-                "URI refs previously returned by search/fetch tools. Creates the draft "
-                "when none exists, replaces it otherwise, and preserves pinned tracks."
+                "Create the Hitster playlist draft in the workspace from Spotify "
+                "track URI refs previously returned by search/fetch tools. Use this "
+                "for the initial draft; it fails if a draft already exists."
             ),
-            params=BuildDraftPlaylistParams,
+            params=CreateDraftPlaylistParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
         )
-        async def build_draft_playlist(
+        async def create_draft_playlist(
             store: Inject[PlaylistDraftStore],
-            params: BuildDraftPlaylistParams,
+            params: CreateDraftPlaylistParams,
         ) -> ActionResult:
             try:
-                saved_playlist = store.save_playlist_draft_from_refs(
+                playlist = store.create_playlist_draft_from_refs(
                     params.name,
                     params.tracks,
                 )
-                return self._draft_success("build_draft_playlist", saved_playlist)
+                return self._draft_success("create_draft_playlist", playlist)
             except Exception as error:
                 return self._draft_failure(
-                    "build_draft_playlist",
+                    "create_draft_playlist",
                     store,
                     error,
                 )
 
         @self.action(
-            description="Add tracks to the current Hitster playlist draft.",
+            description=(
+                "Put Spotify track URI refs into the Hitster playlist draft. Creates "
+                "a draft when none exists, otherwise appends only tracks that are not "
+                "already present by Spotify URI."
+            ),
             params=AddDraftPlaylistTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
@@ -354,7 +358,11 @@ class Tools:
                 )
 
         @self.action(
-            description="",
+            description=(
+                "Fetch tracks from an external Spotify playlist by playlist ID or URI "
+                "for research. The returned tracks are cached for later draft tools; "
+                "this does not read or mutate the current workspace draft."
+            ),
             params=PlaylistIdParams,
             status_label=lambda params: params.status,
             action_type=ActionType.FETCH,

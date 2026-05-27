@@ -87,7 +87,7 @@ class TestAgentWorkspaceUpdateEvents:
         tools = Tools(ToolContext(store))
         tool_args = {
             "name": "80er Party",
-            "status": "Playlist-Entwurf bauen: '80er Party'",
+            "status": "Baue das 80er-Deck",
             "tracks": [
                 {
                     "uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
@@ -102,7 +102,7 @@ class TestAgentWorkspaceUpdateEvents:
                         ToolCall(
                             id="call-1",
                             function={
-                                "name": "build_draft_playlist",
+                                "name": "create_draft_playlist",
                                 "arguments": json.dumps(tool_args),
                             },
                         )
@@ -131,7 +131,7 @@ class TestAgentWorkspaceUpdateEvents:
 
         assert workspace_update_index == tool_result_index + 1
         assert tool_call.action_type == ActionType.MUTATE
-        assert tool_call.status_label == "Playlist-Entwurf bauen: '80er Party'"
+        assert tool_call.status_label == "Baue das 80er-Deck"
         assert isinstance(tool_result, ToolResultEvent)
         assert isinstance(workspace_update, WorkspaceUpdatedEvent)
         serialized_result = json.loads(tool_result.result)

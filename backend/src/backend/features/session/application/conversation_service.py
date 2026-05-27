@@ -351,7 +351,13 @@ class SessionConversationService:
                 yield SessionPlaylistSet(playlist=playlist)
             elif isinstance(event, SessionRunnerPlaylistTracksAdded):
                 had_playlist = session.playlist is not None
-                playlist = session.add_tracks(list(event.tracks))
+                if had_playlist:
+                    playlist = session.add_tracks(list(event.tracks))
+                else:
+                    playlist = session.set_playlist(
+                        tracks=list(event.tracks),
+                        id=event.playlist_id,
+                    )
                 await self._session_repository.save(session=session)
                 if not had_playlist:
                     yield SessionPlaylistSet(playlist=playlist)

@@ -7,6 +7,11 @@ from spotifyify import PagingPlaylistTrack, Spotifyify, Track
 from spotifyify.exceptions import SpotifyAPIError
 
 from agent.playlist import PlaylistDraftTrack
+from agent.playlist.rendering import (
+    render_album_tag,
+    render_playlist_tag,
+    render_track_tag,
+)
 from agent.tools.views import (
     AlbumTracksParams,
     ArtistAlbumsParams,
@@ -71,9 +76,7 @@ class Spotify:
         albums = page.items or []
         if not albums:
             return "No albums found."
-        return "\n".join(
-            _format_album(index + 1, album) for index, album in enumerate(albums)
-        )
+        return "\n".join(_format_album(album) for album in albums)
 
     async def search_playlists(self, params: SearchParams) -> str:
         await self.open()
@@ -86,11 +89,7 @@ class Spotify:
         playlists = [playlist for playlist in (page.items or []) if playlist]
         if not playlists:
             return "No playlists found."
-        return "\n".join(
-            f"{index + 1}. {playlist.name} ({_playlist_track_count(playlist)} tracks)"
-            f"  id={playlist.id}  url={_playlist_url(playlist)}"
-            for index, playlist in enumerate(playlists)
-        )
+        return "\n".join(_format_playlist(playlist) for playlist in playlists)
 
     async def get_artist_albums(self, params: ArtistAlbumsParams) -> str:
         artist_id = _normalize_spotify_id(params.artist_id, "artist")
@@ -105,9 +104,7 @@ class Spotify:
         albums = page.items or []
         if not albums:
             return "No albums found."
-        return "\n".join(
-            _format_album(index + 1, album) for index, album in enumerate(albums)
-        )
+        return "\n".join(_format_album(album) for album in albums)
 
     async def get_artist_top_tracks(
         self,
@@ -244,23 +241,6 @@ def _release_year(release_date: str | None) -> int:
     return 0
 
 
-def _track_url(track) -> str:
-    if track.external_urls and track.external_urls.spotify:
-        return track.external_urls.spotify
-    if track.uri and track.uri.startswith("spotify:track:"):
-        track_id = track.uri.removeprefix("spotify:track:")
-        return f"https://open.spotify.com/track/{track_id}"
-    return ""
-
-
-def _playlist_url(playlist) -> str:
-    if playlist.external_urls and playlist.external_urls.spotify:
-        return playlist.external_urls.spotify
-    if playlist.id:
-        return f"https://open.spotify.com/playlist/{playlist.id}"
-    return ""
-
-
 def _track_release_date(track: Track) -> str | None:
     return track.album.release_date if track.album else None
 
@@ -284,13 +264,19 @@ def _track_lookup_result(
     lines: list[str] = []
     draft_tracks: list[PlaylistDraftTrack] = []
 
-    for index, track in enumerate(tracks):
+    for _, track in enumerate(tracks):
         release_date = release_date_for(track)
         cover_url = cover_url_for(track)
-        lines.append(_format_track(index + 1, track, release_date, cover_url))
         draft_track = _playlist_draft_track(track, release_date, cover_url)
         if draft_track.spotify_uri is not None:
             draft_tracks.append(draft_track)
+            lines.append(
+                render_track_tag(
+                    draft_track,
+                    identity_attr="uri",
+                    identity_value=draft_track.spotify_uri,
+                )
+            )
 
     return SpotifyTrackLookupResult(content="\n".join(lines), tracks=draft_tracks)
 
@@ -311,27 +297,19 @@ def _playlist_draft_track(
     )
 
 
-def _format_track(
-    index: int,
-    track,
-    release_date: str | None,
-    cover_url: str | None,
-) -> str:
-    artists = track.artists or []
-    artist_uris = ", ".join(artist.uri for artist in artists if artist.uri)
-    return (
-        f"{index}. {_track_title(track)}"
-        f" – {_artist_names(artists)}"
-        f" ({_release_year(release_date)})"
-        f"  uri={track.uri or 'n/a'}  artist_uris=[{artist_uris}]"
-        f"  cover_url={cover_url or 'n/a'}"
+def _format_album(album) -> str:
+    return render_album_tag(
+        uri=album.uri,
+        name=album.name,
+        artist=_artist_names(album.artists),
+        year=_release_year(album.release_date),
+        track_count=album.total_tracks,
     )
 
 
-def _format_album(index: int, album) -> str:
-    artists = album.artists or []
-    return (
-        f"{index}. {album.name} – {_artist_names(artists)}"
-        f" ({_release_year(album.release_date)}, {album.total_tracks} tracks)"
-        f"  uri={album.uri}"
+def _format_playlist(playlist) -> str:
+    return render_playlist_tag(
+        id=playlist.id,
+        name=playlist.name,
+        track_count=_playlist_track_count(playlist),
     )

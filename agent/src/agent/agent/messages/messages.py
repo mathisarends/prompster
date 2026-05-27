@@ -12,7 +12,8 @@ from llmify import (
 )
 
 from agent.agent.views import UserEvent, UserEvents
-from agent.playlist import PlaylistDraft, PlaylistDraftTrack
+from agent.playlist import PlaylistDraft
+from agent.playlist.rendering import render_track_tag
 
 _SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "system_prompt.md").read_text(
     encoding="utf-8"
@@ -88,25 +89,11 @@ class MessageManager:
             ),
         ]
         lines.extend(
-            self._render_playlist_track(track) for track in playlist_draft.tracks
+            render_track_tag(track, include_pinned=True)
+            for track in playlist_draft.tracks
         )
         lines.append("</created_playlist>")
         return "\n".join(lines)
-
-    def _render_playlist_track(self, track: PlaylistDraftTrack) -> str:
-        attrs = [
-            f'id="{track.id}"',
-            f'label="{self._render_track_label(track)}"',
-        ]
-        if track.is_pinned:
-            attrs.append('pinned="true"')
-        return f"<track {' '.join(attrs)} />"
-
-    def _render_track_label(self, track: PlaylistDraftTrack) -> str:
-        label = f"{track.artist} - {track.title}"
-        if track.year is not None:
-            label = f"{label} ({track.year})"
-        return escape(label, quote=True)
 
     def _get_user_events(self) -> UserEvents:
         return (

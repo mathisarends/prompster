@@ -127,60 +127,57 @@ export const DeckWorkspaceView = ({
     [playTrack],
   );
 
-  const controller = useMemo<DeckPlaylistController | undefined>(
-    () => {
-      if (!showPlaybackControls) {
-        return undefined;
-      }
+  const controller = useMemo<DeckPlaylistController | undefined>(() => {
+    if (!showPlaybackControls) {
+      return undefined;
+    }
 
-      return {
-        isPlaying: !playerState.isPaused && Boolean(playerState.currentTrackUri),
-        activeTrackId,
-        positionSeconds: playerState.positionMs / 1000,
-        durationSeconds: playerState.durationMs / 1000,
-        volume,
-        onPlayTrack: (trackId: string) => {
-          const track =
-            tracks.find((candidate) => candidate.id === trackId) ??
-            (previewTrack?.id === trackId ? previewTrack : null);
-          if (!track?.spotifyUri) {
-            return;
-          }
-
-          playSpotifyUri(track.spotifyUri);
-        },
-        onPause: () => {
-          void pause();
-        },
-        onResume: () => {
-          void resume();
-        },
-        onSeek: (seconds: number) => {
-          void seek(Math.round(seconds * 1000));
-        },
-        onVolumeChange: (nextVolume: number) => {
-          setVolume(nextVolume);
-          void setSpotifyVolume(nextVolume / 100);
-        },
-      };
-    },
-    [
+    return {
+      isPlaying: !playerState.isPaused && Boolean(playerState.currentTrackUri),
       activeTrackId,
-      pause,
-      playSpotifyUri,
-      playerState.currentTrackUri,
-      playerState.durationMs,
-      playerState.isPaused,
-      playerState.positionMs,
-      previewTrack,
-      resume,
-      seek,
-      setSpotifyVolume,
-      showPlaybackControls,
-      tracks,
+      positionSeconds: playerState.positionMs / 1000,
+      durationSeconds: playerState.durationMs / 1000,
       volume,
-    ],
-  );
+      onPlayTrack: (trackId: string) => {
+        const track =
+          tracks.find((candidate) => candidate.id === trackId) ??
+          (previewTrack?.id === trackId ? previewTrack : null);
+        if (!track?.spotifyUri) {
+          return;
+        }
+
+        playSpotifyUri(track.spotifyUri);
+      },
+      onPause: () => {
+        void pause();
+      },
+      onResume: () => {
+        void resume();
+      },
+      onSeek: (seconds: number) => {
+        void seek(Math.round(seconds * 1000));
+      },
+      onVolumeChange: (nextVolume: number) => {
+        setVolume(nextVolume);
+        void setSpotifyVolume(nextVolume / 100);
+      },
+    };
+  }, [
+    activeTrackId,
+    pause,
+    playSpotifyUri,
+    playerState.currentTrackUri,
+    playerState.durationMs,
+    playerState.isPaused,
+    playerState.positionMs,
+    previewTrack,
+    resume,
+    seek,
+    setSpotifyVolume,
+    showPlaybackControls,
+    tracks,
+    volume,
+  ]);
 
   const previewSpotifyTrack = (track: SpotifyTrackResponse) => {
     const uri = `spotify:track:${track.id}`;

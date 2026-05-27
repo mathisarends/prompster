@@ -20,6 +20,7 @@ class PlaylistDraftStore:
         self._playlist_draft = playlist_draft
         self._track_cache: dict[str, PlaylistDraftTrack] = {}
         self._pending_playlist_draft_updates: list[PlaylistDraftUpdate] = []
+
         if playlist_draft is not None:
             self.cache_tracks(playlist_draft.tracks)
 
@@ -39,24 +40,32 @@ class PlaylistDraftStore:
         self._pending_playlist_draft_updates.append(update)
         return playlist_draft
 
-    def save_playlist_draft_from_refs(
+    def create_playlist_draft_from_refs(
         self,
         name: str,
         track_refs: list[TrackRef],
     ) -> PlaylistDraft:
-        tracks = self.resolve_track_refs(track_refs)
         if self._playlist_draft is not None:
-            pinned_tracks = [
-                track for track in self._playlist_draft.tracks if track.is_pinned
-            ]
-            pinned_uris = {track.spotify_uri for track in pinned_tracks}
-            tracks = pinned_tracks + [
-                track for track in tracks if track.spotify_uri not in pinned_uris
-            ]
-        return self.save_playlist_draft(PlaylistDraft(name=name, tracks=tracks))
+            raise ValueError("Playlist draft already exists.")
+        return self.save_playlist_draft(
+            PlaylistDraft(
+                name=name,
+                tracks=self._deduplicate_tracks(self.resolve_track_refs(track_refs)),
+            )
+        )
 
     def add_tracks(self, tracks: list[PlaylistDraftTrack]) -> PlaylistDraft:
-        playlist_draft = self._require_playlist_draft()
+        if self._playlist_draft is None:
+            return self.save_playlist_draft(
+                PlaylistDraft(name="Playlist", tracks=self._deduplicate_tracks(tracks))
+            )
+
+        playlist_draft = self._playlist_draft
+        existing_uris = {track.spotify_uri for track in playlist_draft.tracks}
+        tracks = self._deduplicate_tracks(tracks, existing_uris=existing_uris)
+        if not tracks:
+            return playlist_draft
+
         playlist_draft.tracks.extend(tracks)
         self.cache_tracks(tracks)
         self._pending_playlist_draft_updates.append(
@@ -145,21 +154,13 @@ class PlaylistDraftStore:
         return [self.resolve_track_ref(track_ref) for track_ref in track_refs]
 
     def resolve_track_ref(self, track_ref: TrackRef) -> PlaylistDraftTrack:
-        return self.resolve_track_uri(
-            track_ref.uri,
-            is_pinned=track_ref.pinned,
-        )
+        return self.resolve_track_uri(track_ref.uri)
 
-    def resolve_track_uri(
-        self,
-        uri: str,
-        *,
-        is_pinned: bool = False,
-    ) -> PlaylistDraftTrack:
+    def resolve_track_uri(self, uri: str) -> PlaylistDraftTrack:
         track = self._track_cache.get(uri)
         if track is None:
             raise ValueError(f"Spotify track URI is not in the workspace cache: {uri}")
-        return track.model_copy(update={"id": uuid4(), "is_pinned": is_pinned})
+        return track.model_copy(update={"id": uuid4(), "is_pinned": False})
 
     def drain_playlist_draft_updates(self) -> list[PlaylistDraftUpdate]:
         updates = self._pending_playlist_draft_updates.copy()
@@ -170,6 +171,21 @@ class PlaylistDraftStore:
         if self._playlist_draft is None:
             raise ValueError("No playlist draft exists yet.")
         return self._playlist_draft
+
+    def _deduplicate_tracks(
+        self,
+        tracks: list[PlaylistDraftTrack],
+        *,
+        existing_uris: set[str | None] | None = None,
+    ) -> list[PlaylistDraftTrack]:
+        seen_uris = set(existing_uris or set())
+        deduplicated: list[PlaylistDraftTrack] = []
+        for track in tracks:
+            if track.spotify_uri in seen_uris:
+                continue
+            seen_uris.add(track.spotify_uri)
+            deduplicated.append(track)
+        return deduplicated
 
     def _assert_no_pinned_track_ids(self, track_ids: set[UUID]) -> None:
         playlist_draft = self._require_playlist_draft()

@@ -126,7 +126,7 @@ class AlbumTracksParams(ToolParams):
     album_id: str = Field(description="URI or ID.")
 
 
-class BuildDraftPlaylistParams(ToolParams):
+class CreateDraftPlaylistParams(ToolParams):
     name: str
     tracks: list[TrackRef] = Field(min_length=1)
 

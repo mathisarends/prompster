@@ -659,6 +659,41 @@ class TestSessionServiceSendMessage:
         assert session.playlist is not None
         assert session.playlist.id == playlist_id
 
+    def test_emits_playlist_set_for_initial_runner_track_addition(self) -> None:
+        owner_id = uuid4()
+        playlist_id = uuid4()
+        track = PlaylistTrack(id=uuid4(), title="Take On Me", artist="a-ha", year=1985)
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        runner = _SessionRunnerStub(
+            events=[
+                SessionRunnerPlaylistTracksAdded(
+                    playlist_id=playlist_id,
+                    tracks=[track],
+                )
+            ]
+        )
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        events = asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="leg den song ins deck",
+                )
+            )
+        )
+
+        playlist_event = next(
+            event for event in events if isinstance(event, SessionPlaylistSet)
+        )
+        assert playlist_event.playlist.id == playlist_id
+        assert playlist_event.playlist.tracks == [track]
+        assert not any(isinstance(event, SessionPlaylistTrackAdded) for event in events)
+        assert session.playlist is not None
+        assert session.playlist.id == playlist_id
+
     def test_emits_playlist_track_diffs_for_runner_playlist_mutations(self) -> None:
         owner_id = uuid4()
         playlist_id = uuid4()
