@@ -11,7 +11,7 @@ export interface SpotifyTrackResponse {
   title: string;
   artist: string;
   album?: string | null;
-  year?: number | null;
+  year: number;
   coverUrl?: string | null;
   url?: string | null;
 }
