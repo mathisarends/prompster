@@ -3,7 +3,10 @@ from collections.abc import AsyncIterator
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from llmify.messages import UserMessage as LLMUserMessage
+from llmify.messages import (
+    AssistantMessage as LLMAssistantMessage,
+    UserMessage as LLMUserMessage,
+)
 
 from backend.features.session.application import SessionConversationService
 from backend.features.session.application.ports.session_runner import (
@@ -16,8 +19,8 @@ from backend.features.session.domain import (
     UserCurationEvent,
     UserCurationEventType,
 )
-from backend.features.session.infrastructure.session_runner import (
-    _to_history_messages,
+from backend.features.session.infrastructure.agent_history import (
+    build_agent_history,
 )
 
 
@@ -53,7 +56,7 @@ class _NoOpQuotaService:
 
 
 class TestSessionRunnerHistoryRendering:
-    """``_to_history_messages`` produces the exact LLM message sequence the
+    """``build_agent_history`` produces the exact LLM message sequence the
     agent will replay. Curation events bind to the user message they belong
     to and appear inline in its content — mirroring the domain model where
     ``UserMessage.user_curation_events`` is part of the user entity.
@@ -68,7 +71,7 @@ class TestSessionRunnerHistoryRendering:
         )
         session.add_user_message("mach weiter")
 
-        history = _to_history_messages(session=session)
+        history = build_agent_history(session=session)
 
         user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
         assert len(user_messages) == 2
@@ -98,7 +101,7 @@ class TestSessionRunnerHistoryRendering:
             user_curation_events=[event],
         )
 
-        history = _to_history_messages(session=session)
+        history = build_agent_history(session=session)
 
         assert len(history) == 1
         assert isinstance(history[0], LLMUserMessage)
@@ -109,9 +112,12 @@ class TestSessionRunnerHistoryRendering:
             "</user_events>"
         )
 
-    def test_consumed_bound_events_are_not_resurfaced(self) -> None:
-        # Events the agent has already acknowledged on a previous run are
-        # marked consumed — they must not appear in the next history rebuild.
+    def test_consumed_bound_events_stay_visible_in_history(self) -> None:
+        # Past curation events must remain visible on every subsequent run —
+        # they are a permanent record of the user's intent for that turn
+        # (mirrors the domain coupling UserMessage <-> user_curation_events).
+        # The ``consumed`` flag only gates user-facing restoration, not
+        # history visibility.
         session = Session(title="Deck", entries=[], owner_id=uuid4())
         session.add_user_message("start")
         session.add_track(
@@ -121,20 +127,78 @@ class TestSessionRunnerHistoryRendering:
         for event in session.unconsumed_user_curation_events:
             event.mark_consumed()
 
-        history = _to_history_messages(session=session)
+        history = build_agent_history(session=session)
 
         user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
-        assert all("<user_events>" not in m.content for m in user_messages)
+        assert "<user_events>" in user_messages[1].content
+        assert "track_added" in user_messages[1].content
 
     def test_session_without_curation_events_emits_plain_user_messages(self) -> None:
         session = Session(title="Deck", entries=[], owner_id=uuid4())
         session.add_user_message("hi")
         session.add_assistant_message("hey")
 
-        history = _to_history_messages(session=session)
+        history = build_agent_history(session=session)
 
         user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
         assert [m.content for m in user_messages] == ["hi"]
+
+    def test_full_multi_turn_rendering_keeps_past_events_visible(self) -> None:
+        """Golden output: a 5-turn history where the user pinned a track
+        2 turns ago. The pinned event lives inside its bound UserMessage
+        and remains visible on every later run — exactly what the LLM sees.
+
+        The session transcript built below maps 1:1 to the asserted
+        ``expected`` list, so you can read this test as a spec of how the
+        agent perceives a multi-turn conversation with manual user actions.
+        """
+        session = Session(title="Deck", entries=[], owner_id=uuid4())
+
+        # Turn 1 — user opens the deck, no manual changes yet.
+        session.add_user_message("Bau mir ein 80er-Deck")
+        session.add_assistant_message("Klar, ich starte mit ein paar Klassikern.")
+
+        # Turn 2 — user pins a track BEFORE typing the next message.
+        # The pin is recorded as a curation event and binds to turn-2's UserMessage.
+        session.add_track(title="Take On Me", artist="a-ha", year=1985, is_pinned=True)
+        session.add_user_message("der pin bleibt, sonst gerne austauschen")
+        session.add_assistant_message("Verstanden, a-ha bleibt drin.")
+
+        # Turn 3 — plain conversation, no manual change.
+        # The earlier pin is now "2 turns ago" — it must still be visible.
+        session.add_user_message("Mach es etwas tanzbarer")
+
+        # Simulate that previous agent runs already consumed the pin event.
+        # consumed=True must NOT hide it from history rendering.
+        for event in session.user_curation_events:
+            event.mark_consumed()
+
+        history = build_agent_history(session=session)
+
+        # The pin event's timestamp is generated at runtime — pull it out so
+        # the golden output below stays deterministic.
+        pin_event = session.user_curation_events[0]
+        pin_iso = pin_event.occurred_at.isoformat()
+
+        expected = [
+            LLMUserMessage(content="Bau mir ein 80er-Deck"),
+            LLMAssistantMessage(content="Klar, ich starte mit ein paar Klassikern."),
+            LLMUserMessage(
+                content=(
+                    "<user_events>\n"
+                    f'<event type="track_added" at="{pin_iso}">'
+                    "a-ha - Take On Me</event>\n"
+                    "</user_events>\n"
+                    "\n"
+                    "der pin bleibt, sonst gerne austauschen"
+                )
+            ),
+            LLMAssistantMessage(content="Verstanden, a-ha bleibt drin."),
+            LLMUserMessage(content="Mach es etwas tanzbarer"),
+        ]
+
+        assert [type(m) for m in history] == [type(m) for m in expected]
+        assert [m.content for m in history] == [m.content for m in expected]
 
 
 class TestSendMessageConsumesCurationEvents:

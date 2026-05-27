@@ -1,6 +1,4 @@
-import json
 from collections.abc import AsyncIterator
-from uuid import UUID
 
 from agent.agent import (
     Agent,
@@ -11,8 +9,7 @@ from agent.agent import (
     ToolResultEvent,
     WorkspaceUpdatedEvent,
 )
-from agent.messages import render_user_message_content
-from agent import Spotify, UserEvent
+from agent import Spotify
 from agent.tools.views import AskFollowUpQuestion
 from agent.playlist import (
     PlaylistDraft,
@@ -24,13 +21,6 @@ from agent.playlist import (
 )
 
 from llmify import ChatModel
-from llmify.messages import (
-    AssistantMessage as LLMAssistantMessage,
-    Message as LLMMessage,
-    ToolCall as LLMToolCall,
-    ToolResultMessage as LLMToolResultMessage,
-    UserMessage as LLMUserMessage,
-)
 from spotifyify import Spotifyify
 
 from backend.features.session.application.ports.session_runner import (
@@ -48,9 +38,6 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerToolCallStarted,
 )
 from backend.features.session.domain import (
-    AssistantMessage,
-    CompletedCall,
-    FailedCall,
     FollowUpOption,
     FollowUpQuestion,
     PendingCall,
@@ -58,13 +45,9 @@ from backend.features.session.domain import (
     PlaylistTrack,
     Session,
     ToolActionType,
-    ToolCall,
-    ToolCallSequence,
     ToolFunction,
-    UserCurationEvent,
-    UserMessage,
-    UserMessageAttachment,
 )
+from backend.features.session.infrastructure.agent_history import build_agent_history
 
 
 class AgentSessionRunner(SessionRunner):
@@ -81,9 +64,7 @@ class AgentSessionRunner(SessionRunner):
     async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
         agent = Agent(
             llm=self._llm,
-            history=_to_history_messages(
-                session=session,
-            ),
+            history=build_agent_history(session=session),
             system_prompt=self._system_prompt,
             spotify=Spotify(client=self._spotify),
             playlist_store=_to_playlist_draft_store(session.playlist),
@@ -152,63 +133,6 @@ class AgentSessionRunner(SessionRunner):
             await agent.close()
 
 
-def _to_history_messages(
-    *,
-    session: Session,
-) -> list[LLMMessage]:
-    bound_event_ids: set[UUID] = set()
-    messages: list[LLMMessage] = []
-    for entry in session.entries:
-        if isinstance(entry, UserMessage):
-            curation_events = _to_user_events_for_message(message=entry)
-            for event in entry.user_curation_events:
-                bound_event_ids.add(event.id)
-            messages.append(
-                LLMUserMessage(
-                    content=render_user_message_content(
-                        _to_user_message_content(entry),
-                        curation_events,
-                    )
-                )
-            )
-        elif isinstance(entry, AssistantMessage):
-            messages.append(LLMAssistantMessage(content=entry.content))
-        elif isinstance(entry, ToolCallSequence):
-            for call in entry.calls:
-                messages.append(
-                    LLMAssistantMessage(
-                        content="", tool_calls=[_to_llm_tool_call(call)]
-                    )
-                )
-                if isinstance(call, CompletedCall):
-                    messages.append(
-                        LLMToolResultMessage(
-                            tool_call_id=call.id,
-                            content=call.result,
-                        )
-                    )
-                elif isinstance(call, FailedCall):
-                    messages.append(
-                        LLMToolResultMessage(
-                            tool_call_id=call.id,
-                            content=call.error,
-                        )
-                    )
-
-    trailing_events = _to_trailing_user_events(
-        session=session, bound_event_ids=bound_event_ids
-    )
-    if trailing_events:
-        # No user message followed these manual changes yet (e.g. agent is resuming
-        # after follow-up answers). Surface them in a synthetic UserMessage so the
-        # LLM still sees the curation block in turn order.
-        messages.append(
-            LLMUserMessage(content=render_user_message_content("", trailing_events))
-        )
-
-    return messages
-
-
 def _to_tool_action_type(value: str | None) -> ToolActionType | None:
     if value is None:
         return None
@@ -216,45 +140,6 @@ def _to_tool_action_type(value: str | None) -> ToolActionType | None:
         return ToolActionType(value)
     except ValueError:
         return None
-
-
-def _to_user_message_content(message: UserMessage) -> str:
-    if not message.attachments:
-        return message.content
-
-    payload = {
-        "attachment_references": [
-            _to_attachment_payload(attachment) for attachment in message.attachments
-        ]
-    }
-    attachment_context = json.dumps(payload, ensure_ascii=False)
-    if message.content.strip():
-        return f"{message.content}\n\n{attachment_context}"
-    return attachment_context
-
-
-def _to_attachment_payload(attachment: UserMessageAttachment) -> dict[str, str | None]:
-    return {
-        "kind": attachment.kind.value,
-        "external_id": attachment.external_id,
-        "title": attachment.title,
-        "subtitle": attachment.subtitle,
-        "image_url": attachment.image_url,
-        "spotify_id": attachment.spotify_id,
-    }
-
-
-def _to_llm_tool_call(call: ToolCall) -> LLMToolCall:
-    return LLMToolCall(
-        id=call.id,
-        function={
-            "name": call.function.name,
-            "arguments": json.dumps(
-                call.function.arguments,
-                ensure_ascii=False,
-            ),
-        },
-    )
 
 
 def _to_follow_up_question(question: AskFollowUpQuestion) -> FollowUpQuestion:
@@ -308,31 +193,4 @@ def _to_playlist_draft_store(playlist: Playlist | None) -> PlaylistDraftStore:
                 for track in playlist.tracks
             ],
         )
-    )
-
-
-def _to_user_events_for_message(*, message: UserMessage) -> list[UserEvent]:
-    return [
-        _to_user_event(event=event)
-        for event in message.user_curation_events
-        if not event.consumed
-    ]
-
-
-def _to_trailing_user_events(
-    *, session: Session, bound_event_ids: set[UUID]
-) -> list[UserEvent]:
-    return [
-        _to_user_event(event=event)
-        for event in session.unconsumed_user_curation_events
-        if event.id not in bound_event_ids
-    ]
-
-
-def _to_user_event(*, event: UserCurationEvent) -> UserEvent:
-    return UserEvent(
-        type=event.event_type.value,
-        track_title=event.track_title,
-        track_artist=event.track_artist,
-        occurred_at=event.occurred_at,
     )
