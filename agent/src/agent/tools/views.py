@@ -46,7 +46,7 @@ class Tool:
     def __init__(
         self,
         name: str,
-        description: str,
+        description: str | None,
         fn: Callable[..., Any],
         status_label: Callable[[Any], str] | None = None,
         action_type: ActionType = ActionType.FETCH,
@@ -90,13 +90,15 @@ class Tool:
 
     def to_schema(self) -> ToolSchema:
         parameters = self._schema if self._schema else self._schema_builder.build()
+        function: dict[str, Any] = {
+            "name": self.name,
+            "parameters": parameters,
+        }
+        if self.description is not None:
+            function["description"] = self.description
         return {
             "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": parameters,
-            },
+            "function": function,
         }
 
     def __eq__(self, other: object) -> bool:

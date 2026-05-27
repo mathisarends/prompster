@@ -1,10 +1,10 @@
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 
 class FunctionSchema(TypedDict):
     name: str
-    description: str
     parameters: dict
+    description: NotRequired[str]
 
 
 class ToolSchema(TypedDict):

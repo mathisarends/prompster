@@ -62,7 +62,7 @@ class Tools:
 
     def action[P: BaseModel](
         self,
-        description: str,
+        description: str | None = None,
         name: str | None = None,
         *,
         params: type[P] | None = None,
@@ -150,7 +150,6 @@ class Tools:
 
     def _register_default_tools(self) -> None:
         @self.action(
-            description="",
             params=SearchParams,
             status_label=lambda params: params.status,
             action_type=ActionType.SEARCH,
@@ -168,7 +167,6 @@ class Tools:
                 return ActionResult.fail(error)
 
         @self.action(
-            description="",
             params=SearchParams,
             status_label=lambda params: params.status,
             action_type=ActionType.SEARCH,
@@ -184,7 +182,6 @@ class Tools:
                 return ActionResult.fail(error)
 
         @self.action(
-            description="",
             params=SearchParams,
             status_label=lambda params: params.status,
             action_type=ActionType.SEARCH,
@@ -200,7 +197,6 @@ class Tools:
                 return ActionResult.fail(error)
 
         @self.action(
-            description="",
             params=ArtistAlbumsParams,
             status_label=lambda params: params.status,
             action_type=ActionType.FETCH,
@@ -216,7 +212,6 @@ class Tools:
                 return ActionResult.fail(error)
 
         @self.action(
-            description="",
             params=ArtistTopTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.FETCH,
@@ -234,7 +229,6 @@ class Tools:
                 return ActionResult.fail(error)
 
         @self.action(
-            description="",
             params=AlbumTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.FETCH,
