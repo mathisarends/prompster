@@ -105,7 +105,7 @@ export const ChatPage = () => {
   );
   const scrollDependency = entries.map(getScrollKey).join("|");
   const scrollViewportRef = useRef<HTMLDivElement>(null);
-  const { isAtBottom, scrollToBottom } = useStickyScroll(
+  const { showScrollToBottomButton, scrollToBottom } = useStickyScroll(
     scrollViewportRef,
     scrollDependency,
   );
@@ -193,8 +193,8 @@ export const ChatPage = () => {
         }
       />
 
-      <main className="min-h-0 flex-1 overflow-hidden">
-        <ScrollArea className="h-full min-h-0">
+      <main className="relative min-h-0 flex-1 overflow-hidden">
+        <ScrollArea className="h-full min-h-0" viewportRef={scrollViewportRef}>
           <div className="px-4 sm:px-8">
             <div className="mx-auto flex w-full max-w-4xl flex-col">
               <div className="flex flex-col gap-4 px-1 pt-1 sm:px-2">
@@ -213,13 +213,30 @@ export const ChatPage = () => {
                     {entries.map((entry, index) =>
                       renderEntry(entry, entries[index - 1]),
                     )}
+                    {showThinkingPlaceholder && (
+                      <ChatThinkingIndicator className="px-1 py-2" />
+                    )}
                   </>
                 )}
-                <div ref={messagesEndRef} />
               </div>
             </div>
           </div>
         </ScrollArea>
+        <button
+          type="button"
+          onClick={() => scrollToBottom()}
+          aria-label="Zu neuen Nachrichten scrollen"
+          aria-hidden={!showScrollToBottomButton}
+          tabIndex={showScrollToBottomButton ? 0 : -1}
+          className={cn(
+            "absolute bottom-4 left-1/2 z-20 flex size-9 -translate-x-1/2 items-center justify-center rounded-full border border-white/15 bg-background/90 text-foreground shadow-lg shadow-black/30 backdrop-blur transition-all duration-200 ease-out hover:bg-background hover:border-white/25",
+            showScrollToBottomButton
+              ? "opacity-100"
+              : "pointer-events-none translate-y-2 opacity-0",
+          )}
+        >
+          <ChevronDown className="size-4" />
+        </button>
       </main>
 
       <div className="shrink-0 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-6 sm:px-8 sm:pb-3">
@@ -278,7 +295,7 @@ export const ChatPage = () => {
           onLayoutChanged={(layout) =>
             setWorkspaceLayout([layout.chat ?? 62, layout.workspace ?? 38])
           }
-        >was m
+        >
           <ResizablePanel
             id="chat"
             defaultSize={workspaceLayout[0] ?? 62}

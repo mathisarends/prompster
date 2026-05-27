@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
 const BOTTOM_THRESHOLD_PX = 48;
+const SHOW_SCROLL_BUTTON_THRESHOLD_PX = 160;
 
 const getDistanceFromBottom = (element: HTMLElement) =>
   element.scrollHeight - element.scrollTop - element.clientHeight;
@@ -10,28 +11,43 @@ export const useStickyScroll = <T extends HTMLElement>(
   dependency: unknown,
 ) => {
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [showScrollToBottomButton, setShowScrollToBottomButton] =
+    useState(false);
   const stickToBottomRef = useRef(true);
 
   useEffect(() => {
     const viewport = viewportRef.current;
     if (!viewport) return;
 
-    const handleScroll = () => {
-      const atBottom = getDistanceFromBottom(viewport) <= BOTTOM_THRESHOLD_PX;
+    const syncScrollState = () => {
+      const distanceFromBottom = getDistanceFromBottom(viewport);
+      const atBottom = distanceFromBottom <= BOTTOM_THRESHOLD_PX;
       stickToBottomRef.current = atBottom;
       setIsAtBottom(atBottom);
+      setShowScrollToBottomButton(
+        distanceFromBottom > SHOW_SCROLL_BUTTON_THRESHOLD_PX,
+      );
     };
 
-    handleScroll();
-    viewport.addEventListener("scroll", handleScroll, { passive: true });
-    return () => viewport.removeEventListener("scroll", handleScroll);
+    syncScrollState();
+    viewport.addEventListener("scroll", syncScrollState, { passive: true });
+    return () => viewport.removeEventListener("scroll", syncScrollState);
   }, [viewportRef]);
 
   useEffect(() => {
-    if (!stickToBottomRef.current) return;
     const viewport = viewportRef.current;
     if (!viewport) return;
-    viewport.scrollTop = viewport.scrollHeight;
+
+    if (stickToBottomRef.current) {
+      viewport.scrollTop = viewport.scrollHeight;
+      return;
+    }
+
+    const distanceFromBottom = getDistanceFromBottom(viewport);
+    setIsAtBottom(distanceFromBottom <= BOTTOM_THRESHOLD_PX);
+    setShowScrollToBottomButton(
+      distanceFromBottom > SHOW_SCROLL_BUTTON_THRESHOLD_PX,
+    );
   }, [dependency, viewportRef]);
 
   const scrollToBottom = useCallback(
@@ -39,10 +55,11 @@ export const useStickyScroll = <T extends HTMLElement>(
       const viewport = viewportRef.current;
       if (!viewport) return;
       stickToBottomRef.current = true;
+      setShowScrollToBottomButton(false);
       viewport.scrollTo({ top: viewport.scrollHeight, behavior });
     },
     [viewportRef],
   );
 
-  return { isAtBottom, scrollToBottom };
+  return { isAtBottom, showScrollToBottomButton, scrollToBottom };
 };
