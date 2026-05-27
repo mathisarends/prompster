@@ -39,6 +39,8 @@ type DeckWorkspaceViewProps = {
   playlist: {
     name?: string | null;
     tracks: PlaylistTrackResponse[];
+    uiRevision?: number;
+    uiEvent?: "set" | "track_added" | "track_removed" | "track_replaced";
   };
   onRemoveTrack?: (trackId: string) => Promise<void>;
 };
@@ -344,6 +346,10 @@ export const DeckWorkspaceView = ({
 
             <DeckPlaylist
               initialTracks={tracks}
+              playlistUpdate={{
+                revision: playlist.uiRevision ?? 0,
+                event: playlist.uiEvent,
+              }}
               showHeader={false}
               allowLocalRemoval={false}
               onRemoveTrack={onRemoveTrack}

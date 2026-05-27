@@ -7,7 +7,7 @@
  */
 import type { SessionMessageAttachmentRequest } from "./sessionMessageAttachmentRequest";
 
-export interface SessionPlaylistTrackAddedSendMessageRequest {
+export interface SendMessageRequest {
   /**
    * @minLength 1
    * @maxLength 4000

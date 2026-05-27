@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SearchBar } from "@/components/deck/search-bar";
 import { SpotifyTrackSearchResults } from "@/components/deck/spotify-track-search-panel";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -48,9 +49,24 @@ type DeckPlaylistProps = {
   addingSpotifyTrackId?: string | null;
   pinningTrackId?: string | null;
   controller?: DeckPlaylistController;
+  playlistUpdate?: {
+    revision: number;
+    event?: "set" | "track_added" | "track_removed" | "track_replaced";
+  };
 };
 
 type SortMode = "playlist" | "title" | "artist" | "year-desc" | "year-asc";
+type TrackAnimationState = "normal" | "entering" | "exiting" | "updated";
+
+type AnimatedPlaylistTrack = {
+  track: PlaylistTrack;
+  state: TrackAnimationState;
+  signature: string;
+};
+
+const TRACK_ENTER_MS = 520;
+const TRACK_EXIT_MS = 280;
+const PLAYLIST_SET_SKELETON_MS = 620;
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: "playlist", label: "Playlist-Reihenfolge" },
@@ -93,6 +109,107 @@ const toSpotifyWebUrl = (spotifyUri: string): string | null => {
   return `https://open.spotify.com/${type}/${id}`;
 };
 
+const getTrackSignature = (track: PlaylistTrack) =>
+  [
+    track.title,
+    track.artist,
+    track.year,
+    track.coverUrl,
+    track.spotifyUri ?? "",
+    track.isPinned ? "pinned" : "unpinned",
+  ].join("\u001f");
+
+const useAnimatedPlaylistTracks = (
+  tracks: PlaylistTrack[],
+): AnimatedPlaylistTrack[] => {
+  const [renderedTracks, setRenderedTracks] = useState<AnimatedPlaylistTrack[]>(
+    () =>
+      tracks.map((track) => ({
+        track,
+        state: "normal",
+        signature: getTrackSignature(track),
+      })),
+  );
+
+  useEffect(() => {
+    const nextById = new Map(tracks.map((track) => [track.id, track]));
+
+    setRenderedTracks((currentTracks) => {
+      const currentById = new Map(
+        currentTracks.map((item) => [item.track.id, item]),
+      );
+      const nextItems = tracks.map<AnimatedPlaylistTrack>((track) => {
+        const current = currentById.get(track.id);
+        const signature = getTrackSignature(track);
+
+        if (!current || current.state === "exiting") {
+          return { track, state: "entering", signature };
+        }
+
+        return {
+          track,
+          signature,
+          state: current.signature === signature ? "normal" : "updated",
+        };
+      });
+
+      currentTracks.forEach((item, index) => {
+        if (nextById.has(item.track.id) || item.state === "exiting") return;
+        nextItems.splice(Math.min(index, nextItems.length), 0, {
+          ...item,
+          state: "exiting",
+        });
+      });
+
+      return nextItems;
+    });
+
+    const settleTimer = window.setTimeout(() => {
+      setRenderedTracks((currentTracks) =>
+        currentTracks.map((item) =>
+          item.state === "entering" || item.state === "updated"
+            ? { ...item, state: "normal" }
+            : item,
+        ),
+      );
+    }, TRACK_ENTER_MS);
+
+    const removeTimer = window.setTimeout(() => {
+      setRenderedTracks((currentTracks) =>
+        currentTracks.filter((item) => item.state !== "exiting"),
+      );
+    }, TRACK_EXIT_MS);
+
+    return () => {
+      window.clearTimeout(settleTimer);
+      window.clearTimeout(removeTimer);
+    };
+  }, [tracks]);
+
+  return renderedTracks;
+};
+
+const DeckPlaylistSkeletonTracks = () => (
+  <div className="space-y-1 pb-3 pt-2">
+    {Array.from({ length: 6 }).map((_, index) => (
+      <div
+        key={index}
+        className="grid grid-cols-[minmax(0,1fr)_64px_36px] items-center gap-x-3 rounded-md px-2 py-2.5"
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <Skeleton className="h-10 w-10 shrink-0 rounded-[4px] bg-white/[0.08]" />
+          <div className="min-w-0 flex-1">
+            <Skeleton className="h-3.5 w-[72%] bg-white/[0.1]" />
+            <Skeleton className="mt-2 h-3 w-[46%] bg-white/[0.07]" />
+          </div>
+        </div>
+        <Skeleton className="h-3.5 w-9 justify-self-center bg-white/[0.08]" />
+        <Skeleton className="size-8 justify-self-end bg-white/[0.06]" />
+      </div>
+    ))}
+  </div>
+);
+
 export const DeckPlaylist = ({
   className,
   initialTracks = [],
@@ -108,6 +225,7 @@ export const DeckPlaylist = ({
   addingSpotifyTrackId = null,
   pinningTrackId = null,
   controller,
+  playlistUpdate,
 }: DeckPlaylistProps) => {
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useLocalStorage<SortMode>(
@@ -117,6 +235,7 @@ export const DeckPlaylist = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const playback = usePlaybackState(initialTracks, controller);
   const optimistic = useOptimisticRemoval(onRemoveTrack);
+  const [showPlaylistSetSkeleton, setShowPlaylistSetSkeleton] = useState(false);
 
   const canRemoveTracks = allowLocalRemoval || Boolean(onRemoveTrack);
   const canToggleTrackPin = Boolean(onToggleTrackPin);
@@ -182,11 +301,29 @@ export const DeckPlaylist = ({
         .includes(normalized),
     );
   }, [query, sortedTracks]);
+  const animatedFilteredTracks = useAnimatedPlaylistTracks(filteredTracks);
 
   const activeSortOption =
     SORT_OPTIONS.find((option) => option.value === sortMode) ?? SORT_OPTIONS[0];
   const trimmedQuery = query.trim();
   const isSearchActive = trimmedQuery.length > 0;
+
+  useEffect(() => {
+    if (
+      playlistUpdate?.event !== "set" ||
+      !playlistUpdate.revision ||
+      playlistUpdate.revision <= 0
+    ) {
+      return;
+    }
+
+    setShowPlaylistSetSkeleton(true);
+    const timer = window.setTimeout(() => {
+      setShowPlaylistSetSkeleton(false);
+    }, PLAYLIST_SET_SKELETON_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [playlistUpdate?.event, playlistUpdate?.revision]);
 
   const removeTrack = (trackId: string) => {
     if (onRemoveTrack) {
@@ -205,46 +342,55 @@ export const DeckPlaylist = ({
     onVisibleTrackCountChange?.(filteredTracks.length);
   }, [filteredTracks.length, onVisibleTrackCountChange]);
 
-  const renderPlaylistTracks = (tracks: PlaylistTrack[]) =>
-    tracks.map((track) => {
+  const renderPlaylistTracks = (tracks: AnimatedPlaylistTrack[]) =>
+    tracks.map(({ track, state }) => {
       const isActive = track.id === playback.activeTrackId;
       const isPlayable = Boolean(track.spotifyUri);
 
       return (
-        <DeckPlaylistTrackItem
+        <div
           key={track.id}
-          track={track}
-          isActive={isActive}
-          isPlaying={playback.isPlaying}
-          isPlayable={isPlayable}
-          canRemove={canRemoveTracks}
-          canTogglePin={canToggleTrackPin}
-          isRemoving={optimistic.loadingIds.has(track.id)}
-          isPinning={pinningTrackId === track.id}
-          onActivateTrack={() => {
-            if (isPlayable) playback.activateTrack(track.id);
-          }}
-          onTogglePlayPause={() => {
-            if (!isPlayable) return;
+          className={cn(
+            "deck-playlist-track-motion",
+            state === "entering" ? "is-entering" : null,
+            state === "exiting" ? "is-exiting" : null,
+            state === "updated" ? "is-updated" : null,
+          )}
+        >
+          <DeckPlaylistTrackItem
+            track={track}
+            isActive={isActive}
+            isPlaying={playback.isPlaying}
+            isPlayable={isPlayable}
+            canRemove={canRemoveTracks}
+            canTogglePin={canToggleTrackPin}
+            isRemoving={optimistic.loadingIds.has(track.id)}
+            isPinning={pinningTrackId === track.id}
+            onActivateTrack={() => {
+              if (isPlayable) playback.activateTrack(track.id);
+            }}
+            onTogglePlayPause={() => {
+              if (!isPlayable) return;
 
-            if (!hasPlaybackController) {
-              openTrackOnSpotify(track);
-              return;
-            }
-
-            if (isActive) {
-              if (playback.isPlaying) {
-                playback.onPause();
-              } else {
-                playback.onResume();
+              if (!hasPlaybackController) {
+                openTrackOnSpotify(track);
+                return;
               }
-            } else {
-              playback.activateTrack(track.id);
-            }
-          }}
-          onRemoveTrack={() => removeTrack(track.id)}
-          onTogglePin={() => toggleTrackPin(track)}
-        />
+
+              if (isActive) {
+                if (playback.isPlaying) {
+                  playback.onPause();
+                } else {
+                  playback.onResume();
+                }
+              } else {
+                playback.activateTrack(track.id);
+              }
+            }}
+            onRemoveTrack={() => removeTrack(track.id)}
+            onTogglePin={() => toggleTrackPin(track)}
+          />
+        </div>
       );
     });
 
@@ -327,9 +473,11 @@ export const DeckPlaylist = ({
 
         <div className="min-h-0 flex-1 overflow-hidden">
           <ScrollArea className="h-full min-h-0 overflow-hidden pr-3">
-            {isSearchActive ? (
+            {showPlaylistSetSkeleton ? (
+              <DeckPlaylistSkeletonTracks />
+            ) : isSearchActive ? (
               <div className="space-y-5 pb-3 pt-2">
-                {filteredTracks.length > 0 ? (
+                {animatedFilteredTracks.length > 0 ? (
                   <section>
                     <div className="mb-2 px-1">
                       <h4 className="text-xs font-semibold uppercase text-muted-foreground">
@@ -337,7 +485,7 @@ export const DeckPlaylist = ({
                       </h4>
                     </div>
                     <div className="space-y-1">
-                      {renderPlaylistTracks(filteredTracks)}
+                      {renderPlaylistTracks(animatedFilteredTracks)}
                     </div>
                   </section>
                 ) : null}
@@ -370,9 +518,9 @@ export const DeckPlaylist = ({
                   </section>
                 ) : null}
               </div>
-            ) : filteredTracks.length > 0 ? (
+            ) : animatedFilteredTracks.length > 0 ? (
               <div className="space-y-1 pb-3 pt-2">
-                {renderPlaylistTracks(filteredTracks)}
+                {renderPlaylistTracks(animatedFilteredTracks)}
               </div>
             ) : (
               <div className="flex min-h-full flex-col items-center justify-center gap-3 px-3 py-8 text-center text-sm text-muted-foreground">

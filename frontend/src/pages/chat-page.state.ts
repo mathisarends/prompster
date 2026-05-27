@@ -26,6 +26,8 @@ export type ChatPlaylist = {
   id: string;
   name?: string | null;
   tracks: PlaylistPayload["tracks"];
+  uiRevision: number;
+  uiEvent?: "set" | "track_added" | "track_removed" | "track_replaced";
 };
 
 export type ChatUserEntry = Omit<UserMessageEntryResponse, "kind"> & {
@@ -313,8 +315,12 @@ const normalizePlaylist = (playlist: PlaylistLike): ChatPlaylist | null => {
     id: playlist.id,
     name: playlist.name,
     tracks: playlist.tracks,
+    uiRevision: 0,
   };
 };
+
+const nextPlaylistRevision = (playlist: ChatPlaylist | null) =>
+  (playlist?.uiRevision ?? 0) + 1;
 
 const addPlaylistTrack = (
   playlist: ChatPlaylist | null,
@@ -322,11 +328,18 @@ const addPlaylistTrack = (
   track: PlaylistPayload["tracks"][number],
 ): ChatPlaylist => {
   if (!playlist || playlist.id !== playlistId) {
-    return { id: playlistId, tracks: [track] };
+    return {
+      id: playlistId,
+      tracks: [track],
+      uiRevision: nextPlaylistRevision(playlist),
+      uiEvent: "track_added",
+    };
   }
 
   return {
     ...playlist,
+    uiRevision: nextPlaylistRevision(playlist),
+    uiEvent: "track_added",
     tracks: playlist.tracks.some((candidate) => candidate.id === track.id)
       ? playlist.tracks.map((candidate) =>
           candidate.id === track.id ? track : candidate,
@@ -343,6 +356,8 @@ const removePlaylistTrack = (
   if (!playlist || playlist.id !== playlistId) return playlist;
   return {
     ...playlist,
+    uiRevision: nextPlaylistRevision(playlist),
+    uiEvent: "track_removed",
     tracks: playlist.tracks.filter((track) => track.id !== trackId),
   };
 };
@@ -354,7 +369,12 @@ const replacePlaylistTrack = (
   track: PlaylistPayload["tracks"][number],
 ): ChatPlaylist => {
   if (!playlist || playlist.id !== playlistId) {
-    return { id: playlistId, tracks: [track] };
+    return {
+      id: playlistId,
+      tracks: [track],
+      uiRevision: nextPlaylistRevision(playlist),
+      uiEvent: "track_replaced",
+    };
   }
 
   const replaced = playlist.tracks.some(
@@ -362,6 +382,8 @@ const replacePlaylistTrack = (
   );
   return {
     ...playlist,
+    uiRevision: nextPlaylistRevision(playlist),
+    uiEvent: "track_replaced",
     tracks: replaced
       ? playlist.tracks.map((candidate) =>
           candidate.id === trackId ? track : candidate,
@@ -473,11 +495,19 @@ const reduceServerEvent = (
         ),
       };
 
-    case "playlist.set":
+    case "playlist.set": {
+      const playlist = normalizePlaylist(event.playlist);
+      if (!playlist) return { ...state, playlist: null };
+
       return {
         ...state,
-        playlist: normalizePlaylist(event.playlist),
+        playlist: {
+          ...playlist,
+          uiRevision: nextPlaylistRevision(state.playlist),
+          uiEvent: "set",
+        },
       };
+    }
 
     case "playlist.track_added":
       return {

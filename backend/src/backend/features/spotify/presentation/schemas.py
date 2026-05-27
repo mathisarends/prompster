@@ -6,7 +6,7 @@ class SpotifyTrackResponse(Schema):
     title: str
     artist: str
     album: str | None = None
-    year: int | None = None
+    year: int
     cover_url: str | None = None
     url: str | None = None
 

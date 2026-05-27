@@ -28,6 +28,7 @@ type LocalState = {
 
 type LocalAction =
   | { type: "ACTIVATE_TRACK"; trackId: string }
+  | { type: "SET_TRACKS"; tracks: PlaylistTrack[] }
   | { type: "REMOVE_TRACK"; trackId: string }
   | { type: "PAUSE" }
   | { type: "RESUME" }
@@ -46,6 +47,31 @@ function reducer(state: LocalState, action: LocalAction): LocalState {
         remainingSeconds: track.durationSeconds,
         durationSeconds: track.durationSeconds,
         isPlaying: true,
+      };
+    }
+    case "SET_TRACKS": {
+      const activeTrack = action.tracks.find(
+        (track) => track.id === state.activeTrackId,
+      );
+      if (activeTrack) {
+        return {
+          ...state,
+          tracks: action.tracks,
+          durationSeconds: activeTrack.durationSeconds,
+          remainingSeconds: Math.min(
+            state.remainingSeconds,
+            activeTrack.durationSeconds,
+          ),
+        };
+      }
+
+      return {
+        ...state,
+        tracks: action.tracks,
+        activeTrackId: null,
+        isPlaying: false,
+        remainingSeconds: 0,
+        durationSeconds: 0,
       };
     }
     case "REMOVE_TRACK": {
@@ -72,7 +98,10 @@ function reducer(state: LocalState, action: LocalAction): LocalState {
       return { ...state, volume: action.volume };
     case "TICK":
       return state.isPlaying
-        ? { ...state, remainingSeconds: Math.max(state.remainingSeconds - 1, 0) }
+        ? {
+            ...state,
+            remainingSeconds: Math.max(state.remainingSeconds - 1, 0),
+          }
         : state;
   }
 }
@@ -146,6 +175,11 @@ export function usePlaybackState(
     const id = window.setInterval(() => dispatch({ type: "TICK" }), 1000);
     return () => window.clearInterval(id);
   }, [controller, local.isPlaying, local.activeTrackId]);
+
+  useEffect(() => {
+    if (controller) return;
+    dispatch({ type: "SET_TRACKS", tracks: initialTracks });
+  }, [controller, initialTracks]);
 
   const onToggleShuffle = useCallback(() => {
     setShuffleEnabled((prev) => !prev);
