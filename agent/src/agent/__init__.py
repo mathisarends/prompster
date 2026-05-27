@@ -1,5 +1,5 @@
-from .agent import (
-    Agent,
+from .agent import Agent
+from .events import (
     AgentEvent,
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
@@ -9,10 +9,9 @@ from .agent import (
     StepStartedEvent,
     ToolCallEvent,
     ToolResultEvent,
-    UserEvent,
-    UserEvents,
     WorkspaceUpdatedEvent,
 )
+from .views import UserEvent, UserEvents
 from .tools import Spotify
 from .tools.views import AskFollowUpOption, AskFollowUpQuestion
 from .playlist import (
@@ -32,7 +31,6 @@ from .playlist import (
     TrackRefReplacement,
     PlaylistDraftStore,
 )
-
 
 __all__ = [
     "Agent",

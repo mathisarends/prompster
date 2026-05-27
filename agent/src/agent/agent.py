@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator, Sequence
 
 from llmify import ChatModel, Message, StreamEventType
 
-from agent.agent.events import (
+from agent.events import (
     AgentEvent,
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
@@ -15,11 +15,11 @@ from agent.agent.events import (
     ToolResultEvent,
     WorkspaceUpdatedEvent,
 )
-from agent.agent.messages import MessageManager
+from agent.messages import MessageManager
 from agent.tools import Tools, Spotify
 from agent.tools.views import AskFollowUpParams
 from agent.playlist import PlaylistDraftStore
-from agent.agent.views import UserEvent
+from agent.views import UserEvent
 
 logger = logging.getLogger(__name__)
 

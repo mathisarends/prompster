@@ -7,7 +7,7 @@ from spotifyify import PagingPlaylistTrack, Spotifyify, Track
 from spotifyify.exceptions import SpotifyAPIError
 
 from agent.playlist import PlaylistDraftTrack
-from agent.agent.messages.rendering import (
+from agent.messages.rendering import (
     render_album_tag,
     render_playlist_tag,
     render_track_tag,

@@ -11,9 +11,9 @@ from llmify import (
     UserMessage,
 )
 
-from agent.agent.views import UserEvent
+from agent.views import UserEvent
 from agent.playlist import PlaylistDraft
-from agent.agent.messages.rendering import render_track_tag
+from agent.messages.rendering import render_track_tag
 from .rendering import render_user_message_content
 
 _SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "system_prompt.md").read_text(

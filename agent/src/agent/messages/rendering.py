@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from html import escape
 
-from agent.agent.views import UserEvent
+from agent.views import UserEvent
 from agent.playlist.views import PlaylistDraftTrack
 
 

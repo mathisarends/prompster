@@ -1,6 +1,6 @@
 from llmify import SystemMessage
 
-from agent.agent.messages import MessageManager
+from agent.messages import MessageManager
 
 
 class TestSystemPromptScope:

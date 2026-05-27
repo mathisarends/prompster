@@ -11,7 +11,7 @@ from agent.agent import (
     ToolResultEvent,
     WorkspaceUpdatedEvent,
 )
-from agent.agent.messages import render_user_message_content
+from agent.messages import render_user_message_content
 from agent import Spotify, UserEvent
 from agent.tools.views import AskFollowUpQuestion
 from agent.playlist import (
