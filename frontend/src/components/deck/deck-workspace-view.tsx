@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Download, ListMusic } from "lucide-react";
 import { toast } from "sonner";
@@ -99,6 +99,15 @@ export const DeckWorkspaceView = ({
     return null;
   }, [playerState.currentTrackUri, previewTrack, tracks]);
 
+  const playSpotifyUri = useCallback(
+    (uri: string) => {
+      void playTrack(uri).catch(() => {
+        toast.error("Song konnte nicht abgespielt werden.");
+      });
+    },
+    [playTrack],
+  );
+
   const controller = useMemo<DeckPlaylistController>(
     () => ({
       isPlaying: !playerState.isPaused && Boolean(playerState.currentTrackUri),
@@ -114,7 +123,7 @@ export const DeckWorkspaceView = ({
           return;
         }
 
-        void playTrack(track.spotifyUri);
+        playSpotifyUri(track.spotifyUri);
       },
       onPause: () => {
         void pause();
@@ -133,7 +142,7 @@ export const DeckWorkspaceView = ({
     [
       activeTrackId,
       pause,
-      playTrack,
+      playSpotifyUri,
       playerState.currentTrackUri,
       playerState.durationMs,
       playerState.isPaused,
@@ -159,7 +168,7 @@ export const DeckWorkspaceView = ({
       spotifyUri: uri,
       isPinned: false,
     });
-    void playTrack(uri);
+    playSpotifyUri(uri);
   };
 
   const connectRequired =

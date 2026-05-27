@@ -22,6 +22,16 @@ type PlaybackClockState = {
   paused: boolean;
 };
 
+type SpotifyDevice = {
+  id: string | null;
+  name: string;
+  is_active: boolean;
+};
+
+type SpotifyDevicesResponse = {
+  devices?: SpotifyDevice[];
+};
+
 export type SpotifyPlayerState = {
   status: SpotifyPlayerStatus;
   deviceId: string | null;
@@ -66,10 +76,32 @@ const clampMs = (value: number, max: number): number => {
   return Math.max(0, Math.min(value, max));
 };
 
+const pickPreferredDeviceId = (
+  payload: SpotifyDevicesResponse,
+): string | null => {
+  const devices = payload.devices ?? [];
+
+  const namedDevice = devices.find(
+    (device) => device.id && device.name === PLAYER_NAME,
+  );
+  if (namedDevice?.id) {
+    return namedDevice.id;
+  }
+
+  const activeDevice = devices.find((device) => device.id && device.is_active);
+  if (activeDevice?.id) {
+    return activeDevice.id;
+  }
+
+  const fallbackDevice = devices.find((device) => Boolean(device.id));
+  return fallbackDevice?.id ?? null;
+};
+
 export const useSpotifyPlayer = (options: UseSpotifyPlayerOptions = {}) => {
   const { enabled = true } = options;
   const [state, setState] = useState<SpotifyPlayerState>(INITIAL_STATE);
   const playerRef = useRef<Spotify.Player | null>(null);
+  const deviceIdRef = useRef<string | null>(null);
   const clockRef = useRef<PlaybackClockState>(createInitialClockState());
   const rafRef = useRef<number | null>(null);
 
@@ -78,6 +110,7 @@ export const useSpotifyPlayer = (options: UseSpotifyPlayerOptions = {}) => {
   }, []);
 
   const setConnectRequired = useCallback(() => {
+    deviceIdRef.current = null;
     setState((previous) => ({
       ...previous,
       status: "auth-error",
@@ -96,16 +129,25 @@ export const useSpotifyPlayer = (options: UseSpotifyPlayerOptions = {}) => {
   }, []);
 
   useEffect(() => {
+    deviceIdRef.current = state.deviceId;
+  }, [state.deviceId]);
+
+  useEffect(() => {
     if (!enabled) {
       playerRef.current?.disconnect();
       playerRef.current = null;
-      setState(INITIAL_STATE);
+      deviceIdRef.current = null;
+      queueMicrotask(() => {
+        setState(INITIAL_STATE);
+      });
       return;
     }
 
     let disposed = false;
 
-    setStatus("loading");
+    queueMicrotask(() => {
+      setStatus("loading");
+    });
 
     const initialize = async () => {
       try {
@@ -129,6 +171,7 @@ export const useSpotifyPlayer = (options: UseSpotifyPlayerOptions = {}) => {
         });
 
         const onReady = ({ device_id }: Spotify.WebPlaybackInstance) => {
+          deviceIdRef.current = device_id;
           setState((previous) => ({
             ...previous,
             status: "ready",
@@ -137,6 +180,10 @@ export const useSpotifyPlayer = (options: UseSpotifyPlayerOptions = {}) => {
         };
 
         const onNotReady = ({ device_id }: Spotify.WebPlaybackInstance) => {
+          if (deviceIdRef.current === device_id) {
+            deviceIdRef.current = null;
+          }
+
           setState((previous) => ({
             ...previous,
             deviceId:
@@ -210,6 +257,7 @@ export const useSpotifyPlayer = (options: UseSpotifyPlayerOptions = {}) => {
       disposed = true;
       playerRef.current?.disconnect();
       playerRef.current = null;
+      deviceIdRef.current = null;
     };
   }, [enabled, setConnectRequired, setStatus]);
 
@@ -255,15 +303,78 @@ export const useSpotifyPlayer = (options: UseSpotifyPlayerOptions = {}) => {
 
   const playTrack = useCallback(
     async (uri: string): Promise<void> => {
-      const deviceId = playerRef.current ? state.deviceId : null;
+      let accessToken: string;
+
+      try {
+        accessToken = await fetchSpotifyAccessToken();
+      } catch (error) {
+        if (isConnectRequiredError(error)) {
+          setConnectRequired();
+          return;
+        }
+        setStatus("auth-error");
+        throw error;
+      }
+
+      const resolveDeviceId = async (
+        forceRefresh = false,
+      ): Promise<string | null> => {
+        if (!forceRefresh && playerRef.current && deviceIdRef.current) {
+          return deviceIdRef.current;
+        }
+
+        let response = await fetch(
+          "https://api.spotify.com/v1/me/player/devices",
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
+
+        if (response.status === 401) {
+          accessToken = await fetchSpotifyAccessToken();
+          response = await fetch(
+            "https://api.spotify.com/v1/me/player/devices",
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            },
+          );
+        }
+
+        if (!response.ok) {
+          return null;
+        }
+
+        const payload = (await response.json()) as SpotifyDevicesResponse;
+        const resolvedDeviceId = pickPreferredDeviceId(payload);
+
+        if (!resolvedDeviceId) {
+          return null;
+        }
+
+        deviceIdRef.current = resolvedDeviceId;
+        setState((previous) =>
+          previous.deviceId === resolvedDeviceId
+            ? previous
+            : { ...previous, deviceId: resolvedDeviceId },
+        );
+
+        return resolvedDeviceId;
+      };
+
+      let deviceId = await resolveDeviceId();
       if (!deviceId) {
         throw new Error("Spotify player device is not ready.");
       }
 
-      const sendPlayRequest = async (): Promise<Response> => {
-        const accessToken = await fetchSpotifyAccessToken();
+      const sendPlayRequest = async (
+        targetDeviceId: string,
+      ): Promise<Response> => {
         return fetch(
-          `https://api.spotify.com/v1/me/player/play?device_id=${encodeURIComponent(deviceId)}`,
+          `https://api.spotify.com/v1/me/player/play?device_id=${encodeURIComponent(targetDeviceId)}`,
           {
             method: "PUT",
             headers: {
@@ -278,7 +389,29 @@ export const useSpotifyPlayer = (options: UseSpotifyPlayerOptions = {}) => {
       let response: Response;
 
       try {
-        response = await sendPlayRequest();
+        let retried401 = false;
+        let retried404 = false;
+
+        while (true) {
+          response = await sendPlayRequest(deviceId);
+
+          if (response.status === 401 && !retried401) {
+            accessToken = await fetchSpotifyAccessToken();
+            retried401 = true;
+            continue;
+          }
+
+          if (response.status === 404 && !retried404) {
+            const recoveredDeviceId = await resolveDeviceId(true);
+            if (recoveredDeviceId) {
+              deviceId = recoveredDeviceId;
+            }
+            retried404 = true;
+            continue;
+          }
+
+          break;
+        }
       } catch (error) {
         if (isConnectRequiredError(error)) {
           setConnectRequired();
@@ -286,10 +419,6 @@ export const useSpotifyPlayer = (options: UseSpotifyPlayerOptions = {}) => {
         }
         setStatus("error");
         throw error;
-      }
-
-      if (response.status === 401) {
-        response = await sendPlayRequest();
       }
 
       if (response.status === 403) {
@@ -307,11 +436,12 @@ export const useSpotifyPlayer = (options: UseSpotifyPlayerOptions = {}) => {
       setState((previous) => ({
         ...previous,
         status: "ready",
+        deviceId,
         isPaused: false,
         currentTrackUri: uri,
       }));
     },
-    [setConnectRequired, setStatus, state.deviceId],
+    [setConnectRequired, setStatus],
   );
 
   const resume = useCallback(async (): Promise<void> => {
