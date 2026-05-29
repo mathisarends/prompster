@@ -91,7 +91,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm.title = session.title
         orm.owner_id = session.owner_id
         orm.is_starred = session.is_starred
-        orm.phase = session.phase.value
+        orm.phase = session.phase
         orm.created_at = session.created_at
         orm.last_activity_at = self._resolve_last_activity_at(session)
 
@@ -159,7 +159,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             entries=ordered_entries,
             owner_id=orm.owner_id,
             is_starred=orm.is_starred,
-            phase=Phase(orm.phase or Phase.BUILD.value),
+            phase=Phase(orm.phase or Phase.BUILD),
             playlist=self._to_domain_playlist(orm.playlist),
             user_curation_events=domain_user_curation_events,
             playlist_references=[
@@ -227,7 +227,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             title=domain.title,
             owner_id=domain.owner_id,
             is_starred=domain.is_starred,
-            phase=domain.phase.value,
+            phase=domain.phase,
             created_at=domain.created_at,
             last_activity_at=self._resolve_last_activity_at(domain),
         )

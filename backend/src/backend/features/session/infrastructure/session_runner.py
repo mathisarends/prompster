@@ -111,7 +111,7 @@ class AgentSessionRunner(SessionRunner):
 
 
 def _agent_phase_for(session: Session) -> AgentPhase:
-    return AgentPhase(session.phase.value)
+    return AgentPhase(session.phase)
 
 
 def _to_playlist_draft_store(playlist: Playlist | None) -> PlaylistDraftStore:

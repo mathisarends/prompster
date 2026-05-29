@@ -574,8 +574,7 @@ class Session(Aggregate):
     def advance_to_building_phase(self) -> None:
         if self._phase != Phase.ONBOARDING:
             raise InvalidSessionPhaseTransitionError(
-                f"Cannot advance session {self.id} from {self._phase.value} "
-                f"to {Phase.BUILD.value}."
+                f"Cannot advance session {self.id} from {self._phase} to {Phase.BUILD}."
             )
         self._phase = Phase.BUILD
 
