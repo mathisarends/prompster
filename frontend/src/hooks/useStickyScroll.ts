@@ -26,13 +26,24 @@ export const useStickyScroll = <T extends HTMLElement>(
       setShowScrollToBottomButton(!atBottom);
     };
 
+    // While the user is pinned to the bottom, keep them pinned as the content
+    // grows. The smooth streaming reveal changes content height every frame, so
+    // we observe the content element (not just the viewport) to follow along.
+    const pinIfSticky = () => {
+      if (stickToBottomRef.current) {
+        viewport.scrollTop = viewport.scrollHeight;
+      }
+      syncScrollState();
+    };
+
     syncScrollState();
     viewport.addEventListener("scroll", syncScrollState, { passive: true });
 
-    const resizeObserver = new ResizeObserver(() => {
-      syncScrollState();
-    });
+    const resizeObserver = new ResizeObserver(pinIfSticky);
     resizeObserver.observe(viewport);
+    if (viewport.firstElementChild) {
+      resizeObserver.observe(viewport.firstElementChild);
+    }
 
     return () => {
       viewport.removeEventListener("scroll", syncScrollState);

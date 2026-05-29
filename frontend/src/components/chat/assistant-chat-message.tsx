@@ -1,3 +1,4 @@
+import { useSmoothStreamingText } from "@/hooks/useSmoothStreamingText";
 import { cn } from "@/lib/utils";
 
 import { ChatThinkingIndicator } from "./chat-thinking-indicator";
@@ -17,6 +18,11 @@ export const AssistantChatMessage = ({
   toolCalls,
   attachedAbove = false,
 }: AssistantChatMessageProps) => {
+  const displayedText = useSmoothStreamingText(text, { isStreaming });
+  // Keep the streaming caret alive until the smooth reveal has caught up, even
+  // if the server already sent everything and flipped isStreaming off.
+  const isRevealing = isStreaming || displayedText.length < text.length;
+
   return (
     <div
       className={cn(
@@ -24,10 +30,10 @@ export const AssistantChatMessage = ({
         attachedAbove && "-mt-4 pt-0",
       )}
     >
-      {text ? (
+      {displayedText ? (
         <MarkdownRenderer
-          content={text}
-          className={cn("chat-assistant-prose", isStreaming && "is-streaming")}
+          content={displayedText}
+          className={cn("chat-assistant-prose", isRevealing && "is-streaming")}
         />
       ) : isStreaming ? (
         <ChatThinkingIndicator />
