@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Sparkles } from "lucide-react";
+import { Mic2, PartyPopper, Sparkles, Trophy } from "lucide-react";
 
 import {
   createSession,
@@ -9,6 +9,27 @@ import {
 } from "@/api/generated/session-api";
 import { Badge } from "@/components/ui/badge";
 import { ChatInputBox } from "@/components/chat/chat-input-box";
+
+const PROMPT_SUGGESTIONS = [
+  {
+    label: "Hip-Hop der 90er",
+    icon: Mic2,
+    prompt:
+      "Erstell mir ein Deck mit 60 Karten zu Hip-Hop-Klassikern der 90er – bekannte Songs, die jeder mitsingen kann.",
+  },
+  {
+    label: "Eurovision Hits",
+    icon: Trophy,
+    prompt:
+      "Ich möchte ein Deck mit den größten Eurovision-Hits von 2000 bis 2020, 50 Karten.",
+  },
+  {
+    label: "Party-Anthems",
+    icon: PartyPopper,
+    prompt:
+      "Bau mir ein Deck mit Party-Anthems aus Rock und Pop, das auf jeder Feier funktioniert – 40 Karten.",
+  },
+] as const;
 
 export const HomePage = () => {
   const [prompt, setPrompt] = useState("");
@@ -59,16 +80,33 @@ export const HomePage = () => {
               </p>
             </div>
 
-            <ChatInputBox
-              value={prompt}
-              onChange={setPrompt}
-              onSubmit={startChat}
-              placeholder='z.B. "Hip-Hop Klassiker der 90er fur 60 Karten" oder "Eurovision Hits 2000-2020"'
-              sendButtonAriaLabel="Chat starten"
-              disabled={isCreatingSession}
-              isSubmitting={isCreatingSession}
-              clearOnSubmit={false}
-            />
+            <div className="space-y-4">
+              <ChatInputBox
+                value={prompt}
+                onChange={setPrompt}
+                onSubmit={startChat}
+                placeholder='z.B. "Hip-Hop Klassiker der 90er für 60 Karten" oder "Eurovision Hits 2000–2020"'
+                sendButtonAriaLabel="Chat starten"
+                disabled={isCreatingSession}
+                isSubmitting={isCreatingSession}
+                clearOnSubmit={false}
+              />
+
+              <div className="flex flex-wrap justify-center gap-2.5">
+                {PROMPT_SUGGESTIONS.map((suggestion) => (
+                  <button
+                    key={suggestion.label}
+                    type="button"
+                    onClick={() => setPrompt(suggestion.prompt)}
+                    disabled={isCreatingSession}
+                    className="flex items-center gap-1.5 rounded-full border border-border/60 bg-card/40 px-4 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:border-border hover:bg-card/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <suggestion.icon className="size-3.5" />
+                    {suggestion.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             {errorMessage && (
               <p className="text-center text-sm text-destructive">
                 {errorMessage}

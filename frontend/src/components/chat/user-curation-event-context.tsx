@@ -49,8 +49,8 @@ const eventMeta: Record<
   UserCurationEventMeta
 > = {
   [UserCurationEventTypeResponse.track_added]: {
-    label: "Hinzugefuegt",
-    restoreTooltip: "Aenderung rueckgaengig machen",
+    label: "Hinzugefügt",
+    restoreTooltip: "Änderungen rückgängig machen",
     Icon: Plus,
     className: "border-emerald-400/20 bg-emerald-400/10 text-emerald-200",
   },
