@@ -30,7 +30,6 @@ import { cn } from "@/lib/utils";
 
 import {
   getPendingFollowUpQuestion,
-  getScrollKey,
   toToolCallItems,
   type ChatEntry,
 } from "./chat-page.state";
@@ -105,12 +104,9 @@ export const ChatPage = () => {
       ? true
       : window.matchMedia("(min-width: 1024px)").matches,
   );
-  const scrollDependency = entries.map(getScrollKey).join("|");
   const scrollViewportRef = useRef<HTMLDivElement>(null);
-  const { showScrollToBottomButton, scrollToBottom } = useStickyScroll(
-    scrollViewportRef,
-    scrollDependency,
-  );
+  const { showScrollToBottomButton, scrollToBottom } =
+    useStickyScroll(scrollViewportRef);
   const pendingFollowUp = getPendingFollowUpQuestion(entries);
   const showThinkingPlaceholder = shouldShowThinkingPlaceholder(
     entries,

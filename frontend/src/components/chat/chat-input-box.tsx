@@ -49,6 +49,21 @@ const isInteractiveElement = (element: EventTarget | null) => {
   );
 };
 
+const isTextCharacterKey = (event: KeyboardEvent) => {
+  if (
+    event.defaultPrevented ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.altKey
+  ) {
+    return false;
+  }
+
+  if (event.isComposing) return false;
+
+  return event.key.length === 1 && event.key !== " ";
+};
+
 const ChatInputBoxComponent = ({
   value,
   onChange,
@@ -150,7 +165,11 @@ const ChatInputBoxComponent = ({
       replaceBufferedValue("");
       onChange("");
       setAttachments([]);
+      focusTextareaAt(0);
+      return;
     }
+
+    focusTextareaAt(draftValue.length);
   };
 
   const handleSendButtonClick = () => {
@@ -244,6 +263,32 @@ const ChatInputBoxComponent = ({
     closeAttachmentMention();
   };
 
+  const insertTextAtCurrentSelection = useCallback(
+    (text: string) => {
+      const textarea = textareaRef.current;
+      const storedSelection = textareaSelectionRef.current;
+      const selectionStart = Math.min(
+        textarea?.selectionStart ?? storedSelection.start,
+        draftValue.length,
+      );
+      const selectionEnd = Math.min(
+        textarea?.selectionEnd ?? storedSelection.end,
+        draftValue.length,
+      );
+      const nextValue = `${draftValue.slice(0, selectionStart)}${text}${draftValue.slice(selectionEnd)}`;
+      const nextCursorPosition = selectionStart + text.length;
+
+      setBufferedValue(nextValue);
+      textareaSelectionRef.current = {
+        start: nextCursorPosition,
+        end: nextCursorPosition,
+      };
+      syncAttachmentMentionFromCursor(nextValue, nextCursorPosition);
+      focusTextareaAt(nextCursorPosition);
+    },
+    [draftValue, setBufferedValue, syncAttachmentMentionFromCursor],
+  );
+
   const focusTextareaFromContainer = (event: MouseEvent<HTMLDivElement>) => {
     if (isInteractiveElement(event.target)) return;
 
@@ -299,6 +344,23 @@ const ChatInputBoxComponent = ({
     measureSingleLine();
   }, [draftValue, placeholder, measureSingleLine]);
 
+  useEffect(() => {
+    const handleDocumentKeyDown = (event: KeyboardEvent) => {
+      const textarea = textareaRef.current;
+      if (!textarea || disabled || document.activeElement === textarea) return;
+      if (isInteractiveElement(event.target)) return;
+      if (!isTextCharacterKey(event)) return;
+
+      event.preventDefault();
+      insertTextAtCurrentSelection(event.key);
+    };
+
+    document.addEventListener("keydown", handleDocumentKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleDocumentKeyDown);
+    };
+  }, [disabled, insertTextAtCurrentSelection]);
+
   return (
     <div
       onClick={focusTextareaFromContainer}
@@ -336,7 +398,7 @@ const ChatInputBoxComponent = ({
           ref={textareaRef}
           rows={rows ?? 1}
           value={draftValue}
-          disabled={disabled || isSubmitting}
+          disabled={disabled}
           onChange={(e) => {
             rememberTextareaSelection(e.target);
             setBufferedValue(e.target.value);
