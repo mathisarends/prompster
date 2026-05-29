@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarRange, Download, ListMusic } from "lucide-react";
+import { ChartColumn, Download, ListMusic } from "lucide-react";
 import { toast } from "sonner";
 
 import type {
@@ -398,9 +398,9 @@ export const DeckWorkspaceView = ({
                 <ListMusic className="size-4" />
                 Playlist
               </TabsTrigger>
-              <TabsTrigger value="timeline">
-                <CalendarRange className="size-4" />
-                Timeline
+              <TabsTrigger value="analyse">
+                <ChartColumn className="size-4" />
+                Analyse
               </TabsTrigger>
               <TabsTrigger value="export">
                 <Download className="size-4" />
@@ -458,7 +458,7 @@ export const DeckWorkspaceView = ({
           </TabsContent>
 
           <TabsContent
-            value="timeline"
+            value="analyse"
             className="flex min-h-0 flex-1 flex-col overflow-hidden"
           >
             <DeckTimeline tracks={tracks} />
