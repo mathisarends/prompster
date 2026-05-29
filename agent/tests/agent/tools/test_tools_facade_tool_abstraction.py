@@ -5,7 +5,7 @@ import pytest
 from pydantic import BaseModel
 
 from agent.tools import ToolContext, Tools
-from agent.tools.views import ActionResult, ActionType
+from agent.tools.views import ActionResult, ActionType, Phase
 from agent.playlist import (
     PlaylistDraftStore,
     PlaylistDraftTrack,
@@ -32,6 +32,70 @@ class TestToolsFacadeAbstraction:
         assert tools.get("add_playlist_tracks").action_type == ActionType.MUTATE
         assert tools.get("ask_follow_up") is not None
         assert tools.get("ask_follow_up").action_type == ActionType.INTERACT
+
+    def test_default_tools_are_filtered_by_phase(self) -> None:
+        tools = Tools()
+
+        onboarding_tool_names = {
+            schema["function"]["name"]
+            for schema in tools.to_schema(phase=Phase.ONBOARDING)
+        }
+        build_tool_names = {
+            schema["function"]["name"] for schema in tools.to_schema(phase=Phase.BUILD)
+        }
+
+        assert onboarding_tool_names == {"ask_follow_up"}
+        assert "ask_follow_up" not in build_tool_names
+        assert {
+            "search_tracks",
+            "search_albums",
+            "search_playlists",
+            "get_artist_albums",
+            "get_artist_top_tracks",
+            "get_album_tracks",
+            "get_spotify_playlist_tracks",
+            "create_playlist",
+            "add_playlist_tracks",
+            "remove_playlist_tracks",
+            "replace_playlist_tracks",
+        }.issubset(build_tool_names)
+
+    def test_custom_tool_phase_metadata_filters_schema_and_lookup(self) -> None:
+        tools = Tools()
+
+        @tools.action(
+            description="Echo value",
+            params=_EchoParams,
+            included_in_phases={Phase.BUILD},
+        )
+        async def echo(params: _EchoParams) -> ActionResult:
+            return ActionResult(success=True, extracted_content=params.value)
+
+        onboarding_names = {
+            schema["function"]["name"]
+            for schema in tools.to_schema(phase=Phase.ONBOARDING)
+        }
+        build_names = {
+            schema["function"]["name"] for schema in tools.to_schema(phase=Phase.BUILD)
+        }
+
+        assert "echo" not in onboarding_names
+        assert "echo" in build_names
+        assert tools.get("echo", phase=Phase.ONBOARDING) is None
+        assert tools.get("echo", phase=Phase.BUILD) is not None
+
+    @pytest.mark.asyncio
+    async def test_execute_rejects_tool_outside_current_phase(self) -> None:
+        tools = Tools()
+
+        result = await tools.execute(
+            "search_tracks",
+            {"query": "abba", "status": "Suche nach Abba"},
+            phase=Phase.ONBOARDING,
+        )
+
+        assert result.success is False
+        assert "not available in phase 'onboarding'" in (result.error or "")
 
     @pytest.mark.asyncio
     async def test_action_registers_and_executes_custom_tool(self) -> None:

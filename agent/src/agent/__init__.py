@@ -13,7 +13,7 @@ from .events import (
 )
 from .views import UserEvent, UserEvents
 from .tools import Spotify
-from .tools.views import AskFollowUpOption, AskFollowUpQuestion
+from .tools.views import AskFollowUpOption, AskFollowUpQuestion, Phase
 from .playlist import (
     PlaylistDraft,
     PlaylistDraftCreated,
@@ -39,6 +39,7 @@ __all__ = [
     "AssistantMessageEvent",
     "AskFollowUpOption",
     "AskFollowUpQuestion",
+    "Phase",
     "FollowUpRequestedEvent",
     "RunCompletedEvent",
     "RunStartedEvent",

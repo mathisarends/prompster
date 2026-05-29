@@ -1,5 +1,5 @@
 import inspect
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from enum import StrEnum
 from typing import Any, Self
 from uuid import UUID
@@ -16,6 +16,11 @@ class ActionType(StrEnum):
     FETCH = "fetch"
     MUTATE = "mutate"
     INTERACT = "interact"
+
+
+class Phase(StrEnum):
+    ONBOARDING = "onboarding"
+    BUILD = "build"
 
 
 class ToolParams(BaseModel):
@@ -50,6 +55,7 @@ class Tool:
         fn: Callable[..., Any],
         status_label: Callable[[Any], str] | None = None,
         action_type: ActionType = ActionType.FETCH,
+        included_in_phases: Iterable[Phase] | None = None,
         schema: dict | None = None,
         param_model: type[BaseModel] | None = None,
         suspends_for_input: bool = False,
@@ -58,6 +64,7 @@ class Tool:
         self.description = description
         self.fn = fn
         self.action_type = action_type
+        self.included_in_phases = frozenset(included_in_phases or ())
         self._schema = schema
         self.param_model = param_model
         self.suspends_for_input = suspends_for_input
@@ -65,6 +72,9 @@ class Tool:
         self._schema_builder = (
             None if schema else ToolSchemaBuilder(self.fn, param_model)
         )
+
+    def is_included_in(self, phase: Phase) -> bool:
+        return not self.included_in_phases or phase in self.included_in_phases
 
     def render_status(self, args: dict[str, Any]) -> str | None:
         if self._status_label is None or self.param_model is None:

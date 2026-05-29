@@ -15,7 +15,7 @@ from agent.agent import (
     WorkspaceUpdatedEvent,
 )
 from agent.tools import ToolContext, Tools
-from agent.tools.views import ActionType
+from agent.tools.views import ActionType, Phase
 from agent.playlist import PlaylistDraftStore, PlaylistDraftTrack
 
 
@@ -29,8 +29,10 @@ class _ChatResponse:
 class _FakeLlm:
     def __init__(self, responses: list[_ChatResponse]) -> None:
         self._responses = responses
+        self.tool_schema_batches: list[list[Any]] = []
 
     async def stream(self, messages: list[Any], tools: list[Any]):
+        self.tool_schema_batches.append(tools)
         response = self._responses.pop(0)
         for chunk in response.chunks or []:
             yield StreamTextDelta(delta=chunk)
@@ -107,6 +109,7 @@ class TestAgentWorkspaceUpdateEvents:
             ]
         )
         agent = Agent(llm=llm, tools=tools)
+        agent.advance(Phase.BUILD)
 
         events = [event async for event in agent.stream("Bau mir ein Deck")]
 
@@ -137,3 +140,32 @@ class TestAgentWorkspaceUpdateEvents:
         assert workspace_update.playlist_draft.name == "80er Party"
         assert workspace_update.playlist_draft.tracks == []
         assert store.drain_playlist_draft_updates() == []
+
+    @pytest.mark.asyncio
+    async def test_agent_passes_only_onboarding_tools_by_default(self) -> None:
+        llm = _FakeLlm([_ChatResponse(completion="ok", tool_calls=[])])
+        agent = Agent(llm=llm)
+
+        _ = [event async for event in agent.stream("Hallo")]
+
+        tool_names = {
+            schema["function"]["name"] for schema in llm.tool_schema_batches[0]
+        }
+        assert agent.phase == Phase.ONBOARDING
+        assert tool_names == {"ask_follow_up"}
+
+    @pytest.mark.asyncio
+    async def test_agent_uses_build_tools_after_explicit_phase_advance(self) -> None:
+        llm = _FakeLlm([_ChatResponse(completion="ok", tool_calls=[])])
+        agent = Agent(llm=llm)
+        agent.advance(Phase.BUILD)
+
+        _ = [event async for event in agent.stream("Bau mir ein Deck")]
+
+        tool_names = {
+            schema["function"]["name"] for schema in llm.tool_schema_batches[0]
+        }
+        assert agent.phase == Phase.BUILD
+        assert "ask_follow_up" not in tool_names
+        assert "search_tracks" in tool_names
+        assert "create_playlist" in tool_names

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from agent.agent import Agent
-from agent import Spotify
+from agent import Phase, Spotify
 from agent.playlist import (
     PlaylistDraft,
     PlaylistDraftTrack,
@@ -19,7 +19,13 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerCancelled,
     SessionRunnerEvent,
 )
-from backend.features.session.domain import Playlist, Session
+from backend.features.session.domain import (
+    AssistantMessage,
+    FollowUpQuestionGroup,
+    Playlist,
+    Session,
+    ToolCallSequence,
+)
 from backend.features.session.infrastructure.agent_event_mapper import (
     AgentSessionEventMapper,
 )
@@ -102,7 +108,23 @@ class AgentSessionRunner(SessionRunner):
             system_prompt=self._system_prompt,
             spotify=Spotify(client=self._spotify),
             playlist_store=_to_playlist_draft_store(session.playlist),
+            phase=_agent_phase_for(session),
         )
+
+
+def _agent_phase_for(session: Session) -> Phase:
+    if session.playlist is not None:
+        return Phase.BUILD
+
+    for entry in session.entries:
+        if isinstance(entry, AssistantMessage):
+            return Phase.BUILD
+        if isinstance(entry, ToolCallSequence) and entry.is_complete:
+            return Phase.BUILD
+        if isinstance(entry, FollowUpQuestionGroup) and entry.is_complete:
+            return Phase.BUILD
+
+    return Phase.ONBOARDING
 
 
 def _to_playlist_draft_store(playlist: Playlist | None) -> PlaylistDraftStore:

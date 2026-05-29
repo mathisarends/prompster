@@ -22,6 +22,7 @@ from agent.tools.views import (
     ArtistTopTracksParams,
     AskFollowUpParams,
     CreateDraftPlaylistParams,
+    Phase,
     PlaylistIdParams,
     RemoveDraftPlaylistTracksParams,
     ReplaceDraftPlaylistTracksParams,
@@ -53,8 +54,13 @@ class Tools:
     def resolve[T](self, expected_type: type[T]) -> T | None:
         return self._context.resolve(expected_type)
 
-    def get(self, name: str) -> Tool | None:
-        return self._tools.get(name)
+    def get(self, name: str, phase: Phase | None = None) -> Tool | None:
+        tool = self._tools.get(name)
+        if tool is None:
+            return None
+        if phase is not None and not tool.is_included_in(phase):
+            return None
+        return tool
 
     def action[P: BaseModel](
         self,
@@ -64,6 +70,7 @@ class Tools:
         params: type[P] | None = None,
         status_label: Callable[[P], str] | None = None,
         action_type: ActionType = ActionType.FETCH,
+        included_in_phases: set[Phase] | None = None,
         suspends_for_input: bool = False,
     ) -> Callable:
         def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
@@ -74,6 +81,7 @@ class Tools:
                     fn=fn,
                     status_label=status_label,
                     action_type=action_type,
+                    included_in_phases=included_in_phases,
                     param_model=params,
                     suspends_for_input=suspends_for_input,
                 )
@@ -85,11 +93,21 @@ class Tools:
     def _register(self, tool: Tool) -> None:
         self._tools[tool.name] = tool
 
-    async def execute(self, name: str, args: dict) -> ActionResult:
+    async def execute(
+        self, name: str, args: dict, phase: Phase | None = None
+    ) -> ActionResult:
+        tool = self._tools.get(name)
+        if phase is not None and tool is not None and not tool.is_included_in(phase):
+            return ActionResult.fail(
+                f"Tool '{name}' is not available in phase '{phase.value}'."
+            )
         return await self._executor.execute(name, args)
 
-    def to_schema(self) -> list[ToolSchema]:
-        return [t.to_schema() for t in self._tools.values()]
+    def to_schema(self, phase: Phase | None = None) -> list[ToolSchema]:
+        tools = self._tools.values()
+        if phase is not None:
+            tools = [tool for tool in tools if tool.is_included_in(phase)]
+        return [tool.to_schema() for tool in tools]
 
     def parse_args(self, call: ToolCall) -> dict[str, Any]:
         raw = call.function.arguments
@@ -111,6 +129,7 @@ class Tools:
             params=SearchParams,
             status_label=lambda params: params.status,
             action_type=ActionType.SEARCH,
+            included_in_phases={Phase.BUILD},
         )
         async def search_tracks(
             spotify: Inject[Spotify],
@@ -128,6 +147,7 @@ class Tools:
             params=SearchParams,
             status_label=lambda params: params.status,
             action_type=ActionType.SEARCH,
+            included_in_phases={Phase.BUILD},
         )
         async def search_albums(
             spotify: Inject[Spotify],
@@ -143,6 +163,7 @@ class Tools:
             params=SearchParams,
             status_label=lambda params: params.status,
             action_type=ActionType.SEARCH,
+            included_in_phases={Phase.BUILD},
         )
         async def search_playlists(
             spotify: Inject[Spotify],
@@ -158,6 +179,7 @@ class Tools:
             params=ArtistAlbumsParams,
             status_label=lambda params: params.status,
             action_type=ActionType.FETCH,
+            included_in_phases={Phase.BUILD},
         )
         async def get_artist_albums(
             spotify: Inject[Spotify],
@@ -173,6 +195,7 @@ class Tools:
             params=ArtistTopTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.FETCH,
+            included_in_phases={Phase.BUILD},
         )
         async def get_artist_top_tracks(
             spotify: Inject[Spotify],
@@ -190,6 +213,7 @@ class Tools:
             params=AlbumTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.FETCH,
+            included_in_phases={Phase.BUILD},
         )
         async def get_album_tracks(
             spotify: Inject[Spotify],
@@ -212,6 +236,7 @@ class Tools:
             params=CreateDraftPlaylistParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
+            included_in_phases={Phase.BUILD},
         )
         async def create_playlist(
             store: Inject[PlaylistDraftStore],
@@ -232,6 +257,7 @@ class Tools:
             params=AddDraftPlaylistTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
+            included_in_phases={Phase.BUILD},
         )
         async def add_playlist_tracks(
             store: Inject[PlaylistDraftStore],
@@ -254,6 +280,7 @@ class Tools:
             params=RemoveDraftPlaylistTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
+            included_in_phases={Phase.BUILD},
         )
         async def remove_playlist_tracks(
             store: Inject[PlaylistDraftStore],
@@ -275,6 +302,7 @@ class Tools:
             params=ReplaceDraftPlaylistTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
+            included_in_phases={Phase.BUILD},
         )
         async def replace_playlist_tracks(
             store: Inject[PlaylistDraftStore],
@@ -297,6 +325,7 @@ class Tools:
             params=PlaylistIdParams,
             status_label=lambda params: params.status,
             action_type=ActionType.FETCH,
+            included_in_phases={Phase.BUILD},
         )
         async def get_spotify_playlist_tracks(
             spotify: Inject[Spotify],
@@ -320,6 +349,7 @@ class Tools:
             params=AskFollowUpParams,
             status_label=lambda params: params.status,
             action_type=ActionType.INTERACT,
+            included_in_phases={Phase.ONBOARDING},
             suspends_for_input=True,
         )
         async def ask_follow_up(params: AskFollowUpParams) -> ActionResult:

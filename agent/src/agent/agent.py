@@ -17,7 +17,7 @@ from agent.events import (
 )
 from agent.messages import MessageManager
 from agent.tools import Tools, Spotify
-from agent.tools.views import AskFollowUpParams
+from agent.tools.views import AskFollowUpParams, Phase
 from agent.playlist import PlaylistDraftStore
 from agent.views import UserEvent
 
@@ -34,10 +34,12 @@ class Agent:
         system_prompt: str | None = None,
         spotify: Spotify | None = None,
         playlist_store: PlaylistDraftStore | None = None,
+        phase: Phase = Phase.ONBOARDING,
     ) -> None:
         self._llm = llm
         self._tools = tools or Tools()
         self._max_iterations = max_iterations
+        self._phase = phase
 
         self._spotify = spotify or Spotify()
         self._tools.provide(self._spotify)
@@ -53,11 +55,17 @@ class Agent:
             history=history,
         )
 
-        self._tool_schema = self._tools.to_schema()
         self._stop_requested = False
 
     async def close(self) -> None:
         await self._spotify.close()
+
+    @property
+    def phase(self) -> Phase:
+        return self._phase
+
+    def advance(self, phase: Phase) -> None:
+        self._phase = phase
 
     def request_stop(self) -> None:
         self._stop_requested = True
@@ -90,8 +98,9 @@ class Agent:
             completion = ""
             tool_calls = []
 
+            schemas = self._tools.to_schema(phase=self._phase)
             async for response_event in self._llm.stream(
-                self._messages.all(), tools=self._tool_schema
+                self._messages.all(), tools=schemas
             ):
                 if self._stop_requested:
                     return
@@ -124,7 +133,7 @@ class Agent:
                 if self._stop_requested:
                     return
                 args = self._tools.parse_args(call)
-                tool = self._tools.get(call.function.name)
+                tool = self._tools.get(call.function.name, phase=self._phase)
                 yield ToolCallEvent(
                     tool_call_id=call.id,
                     name=call.function.name,
@@ -141,7 +150,11 @@ class Agent:
                     )
                     return  # suspend — resume() injects the answer as tool result
 
-                result = await self._tools.execute(call.function.name, args)
+                result = await self._tools.execute(
+                    call.function.name,
+                    args,
+                    phase=self._phase,
+                )
                 serialized = self._tools.serialize_result(result)
                 yield ToolResultEvent(
                     tool_call_id=call.id,

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import BaseModel
 
-from agent.tools.views import ActionResult, ActionType, Tool, ToolParams
+from agent.tools.views import ActionResult, ActionType, Phase, Tool, ToolParams
 
 
 class _Params(BaseModel):
@@ -147,3 +147,22 @@ class TestToolAbstraction:
         )
 
         assert tool.action_type == ActionType.SEARCH
+
+    def test_tool_without_phase_metadata_is_included_in_all_phases(self) -> None:
+        tool = Tool(name="demo", description="Demo", fn=_sync_returns_empty_result)
+
+        assert tool.included_in_phases == frozenset()
+        assert tool.is_included_in(Phase.ONBOARDING) is True
+        assert tool.is_included_in(Phase.BUILD) is True
+
+    def test_tool_can_be_limited_to_explicit_phases(self) -> None:
+        tool = Tool(
+            name="demo",
+            description="Demo",
+            fn=_sync_returns_empty_result,
+            included_in_phases={Phase.BUILD},
+        )
+
+        assert tool.included_in_phases == frozenset({Phase.BUILD})
+        assert tool.is_included_in(Phase.ONBOARDING) is False
+        assert tool.is_included_in(Phase.BUILD) is True
