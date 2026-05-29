@@ -11,15 +11,10 @@ import { AttachmentList } from "@/components/chat/attachments/attachment-list";
 import { AttachmentPopover } from "@/components/chat/attachments/attachment-popover";
 import type { ChatAttachment } from "@/components/chat/attachments/attachment-types";
 import { SendButton } from "@/components/chat/send-button";
+import { useChatInputAttachments } from "@/components/chat/use-chat-input-attachments";
 import { Textarea } from "@/components/ui/textarea";
 import { useBufferedControlledValue } from "@/hooks/useBufferedControlledValue";
 import { cn } from "@/lib/utils";
-
-type AttachmentMention = {
-  start: number;
-  end: number;
-  query: string;
-};
 
 const DRAFT_SYNC_DELAY_MS = 180;
 
@@ -54,26 +49,6 @@ const isInteractiveElement = (element: EventTarget | null) => {
   );
 };
 
-const attachmentKey = (attachment: ChatAttachment) =>
-  `${attachment.kind}:${attachment.id}`;
-
-const findAttachmentMention = (
-  text: string,
-  cursorPosition: number,
-): AttachmentMention | null => {
-  const beforeCursor = text.slice(0, cursorPosition);
-  const start = beforeCursor.lastIndexOf("@");
-  if (start < 0) return null;
-
-  const previousCharacter = start > 0 ? text[start - 1] : "";
-  if (previousCharacter && !/\s/.test(previousCharacter)) return null;
-
-  const query = beforeCursor.slice(start + 1);
-  if (query.includes("\n")) return null;
-
-  return { start, end: cursorPosition, query };
-};
-
 const ChatInputBoxComponent = ({
   value,
   onChange,
@@ -101,24 +76,26 @@ const ChatInputBoxComponent = ({
   const textareaSelectionRef = useRef({ start: 0, end: 0 });
   const measureFrameRef = useRef<number | null>(null);
   const [isSingleLine, setIsSingleLine] = useState(true);
-  const [attachmentPopoverOpen, setAttachmentPopoverOpen] = useState(false);
-  const [attachmentMention, setAttachmentMention] =
-    useState<AttachmentMention | null>(null);
-  const [internalAttachments, setInternalAttachments] = useState<
-    ChatAttachment[]
-  >([]);
-  const attachments = controlledAttachments ?? internalAttachments;
-  const setAttachments = (next: ChatAttachment[]) => {
-    if (controlledAttachments === undefined) {
-      setInternalAttachments(next);
-    }
-    onAttachmentsChange?.(next);
-  };
+  const {
+    attachments,
+    attachmentMention,
+    attachmentPopoverOpen,
+    isAttachmentMentionActive,
+    addAttachment,
+    removeAttachment,
+    setAttachments,
+    setAttachmentMention,
+    setAttachmentPopoverOpen,
+    closeAttachmentMention: closeAttachmentMentionState,
+    syncAttachmentMentionFromCursor,
+  } = useChatInputAttachments({
+    attachments: controlledAttachments,
+    onAttachmentsChange,
+  });
 
   const handleExternalValueChange = useCallback(() => {
-    setAttachmentMention(null);
-    setAttachmentPopoverOpen(false);
-  }, []);
+    closeAttachmentMentionState();
+  }, [closeAttachmentMentionState]);
 
   const {
     bufferedValue: draftValue,
@@ -136,18 +113,14 @@ const ChatInputBoxComponent = ({
   const hasAttachments = attachments.length > 0;
   const canSend = hasText || hasAttachments;
   const canStop = isSubmitting && !!onStop;
-  const isAttachmentMentionActive =
-    attachmentPopoverOpen && !!attachmentMention;
+  const isRenderedAttachmentMentionActive =
+    isAttachmentUiEnabled && isAttachmentMentionActive;
 
   const updateAttachmentMention = (
     nextValue: string,
     cursorPosition: number | null,
   ) => {
-    if (cursorPosition === null) return;
-
-    const nextMention = findAttachmentMention(nextValue, cursorPosition);
-    setAttachmentMention(nextMention);
-    setAttachmentPopoverOpen(nextMention !== null);
+    syncAttachmentMentionFromCursor(nextValue, cursorPosition);
   };
 
   const rememberTextareaSelection = (textarea: HTMLTextAreaElement) => {
@@ -189,12 +162,6 @@ const ChatInputBoxComponent = ({
     submit();
   };
 
-  const addAttachment = (attachment: ChatAttachment) => {
-    const key = attachmentKey(attachment);
-    if (attachments.some((existing) => attachmentKey(existing) === key)) return;
-    setAttachments([...attachments, attachment]);
-  };
-
   const removeAttachmentMention = () => {
     if (!attachmentMention) return;
 
@@ -205,8 +172,7 @@ const ChatInputBoxComponent = ({
     const nextCursorPosition = attachmentMention.start;
 
     setBufferedValue(nextValue);
-    setAttachmentMention(null);
-    setAttachmentPopoverOpen(false);
+    closeAttachmentMentionState();
 
     focusTextareaAt(nextCursorPosition);
   };
@@ -214,13 +180,12 @@ const ChatInputBoxComponent = ({
   const closeAttachmentMention = () => {
     const cursorPosition = attachmentMention?.end ?? draftValue.length;
 
-    setAttachmentPopoverOpen(false);
-    setAttachmentMention(null);
+    closeAttachmentMentionState();
     focusTextareaAt(cursorPosition);
   };
 
   const startAttachmentMentionFromTrigger = () => {
-    if (isAttachmentMentionActive) {
+    if (isRenderedAttachmentMentionActive) {
       closeAttachmentMention();
       return;
     }
@@ -248,7 +213,6 @@ const ChatInputBoxComponent = ({
 
     setBufferedValue(nextValue);
     setAttachmentMention({ start: mentionStart, end: mentionEnd, query: "" });
-    setAttachmentPopoverOpen(true);
     textareaSelectionRef.current = { start: mentionEnd, end: mentionEnd };
   };
 
@@ -267,7 +231,6 @@ const ChatInputBoxComponent = ({
       end: nextEnd,
       query: nextQuery,
     });
-    setAttachmentPopoverOpen(true);
   };
 
   const handleAttachmentPopoverOpenChange = (nextOpen: boolean) => {
@@ -279,11 +242,6 @@ const ChatInputBoxComponent = ({
     }
 
     closeAttachmentMention();
-  };
-
-  const removeAttachment = (attachment: ChatAttachment) => {
-    const key = attachmentKey(attachment);
-    setAttachments(attachments.filter((a) => attachmentKey(a) !== key));
   };
 
   const focusTextareaFromContainer = (event: MouseEvent<HTMLDivElement>) => {
@@ -349,6 +307,13 @@ const ChatInputBoxComponent = ({
         className,
       )}
     >
+      {isAttachmentUiEnabled && (
+        <AttachmentList
+          attachments={attachments}
+          onRemove={disabled || isSubmitting ? undefined : removeAttachment}
+        />
+      )}
+
       <div
         ref={inputContentRef}
         className={cn(
@@ -386,7 +351,7 @@ const ChatInputBoxComponent = ({
           }}
           onBlur={() => flushBufferedValue()}
           onKeyDown={(e) => {
-            if (isAttachmentMentionActive) {
+            if (isRenderedAttachmentMentionActive) {
               if (
                 e.key === "ArrowDown" ||
                 e.key === "ArrowUp" ||
@@ -424,12 +389,24 @@ const ChatInputBoxComponent = ({
             isSingleLine ? "shrink-0" : "justify-end",
           )}
         >
+          {isAttachmentUiEnabled && (
+            <AttachmentPopover
+              attachments={attachments}
+              onAdd={addAttachment}
+              disabled={disabled || isSubmitting}
+              open={attachmentPopoverOpen}
+              onOpenChange={handleAttachmentPopoverOpenChange}
+              query={attachmentMention?.query ?? ""}
+              onQueryChange={syncAttachmentMentionQuery}
+              onTriggerClick={startAttachmentMentionFromTrigger}
+              hideSearchInput={isRenderedAttachmentMentionActive}
+              onPick={removeAttachmentMention}
+            />
+          )}
           <SendButton
             onClick={handleSendButtonClick}
             disabled={
-              disabled ||
-              (isSubmitting && !canStop) ||
-              (!canStop && !canSend)
+              disabled || (isSubmitting && !canStop) || (!canStop && !canSend)
             }
             isLoading={isSubmitting}
             isStopMode={canStop}
