@@ -1,12 +1,6 @@
-import { MoreHorizontal, Pause, Pin, PinOff, Play, Trash2 } from "lucide-react";
+import { Pause, Pin, PinOff, Play, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -53,7 +47,6 @@ export const DeckPlaylistTrackItem = ({
   onRemoveTrack,
   onTogglePin,
 }: DeckPlaylistTrackItemProps) => {
-  const hasTrackActions = canRemove || canTogglePin;
   const pinLabel = track.isPinned ? "Track entpinnen" : "Track anpinnen";
 
   return (
@@ -62,7 +55,7 @@ export const DeckPlaylistTrackItem = ({
       tabIndex={0}
       onDoubleClick={onActivateTrack}
       className={cn(
-        "group relative grid grid-cols-[minmax(0,1fr)_64px_36px] items-center gap-x-3 rounded-md px-2 py-2.5 transition-colors",
+        "group relative grid grid-cols-[minmax(0,1fr)_64px_72px] items-center gap-x-3 rounded-md px-2 py-2.5 transition-colors",
         isActive ? "bg-white/[0.025]" : "hover:bg-white/[0.035]",
         !isPlayable ? "opacity-55" : null,
         isRemoving ? "pointer-events-none opacity-50" : null,
@@ -160,45 +153,58 @@ export const DeckPlaylistTrackItem = ({
         {track.year}
       </span>
 
-      <div className="flex items-center justify-end">
-        {hasTrackActions ? (
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <DropdownMenuTrigger
-                    aria-label={`Mehr Optionen für ${track.title}`}
-                    className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground opacity-0 outline-none transition-opacity hover:bg-white/[0.06] hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100 data-[state=open]:bg-white/[0.08] data-[state=open]:text-foreground data-[state=open]:opacity-100"
-                  >
-                    <MoreHorizontal className="size-4" />
-                  </DropdownMenuTrigger>
-                }
-              />
-              <TooltipContent side="left" sideOffset={8}>
-                Mehr Optionen für {track.title}
-              </TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end" side="bottom" sideOffset={6}>
-              {canTogglePin ? (
-                <DropdownMenuItem onClick={onTogglePin} disabled={isPinning}>
-                  {track.isPinned ? <PinOff /> : <Pin />}
-                  <span>{isPinning ? "Wird aktualisiert..." : pinLabel}</span>
-                </DropdownMenuItem>
-              ) : null}
-              {canRemove ? (
-                <DropdownMenuItem
-                  onClick={onRemoveTrack}
-                  disabled={isRemoving}
-                  className="text-destructive data-highlighted:bg-destructive/10 data-highlighted:text-destructive"
+      <div className="flex items-center justify-end gap-0.5">
+        {canTogglePin ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label={pinLabel}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onTogglePin();
+                  }}
+                  disabled={isPinning}
+                  className="text-muted-foreground opacity-0 transition-opacity hover:bg-white/[0.06] hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
                 >
-                  <Trash2 />
-                  <span>
-                    {isRemoving ? "Wird gelöscht..." : "Track löschen"}
-                  </span>
-                </DropdownMenuItem>
-              ) : null}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  {track.isPinned ? (
+                    <PinOff className="size-4" />
+                  ) : (
+                    <Pin className="size-4" />
+                  )}
+                </Button>
+              }
+            />
+            <TooltipContent side="top" sideOffset={8}>
+              {isPinning ? "Wird aktualisiert..." : pinLabel}
+            </TooltipContent>
+          </Tooltip>
+        ) : null}
+        {canRemove ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label="Track löschen"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onRemoveTrack();
+                  }}
+                  disabled={isRemoving}
+                  className="text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              }
+            />
+            <TooltipContent side="top" sideOffset={8}>
+              {isRemoving ? "Wird gelöscht..." : "Track löschen"}
+            </TooltipContent>
+          </Tooltip>
         ) : null}
       </div>
     </div>

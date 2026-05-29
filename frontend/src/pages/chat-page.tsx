@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import {
   useLocation,
@@ -7,7 +7,10 @@ import {
   useParams,
 } from "react-router-dom";
 
-import type { SessionResponse } from "@/api/generated/model";
+import type {
+  SessionResponse,
+  UserCurationEventResponse,
+} from "@/api/generated/model";
 import { AssistantChatMessage } from "@/components/chat/assistant-chat-message";
 import { ChatInputBox } from "@/components/chat/chat-input-box";
 import { ChatMessageSkeleton } from "@/components/chat/chat-message-skeleton";
@@ -23,7 +26,7 @@ import {
 } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserChatMessage } from "@/components/chat/user-chat-message";
-import { UserCurationEventContext } from "@/components/chat/user-curation-event-context";
+import { UserCurationEventContext } from "@/components/chat/user-curation";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStickyScroll } from "@/hooks/useStickyScroll";
 import { cn } from "@/lib/utils";
@@ -34,6 +37,18 @@ import {
   type ChatEntry,
 } from "./chat-page.state";
 import { useChatSession } from "./chat-page.hook";
+
+type UserCurationTrackPlaybackState = {
+  activeTrackUri: string | null;
+  canControlPlayback: boolean;
+  isPlaying: boolean;
+};
+
+type UserCurationTrackPlayerBridge = {
+  activeTrackUri: string | null;
+  isPlaying: boolean;
+  onTogglePlayback: (event: UserCurationEventResponse) => void;
+} | null;
 
 const shouldShowThinkingPlaceholder = (
   entries: ChatEntry[],
@@ -106,6 +121,15 @@ export const ChatPage = () => {
       : window.matchMedia("(min-width: 1024px)").matches,
   );
   const scrollViewportRef = useRef<HTMLDivElement>(null);
+  const userCurationTrackPlayerRef = useRef<
+    ((event: UserCurationEventResponse) => void) | null
+  >(null);
+  const [userCurationPlaybackState, setUserCurationPlaybackState] =
+    useState<UserCurationTrackPlaybackState>({
+      activeTrackUri: null,
+      canControlPlayback: false,
+      isPlaying: false,
+    });
   const { showScrollToBottomButton, scrollToBottom } =
     useStickyScroll(scrollViewportRef);
   const pendingFollowUp = getPendingFollowUpQuestion(entries);
@@ -123,6 +147,25 @@ export const ChatPage = () => {
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
+
+  const updateUserCurationTrackPlayer = useCallback(
+    (bridge: UserCurationTrackPlayerBridge) => {
+      userCurationTrackPlayerRef.current = bridge?.onTogglePlayback ?? null;
+      setUserCurationPlaybackState({
+        activeTrackUri: bridge?.activeTrackUri ?? null,
+        canControlPlayback: Boolean(bridge),
+        isPlaying: bridge?.isPlaying ?? false,
+      });
+    },
+    [],
+  );
+
+  const toggleUserCurationEventTrackPlayback = useCallback(
+    (event: UserCurationEventResponse) => {
+      userCurationTrackPlayerRef.current?.(event);
+    },
+    [],
+  );
 
   const renderEntry = (entry: ChatEntry, previousEntry?: ChatEntry) => {
     switch (entry.kind) {
@@ -243,6 +286,13 @@ export const ChatPage = () => {
           <UserCurationEventContext
             sessionId={sessionId}
             events={session?.unconsumedUserCurationEvents ?? []}
+            activeTrackUri={userCurationPlaybackState.activeTrackUri}
+            isPlaybackActive={userCurationPlaybackState.isPlaying}
+            onToggleTrackPlayback={
+              userCurationPlaybackState.canControlPlayback
+                ? toggleUserCurationEventTrackPlayback
+                : undefined
+            }
           />
           {pendingFollowUp ? (
             <FollowUpQuestionGroup
@@ -316,6 +366,7 @@ export const ChatPage = () => {
               sessionId={sessionId}
               playlist={playlist}
               onRemoveTrack={removePlaylistTrack}
+              onCurationTrackPlayerChange={updateUserCurationTrackPlayer}
             />
           </ResizablePanel>
         </ResizablePanelGroup>

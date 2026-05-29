@@ -7,6 +7,7 @@ import type {
   PlaylistTrackResponse,
   SpotifyPlaylistExportResponse,
   SpotifyTrackResponse,
+  UserCurationEventResponse,
 } from "@/api/generated/model";
 import {
   addPlaylistTrack,
@@ -43,6 +44,13 @@ type DeckWorkspaceViewProps = {
     uiEvent?: "set" | "track_added" | "track_removed" | "track_replaced";
   };
   onRemoveTrack?: (trackId: string) => Promise<void>;
+  onCurationTrackPlayerChange?: (
+    bridge: {
+      activeTrackUri: string | null;
+      isPlaying: boolean;
+      onTogglePlayback: (event: UserCurationEventResponse) => void;
+    } | null,
+  ) => void;
 };
 
 type SpotifyMode = "loading" | "disconnected" | "non-premium" | "ready";
@@ -51,6 +59,7 @@ export const DeckWorkspaceView = ({
   sessionId,
   playlist,
   onRemoveTrack,
+  onCurationTrackPlayerChange,
 }: DeckWorkspaceViewProps) => {
   const showSpotifyConnectDialog = false;
   const queryClient = useQueryClient();
@@ -195,6 +204,72 @@ export const DeckWorkspaceView = ({
     });
     playSpotifyUri(uri);
   };
+
+  const toggleCurationEventTrackPlayback = useCallback(
+    (event: UserCurationEventResponse) => {
+      if (!event.trackSpotifyUri) return;
+
+      if (event.trackSpotifyUri === playerState.currentTrackUri) {
+        if (playerState.isPaused) {
+          void resume();
+        } else {
+          void pause();
+        }
+        return;
+      }
+
+      const playlistTrack = tracks.find(
+        (track) =>
+          track.id === event.trackId ||
+          track.spotifyUri === event.trackSpotifyUri,
+      );
+
+      if (!playlistTrack) {
+        setPreviewTrack({
+          id: event.trackId,
+          title: event.trackTitle,
+          artist: event.trackArtist,
+          year: event.trackYear?.toString() ?? "",
+          durationSeconds: 0,
+          coverUrl: event.trackCoverUrl ?? "",
+          spotifyUri: event.trackSpotifyUri,
+          isPinned: false,
+        });
+      }
+
+      playSpotifyUri(event.trackSpotifyUri);
+    },
+    [
+      pause,
+      playSpotifyUri,
+      playerState.currentTrackUri,
+      playerState.isPaused,
+      resume,
+      tracks,
+    ],
+  );
+
+  useEffect(() => {
+    if (!onCurationTrackPlayerChange) return;
+
+    if (!showPlaybackControls) {
+      onCurationTrackPlayerChange(null);
+      return;
+    }
+
+    onCurationTrackPlayerChange({
+      activeTrackUri: playerState.currentTrackUri,
+      isPlaying: !playerState.isPaused && Boolean(playerState.currentTrackUri),
+      onTogglePlayback: toggleCurationEventTrackPlayback,
+    });
+    return () => onCurationTrackPlayerChange(null);
+  }, [
+    onCurationTrackPlayerChange,
+    playerState.currentTrackUri,
+    playerState.isPaused,
+    showPlaybackControls,
+    toggleCurationEventTrackPlayback,
+  ]);
 
   useEffect(() => {
     if (spotifyMode !== "ready") return;
