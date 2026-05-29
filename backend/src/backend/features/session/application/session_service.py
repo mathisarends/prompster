@@ -4,9 +4,6 @@ from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
     SessionSummaryQuery,
 )
-from backend.features.session.application.ports.title_generator import (
-    SessionTitleGenerator,
-)
 from backend.features.session.domain import (
     PlaylistTrack,
     Session,
@@ -20,23 +17,17 @@ class SessionService:
         self,
         session_repository: SessionRepository,
         session_summary_query: SessionSummaryQuery,
-        title_generator: SessionTitleGenerator,
     ) -> None:
         self._session_repository = session_repository
         self._session_summary_query = session_summary_query
-        self._title_generator = title_generator
 
     async def get_by_id(self, *, session_id: UUID, user_id: UUID) -> Session:
         return await self._get_authorized(session_id=session_id, user_id=user_id)
 
     @timed()
     async def create(self, *, owner_id: UUID, initial_prompt: str) -> Session:
-        generated_title = await self._title_generator.generate(
-            initial_prompt=initial_prompt
-        )
-        title = (generated_title.strip() or "New Session")[:120]
         session = Session(
-            title=title,
+            title="",
             entries=[],
             owner_id=owner_id,
         )

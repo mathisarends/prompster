@@ -1,3 +1,4 @@
+import asyncio
 import json
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
@@ -14,6 +15,7 @@ from backend.features.session.application.events import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionPlaylistTrackReplaced,
+    SessionTitleGenerated,
     SessionToolCallSequenceAdded,
     SessionToolCallSequenceCompleted,
     SessionToolCallResolved,
@@ -31,6 +33,9 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerPlaylistUpdated,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallStarted,
+)
+from backend.features.session.application.ports.title_generator import (
+    SessionTitleGenerator,
 )
 from backend.features.session.domain import (
     AssistantMessage,
@@ -83,10 +88,12 @@ class SessionConversationService:
         session_repository: SessionRepository,
         runner: SessionRunner,
         user_message_rate_limit_service: UserMessageRateLimitService,
+        title_generator: SessionTitleGenerator,
     ) -> None:
         self._session_repository = session_repository
         self._runner = runner
         self._user_message_rate_limit_service = user_message_rate_limit_service
+        self._title_generator = title_generator
 
     async def send_message(
         self,
@@ -105,25 +112,119 @@ class SessionConversationService:
             content=content,
             attachments=self._to_user_message_attachments(attachments or []),
         )
+        title_task = self._maybe_start_title_generation(
+            session=session,
+            prompt=content,
+        )
         async for event in self._persist_and_resume_agent(
             session=session,
             resolved_tool_call=resolved_tool_call,
+            title_task=title_task,
         ):
             yield event
+
+    def _maybe_start_title_generation(
+        self,
+        *,
+        session: Session,
+        prompt: str,
+    ) -> asyncio.Task[str] | None:
+        if session.title.strip():
+            return None
+
+        return asyncio.create_task(
+            self._title_generator.generate(initial_prompt=prompt)
+        )
 
     async def _persist_and_resume_agent(
         self,
         *,
         session: Session,
         resolved_tool_call: _ResolvedToolCall | None = None,
+        title_task: asyncio.Task[str] | None = None,
     ) -> AsyncIterator[SessionEvent]:
+        try:
+            await self._persist_session(session=session)
+            for event in self._to_tool_call_resolution_events(resolved_tool_call):
+                yield event
+            async for event in self._run_agent_and_consume_user_curation_events(
+                session=session
+            ):
+                yield event
+                for title_event in await self._emit_title_if_ready(
+                    session=session,
+                    title_task=title_task,
+                ):
+                    yield title_event
+            for title_event in await self._flush_title(
+                session=session,
+                title_task=title_task,
+            ):
+                yield title_event
+        finally:
+            if title_task is not None and not title_task.done():
+                title_task.cancel()
+            elif title_task is not None and title_task.done():
+                self._consume_title_task_exception(title_task)
+
+    async def _emit_title_if_ready(
+        self,
+        *,
+        session: Session,
+        title_task: asyncio.Task[str] | None,
+    ) -> tuple[SessionEvent, ...]:
+        if title_task is None or not title_task.done() or session.title.strip():
+            return ()
+
+        return await self._apply_title(
+            session=session,
+            raw_title=self._title_from_task(title_task),
+        )
+
+    async def _flush_title(
+        self,
+        *,
+        session: Session,
+        title_task: asyncio.Task[str] | None,
+    ) -> tuple[SessionEvent, ...]:
+        if title_task is None or session.title.strip():
+            return ()
+
+        try:
+            raw_title = await title_task
+        except asyncio.CancelledError:
+            return ()
+        except Exception:
+            raw_title = "New Session"
+
+        return await self._apply_title(session=session, raw_title=raw_title)
+
+    async def _apply_title(
+        self,
+        *,
+        session: Session,
+        raw_title: str,
+    ) -> tuple[SessionEvent, ...]:
+        title = (raw_title.strip() or "New Session")[:120]
+        session.title = title
         await self._persist_session(session=session)
-        for event in self._to_tool_call_resolution_events(resolved_tool_call):
-            yield event
-        async for event in self._run_agent_and_consume_user_curation_events(
-            session=session
-        ):
-            yield event
+        return (SessionTitleGenerated(title=title),)
+
+    def _title_from_task(self, title_task: asyncio.Task[str]) -> str:
+        try:
+            return title_task.result()
+        except asyncio.CancelledError:
+            return "New Session"
+        except Exception:
+            return "New Session"
+
+    def _consume_title_task_exception(self, title_task: asyncio.Task[str]) -> None:
+        try:
+            title_task.result()
+        except asyncio.CancelledError:
+            pass
+        except Exception:
+            pass
 
     async def stop_message(
         self,

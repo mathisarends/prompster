@@ -17,6 +17,7 @@ import type { PlaylistTrackAddedEvent } from "./playlistTrackAddedEvent";
 import type { PlaylistTrackRemovedEvent } from "./playlistTrackRemovedEvent";
 import type { PlaylistTrackReplacedEvent } from "./playlistTrackReplacedEvent";
 import type { SessionSnapshotEvent } from "./sessionSnapshotEvent";
+import type { TitleGeneratedEvent } from "./titleGeneratedEvent";
 import type { ToolCallFailedEvent } from "./toolCallFailedEvent";
 import type { ToolCallResolvedEvent } from "./toolCallResolvedEvent";
 import type { ToolCallSequenceAddedEvent } from "./toolCallSequenceAddedEvent";
@@ -29,6 +30,7 @@ export interface SessionEventSchema {
   /** Any event the backend may push over the stream. */
   serverEvent?:
     | SessionSnapshotEvent
+    | TitleGeneratedEvent
     | AssistantMessageStartedEvent
     | AssistantMessageChunkEvent
     | AssistantMessageCompletedEvent

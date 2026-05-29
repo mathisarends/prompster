@@ -9,6 +9,7 @@ from backend.features.session.application import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionPlaylistTrackReplaced,
+    SessionTitleGenerated,
     SessionToolCallFailed,
     SessionToolCallSequenceAdded,
     SessionToolCallSequenceCompleted,
@@ -35,6 +36,7 @@ from backend.features.session.presentation.sse.events import (
     PlaylistTrackRemovedEvent,
     PlaylistTrackReplacedEvent,
     ServerEvent,
+    TitleGeneratedEvent,
     ToolCallFailedEvent,
     ToolCallSequenceAddedEvent,
     ToolCallSequenceCompletedEvent,
@@ -43,6 +45,9 @@ from backend.features.session.presentation.sse.events import (
 
 
 def to_server_event(event: SessionEvent) -> ServerEvent:
+    if isinstance(event, SessionTitleGenerated):
+        return TitleGeneratedEvent(title=event.title)
+
     if isinstance(event, SessionAssistantMessageStarted):
         return AssistantMessageStartedEvent(
             message_id=event.message.id,

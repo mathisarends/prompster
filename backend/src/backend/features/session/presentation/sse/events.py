@@ -21,6 +21,7 @@ class _SessionEventSchema(Schema):
 
 class SessionEventType(StrEnum):
     SESSION_SNAPSHOT = "session.snapshot"
+    TITLE_GENERATED = "session.title_generated"
 
     ASSISTANT_MESSAGE_STARTED = "message.assistant_started"
     ASSISTANT_MESSAGE_CHUNK = "message.assistant_chunk"
@@ -60,6 +61,11 @@ class SessionSnapshotPayload(_SessionEventSchema):
 class SessionSnapshotEvent(_SessionEventSchema):
     type: Literal[SessionEventType.SESSION_SNAPSHOT] = SessionEventType.SESSION_SNAPSHOT
     session: SessionSnapshotPayload
+
+
+class TitleGeneratedEvent(_SessionEventSchema):
+    type: Literal[SessionEventType.TITLE_GENERATED] = SessionEventType.TITLE_GENERATED
+    title: str
 
 
 class AssistantMessageStartedEvent(_SessionEventSchema):
@@ -173,6 +179,7 @@ class ErrorEvent(_SessionEventSchema):
 ServerEvent = Annotated[
     Union[
         SessionSnapshotEvent,
+        TitleGeneratedEvent,
         AssistantMessageStartedEvent,
         AssistantMessageChunkEvent,
         AssistantMessageCompletedEvent,

@@ -20,6 +20,7 @@ type ChatPageHeaderProps = {
   session?: SessionResponse;
   title?: string;
   isLoading?: boolean;
+  isTitlePending?: boolean;
   className?: string;
   onSessionDeleted?: (sessionId: string) => void;
 };
@@ -28,6 +29,7 @@ export const ChatPageHeader = ({
   session,
   title,
   isLoading = false,
+  isTitlePending = false,
   className,
   onSessionDeleted,
 }: ChatPageHeaderProps) => {
@@ -35,6 +37,7 @@ export const ChatPageHeader = ({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const { toggleStar, isTogglingFor } = useSessionStarActions();
   const displayTitle = title ?? session?.title ?? "Neues Karten-Deck";
+  const showTitleSkeleton = isLoading || isTitlePending;
 
   return (
     <>
@@ -46,7 +49,7 @@ export const ChatPageHeader = ({
       >
         <span className="inline-flex min-w-0 items-center gap-2.5 text-sm font-semibold text-foreground/85">
           <Sparkles className="size-3.5 shrink-0" />
-          {isLoading ? (
+          {showTitleSkeleton && !session ? (
             <Skeleton className="h-4 w-40" />
           ) : session ? (
             <DropdownMenu>
@@ -54,8 +57,14 @@ export const ChatPageHeader = ({
                 aria-label="Chat-Aktionen oeffnen"
                 className="group/title -mx-2 -my-1 inline-flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm font-semibold transition-colors hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:bg-accent/60"
               >
-                <span className="truncate">{displayTitle}</span>
-                <ChevronDown className="size-3.5 shrink-0 text-foreground/60 transition-transform group-data-[state=open]/title:rotate-180" />
+                {showTitleSkeleton ? (
+                  <Skeleton className="h-4 w-40" />
+                ) : (
+                  <span className="truncate">{displayTitle}</span>
+                )}
+                {!showTitleSkeleton && (
+                  <ChevronDown className="size-3.5 shrink-0 text-foreground/60 transition-transform group-data-[state=open]/title:rotate-180" />
+                )}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" side="bottom" sideOffset={6}>
                 <SessionActionsMenuItems

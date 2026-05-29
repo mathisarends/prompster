@@ -75,6 +75,7 @@ export const ChatPage = () => {
     entries,
     playlist,
     followUpDrafts,
+    isTitlePending,
     isStreaming,
     isStopping,
     isLoadingSession,
@@ -179,13 +180,13 @@ export const ChatPage = () => {
     }
   };
 
-  const headerTitle = title ?? "Neues Karten-Deck";
   const chatPane = (
     <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
       <ChatPageHeader
         session={session}
-        title={headerTitle}
+        title={title}
         isLoading={isLoadingSession}
+        isTitlePending={isTitlePending}
         onSessionDeleted={() =>
           navigate("/new", { state: { newChatAt: Date.now() } })
         }

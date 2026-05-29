@@ -84,6 +84,11 @@ class SessionPlaylistTrackReplaced:
     track: PlaylistTrack
 
 
+@dataclass(frozen=True)
+class SessionTitleGenerated:
+    title: str
+
+
 type SessionEvent = (
     SessionAssistantMessageStarted
     | SessionAssistantMessageChunk
@@ -98,4 +103,5 @@ type SessionEvent = (
     | SessionPlaylistTrackAdded
     | SessionPlaylistTrackRemoved
     | SessionPlaylistTrackReplaced
+    | SessionTitleGenerated
 )

@@ -15,6 +15,9 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerCancelled,
     SessionRunnerEvent,
 )
+from backend.features.session.application.ports.title_generator import (
+    SessionTitleGenerator,
+)
 from backend.features.session.domain import (
     Phase,
     Session,
@@ -55,6 +58,11 @@ class _EmptyRunner(SessionRunner):
 class _NoOpQuotaService:
     async def consume(self, *, user_id):
         return None
+
+
+class _TitleGeneratorStub(SessionTitleGenerator):
+    async def generate(self, initial_prompt: str) -> str:
+        return "Deck"
 
 
 class _CancelledRunner(SessionRunner):
@@ -240,6 +248,7 @@ class TestSendMessageConsumesCurationEvents:
             session_repository=repository,
             runner=_EmptyRunner(),
             user_message_rate_limit_service=_NoOpQuotaService(),
+            title_generator=_TitleGeneratorStub(),
         )
 
         async def run() -> None:
@@ -275,6 +284,7 @@ class TestSendMessageConsumesCurationEvents:
             session_repository=repository,
             runner=_CancelledRunner(),
             user_message_rate_limit_service=_NoOpQuotaService(),
+            title_generator=_TitleGeneratorStub(),
         )
 
         async def run() -> None:

@@ -7,6 +7,7 @@
  */
 
 export * from "./addPlaylistTrackRequest";
+export * from "./artistReferenceResponse";
 export * from "./assistantMessageCancelledEvent";
 export * from "./assistantMessageChunkEvent";
 export * from "./assistantMessageCompletedEvent";
@@ -30,7 +31,9 @@ export * from "./listSessionsParams";
 export * from "./lLMOptionResponse";
 export * from "./lLMOptionsResponse";
 export * from "./lLMProvider";
+export * from "./phase";
 export * from "./playlistPayload";
+export * from "./playlistReferenceResponse";
 export * from "./playlistResponse";
 export * from "./playlistSetEvent";
 export * from "./playlistTrackAddedEvent";
@@ -57,6 +60,7 @@ export * from "./spotifyPlaylistResponse";
 export * from "./spotifySearchType";
 export * from "./spotifyTrackResponse";
 export * from "./spotifyUnifiedSearchResponse";
+export * from "./titleGeneratedEvent";
 export * from "./toolCallFailedEvent";
 export * from "./toolCallResolvedEvent";
 export * from "./toolCallResponse";

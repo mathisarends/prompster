@@ -39,6 +39,7 @@ export type UseChatSessionResult = {
   entries: ChatEntry[];
   playlist: ChatPlaylist | null;
   followUpDrafts: Record<string, string>;
+  isTitlePending: boolean;
   isStreaming: boolean;
   isStopping: boolean;
   errorMessage?: string;
@@ -330,12 +331,16 @@ export const useChatSession = ({
     [invalidateSessionQueries, sessionId],
   );
 
+  const resolvedTitle = state.title ?? session?.title;
+  const isTitlePending = !resolvedTitle?.trim();
+
   return {
     session,
-    title: state.title ?? session?.title,
+    title: resolvedTitle,
     entries: state.entries,
     playlist: state.playlist,
     followUpDrafts: state.followUpDrafts,
+    isTitlePending,
     isStreaming: state.isStreaming,
     isStopping,
     errorMessage: state.errorMessage,

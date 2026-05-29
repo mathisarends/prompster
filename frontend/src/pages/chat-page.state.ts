@@ -406,6 +406,12 @@ const reduceServerEvent = (
         errorMessage: undefined,
       };
 
+    case "session.title_generated":
+      return {
+        ...state,
+        title: event.title,
+      };
+
     case "message.assistant_started":
       return {
         ...state,

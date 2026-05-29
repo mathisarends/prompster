@@ -14,6 +14,7 @@ from backend.features.session.application.events import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionPlaylistTrackReplaced,
+    SessionTitleGenerated,
     SessionToolCallSequenceAdded,
     SessionToolCallResolved,
 )
@@ -137,12 +138,22 @@ class _SessionSummaryQueryStub(SessionSummaryQuery):
 
 
 class _SessionTitleGeneratorStub(SessionTitleGenerator):
-    def __init__(self, generated_title: str) -> None:
+    def __init__(
+        self,
+        generated_title: str = "",
+        *,
+        error: Exception | None = None,
+    ) -> None:
         self._generated_title = generated_title
+        self._error = error
         self.received_initial_prompt: str | None = None
+        self.call_count = 0
 
     async def generate(self, initial_prompt: str) -> str:
         self.received_initial_prompt = initial_prompt
+        self.call_count += 1
+        if self._error is not None:
+            raise self._error
         return self._generated_title
 
 
@@ -186,13 +197,10 @@ def _make_management_service(
     *,
     repository: _SessionRepositoryStub | None = None,
     summary_query: _SessionSummaryQueryStub | None = None,
-    title_generator: _SessionTitleGeneratorStub | None = None,
 ) -> SessionService:
     return SessionService(
         session_repository=repository or _SessionRepositoryStub(),
         session_summary_query=summary_query or _SessionSummaryQueryStub(summaries=[]),
-        title_generator=title_generator
-        or _SessionTitleGeneratorStub(generated_title=""),
     )
 
 
@@ -201,11 +209,13 @@ def _make_conversation_service(
     repository: _SessionRepositoryStub | None = None,
     runner: _SessionRunnerStub | None = None,
     quota_service: _UserMessageQuotaServiceStub | None = None,
+    title_generator: _SessionTitleGeneratorStub | None = None,
 ) -> SessionConversationService:
     return SessionConversationService(
         session_repository=repository or _SessionRepositoryStub(),
         runner=runner or _SessionRunnerStub(),
         user_message_rate_limit_service=quota_service or _UserMessageQuotaServiceStub(),
+        title_generator=title_generator or _SessionTitleGeneratorStub(),
     )
 
 
@@ -256,37 +266,20 @@ class TestSessionServiceGetById:
 
 
 class TestSessionServiceCreate:
-    def test_generates_trimmed_limited_title_and_persists_session(self) -> None:
+    def test_creates_session_with_pending_empty_title(self) -> None:
         owner_id = uuid4()
         initial_prompt = "spiele was ruhiges"
         repository = _SessionRepositoryStub()
-        generator = _SessionTitleGeneratorStub(generated_title=f"  {'A' * 130}  ")
-        service = _make_management_service(
-            repository=repository,
-            title_generator=generator,
-        )
+        service = _make_management_service(repository=repository)
 
         created = asyncio.run(
             service.create(owner_id=owner_id, initial_prompt=initial_prompt)
         )
 
         assert created is repository.created_session
-        assert created.title == "A" * 120
+        assert created.title == ""
         assert created.owner_id == owner_id
         assert len(created.entries) == 0
-        assert generator.received_initial_prompt == initial_prompt
-
-    def test_falls_back_to_new_session_for_blank_generated_title(self) -> None:
-        repository = _SessionRepositoryStub()
-        generator = _SessionTitleGeneratorStub(generated_title="   ")
-        service = _make_management_service(
-            repository=repository,
-            title_generator=generator,
-        )
-
-        session = asyncio.run(service.create(owner_id=uuid4(), initial_prompt="prompt"))
-
-        assert session.title == "New Session"
 
 
 class TestSessionServiceUpdate:
@@ -508,6 +501,86 @@ class TestSessionServiceSendMessage:
         )
         assert isinstance(events[-1], SessionAssistantMessageCompleted)
         assert quota_service.consumed_user_ids == [owner_id]
+
+    def test_generates_title_for_untitled_session_during_message_stream(self) -> None:
+        owner_id = uuid4()
+        prompt = "spiele was ruhiges"
+        session = Session(title="", entries=[], owner_id=owner_id)
+        repository = _SessionRepositoryStub(session_by_id=session)
+        generator = _SessionTitleGeneratorStub(generated_title=f"  {'A' * 130}  ")
+        service = _make_conversation_service(
+            repository=repository,
+            title_generator=generator,
+        )
+
+        events = asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content=prompt,
+                )
+            )
+        )
+
+        title_events = [
+            event for event in events if isinstance(event, SessionTitleGenerated)
+        ]
+        assert title_events == [SessionTitleGenerated(title="A" * 120)]
+        assert session.title == "A" * 120
+        assert generator.received_initial_prompt == prompt
+        assert generator.call_count == 1
+        assert any(
+            isinstance(event, SessionAssistantMessageCompleted) for event in events
+        )
+
+    def test_does_not_generate_title_for_already_titled_session(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        generator = _SessionTitleGeneratorStub(generated_title="New Title")
+        service = _make_conversation_service(
+            repository=_SessionRepositoryStub(session_by_id=session),
+            title_generator=generator,
+        )
+
+        events = asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="spiele rihanna hits",
+                )
+            )
+        )
+
+        assert not any(isinstance(event, SessionTitleGenerated) for event in events)
+        assert session.title == "Rihanna Deck"
+        assert generator.call_count == 0
+
+    def test_title_generator_error_falls_back_without_breaking_stream(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="", entries=[], owner_id=owner_id)
+        generator = _SessionTitleGeneratorStub(error=RuntimeError("title failed"))
+        service = _make_conversation_service(
+            repository=_SessionRepositoryStub(session_by_id=session),
+            title_generator=generator,
+        )
+
+        events = asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="spiele rihanna hits",
+                )
+            )
+        )
+
+        assert SessionTitleGenerated(title="New Session") in events
+        assert session.title == "New Session"
+        assert any(
+            isinstance(event, SessionAssistantMessageCompleted) for event in events
+        )
 
     def test_does_not_persist_when_quota_is_exceeded(self) -> None:
         owner_id = uuid4()

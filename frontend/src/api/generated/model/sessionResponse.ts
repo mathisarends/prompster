@@ -5,8 +5,11 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
+import type { ArtistReferenceResponse } from "./artistReferenceResponse";
 import type { AssistantMessageEntryResponse } from "./assistantMessageEntryResponse";
 import type { FollowUpQuestionGroupEntryResponse } from "./followUpQuestionGroupEntryResponse";
+import type { Phase } from "./phase";
+import type { PlaylistReferenceResponse } from "./playlistReferenceResponse";
 import type { PlaylistResponse } from "./playlistResponse";
 import type { ToolCallSequenceEntryResponse } from "./toolCallSequenceEntryResponse";
 import type { UserCurationEventResponse } from "./userCurationEventResponse";
@@ -16,6 +19,7 @@ export interface SessionResponse {
   id: string;
   title: string;
   isStarred: boolean;
+  phase: Phase;
   createdAt: string;
   entries: (
     | UserMessageEntryResponse
@@ -24,5 +28,7 @@ export interface SessionResponse {
     | FollowUpQuestionGroupEntryResponse
   )[];
   playlist?: PlaylistResponse | null;
+  playlistReferences?: PlaylistReferenceResponse[];
+  artistReferences?: ArtistReferenceResponse[];
   unconsumedUserCurationEvents?: UserCurationEventResponse[];
 }

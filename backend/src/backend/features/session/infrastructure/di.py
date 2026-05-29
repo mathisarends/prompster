@@ -102,12 +102,10 @@ class SessionProvider(Provider):
         self,
         session_repository: SessionRepository,
         session_summary_query: SessionSummaryQuery,
-        title_generator: SessionTitleGenerator,
     ) -> SessionService:
         return SessionService(
             session_repository=session_repository,
             session_summary_query=session_summary_query,
-            title_generator=title_generator,
         )
 
     @provide(scope=Scope.REQUEST)
@@ -116,11 +114,13 @@ class SessionProvider(Provider):
         session_repository: SessionRepository,
         runner: SessionRunner,
         user_message_rate_limit_service: UserMessageRateLimitService,
+        title_generator: SessionTitleGenerator,
     ) -> SessionConversationService:
         return SessionConversationService(
             session_repository=session_repository,
             runner=runner,
             user_message_rate_limit_service=user_message_rate_limit_service,
+            title_generator=title_generator,
         )
 
     @provide(scope=Scope.REQUEST)

@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SessionActionsMenuItems } from "@/components/sidebar/session-actions-menu-items";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 type SidebarSessionItemProps = {
@@ -31,6 +32,10 @@ export const SidebarSessionItem = ({
 }: SidebarSessionItemProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const shouldPinMenuButton = isActive || menuOpen;
+  const hasTitle = Boolean(session.title.trim());
+  const actionLabel = hasTitle
+    ? `Aktionen fuer ${session.title}`
+    : "Chat-Aktionen oeffnen";
 
   return (
     <li className="group/session relative">
@@ -44,12 +49,16 @@ export const SidebarSessionItem = ({
             : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
         )}
       >
-        <span className="min-w-0 flex-1 truncate">{session.title}</span>
+        {hasTitle ? (
+          <span className="min-w-0 flex-1 truncate">{session.title}</span>
+        ) : (
+          <Skeleton className="h-3.5 w-32" />
+        )}
       </button>
 
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger
-          aria-label={`Aktionen fuer ${session.title}`}
+          aria-label={actionLabel}
           className={cn(
             "absolute right-1 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-sidebar-foreground/70 transition-opacity hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-sidebar-ring",
             "opacity-0 group-hover/session:opacity-100",
