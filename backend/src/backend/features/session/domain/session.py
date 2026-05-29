@@ -4,6 +4,7 @@ from uuid import UUID
 
 from backend.features.session.domain.exceptions import (
     ArtistReferenceNotFoundError,
+    InvalidSessionPhaseTransitionError,
     NoCurrentAssistantMessageError,
     NoPendingFollowUpGroupError,
     NoPendingToolCallSequenceError,
@@ -35,6 +36,7 @@ from backend.features.session.domain.entities import (
     UserMessage,
     UserMessageAttachment,
 )
+from backend.features.session.domain.views import Phase
 from backend.shared.ddd import Aggregate
 
 
@@ -49,6 +51,7 @@ class Session(Aggregate):
         user_curation_events: list[UserCurationEvent] | None = None,
         playlist_references: list[PlaylistReference] | None = None,
         artist_references: list[ArtistReference] | None = None,
+        phase: Phase = Phase.BUILD,
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> None:
@@ -61,6 +64,7 @@ class Session(Aggregate):
         self._user_curation_events: list[UserCurationEvent] = user_curation_events or []
         self._playlist_references: list[PlaylistReference] = playlist_references or []
         self._artist_references: list[ArtistReference] = artist_references or []
+        self._phase = phase
 
     @property
     def title(self) -> str:
@@ -77,6 +81,10 @@ class Session(Aggregate):
     @property
     def is_starred(self) -> bool:
         return self._is_starred
+
+    @property
+    def phase(self) -> Phase:
+        return self._phase
 
     @property
     def entries(self) -> tuple[SessionEntry, ...]:
@@ -562,6 +570,14 @@ class Session(Aggregate):
 
     def unstar(self) -> None:
         self._is_starred = False
+
+    def advance_to_building_phase(self) -> None:
+        if self._phase != Phase.ONBOARDING:
+            raise InvalidSessionPhaseTransitionError(
+                f"Cannot advance session {self.id} from {self._phase.value} "
+                f"to {Phase.BUILD.value}."
+            )
+        self._phase = Phase.BUILD
 
     def has_access(self, user_id: UUID) -> None:
         if self.owner_id != user_id:

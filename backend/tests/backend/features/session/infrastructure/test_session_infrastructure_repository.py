@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from backend.features.session.domain import (
     PendingCall,
+    Phase,
     PlaylistTrack,
     Session,
     ToolActionType,
@@ -158,6 +159,34 @@ def test_playlist_track_mapping_preserves_lock_state() -> None:
 
     assert orm_track.is_pinned is True
     assert roundtrip.is_pinned is True
+
+
+def test_session_phase_mapping_roundtrip() -> None:
+    owner_id = uuid4()
+    session_id = uuid4()
+    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    session = Session(
+        title="Roadtrip",
+        entries=[],
+        owner_id=owner_id,
+        id=session_id,
+        phase=Phase.BUILD,
+    )
+
+    orm = repository._to_orm(session)
+
+    assert orm.phase == "build"
+
+    orm.user_messages = []
+    orm.assistant_messages = []
+    orm.tool_call_sequences = []
+    orm.follow_up_question_groups = []
+    orm.user_curation_events = []
+    orm.playlist_references = []
+    orm.artist_references = []
+    mapped = repository._to_domain(orm)
+
+    assert mapped.phase == Phase.BUILD
 
 
 def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:

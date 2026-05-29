@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pydantic import Field, model_validator
 
+from backend.features.session.domain import Phase
 from backend.presentation.schema import Schema
 
 
@@ -187,6 +188,7 @@ class SessionResponse(Schema):
     id: UUID
     title: str
     is_starred: bool
+    phase: Phase
     created_at: datetime
     entries: list[SessionEntryResponse]
     playlist: PlaylistResponse | None = None

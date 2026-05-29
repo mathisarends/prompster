@@ -110,6 +110,11 @@ class SessionModel(DatabaseEntity, table=True):
         sa_type=Boolean(),
         sa_column_kwargs={"server_default": text("false")},
     )
+    phase: str = Field(
+        default="build",
+        max_length=32,
+        sa_column_kwargs={"server_default": text("'build'")},
+    )
     last_activity_at: datetime = Field(sa_type=DateTime(timezone=True))
 
     user_messages: list["SessionUserMessageModel"] = Relationship(

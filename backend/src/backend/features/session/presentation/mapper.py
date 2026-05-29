@@ -49,6 +49,7 @@ def to_session_response(session: Session) -> SessionResponse:
         id=session.id,
         title=session.title,
         is_starred=session.is_starred,
+        phase=session.phase.value,
         created_at=session.created_at,
         entries=[to_entry_response(entry) for entry in session.entries],
         playlist=to_playlist_response(session.playlist),

@@ -5,6 +5,7 @@ from .exceptions import (
     FollowUpQuestionAlreadyResolvedError,
     FollowUpQuestionNotFoundError,
     FollowUpQuestionOutOfOrderError,
+    InvalidSessionPhaseTransitionError,
     NoCurrentAssistantMessageError,
     NoPendingFollowUpGroupError,
     NoPendingToolCallSequenceError,
@@ -26,6 +27,7 @@ from .exceptions import (
 )
 from .repository import SessionRepository
 from .session import Session
+from .views import Phase
 from .entities import (
     ArtistReference,
     AssistantMessage,
@@ -69,12 +71,14 @@ __all__ = [
     "FollowUpQuestionNotFoundError",
     "FollowUpQuestionOutOfOrderError",
     "FollowUpQuestionState",
+    "InvalidSessionPhaseTransitionError",
     "NoCurrentAssistantMessageError",
     "NoPendingFollowUpGroupError",
     "NoPendingToolCallSequenceError",
     "PendingCall",
     "PendingFollowUpQuestionsError",
     "PendingToolCallsError",
+    "Phase",
     "Playlist",
     "PlaylistReference",
     "PlaylistReferenceNotFoundError",

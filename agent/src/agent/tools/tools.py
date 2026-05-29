@@ -349,7 +349,7 @@ class Tools:
             params=AskFollowUpParams,
             status_label=lambda params: params.status,
             action_type=ActionType.INTERACT,
-            included_in_phases={Phase.ONBOARDING},
+            included_in_phases={Phase.ONBOARDING, Phase.BUILD},
             suspends_for_input=True,
         )
         async def ask_follow_up(params: AskFollowUpParams) -> ActionResult:

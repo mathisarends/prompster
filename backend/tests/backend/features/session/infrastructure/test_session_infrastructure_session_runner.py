@@ -8,6 +8,7 @@ from llmify.messages import (
     UserMessage as LLMUserMessage,
 )
 
+from agent.tools.views import Phase as AgentPhase
 from backend.features.session.application import SessionConversationService
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
@@ -15,12 +16,14 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerEvent,
 )
 from backend.features.session.domain import (
+    Phase,
     Session,
     SessionRepository,
     UserCurationEvent,
     UserCurationEventType,
 )
 from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
+from backend.features.session.infrastructure.session_runner import _agent_phase_for
 
 
 class _SessionRepositoryStub(SessionRepository):
@@ -57,6 +60,18 @@ class _NoOpQuotaService:
 class _CancelledRunner(SessionRunner):
     async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
         yield SessionRunnerCancelled()
+
+
+class TestAgentPhaseMapping:
+    def test_agent_phase_uses_persisted_session_phase(self) -> None:
+        session = Session(
+            title="Deck",
+            entries=[],
+            owner_id=uuid4(),
+            phase=Phase.BUILD,
+        )
+
+        assert _agent_phase_for(session) == AgentPhase.BUILD
 
 
 class TestSessionRunnerHistoryRendering:

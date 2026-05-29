@@ -6,6 +6,10 @@ class SessionAccessDeniedError(Exception):
     pass
 
 
+class InvalidSessionPhaseTransitionError(Exception):
+    pass
+
+
 class PlaylistTrackNotFoundError(Exception):
     pass
 

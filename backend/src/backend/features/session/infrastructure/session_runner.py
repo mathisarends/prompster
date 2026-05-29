@@ -4,12 +4,13 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from agent.agent import Agent
-from agent import Phase, Spotify
+from agent import Spotify
 from agent.playlist import (
     PlaylistDraft,
     PlaylistDraftTrack,
     PlaylistDraftStore,
 )
+from agent.tools.views import Phase as AgentPhase
 
 from llmify import ChatModel
 from spotifyify import Spotifyify
@@ -20,11 +21,8 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerEvent,
 )
 from backend.features.session.domain import (
-    AssistantMessage,
-    FollowUpQuestionGroup,
     Playlist,
     Session,
-    ToolCallSequence,
 )
 from backend.features.session.infrastructure.agent_event_mapper import (
     AgentSessionEventMapper,
@@ -112,19 +110,8 @@ class AgentSessionRunner(SessionRunner):
         )
 
 
-def _agent_phase_for(session: Session) -> Phase:
-    if session.playlist is not None:
-        return Phase.BUILD
-
-    for entry in session.entries:
-        if isinstance(entry, AssistantMessage):
-            return Phase.BUILD
-        if isinstance(entry, ToolCallSequence) and entry.is_complete:
-            return Phase.BUILD
-        if isinstance(entry, FollowUpQuestionGroup) and entry.is_complete:
-            return Phase.BUILD
-
-    return Phase.ONBOARDING
+def _agent_phase_for(session: Session) -> AgentPhase:
+    return AgentPhase(session.phase.value)
 
 
 def _to_playlist_draft_store(playlist: Playlist | None) -> PlaylistDraftStore:

@@ -8,6 +8,7 @@ from backend.features.session.domain import (
     CompletedCall,
     FailedCall,
     PendingCall,
+    Phase,
     ToolCallSequence,
     ToolFunction,
     is_pending,
@@ -22,6 +23,10 @@ def make_pending(call_id: str) -> PendingCall:
 
 
 class TestSessionDomainToolCall:
+    def test_phase_values_match_persisted_agent_contract(self) -> None:
+        assert Phase.ONBOARDING.value == "onboarding"
+        assert Phase.BUILD.value == "build"
+
     def test_resolve_returns_completed_variant(self) -> None:
         sequence = ToolCallSequence(calls=[make_pending("tc-1")])
 

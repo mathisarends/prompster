@@ -5,6 +5,7 @@ import pytest
 
 from backend.features.session.domain.exceptions import (
     ArtistReferenceNotFoundError,
+    InvalidSessionPhaseTransitionError,
     NoCurrentAssistantMessageError,
     NoPendingFollowUpGroupError,
     NoPendingToolCallSequenceError,
@@ -27,6 +28,7 @@ from backend.features.session.domain import (
     FollowUpQuestionGroup,
     FollowUpQuestionState,
     PendingCall,
+    Phase,
     PlaylistTrack,
     Session,
     ToolCallSequence,
@@ -110,6 +112,31 @@ class TestSessionDomainSession:
         created = Session(title="Roadtrip", entries=[], owner_id=owner_id)
 
         assert created.is_starred is False
+
+    def test_session_starts_in_build_phase(self, owner_id: UUID) -> None:
+        created = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+
+        assert created.phase == Phase.BUILD
+
+    def test_advance_to_building_phase_marks_onboarding_session_as_build(
+        self, owner_id: UUID
+    ) -> None:
+        session = Session(
+            title="Roadtrip",
+            entries=[],
+            owner_id=owner_id,
+            phase=Phase.ONBOARDING,
+        )
+
+        session.advance_to_building_phase()
+
+        assert session.phase == Phase.BUILD
+
+    def test_advance_to_building_phase_rejects_non_onboarding_source(
+        self, session: Session
+    ) -> None:
+        with pytest.raises(InvalidSessionPhaseTransitionError):
+            session.advance_to_building_phase()
 
     def test_star_marks_session_as_starred(self, session: Session) -> None:
         session.star()
