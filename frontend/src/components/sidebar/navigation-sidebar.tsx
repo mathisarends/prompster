@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 
 const NEW_CHAT_SHORTCUT: ShortcutKey[] = ["mod", "shift", "o"];
 const SEARCH_SHORTCUT: ShortcutKey[] = ["mod", "k"];
-const TOGGLE_SIDEBAR_SHORTCUT: ShortcutKey[] = ["mod", "b"];
+const TOGGLE_SIDEBAR_SHORTCUT: ShortcutKey[] = ["mod", "."];
 
 type NavigationSidebarProps = {
   open: boolean;
@@ -85,7 +85,7 @@ export const NavigationSidebar = ({
   });
 
   useKeyboardShortcut(
-    { ctrlOrMeta: true, key: "b", ignoreInEditable: true },
+    { ctrlOrMeta: true, key: ".", ignoreInEditable: true },
     () => {
       onToggle();
     },
