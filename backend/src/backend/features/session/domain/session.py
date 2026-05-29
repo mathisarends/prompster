@@ -3,6 +3,7 @@ from typing import Self
 from uuid import UUID
 
 from backend.features.session.domain.exceptions import (
+    ArtistReferenceNotFoundError,
     NoCurrentAssistantMessageError,
     NoPendingFollowUpGroupError,
     NoPendingToolCallSequenceError,
@@ -10,12 +11,14 @@ from backend.features.session.domain.exceptions import (
     PendingToolCallsError,
     PlaylistTrackPinnedError,
     PlaylistTrackNotFoundError,
+    PlaylistReferenceNotFoundError,
     SessionAccessDeniedError,
     UserCurationEventAlreadyConsumedError,
     UserCurationEventMissingTrackYearError,
     UserCurationEventNotFoundError,
 )
 from backend.features.session.domain.entities import (
+    ArtistReference,
     AssistantMessage,
     CompletedCall,
     FailedCall,
@@ -23,6 +26,7 @@ from backend.features.session.domain.entities import (
     FollowUpQuestionGroup,
     PendingCall,
     Playlist,
+    PlaylistReference,
     PlaylistTrack,
     SessionEntry,
     ToolCallSequence,
@@ -43,6 +47,8 @@ class Session(Aggregate):
         is_starred: bool = False,
         playlist: Playlist | None = None,
         user_curation_events: list[UserCurationEvent] | None = None,
+        playlist_references: list[PlaylistReference] | None = None,
+        artist_references: list[ArtistReference] | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> None:
@@ -53,6 +59,8 @@ class Session(Aggregate):
         self._is_starred = is_starred
         self._playlist = playlist
         self._user_curation_events: list[UserCurationEvent] = user_curation_events or []
+        self._playlist_references: list[PlaylistReference] = playlist_references or []
+        self._artist_references: list[ArtistReference] = artist_references or []
 
     @property
     def title(self) -> str:
@@ -81,6 +89,14 @@ class Session(Aggregate):
     @property
     def user_curation_events(self) -> tuple[UserCurationEvent, ...]:
         return tuple(self._user_curation_events)
+
+    @property
+    def playlist_references(self) -> tuple[PlaylistReference, ...]:
+        return tuple(self._playlist_references)
+
+    @property
+    def artist_references(self) -> tuple[ArtistReference, ...]:
+        return tuple(self._artist_references)
 
     @property
     def unconsumed_user_curation_events(self) -> list[UserCurationEvent]:
@@ -213,6 +229,83 @@ class Session(Aggregate):
         self._apply_user_curation_event_reversal(event)
         self._user_curation_events.remove(event)
         self._detach_user_curation_event_from_messages(event_id=event.id)
+
+    def add_playlist_reference(
+        self,
+        *,
+        spotify_playlist_id: str,
+        name: str,
+        owner: str | None = None,
+        cover_url: str | None = None,
+        total_tracks: int | None = None,
+    ) -> PlaylistReference:
+        for reference in self._playlist_references:
+            if reference.spotify_playlist_id != spotify_playlist_id:
+                continue
+            reference.name = name
+            reference.owner = owner
+            reference.cover_url = cover_url
+            reference.total_tracks = total_tracks
+            return reference
+
+        reference = PlaylistReference(
+            spotify_playlist_id=spotify_playlist_id,
+            name=name,
+            owner=owner,
+            cover_url=cover_url,
+            total_tracks=total_tracks,
+        )
+        self._playlist_references.append(reference)
+        return reference
+
+    def add_artist_reference(
+        self,
+        *,
+        spotify_artist_id: str,
+        name: str,
+        image_url: str | None = None,
+        genres: tuple[str, ...] = (),
+        followers: int | None = None,
+        popularity: int | None = None,
+    ) -> ArtistReference:
+        for reference in self._artist_references:
+            if reference.spotify_artist_id != spotify_artist_id:
+                continue
+            reference.name = name
+            reference.image_url = image_url
+            reference.genres = tuple(genres)
+            reference.followers = followers
+            reference.popularity = popularity
+            return reference
+
+        reference = ArtistReference(
+            spotify_artist_id=spotify_artist_id,
+            name=name,
+            image_url=image_url,
+            genres=genres,
+            followers=followers,
+            popularity=popularity,
+        )
+        self._artist_references.append(reference)
+        return reference
+
+    def remove_playlist_reference(self, reference_id: UUID) -> None:
+        for index, reference in enumerate(self._playlist_references):
+            if reference.id == reference_id:
+                self._playlist_references.pop(index)
+                return
+        raise PlaylistReferenceNotFoundError(
+            f"Playlist reference {reference_id} not found in session {self.id}."
+        )
+
+    def remove_artist_reference(self, reference_id: UUID) -> None:
+        for index, reference in enumerate(self._artist_references):
+            if reference.id == reference_id:
+                self._artist_references.pop(index)
+                return
+        raise ArtistReferenceNotFoundError(
+            f"Artist reference {reference_id} not found in session {self.id}."
+        )
 
     def add_user_message(
         self,

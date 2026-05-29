@@ -17,8 +17,10 @@ from backend.features.session.domain import (
 from backend.features.session.infrastructure.repository import SqlSessionRepository
 from backend.infrastructure.database.orm import (
     PlaylistTrackModel,
+    SessionArtistReferenceModel,
     SessionUserCurationEventModel,
     SessionModel,
+    SessionPlaylistReferenceModel,
     SessionUserMessageAttachmentModel,
     SessionUserMessageModel,
 )
@@ -219,6 +221,87 @@ def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:
     assert orm.user_curation_events[0].consumed is False
 
 
+def test_reference_mapping_roundtrip() -> None:
+    owner_id = uuid4()
+    session_id = uuid4()
+    session = Session(title="Roadtrip", entries=[], owner_id=owner_id, id=session_id)
+    playlist_reference = session.add_playlist_reference(
+        spotify_playlist_id="37i9dQZF1DX4dyzvuaRJ0n",
+        name="Lo-Fi Beats",
+        owner="Spotify",
+        cover_url="https://example.com/playlist.jpg",
+        total_tracks=100,
+    )
+    artist_reference = session.add_artist_reference(
+        spotify_artist_id="1dfeR4HaWDbWqFHLkxsg1d",
+        name="Queen",
+        image_url="https://example.com/queen.jpg",
+        genres=("rock", "glam rock"),
+        followers=50_000_000,
+        popularity=81,
+    )
+
+    orm = SessionModel(
+        id=session_id,
+        title=session.title,
+        owner_id=session.owner_id,
+        is_starred=False,
+        last_activity_at=session.created_at,
+        created_at=session.created_at,
+    )
+    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    repository._sync_playlist_references(
+        orm=orm,
+        session_id=session_id,
+        references=session.playlist_references,
+    )
+    repository._sync_artist_references(
+        orm=orm,
+        session_id=session_id,
+        references=session.artist_references,
+    )
+
+    assert len(orm.playlist_references) == 1
+    assert orm.playlist_references[0].id == playlist_reference.id
+    assert orm.playlist_references[0].spotify_playlist_id == ("37i9dQZF1DX4dyzvuaRJ0n")
+    assert len(orm.artist_references) == 1
+    assert orm.artist_references[0].id == artist_reference.id
+    assert orm.artist_references[0].genres == ["rock", "glam rock"]
+
+    mapped_playlist = repository._to_domain_playlist_reference(
+        SessionPlaylistReferenceModel(
+            id=playlist_reference.id,
+            session_id=session_id,
+            position=0,
+            spotify_playlist_id="37i9dQZF1DX4dyzvuaRJ0n",
+            name="Lo-Fi Beats",
+            owner="Spotify",
+            cover_url="https://example.com/playlist.jpg",
+            total_tracks=100,
+            created_at=playlist_reference.created_at,
+        )
+    )
+    mapped_artist = repository._to_domain_artist_reference(
+        SessionArtistReferenceModel(
+            id=artist_reference.id,
+            session_id=session_id,
+            position=0,
+            spotify_artist_id="1dfeR4HaWDbWqFHLkxsg1d",
+            name="Queen",
+            image_url="https://example.com/queen.jpg",
+            genres=["rock", "glam rock"],
+            followers=50_000_000,
+            popularity=81,
+            created_at=artist_reference.created_at,
+        )
+    )
+
+    assert mapped_playlist.id == playlist_reference.id
+    assert mapped_playlist.total_tracks == 100
+    assert mapped_artist.id == artist_reference.id
+    assert mapped_artist.genres == ("rock", "glam rock")
+
+
 def test_resolve_last_activity_at_includes_user_curation_events() -> None:
     owner_id = uuid4()
     session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
@@ -231,6 +314,21 @@ def test_resolve_last_activity_at_includes_user_curation_events() -> None:
     last_activity = repository._resolve_last_activity_at(session)
 
     assert last_activity == session.user_curation_events[0].created_at
+
+
+def test_resolve_last_activity_at_includes_references() -> None:
+    owner_id = uuid4()
+    session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+    reference = session.add_artist_reference(
+        spotify_artist_id="1dfeR4HaWDbWqFHLkxsg1d",
+        name="Queen",
+    )
+    reference.created_at = session.created_at + timedelta(minutes=5)
+
+    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    last_activity = repository._resolve_last_activity_at(session)
+
+    assert last_activity == reference.created_at
 
 
 def test_user_curation_event_mapping_roundtrip() -> None:
@@ -314,6 +412,37 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
             created_at=event_created_at,
         )
     ]
+    orm.playlist_references = [
+        SessionPlaylistReferenceModel(
+            id=uuid4(),
+            session_id=session_id,
+            position=0,
+            spotify_playlist_id="b",
+            name="Second",
+            total_tracks=20,
+            created_at=message_created_at,
+        ),
+        SessionPlaylistReferenceModel(
+            id=uuid4(),
+            session_id=session_id,
+            position=1,
+            spotify_playlist_id="a",
+            name="First",
+            total_tracks=10,
+            created_at=message_created_at,
+        ),
+    ]
+    orm.artist_references = [
+        SessionArtistReferenceModel(
+            id=uuid4(),
+            session_id=session_id,
+            position=0,
+            spotify_artist_id="artist",
+            name="Queen",
+            genres=["rock"],
+            created_at=message_created_at,
+        )
+    ]
 
     mapped = repository._to_domain(orm)
 
@@ -324,6 +453,11 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
         message.user_curation_events[0].event_type == UserCurationEventType.TRACK_ADDED
     )
     assert message.user_curation_events[0].track_year == 2006
+    assert [reference.name for reference in mapped.playlist_references] == [
+        "Second",
+        "First",
+    ]
+    assert mapped.artist_references[0].genres == ("rock",)
 
 
 def test_tool_call_action_type_mapping_roundtrip() -> None:

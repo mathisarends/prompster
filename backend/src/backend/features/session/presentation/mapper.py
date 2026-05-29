@@ -3,6 +3,7 @@ from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
 )
 from backend.features.session.domain import (
+    ArtistReference,
     AssistantMessage,
     CompletedCall,
     FailedCall,
@@ -10,6 +11,7 @@ from backend.features.session.domain import (
     FollowUpQuestionGroup,
     PendingCall,
     Playlist,
+    PlaylistReference,
     PlaylistTrack,
     Session,
     SessionEntry,
@@ -20,11 +22,13 @@ from backend.features.session.domain import (
     UserCurationEvent,
 )
 from backend.features.session.presentation.schemas import (
+    ArtistReferenceResponse,
     AssistantMessageEntryResponse,
     FollowUpOptionResponse,
     FollowUpQuestionGroupEntryResponse,
     FollowUpQuestionResponse,
     PlaylistResponse,
+    PlaylistReferenceResponse,
     PlaylistTrackResponse,
     SessionEntryResponse,
     SessionResponse,
@@ -48,6 +52,14 @@ def to_session_response(session: Session) -> SessionResponse:
         created_at=session.created_at,
         entries=[to_entry_response(entry) for entry in session.entries],
         playlist=to_playlist_response(session.playlist),
+        playlist_references=[
+            to_playlist_reference_response(reference)
+            for reference in session.playlist_references
+        ],
+        artist_references=[
+            to_artist_reference_response(reference)
+            for reference in session.artist_references
+        ],
         unconsumed_user_curation_events=[
             to_user_curation_event_response(event)
             for event in session.unconsumed_user_curation_events
@@ -187,6 +199,31 @@ def to_playlist_response(playlist: Playlist | None) -> PlaylistResponse | None:
         id=playlist.id,
         name=playlist.name,
         tracks=[to_playlist_track_response(track) for track in playlist.tracks],
+    )
+
+
+def to_playlist_reference_response(
+    reference: PlaylistReference,
+) -> PlaylistReferenceResponse:
+    return PlaylistReferenceResponse(
+        id=reference.id,
+        spotify_playlist_id=reference.spotify_playlist_id,
+        name=reference.name,
+        owner=reference.owner,
+        cover_url=reference.cover_url,
+        total_tracks=reference.total_tracks,
+    )
+
+
+def to_artist_reference_response(reference: ArtistReference) -> ArtistReferenceResponse:
+    return ArtistReferenceResponse(
+        id=reference.id,
+        spotify_artist_id=reference.spotify_artist_id,
+        name=reference.name,
+        image_url=reference.image_url,
+        genres=list(reference.genres),
+        followers=reference.followers,
+        popularity=reference.popularity,
     )
 
 

@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 import pytest
 
 from backend.features.session.domain.exceptions import (
+    ArtistReferenceNotFoundError,
     NoCurrentAssistantMessageError,
     NoPendingFollowUpGroupError,
     NoPendingToolCallSequenceError,
@@ -11,6 +12,7 @@ from backend.features.session.domain.exceptions import (
     PendingToolCallsError,
     PlaylistTrackPinnedError,
     PlaylistTrackNotFoundError,
+    PlaylistReferenceNotFoundError,
     SessionAccessDeniedError,
     UserCurationEventAlreadyConsumedError,
     UserCurationEventMissingTrackYearError,
@@ -443,6 +445,106 @@ class TestSessionDomainSession:
 
         assert len(unconsumed) == 1
         assert unconsumed[0].event_type == UserCurationEventType.TRACK_PINNED
+
+    def test_add_playlist_reference_appends_session_source(
+        self, session: Session
+    ) -> None:
+        reference = session.add_playlist_reference(
+            spotify_playlist_id="37i9dQZF1DX4dyzvuaRJ0n",
+            name="Lo-Fi Beats",
+            owner="Spotify",
+            cover_url="https://example.com/cover.jpg",
+            total_tracks=100,
+        )
+
+        assert session.playlist_references == (reference,)
+        assert reference.spotify_playlist_id == "37i9dQZF1DX4dyzvuaRJ0n"
+        assert reference.total_tracks == 100
+
+    def test_add_playlist_reference_refreshes_existing_by_spotify_id(
+        self, session: Session
+    ) -> None:
+        original = session.add_playlist_reference(
+            spotify_playlist_id="37i9dQZF1DX4dyzvuaRJ0n",
+            name="Old Name",
+            owner="Old Owner",
+        )
+
+        updated = session.add_playlist_reference(
+            spotify_playlist_id="37i9dQZF1DX4dyzvuaRJ0n",
+            name="Lo-Fi Beats",
+            owner="Spotify",
+            cover_url="https://example.com/cover.jpg",
+            total_tracks=100,
+        )
+
+        assert updated is original
+        assert session.playlist_references == (original,)
+        assert original.name == "Lo-Fi Beats"
+        assert original.owner == "Spotify"
+        assert original.cover_url == "https://example.com/cover.jpg"
+        assert original.total_tracks == 100
+
+    def test_remove_playlist_reference_removes_matching_reference(
+        self, session: Session
+    ) -> None:
+        reference = session.add_playlist_reference(
+            spotify_playlist_id="37i9dQZF1DX4dyzvuaRJ0n",
+            name="Lo-Fi Beats",
+        )
+
+        session.remove_playlist_reference(reference.id)
+
+        assert session.playlist_references == ()
+
+    def test_remove_playlist_reference_raises_when_missing(
+        self, session: Session
+    ) -> None:
+        with pytest.raises(PlaylistReferenceNotFoundError, match="not found"):
+            session.remove_playlist_reference(uuid4())
+
+    def test_add_artist_reference_refreshes_existing_by_spotify_id(
+        self, session: Session
+    ) -> None:
+        original = session.add_artist_reference(
+            spotify_artist_id="1dfeR4HaWDbWqFHLkxsg1d",
+            name="Old Name",
+        )
+
+        updated = session.add_artist_reference(
+            spotify_artist_id="1dfeR4HaWDbWqFHLkxsg1d",
+            name="Queen",
+            image_url="https://example.com/queen.jpg",
+            genres=("rock", "glam rock"),
+            followers=50_000_000,
+            popularity=81,
+        )
+
+        assert updated is original
+        assert session.artist_references == (original,)
+        assert original.name == "Queen"
+        assert original.image_url == "https://example.com/queen.jpg"
+        assert original.genres == ("rock", "glam rock")
+        assert original.followers == 50_000_000
+        assert original.popularity == 81
+
+    def test_remove_artist_reference_removes_matching_reference(
+        self, session: Session
+    ) -> None:
+        reference = session.add_artist_reference(
+            spotify_artist_id="1dfeR4HaWDbWqFHLkxsg1d",
+            name="Queen",
+        )
+
+        session.remove_artist_reference(reference.id)
+
+        assert session.artist_references == ()
+
+    def test_remove_artist_reference_raises_when_missing(
+        self, session: Session
+    ) -> None:
+        with pytest.raises(ArtistReferenceNotFoundError, match="not found"):
+            session.remove_artist_reference(uuid4())
 
     def test_user_curation_event_snapshot_keeps_track_year(
         self, session: Session

@@ -1,4 +1,5 @@
 from .exceptions import (
+    ArtistReferenceNotFoundError,
     EmptyFollowUpAnswerError,
     FollowUpOptionNotFoundError,
     FollowUpQuestionAlreadyResolvedError,
@@ -11,6 +12,7 @@ from .exceptions import (
     PendingToolCallsError,
     PlaylistTrackNotFoundError,
     PlaylistTrackPinnedError,
+    PlaylistReferenceNotFoundError,
     SessionAccessDeniedError,
     SessionExportRequiresSpotifyConnectionError,
     SessionPlaylistEmptyError,
@@ -25,6 +27,7 @@ from .exceptions import (
 from .repository import SessionRepository
 from .session import Session
 from .entities import (
+    ArtistReference,
     AssistantMessage,
     CompletedCall,
     FailedCall,
@@ -34,6 +37,7 @@ from .entities import (
     FollowUpQuestionState,
     PendingCall,
     Playlist,
+    PlaylistReference,
     PlaylistTrack,
     ResolvedCall,
     SessionEntry,
@@ -51,6 +55,8 @@ from .entities import (
 )
 
 __all__ = [
+    "ArtistReference",
+    "ArtistReferenceNotFoundError",
     "AssistantMessage",
     "CompletedCall",
     "EmptyFollowUpAnswerError",
@@ -70,6 +76,8 @@ __all__ = [
     "PendingFollowUpQuestionsError",
     "PendingToolCallsError",
     "Playlist",
+    "PlaylistReference",
+    "PlaylistReferenceNotFoundError",
     "PlaylistTrack",
     "PlaylistTrackPinnedError",
     "PlaylistTrackNotFoundError",

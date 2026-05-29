@@ -150,6 +150,25 @@ class UserCurationEventResponse(Schema):
     occurred_at: datetime
 
 
+class PlaylistReferenceResponse(Schema):
+    id: UUID
+    spotify_playlist_id: str
+    name: str
+    owner: str | None = None
+    cover_url: str | None = None
+    total_tracks: int | None = None
+
+
+class ArtistReferenceResponse(Schema):
+    id: UUID
+    spotify_artist_id: str
+    name: str
+    image_url: str | None = None
+    genres: list[str] = Field(default_factory=list)
+    followers: int | None = None
+    popularity: int | None = None
+
+
 UserMessageEntryResponse.model_rebuild()
 
 
@@ -171,6 +190,8 @@ class SessionResponse(Schema):
     created_at: datetime
     entries: list[SessionEntryResponse]
     playlist: PlaylistResponse | None = None
+    playlist_references: list[PlaylistReferenceResponse] = Field(default_factory=list)
+    artist_references: list[ArtistReferenceResponse] = Field(default_factory=list)
     unconsumed_user_curation_events: list[UserCurationEventResponse] = Field(
         default_factory=list
     )

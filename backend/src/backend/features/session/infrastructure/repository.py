@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend.features.session.domain import (
+    ArtistReference,
     AssistantMessage,
     CompletedCall,
     FailedCall,
@@ -15,6 +16,7 @@ from backend.features.session.domain import (
     FollowUpQuestionState,
     PendingCall,
     Playlist,
+    PlaylistReference,
     PlaylistTrack,
     Session,
     SessionEntry,
@@ -32,10 +34,12 @@ from backend.features.session.domain import (
 )
 from backend.infrastructure.database.orm import (
     PlaylistTrackModel,
+    SessionArtistReferenceModel,
     SessionAssistantMessageModel,
     SessionFollowUpQuestionGroupModel,
     SessionFollowUpQuestionModel,
     SessionModel,
+    SessionPlaylistReferenceModel,
     SessionPlaylistModel,
     SessionToolCallSequenceModel,
     SessionToolCallModel,
@@ -96,6 +100,16 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             session_id=session_id,
             events=session.user_curation_events,
         )
+        self._sync_playlist_references(
+            orm=orm,
+            session_id=session_id,
+            references=session.playlist_references,
+        )
+        self._sync_artist_references(
+            orm=orm,
+            session_id=session_id,
+            references=session.artist_references,
+        )
         orm.playlist = self._to_orm_playlist(
             domain_playlist=session.playlist,
             session_id=session_id,
@@ -124,6 +138,14 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         domain_user_curation_events = [
             self._to_domain_user_curation_event(event) for event in user_curation_events
         ]
+        playlist_references = sorted(
+            orm.playlist_references,
+            key=lambda item: item.position,
+        )
+        artist_references = sorted(
+            orm.artist_references,
+            key=lambda item: item.position,
+        )
         self._hydrate_user_message_curation_events(
             entries=ordered_entries,
             events=domain_user_curation_events,
@@ -137,6 +159,14 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             is_starred=orm.is_starred,
             playlist=self._to_domain_playlist(orm.playlist),
             user_curation_events=domain_user_curation_events,
+            playlist_references=[
+                self._to_domain_playlist_reference(reference)
+                for reference in playlist_references
+            ],
+            artist_references=[
+                self._to_domain_artist_reference(reference)
+                for reference in artist_references
+            ],
             created_time=orm.created_at,
         )
 
@@ -203,6 +233,16 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             orm=orm,
             session_id=session_id,
             events=domain.user_curation_events,
+        )
+        self._sync_playlist_references(
+            orm=orm,
+            session_id=session_id,
+            references=domain.playlist_references,
+        )
+        self._sync_artist_references(
+            orm=orm,
+            session_id=session_id,
+            references=domain.artist_references,
         )
         orm.playlist = self._to_orm_playlist(
             domain_playlist=domain.playlist,
@@ -355,6 +395,59 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
 
         orm.user_curation_events = user_curation_event_rows
 
+    def _sync_playlist_references(
+        self,
+        *,
+        orm: SessionModel,
+        session_id: UUID,
+        references: tuple[PlaylistReference, ...],
+    ) -> None:
+        existing_rows = {row.id: row for row in orm.playlist_references if row.id}
+
+        rows: list[SessionPlaylistReferenceModel] = []
+        for position, reference in enumerate(references):
+            row = existing_rows.get(reference.id)
+            if row is None:
+                row = SessionPlaylistReferenceModel(id=reference.id)
+            row.session_id = session_id
+            row.position = position
+            row.spotify_playlist_id = reference.spotify_playlist_id
+            row.name = reference.name
+            row.owner = reference.owner
+            row.cover_url = reference.cover_url
+            row.total_tracks = reference.total_tracks
+            row.created_at = reference.created_at
+            rows.append(row)
+
+        orm.playlist_references = rows
+
+    def _sync_artist_references(
+        self,
+        *,
+        orm: SessionModel,
+        session_id: UUID,
+        references: tuple[ArtistReference, ...],
+    ) -> None:
+        existing_rows = {row.id: row for row in orm.artist_references if row.id}
+
+        rows: list[SessionArtistReferenceModel] = []
+        for position, reference in enumerate(references):
+            row = existing_rows.get(reference.id)
+            if row is None:
+                row = SessionArtistReferenceModel(id=reference.id)
+            row.session_id = session_id
+            row.position = position
+            row.spotify_artist_id = reference.spotify_artist_id
+            row.name = reference.name
+            row.image_url = reference.image_url
+            row.genres = list(reference.genres)
+            row.followers = reference.followers
+            row.popularity = reference.popularity
+            row.created_at = reference.created_at
+            rows.append(row)
+
+        orm.artist_references = rows
+
     def _detail_query(self, *, session_id: UUID):
         return (
             select(SessionModel)
@@ -365,6 +458,8 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
                 ),
                 selectinload(SessionModel.assistant_messages),
                 selectinload(SessionModel.user_curation_events),
+                selectinload(SessionModel.playlist_references),
+                selectinload(SessionModel.artist_references),
                 selectinload(SessionModel.tool_call_sequences).selectinload(
                     SessionToolCallSequenceModel.calls
                 ),
@@ -387,6 +482,13 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             created_at = getattr(event, "created_at", None)
             if isinstance(created_at, datetime) and created_at > latest:
                 latest = created_at
+        for reference in (
+            *session.playlist_references,
+            *session.artist_references,
+        ):
+            created_at = getattr(reference, "created_at", None)
+            if isinstance(created_at, datetime) and created_at > latest:
+                latest = created_at
         return latest
 
     def _to_domain_user_curation_event(
@@ -402,6 +504,33 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             track_spotify_uri=row.track_spotify_uri,
             track_cover_url=row.track_cover_url,
             consumed=row.consumed,
+            created_time=row.created_at,
+        )
+
+    def _to_domain_playlist_reference(
+        self, row: SessionPlaylistReferenceModel
+    ) -> PlaylistReference:
+        return PlaylistReference(
+            id=row.id,
+            spotify_playlist_id=row.spotify_playlist_id,
+            name=row.name,
+            owner=row.owner,
+            cover_url=row.cover_url,
+            total_tracks=row.total_tracks,
+            created_time=row.created_at,
+        )
+
+    def _to_domain_artist_reference(
+        self, row: SessionArtistReferenceModel
+    ) -> ArtistReference:
+        return ArtistReference(
+            id=row.id,
+            spotify_artist_id=row.spotify_artist_id,
+            name=row.name,
+            image_url=row.image_url,
+            genres=tuple(row.genres or ()),
+            followers=row.followers,
+            popularity=row.popularity,
             created_time=row.created_at,
         )
 

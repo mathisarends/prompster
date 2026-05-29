@@ -13,6 +13,7 @@ from .messages import (
     UserMessageAttachmentKind,
 )
 from .playlist import Playlist, PlaylistTrack
+from .reference import ArtistReference, PlaylistReference
 from .session_entry import SessionEntry
 from .tool_call import (
     CompletedCall,
@@ -28,6 +29,7 @@ from .tool_call import (
 from .tool_call_sequence import ToolCallSequence
 
 __all__ = [
+    "ArtistReference",
     "AssistantMessage",
     "CompletedCall",
     "FailedCall",
@@ -37,6 +39,7 @@ __all__ = [
     "FollowUpQuestionState",
     "PendingCall",
     "Playlist",
+    "PlaylistReference",
     "PlaylistTrack",
     "ResolvedCall",
     "SessionEntry",

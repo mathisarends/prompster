@@ -1,7 +1,7 @@
 import inspect
 from collections.abc import Callable
 from enum import StrEnum
-from typing import Any
+from typing import Any, Self
 from uuid import UUID
 
 from agent.playlist import TrackRef, TrackRefReplacement
@@ -31,14 +31,17 @@ class ToolParams(BaseModel):
 class ActionResult(BaseModel):
     success: bool
     extracted_content: Any = ""
+
+    # context for partial failes, for examples "tried removed tracks that are pinned"
+    failed_operations: str | None = None
     error: str | None = None
 
     @classmethod
-    def ok(cls, extracted_content: Any = "") -> "ActionResult":
+    def ok(cls, extracted_content: Any = "") -> Self:
         return cls(success=True, extracted_content=extracted_content)
 
     @classmethod
-    def fail(cls, error: Exception | str) -> "ActionResult":
+    def fail(cls, error: Exception | str) -> Self:
         return cls(success=False, extracted_content="", error=str(error))
 
 

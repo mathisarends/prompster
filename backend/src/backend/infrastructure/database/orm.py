@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     LargeBinary,
+    UniqueConstraint,
 )
 from sqlmodel import Field, Relationship, SQLModel, text
 
@@ -123,6 +124,14 @@ class SessionModel(DatabaseEntity, table=True):
         back_populates="session",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
+    playlist_references: list["SessionPlaylistReferenceModel"] = Relationship(
+        back_populates="session",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
+    artist_references: list["SessionArtistReferenceModel"] = Relationship(
+        back_populates="session",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
     tool_call_sequences: list["SessionToolCallSequenceModel"] = Relationship(
         back_populates="session",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
@@ -228,6 +237,62 @@ class SessionUserCurationEventModel(DatabaseEntity, table=True):
     )
 
     session: SessionModel = Relationship(back_populates="user_curation_events")
+
+
+class SessionPlaylistReferenceModel(DatabaseEntity, table=True):
+    __tablename__ = "session_playlist_references"
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id",
+            "spotify_playlist_id",
+            name="uq_session_playlist_references_session_spotify_playlist",
+        ),
+        Index(
+            "ix_session_playlist_references_session_position",
+            "session_id",
+            "position",
+        ),
+    )
+
+    session_id: UUID = Field(foreign_key="sessions.id")
+    position: int
+    spotify_playlist_id: str = Field(max_length=64)
+    name: str
+    owner: str | None = None
+    cover_url: str | None = None
+    total_tracks: int | None = None
+
+    session: SessionModel = Relationship(back_populates="playlist_references")
+
+
+class SessionArtistReferenceModel(DatabaseEntity, table=True):
+    __tablename__ = "session_artist_references"
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id",
+            "spotify_artist_id",
+            name="uq_session_artist_references_session_spotify_artist",
+        ),
+        Index(
+            "ix_session_artist_references_session_position",
+            "session_id",
+            "position",
+        ),
+    )
+
+    session_id: UUID = Field(foreign_key="sessions.id")
+    position: int
+    spotify_artist_id: str = Field(max_length=64)
+    name: str
+    image_url: str | None = None
+    genres: list[str] = Field(
+        default_factory=list,
+        sa_column=Column(JSON, nullable=False),
+    )
+    followers: int | None = None
+    popularity: int | None = None
+
+    session: SessionModel = Relationship(back_populates="artist_references")
 
 
 class SessionToolCallSequenceModel(DatabaseEntity, table=True):

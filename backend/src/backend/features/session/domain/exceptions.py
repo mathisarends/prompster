@@ -14,6 +14,14 @@ class PlaylistTrackPinnedError(Exception):
     pass
 
 
+class PlaylistReferenceNotFoundError(Exception):
+    pass
+
+
+class ArtistReferenceNotFoundError(Exception):
+    pass
+
+
 class SessionPlaylistEmptyError(Exception):
     pass
 
