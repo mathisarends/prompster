@@ -8,17 +8,12 @@ from agent.tools import ToolContext, Tools
 from agent.tools.views import ActionResult, ActionType
 from agent.playlist import (
     PlaylistDraftStore,
-    PlaylistDraftToolResult,
     PlaylistDraftTrack,
 )
 
 
 class _EchoParams(BaseModel):
     value: str
-
-
-class _ResultModel(BaseModel):
-    value: int
 
 
 class TestToolsFacadeAbstraction:
@@ -77,13 +72,13 @@ class TestToolsFacadeAbstraction:
         serialized = tools.serialize_result(
             ActionResult(
                 success=True,
-                extracted_content=_ResultModel(value=3),
+                extracted_content="value=3",
             )
         )
 
         assert json.loads(serialized) == {
             "success": True,
-            "extracted_content": {"value": 3},
+            "extracted_content": "value=3",
             "error": None,
         }
 
@@ -114,9 +109,8 @@ class TestToolsFacadeAbstraction:
         )
 
         assert result.success is True
-        tool_result = result.extracted_content
-        assert isinstance(tool_result, PlaylistDraftToolResult)
-        playlist_draft = tool_result.playlist_draft
+        assert result.extracted_content == 'Playlist "Context Switch" created.'
+        playlist_draft = new_store.playlist_draft
         assert playlist_draft is not None
         assert playlist_draft.name == "Context Switch"
         assert old_store.playlist_draft is None

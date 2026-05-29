@@ -38,6 +38,10 @@ class TestToolAbstraction:
         assert params.status == "Suche läuft"
         assert params.query == "abba"
 
+    def test_action_result_requires_string_extracted_content(self) -> None:
+        with pytest.raises(ValueError, match="valid string"):
+            ActionResult(success=True, extracted_content={"value": 1})
+
     def test_render_status_returns_lambda_result(self) -> None:
         class _Concrete(ToolParams):
             query: str

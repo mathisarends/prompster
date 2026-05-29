@@ -30,14 +30,11 @@ class ToolParams(BaseModel):
 
 class ActionResult(BaseModel):
     success: bool
-    extracted_content: Any = ""
-
-    # context for partial failes, for examples "tried removed tracks that are pinned"
-    failed_operations: str | None = None
+    extracted_content: str = ""
     error: str | None = None
 
     @classmethod
-    def ok(cls, extracted_content: Any = "") -> Self:
+    def ok(cls, extracted_content: str = "") -> Self:
         return cls(success=True, extracted_content=extracted_content)
 
     @classmethod

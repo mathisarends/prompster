@@ -6,7 +6,6 @@ from agent.tools.handler.spotify import SpotifyTrackLookupResult
 from agent.tools.views import SearchParams
 from agent.playlist import (
     PlaylistDraft,
-    PlaylistDraftToolResult,
     PlaylistDraftTrack,
     PlaylistDraftStore,
 )
@@ -88,12 +87,10 @@ class TestWorkspaceDraftPlaylistTool:
         )
 
         assert result.success is True
-        tool_result = result.extracted_content
-        assert isinstance(tool_result, PlaylistDraftToolResult)
-        playlist = tool_result.playlist_draft
+        assert isinstance(result.extracted_content, str)
+        assert result.extracted_content == 'Playlist "80er Party" created.'
+        playlist = store.playlist_draft
         assert isinstance(playlist, PlaylistDraft)
-        assert tool_result.operations[0].operation == "create_playlist"
-        assert tool_result.operations[0].success is True
         assert playlist.name == "80er Party"
         assert playlist.tracks == []
         assert store.playlist_draft == playlist
@@ -212,10 +209,11 @@ class TestWorkspaceDraftPlaylistTool:
 
         assert search_result.success is True
         assert add_result.success is True
-        tool_result = add_result.extracted_content
-        assert isinstance(tool_result, PlaylistDraftToolResult)
-        assert tool_result.playlist_draft is not None
-        assert tool_result.playlist_draft.tracks[0].title == "Take On Me"
+        assert add_result.extracted_content == (
+            '1 track reference(s) processed for playlist "Playlist".'
+        )
+        assert store.playlist_draft is not None
+        assert store.playlist_draft.tracks[0].title == "Take On Me"
 
     @pytest.mark.asyncio
     async def test_add_remove_and_replace_playlist_tracks_emit_diffs(
@@ -261,9 +259,10 @@ class TestWorkspaceDraftPlaylistTool:
             },
         )
         assert create_result.success is True
-        create_tool_result = create_result.extracted_content
-        assert isinstance(create_tool_result, PlaylistDraftToolResult)
-        playlist = create_tool_result.playlist_draft
+        assert create_result.extracted_content == (
+            '1 track reference(s) processed for playlist "Playlist".'
+        )
+        playlist = store.playlist_draft
         assert playlist is not None
         store.drain_playlist_draft_updates()
 
@@ -281,10 +280,11 @@ class TestWorkspaceDraftPlaylistTool:
         add_update = store.drain_playlist_draft_updates()[0]
 
         assert added_playlist.success is True
-        added_tool_result = added_playlist.extracted_content
-        assert isinstance(added_tool_result, PlaylistDraftToolResult)
-        assert added_tool_result.playlist_draft is not None
-        assert added_tool_result.playlist_draft.tracks[-1].title == "Billie Jean"
+        assert added_playlist.extracted_content == (
+            '1 track reference(s) processed for playlist "Playlist".'
+        )
+        assert store.playlist_draft is not None
+        assert store.playlist_draft.tracks[-1].title == "Billie Jean"
         assert add_update.kind == "tracks_added"
         assert add_update.tracks[0].title == "Billie Jean"
 
@@ -307,7 +307,8 @@ class TestWorkspaceDraftPlaylistTool:
         assert replace_update.replacements[0].track_id == first_track_id
         assert replace_update.replacements[0].track.title == "Africa"
 
-        added_track_id = added_tool_result.playlist_draft.tracks[-1].id
+        assert store.playlist_draft is not None
+        added_track_id = store.playlist_draft.tracks[-1].id
         await tools.execute(
             "remove_playlist_tracks",
             {
@@ -356,13 +357,12 @@ class TestWorkspaceDraftPlaylistTool:
         create_update = store.drain_playlist_draft_updates()[0]
 
         assert create_result.success is True
-        create_tool_result = create_result.extracted_content
-        assert isinstance(create_tool_result, PlaylistDraftToolResult)
-        assert create_tool_result.playlist_draft is not None
-        assert create_tool_result.playlist_draft.name == "Playlist"
-        assert [track.title for track in create_tool_result.playlist_draft.tracks] == [
-            "Take On Me"
-        ]
+        assert create_result.extracted_content == (
+            '2 track reference(s) processed for playlist "Playlist".'
+        )
+        assert store.playlist_draft is not None
+        assert store.playlist_draft.name == "Playlist"
+        assert [track.title for track in store.playlist_draft.tracks] == ["Take On Me"]
         assert create_update.kind == "created"
 
         add_result = await tools.execute(
@@ -379,10 +379,11 @@ class TestWorkspaceDraftPlaylistTool:
         add_updates = store.drain_playlist_draft_updates()
 
         assert add_result.success is True
-        add_tool_result = add_result.extracted_content
-        assert isinstance(add_tool_result, PlaylistDraftToolResult)
-        assert add_tool_result.playlist_draft is not None
-        assert [track.title for track in add_tool_result.playlist_draft.tracks] == [
+        assert add_result.extracted_content == (
+            '3 track reference(s) processed for playlist "Playlist".'
+        )
+        assert store.playlist_draft is not None
+        assert [track.title for track in store.playlist_draft.tracks] == [
             "Take On Me",
             "Billie Jean",
         ]
@@ -454,16 +455,10 @@ class TestWorkspaceDraftPlaylistTool:
         )
         assert remove_result.success is False
         assert "pinned" in (remove_result.error or "")
-        remove_tool_result = remove_result.extracted_content
-        assert isinstance(remove_tool_result, PlaylistDraftToolResult)
-        assert remove_tool_result.operations[0].success is False
-        assert "pinned" in (remove_tool_result.operations[0].reason or "")
+        assert remove_result.extracted_content == ""
         assert replace_result.success is False
         assert "pinned" in (replace_result.error or "")
-        replace_tool_result = replace_result.extracted_content
-        assert isinstance(replace_tool_result, PlaylistDraftToolResult)
-        assert replace_tool_result.operations[0].success is False
-        assert "pinned" in (replace_tool_result.operations[0].reason or "")
+        assert replace_result.extracted_content == ""
         assert store.playlist_draft is not None
         assert store.playlist_draft.tracks == [pinned_track]
         assert store.drain_playlist_draft_updates() == []

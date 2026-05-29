@@ -122,6 +122,6 @@ The flow has two separate phases: **Playlist** and **Cards**. Do NOT jump from p
    - Rebuild the entire playlist
 6. For refinements, use the smallest matching playlist tool: `add_playlist_tracks`, `remove_playlist_tracks`, or `replace_playlist_tracks`. `add_playlist_tracks` has PUT/upsert semantics: it can create a playlist if none exists as a fallback and otherwise adds only Spotify URIs that are not already present, but prefer `create_playlist` for intentional initial creation. Iterate until the user is happy with the workspace playlist.
 7. Tracks with `is_pinned: true` in the current workspace are pinned hard constraints. Never remove, replace, rewrite, or otherwise change them during refinements. The workspace rejects remove/replace attempts against them.
-8. Read playlist tool results carefully. They include an operations list that says which workspace operation succeeded or failed and why. If a URI is missing from the workspace cache, fetch/search that track first, then retry with the URI ref.
+8. Read playlist tool results carefully. `extracted_content` is a short string for successful operations. Failed operations put the reason in `error`. If a URI is missing from the workspace cache, fetch/search that track first, then retry with the URI ref.
 </phase>
 </workflow>

@@ -6,14 +6,16 @@ from typing import Any
 from llmify.messages import ToolCall
 from pydantic import BaseModel
 
+from agent.playlist import (
+    PlaylistDraftStore,
+)
 from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
 from agent.tools.handler import Spotify
 from agent.tools.schemas import ToolSchema
 from agent.tools.views import (
-    ActionType,
     ActionResult,
-    Tool,
+    ActionType,
     AddDraftPlaylistTracksParams,
     AlbumTracksParams,
     ArtistAlbumsParams,
@@ -24,13 +26,7 @@ from agent.tools.views import (
     RemoveDraftPlaylistTracksParams,
     ReplaceDraftPlaylistTracksParams,
     SearchParams,
-)
-
-from agent.playlist import (
-    PlaylistDraft,
-    PlaylistDraftOperationStatus,
-    PlaylistDraftToolResult,
-    PlaylistDraftStore,
+    Tool,
 )
 
 logger = logging.getLogger(__name__)
@@ -109,44 +105,6 @@ class Tools:
         if not isinstance(result, ActionResult):
             raise TypeError(f"Expected ActionResult, received {type(result).__name__}")
         return result.model_dump_json()
-
-    def _draft_success(
-        self,
-        operation: str,
-        playlist_draft: PlaylistDraft,
-    ) -> ActionResult:
-        return ActionResult.ok(
-            PlaylistDraftToolResult(
-                playlist_draft=playlist_draft,
-                operations=[
-                    PlaylistDraftOperationStatus(
-                        operation=operation,
-                        success=True,
-                    )
-                ],
-            )
-        )
-
-    def _draft_failure(
-        self,
-        operation: str,
-        store: PlaylistDraftStore,
-        error: Exception,
-    ) -> ActionResult:
-        return ActionResult(
-            success=False,
-            extracted_content=PlaylistDraftToolResult(
-                playlist_draft=store.playlist_draft,
-                operations=[
-                    PlaylistDraftOperationStatus(
-                        operation=operation,
-                        success=False,
-                        reason=str(error),
-                    )
-                ],
-            ),
-            error=str(error),
-        )
 
     def _register_default_tools(self) -> None:
         @self.action(
@@ -261,13 +219,9 @@ class Tools:
         ) -> ActionResult:
             try:
                 playlist = store.create_empty_playlist_draft(params.name)
-                return self._draft_success("create_playlist", playlist)
+                return ActionResult.ok(f'Playlist "{playlist.name}" created.')
             except Exception as error:
-                return self._draft_failure(
-                    "create_playlist",
-                    store,
-                    error,
-                )
+                return ActionResult.fail(error)
 
         @self.action(
             description=(
@@ -285,16 +239,12 @@ class Tools:
         ) -> ActionResult:
             try:
                 updated_playlist = store.add_track_refs(params.tracks)
-                return self._draft_success(
-                    "add_playlist_tracks",
-                    updated_playlist,
+                return ActionResult.ok(
+                    f"{len(params.tracks)} track reference(s) processed for "
+                    f'playlist "{updated_playlist.name}".'
                 )
             except Exception as error:
-                return self._draft_failure(
-                    "add_playlist_tracks",
-                    store,
-                    error,
-                )
+                return ActionResult.fail(error)
 
         @self.action(
             description=(
@@ -310,17 +260,12 @@ class Tools:
             params: RemoveDraftPlaylistTracksParams,
         ) -> ActionResult:
             try:
-                updated_playlist = store.remove_tracks(params.track_ids)
-                return self._draft_success(
-                    "remove_playlist_tracks",
-                    updated_playlist,
+                store.remove_tracks(params.track_ids)
+                return ActionResult.ok(
+                    f"{len(params.track_ids)} track(s) removed from playlist."
                 )
             except Exception as error:
-                return self._draft_failure(
-                    "remove_playlist_tracks",
-                    store,
-                    error,
-                )
+                return ActionResult.fail(error)
 
         @self.action(
             description=(
@@ -336,17 +281,12 @@ class Tools:
             params: ReplaceDraftPlaylistTracksParams,
         ) -> ActionResult:
             try:
-                updated_playlist = store.replace_track_refs(params.replacements)
-                return self._draft_success(
-                    "replace_playlist_tracks",
-                    updated_playlist,
+                store.replace_track_refs(params.replacements)
+                return ActionResult.ok(
+                    f"{len(params.replacements)} track replacement(s) processed."
                 )
             except Exception as error:
-                return self._draft_failure(
-                    "replace_playlist_tracks",
-                    store,
-                    error,
-                )
+                return ActionResult.fail(error)
 
         @self.action(
             description=(
@@ -374,7 +314,7 @@ class Tools:
             description=(
                 "Ask the user one or more clarifying questions before proceeding. "
                 "Use this when the task is ambiguous and user input is required. "
-                "Provide 1–4 questions, each with 1–4 selectable options. "
+                "Provide 1-4 questions, each with 1-4 selectable options. "
                 "The user may also type a free-text answer or skip a question."
             ),
             params=AskFollowUpParams,
