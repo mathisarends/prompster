@@ -11,7 +11,7 @@ export const SidebarInlineShortcutKeys = ({
   const { formatShortcutKey } = usePlatform();
 
   return (
-    <span className="ml-auto flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+    <span className="ml-auto flex shrink-0 items-center gap-1 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100">
       {keys.map((key, index) => (
         <kbd
           key={`${key}-${index}`}

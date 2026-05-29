@@ -111,7 +111,7 @@ export const NavigationSidebar = ({
       <aside
         data-state={open ? "open" : "closed"}
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
+          "fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
           "transition-[width,transform] duration-300 ease-out",
           open
             ? "w-72 translate-x-0"

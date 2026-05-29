@@ -42,7 +42,7 @@ export const NavigationSidebarTop = ({
 
   if (open) {
     return (
-      <div className="space-y-4 px-3 py-3">
+      <div className="w-72 shrink-0 space-y-4 px-3 py-3">
         <div className="flex items-center justify-between gap-2">
           <PrompsterLogo />
           <KeyboardShortcutHint
@@ -65,7 +65,7 @@ export const NavigationSidebarTop = ({
           <button
             type="button"
             onClick={handleNewChatClick}
-            className="group flex h-10 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="group flex h-10 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium whitespace-nowrap text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             <Plus className="size-5 shrink-0" />
             <span>Neuer Chat</span>
@@ -74,7 +74,7 @@ export const NavigationSidebarTop = ({
           <button
             type="button"
             onClick={onOpenSearch}
-            className="group flex h-10 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            className="group flex h-10 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium whitespace-nowrap text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             <Search className="size-5 shrink-0" />
             <span>Suchen</span>
