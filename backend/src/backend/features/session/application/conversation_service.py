@@ -3,7 +3,6 @@ from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
 from uuid import UUID
 
-from backend.features.user.application import UserMessageRateLimitService
 from backend.features.session.application.events import (
     SessionAssistantMessageChunk,
     SessionAssistantMessageCancelled,
@@ -43,6 +42,7 @@ from backend.features.session.domain import (
     UserMessageAttachment,
     UserMessageAttachmentKind,
 )
+from backend.features.user.application import UserMessageRateLimitService
 
 
 @dataclass(frozen=True)
@@ -103,17 +103,7 @@ class SessionConversationService:
         )
         session.add_user_message(
             content=content,
-            attachments=[
-                UserMessageAttachment(
-                    kind=UserMessageAttachmentKind(attachment.kind),
-                    external_id=attachment.external_id,
-                    title=attachment.title,
-                    subtitle=attachment.subtitle,
-                    image_url=attachment.image_url,
-                    spotify_id=attachment.spotify_id,
-                )
-                for attachment in (attachments or [])
-            ],
+            attachments=self._to_user_message_attachments(attachments or []),
         )
         async for event in self._persist_and_resume_agent(
             session=session,
@@ -154,18 +144,9 @@ class SessionConversationService:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         pending_group = session.require_pending_follow_up_group()
         for answer in answers:
-            if answer.option_id is not None:
-                session.answer_follow_up_with_option(
-                    question_id=answer.question_id,
-                    option_id=answer.option_id,
-                )
-            else:
-                session.answer_follow_up_with_text(
-                    question_id=answer.question_id,
-                    text=answer.text or "",
-                )
+            self._apply_follow_up_answer(session=session, answer=answer)
         if not pending_group.is_complete:
-            await self._session_repository.save(session=session)
+            await self._persist_session(session=session)
             return
 
         await self._user_message_rate_limit_service.consume(user_id=user_id)
@@ -200,6 +181,49 @@ class SessionConversationService:
 
     async def _persist_session(self, *, session: Session) -> None:
         await self._session_repository.save(session=session)
+
+    async def _persisted_events(
+        self,
+        *,
+        session: Session,
+        events: tuple[SessionEvent, ...] = (),
+    ) -> tuple[SessionEvent, ...]:
+        await self._persist_session(session=session)
+        return events
+
+    def _to_user_message_attachments(
+        self,
+        attachments: list[SessionMessageAttachment],
+    ) -> list[UserMessageAttachment]:
+        return [
+            UserMessageAttachment(
+                kind=UserMessageAttachmentKind(attachment.kind),
+                external_id=attachment.external_id,
+                title=attachment.title,
+                subtitle=attachment.subtitle,
+                image_url=attachment.image_url,
+                spotify_id=attachment.spotify_id,
+            )
+            for attachment in attachments
+        ]
+
+    def _apply_follow_up_answer(
+        self,
+        *,
+        session: Session,
+        answer: FollowUpAnswer,
+    ) -> None:
+        if answer.option_id is not None:
+            session.answer_follow_up_with_option(
+                question_id=answer.question_id,
+                option_id=answer.option_id,
+            )
+            return
+
+        session.answer_follow_up_with_text(
+            question_id=answer.question_id,
+            text=answer.text or "",
+        )
 
     async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
         session = await self._session_repository.get_by_id(session_id=session_id)
@@ -305,15 +329,17 @@ class SessionConversationService:
         state = _AgentRunState()
 
         async for event in self._runner.run(session=session):
-            for session_event in await self._handle_runner_event(
+            session_events = await self._handle_runner_event(
                 event=event,
                 session=session,
                 state=state,
-            ):
-                yield session_event
+            )
 
             if state.cancelled and on_cancelled is not None:
                 on_cancelled()
+
+            for session_event in session_events:
+                yield session_event
 
             if state.stopped:
                 return
@@ -380,6 +406,7 @@ class SessionConversationService:
                     session=session,
                     state=state,
                 )
+        raise TypeError(f"Unsupported runner event: {event!r}")
 
     async def _handle_assistant_message_chunk(
         self,
@@ -431,10 +458,9 @@ class SessionConversationService:
                 )
             )
 
-        await self._persist_session(session=session)
         events.append(SessionAssistantMessageCompleted(message=message))
         state.current_assistant_message = None
-        return tuple(events)
+        return await self._persisted_events(session=session, events=tuple(events))
 
     async def _handle_tool_call_started(
         self,
@@ -450,9 +476,8 @@ class SessionConversationService:
             )
         )
         sequence = session.add_tool_call(event.call)
-        await self._persist_session(session=session)
         events.append(SessionToolCallSequenceAdded(sequence=sequence))
-        return tuple(events)
+        return await self._persisted_events(session=session, events=tuple(events))
 
     async def _handle_tool_call_completed(
         self,
@@ -465,14 +490,16 @@ class SessionConversationService:
             tool_call_id=event.tool_call_id,
             result=event.result,
         )
-        await self._persist_session(session=session)
-        return self._to_tool_call_resolution_events(
-            _ResolvedToolCall(
-                sequence_id=sequence.id,
-                tool_call_id=event.tool_call_id,
-                result=event.result,
-                sequence_completed=sequence.is_complete,
-            )
+        return await self._persisted_events(
+            session=session,
+            events=self._to_tool_call_resolution_events(
+                _ResolvedToolCall(
+                    sequence_id=sequence.id,
+                    tool_call_id=event.tool_call_id,
+                    result=event.result,
+                    sequence_completed=sequence.is_complete,
+                )
+            ),
         )
 
     async def _handle_follow_up_requested(
@@ -483,9 +510,11 @@ class SessionConversationService:
         state: _AgentRunState,
     ) -> tuple[SessionEvent, ...]:
         group = session.add_follow_up_questions(event.questions)
-        await self._persist_session(session=session)
         state.stopped = True
-        return (SessionFollowUpGroupAdded(group=group),)
+        return await self._persisted_events(
+            session=session,
+            events=(SessionFollowUpGroupAdded(group=group),),
+        )
 
     async def _handle_playlist_updated(
         self,
@@ -499,8 +528,10 @@ class SessionConversationService:
             id=event.playlist.id,
             created_time=event.playlist.created_at,
         )
-        await self._persist_session(session=session)
-        return (SessionPlaylistSet(playlist=playlist),)
+        return await self._persisted_events(
+            session=session,
+            events=(SessionPlaylistSet(playlist=playlist),),
+        )
 
     async def _handle_playlist_tracks_added(
         self,
@@ -517,16 +548,21 @@ class SessionConversationService:
                 id=event.playlist_id,
             )
 
-        await self._persist_session(session=session)
         if not had_playlist:
-            return (SessionPlaylistSet(playlist=playlist),)
-
-        return tuple(
-            SessionPlaylistTrackAdded(
-                playlist_id=playlist.id,
-                track=track,
+            return await self._persisted_events(
+                session=session,
+                events=(SessionPlaylistSet(playlist=playlist),),
             )
-            for track in event.tracks
+
+        return await self._persisted_events(
+            session=session,
+            events=tuple(
+                SessionPlaylistTrackAdded(
+                    playlist_id=playlist.id,
+                    track=track,
+                )
+                for track in event.tracks
+            ),
         )
 
     async def _handle_playlist_tracks_removed(
@@ -544,16 +580,18 @@ class SessionConversationService:
         if playlist is None:
             playlist = session.playlist
 
-        await self._persist_session(session=session)
         if playlist is None:
-            return ()
+            return await self._persisted_events(session=session)
 
-        return tuple(
-            SessionPlaylistTrackRemoved(
-                playlist_id=playlist.id,
-                track_id=track_id,
-            )
-            for track_id in event.track_ids
+        return await self._persisted_events(
+            session=session,
+            events=tuple(
+                SessionPlaylistTrackRemoved(
+                    playlist_id=playlist.id,
+                    track_id=track_id,
+                )
+                for track_id in event.track_ids
+            ),
         )
 
     async def _handle_playlist_tracks_replaced(
@@ -569,17 +607,19 @@ class SessionConversationService:
                 track=replacement.track,
             )
 
-        await self._persist_session(session=session)
         if playlist is None:
-            return ()
+            return await self._persisted_events(session=session)
 
-        return tuple(
-            SessionPlaylistTrackReplaced(
-                playlist_id=playlist.id,
-                track_id=replacement.track_id,
-                track=replacement.track,
-            )
-            for replacement in event.replacements
+        return await self._persisted_events(
+            session=session,
+            events=tuple(
+                SessionPlaylistTrackReplaced(
+                    playlist_id=playlist.id,
+                    track_id=replacement.track_id,
+                    track=replacement.track,
+                )
+                for replacement in event.replacements
+            ),
         )
 
     async def _handle_runner_cancelled(
@@ -594,11 +634,13 @@ class SessionConversationService:
 
         message = state.current_assistant_message
         state.current_assistant_message = None
-        await self._persist_session(session=session)
         if message is None:
-            return ()
+            return await self._persisted_events(session=session)
 
-        return (SessionAssistantMessageCancelled(message_id=message.id),)
+        return await self._persisted_events(
+            session=session,
+            events=(SessionAssistantMessageCancelled(message_id=message.id),),
+        )
 
     async def _ensure_assistant_message_started(
         self,
@@ -611,8 +653,10 @@ class SessionConversationService:
 
         message = session.add_assistant_message()
         state.current_assistant_message = message
-        await self._persist_session(session=session)
-        return (SessionAssistantMessageStarted(message=message),)
+        return await self._persisted_events(
+            session=session,
+            events=(SessionAssistantMessageStarted(message=message),),
+        )
 
     async def _finish_current_assistant_message(
         self,
@@ -624,9 +668,11 @@ class SessionConversationService:
         if message is None:
             return ()
 
-        await self._persist_session(session=session)
         state.current_assistant_message = None
-        return (SessionAssistantMessageCompleted(message=message),)
+        return await self._persisted_events(
+            session=session,
+            events=(SessionAssistantMessageCompleted(message=message),),
+        )
 
     def _require_current_run_assistant_message(
         self,
@@ -662,4 +708,4 @@ class SessionConversationService:
 
         for event in events:
             event.mark_consumed()
-        await self._session_repository.save(session=session)
+        await self._persist_session(session=session)
