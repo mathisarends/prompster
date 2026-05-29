@@ -24,6 +24,7 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
     SessionRunnerCancelled,
+    SessionRunnerEvent,
     SessionRunnerFollowUpRequested,
     SessionRunnerPlaylistTracksAdded,
     SessionRunnerPlaylistTracksRemoved,
@@ -69,6 +70,13 @@ class _ResolvedToolCall:
     sequence_completed: bool
 
 
+@dataclass
+class _AgentRunState:
+    current_assistant_message: AssistantMessage | None = None
+    cancelled: bool = False
+    stopped: bool = False
+
+
 class SessionConversationService:
     def __init__(
         self,
@@ -107,7 +115,19 @@ class SessionConversationService:
                 for attachment in (attachments or [])
             ],
         )
-        await self._session_repository.save(session=session)
+        async for event in self._persist_and_resume_agent(
+            session=session,
+            resolved_tool_call=resolved_tool_call,
+        ):
+            yield event
+
+    async def _persist_and_resume_agent(
+        self,
+        *,
+        session: Session,
+        resolved_tool_call: _ResolvedToolCall | None = None,
+    ) -> AsyncIterator[SessionEvent]:
+        await self._persist_session(session=session)
         for event in self._to_tool_call_resolution_events(resolved_tool_call):
             yield event
         async for event in self._run_agent_and_consume_user_curation_events(
@@ -153,11 +173,9 @@ class SessionConversationService:
             session=session,
             result=self._serialize_follow_up_answers(pending_group),
         )
-        await self._session_repository.save(session=session)
-        for event in self._to_tool_call_resolution_events(resolved_tool_call):
-            yield event
-        async for event in self._run_agent_and_consume_user_curation_events(
-            session=session
+        async for event in self._persist_and_resume_agent(
+            session=session,
+            resolved_tool_call=resolved_tool_call,
         ):
             yield event
 
@@ -174,13 +192,14 @@ class SessionConversationService:
             session=session,
             pending_group=pending_group,
         )
-        await self._session_repository.save(session=session)
-        for event in self._to_tool_call_resolution_events(resolved_tool_call):
-            yield event
-        async for event in self._run_agent_and_consume_user_curation_events(
-            session=session
+        async for event in self._persist_and_resume_agent(
+            session=session,
+            resolved_tool_call=resolved_tool_call,
         ):
             yield event
+
+    async def _persist_session(self, *, session: Session) -> None:
+        await self._session_repository.save(session=session)
 
     async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
         session = await self._session_repository.get_by_id(session_id=session_id)
@@ -283,145 +302,340 @@ class SessionConversationService:
         session: Session,
         on_cancelled: Callable[[], None] | None = None,
     ) -> AsyncIterator[SessionEvent]:
-        current_assistant_message: AssistantMessage | None = None
+        state = _AgentRunState()
 
         async for event in self._runner.run(session=session):
-            if isinstance(event, SessionRunnerAssistantMessageChunk):
-                if current_assistant_message is None:
-                    current_assistant_message = session.add_assistant_message()
-                    await self._session_repository.save(session=session)
-                    yield SessionAssistantMessageStarted(
-                        message=current_assistant_message
-                    )
+            for session_event in await self._handle_runner_event(
+                event=event,
+                session=session,
+                state=state,
+            ):
+                yield session_event
 
-                session.append_to_current_assistant_message(event.chunk)
-                yield SessionAssistantMessageChunk(
-                    message_id=current_assistant_message.id,
-                    chunk=event.chunk,
-                )
-            elif isinstance(event, SessionRunnerAssistantMessage):
-                if current_assistant_message is None:
-                    current_assistant_message = session.add_assistant_message()
-                    await self._session_repository.save(session=session)
-                    yield SessionAssistantMessageStarted(
-                        message=current_assistant_message
-                    )
+            if state.cancelled and on_cancelled is not None:
+                on_cancelled()
 
-                if event.content:
-                    if current_assistant_message.content:
-                        current_assistant_message.content = event.content
-                    else:
-                        session.append_to_current_assistant_message(event.content)
-                        yield SessionAssistantMessageChunk(
-                            message_id=current_assistant_message.id,
-                            chunk=event.content,
-                        )
-
-                await self._session_repository.save(session=session)
-                yield SessionAssistantMessageCompleted(
-                    message=current_assistant_message
-                )
-                current_assistant_message = None
-            elif isinstance(event, SessionRunnerToolCallStarted):
-                if current_assistant_message is not None:
-                    await self._session_repository.save(session=session)
-                    yield SessionAssistantMessageCompleted(
-                        message=current_assistant_message
-                    )
-                    current_assistant_message = None
-
-                sequence = session.add_tool_call(event.call)
-                await self._session_repository.save(session=session)
-                yield SessionToolCallSequenceAdded(sequence=sequence)
-            elif isinstance(event, SessionRunnerToolCallCompleted):
-                sequence = self._require_pending_tool_call_sequence(session=session)
-                session.resolve_tool_call(
-                    tool_call_id=event.tool_call_id,
-                    result=event.result,
-                )
-                await self._session_repository.save(session=session)
-                yield SessionToolCallResolved(
-                    sequence_id=sequence.id,
-                    tool_call_id=event.tool_call_id,
-                    result=event.result,
-                )
-                if sequence.is_complete:
-                    yield SessionToolCallSequenceCompleted(sequence_id=sequence.id)
-            elif isinstance(event, SessionRunnerFollowUpRequested):
-                group = session.add_follow_up_questions(event.questions)
-                await self._session_repository.save(session=session)
-                yield SessionFollowUpGroupAdded(group=group)
+            if state.stopped:
                 return
-            elif isinstance(event, SessionRunnerPlaylistUpdated):
-                playlist = session.set_playlist(
-                    tracks=list(event.playlist.tracks),
-                    name=event.playlist.name,
-                    id=event.playlist.id,
-                    created_time=event.playlist.created_at,
+
+    async def _handle_runner_event(
+        self,
+        *,
+        event: SessionRunnerEvent,
+        session: Session,
+        state: _AgentRunState,
+    ) -> tuple[SessionEvent, ...]:
+        match event:
+            case SessionRunnerAssistantMessageChunk():
+                return await self._handle_assistant_message_chunk(
+                    event=event,
+                    session=session,
+                    state=state,
                 )
-                await self._session_repository.save(session=session)
-                yield SessionPlaylistSet(playlist=playlist)
-            elif isinstance(event, SessionRunnerPlaylistTracksAdded):
-                had_playlist = session.playlist is not None
-                if had_playlist:
-                    playlist = session.add_tracks(list(event.tracks))
-                else:
-                    playlist = session.set_playlist(
-                        tracks=list(event.tracks),
-                        id=event.playlist_id,
-                    )
-                await self._session_repository.save(session=session)
-                if not had_playlist:
-                    yield SessionPlaylistSet(playlist=playlist)
-                    continue
-                for track in event.tracks:
-                    yield SessionPlaylistTrackAdded(
-                        playlist_id=playlist.id,
-                        track=track,
-                    )
-            elif isinstance(event, SessionRunnerPlaylistTracksRemoved):
-                playlist = session.playlist
-                for track_id in event.track_ids:
-                    session.remove_track(
-                        track_id=track_id,
-                        record_user_curation_event=False,
-                    )
-                if playlist is None:
-                    playlist = session.playlist
-                await self._session_repository.save(session=session)
-                if playlist is not None:
-                    for track_id in event.track_ids:
-                        yield SessionPlaylistTrackRemoved(
-                            playlist_id=playlist.id,
-                            track_id=track_id,
-                        )
-            elif isinstance(event, SessionRunnerPlaylistTracksReplaced):
-                playlist = session.playlist
-                for replacement in event.replacements:
-                    playlist = session.replace_track(
-                        track_id=replacement.track_id,
-                        track=replacement.track,
-                    )
-                await self._session_repository.save(session=session)
-                if playlist is not None:
-                    for replacement in event.replacements:
-                        yield SessionPlaylistTrackReplaced(
-                            playlist_id=playlist.id,
-                            track_id=replacement.track_id,
-                            track=replacement.track,
-                        )
-            elif isinstance(event, SessionRunnerCancelled):
-                if on_cancelled is not None:
-                    on_cancelled()
-                session.remove_last_pending_tool_call()
-                if current_assistant_message is not None:
-                    await self._session_repository.save(session=session)
-                    yield SessionAssistantMessageCancelled(
-                        message_id=current_assistant_message.id
-                    )
-                else:
-                    await self._session_repository.save(session=session)
-                return
+            case SessionRunnerAssistantMessage():
+                return await self._handle_assistant_message(
+                    event=event,
+                    session=session,
+                    state=state,
+                )
+            case SessionRunnerToolCallStarted():
+                return await self._handle_tool_call_started(
+                    event=event,
+                    session=session,
+                    state=state,
+                )
+            case SessionRunnerToolCallCompleted():
+                return await self._handle_tool_call_completed(
+                    event=event,
+                    session=session,
+                )
+            case SessionRunnerFollowUpRequested():
+                return await self._handle_follow_up_requested(
+                    event=event,
+                    session=session,
+                    state=state,
+                )
+            case SessionRunnerPlaylistUpdated():
+                return await self._handle_playlist_updated(
+                    event=event,
+                    session=session,
+                )
+            case SessionRunnerPlaylistTracksAdded():
+                return await self._handle_playlist_tracks_added(
+                    event=event,
+                    session=session,
+                )
+            case SessionRunnerPlaylistTracksRemoved():
+                return await self._handle_playlist_tracks_removed(
+                    event=event,
+                    session=session,
+                )
+            case SessionRunnerPlaylistTracksReplaced():
+                return await self._handle_playlist_tracks_replaced(
+                    event=event,
+                    session=session,
+                )
+            case SessionRunnerCancelled():
+                return await self._handle_runner_cancelled(
+                    session=session,
+                    state=state,
+                )
+
+    async def _handle_assistant_message_chunk(
+        self,
+        *,
+        event: SessionRunnerAssistantMessageChunk,
+        session: Session,
+        state: _AgentRunState,
+    ) -> tuple[SessionEvent, ...]:
+        events = list(
+            await self._ensure_assistant_message_started(
+                session=session,
+                state=state,
+            )
+        )
+        message = self._require_current_run_assistant_message(state=state)
+
+        session.append_to_current_assistant_message(event.chunk)
+        events.append(
+            SessionAssistantMessageChunk(
+                message_id=message.id,
+                chunk=event.chunk,
+            )
+        )
+        return tuple(events)
+
+    async def _handle_assistant_message(
+        self,
+        *,
+        event: SessionRunnerAssistantMessage,
+        session: Session,
+        state: _AgentRunState,
+    ) -> tuple[SessionEvent, ...]:
+        events = list(
+            await self._ensure_assistant_message_started(
+                session=session,
+                state=state,
+            )
+        )
+        message = self._require_current_run_assistant_message(state=state)
+
+        if event.content and message.content:
+            message.content = event.content
+        elif event.content:
+            session.append_to_current_assistant_message(event.content)
+            events.append(
+                SessionAssistantMessageChunk(
+                    message_id=message.id,
+                    chunk=event.content,
+                )
+            )
+
+        await self._persist_session(session=session)
+        events.append(SessionAssistantMessageCompleted(message=message))
+        state.current_assistant_message = None
+        return tuple(events)
+
+    async def _handle_tool_call_started(
+        self,
+        *,
+        event: SessionRunnerToolCallStarted,
+        session: Session,
+        state: _AgentRunState,
+    ) -> tuple[SessionEvent, ...]:
+        events = list(
+            await self._finish_current_assistant_message(
+                session=session,
+                state=state,
+            )
+        )
+        sequence = session.add_tool_call(event.call)
+        await self._persist_session(session=session)
+        events.append(SessionToolCallSequenceAdded(sequence=sequence))
+        return tuple(events)
+
+    async def _handle_tool_call_completed(
+        self,
+        *,
+        event: SessionRunnerToolCallCompleted,
+        session: Session,
+    ) -> tuple[SessionEvent, ...]:
+        sequence = self._require_pending_tool_call_sequence(session=session)
+        session.resolve_tool_call(
+            tool_call_id=event.tool_call_id,
+            result=event.result,
+        )
+        await self._persist_session(session=session)
+        return self._to_tool_call_resolution_events(
+            _ResolvedToolCall(
+                sequence_id=sequence.id,
+                tool_call_id=event.tool_call_id,
+                result=event.result,
+                sequence_completed=sequence.is_complete,
+            )
+        )
+
+    async def _handle_follow_up_requested(
+        self,
+        *,
+        event: SessionRunnerFollowUpRequested,
+        session: Session,
+        state: _AgentRunState,
+    ) -> tuple[SessionEvent, ...]:
+        group = session.add_follow_up_questions(event.questions)
+        await self._persist_session(session=session)
+        state.stopped = True
+        return (SessionFollowUpGroupAdded(group=group),)
+
+    async def _handle_playlist_updated(
+        self,
+        *,
+        event: SessionRunnerPlaylistUpdated,
+        session: Session,
+    ) -> tuple[SessionEvent, ...]:
+        playlist = session.set_playlist(
+            tracks=list(event.playlist.tracks),
+            name=event.playlist.name,
+            id=event.playlist.id,
+            created_time=event.playlist.created_at,
+        )
+        await self._persist_session(session=session)
+        return (SessionPlaylistSet(playlist=playlist),)
+
+    async def _handle_playlist_tracks_added(
+        self,
+        *,
+        event: SessionRunnerPlaylistTracksAdded,
+        session: Session,
+    ) -> tuple[SessionEvent, ...]:
+        had_playlist = session.playlist is not None
+        if had_playlist:
+            playlist = session.add_tracks(list(event.tracks))
+        else:
+            playlist = session.set_playlist(
+                tracks=list(event.tracks),
+                id=event.playlist_id,
+            )
+
+        await self._persist_session(session=session)
+        if not had_playlist:
+            return (SessionPlaylistSet(playlist=playlist),)
+
+        return tuple(
+            SessionPlaylistTrackAdded(
+                playlist_id=playlist.id,
+                track=track,
+            )
+            for track in event.tracks
+        )
+
+    async def _handle_playlist_tracks_removed(
+        self,
+        *,
+        event: SessionRunnerPlaylistTracksRemoved,
+        session: Session,
+    ) -> tuple[SessionEvent, ...]:
+        playlist = session.playlist
+        for track_id in event.track_ids:
+            session.remove_track(
+                track_id=track_id,
+                record_user_curation_event=False,
+            )
+        if playlist is None:
+            playlist = session.playlist
+
+        await self._persist_session(session=session)
+        if playlist is None:
+            return ()
+
+        return tuple(
+            SessionPlaylistTrackRemoved(
+                playlist_id=playlist.id,
+                track_id=track_id,
+            )
+            for track_id in event.track_ids
+        )
+
+    async def _handle_playlist_tracks_replaced(
+        self,
+        *,
+        event: SessionRunnerPlaylistTracksReplaced,
+        session: Session,
+    ) -> tuple[SessionEvent, ...]:
+        playlist = session.playlist
+        for replacement in event.replacements:
+            playlist = session.replace_track(
+                track_id=replacement.track_id,
+                track=replacement.track,
+            )
+
+        await self._persist_session(session=session)
+        if playlist is None:
+            return ()
+
+        return tuple(
+            SessionPlaylistTrackReplaced(
+                playlist_id=playlist.id,
+                track_id=replacement.track_id,
+                track=replacement.track,
+            )
+            for replacement in event.replacements
+        )
+
+    async def _handle_runner_cancelled(
+        self,
+        *,
+        session: Session,
+        state: _AgentRunState,
+    ) -> tuple[SessionEvent, ...]:
+        state.cancelled = True
+        state.stopped = True
+        session.remove_last_pending_tool_call()
+
+        message = state.current_assistant_message
+        state.current_assistant_message = None
+        await self._persist_session(session=session)
+        if message is None:
+            return ()
+
+        return (SessionAssistantMessageCancelled(message_id=message.id),)
+
+    async def _ensure_assistant_message_started(
+        self,
+        *,
+        session: Session,
+        state: _AgentRunState,
+    ) -> tuple[SessionEvent, ...]:
+        if state.current_assistant_message is not None:
+            return ()
+
+        message = session.add_assistant_message()
+        state.current_assistant_message = message
+        await self._persist_session(session=session)
+        return (SessionAssistantMessageStarted(message=message),)
+
+    async def _finish_current_assistant_message(
+        self,
+        *,
+        session: Session,
+        state: _AgentRunState,
+    ) -> tuple[SessionEvent, ...]:
+        message = state.current_assistant_message
+        if message is None:
+            return ()
+
+        await self._persist_session(session=session)
+        state.current_assistant_message = None
+        return (SessionAssistantMessageCompleted(message=message),)
+
+    def _require_current_run_assistant_message(
+        self,
+        *,
+        state: _AgentRunState,
+    ) -> AssistantMessage:
+        if state.current_assistant_message is None:
+            raise RuntimeError("Runner event did not start an assistant message.")
+        return state.current_assistant_message
 
     async def _run_agent_and_consume_user_curation_events(
         self,
