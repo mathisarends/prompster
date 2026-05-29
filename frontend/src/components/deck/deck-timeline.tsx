@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { CalendarRange } from "lucide-react";
+import { CalendarRange, Disc3 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { PlaylistTrack } from "@/lib/playlist-track";
@@ -197,20 +197,14 @@ const DecadeRow = ({ bucket, maxCount, isPeak, isLast }: DecadeRowProps) => {
         </div>
 
         {!isEmpty ? (
-          <ul className="mt-2 space-y-1.5">
+          <ul className="mt-3 space-y-1">
             {bucket.tracks.map((track) => (
-              <li
+              <TimelineTrack
                 key={track.id}
-                className="flex items-baseline gap-2.5 text-sm leading-snug"
-              >
-                <span className="shrink-0 tabular-nums text-muted-foreground/70">
-                  {track.year}
-                </span>
-                <span className="min-w-0 truncate text-foreground">
-                  <span className="font-medium">{track.artist}</span>
-                  <span className="text-muted-foreground"> – {track.title}</span>
-                </span>
-              </li>
+                track={track}
+                showYear
+                accent={isPeak}
+              />
             ))}
           </ul>
         ) : null}
@@ -218,6 +212,56 @@ const DecadeRow = ({ bucket, maxCount, isPeak, isLast }: DecadeRowProps) => {
     </div>
   );
 };
+
+type TimelineTrackProps = {
+  track: PlaylistTrack;
+  showYear?: boolean;
+  accent?: boolean;
+};
+
+const TimelineTrack = ({ track, showYear, accent }: TimelineTrackProps) => (
+  <li className="group flex items-center gap-3 rounded-md px-1.5 py-1.5 transition-colors hover:bg-white/[0.04]">
+    <div
+      className={cn(
+        "relative size-10 shrink-0 overflow-hidden rounded-[5px] bg-white/[0.06] shadow-sm ring-1 transition",
+        accent ? "ring-primary/30" : "ring-white/[0.06]",
+      )}
+    >
+      {track.coverUrl ? (
+        <img
+          src={track.coverUrl}
+          alt={`${track.title} Cover`}
+          className="h-full w-full object-cover transition group-hover:scale-105"
+          loading="lazy"
+        />
+      ) : (
+        <div className="grid h-full w-full place-items-center">
+          <Disc3 className="size-4 text-muted-foreground/50" />
+        </div>
+      )}
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="truncate text-sm font-semibold leading-tight text-foreground">
+        {track.artist}
+      </p>
+      <p className="mt-0.5 truncate text-xs leading-tight text-muted-foreground">
+        {track.title}
+      </p>
+    </div>
+    {showYear && track.year ? (
+      <span
+        className={cn(
+          "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
+          accent
+            ? "bg-primary/12 text-primary"
+            : "bg-white/[0.05] text-muted-foreground",
+        )}
+      >
+        {track.year}
+      </span>
+    ) : null}
+  </li>
+);
 
 const UndatedRow = ({ tracks }: { tracks: PlaylistTrack[] }) => (
   <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
@@ -231,15 +275,9 @@ const UndatedRow = ({ tracks }: { tracks: PlaylistTrack[] }) => (
       <span className="ml-2 text-sm text-muted-foreground tabular-nums">
         {tracks.length} {tracks.length === 1 ? "Song" : "Songs"}
       </span>
-      <ul className="mt-2 space-y-1.5">
+      <ul className="mt-3 space-y-1">
         {tracks.map((track) => (
-          <li
-            key={track.id}
-            className="truncate text-sm leading-snug text-foreground"
-          >
-            <span className="font-medium">{track.artist}</span>
-            <span className="text-muted-foreground"> – {track.title}</span>
-          </li>
+          <TimelineTrack key={track.id} track={track} />
         ))}
       </ul>
     </div>

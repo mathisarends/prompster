@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncIterator
 
 from pydantic import TypeAdapter
@@ -39,6 +40,7 @@ _COMMAND_ERRORS = (
 )
 
 _SERVER_EVENT_ADAPTER: TypeAdapter[ServerEvent] = TypeAdapter(ServerEvent)
+logger = logging.getLogger(__name__)
 
 
 def stream_session_events(events: AsyncIterator[SessionEvent]) -> StreamingResponse:
@@ -62,8 +64,9 @@ async def _stream(events: AsyncIterator[SessionEvent]) -> AsyncIterator[str]:
 
 
 def _to_sse(event: ServerEvent) -> str:
-    event_name = getattr(event.type, "value", event.type)
+    event_name = event.type.value
     data = _SERVER_EVENT_ADAPTER.dump_json(event, by_alias=True).decode()
+    logger.debug("Emitting SSE event: name=%s data=%s", event_name, data)
     return f"event: {event_name}\ndata: {data}\n\n"
 
 
