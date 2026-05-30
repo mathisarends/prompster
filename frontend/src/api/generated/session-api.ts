@@ -36,6 +36,7 @@ import type {
   SessionSummaryListResponse,
   SessionUpdateRequest,
   SpotifyPlaylistExportResponse,
+  SubmitOnboardingAnswerRequest,
 } from "./model";
 
 import { customInstance } from "../http-client";
@@ -1572,6 +1573,376 @@ export function useSendMessage<
     sendMessageRequest,
     options,
   );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Submit Onboarding Answer
+ */
+export const submitOnboardingAnswer = (
+  sessionId: string,
+  submitOnboardingAnswerRequest: BodyType<SubmitOnboardingAnswerRequest>,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<unknown | string>(
+    {
+      url: `/api/v1/sessions/${sessionId}/onboarding-answer`,
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: submitOnboardingAnswerRequest,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getSubmitOnboardingAnswerQueryKey = (
+  sessionId: string,
+  submitOnboardingAnswerRequest?: BodyType<SubmitOnboardingAnswerRequest>,
+) => {
+  return [
+    "POST",
+    `/api/v1/sessions/${sessionId}/onboarding-answer`,
+    submitOnboardingAnswerRequest,
+  ] as const;
+};
+
+export const getSubmitOnboardingAnswerQueryOptions = <
+  TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  submitOnboardingAnswerRequest: BodyType<SubmitOnboardingAnswerRequest>,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getSubmitOnboardingAnswerQueryKey(sessionId, submitOnboardingAnswerRequest);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof submitOnboardingAnswer>>
+  > = ({ signal }) =>
+    submitOnboardingAnswer(
+      sessionId,
+      submitOnboardingAnswerRequest,
+      requestOptions,
+      signal,
+    );
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: sessionId !== null && sessionId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SubmitOnboardingAnswerQueryResult = NonNullable<
+  Awaited<ReturnType<typeof submitOnboardingAnswer>>
+>;
+export type SubmitOnboardingAnswerQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useSubmitOnboardingAnswer<
+  TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  submitOnboardingAnswerRequest: BodyType<SubmitOnboardingAnswerRequest>,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+          TError,
+          Awaited<ReturnType<typeof submitOnboardingAnswer>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSubmitOnboardingAnswer<
+  TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  submitOnboardingAnswerRequest: BodyType<SubmitOnboardingAnswerRequest>,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+          TError,
+          Awaited<ReturnType<typeof submitOnboardingAnswer>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useSubmitOnboardingAnswer<
+  TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  submitOnboardingAnswerRequest: BodyType<SubmitOnboardingAnswerRequest>,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Submit Onboarding Answer
+ */
+
+export function useSubmitOnboardingAnswer<
+  TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  submitOnboardingAnswerRequest: BodyType<SubmitOnboardingAnswerRequest>,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof submitOnboardingAnswer>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getSubmitOnboardingAnswerQueryOptions(
+    sessionId,
+    submitOnboardingAnswerRequest,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Complete Onboarding
+ */
+export const completeOnboarding = (
+  sessionId: string,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<unknown | string>(
+    {
+      url: `/api/v1/sessions/${sessionId}/onboarding/complete`,
+      method: "POST",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getCompleteOnboardingQueryKey = (sessionId: string) => {
+  return ["POST", `/api/v1/sessions/${sessionId}/onboarding/complete`] as const;
+};
+
+export const getCompleteOnboardingQueryOptions = <
+  TData = Awaited<ReturnType<typeof completeOnboarding>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof completeOnboarding>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getCompleteOnboardingQueryKey(sessionId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof completeOnboarding>>
+  > = ({ signal }) => completeOnboarding(sessionId, requestOptions, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: sessionId !== null && sessionId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof completeOnboarding>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CompleteOnboardingQueryResult = NonNullable<
+  Awaited<ReturnType<typeof completeOnboarding>>
+>;
+export type CompleteOnboardingQueryError = ErrorType<
+  ErrorResponse | HTTPValidationError
+>;
+
+export function useCompleteOnboarding<
+  TData = Awaited<ReturnType<typeof completeOnboarding>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof completeOnboarding>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof completeOnboarding>>,
+          TError,
+          Awaited<ReturnType<typeof completeOnboarding>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCompleteOnboarding<
+  TData = Awaited<ReturnType<typeof completeOnboarding>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof completeOnboarding>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof completeOnboarding>>,
+          TError,
+          Awaited<ReturnType<typeof completeOnboarding>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useCompleteOnboarding<
+  TData = Awaited<ReturnType<typeof completeOnboarding>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof completeOnboarding>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Complete Onboarding
+ */
+
+export function useCompleteOnboarding<
+  TData = Awaited<ReturnType<typeof completeOnboarding>>,
+  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+>(
+  sessionId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof completeOnboarding>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getCompleteOnboardingQueryOptions(sessionId, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

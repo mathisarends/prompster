@@ -52,6 +52,8 @@ export * from "./spotifyPlaylistResponse";
 export * from "./spotifySearchType";
 export * from "./spotifyTrackResponse";
 export * from "./spotifyUnifiedSearchResponse";
+export * from "./submitOnboardingAnswerRequest";
+export * from "./suspendedForInputEvent";
 export * from "./titleGeneratedEvent";
 export * from "./toolCallFailedEvent";
 export * from "./toolCallResolvedEvent";
