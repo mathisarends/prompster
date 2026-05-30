@@ -124,7 +124,8 @@ class Tools:
         @self.action(
             description=(
                 "Stelle dem User eine einzelne Onboarding-Klärungsfrage. "
-                "Dieses Tool pausiert den Run, bis der User geantwortet hat."
+                "Gib immer 3-8 konkrete Auswahlmöglichkeiten mit. "
+                "Markiere nur die letzte Onboarding-Frage mit is_last_question."
             ),
             params=AskOnboardingQuestionParams,
             status_label=lambda params: params.status,

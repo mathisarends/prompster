@@ -57,6 +57,46 @@ class TestToolsFacadeAbstraction:
             "replace_playlist_tracks",
         }.issubset(build_tool_names)
 
+    def test_onboarding_question_schema_requires_three_to_eight_options(self) -> None:
+        tools = Tools()
+
+        schema = next(
+            schema
+            for schema in tools.to_schema(phase=Phase.ONBOARDING)
+            if schema["function"]["name"] == "ask_onboarding_question"
+        )
+        options = schema["function"]["parameters"]["properties"]["options"]
+
+        assert "options" in schema["function"]["parameters"]["required"]
+        assert options["minItems"] == 3
+        assert options["maxItems"] == 8
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "options",
+        [
+            ["Freunde", "Familie"],
+            [str(index) for index in range(9)],
+        ],
+    )
+    async def test_onboarding_question_rejects_option_counts_outside_range(
+        self,
+        options: list[str],
+    ) -> None:
+        tools = Tools()
+
+        result = await tools.execute(
+            "ask_onboarding_question",
+            {
+                "question": "Für wen ist die Playlist?",
+                "options": options,
+            },
+            phase=Phase.ONBOARDING,
+        )
+
+        assert result.success is False
+        assert "options" in (result.error or "")
+
     def test_custom_tool_phase_metadata_filters_schema_and_lookup(self) -> None:
         tools = Tools()
 

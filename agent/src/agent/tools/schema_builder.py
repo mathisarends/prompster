@@ -26,6 +26,34 @@ def is_injectable(hint: Any) -> bool:
     return any(isinstance(a, _InjectMarker) for a in get_args(hint))
 
 
+def _apply_field_constraints(prop: dict[str, Any], metadata: list[Any]) -> None:
+    if prop.get("type") != "array":
+        return
+
+    for constraint in metadata:
+        min_length = getattr(constraint, "min_length", None)
+        if min_length is not None:
+            prop["minItems"] = min_length
+
+        max_length = getattr(constraint, "max_length", None)
+        if max_length is not None:
+            prop["maxItems"] = max_length
+
+
+def _is_pydantic_model(model: Any) -> bool:
+    try:
+        return isinstance(model, type) and issubclass(model, BaseModel)
+    except TypeError:
+        return False
+
+
+def _is_enum(model: Any) -> bool:
+    try:
+        return isinstance(model, type) and issubclass(model, Enum)
+    except TypeError:
+        return False
+
+
 class ToolSchemaBuilder:
     _PRIMITIVE_TYPES: ClassVar[dict[type, str]] = {
         str: "string",
@@ -51,7 +79,7 @@ class ToolSchemaBuilder:
         self._param_model = param_model
 
     def build(self) -> dict:
-        if self._param_model is not None and self._is_pydantic_model(self._param_model):
+        if self._param_model is not None and _is_pydantic_model(self._param_model):
             return self._build_from_pydantic_model(self._param_model)
 
         sig = inspect.signature(self._function)
@@ -118,10 +146,10 @@ class ToolSchemaBuilder:
         if origin is dict:
             return {**prop, "type": "object"}
 
-        if self._is_pydantic_model(python_type):
+        if _is_pydantic_model(python_type):
             return self._build_model_property(python_type, description)
 
-        if self._is_enum(python_type):
+        if _is_enum(python_type):
             return {
                 **prop,
                 "type": "string",
@@ -140,6 +168,7 @@ class ToolSchemaBuilder:
                 field_info.annotation,
                 field_info.description,
             )
+            _apply_field_constraints(properties[field_name], field_info.metadata)
             if not field_info.is_required() and field_info.default not in (
                 None,
                 PydanticUndefined,
@@ -161,17 +190,3 @@ class ToolSchemaBuilder:
         if description:
             schema["description"] = description
         return schema
-
-    @staticmethod
-    def _is_pydantic_model(model: Any) -> bool:
-        try:
-            return isinstance(model, type) and issubclass(model, BaseModel)
-        except TypeError:
-            return False
-
-    @staticmethod
-    def _is_enum(model: Any) -> bool:
-        try:
-            return isinstance(model, type) and issubclass(model, Enum)
-        except TypeError:
-            return False

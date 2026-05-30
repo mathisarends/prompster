@@ -26,8 +26,10 @@ class MessageManager:
     )
     _ONBOARDING_NUDGE_PROMPT = """\
 You are now gathering context for a playlist. Ask 3-5 semantically relevant
-clarifying questions based on the user's request. Topic guidance
-(NOT hardcoded - choose what is relevant):
+clarifying questions based on the user's request. For every question, provide
+3-8 concise, meaningful answer options. The UI offers a separate free-text
+answer, so do not add a generic "Other" option. Topic guidance (NOT hardcoded -
+choose what is relevant):
 - Who is it for / what is the occasion?
 - Which decades / eras?
 - How broad or focused should the selection be?
@@ -35,8 +37,8 @@ clarifying questions based on the user's request. Topic guidance
 - Any special requests?
 
 Call `ask_onboarding_question` ONCE for each question.
-You will pause after each call - this is intentional.
-Set `is_last_question=true` for the final question.
+Set `is_last_question=false` until the final question.
+Set `is_last_question=true` only for the final question.
 """
 
     def __init__(

@@ -58,5 +58,9 @@ class PlaylistIdParams(ToolParams):
 class AskOnboardingQuestionParams(ToolParams):
     status: str = "Stelle Onboarding-Frage..."
     question: str
-    options: list[str] = Field(default_factory=list, min_length=0, max_length=6)
+    options: list[str] = Field(
+        min_length=3,
+        max_length=8,
+        description="3-8 concise, meaningful suggested answers for the user.",
+    )
     is_last_question: bool = False

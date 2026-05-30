@@ -22,6 +22,10 @@ class _SearchParams(BaseModel):
     kind: _Kind = Field(default=_Kind.album, description="Requested content kind")
 
 
+class _ConstrainedOptionsParams(BaseModel):
+    options: list[str] = Field(min_length=3, max_length=8)
+
+
 def _search_signature(
     query: Annotated[str, "Search query"],
     limit: int = 10,
@@ -33,6 +37,10 @@ def _search_signature(
 
 def _search_with_model(params: _SearchParams) -> str:
     return params.query
+
+
+def _options_with_model(params: _ConstrainedOptionsParams) -> list[str]:
+    return params.options
 
 
 class TestToolSchemaBuilderAbstraction:
@@ -58,3 +66,11 @@ class TestToolSchemaBuilderAbstraction:
         assert schema["properties"]["query"]["description"] == "Search text"
         assert schema["properties"]["limit"]["default"] == 10
         assert schema["properties"]["kind"]["enum"] == ["album", "single"]
+
+    def test_build_includes_pydantic_array_length_constraints(self) -> None:
+        schema = ToolSchemaBuilder(
+            _options_with_model, param_model=_ConstrainedOptionsParams
+        ).build()
+
+        assert schema["properties"]["options"]["minItems"] == 3
+        assert schema["properties"]["options"]["maxItems"] == 8
