@@ -1,6 +1,8 @@
 from collections.abc import AsyncGenerator, Sequence
+from dataclasses import dataclass, field
 
 from llmify import ChatModel, Message, StreamEnd, StreamEventType
+from llmify.messages import ToolCall
 
 from agent.events import (
     AgentEvent,
@@ -20,6 +22,12 @@ from agent.tools.views import AskFollowUpParams, Phase
 from agent.playlist import PlaylistDraftStore
 from agent.tokens import TokenTracker
 from agent.views import UserEvent
+
+
+@dataclass
+class _LLMResponse:
+    completion: str = ""
+    tool_calls: list[ToolCall] = field(default_factory=list)
 
 
 class Agent:
@@ -97,80 +105,95 @@ class Agent:
             if self._stop_requested:
                 return
             yield StepStartedEvent(step=iteration)
-            completion = ""
-            tool_calls = []
 
-            schemas = self._tools.to_schema(phase=self._phase)
-            async for response_event in self._llm.stream(
-                self._messages.all(), tools=schemas
-            ):
-                if self._stop_requested:
-                    return
-                if response_event.type == StreamEventType.TEXT:
-                    if response_event.delta:
-                        completion += response_event.delta
-                        yield AssistantMessageChunkEvent(chunk=response_event.delta)
-                elif response_event.type == StreamEventType.TOOL_CALL:
-                    tool_calls.append(response_event.tool_call)
-                elif response_event.type == StreamEventType.END:
-                    assert isinstance(response_event, StreamEnd)
-                    completion = response_event.completion or completion
-                    if response_event.tool_calls:
-                        tool_calls = response_event.tool_calls
-                    self._token_tracker.add(response_event.usage, self._llm_name)
-
-            if not tool_calls:
-                self._messages.add_assistant(completion)
-                yield AssistantMessageEvent(content=completion)
-                yield RunCompletedEvent(output=completion)
+            response = _LLMResponse()
+            async for event in self._stream_llm_response(response):
+                yield event
+            if self._stop_requested:
                 return
 
-            if completion:
-                yield AssistantMessageEvent(content=completion)
+            if not response.tool_calls:
+                self._messages.add_assistant(response.completion)
+                yield AssistantMessageEvent(content=response.completion)
+                yield RunCompletedEvent(output=response.completion)
+                return
+
+            if response.completion:
+                yield AssistantMessageEvent(content=response.completion)
 
             self._messages.add_assistant(
-                completion,
-                tool_calls=tool_calls,
+                response.completion,
+                tool_calls=response.tool_calls,
             )
 
-            for call in tool_calls:
+            for call in response.tool_calls:
                 if self._stop_requested:
                     return
-                args = self._tools.parse_args(call)
-                tool = self._tools.get(call.function.name, phase=self._phase)
-                yield ToolCallEvent(
-                    tool_call_id=call.id,
-                    name=call.function.name,
-                    args=args,
-                    status_label=tool.render_status(args) if tool else None,
-                    action_type=tool.action_type if tool else None,
-                )
+                async for event in self._handle_tool_call(call):
+                    yield event
+                    if isinstance(event, FollowUpRequestedEvent):
+                        return
 
-                if tool is not None and tool.suspends_for_input:
-                    parsed = AskFollowUpParams.model_validate(args)
-                    yield FollowUpRequestedEvent(
-                        tool_call_id=call.id,
-                        questions=parsed.questions,
-                    )
-                    return  # suspend — resume() injects the answer as tool result
+    async def _stream_llm_response(
+        self,
+        response: _LLMResponse,
+    ) -> AsyncGenerator[AgentEvent, None]:
+        schemas = self._tools.to_schema(phase=self._phase)
+        async for event in self._llm.stream(self._messages.all(), tools=schemas):
+            if self._stop_requested:
+                return
+            if event.type == StreamEventType.TEXT:
+                if event.delta:
+                    response.completion += event.delta
+                    yield AssistantMessageChunkEvent(chunk=event.delta)
+            elif event.type == StreamEventType.TOOL_CALL:
+                response.tool_calls.append(event.tool_call)
+            elif event.type == StreamEventType.END:
+                assert isinstance(event, StreamEnd)
+                response.completion = event.completion or response.completion
+                if event.tool_calls:
+                    response.tool_calls = event.tool_calls
+                self._token_tracker.add(event.usage, self._llm_name)
 
-                result = await self._tools.execute(
-                    call.function.name,
-                    args,
-                    phase=self._phase,
-                )
-                serialized = self._tools.serialize_result(result)
-                yield ToolResultEvent(
-                    tool_call_id=call.id,
-                    name=call.function.name,
-                    result=serialized,
-                )
-                for update in self._playlist_store.drain_playlist_draft_updates():
-                    yield WorkspaceUpdatedEvent(
-                        playlist_draft=update.playlist_draft,
-                        update=update,
-                    )
-                self._messages.add_tool_result(
-                    tool_call_id=call.id,
-                    content=serialized,
-                )
+    async def _handle_tool_call(
+        self,
+        call: ToolCall,
+    ) -> AsyncGenerator[AgentEvent, None]:
+        args = self._tools.parse_args(call)
+        tool = self._tools.get(call.function.name, phase=self._phase)
+        yield ToolCallEvent(
+            tool_call_id=call.id,
+            name=call.function.name,
+            args=args,
+            status_label=tool.render_status(args) if tool else None,
+            action_type=tool.action_type if tool else None,
+        )
+
+        if tool is not None and tool.suspends_for_input:
+            parsed = AskFollowUpParams.model_validate(args)
+            yield FollowUpRequestedEvent(
+                tool_call_id=call.id,
+                questions=parsed.questions,
+            )
+            return  # suspend - resume() injects the answer as tool result
+
+        result = await self._tools.execute(
+            call.function.name,
+            args,
+            phase=self._phase,
+        )
+        serialized = self._tools.serialize_result(result)
+        yield ToolResultEvent(
+            tool_call_id=call.id,
+            name=call.function.name,
+            result=serialized,
+        )
+        for update in self._playlist_store.drain_playlist_draft_updates():
+            yield WorkspaceUpdatedEvent(
+                playlist_draft=update.playlist_draft,
+                update=update,
+            )
+        self._messages.add_tool_result(
+            tool_call_id=call.id,
+            content=serialized,
+        )
