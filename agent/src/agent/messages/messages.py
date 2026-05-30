@@ -13,11 +13,15 @@ from llmify import (
 
 from agent.views import UserEvent
 from agent.playlist import PlaylistDraft
+from agent.tools.views import Phase
 from agent.messages.rendering import render_track_tag
 from .rendering import render_user_message_content
 
 _SYSTEM_PROMPT = (
     Path(__file__).parent / "prompts" / "onboarding_system_prompt.md"
+).read_text(encoding="utf-8")
+_ONBOARDING_NUDGE_PROMPT = (
+    Path(__file__).parent / "prompts" / "onboarding_nudge.md"
 ).read_text(encoding="utf-8")
 
 type _PlaylistDraftProvider = Callable[[], PlaylistDraft | None]
@@ -27,11 +31,13 @@ class MessageManager:
     def __init__(
         self,
         system_prompt: str | None = None,
+        phase: Phase = Phase.BUILD,
         playlist_draft_provider: _PlaylistDraftProvider | None = None,
         max_playlist_tracks: int = 75,
         history: list[Message] | None = None,
     ) -> None:
         self._system_prompt = system_prompt or _SYSTEM_PROMPT
+        self._phase = phase
         self._playlist_draft_provider = playlist_draft_provider
         self._max_playlist_tracks = max_playlist_tracks
         self._messages: list[Message] = []
@@ -41,14 +47,11 @@ class MessageManager:
 
     def all(self) -> list[Message]:
         messages: list[Message] = [SystemMessage(content=self._system_prompt)]
+        self._inject_onboarding_nudge(messages)
 
         playlist_context = self._render_playlist_context()
         if playlist_context is not None:
-            # Context Injection Pattern: UserMessage + AssistantMessage("Understood.")
-            # Prevents consecutive UserMessages and ensures the model treats the
-            # state as confirmed context rather than an open question.
-            messages.append(UserMessage(content=playlist_context))
-            messages.append(AssistantMessage(content="Understood."))
+            self._inject_confirmed_context(messages, playlist_context)
 
         messages.extend(self._messages)
         return messages
@@ -103,3 +106,34 @@ class MessageManager:
         )
         lines.append("</created_playlist>")
         return "\n".join(lines)
+
+    def _inject_onboarding_nudge(self, messages: list[Message]) -> None:
+        if self._phase != Phase.ONBOARDING:
+            return
+        if self._has_any_onboarding_question_call():
+            return
+        self._inject_confirmed_context(messages, _ONBOARDING_NUDGE_PROMPT)
+
+    def _inject_confirmed_context(self, messages: list[Message], content: str) -> None:
+        # Context Injection Pattern: UserMessage + AssistantMessage("Understood.")
+        # Prevents consecutive UserMessages and ensures the model treats the
+        # state as confirmed context rather than an open question.
+        messages.append(UserMessage(content=content))
+        messages.append(AssistantMessage(content="Understood."))
+
+    def _has_any_onboarding_question_call(self) -> bool:
+        for message in self._messages:
+            if not isinstance(message, AssistantMessage):
+                continue
+            if not message.tool_calls:
+                continue
+            for tool_call in message.tool_calls:
+                function_name = None
+                function = getattr(tool_call, "function", None)
+                if isinstance(function, dict):
+                    function_name = function.get("name")
+                else:
+                    function_name = getattr(function, "name", None)
+                if function_name == "ask_onboarding_question":
+                    return True
+        return False

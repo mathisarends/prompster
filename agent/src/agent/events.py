@@ -53,6 +53,13 @@ class ToolResultEvent(AgentEvent):
 
 
 @dataclass(kw_only=True)
+class SuspendedForInputEvent(AgentEvent):
+    question: str | None = None
+    options: list[str] = field(default_factory=list)
+    is_last_question: bool = False
+
+
+@dataclass(kw_only=True)
 class WorkspaceUpdatedEvent(AgentEvent):
     playlist_draft: PlaylistDraft
     update: PlaylistDraftUpdate

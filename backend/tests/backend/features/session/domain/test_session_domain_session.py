@@ -98,10 +98,10 @@ class TestSessionDomainSession:
 
         assert created.is_starred is False
 
-    def test_session_starts_in_build_phase(self, owner_id: UUID) -> None:
+    def test_session_starts_in_onboarding_phase(self, owner_id: UUID) -> None:
         created = Session(title="Roadtrip", entries=[], owner_id=owner_id)
 
-        assert created.phase == Phase.BUILD
+        assert created.phase == Phase.ONBOARDING
 
     def test_advance_to_building_phase_marks_onboarding_session_as_build(
         self, owner_id: UUID
@@ -118,10 +118,61 @@ class TestSessionDomainSession:
         assert session.phase == Phase.BUILD
 
     def test_advance_to_building_phase_rejects_non_onboarding_source(
-        self, session: Session
+        self, owner_id: UUID
     ) -> None:
+        session = Session(
+            title="Roadtrip",
+            entries=[],
+            owner_id=owner_id,
+            phase=Phase.BUILD,
+        )
         with pytest.raises(InvalidSessionPhaseTransitionError):
             session.advance_to_building_phase()
+
+    def test_add_onboarding_question_assigns_sequence(self, session: Session) -> None:
+        first = session.add_onboarding_question(
+            question_text="Fuer wen ist die Playlist?",
+            options=("Freunde", "Familie"),
+        )
+        second = session.add_onboarding_question(
+            question_text="Welche Stimmung?",
+            options=("Ruhig", "Energiegeladen"),
+        )
+
+        assert first.sequence_number == 1
+        assert second.sequence_number == 2
+        assert len(session.onboarding_questions) == 2
+
+    def test_answer_onboarding_question_updates_answer_state(
+        self, session: Session
+    ) -> None:
+        question = session.add_onboarding_question(
+            question_text="Welche Jahrzehnte?",
+            options=("80er", "90er"),
+        )
+
+        session.answer_onboarding_question(question_id=question.id, answer="80er")
+
+        assert question.is_answered is True
+        assert question.answer == "80er"
+        assert question.answered_at is not None
+
+    def test_answering_last_question_reconstructs_history(
+        self, session: Session
+    ) -> None:
+        session.add_user_message(content="Erstelle eine Playlist")
+        first = session.add_onboarding_question(question_text="Fuer wen?")
+        last = session.add_onboarding_question(
+            question_text="Welche Dekade?", is_last_question=True
+        )
+        session.answer_onboarding_question(question_id=first.id, answer="Freunde")
+        session.answer_onboarding_question(question_id=last.id, answer="80er")
+
+        entry_types = [type(e).__name__ for e in session.entries]
+        assert "ToolCallSequence" not in entry_types
+        contents = [getattr(e, "content", None) for e in session.entries]
+        assert any("Fuer wen? -> Freunde" in (c or "") for c in contents)
+        assert any("Welche Dekade? -> 80er" in (c or "") for c in contents)
 
     def test_star_marks_session_as_starred(self, session: Session) -> None:
         session.star()

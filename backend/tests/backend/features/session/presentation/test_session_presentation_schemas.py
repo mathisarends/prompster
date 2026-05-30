@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
     SendMessageRequest,
+    SubmitOnboardingAnswerRequest,
 )
 
 
@@ -59,3 +60,12 @@ class TestAddPlaylistTrackRequest:
     def test_rejects_year_out_of_range(self) -> None:
         with pytest.raises(ValidationError, match="greater than or equal to 1900"):
             AddPlaylistTrackRequest(title="Starlight", artist="Muse", year=1899)
+
+
+class TestSubmitOnboardingAnswerRequest:
+    def test_requires_non_empty_answer(self) -> None:
+        with pytest.raises(ValidationError, match="at least 1 character"):
+            SubmitOnboardingAnswerRequest(
+                question_id="cbba96da-2ea9-44bc-878b-4898fb3c3593",
+                answer="",
+            )

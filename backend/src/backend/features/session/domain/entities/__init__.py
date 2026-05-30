@@ -6,6 +6,7 @@ from .messages import (
     UserMessageAttachment,
     UserMessageAttachmentKind,
 )
+from .onboarding_question import OnboardingQuestion
 from .playlist import Playlist, PlaylistTrack
 from .reference import ArtistReference, PlaylistReference
 from .session_entry import SessionEntry
@@ -27,6 +28,7 @@ __all__ = [
     "AssistantMessage",
     "CompletedCall",
     "FailedCall",
+    "OnboardingQuestion",
     "PendingCall",
     "Playlist",
     "PlaylistReference",

@@ -54,9 +54,11 @@ export const ChatPage = () => {
     isTitlePending,
     isStreaming,
     isStopping,
+    pendingInput,
     isLoadingSession,
     isError,
     sendMessage,
+    submitOnboardingAnswer,
     stopMessage,
     removePlaylistTrack,
   } = useChatSession({
@@ -142,9 +144,11 @@ export const ChatPage = () => {
               isTitlePending={isTitlePending}
               isStreaming={isStreaming}
               isStopping={isStopping}
+              pendingInput={pendingInput}
               isLoadingSession={isLoadingSession}
               isError={isError}
               sendMessage={sendMessage}
+              submitOnboardingAnswer={submitOnboardingAnswer}
               stopMessage={stopMessage}
               userCurationPlaybackState={userCurationPlaybackState}
               onToggleUserCurationTrackPlayback={
@@ -178,9 +182,11 @@ export const ChatPage = () => {
             isTitlePending={isTitlePending}
             isStreaming={isStreaming}
             isStopping={isStopping}
+            pendingInput={pendingInput}
             isLoadingSession={isLoadingSession}
             isError={isError}
             sendMessage={sendMessage}
+            submitOnboardingAnswer={submitOnboardingAnswer}
             stopMessage={stopMessage}
             userCurationPlaybackState={userCurationPlaybackState}
             onToggleUserCurationTrackPlayback={

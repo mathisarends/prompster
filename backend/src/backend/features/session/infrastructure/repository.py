@@ -10,6 +10,7 @@ from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
     FailedCall,
+    OnboardingQuestion,
     PendingCall,
     Playlist,
     PlaylistReference,
@@ -36,6 +37,7 @@ from backend.infrastructure.database.orm import (
     SessionModel,
     SessionPlaylistReferenceModel,
     SessionPlaylistModel,
+    SessionOnboardingQuestionModel,
     SessionToolCallSequenceModel,
     SessionToolCallModel,
     SessionUserCurationEventModel,
@@ -106,6 +108,11 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             session_id=session_id,
             references=session.artist_references,
         )
+        self._sync_onboarding_questions(
+            orm=orm,
+            session_id=session_id,
+            questions=session.onboarding_questions,
+        )
         orm.playlist = self._to_orm_playlist(
             domain_playlist=session.playlist,
             session_id=session_id,
@@ -140,6 +147,10 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             orm.artist_references,
             key=lambda item: item.position,
         )
+        onboarding_questions = sorted(
+            orm.onboarding_questions,
+            key=lambda item: item.sequence_number,
+        )
         self._hydrate_user_message_curation_events(
             entries=ordered_entries,
             events=domain_user_curation_events,
@@ -151,7 +162,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             entries=ordered_entries,
             owner_id=orm.owner_id,
             is_starred=orm.is_starred,
-            phase=Phase(orm.phase or Phase.BUILD),
+            phase=Phase(orm.phase or Phase.ONBOARDING),
             playlist=self._to_domain_playlist(orm.playlist),
             user_curation_events=domain_user_curation_events,
             playlist_references=[
@@ -161,6 +172,10 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             artist_references=[
                 self._to_domain_artist_reference(reference)
                 for reference in artist_references
+            ],
+            onboarding_questions=[
+                self._to_domain_onboarding_question(question)
+                for question in onboarding_questions
             ],
             created_time=orm.created_at,
         )
@@ -239,6 +254,11 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             orm=orm,
             session_id=session_id,
             references=domain.artist_references,
+        )
+        self._sync_onboarding_questions(
+            orm=orm,
+            session_id=session_id,
+            questions=domain.onboarding_questions,
         )
         orm.playlist = self._to_orm_playlist(
             domain_playlist=domain.playlist,
@@ -429,6 +449,33 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
 
         orm.artist_references = rows
 
+    def _sync_onboarding_questions(
+        self,
+        *,
+        orm: SessionModel,
+        session_id: UUID,
+        questions: tuple[OnboardingQuestion, ...],
+    ) -> None:
+        existing_rows = {row.id: row for row in orm.onboarding_questions if row.id}
+
+        rows: list[SessionOnboardingQuestionModel] = []
+        for question in questions:
+            row = existing_rows.get(question.id)
+            if row is None:
+                row = SessionOnboardingQuestionModel(id=question.id)
+            row.session_id = session_id
+            row.sequence_number = question.sequence_number
+            row.question_text = question.question_text
+            row.options = list(question.options)
+            row.is_last_question = question.is_last_question
+            row.answer = question.answer
+            row.is_answered = question.is_answered
+            row.answered_at = question.answered_at
+            row.created_at = question.created_at
+            rows.append(row)
+
+        orm.onboarding_questions = rows
+
     def _detail_query(self, *, session_id: UUID):
         return (
             select(SessionModel)
@@ -441,6 +488,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
                 selectinload(SessionModel.user_curation_events),
                 selectinload(SessionModel.playlist_references),
                 selectinload(SessionModel.artist_references),
+                selectinload(SessionModel.onboarding_questions),
                 selectinload(SessionModel.tool_call_sequences).selectinload(
                     SessionToolCallSequenceModel.calls
                 ),
@@ -467,6 +515,13 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             created_at = getattr(reference, "created_at", None)
             if isinstance(created_at, datetime) and created_at > latest:
                 latest = created_at
+        for question in session.onboarding_questions:
+            created_at = getattr(question, "created_at", None)
+            if isinstance(created_at, datetime) and created_at > latest:
+                latest = created_at
+            answered_at = getattr(question, "answered_at", None)
+            if isinstance(answered_at, datetime) and answered_at > latest:
+                latest = answered_at
         return latest
 
     def _to_domain_user_curation_event(
@@ -509,6 +564,21 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             genres=tuple(row.genres or ()),
             followers=row.followers,
             popularity=row.popularity,
+            created_time=row.created_at,
+        )
+
+    def _to_domain_onboarding_question(
+        self, row: SessionOnboardingQuestionModel
+    ) -> OnboardingQuestion:
+        return OnboardingQuestion(
+            id=row.id,
+            sequence_number=row.sequence_number,
+            question_text=row.question_text,
+            options=tuple(row.options or ()),
+            is_last_question=row.is_last_question,
+            answer=row.answer,
+            is_answered=row.is_answered,
+            answered_at=row.answered_at,
             created_time=row.created_at,
         )
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Self
 from uuid import UUID
 
@@ -22,6 +22,7 @@ from backend.features.session.domain.entities import (
     AssistantMessage,
     CompletedCall,
     FailedCall,
+    OnboardingQuestion,
     PendingCall,
     Playlist,
     PlaylistReference,
@@ -50,7 +51,8 @@ class Session(Aggregate):
         user_curation_events: list[UserCurationEvent] | None = None,
         playlist_references: list[PlaylistReference] | None = None,
         artist_references: list[ArtistReference] | None = None,
-        phase: Phase = Phase.BUILD,
+        phase: Phase = Phase.ONBOARDING,
+        onboarding_questions: list[OnboardingQuestion] | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> None:
@@ -64,6 +66,10 @@ class Session(Aggregate):
         self._playlist_references: list[PlaylistReference] = playlist_references or []
         self._artist_references: list[ArtistReference] = artist_references or []
         self._phase = phase
+        self._onboarding_questions: list[OnboardingQuestion] = (
+            onboarding_questions or []
+        )
+
         if self._playlist is not None:
             self._assert_track_limit(total_tracks=len(self._playlist.tracks))
 
@@ -106,6 +112,10 @@ class Session(Aggregate):
     @property
     def artist_references(self) -> tuple[ArtistReference, ...]:
         return tuple(self._artist_references)
+
+    @property
+    def onboarding_questions(self) -> tuple[OnboardingQuestion, ...]:
+        return tuple(self._onboarding_questions)
 
     @property
     def unconsumed_user_curation_events(self) -> list[UserCurationEvent]:
@@ -317,6 +327,66 @@ class Session(Aggregate):
                 return
         raise ArtistReferenceNotFoundError(
             f"Artist reference {reference_id} not found in session {self.id}."
+        )
+
+    def add_onboarding_question(
+        self,
+        *,
+        question_text: str,
+        options: tuple[str, ...] = (),
+        is_last_question: bool = False,
+    ) -> OnboardingQuestion:
+        sequence_number = len(self._onboarding_questions) + 1
+        question = OnboardingQuestion(
+            sequence_number=sequence_number,
+            question_text=question_text,
+            options=options,
+            is_last_question=is_last_question,
+        )
+        self._onboarding_questions.append(question)
+        return question
+
+    def answer_onboarding_question(
+        self, *, question_id: UUID, answer: str
+    ) -> OnboardingQuestion:
+        normalized = answer.strip()
+        if not normalized:
+            raise ValueError("Onboarding answer must not be empty.")
+
+        for question in self._onboarding_questions:
+            if question.id != question_id:
+                continue
+            if question.is_answered:
+                raise ValueError(
+                    f"Onboarding question {question_id} is already answered."
+                )
+            question.answer_with(normalized, answered_at=datetime.now(timezone.utc))
+            if question.is_last_question:
+                self._reconstruct_onboarding_history()
+            return question
+
+        raise ValueError(f"Onboarding question {question_id} not found.")
+
+    def _reconstruct_onboarding_history(self) -> None:
+        self._entries = [
+            entry
+            for entry in self._entries
+            if not self._is_onboarding_tool_call_sequence(entry)
+        ]
+        answered = [q for q in self._onboarding_questions if q.is_answered]
+        if not answered:
+            return
+        lines = ["Beantwortete Onboarding-Fragen:"]
+        for i, q in enumerate(answered, 1):
+            lines.append(f"{i}. {q.question_text} -> {q.answer}")
+        self._entries.append(UserMessage(content="\n".join(lines)))
+        self._entries.append(AssistantMessage(content="Understood."))
+
+    def _is_onboarding_tool_call_sequence(self, entry: SessionEntry) -> bool:
+        if not isinstance(entry, ToolCallSequence):
+            return False
+        return all(
+            call.function.name == "ask_onboarding_question" for call in entry.calls
         )
 
     def add_user_message(

@@ -42,7 +42,9 @@ class TestToolsFacadeAbstraction:
             schema["function"]["name"] for schema in tools.to_schema(phase=Phase.BUILD)
         }
 
-        assert onboarding_tool_names == set()
+        assert {
+            "ask_onboarding_question",
+        }.issubset(onboarding_tool_names)
         assert {
             "search_tracks",
             "search_albums",

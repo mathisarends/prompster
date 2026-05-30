@@ -9,7 +9,10 @@ import {
   stopMessage as stopSessionMessage,
   useGetSession,
 } from "@/api/generated/session-api";
-import { streamSendMessage } from "@/api/session-stream";
+import {
+  streamSendMessage,
+  streamSubmitOnboardingAnswer,
+} from "@/api/session-stream";
 
 import {
   chatReducer,
@@ -17,6 +20,7 @@ import {
   type ChatAction,
   type ChatEntry,
   type ChatPlaylist,
+  type PendingInput,
 } from "./chat-page.state";
 
 type StreamOptions = Parameters<typeof streamSendMessage>[2];
@@ -36,10 +40,12 @@ export type UseChatSessionResult = {
   isTitlePending: boolean;
   isStreaming: boolean;
   isStopping: boolean;
+  pendingInput: PendingInput | null;
   errorMessage?: string;
   isLoadingSession: boolean;
   isError: boolean;
   sendMessage: (text: string) => void;
+  submitOnboardingAnswer: (questionId: string, answer: string) => void;
   stopMessage: () => void;
   removePlaylistTrack: (trackId: string) => Promise<void>;
 };
@@ -225,6 +231,26 @@ export const useChatSession = ({
     [streamAssistantResponse],
   );
 
+  const submitOnboardingAnswer = useCallback(
+    (questionId: string, answer: string) => {
+      const normalizedAnswer = answer.trim();
+      if (!normalizedAnswer) return;
+
+      void runEventStream(
+        {
+          type: "stream/started",
+        },
+        (streamOptions) =>
+          streamSubmitOnboardingAnswer(
+            sessionId,
+            { questionId, answer: normalizedAnswer },
+            streamOptions,
+          ),
+      );
+    },
+    [runEventStream, sessionId],
+  );
+
   const stopMessage = useCallback(() => {
     if (!sessionId || !isStreamingRef.current || isStoppingRef.current) return;
 
@@ -275,10 +301,12 @@ export const useChatSession = ({
     isTitlePending,
     isStreaming: state.isStreaming,
     isStopping,
+    pendingInput: state.pendingInput,
     errorMessage: state.errorMessage,
     isLoadingSession: isLoading && state.entries.length === 0,
     isError,
     sendMessage,
+    submitOnboardingAnswer,
     stopMessage,
     removePlaylistTrack: removePlaylistTrackFromSession,
   };

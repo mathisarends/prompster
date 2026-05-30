@@ -204,6 +204,11 @@ class SendMessageRequest(Schema):
         return self
 
 
+class SubmitOnboardingAnswerRequest(Schema):
+    question_id: UUID
+    answer: str = Field(min_length=1, max_length=2000)
+
+
 class AddPlaylistTrackRequest(Schema):
     title: str = Field(min_length=1, max_length=300)
     artist: str = Field(min_length=1, max_length=300)

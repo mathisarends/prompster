@@ -21,7 +21,8 @@ const PROMPT_SUGGESTIONS = [
   {
     label: "Eurovision Hits",
     icon: Trophy,
-    prompt: "Ich moechte ein Deck mit den groessten Eurovision-Hits von 2000 bis 2020.",
+    prompt:
+      "Ich moechte ein Deck mit den groessten Eurovision-Hits von 2000 bis 2020.",
   },
   {
     label: "Party-Anthems",
@@ -75,8 +76,9 @@ export const HomePage = () => {
                 Welche Musik soll dein Deck haben?
               </h1>
               <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-lg">
-                Beschreib dein Wunsch-Deck in einem Satz. Der Agent fragt
-                gezielt nach und erstellt daraus Schritt fur Schritt dein Deck.
+                Egal ob für die WG-Party, den Roadtrip oder als persönliches
+                Geschenk: Sag uns in einem Satz, was du suchst. Wir bauen dir
+                daraus Karte für Karte dein Wunsch-Deck.
               </p>
             </div>
 

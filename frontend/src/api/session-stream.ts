@@ -15,7 +15,11 @@ type StreamSendMessageOptions = {
   onEvent?: (event: SessionServerEvent) => void;
 };
 
-type StreamRequestBody = SendMessageRequest;
+type StreamRequestBody = SendMessageRequest | SubmitOnboardingAnswerBody;
+type SubmitOnboardingAnswerBody = {
+  questionId: string;
+  answer: string;
+};
 
 const getApiUrl = (path: string) => {
   const baseUrl = String(
@@ -33,6 +37,17 @@ export const streamSendMessage = async (
   options: StreamSendMessageOptions,
 ) =>
   streamSessionRequest(`/api/v1/sessions/${sessionId}/messages`, body, options);
+
+export const streamSubmitOnboardingAnswer = async (
+  sessionId: string,
+  body: SubmitOnboardingAnswerBody,
+  options: StreamSendMessageOptions,
+) =>
+  streamSessionRequest(
+    `/api/v1/sessions/${sessionId}/onboarding-answer`,
+    body,
+    options,
+  );
 
 const streamSessionRequest = async (
   path: string,

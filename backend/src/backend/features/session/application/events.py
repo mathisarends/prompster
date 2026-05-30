@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import StrEnum
 from uuid import UUID
 
 from backend.features.session.domain import (
@@ -7,6 +8,11 @@ from backend.features.session.domain import (
     PlaylistTrack,
     ToolCallSequence,
 )
+
+
+class SuspensionKind(StrEnum):
+    ONBOARDING_QUESTION = "onboarding_question"
+    PLAYLIST_CONTEXT = "playlist_context"
 
 
 @dataclass(frozen=True)
@@ -83,6 +89,15 @@ class SessionTitleGenerated:
     title: str
 
 
+@dataclass(frozen=True)
+class SessionSuspendedForInput:
+    kind: SuspensionKind
+    question: str | None = None
+    options: list[str] | None = None
+    question_id: UUID | None = None
+    is_last_question: bool = False
+
+
 type SessionEvent = (
     SessionAssistantMessageStarted
     | SessionAssistantMessageChunk
@@ -97,4 +112,5 @@ type SessionEvent = (
     | SessionPlaylistTrackRemoved
     | SessionPlaylistTrackReplaced
     | SessionTitleGenerated
+    | SessionSuspendedForInput
 )

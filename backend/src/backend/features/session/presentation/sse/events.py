@@ -36,6 +36,7 @@ class SessionEventType(StrEnum):
     PLAYLIST_TRACK_ADDED = "playlist.track_added"
     PLAYLIST_TRACK_REMOVED = "playlist.track_removed"
     PLAYLIST_TRACK_REPLACED = "playlist.track_replaced"
+    SUSPENDED_FOR_INPUT = "session.suspended_for_input"
 
     DONE = "done"
     ERROR = "error"
@@ -155,6 +156,16 @@ class PlaylistTrackReplacedEvent(_SessionEventSchema):
     track: PlaylistTrackResponse
 
 
+class SuspendedForInputEvent(_SessionEventSchema):
+    type: Literal[SessionEventType.SUSPENDED_FOR_INPUT] = (
+        SessionEventType.SUSPENDED_FOR_INPUT
+    )
+    kind: str
+    question: str | None = None
+    options: list[str] = Field(default_factory=list)
+    question_id: UUID | None = None
+
+
 class DoneEvent(_SessionEventSchema):
     type: Literal[SessionEventType.DONE] = SessionEventType.DONE
 
@@ -182,6 +193,7 @@ ServerEvent = Annotated[
         PlaylistTrackAddedEvent,
         PlaylistTrackRemovedEvent,
         PlaylistTrackReplacedEvent,
+        SuspendedForInputEvent,
         DoneEvent,
         ErrorEvent,
     ],

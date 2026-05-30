@@ -23,6 +23,7 @@ from backend.features.session.presentation.schemas import (
     ErrorResponse,
     PlaylistTrackResponse,
     SendMessageRequest,
+    SubmitOnboardingAnswerRequest,
     SessionCreateRequest,
     SessionResponse,
     SessionSummaryListResponse,
@@ -176,6 +177,28 @@ async def send_message(
                 )
                 for attachment in body.attachments
             ],
+        )
+    )
+
+
+@router.post(
+    "/{session_id}/onboarding-answer",
+    status_code=status.HTTP_200_OK,
+    operation_id="submit_onboarding_answer",
+    responses=_event_stream_response | _auth_errors | _bad_request | _not_found,
+)
+async def submit_onboarding_answer(
+    session_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    body: SubmitOnboardingAnswerRequest,
+    service: FromDishka[SessionConversationService],
+) -> StreamingResponse:
+    return stream_session_events(
+        service.submit_onboarding_answer(
+            session_id=session_id,
+            user_id=authenticated_user_id,
+            question_id=body.question_id,
+            answer=body.answer,
         )
     )
 

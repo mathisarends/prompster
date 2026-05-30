@@ -15,9 +15,14 @@ import { ToolCallAccordion } from "@/components/chat/tool-call-sequence";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserChatMessage } from "@/components/chat/user-chat-message";
 import { UserCurationEventContext } from "@/components/chat/user-curation";
+import { Button } from "@/components/ui/button";
 import { useStickyScroll } from "@/hooks/useStickyScroll";
 import { cn } from "@/lib/utils";
-import { type ChatEntry, toToolCallItems } from "@/pages/chat-page.state";
+import {
+  type ChatEntry,
+  type PendingInput,
+  toToolCallItems,
+} from "@/pages/chat-page.state";
 
 type UserCurationTrackPlaybackState = {
   activeTrackUri: string | null;
@@ -33,9 +38,11 @@ type ChatSessionPaneProps = {
   isTitlePending: boolean;
   isStreaming: boolean;
   isStopping: boolean;
+  pendingInput: PendingInput | null;
   isLoadingSession: boolean;
   isError: boolean;
   sendMessage: (text: string) => void;
+  submitOnboardingAnswer: (questionId: string, answer: string) => void;
   stopMessage: () => void;
   userCurationPlaybackState: UserCurationTrackPlaybackState;
   onToggleUserCurationTrackPlayback?: (
@@ -66,9 +73,11 @@ export const ChatSessionPane = ({
   isTitlePending,
   isStreaming,
   isStopping,
+  pendingInput,
   isLoadingSession,
   isError,
   sendMessage,
+  submitOnboardingAnswer,
   stopMessage,
   userCurationPlaybackState,
   onToggleUserCurationTrackPlayback,
@@ -82,6 +91,19 @@ export const ChatSessionPane = ({
     entries,
     isStreaming,
   );
+  const isOnboardingQuestionPending =
+    pendingInput?.kind === "onboarding_question" && Boolean(pendingInput.questionId);
+  const pendingQuestion = pendingInput?.question?.trim();
+  const pendingOptions = pendingInput?.options ?? [];
+
+  const submitPrompt = (text: string) => {
+    if (isOnboardingQuestionPending && pendingInput?.questionId) {
+      submitOnboardingAnswer(pendingInput.questionId, text);
+      setPrompt("");
+      return;
+    }
+    sendMessage(text);
+  };
 
   const renderEntry = (entry: ChatEntry, previousEntry?: ChatEntry) => {
     switch (entry.kind) {
@@ -184,17 +206,46 @@ export const ChatSessionPane = ({
           <ChatInputBox
             value={prompt}
             onChange={setPrompt}
-            onSubmit={sendMessage}
+            onSubmit={submitPrompt}
             onStop={stopMessage}
             placeholder="Deine Antwort ..."
             sendButtonAriaLabel="Nachricht senden"
             className="rounded-3xl border border-border/50 bg-card/70 p-4 shadow-2xl shadow-black/20"
             textareaClassName="max-h-40"
             rows={1}
-            disabled={!sessionId || isLoadingSession || isError}
+            disabled={
+              !sessionId ||
+              isLoadingSession ||
+              isError
+            }
             isSubmitting={isStreaming}
             isStopping={isStopping}
           />
+          {isOnboardingQuestionPending ? (
+            <div className="mt-3 rounded-2xl border border-border/60 bg-card/65 p-4">
+              <p className="text-sm font-medium text-foreground">
+                {pendingQuestion || "Bitte beantworte kurz diese Frage:"}
+              </p>
+              {pendingOptions.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {pendingOptions.map((option) => (
+                    <Button
+                      key={option}
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={isStreaming}
+                      onClick={() =>
+                        submitOnboardingAnswer(pendingInput.questionId!, option)
+                      }
+                    >
+                      {option}
+                    </Button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
     </section>

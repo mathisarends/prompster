@@ -15,6 +15,7 @@ class ActionType(StrEnum):
     SEARCH = "search"
     FETCH = "fetch"
     MUTATE = "mutate"
+    INTERACT = "interact"
 
 
 class Phase(StrEnum):
@@ -54,6 +55,7 @@ class Tool:
         fn: Callable[..., Any],
         status_label: Callable[[Any], str] | None = None,
         action_type: ActionType = ActionType.FETCH,
+        suspends_for_input: bool = False,
         included_in_phases: Iterable[Phase] | None = None,
         schema: dict | None = None,
         param_model: type[BaseModel] | None = None,
@@ -62,6 +64,7 @@ class Tool:
         self.description = description
         self.fn = fn
         self.action_type = action_type
+        self.suspends_for_input = suspends_for_input
         self.included_in_phases = frozenset(included_in_phases or ())
         self._schema = schema
         self.param_model = param_model
@@ -157,3 +160,10 @@ class PlaylistIdParams(ToolParams):
 
 class GenerateCardsParams(ToolParams):
     playlist_id: str
+
+
+class AskOnboardingQuestionParams(ToolParams):
+    status: str = "Stelle Onboarding-Frage..."
+    question: str
+    options: list[str] = Field(default_factory=list, min_length=0, max_length=6)
+    is_last_question: bool = False

@@ -1,6 +1,7 @@
 from agent.agent import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
+    SuspendedForInputEvent,
     ToolCallEvent,
     ToolResultEvent,
     WorkspaceUpdatedEvent,
@@ -20,6 +21,7 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerPlaylistTracksAdded,
     SessionRunnerPlaylistTracksRemoved,
     SessionRunnerPlaylistTracksReplaced,
+    SessionRunnerSuspendedForInput,
     SessionRunnerPlaylistUpdated,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallStarted,
@@ -53,6 +55,8 @@ class AgentSessionEventMapper:
                 return [self._map_tool_call_completed(event)]
             case WorkspaceUpdatedEvent():
                 return [self._map_workspace_updated(event)]
+            case SuspendedForInputEvent():
+                return [self._map_suspended_for_input(event)]
             case _:
                 return []
 
@@ -119,6 +123,15 @@ class AgentSessionEventMapper:
                 return SessionRunnerPlaylistUpdated(
                     playlist=self._to_playlist(event.playlist_draft)
                 )
+
+    def _map_suspended_for_input(
+        self, event: SuspendedForInputEvent
+    ) -> SessionRunnerSuspendedForInput:
+        return SessionRunnerSuspendedForInput(
+            question=event.question,
+            options=list(event.options),
+            is_last_question=event.is_last_question,
+        )
 
     def _to_tool_action_type(self, value: str | None) -> ToolActionType | None:
         if value is None:

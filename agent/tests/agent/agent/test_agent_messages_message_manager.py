@@ -21,6 +21,7 @@ from agent.messages import (
     render_user_events_block,
     render_user_message_content,
 )
+from agent.tools.views import Phase
 from agent.views import UserCurationEventType, UserEvent
 from agent.playlist import PlaylistDraft, PlaylistDraftTrack
 
@@ -62,6 +63,22 @@ class TestMessageManagerBaseline:
         messages = manager.all()
         assert [type(m) for m in messages] == [SystemMessage]
         assert messages[0].content == "Prompt"
+
+    def test_onboarding_nudge_is_injected_as_confirmed_context(self) -> None:
+        manager = MessageManager(
+            system_prompt="Prompt",
+            phase=Phase.ONBOARDING,
+        )
+
+        messages = manager.all()
+
+        assert [type(m) for m in messages] == [
+            SystemMessage,
+            UserMessage,
+            AssistantMessage,
+        ]
+        assert "ask_onboarding_question" in messages[1].content
+        assert messages[2].content == "Understood."
 
 
 class TestMessageManagerConversationTurns:

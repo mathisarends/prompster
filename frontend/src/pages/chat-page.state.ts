@@ -55,7 +55,15 @@ export type ChatState = {
   entries: ChatEntry[];
   playlist: ChatPlaylist | null;
   isStreaming: boolean;
+  pendingInput: PendingInput | null;
   errorMessage?: string;
+};
+
+export type PendingInput = {
+  kind: string;
+  question?: string | null;
+  options: string[];
+  questionId?: string | null;
 };
 
 export type ChatAction =
@@ -68,12 +76,14 @@ export type ChatAction =
   | { type: "stream/finished" }
   | { type: "stream/stopped" }
   | { type: "stream/failed"; message: string }
+  | { type: "pending_input/clear" }
   | { type: "stream/event"; event: SessionServerEvent };
 
 export const createInitialChatState = (): ChatState => ({
   entries: [],
   playlist: null,
   isStreaming: false,
+  pendingInput: null,
 });
 
 export const chatReducer = (
@@ -103,6 +113,7 @@ export const chatReducer = (
             ]
           : state.entries,
         isStreaming: true,
+        pendingInput: null,
         errorMessage: undefined,
       };
 
@@ -125,6 +136,12 @@ export const chatReducer = (
         entries: upsertStreamErrorEntry(state.entries, action.message),
         isStreaming: false,
         errorMessage: action.message,
+      };
+
+    case "pending_input/clear":
+      return {
+        ...state,
+        pendingInput: null,
       };
 
     case "stream/event":
@@ -291,6 +308,36 @@ const reduceServerEvent = (
   state: ChatState,
   event: SessionServerEvent,
 ): ChatState => {
+  const eventType = (event as { type?: string }).type;
+  if (eventType === "session.suspended_for_input") {
+    const payload = event as {
+      kind?: string;
+      question?: string | null;
+      options?: unknown;
+      questionId?: string | null;
+    };
+    const kind = payload.kind ?? "onboarding_question";
+    if (kind !== "onboarding_question") {
+      return {
+        ...state,
+        pendingInput: null,
+      };
+    }
+    return {
+      ...state,
+      pendingInput: {
+        kind,
+        question: payload.question ?? null,
+        options: Array.isArray(payload.options)
+          ? payload.options.filter((option): option is string =>
+              typeof option === "string",
+            )
+          : [],
+        questionId: payload.questionId ?? null,
+      },
+    };
+  }
+
   switch (event.type) {
     case "session.snapshot":
       return {

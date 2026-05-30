@@ -8,6 +8,7 @@ from backend.features.session.application import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionPlaylistTrackReplaced,
+    SessionSuspendedForInput,
     SessionTitleGenerated,
     SessionToolCallFailed,
     SessionToolCallSequenceAdded,
@@ -33,6 +34,7 @@ from backend.features.session.presentation.sse.events import (
     PlaylistTrackRemovedEvent,
     PlaylistTrackReplacedEvent,
     ServerEvent,
+    SuspendedForInputEvent,
     TitleGeneratedEvent,
     ToolCallFailedEvent,
     ToolCallSequenceAddedEvent,
@@ -111,6 +113,14 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
             playlist_id=event.playlist_id,
             track_id=event.track_id,
             track=to_playlist_track_response(event.track),
+        )
+
+    if isinstance(event, SessionSuspendedForInput):
+        return SuspendedForInputEvent(
+            kind=event.kind,
+            question=event.question,
+            options=list(event.options or []),
+            question_id=event.question_id,
         )
 
     raise TypeError(f"Unsupported session event: {type(event).__name__}")

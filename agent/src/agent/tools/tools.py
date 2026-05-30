@@ -18,6 +18,7 @@ from agent.tools.views import (
     ActionType,
     AddDraftPlaylistTracksParams,
     AlbumTracksParams,
+    AskOnboardingQuestionParams,
     ArtistAlbumsParams,
     ArtistTopTracksParams,
     CreateDraftPlaylistParams,
@@ -69,6 +70,7 @@ class Tools:
         params: type[P] | None = None,
         status_label: Callable[[P], str] | None = None,
         action_type: ActionType = ActionType.FETCH,
+        suspends_for_input: bool = False,
         included_in_phases: set[Phase] | None = None,
     ) -> Callable:
         def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
@@ -79,6 +81,7 @@ class Tools:
                     fn=fn,
                     status_label=status_label,
                     action_type=action_type,
+                    suspends_for_input=suspends_for_input,
                     included_in_phases=included_in_phases,
                     param_model=params,
                 )
@@ -122,6 +125,24 @@ class Tools:
         return result.model_dump_json()
 
     def _register_default_tools(self) -> None:
+        @self.action(
+            description=(
+                "Stelle dem User eine einzelne Onboarding-Klärungsfrage. "
+                "Dieses Tool pausiert den Run, bis der User geantwortet hat."
+            ),
+            params=AskOnboardingQuestionParams,
+            status_label=lambda params: params.status,
+            action_type=ActionType.INTERACT,
+            suspends_for_input=True,
+            included_in_phases={Phase.ONBOARDING},
+        )
+        async def ask_onboarding_question(
+            params: AskOnboardingQuestionParams,
+        ) -> ActionResult:
+            return ActionResult.ok(
+                extracted_content=f"Frage gestellt: {params.question}"
+            )
+
         @self.action(
             params=SearchParams,
             status_label=lambda params: params.status,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChartColumn, Download, ListMusic } from "lucide-react";
 import { toast } from "sonner";
@@ -7,7 +7,6 @@ import type {
   PlaylistTrackResponse,
   SpotifyPlaylistExportResponse,
   SpotifyTrackResponse,
-  UserCurationEventResponse,
 } from "@/api/generated/model";
 import {
   addPlaylistTrack,
@@ -18,12 +17,8 @@ import {
   pinPlaylistTrack,
   unpinPlaylistTrack,
 } from "@/api/generated/session-api";
-import { getGetMeQueryKey, useGetMe } from "@/api/generated/user-api";
 import { ChatWorkspacePanel } from "@/components/chat/chat-workspace-panel";
-import {
-  DeckPlaylist,
-  type DeckPlaylistController,
-} from "@/components/deck/deck-playlist";
+import { DeckPlaylist } from "@/components/deck/deck-playlist";
 import { DeckTimeline } from "@/components/deck/deck-timeline";
 import {
   DeckExportActions,
@@ -32,9 +27,11 @@ import {
 } from "@/components/deck/export";
 import { SpotifyConnectDialog } from "@/components/deck/spotify-connect-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  type CurationTrackPlayerBridge,
+  useDeckPlayerController,
+} from "@/hooks/useDeckPlayerController";
 import { useSpotifyOAuthPopup } from "@/hooks/useSpotifyOAuthPopup";
-import { useSpotifyPlayer } from "@/hooks/useSpotifyPlayer";
-import type { PlaylistTrack } from "@/lib/playlist-track";
 
 type DeckWorkspaceViewProps = {
   sessionId: string;
@@ -46,15 +43,9 @@ type DeckWorkspaceViewProps = {
   };
   onRemoveTrack?: (trackId: string) => Promise<void>;
   onCurationTrackPlayerChange?: (
-    bridge: {
-      activeTrackUri: string | null;
-      isPlaying: boolean;
-      onTogglePlayback: (event: UserCurationEventResponse) => void;
-    } | null,
+    bridge: CurationTrackPlayerBridge | null,
   ) => void;
 };
-
-type SpotifyMode = "loading" | "disconnected" | "non-premium" | "ready";
 
 export const DeckWorkspaceView = ({
   sessionId,
@@ -64,32 +55,14 @@ export const DeckWorkspaceView = ({
 }: DeckWorkspaceViewProps) => {
   const showSpotifyConnectDialog = false;
   const queryClient = useQueryClient();
-  const { data: me, isLoading: isMeLoading } = useGetMe();
   const { isSpotifyOAuthLoading, openSpotifyOAuthPopup } =
     useSpotifyOAuthPopup();
-  const [volume, setVolume] = useState(72);
   const [addingSpotifyTrackId, setAddingSpotifyTrackId] = useState<
     string | null
   >(null);
-  const [previewTrack, setPreviewTrack] = useState<PlaylistTrack | null>(null);
   const [exportedPlaylist, setExportedPlaylist] =
     useState<SpotifyPlaylistExportResponse | null>(null);
   const [activeTab, setActiveTab] = useState("playlist");
-  const spotifyMode = useMemo<SpotifyMode>(() => {
-    if (isMeLoading || !me) return "loading";
-    if (!me.spotifyConnected) return "disconnected";
-    if (!me.spotifyPremium) return "non-premium";
-    return "ready";
-  }, [isMeLoading, me]);
-
-  const {
-    state: playerState,
-    playTrack,
-    pause,
-    resume,
-    seek,
-    setVolume: setSpotifyVolume,
-  } = useSpotifyPlayer({ enabled: spotifyMode === "ready" });
 
   const tracks = useMemo(
     () =>
@@ -106,183 +79,17 @@ export const DeckWorkspaceView = ({
     [playlist.tracks],
   );
 
-  const activeTrackId = useMemo(() => {
-    const playlistMatch = tracks.find(
-      (track) => track.spotifyUri === playerState.currentTrackUri,
-    );
-    if (playlistMatch) return playlistMatch.id;
-
-    if (
-      previewTrack &&
-      previewTrack.spotifyUri === playerState.currentTrackUri
-    ) {
-      return previewTrack.id;
-    }
-    return null;
-  }, [playerState.currentTrackUri, previewTrack, tracks]);
-
-  const runtimePlaybackBlocked =
-    spotifyMode === "ready" &&
-    (playerState.status === "premium-required" ||
-      playerState.status === "auth-error");
-  const showPlaybackControls =
-    spotifyMode === "ready" && !runtimePlaybackBlocked;
-  const showPremiumRequiredHint =
-    spotifyMode === "non-premium" || runtimePlaybackBlocked;
-
-  const playSpotifyUri = useCallback(
-    (uri: string) => {
-      void playTrack(uri).catch(() => {
-        toast.error("Song konnte nicht abgespielt werden.");
-      });
-    },
-    [playTrack],
-  );
-
-  const controller = useMemo<DeckPlaylistController | undefined>(() => {
-    if (!showPlaybackControls) {
-      return undefined;
-    }
-
-    return {
-      isPlaying: !playerState.isPaused && Boolean(playerState.currentTrackUri),
-      activeTrackId,
-      positionSeconds: playerState.positionMs / 1000,
-      durationSeconds: playerState.durationMs / 1000,
-      volume,
-      onPlayTrack: (trackId: string) => {
-        const track =
-          tracks.find((candidate) => candidate.id === trackId) ??
-          (previewTrack?.id === trackId ? previewTrack : null);
-        if (!track?.spotifyUri) {
-          return;
-        }
-
-        playSpotifyUri(track.spotifyUri);
-      },
-      onPause: () => {
-        void pause();
-      },
-      onResume: () => {
-        void resume();
-      },
-      onSeek: (seconds: number) => {
-        void seek(Math.round(seconds * 1000));
-      },
-      onVolumeChange: (nextVolume: number) => {
-        setVolume(nextVolume);
-        void setSpotifyVolume(nextVolume / 100);
-      },
-    };
-  }, [
-    activeTrackId,
-    pause,
-    playSpotifyUri,
-    playerState.currentTrackUri,
-    playerState.durationMs,
-    playerState.isPaused,
-    playerState.positionMs,
+  const {
+    spotifyMode,
+    controller,
+    showPlaybackControls,
+    showPremiumRequiredHint,
     previewTrack,
-    resume,
-    seek,
-    setSpotifyVolume,
-    showPlaybackControls,
+    previewSpotifyTrack,
+  } = useDeckPlayerController({
     tracks,
-    volume,
-  ]);
-
-  const previewSpotifyTrack = (track: SpotifyTrackResponse) => {
-    const uri = `spotify:track:${track.id}`;
-    setPreviewTrack({
-      id: track.id,
-      title: track.title,
-      artist: track.artist,
-      year: track.year?.toString() ?? "",
-      durationSeconds: 0,
-      coverUrl: track.coverUrl ?? "",
-      spotifyUri: uri,
-      isPinned: false,
-    });
-    playSpotifyUri(uri);
-  };
-
-  const toggleCurationEventTrackPlayback = useCallback(
-    (event: UserCurationEventResponse) => {
-      if (!event.trackSpotifyUri) return;
-
-      if (event.trackSpotifyUri === playerState.currentTrackUri) {
-        if (playerState.isPaused) {
-          void resume();
-        } else {
-          void pause();
-        }
-        return;
-      }
-
-      const playlistTrack = tracks.find(
-        (track) =>
-          track.id === event.trackId ||
-          track.spotifyUri === event.trackSpotifyUri,
-      );
-
-      if (!playlistTrack) {
-        setPreviewTrack({
-          id: event.trackId,
-          title: event.trackTitle,
-          artist: event.trackArtist,
-          year: event.trackYear?.toString() ?? "",
-          durationSeconds: 0,
-          coverUrl: event.trackCoverUrl ?? "",
-          spotifyUri: event.trackSpotifyUri,
-          isPinned: false,
-        });
-      }
-
-      playSpotifyUri(event.trackSpotifyUri);
-    },
-    [
-      pause,
-      playSpotifyUri,
-      playerState.currentTrackUri,
-      playerState.isPaused,
-      resume,
-      tracks,
-    ],
-  );
-
-  useEffect(() => {
-    if (!onCurationTrackPlayerChange) return;
-
-    if (!showPlaybackControls) {
-      onCurationTrackPlayerChange(null);
-      return;
-    }
-
-    onCurationTrackPlayerChange({
-      activeTrackUri: playerState.currentTrackUri,
-      isPlaying: !playerState.isPaused && Boolean(playerState.currentTrackUri),
-      onTogglePlayback: toggleCurationEventTrackPlayback,
-    });
-    return () => onCurationTrackPlayerChange(null);
-  }, [
     onCurationTrackPlayerChange,
-    playerState.currentTrackUri,
-    playerState.isPaused,
-    showPlaybackControls,
-    toggleCurationEventTrackPlayback,
-  ]);
-
-  useEffect(() => {
-    if (spotifyMode !== "ready") return;
-    if (
-      playerState.status !== "premium-required" &&
-      playerState.status !== "auth-error"
-    ) {
-      return;
-    }
-
-    void queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
-  }, [playerState.status, queryClient, spotifyMode]);
+  });
 
   const { pdfPreview, isLoadingPdfPreview } = usePdfPreview({
     sessionId,
@@ -418,7 +225,7 @@ export const DeckWorkspaceView = ({
           >
             {showPremiumRequiredHint ? (
               <div className="mb-3 rounded-md border border-amber-300/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-                Spotify Premium ist erforderlich fuer In-Browser-Wiedergabe. Du
+                Spotify Premium ist erforderlich für In-Browser-Wiedergabe. Du
                 kannst die Playlist weiterhin kuratieren und nach Spotify
                 exportieren.
               </div>

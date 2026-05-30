@@ -66,6 +66,13 @@ class SessionRunnerCancelled:
     pass
 
 
+@dataclass(frozen=True)
+class SessionRunnerSuspendedForInput:
+    question: str | None = None
+    options: list[str] | None = None
+    is_last_question: bool = False
+
+
 type SessionRunnerEvent = (
     SessionRunnerAssistantMessage
     | SessionRunnerAssistantMessageChunk
@@ -76,6 +83,7 @@ type SessionRunnerEvent = (
     | SessionRunnerPlaylistTracksRemoved
     | SessionRunnerPlaylistTracksReplaced
     | SessionRunnerCancelled
+    | SessionRunnerSuspendedForInput
 )
 
 

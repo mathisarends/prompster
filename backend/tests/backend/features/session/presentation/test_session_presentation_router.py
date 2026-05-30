@@ -14,9 +14,13 @@ from backend.features.session.domain import (
 from backend.features.session.presentation.router import (
     get_session_by_id,
     restore_session_user_curation_event,
+    submit_onboarding_answer,
     stop_message,
 )
-from backend.features.session.presentation.schemas import UserCurationEventTypeResponse
+from backend.features.session.presentation.schemas import (
+    SubmitOnboardingAnswerRequest,
+    UserCurationEventTypeResponse,
+)
 
 
 class _SessionServiceStub:
@@ -45,11 +49,28 @@ class _SessionConversationServiceStub:
     def __init__(self) -> None:
         self.received_session_id: UUID | None = None
         self.received_user_id: UUID | None = None
+        self.received_question_id: UUID | None = None
+        self.received_answer: str | None = None
 
     async def stop_message(self, *, session_id: UUID, user_id: UUID) -> bool:
         self.received_session_id = session_id
         self.received_user_id = user_id
         return True
+
+    async def submit_onboarding_answer(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        question_id: UUID,
+        answer: str,
+    ):
+        self.received_session_id = session_id
+        self.received_user_id = user_id
+        self.received_question_id = question_id
+        self.received_answer = answer
+        if False:
+            yield None
 
 
 class TestGetSessionByIdRoute:
@@ -154,3 +175,35 @@ class TestStopMessageRoute:
         assert response.status_code == 204
         assert service.received_session_id == session_id
         assert service.received_user_id == user_id
+
+
+class TestSubmitOnboardingAnswerRoute:
+    def test_routes_answer_to_conversation_service(self) -> None:
+        session_id = uuid4()
+        user_id = uuid4()
+        question_id = uuid4()
+        service = _SessionConversationServiceStub()
+
+        response = asyncio.run(
+            submit_onboarding_answer(
+                session_id=session_id,
+                authenticated_user_id=user_id,
+                body=SubmitOnboardingAnswerRequest(
+                    question_id=question_id,
+                    answer="Freunde",
+                ),
+                service=cast(SessionConversationService, service),
+            )
+        )
+
+        async def _consume() -> None:
+            async for _ in response.body_iterator:
+                break
+
+        asyncio.run(_consume())
+
+        assert response.media_type == "text/event-stream"
+        assert service.received_session_id == session_id
+        assert service.received_user_id == user_id
+        assert service.received_question_id == question_id
+        assert service.received_answer == "Freunde"

@@ -14,10 +14,12 @@ from backend.features.session.application.events import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionPlaylistTrackReplaced,
+    SessionSuspendedForInput,
     SessionTitleGenerated,
     SessionToolCallSequenceAdded,
     SessionToolCallSequenceCompleted,
     SessionToolCallResolved,
+    SuspensionKind,
 )
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
@@ -29,6 +31,7 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerPlaylistTracksRemoved,
     SessionRunnerPlaylistTracksReplaced,
     SessionRunnerPlaylistUpdated,
+    SessionRunnerSuspendedForInput,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallStarted,
 )
@@ -109,6 +112,27 @@ class SessionConversationService:
             session=session,
             title_task=title_task,
         ):
+            yield event
+
+    async def submit_onboarding_answer(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        question_id: UUID,
+        answer: str,
+    ) -> AsyncIterator[SessionEvent]:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        answered_question = session.answer_onboarding_question(
+            question_id=question_id,
+            answer=answer,
+        )
+        if answered_question.is_last_question:
+            session.advance_to_building_phase()
+            await self._persist_session(session=session)
+            yield SessionSuspendedForInput(kind=SuspensionKind.PLAYLIST_CONTEXT)
+            return
+        async for event in self._persist_and_resume_agent(session=session):
             yield event
 
     def _maybe_start_title_generation(
@@ -374,6 +398,12 @@ class SessionConversationService:
                     session=session,
                     state=state,
                 )
+            case SessionRunnerSuspendedForInput():
+                return await self._handle_suspended_for_input(
+                    event=event,
+                    session=session,
+                    state=state,
+                )
         raise TypeError(f"Unsupported runner event: {event!r}")
 
     async def _handle_assistant_message_chunk(
@@ -595,6 +625,38 @@ class SessionConversationService:
             session=session,
             events=(SessionAssistantMessageCancelled(message_id=message.id),),
         )
+
+    async def _handle_suspended_for_input(
+        self,
+        *,
+        event: SessionRunnerSuspendedForInput,
+        session: Session,
+        state: _AgentRunState,
+    ) -> tuple[SessionEvent, ...]:
+        events = list(
+            await self._finish_current_assistant_message(
+                session=session,
+                state=state,
+            )
+        )
+        question_id = None
+        if event.question is not None:
+            question = session.add_onboarding_question(
+                question_text=event.question,
+                options=tuple(event.options or []),
+                is_last_question=event.is_last_question,
+            )
+            question_id = question.id
+        events.append(
+            SessionSuspendedForInput(
+                kind=SuspensionKind.ONBOARDING_QUESTION,
+                question=event.question,
+                options=list(event.options or []),
+                question_id=question_id,
+                is_last_question=event.is_last_question,
+            )
+        )
+        return await self._persisted_events(session=session, events=tuple(events))
 
     async def _ensure_assistant_message_started(
         self,

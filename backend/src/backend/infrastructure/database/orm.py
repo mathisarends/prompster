@@ -111,9 +111,9 @@ class SessionModel(DatabaseEntity, table=True):
         sa_column_kwargs={"server_default": text("false")},
     )
     phase: str = Field(
-        default="build",
+        default="onboarding",
         max_length=32,
-        sa_column_kwargs={"server_default": text("'build'")},
+        sa_column_kwargs={"server_default": text("'onboarding'")},
     )
     last_activity_at: datetime = Field(sa_type=DateTime(timezone=True))
 
@@ -138,6 +138,10 @@ class SessionModel(DatabaseEntity, table=True):
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
     tool_call_sequences: list["SessionToolCallSequenceModel"] = Relationship(
+        back_populates="session",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
+    onboarding_questions: list["SessionOnboardingQuestionModel"] = Relationship(
         back_populates="session",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
@@ -336,6 +340,39 @@ class SessionToolCallModel(DatabaseEntity, table=True):
     error: str | None = None
 
     sequence: SessionToolCallSequenceModel = Relationship(back_populates="calls")
+
+
+class SessionOnboardingQuestionModel(DatabaseEntity, table=True):
+    __tablename__ = "session_onboarding_questions"
+    __table_args__ = (
+        Index(
+            "ix_session_onboarding_questions_session_sequence",
+            "session_id",
+            "sequence_number",
+        ),
+    )
+
+    session_id: UUID = Field(foreign_key="sessions.id")
+    sequence_number: int
+    question_text: str
+    options: list[str] = Field(
+        default_factory=list,
+        sa_column=Column(JSON, nullable=False),
+    )
+    is_last_question: bool = Field(
+        default=False,
+        sa_type=Boolean(),
+        sa_column_kwargs={"server_default": text("false")},
+    )
+    answer: str | None = None
+    is_answered: bool = Field(
+        default=False,
+        sa_type=Boolean(),
+        sa_column_kwargs={"server_default": text("false")},
+    )
+    answered_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
+
+    session: SessionModel = Relationship(back_populates="onboarding_questions")
 
 
 class SessionPlaylistModel(DatabaseEntity, table=True):

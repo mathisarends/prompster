@@ -10,6 +10,7 @@ from backend.features.session.application import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionPlaylistTrackReplaced,
+    SessionSuspendedForInput,
     SessionToolCallSequenceAdded,
     SessionToolCallResolved,
 )
@@ -32,6 +33,7 @@ from backend.features.session.presentation.sse.events import (
     PlaylistTrackRemovedEvent,
     PlaylistTrackReplacedEvent,
     SessionEventType,
+    SuspendedForInputEvent,
     ToolCallSequenceAddedEvent,
     ToolCallResolvedEvent,
 )
@@ -190,3 +192,18 @@ class TestSessionEventMapper:
         assert event.playlist_id == playlist_id
         assert event.track_id == track_id
         assert event.track.id == track.id
+
+    def test_to_server_event_maps_suspended_for_input(self) -> None:
+        event = to_server_event(
+            SessionSuspendedForInput(
+                kind="onboarding_question",
+                question="Fuer wen ist die Playlist?",
+                options=["Freunde", "Familie"],
+                question_id=uuid4(),
+            )
+        )
+
+        assert isinstance(event, SuspendedForInputEvent)
+        assert event.type == SessionEventType.SUSPENDED_FOR_INPUT
+        assert event.kind == "onboarding_question"
+        assert event.question == "Fuer wen ist die Playlist?"

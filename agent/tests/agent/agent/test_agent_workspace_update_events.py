@@ -12,6 +12,7 @@ from agent.agent import (
     AssistantMessageEvent,
     ToolCallEvent,
     ToolResultEvent,
+    SuspendedForInputEvent,
     WorkspaceUpdatedEvent,
 )
 from agent.tools import ToolContext, Tools
@@ -152,7 +153,7 @@ class TestAgentWorkspaceUpdateEvents:
             schema["function"]["name"] for schema in llm.tool_schema_batches[0]
         }
         assert agent.phase == Phase.ONBOARDING
-        assert tool_names == set()
+        assert "ask_onboarding_question" in tool_names
 
     @pytest.mark.asyncio
     async def test_agent_uses_build_tools_after_explicit_phase_advance(self) -> None:
@@ -168,3 +169,36 @@ class TestAgentWorkspaceUpdateEvents:
         assert agent.phase == Phase.BUILD
         assert "search_tracks" in tool_names
         assert "create_playlist" in tool_names
+
+    @pytest.mark.asyncio
+    async def test_onboarding_question_tool_suspends_run(self) -> None:
+        tool_args = {
+            "question": "Fuer wen ist die Playlist?",
+            "options": ["Freunde", "Familie"],
+            "status": "Frage stellen",
+            "is_last_question": True,
+        }
+
+        llm = _FakeLlm(
+            [
+                _ChatResponse(
+                    completion="",
+                    tool_calls=[
+                        ToolCall(
+                            id="call-1",
+                            function={
+                                "name": "ask_onboarding_question",
+                                "arguments": json.dumps(tool_args),
+                            },
+                        )
+                    ],
+                ),
+                _ChatResponse(completion="should-not-run", tool_calls=[]),
+            ]
+        )
+        agent = Agent(llm=llm)
+
+        events = [event async for event in agent.stream("Start")]
+
+        assert any(isinstance(event, SuspendedForInputEvent) for event in events)
+        assert len(llm.tool_schema_batches) == 1

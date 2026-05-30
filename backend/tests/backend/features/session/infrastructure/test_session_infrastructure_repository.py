@@ -19,6 +19,7 @@ from backend.features.session.infrastructure.repository import SqlSessionReposit
 from backend.infrastructure.database.orm import (
     PlaylistTrackModel,
     SessionArtistReferenceModel,
+    SessionOnboardingQuestionModel,
     SessionUserCurationEventModel,
     SessionModel,
     SessionPlaylistReferenceModel,
@@ -510,3 +511,58 @@ def test_tool_call_action_type_mapping_roundtrip() -> None:
     mapped_call = repository._to_domain_tool_call(orm_call)
 
     assert mapped_call.function.action_type == ToolActionType.SEARCH
+
+
+def test_onboarding_question_mapping_roundtrip() -> None:
+    owner_id = uuid4()
+    session_id = uuid4()
+    session = Session(title="Roadtrip", entries=[], owner_id=owner_id, id=session_id)
+    question = session.add_onboarding_question(
+        question_text="Fuer wen ist die Playlist?",
+        options=("Freunde", "Familie"),
+    )
+    session.answer_onboarding_question(question_id=question.id, answer="Freunde")
+
+    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    orm = SessionModel(
+        id=session_id,
+        title=session.title,
+        owner_id=session.owner_id,
+        is_starred=False,
+        last_activity_at=session.created_at,
+        created_at=session.created_at,
+    )
+    orm.user_messages = []
+    orm.assistant_messages = []
+    orm.tool_call_sequences = []
+    orm.user_curation_events = []
+    orm.playlist_references = []
+    orm.artist_references = []
+    repository._sync_onboarding_questions(
+        orm=orm,
+        session_id=session_id,
+        questions=session.onboarding_questions,
+    )
+
+    assert len(orm.onboarding_questions) == 1
+    assert orm.onboarding_questions[0].question_text == "Fuer wen ist die Playlist?"
+    assert orm.onboarding_questions[0].answer == "Freunde"
+    assert orm.onboarding_questions[0].is_answered is True
+
+    mapped = repository._to_domain_onboarding_question(
+        SessionOnboardingQuestionModel(
+            id=question.id,
+            session_id=session_id,
+            sequence_number=1,
+            question_text="Fuer wen ist die Playlist?",
+            options=["Freunde", "Familie"],
+            answer="Freunde",
+            is_answered=True,
+            answered_at=question.answered_at,
+            created_at=question.created_at,
+        )
+    )
+
+    assert mapped.id == question.id
+    assert mapped.sequence_number == 1
+    assert mapped.options == ("Freunde", "Familie")

@@ -15,6 +15,7 @@ from .session_runner import (
     SessionRunnerPlaylistTracksRemoved,
     SessionRunnerPlaylistTracksReplaced,
     SessionRunnerPlaylistUpdated,
+    SessionRunnerSuspendedForInput,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallStarted,
 )
@@ -37,6 +38,7 @@ __all__ = [
     "SessionRunnerPlaylistTracksRemoved",
     "SessionRunnerPlaylistTracksReplaced",
     "SessionRunnerPlaylistUpdated",
+    "SessionRunnerSuspendedForInput",
     "SessionRunnerToolCallCompleted",
     "SessionRunnerToolCallStarted",
     "SessionSummary",

@@ -14,9 +14,11 @@ from backend.features.session.application.events import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionPlaylistTrackReplaced,
+    SessionSuspendedForInput,
     SessionTitleGenerated,
     SessionToolCallSequenceAdded,
     SessionToolCallResolved,
+    SuspensionKind,
 )
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
@@ -29,6 +31,7 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerPlaylistTracksRemoved,
     SessionRunnerPlaylistTracksReplaced,
     SessionRunnerPlaylistUpdated,
+    SessionRunnerSuspendedForInput,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallStarted,
 )
@@ -49,6 +52,7 @@ from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
     PendingCall,
+    Phase,
     Playlist,
     PlaylistTrack,
     Session,
@@ -254,6 +258,7 @@ class TestSessionServiceCreate:
         assert created.title == ""
         assert created.owner_id == owner_id
         assert len(created.entries) == 0
+        assert created.phase == Phase.ONBOARDING
 
 
 class TestSessionServiceUpdate:
@@ -869,3 +874,70 @@ class TestSessionServiceSendMessage:
 
         assert stopped is True
         assert runner.stopped_session_ids == [session.id]
+
+    def test_submit_onboarding_answer_persists_and_resumes_runner(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        question = session.add_onboarding_question(
+            question_text="Fuer wen ist die Playlist?",
+            options=("Freunde", "Familie"),
+        )
+        runner = _SessionRunnerStub(
+            events=[
+                SessionRunnerSuspendedForInput(
+                    question="Welche Dekade?",
+                    options=["80er", "90er"],
+                )
+            ]
+        )
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        events = asyncio.run(
+            _collect_events(
+                service.submit_onboarding_answer(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    question_id=question.id,
+                    answer="Freunde",
+                )
+            )
+        )
+
+        assert question.is_answered is True
+        assert question.answer == "Freunde"
+        assert any(
+            isinstance(event, SessionSuspendedForInput)
+            and event.kind == SuspensionKind.ONBOARDING_QUESTION
+            for event in events
+        )
+
+    def test_submit_onboarding_answer_for_last_question_advances_phase_and_emits_playlist_context(
+        self,
+    ) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        question = session.add_onboarding_question(
+            question_text="Letzte Frage?",
+            options=("Ja",),
+            is_last_question=True,
+        )
+        runner = _SessionRunnerStub(events=[])
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        events = asyncio.run(
+            _collect_events(
+                service.submit_onboarding_answer(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    question_id=question.id,
+                    answer="Ja",
+                )
+            )
+        )
+
+        assert session.phase == Phase.BUILD
+        assert events == [
+            SessionSuspendedForInput(kind=SuspensionKind.PLAYLIST_CONTEXT)
+        ]

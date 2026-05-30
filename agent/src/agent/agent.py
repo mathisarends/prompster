@@ -1,4 +1,4 @@
-from collections.abc import AsyncGenerator, Sequence
+from collections.abc import AsyncGenerator, Callable, Sequence
 from dataclasses import dataclass, field
 
 from llmify import ChatModel, Message, StreamEnd, StreamEventType
@@ -10,6 +10,7 @@ from agent.events import (
     AssistantMessageEvent,
     RunCompletedEvent,
     RunStartedEvent,
+    SuspendedForInputEvent,
     StepStartedEvent,
     ToolCallEvent,
     ToolResultEvent,
@@ -17,7 +18,7 @@ from agent.events import (
 )
 from agent.messages import MessageManager
 from agent.tools import Tools, Spotify
-from agent.tools.views import Phase
+from agent.tools.views import ActionResult, AskOnboardingQuestionParams, Phase
 from agent.playlist import PlaylistDraftStore
 from agent.tokens import TokenTracker
 from agent.views import UserEvent
@@ -55,6 +56,7 @@ class Agent:
 
         self._messages = MessageManager(
             system_prompt=system_prompt,
+            phase=phase,
             playlist_draft_provider=lambda: self._playlist_store.playlist_draft,
             max_playlist_tracks=max_playlist_tracks,
             history=history,
@@ -123,6 +125,11 @@ class Agent:
                     return
                 async for event in self._handle_tool_call(call):
                     yield event
+                    if (
+                        isinstance(event, SuspendedForInputEvent)
+                        and event.is_last_question
+                    ):
+                        return
 
     async def _stream_llm_response(
         self,
@@ -158,6 +165,27 @@ class Agent:
             status_label=tool.render_status(args) if tool else None,
             action_type=tool.action_type if tool else None,
         )
+
+        if (
+            tool is not None
+            and tool.suspends_for_input
+            and tool.param_model is not None
+        ):
+            params = tool.param_model.model_validate(args)
+            assert isinstance(params, AskOnboardingQuestionParams)
+            serialized = ActionResult.ok(
+                extracted_content=f"Frage gestellt: {params.question}"
+            ).model_dump_json()
+            self._messages.add_tool_result(tool_call_id=call.id, content=serialized)
+            yield ToolResultEvent(
+                tool_call_id=call.id, name=call.function.name, result=serialized
+            )
+            yield SuspendedForInputEvent(
+                question=params.question,
+                options=list(params.options),
+                is_last_question=params.is_last_question,
+            )
+            return
 
         result = await self._tools.execute(
             call.function.name,
