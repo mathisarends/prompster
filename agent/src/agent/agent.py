@@ -47,6 +47,7 @@ class Agent:
 
         self._messages = MessageManager(
             system_prompt=system_prompt,
+            phase_provider=lambda: self._phase,
             playlist_draft_provider=lambda: self._playlist_store.playlist_draft,
             max_playlist_tracks=max_playlist_tracks,
             history=history,
