@@ -24,9 +24,20 @@ class MessageManager:
     _SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "system_prompt.md").read_text(
         encoding="utf-8"
     )
-    _ONBOARDING_NUDGE_PROMPT = (
-        Path(__file__).parent / "prompts" / "onboarding_nudge.md"
-    ).read_text(encoding="utf-8")
+    _ONBOARDING_NUDGE_PROMPT = """\
+You are now gathering context for a playlist. Ask 3-5 semantically relevant
+clarifying questions based on the user's request. Topic guidance
+(NOT hardcoded - choose what is relevant):
+- Who is it for / what is the occasion?
+- Which decades / eras?
+- How broad or focused should the selection be?
+- Mood / vibe?
+- Any special requests?
+
+Call `ask_onboarding_question` ONCE for each question.
+You will pause after each call - this is intentional.
+Set `is_last_question=true` for the final question.
+"""
 
     def __init__(
         self,
