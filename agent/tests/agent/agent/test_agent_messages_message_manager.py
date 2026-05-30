@@ -242,7 +242,8 @@ class TestMessageManagerPlaylistContext:
         assert messages[2].content == "Understood."
         assert (
             f'<created_playlist id="{playlist.id}" name="80er Party" '
-            'track_count="1" pinned_tracks="hard_constraints">'
+            'track_count="1" max_tracks="75" remaining_tracks="74" '
+            'pinned_tracks="hard_constraints">'
         ) in messages[1].content
         assert (
             f'<track id="{playlist.tracks[0].id}" label="a-ha - Take On Me (1985)" />'

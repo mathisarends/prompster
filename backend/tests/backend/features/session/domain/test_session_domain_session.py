@@ -11,6 +11,7 @@ from backend.features.session.domain.exceptions import (
     NoPendingToolCallSequenceError,
     PendingFollowUpQuestionsError,
     PendingToolCallsError,
+    PlaylistTrackLimitExceededError,
     PlaylistTrackPinnedError,
     PlaylistTrackNotFoundError,
     PlaylistReferenceNotFoundError,
@@ -302,6 +303,15 @@ class TestSessionDomainSession:
         assert session.playlist is not None
         assert len(session.playlist.tracks) == 1
         assert session.playlist.tracks[0] is track
+
+    def test_add_track_raises_when_playlist_track_limit_is_reached(
+        self, session: Session
+    ) -> None:
+        for i in range(75):
+            session.add_track(title=f"Track {i}", artist="Muse", year=2006)
+
+        with pytest.raises(PlaylistTrackLimitExceededError, match="already has 75"):
+            session.add_track(title="Overflow", artist="Muse", year=2006)
 
     def test_add_track_records_user_curation_event_snapshot(
         self, session: Session

@@ -10,6 +10,7 @@ from backend.features.session.domain.exceptions import (
     NoPendingToolCallSequenceError,
     PendingFollowUpQuestionsError,
     PendingToolCallsError,
+    PlaylistTrackLimitExceededError,
     PlaylistTrackPinnedError,
     PlaylistTrackNotFoundError,
     PlaylistReferenceNotFoundError,
@@ -39,6 +40,8 @@ from backend.features.session.domain.entities import (
 from backend.features.session.domain.views import Phase
 from backend.shared.ddd import Aggregate
 
+MAX_PLAYLIST_TRACKS = 75
+
 
 class Session(Aggregate):
     def __init__(
@@ -65,6 +68,8 @@ class Session(Aggregate):
         self._playlist_references: list[PlaylistReference] = playlist_references or []
         self._artist_references: list[ArtistReference] = artist_references or []
         self._phase = phase
+        if self._playlist is not None:
+            self._assert_track_limit(total_tracks=len(self._playlist.tracks))
 
     @property
     def title(self) -> str:
@@ -133,6 +138,7 @@ class Session(Aggregate):
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> Playlist:
+        self._assert_track_limit(total_tracks=len(tracks))
         self._assert_pinned_tracks_preserved(tracks)
         self._playlist = Playlist(
             id=id,
@@ -145,6 +151,7 @@ class Session(Aggregate):
     def add_tracks(self, tracks: list[PlaylistTrack]) -> Playlist:
         if self._playlist is None:
             self._playlist = Playlist(tracks=[])
+        self._assert_track_limit(total_tracks=len(self._playlist.tracks) + len(tracks))
         self._playlist.tracks.extend(tracks)
         return self._playlist
 
@@ -160,6 +167,7 @@ class Session(Aggregate):
     ) -> PlaylistTrack:
         if self._playlist is None:
             self._playlist = Playlist(tracks=[])
+        self._assert_track_limit(total_tracks=len(self._playlist.tracks) + 1)
         track = PlaylistTrack(
             title=title,
             artist=artist,
@@ -483,6 +491,7 @@ class Session(Aggregate):
     def _restore_removed_track(self, event: UserCurationEvent) -> PlaylistTrack:
         if self._playlist is None:
             self._playlist = Playlist(tracks=[])
+        self._assert_track_limit(total_tracks=len(self._playlist.tracks) + 1)
         if event.track_year is None:
             raise UserCurationEventMissingTrackYearError(
                 f"User curation event {event.id} cannot restore track "
@@ -499,6 +508,13 @@ class Session(Aggregate):
         )
         self._playlist.tracks.append(track)
         return track
+
+    def _assert_track_limit(self, *, total_tracks: int) -> None:
+        if total_tracks <= MAX_PLAYLIST_TRACKS:
+            return
+        raise PlaylistTrackLimitExceededError(
+            f"Session {self.id} already has {MAX_PLAYLIST_TRACKS} tracks."
+        )
 
     def _record_user_curation_event(
         self, event_type: UserCurationEventType, track: PlaylistTrack

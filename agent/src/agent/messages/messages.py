@@ -28,10 +28,12 @@ class MessageManager:
         self,
         system_prompt: str | None = None,
         playlist_draft_provider: _PlaylistDraftProvider | None = None,
+        max_playlist_tracks: int = 75,
         history: list[Message] | None = None,
     ) -> None:
         self._system_prompt = system_prompt or _SYSTEM_PROMPT
         self._playlist_draft_provider = playlist_draft_provider
+        self._max_playlist_tracks = max_playlist_tracks
         self._messages: list[Message] = []
         self.reset()
         if history:
@@ -83,11 +85,15 @@ class MessageManager:
         if playlist_draft is None:
             return None
 
+        track_count = len(playlist_draft.tracks)
+        remaining_tracks = max(0, self._max_playlist_tracks - track_count)
         lines = [
             (
                 f'<created_playlist id="{playlist_draft.id}" '
                 f'name="{escape(playlist_draft.name, quote=True)}" '
-                f'track_count="{len(playlist_draft.tracks)}" '
+                f'track_count="{track_count}" '
+                f'max_tracks="{self._max_playlist_tracks}" '
+                f'remaining_tracks="{remaining_tracks}" '
                 'pinned_tracks="hard_constraints">'
             ),
         ]

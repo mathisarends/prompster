@@ -1,4 +1,3 @@
-import logging
 from collections.abc import AsyncGenerator, Sequence
 
 from llmify import ChatModel, Message, StreamEventType
@@ -21,8 +20,6 @@ from agent.tools.views import AskFollowUpParams, Phase
 from agent.playlist import PlaylistDraftStore
 from agent.views import UserEvent
 
-logger = logging.getLogger(__name__)
-
 
 class Agent:
     def __init__(
@@ -30,15 +27,14 @@ class Agent:
         llm: ChatModel,
         tools: Tools | None = None,
         history: list[Message] | None = None,
-        max_iterations: int = 10,
         system_prompt: str | None = None,
         spotify: Spotify | None = None,
         playlist_store: PlaylistDraftStore | None = None,
+        max_playlist_tracks: int = 75,
         phase: Phase = Phase.ONBOARDING,
     ) -> None:
         self._llm = llm
         self._tools = tools or Tools()
-        self._max_iterations = max_iterations
         self._phase = phase
 
         self._spotify = spotify or Spotify()
@@ -52,6 +48,7 @@ class Agent:
         self._messages = MessageManager(
             system_prompt=system_prompt,
             playlist_draft_provider=lambda: self._playlist_store.playlist_draft,
+            max_playlist_tracks=max_playlist_tracks,
             history=history,
         )
 
@@ -91,7 +88,9 @@ class Agent:
             yield event
 
     async def _run_loop(self) -> AsyncGenerator[AgentEvent, None]:
-        for iteration in range(1, self._max_iterations + 1):
+        iteration = 0
+        while True:
+            iteration += 1
             if self._stop_requested:
                 return
             yield StepStartedEvent(step=iteration)
@@ -170,5 +169,3 @@ class Agent:
                     tool_call_id=call.id,
                     content=serialized,
                 )
-
-        logger.warning("Max iterations (%d) reached", self._max_iterations)

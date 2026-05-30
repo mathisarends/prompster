@@ -4,7 +4,7 @@ Autonomous tool-calling agent for Spotify playlist research, shared across the w
 
 Encapsulates:
 
-- Agentic run loop via `Agent` with configurable max iterations
+- Agentic run loop via `Agent`
 - Streaming event model (`AgentEvent` subclasses)
 - Tool registry with DI-injected dependencies (`Tools`, `ToolContext`)
 - Spotify interaction via `spotifyify` (`Spotify`)
@@ -21,10 +21,10 @@ class Agent:
         llm: ChatModel,
         tools: Tools | None = None,
         messages: MessageManager | None = None,
-        max_iterations: int = 10,
         system_prompt: str | None = None,
         spotify: Spotify | None = None,
         playlist_store: PlaylistDraftStore | None = None,
+        max_playlist_tracks: int = 75,
     ) -> None: ...
 
     async def prepare(self) -> None          # opens Spotify session
