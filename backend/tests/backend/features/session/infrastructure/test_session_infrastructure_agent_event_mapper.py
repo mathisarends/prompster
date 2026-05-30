@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from uuid import uuid4
 
 from agent.agent import (
@@ -12,6 +11,7 @@ from agent.agent import (
 )
 from agent.playlist import (
     PlaylistDraft,
+    PlaylistDraftCreated,
     PlaylistDraftTrack,
     PlaylistDraftTrackReplacement,
     PlaylistDraftTracksAdded,
@@ -79,14 +79,18 @@ class TestToolCallMapping:
     def test_unknown_action_type_string_becomes_none(self) -> None:
         mapper = AgentSessionEventMapper()
 
-        result = mapper.map(
-            ToolCallEvent(
-                tool_call_id="call_x",
-                name="mystery",
-                args={},
-                action_type="not_a_real_action_type",  # type: ignore[arg-type]
-            )
+        # ``model_construct`` bypasses validation so we can simulate a malformed
+        # or drifted event whose ``action_type`` the backend's ``ToolActionType``
+        # does not recognise — the mapper must coerce it to None.
+        event = ToolCallEvent.model_construct(
+            tool_call_id="call_x",
+            name="mystery",
+            args={},
+            status_label=None,
+            action_type="not_a_real_action_type",
         )
+
+        result = mapper.map(event)
 
         assert isinstance(result[0], SessionRunnerToolCallStarted)
         assert result[0].call.function.action_type is None
@@ -195,19 +199,18 @@ class TestWorkspaceUpdateMapping:
         assert event.replacements[0].track.title == "New"
         assert event.replacements[0].track.artist == "Artist"
 
-    def test_unknown_workspace_update_falls_back_to_full_playlist_snapshot(
+    def test_non_incremental_update_falls_back_to_full_playlist_snapshot(
         self,
     ) -> None:
-        @dataclass
-        class _UnknownUpdate:
-            pass
-
         mapper = AgentSessionEventMapper()
         track = PlaylistDraftTrack(title="Take On Me", artist="a-ha", year=1985)
         draft = self._draft(tracks=[track])
 
         result = mapper.map(
-            WorkspaceUpdatedEvent(playlist_draft=draft, update=_UnknownUpdate())  # type: ignore[arg-type]
+            WorkspaceUpdatedEvent(
+                playlist_draft=draft,
+                update=PlaylistDraftCreated(playlist_draft=draft),
+            )
         )
 
         assert len(result) == 1

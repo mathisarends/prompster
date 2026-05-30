@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
 
 from backend.features.session.domain import (
     PendingCall,
@@ -11,69 +12,65 @@ from backend.features.session.domain import (
 )
 
 
-@dataclass(frozen=True)
-class SessionRunnerAssistantMessage:
+class _RunnerEvent(BaseModel):
+    # ``frozen`` keeps the value-object semantics of the previous frozen
+    # dataclasses; ``arbitrary_types_allowed`` lets the events carry plain
+    # domain objects (Entity-based ``Playlist``/``PlaylistTrack``) as-is
+    # without pydantic trying to validate or coerce them.
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+
+class SessionRunnerAssistantMessage(_RunnerEvent):
     content: str
 
 
-@dataclass(frozen=True)
-class SessionRunnerAssistantMessageChunk:
+class SessionRunnerAssistantMessageChunk(_RunnerEvent):
     chunk: str
 
 
-@dataclass(frozen=True)
-class SessionRunnerToolCallStarted:
+class SessionRunnerToolCallStarted(_RunnerEvent):
     call: PendingCall
 
 
-@dataclass(frozen=True)
-class SessionRunnerToolCallCompleted:
+class SessionRunnerToolCallCompleted(_RunnerEvent):
     tool_call_id: str
     result: str
 
 
-@dataclass(frozen=True)
-class SessionRunnerPlaylistUpdated:
+class SessionRunnerPlaylistUpdated(_RunnerEvent):
     playlist: Playlist
 
 
-@dataclass(frozen=True)
-class SessionRunnerPlaylistTracksAdded:
+class SessionRunnerPlaylistTracksAdded(_RunnerEvent):
     playlist_id: UUID
     tracks: list[PlaylistTrack]
 
 
-@dataclass(frozen=True)
-class SessionRunnerPlaylistTracksRemoved:
+class SessionRunnerPlaylistTracksRemoved(_RunnerEvent):
     playlist_id: UUID
     track_ids: list[UUID]
 
 
-@dataclass(frozen=True)
-class SessionRunnerPlaylistTrackReplacement:
+class SessionRunnerPlaylistTrackReplacement(_RunnerEvent):
     track_id: UUID
     track: PlaylistTrack
 
 
-@dataclass(frozen=True)
-class SessionRunnerPlaylistTracksReplaced:
+class SessionRunnerPlaylistTracksReplaced(_RunnerEvent):
     playlist_id: UUID
     replacements: list[SessionRunnerPlaylistTrackReplacement]
 
 
-@dataclass(frozen=True)
-class SessionRunnerCancelled:
+class SessionRunnerCancelled(_RunnerEvent):
     pass
 
 
-@dataclass(frozen=True)
-class SessionRunnerQuestionAsked:
+class SessionRunnerQuestionAsked(_RunnerEvent):
     question: str | None = None
     options: list[str] | None = None
 
 
-@dataclass(frozen=True)
-class SessionRunnerSuspendedForInput:
+class SessionRunnerSuspendedForInput(_RunnerEvent):
     question: str | None = None
     options: list[str] | None = None
     is_last_question: bool = False
