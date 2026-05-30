@@ -31,6 +31,7 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerPlaylistTracksRemoved,
     SessionRunnerPlaylistTracksReplaced,
     SessionRunnerPlaylistUpdated,
+    SessionRunnerQuestionAsked,
     SessionRunnerSuspendedForInput,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallStarted,
@@ -51,6 +52,7 @@ from backend.features.session.application.session_service import (
 from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
+    InvalidSessionPhaseTransitionError,
     PendingCall,
     Phase,
     Playlist,
@@ -912,7 +914,54 @@ class TestSessionServiceSendMessage:
             for event in events
         )
 
-    def test_submit_onboarding_answer_for_last_question_advances_phase_and_emits_playlist_context(
+    def test_persists_intermediate_onboarding_question_without_suspending(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        runner = _SessionRunnerStub(
+            events=[
+                SessionRunnerQuestionAsked(
+                    question="Fuer wen ist die Playlist?",
+                    options=["Freunde", "Familie"],
+                ),
+                SessionRunnerSuspendedForInput(
+                    question="Welche Dekade?",
+                    options=["80er", "90er"],
+                    is_last_question=True,
+                ),
+            ]
+        )
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        events = asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="baue eine playlist",
+                )
+            )
+        )
+
+        assert [
+            question.question_text for question in session.onboarding_questions
+        ] == [
+            "Fuer wen ist die Playlist?",
+            "Welche Dekade?",
+        ]
+        assert [
+            question.is_last_question for question in session.onboarding_questions
+        ] == [
+            False,
+            True,
+        ]
+        suspended_events = [
+            event for event in events if isinstance(event, SessionSuspendedForInput)
+        ]
+        assert len(suspended_events) == 1
+        assert suspended_events[0].question == "Welche Dekade?"
+
+    def test_submit_onboarding_answer_for_last_question_persists_without_advancing_phase(
         self,
     ) -> None:
         owner_id = uuid4()
@@ -922,9 +971,8 @@ class TestSessionServiceSendMessage:
             options=("Ja",),
             is_last_question=True,
         )
-        runner = _SessionRunnerStub(events=[])
         repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_conversation_service(repository=repository, runner=runner)
+        service = _make_conversation_service(repository=repository)
 
         events = asyncio.run(
             _collect_events(
@@ -937,7 +985,61 @@ class TestSessionServiceSendMessage:
             )
         )
 
+        assert question.is_answered is True
+        assert session.phase == Phase.ONBOARDING
+        assert events == []
+        assert repository.saved_sessions == [session]
+
+    def test_complete_onboarding_advances_phase_and_emits_playlist_context(
+        self,
+    ) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        question = session.add_onboarding_question(
+            question_text="Letzte Frage?",
+            options=("Ja",),
+            is_last_question=True,
+        )
+        session.answer_onboarding_question(question_id=question.id, answer="Ja")
+        runner = _SessionRunnerStub(events=[])
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        events = asyncio.run(
+            _collect_events(
+                service.complete_onboarding(
+                    session_id=session.id,
+                    user_id=owner_id,
+                )
+            )
+        )
+
         assert session.phase == Phase.BUILD
         assert events == [
             SessionSuspendedForInput(kind=SuspensionKind.PLAYLIST_CONTEXT)
         ]
+
+    def test_complete_onboarding_rejects_unanswered_questions(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session.add_onboarding_question(
+            question_text="Fuer wen ist die Playlist?",
+            options=("Freunde", "Familie"),
+        )
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_conversation_service(repository=repository)
+
+        with pytest.raises(
+            InvalidSessionPhaseTransitionError,
+            match="onboarding questions are unanswered",
+        ):
+            asyncio.run(
+                _collect_events(
+                    service.complete_onboarding(
+                        session_id=session.id,
+                        user_id=owner_id,
+                    )
+                )
+            )
+
+        assert session.phase == Phase.ONBOARDING

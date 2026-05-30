@@ -31,6 +31,7 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerPlaylistTracksRemoved,
     SessionRunnerPlaylistTracksReplaced,
     SessionRunnerPlaylistUpdated,
+    SessionRunnerQuestionAsked,
     SessionRunnerSuspendedForInput,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallStarted,
@@ -128,12 +129,21 @@ class SessionConversationService:
             answer=answer,
         )
         if answered_question.is_last_question:
-            session.advance_to_building_phase()
             await self._persist_session(session=session)
-            yield SessionSuspendedForInput(kind=SuspensionKind.PLAYLIST_CONTEXT)
             return
         async for event in self._persist_and_resume_agent(session=session):
             yield event
+
+    async def complete_onboarding(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+    ) -> AsyncIterator[SessionEvent]:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        session.advance_to_building_phase()
+        await self._persist_session(session=session)
+        yield SessionSuspendedForInput(kind=SuspensionKind.PLAYLIST_CONTEXT)
 
     def _maybe_start_title_generation(
         self,
@@ -398,6 +408,11 @@ class SessionConversationService:
                     session=session,
                     state=state,
                 )
+            case SessionRunnerQuestionAsked():
+                return await self._handle_question_asked(
+                    event=event,
+                    session=session,
+                )
             case SessionRunnerSuspendedForInput():
                 return await self._handle_suspended_for_input(
                     event=event,
@@ -625,6 +640,21 @@ class SessionConversationService:
             session=session,
             events=(SessionAssistantMessageCancelled(message_id=message.id),),
         )
+
+    async def _handle_question_asked(
+        self,
+        *,
+        event: SessionRunnerQuestionAsked,
+        session: Session,
+    ) -> tuple[SessionEvent, ...]:
+        if event.question is None:
+            return ()
+
+        session.add_onboarding_question(
+            question_text=event.question,
+            options=tuple(event.options or []),
+        )
+        return await self._persisted_events(session=session)
 
     async def _handle_suspended_for_input(
         self,

@@ -200,6 +200,7 @@ class TestSessionEventMapper:
                 question="Fuer wen ist die Playlist?",
                 options=["Freunde", "Familie"],
                 question_id=uuid4(),
+                is_last_question=True,
             )
         )
 
@@ -207,3 +208,4 @@ class TestSessionEventMapper:
         assert event.type == SessionEventType.SUSPENDED_FOR_INPUT
         assert event.kind == "onboarding_question"
         assert event.question == "Fuer wen ist die Playlist?"
+        assert event.is_last_question is True

@@ -4,6 +4,7 @@ from uuid import uuid4
 from agent.agent import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
+    QuestionAskedEvent,
     SuspendedForUserInputEvent,
     ToolCallEvent,
     ToolResultEvent,
@@ -24,6 +25,7 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerPlaylistTracksAdded,
     SessionRunnerPlaylistTracksRemoved,
     SessionRunnerPlaylistTracksReplaced,
+    SessionRunnerQuestionAsked,
     SessionRunnerSuspendedForInput,
     SessionRunnerPlaylistUpdated,
     SessionRunnerToolCallCompleted,
@@ -226,6 +228,23 @@ class TestUnknownEvent:
 
 
 class TestSuspendedForInputMapping:
+    def test_question_asked_event_maps_to_runner_event(self) -> None:
+        mapper = AgentSessionEventMapper()
+
+        result = mapper.map(
+            QuestionAskedEvent(
+                question="Fuer wen ist die Playlist?",
+                options=["Freunde", "Familie"],
+            )
+        )
+
+        assert result == [
+            SessionRunnerQuestionAsked(
+                question="Fuer wen ist die Playlist?",
+                options=["Freunde", "Familie"],
+            )
+        ]
+
     def test_suspended_event_maps_to_runner_event(self) -> None:
         mapper = AgentSessionEventMapper()
 

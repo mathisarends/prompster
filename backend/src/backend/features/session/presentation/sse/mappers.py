@@ -121,6 +121,7 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
             question=event.question,
             options=list(event.options or []),
             question_id=event.question_id,
+            is_last_question=event.is_last_question,
         )
 
     raise TypeError(f"Unsupported session event: {type(event).__name__}")

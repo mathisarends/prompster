@@ -67,6 +67,12 @@ class SessionRunnerCancelled:
 
 
 @dataclass(frozen=True)
+class SessionRunnerQuestionAsked:
+    question: str | None = None
+    options: list[str] | None = None
+
+
+@dataclass(frozen=True)
 class SessionRunnerSuspendedForInput:
     question: str | None = None
     options: list[str] | None = None
@@ -83,6 +89,7 @@ type SessionRunnerEvent = (
     | SessionRunnerPlaylistTracksRemoved
     | SessionRunnerPlaylistTracksReplaced
     | SessionRunnerCancelled
+    | SessionRunnerQuestionAsked
     | SessionRunnerSuspendedForInput
 )
 

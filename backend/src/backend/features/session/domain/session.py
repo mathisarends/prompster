@@ -618,6 +618,10 @@ class Session(Aggregate):
             raise InvalidSessionPhaseTransitionError(
                 f"Cannot advance session {self.id} from {self._phase} to {Phase.BUILD}."
             )
+        if any(not question.is_answered for question in self._onboarding_questions):
+            raise InvalidSessionPhaseTransitionError(
+                f"Cannot advance session {self.id} while onboarding questions are unanswered."
+            )
         self._phase = Phase.BUILD
 
     def has_access(self, user_id: UUID) -> None:

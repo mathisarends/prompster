@@ -67,12 +67,12 @@ class Agent:
 
         self._stop_requested = False
 
-    async def close(self) -> None:
-        await self._spotify.close()
-
     @property
     def phase(self) -> Phase:
         return self._phase
+
+    async def close(self) -> None:
+        await self._spotify.close()
 
     def request_stop(self) -> None:
         self._stop_requested = True

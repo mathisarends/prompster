@@ -129,6 +129,17 @@ class TestSessionDomainSession:
         with pytest.raises(InvalidSessionPhaseTransitionError):
             session.advance_to_building_phase()
 
+    def test_advance_to_building_phase_rejects_unanswered_onboarding_questions(
+        self, session: Session
+    ) -> None:
+        session.add_onboarding_question(question_text="Fuer wen?")
+
+        with pytest.raises(
+            InvalidSessionPhaseTransitionError,
+            match="onboarding questions are unanswered",
+        ):
+            session.advance_to_building_phase()
+
     def test_add_onboarding_question_assigns_sequence(self, session: Session) -> None:
         first = session.add_onboarding_question(
             question_text="Fuer wen ist die Playlist?",

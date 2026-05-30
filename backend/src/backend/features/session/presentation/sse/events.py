@@ -164,6 +164,7 @@ class SuspendedForInputEvent(_SessionEventSchema):
     question: str | None = None
     options: list[str] = Field(default_factory=list)
     question_id: UUID | None = None
+    is_last_question: bool = False
 
 
 class DoneEvent(_SessionEventSchema):
