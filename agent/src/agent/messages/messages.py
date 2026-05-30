@@ -13,38 +13,25 @@ from llmify import (
 
 from agent.views import UserEvent
 from agent.playlist import PlaylistDraft
-from agent.tools.views import Phase
 from agent.messages.rendering import render_track_tag
 from .rendering import render_user_message_content
 
-_PROMPTS_DIR = Path(__file__).parent / "prompts"
-
-
-def _load_prompt(name: str) -> str:
-    return (_PROMPTS_DIR / name).read_text(encoding="utf-8")
-
-
-_PERSONA = _load_prompt("persona.md")
-_BUILD_SYSTEM_PROMPT = f"{_PERSONA}\n\n{_load_prompt('build_workflow.md')}"
-_ONBOARDING_SYSTEM_PROMPT = (
-    f"{_PERSONA}\n\n{_load_prompt('onboarding_system_prompt.md')}"
-)
+_SYSTEM_PROMPT = (
+    Path(__file__).parent / "prompts" / "onboarding_system_prompt.md"
+).read_text(encoding="utf-8")
 
 type _PlaylistDraftProvider = Callable[[], PlaylistDraft | None]
-type _PhaseProvider = Callable[[], Phase]
 
 
 class MessageManager:
     def __init__(
         self,
         system_prompt: str | None = None,
-        phase_provider: _PhaseProvider | None = None,
         playlist_draft_provider: _PlaylistDraftProvider | None = None,
         max_playlist_tracks: int = 75,
         history: list[Message] | None = None,
     ) -> None:
-        self._system_prompt_override = system_prompt
-        self._phase_provider = phase_provider
+        self._system_prompt = system_prompt or _SYSTEM_PROMPT
         self._playlist_draft_provider = playlist_draft_provider
         self._max_playlist_tracks = max_playlist_tracks
         self._messages: list[Message] = []
@@ -53,7 +40,7 @@ class MessageManager:
             self._messages.extend(history)
 
     def all(self) -> list[Message]:
-        messages: list[Message] = [SystemMessage(content=self._resolve_system_prompt())]
+        messages: list[Message] = [SystemMessage(content=self._system_prompt)]
 
         playlist_context = self._render_playlist_context()
         if playlist_context is not None:
@@ -88,14 +75,6 @@ class MessageManager:
 
     def reset(self) -> None:
         self._messages = []
-
-    def _resolve_system_prompt(self) -> str:
-        if self._system_prompt_override is not None:
-            return self._system_prompt_override
-        phase = self._phase_provider() if self._phase_provider is not None else None
-        if phase == Phase.ONBOARDING:
-            return _ONBOARDING_SYSTEM_PROMPT
-        return _BUILD_SYSTEM_PROMPT
 
     def _render_playlist_context(self) -> str | None:
         playlist_draft = (

@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator, Sequence
 
-from llmify import ChatModel, Message, StreamEventType
+from llmify import ChatModel, Message, StreamEnd, StreamEventType
 
 from agent.events import (
     AgentEvent,
@@ -18,6 +18,7 @@ from agent.messages import MessageManager
 from agent.tools import Tools, Spotify
 from agent.tools.views import AskFollowUpParams, Phase
 from agent.playlist import PlaylistDraftStore
+from agent.tokens import TokenTracker
 from agent.views import UserEvent
 
 
@@ -30,7 +31,7 @@ class Agent:
         system_prompt: str | None = None,
         spotify: Spotify | None = None,
         playlist_store: PlaylistDraftStore | None = None,
-        max_playlist_tracks: int = 75,
+        max_playlist_tracks: int = 50,
         phase: Phase = Phase.ONBOARDING,
     ) -> None:
         self._llm = llm
@@ -47,11 +48,12 @@ class Agent:
 
         self._messages = MessageManager(
             system_prompt=system_prompt,
-            phase_provider=lambda: self._phase,
             playlist_draft_provider=lambda: self._playlist_store.playlist_draft,
             max_playlist_tracks=max_playlist_tracks,
             history=history,
         )
+        self._token_tracker = TokenTracker()
+        self._llm_name = type(llm).__name__
 
         self._stop_requested = False
 
@@ -111,9 +113,11 @@ class Agent:
                 elif response_event.type == StreamEventType.TOOL_CALL:
                     tool_calls.append(response_event.tool_call)
                 elif response_event.type == StreamEventType.END:
+                    assert isinstance(response_event, StreamEnd)
                     completion = response_event.completion or completion
                     if response_event.tool_calls:
                         tool_calls = response_event.tool_calls
+                    self._token_tracker.add(response_event.usage, self._llm_name)
 
             if not tool_calls:
                 self._messages.add_assistant(completion)

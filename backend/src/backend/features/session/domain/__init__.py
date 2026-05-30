@@ -27,7 +27,7 @@ from .exceptions import (
     UserCurationEventNotFoundError,
 )
 from .repository import SessionRepository
-from .session import Session
+from .session import Session, MAX_PLAYLIST_TRACKS
 from .views import Phase
 from .entities import (
     ArtistReference,
@@ -89,6 +89,7 @@ __all__ = [
     "PlaylistTrackNotFoundError",
     "ResolvedCall",
     "Session",
+    "MAX_PLAYLIST_TRACKS",
     "SessionAccessDeniedError",
     "SessionEntry",
     "SessionExportRequiresSpotifyConnectionError",

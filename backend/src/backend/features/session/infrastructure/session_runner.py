@@ -12,6 +12,7 @@ from agent.playlist import (
 )
 from agent.tools.views import Phase as AgentPhase
 
+from backend.features.session.domain import MAX_PLAYLIST_TRACKS
 from llmify import ChatModel
 from spotifyify import Spotifyify
 
@@ -106,6 +107,7 @@ class AgentSessionRunner(SessionRunner):
             system_prompt=self._system_prompt,
             spotify=Spotify(client=self._spotify),
             playlist_store=_to_playlist_draft_store(session.playlist),
+            max_playlist_tracks=MAX_PLAYLIST_TRACKS,
             phase=_agent_phase_for(session),
         )
 

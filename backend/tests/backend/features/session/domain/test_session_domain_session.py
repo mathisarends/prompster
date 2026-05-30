@@ -307,10 +307,10 @@ class TestSessionDomainSession:
     def test_add_track_raises_when_playlist_track_limit_is_reached(
         self, session: Session
     ) -> None:
-        for i in range(75):
+        for i in range(50):
             session.add_track(title=f"Track {i}", artist="Muse", year=2006)
 
-        with pytest.raises(PlaylistTrackLimitExceededError, match="already has 75"):
+        with pytest.raises(PlaylistTrackLimitExceededError, match="already has 50"):
             session.add_track(title="Overflow", artist="Muse", year=2006)
 
     def test_add_track_records_user_curation_event_snapshot(

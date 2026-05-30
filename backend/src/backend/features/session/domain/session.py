@@ -40,7 +40,7 @@ from backend.features.session.domain.entities import (
 from backend.features.session.domain.views import Phase
 from backend.shared.ddd import Aggregate
 
-MAX_PLAYLIST_TRACKS = 75
+MAX_PLAYLIST_TRACKS = 50
 
 
 class Session(Aggregate):
