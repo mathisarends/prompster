@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from agent.playlist import PlaylistDraft, PlaylistDraftUpdate
 
-if TYPE_CHECKING:
-    from agent.tools.views import ActionType
+from agent.tools.views import ActionType
 
 
 class AgentEvent(BaseModel):
@@ -46,7 +45,7 @@ class ToolResultEvent(AgentEvent):
 
 class SuspendedForInputEvent(AgentEvent):
     question: str | None = None
-    options: list[str] = []
+    options: list[str] = Field(default_factory=list)
     is_last_question: bool = False
 
 

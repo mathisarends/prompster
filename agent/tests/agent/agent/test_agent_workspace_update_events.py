@@ -176,7 +176,7 @@ class TestAgentWorkspaceUpdateEvents:
             "question": "Fuer wen ist die Playlist?",
             "options": ["Freunde", "Familie"],
             "status": "Frage stellen",
-            "is_last_question": True,
+            "is_last_question": False,
         }
 
         llm = _FakeLlm(

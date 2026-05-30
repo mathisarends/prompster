@@ -2,9 +2,7 @@ import inspect
 from collections.abc import Callable, Iterable
 from enum import StrEnum
 from typing import Any, Self
-from uuid import UUID
 
-from agent.playlist import TrackRef, TrackRefReplacement
 from pydantic import BaseModel, Field
 
 from agent.tools.schema_builder import ToolSchemaBuilder
@@ -23,24 +21,30 @@ class Phase(StrEnum):
     BUILD = "build"
 
 
-class ToolParams(BaseModel):
-    status: str = Field(
-        description=(
-            "Kurzes deutsches Status-Label im Präsens (max. ~50 Zeichen), das dem "
-            "Nutzer anzeigt, was du gerade tust. Beispiele: \"Suche nach 'Abba'\", "
-            '"Album-Tracks laden", "Playlist-Entwurf bauen: \'80er Party\'".'
-        ),
-    )
+class InputRequest(BaseModel):
+    question: str
+    options: list[str] = Field(default_factory=list)
+    is_last_question: bool = False
 
 
 class ActionResult(BaseModel):
     success: bool
     extracted_content: str = ""
     error: str | None = None
+    input_request: InputRequest | None = None
 
     @classmethod
-    def ok(cls, extracted_content: str = "") -> Self:
-        return cls(success=True, extracted_content=extracted_content)
+    def ok(
+        cls,
+        extracted_content: str = "",
+        *,
+        input_request: InputRequest | None = None,
+    ) -> Self:
+        return cls(
+            success=True,
+            extracted_content=extracted_content,
+            input_request=input_request,
+        )
 
     @classmethod
     def fail(cls, error: Exception | str) -> Self:
@@ -58,7 +62,6 @@ class Tool:
         fn: Callable[..., Any],
         status_label: Callable[[Any], str] | None = None,
         action_type: ActionType = ActionType.FETCH,
-        suspends_for_input: bool = False,
         included_in_phases: Iterable[Phase] | None = None,
         schema: dict | None = None,
         param_model: type[BaseModel] | None = None,
@@ -67,7 +70,6 @@ class Tool:
         self.description = description
         self.fn = fn
         self.action_type = action_type
-        self.suspends_for_input = suspends_for_input
         self.included_in_phases = frozenset(included_in_phases or ())
         self._schema = schema
         self.param_model = param_model
@@ -119,54 +121,3 @@ class Tool:
 
     def __hash__(self) -> int:
         return hash(self.name)
-
-
-class SearchParams(ToolParams):
-    query: str
-    limit: int = 10
-
-
-class ArtistAlbumsParams(ToolParams):
-    artist_id: str = Field(description="URI or ID.")
-    include_groups: str = Field(default="album,single", description="Comma-separated.")
-    limit: int = 20
-
-
-class ArtistTopTracksParams(ToolParams):
-    artist_id: str = Field(description="URI or ID.")
-    country: str = Field(default="DE", description="ISO 3166-1 alpha-2.")
-
-
-class AlbumTracksParams(ToolParams):
-    album_id: str = Field(description="URI or ID.")
-
-
-class CreateDraftPlaylistParams(ToolParams):
-    name: str
-
-
-class AddDraftPlaylistTracksParams(ToolParams):
-    tracks: list[TrackRef] = Field(min_length=1)
-
-
-class RemoveDraftPlaylistTracksParams(ToolParams):
-    track_ids: list[UUID] = Field(min_length=1)
-
-
-class ReplaceDraftPlaylistTracksParams(ToolParams):
-    replacements: list[TrackRefReplacement] = Field(min_length=1)
-
-
-class PlaylistIdParams(ToolParams):
-    playlist_id: str
-
-
-class GenerateCardsParams(ToolParams):
-    playlist_id: str
-
-
-class AskOnboardingQuestionParams(ToolParams):
-    status: str = "Stelle Onboarding-Frage..."
-    question: str
-    options: list[str] = Field(default_factory=list, min_length=0, max_length=6)
-    is_last_question: bool = False

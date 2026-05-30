@@ -12,7 +12,7 @@ from agent.messages.rendering import (
     render_playlist_tag,
     render_track_tag,
 )
-from agent.tools.views import (
+from agent.tools.params import (
     AlbumTracksParams,
     ArtistAlbumsParams,
     ArtistTopTracksParams,

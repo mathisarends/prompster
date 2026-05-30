@@ -12,21 +12,24 @@ from agent.playlist import (
 from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
 from agent.tools.handler import Spotify
-from agent.tools.schemas import ToolSchema
-from agent.tools.views import (
-    ActionResult,
-    ActionType,
+from agent.tools.params import (
     AddDraftPlaylistTracksParams,
     AlbumTracksParams,
     AskOnboardingQuestionParams,
     ArtistAlbumsParams,
     ArtistTopTracksParams,
     CreateDraftPlaylistParams,
-    Phase,
     PlaylistIdParams,
     RemoveDraftPlaylistTracksParams,
     ReplaceDraftPlaylistTracksParams,
     SearchParams,
+)
+from agent.tools.schemas import ToolSchema
+from agent.tools.views import (
+    ActionResult,
+    ActionType,
+    InputRequest,
+    Phase,
     Tool,
 )
 
@@ -70,7 +73,6 @@ class Tools:
         params: type[P] | None = None,
         status_label: Callable[[P], str] | None = None,
         action_type: ActionType = ActionType.FETCH,
-        suspends_for_input: bool = False,
         included_in_phases: set[Phase] | None = None,
     ) -> Callable:
         def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
@@ -81,7 +83,6 @@ class Tools:
                     fn=fn,
                     status_label=status_label,
                     action_type=action_type,
-                    suspends_for_input=suspends_for_input,
                     included_in_phases=included_in_phases,
                     param_model=params,
                 )
@@ -128,14 +129,18 @@ class Tools:
             params=AskOnboardingQuestionParams,
             status_label=lambda params: params.status,
             action_type=ActionType.INTERACT,
-            suspends_for_input=True,
             included_in_phases={Phase.ONBOARDING},
         )
         async def ask_onboarding_question(
             params: AskOnboardingQuestionParams,
         ) -> ActionResult:
             return ActionResult.ok(
-                extracted_content=f"Frage gestellt: {params.question}"
+                extracted_content=f"Frage gestellt: {params.question}",
+                input_request=InputRequest(
+                    question=params.question,
+                    options=params.options,
+                    is_last_question=params.is_last_question,
+                ),
             )
 
         @self.action(

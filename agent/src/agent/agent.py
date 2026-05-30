@@ -18,7 +18,7 @@ from agent.events import (
 )
 from agent.messages import MessageManager
 from agent.tools import Tools, Spotify
-from agent.tools.views import AskOnboardingQuestionParams, Phase
+from agent.tools.views import Phase
 from agent.playlist import PlaylistDraftStore
 from agent.tokens import TokenTracker
 from agent.views import UserEvent
@@ -125,10 +125,7 @@ class Agent:
                     return
                 async for event in self._handle_tool_call(call):
                     yield event
-                    if (
-                        isinstance(event, SuspendedForInputEvent)
-                        and event.is_last_question
-                    ):
+                    if isinstance(event, SuspendedForInputEvent):
                         return
 
     async def _stream_llm_response(
@@ -166,25 +163,6 @@ class Agent:
             action_type=tool.action_type if tool else None,
         )
 
-        if (
-            tool is not None
-            and tool.suspends_for_input
-            and tool.param_model is not None
-        ):
-            params = tool.param_model.model_validate(args)
-            assert isinstance(params, AskOnboardingQuestionParams)
-            content = f"Frage gestellt: {params.question}"
-            self._messages.add_tool_result(tool_call_id=call.id, content=content)
-            yield ToolResultEvent(
-                tool_call_id=call.id, name=call.function.name, result=content
-            )
-            yield SuspendedForInputEvent(
-                question=params.question,
-                options=list(params.options),
-                is_last_question=params.is_last_question,
-            )
-            return
-
         result = await self._tools.execute(
             call.function.name,
             args,
@@ -205,3 +183,9 @@ class Agent:
             tool_call_id=call.id,
             content=content,
         )
+        if result.input_request is not None:
+            yield SuspendedForInputEvent(
+                question=result.input_request.question,
+                options=list(result.input_request.options),
+                is_last_question=result.input_request.is_last_question,
+            )

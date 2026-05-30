@@ -3,7 +3,7 @@ import pytest
 from agent.tools import ToolContext, Tools
 from agent.tools.handler import Spotify
 from agent.tools.handler.spotify import SpotifyTrackLookupResult
-from agent.tools.views import SearchParams
+from agent.tools.params import SearchParams
 from agent.playlist import (
     PlaylistDraft,
     PlaylistDraftTrack,
