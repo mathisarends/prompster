@@ -15,7 +15,6 @@ import { ToolCallAccordion } from "@/components/chat/tool-call-sequence";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserChatMessage } from "@/components/chat/user-chat-message";
 import { UserCurationEventContext } from "@/components/chat/user-curation";
-import { Button } from "@/components/ui/button";
 import { useStickyScroll } from "@/hooks/useStickyScroll";
 import { cn } from "@/lib/utils";
 import {
@@ -42,7 +41,6 @@ type ChatSessionPaneProps = {
   isLoadingSession: boolean;
   isError: boolean;
   sendMessage: (text: string) => void;
-  submitOnboardingAnswer: (questionId: string, answer: string) => void;
   stopMessage: () => void;
   userCurationPlaybackState: UserCurationTrackPlaybackState;
   onToggleUserCurationTrackPlayback?: (
@@ -77,7 +75,6 @@ export const ChatSessionPane = ({
   isLoadingSession,
   isError,
   sendMessage,
-  submitOnboardingAnswer,
   stopMessage,
   userCurationPlaybackState,
   onToggleUserCurationTrackPlayback,
@@ -92,16 +89,10 @@ export const ChatSessionPane = ({
     isStreaming,
   );
   const isOnboardingQuestionPending =
-    pendingInput?.kind === "onboarding_question" && Boolean(pendingInput.questionId);
-  const pendingQuestion = pendingInput?.question?.trim();
-  const pendingOptions = pendingInput?.options ?? [];
+    pendingInput?.kind === "onboarding_question" &&
+    Boolean(pendingInput.questionId);
 
   const submitPrompt = (text: string) => {
-    if (isOnboardingQuestionPending && pendingInput?.questionId) {
-      submitOnboardingAnswer(pendingInput.questionId, text);
-      setPrompt("");
-      return;
-    }
     sendMessage(text);
   };
 
@@ -216,36 +207,12 @@ export const ChatSessionPane = ({
             disabled={
               !sessionId ||
               isLoadingSession ||
-              isError
+              isError ||
+              isOnboardingQuestionPending
             }
             isSubmitting={isStreaming}
             isStopping={isStopping}
           />
-          {isOnboardingQuestionPending ? (
-            <div className="mt-3 rounded-2xl border border-border/60 bg-card/65 p-4">
-              <p className="text-sm font-medium text-foreground">
-                {pendingQuestion || "Bitte beantworte kurz diese Frage:"}
-              </p>
-              {pendingOptions.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {pendingOptions.map((option) => (
-                    <Button
-                      key={option}
-                      type="button"
-                      size="sm"
-                      variant="secondary"
-                      disabled={isStreaming}
-                      onClick={() =>
-                        submitOnboardingAnswer(pendingInput.questionId!, option)
-                      }
-                    >
-                      {option}
-                    </Button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
         </div>
       </div>
     </section>

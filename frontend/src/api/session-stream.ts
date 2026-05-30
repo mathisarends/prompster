@@ -49,9 +49,19 @@ export const streamSubmitOnboardingAnswer = async (
     options,
   );
 
+export const streamCompleteOnboarding = async (
+  sessionId: string,
+  options: StreamSendMessageOptions,
+) =>
+  streamSessionRequest(
+    `/api/v1/sessions/${sessionId}/onboarding/complete`,
+    undefined,
+    options,
+  );
+
 const streamSessionRequest = async (
   path: string,
-  body: StreamRequestBody,
+  body: StreamRequestBody | undefined,
   { signal, onChunk, onDone, onEvent }: StreamSendMessageOptions,
 ) => {
   const response = await fetch(getApiUrl(path), {
@@ -60,7 +70,7 @@ const streamSessionRequest = async (
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(body ?? {}),
     signal,
   });
 

@@ -34,3 +34,29 @@ def test_to_session_response_maps_references() -> None:
     assert len(response.artist_references) == 1
     assert response.artist_references[0].id == artist_reference.id
     assert response.artist_references[0].genres == ["rock", "glam rock"]
+
+
+def test_to_session_response_maps_only_open_onboarding_questions() -> None:
+    session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
+    answered_question = session.add_onboarding_question(
+        question_text="Who is joining?",
+        options=("Friends", "Family"),
+    )
+    open_question = session.add_onboarding_question(
+        question_text="Which mood?",
+        options=("Relaxed", "Energetic"),
+        is_last_question=True,
+    )
+    session.answer_onboarding_question(
+        question_id=answered_question.id,
+        answer="Friends",
+    )
+
+    response = to_session_response(session)
+
+    assert len(response.open_onboarding_questions) == 1
+    assert response.open_onboarding_questions[0].id == open_question.id
+    assert response.open_onboarding_questions[0].sequence_number == 2
+    assert response.open_onboarding_questions[0].question_text == "Which mood?"
+    assert response.open_onboarding_questions[0].options == ["Relaxed", "Energetic"]
+    assert response.open_onboarding_questions[0].is_last_question is True

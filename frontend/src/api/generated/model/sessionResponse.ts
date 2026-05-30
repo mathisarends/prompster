@@ -7,6 +7,7 @@
  */
 import type { ArtistReferenceResponse } from "./artistReferenceResponse";
 import type { AssistantMessageEntryResponse } from "./assistantMessageEntryResponse";
+import type { OnboardingQuestionResponse } from "./onboardingQuestionResponse";
 import type { Phase } from "./phase";
 import type { PlaylistReferenceResponse } from "./playlistReferenceResponse";
 import type { PlaylistResponse } from "./playlistResponse";
@@ -29,4 +30,5 @@ export interface SessionResponse {
   playlistReferences?: PlaylistReferenceResponse[];
   artistReferences?: ArtistReferenceResponse[];
   unconsumedUserCurationEvents?: UserCurationEventResponse[];
+  openOnboardingQuestions?: OnboardingQuestionResponse[];
 }

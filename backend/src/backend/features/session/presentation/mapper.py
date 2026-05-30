@@ -7,6 +7,7 @@ from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
     FailedCall,
+    OnboardingQuestion,
     PendingCall,
     Playlist,
     PlaylistReference,
@@ -22,6 +23,7 @@ from backend.features.session.domain import (
 from backend.features.session.presentation.schemas import (
     ArtistReferenceResponse,
     AssistantMessageEntryResponse,
+    OnboardingQuestionResponse,
     PlaylistResponse,
     PlaylistReferenceResponse,
     PlaylistTrackResponse,
@@ -59,6 +61,10 @@ def to_session_response(session: Session) -> SessionResponse:
         unconsumed_user_curation_events=[
             to_user_curation_event_response(event)
             for event in session.unconsumed_user_curation_events
+        ],
+        open_onboarding_questions=[
+            to_onboarding_question_response(question)
+            for question in session.open_onboarding_questions
         ],
     )
 
@@ -221,4 +227,16 @@ def to_user_curation_event_response(
         track_spotify_uri=event.track_spotify_uri,
         track_cover_url=event.track_cover_url,
         occurred_at=event.occurred_at,
+    )
+
+
+def to_onboarding_question_response(
+    question: OnboardingQuestion,
+) -> OnboardingQuestionResponse:
+    return OnboardingQuestionResponse(
+        id=question.id,
+        sequence_number=question.sequence_number,
+        question_text=question.question_text,
+        options=list(question.options),
+        is_last_question=question.is_last_question,
     )

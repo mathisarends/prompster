@@ -10,6 +10,7 @@ import {
   useGetSession,
 } from "@/api/generated/session-api";
 import {
+  streamCompleteOnboarding,
   streamSendMessage,
   streamSubmitOnboardingAnswer,
 } from "@/api/session-stream";
@@ -45,7 +46,11 @@ export type UseChatSessionResult = {
   isLoadingSession: boolean;
   isError: boolean;
   sendMessage: (text: string) => void;
-  submitOnboardingAnswer: (questionId: string, answer: string) => void;
+  submitOnboardingAnswer: (
+    questionId: string,
+    answer: string,
+    isLastQuestion?: boolean,
+  ) => void;
   stopMessage: () => void;
   removePlaylistTrack: (trackId: string) => Promise<void>;
 };
@@ -232,21 +237,33 @@ export const useChatSession = ({
   );
 
   const submitOnboardingAnswer = useCallback(
-    (questionId: string, answer: string) => {
+    (questionId: string, answer: string, isLastQuestion = false) => {
       const normalizedAnswer = answer.trim();
       if (!normalizedAnswer) return;
 
-      void runEventStream(
-        {
-          type: "stream/started",
-        },
-        (streamOptions) =>
-          streamSubmitOnboardingAnswer(
-            sessionId,
-            { questionId, answer: normalizedAnswer },
-            streamOptions,
-          ),
-      );
+      void (async () => {
+        await runEventStream(
+          {
+            type: "stream/started",
+          },
+          (streamOptions) =>
+            streamSubmitOnboardingAnswer(
+              sessionId,
+              { questionId, answer: normalizedAnswer },
+              streamOptions,
+            ),
+        );
+
+        if (isLastQuestion) {
+          await runEventStream(
+            {
+              type: "stream/started",
+            },
+            (streamOptions) =>
+              streamCompleteOnboarding(sessionId, streamOptions),
+          );
+        }
+      })();
     },
     [runEventStream, sessionId],
   );

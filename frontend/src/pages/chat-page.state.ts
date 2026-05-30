@@ -15,7 +15,10 @@ import type {
 } from "@/components/chat/tool-call-sequence";
 
 type SessionLike =
-  | Pick<SessionResponse, "id" | "title" | "entries" | "playlist">
+  | Pick<
+      SessionResponse,
+      "id" | "title" | "entries" | "playlist" | "openOnboardingQuestions"
+    >
   | SessionSnapshotPayload;
 type SessionEntryResponse = SessionResponse["entries"][number];
 type PlaylistLike = PlaylistPayload | PlaylistResponse | null | undefined;
@@ -64,6 +67,7 @@ export type PendingInput = {
   question?: string | null;
   options: string[];
   questionId?: string | null;
+  isLastQuestion?: boolean;
 };
 
 export type ChatAction =
@@ -97,6 +101,7 @@ export const chatReducer = (
         title: action.session.title,
         entries: normalizeSessionEntries(action.session.entries),
         playlist: normalizePlaylist(action.session.playlist),
+        pendingInput: getPendingInput(action.session),
         errorMessage: undefined,
       };
 
@@ -231,6 +236,21 @@ const normalizePlaylist = (playlist: PlaylistLike): ChatPlaylist | null => {
   };
 };
 
+const getPendingInput = (session: SessionLike): PendingInput | null => {
+  if (!("openOnboardingQuestions" in session)) return null;
+
+  const question = session.openOnboardingQuestions?.[0];
+  if (!question) return null;
+
+  return {
+    kind: "onboarding_question",
+    question: question.questionText,
+    options: question.options ?? [],
+    questionId: question.id,
+    isLastQuestion: question.isLastQuestion,
+  };
+};
+
 const nextPlaylistRevision = (playlist: ChatPlaylist | null) =>
   (playlist?.uiRevision ?? 0) + 1;
 
@@ -315,6 +335,7 @@ const reduceServerEvent = (
       question?: string | null;
       options?: unknown;
       questionId?: string | null;
+      isLastQuestion?: boolean;
     };
     const kind = payload.kind ?? "onboarding_question";
     if (kind !== "onboarding_question") {
@@ -329,11 +350,12 @@ const reduceServerEvent = (
         kind,
         question: payload.question ?? null,
         options: Array.isArray(payload.options)
-          ? payload.options.filter((option): option is string =>
-              typeof option === "string",
+          ? payload.options.filter(
+              (option): option is string => typeof option === "string",
             )
           : [],
         questionId: payload.questionId ?? null,
+        isLastQuestion: payload.isLastQuestion ?? false,
       },
     };
   }

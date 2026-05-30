@@ -352,7 +352,7 @@ class SessionOnboardingQuestionModel(DatabaseEntity, table=True):
         ),
     )
 
-    session_id: UUID = Field(foreign_key="sessions.id")
+    session_id: UUID = Field(foreign_key="sessions.id", ondelete="CASCADE")
     sequence_number: int
     question_text: str
     options: list[str] = Field(

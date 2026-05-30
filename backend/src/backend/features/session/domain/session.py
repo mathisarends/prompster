@@ -118,6 +118,14 @@ class Session(Aggregate):
         return tuple(self._onboarding_questions)
 
     @property
+    def open_onboarding_questions(self) -> tuple[OnboardingQuestion, ...]:
+        return tuple(
+            question
+            for question in self._onboarding_questions
+            if not question.is_answered
+        )
+
+    @property
     def unconsumed_user_curation_events(self) -> list[UserCurationEvent]:
         return [event for event in self._user_curation_events if not event.consumed]
 

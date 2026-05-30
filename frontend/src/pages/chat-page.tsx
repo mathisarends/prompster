@@ -6,6 +6,7 @@ import type {
   UserCurationEventResponse,
 } from "@/api/generated/model";
 import { ChatSessionPane } from "@/components/chat/chat-session-pane";
+import { OnboardingPanel } from "@/components/chat/onboarding-panel";
 import { DeckWorkspaceView } from "@/components/deck/deck-workspace-view";
 import {
   ResizableHandle,
@@ -117,9 +118,46 @@ export const ChatPage = () => {
     [],
   );
 
+  const isOnboardingPending =
+    pendingInput?.kind === "onboarding_question" &&
+    Boolean(pendingInput.questionId);
+
+  const handleOnboardingSubmit = useCallback(
+    (answer: string) => {
+      const questionId = pendingInput?.questionId;
+      if (!questionId) return;
+      submitOnboardingAnswer(
+        questionId,
+        answer,
+        Boolean(pendingInput?.isLastQuestion),
+      );
+    },
+    [pendingInput, submitOnboardingAnswer],
+  );
+
+  const showWorkspace =
+    (Boolean(playlist) || isOnboardingPending) && canShowWorkspace;
+
+  const workspaceContent =
+    isOnboardingPending && pendingInput ? (
+      <OnboardingPanel
+        key={pendingInput.questionId}
+        pendingInput={pendingInput}
+        isSubmitting={isStreaming}
+        onSubmit={handleOnboardingSubmit}
+      />
+    ) : playlist ? (
+      <DeckWorkspaceView
+        sessionId={sessionId}
+        playlist={playlist}
+        onRemoveTrack={removePlaylistTrack}
+        onCurationTrackPlayerChange={updateUserCurationTrackPlayer}
+      />
+    ) : null;
+
   return (
     <div className="chat-page-background h-dvh overflow-hidden text-foreground">
-      {playlist && canShowWorkspace ? (
+      {showWorkspace ? (
         <ResizablePanelGroup
           orientation="horizontal"
           className="relative z-10 h-full"
@@ -148,7 +186,6 @@ export const ChatPage = () => {
               isLoadingSession={isLoadingSession}
               isError={isError}
               sendMessage={sendMessage}
-              submitOnboardingAnswer={submitOnboardingAnswer}
               stopMessage={stopMessage}
               userCurationPlaybackState={userCurationPlaybackState}
               onToggleUserCurationTrackPlayback={
@@ -164,12 +201,7 @@ export const ChatPage = () => {
             maxSize="70%"
             className="border-l border-white/[0.06]"
           >
-            <DeckWorkspaceView
-              sessionId={sessionId}
-              playlist={playlist}
-              onRemoveTrack={removePlaylistTrack}
-              onCurationTrackPlayerChange={updateUserCurationTrackPlayer}
-            />
+            {workspaceContent}
           </ResizablePanel>
         </ResizablePanelGroup>
       ) : (
@@ -186,13 +218,22 @@ export const ChatPage = () => {
             isLoadingSession={isLoadingSession}
             isError={isError}
             sendMessage={sendMessage}
-            submitOnboardingAnswer={submitOnboardingAnswer}
             stopMessage={stopMessage}
             userCurationPlaybackState={userCurationPlaybackState}
             onToggleUserCurationTrackPlayback={
               toggleUserCurationEventTrackPlayback
             }
           />
+          {isOnboardingPending && pendingInput ? (
+            <div className="absolute inset-x-0 bottom-0 z-30 max-h-[78%] border-t border-white/[0.06] shadow-2xl shadow-black/40">
+              <OnboardingPanel
+                key={pendingInput.questionId}
+                pendingInput={pendingInput}
+                isSubmitting={isStreaming}
+                onSubmit={handleOnboardingSubmit}
+              />
+            </div>
+          ) : null}
         </div>
       )}
     </div>

@@ -146,6 +146,14 @@ class ArtistReferenceResponse(Schema):
     popularity: int | None = None
 
 
+class OnboardingQuestionResponse(Schema):
+    id: UUID
+    sequence_number: int
+    question_text: str
+    options: list[str] = Field(default_factory=list)
+    is_last_question: bool
+
+
 UserMessageEntryResponse.model_rebuild()
 
 
@@ -170,6 +178,9 @@ class SessionResponse(Schema):
     playlist_references: list[PlaylistReferenceResponse] = Field(default_factory=list)
     artist_references: list[ArtistReferenceResponse] = Field(default_factory=list)
     unconsumed_user_curation_events: list[UserCurationEventResponse] = Field(
+        default_factory=list
+    )
+    open_onboarding_questions: list[OnboardingQuestionResponse] = Field(
         default_factory=list
     )
 

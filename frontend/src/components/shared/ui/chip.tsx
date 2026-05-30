@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 type ChipProps = {
   label: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   active?: boolean;
   disabled?: boolean;
   onClick?: () => void;
@@ -27,7 +27,7 @@ export const Chip = ({
         active && "border-border bg-card/80 text-foreground",
       )}
     >
-      <Icon className="size-3.5" />
+      {Icon ? <Icon className="size-3.5" /> : null}
       {label}
     </button>
   );

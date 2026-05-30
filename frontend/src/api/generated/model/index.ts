@@ -23,6 +23,7 @@ export * from "./listSessionsParams";
 export * from "./lLMOptionResponse";
 export * from "./lLMOptionsResponse";
 export * from "./lLMProvider";
+export * from "./onboardingQuestionResponse";
 export * from "./phase";
 export * from "./playlistPayload";
 export * from "./playlistReferenceResponse";
