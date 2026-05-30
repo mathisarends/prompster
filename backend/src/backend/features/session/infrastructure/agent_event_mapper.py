@@ -1,7 +1,7 @@
 from agent.agent import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
-    SuspendedForInputEvent,
+    SuspendedForUserInputEvent,
     ToolCallEvent,
     ToolResultEvent,
     WorkspaceUpdatedEvent,
@@ -55,7 +55,7 @@ class AgentSessionEventMapper:
                 return [self._map_tool_call_completed(event)]
             case WorkspaceUpdatedEvent():
                 return [self._map_workspace_updated(event)]
-            case SuspendedForInputEvent():
+            case SuspendedForUserInputEvent():
                 return [self._map_suspended_for_input(event)]
             case _:
                 return []
@@ -125,7 +125,7 @@ class AgentSessionEventMapper:
                 )
 
     def _map_suspended_for_input(
-        self, event: SuspendedForInputEvent
+        self, event: SuspendedForUserInputEvent
     ) -> SessionRunnerSuspendedForInput:
         return SessionRunnerSuspendedForInput(
             question=event.question,

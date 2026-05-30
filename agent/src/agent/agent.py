@@ -8,9 +8,10 @@ from agent.events import (
     AgentEvent,
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
+    QuestionAskedEvent,
     RunCompletedEvent,
     RunStartedEvent,
-    SuspendedForInputEvent,
+    SuspendedForUserInputEvent,
     StepStartedEvent,
     ToolCallEvent,
     ToolResultEvent,
@@ -73,9 +74,6 @@ class Agent:
     def phase(self) -> Phase:
         return self._phase
 
-    def advance(self, phase: Phase) -> None:
-        self._phase = phase
-
     def request_stop(self) -> None:
         self._stop_requested = True
 
@@ -125,7 +123,7 @@ class Agent:
                     return
                 async for event in self._handle_tool_call(call):
                     yield event
-                    if isinstance(event, SuspendedForInputEvent):
+                    if isinstance(event, SuspendedForUserInputEvent):
                         return
 
     async def _stream_llm_response(
@@ -183,9 +181,15 @@ class Agent:
             tool_call_id=call.id,
             content=content,
         )
-        if result.input_request is not None:
-            yield SuspendedForInputEvent(
-                question=result.input_request.question,
-                options=list(result.input_request.options),
-                is_last_question=result.input_request.is_last_question,
-            )
+        request = result.input_request
+        if request is not None:
+            if request.is_last_question:
+                yield SuspendedForUserInputEvent(
+                    question=request.question,
+                    options=list(request.options),
+                )
+            else:
+                yield QuestionAskedEvent(
+                    question=request.question,
+                    options=list(request.options),
+                )

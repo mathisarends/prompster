@@ -43,10 +43,19 @@ class ToolResultEvent(AgentEvent):
     result: str
 
 
-class SuspendedForInputEvent(AgentEvent):
+class QuestionAskedEvent(AgentEvent):
+    """A question that does not suspend the run — the agent keeps going."""
+
     question: str | None = None
     options: list[str] = Field(default_factory=list)
-    is_last_question: bool = False
+
+
+class SuspendedForUserInputEvent(AgentEvent):
+    """The final question — the run suspends and waits for human-in-the-loop input."""
+
+    question: str | None = None
+    options: list[str] = Field(default_factory=list)
+    is_last_question: bool = True
 
 
 class WorkspaceUpdatedEvent(AgentEvent):

@@ -4,7 +4,7 @@ from uuid import uuid4
 from agent.agent import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
-    SuspendedForInputEvent,
+    SuspendedForUserInputEvent,
     ToolCallEvent,
     ToolResultEvent,
     WorkspaceUpdatedEvent,
@@ -230,7 +230,7 @@ class TestSuspendedForInputMapping:
         mapper = AgentSessionEventMapper()
 
         result = mapper.map(
-            SuspendedForInputEvent(
+            SuspendedForUserInputEvent(
                 question="Fuer wen ist die Playlist?",
                 options=["Freunde", "Familie"],
                 is_last_question=True,

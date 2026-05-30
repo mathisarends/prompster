@@ -17,17 +17,17 @@ from agent.tools.views import Phase
 from agent.messages.rendering import render_track_tag
 from .rendering import render_user_message_content
 
-_SYSTEM_PROMPT = (
-    Path(__file__).parent / "prompts" / "onboarding_system_prompt.md"
-).read_text(encoding="utf-8")
-_ONBOARDING_NUDGE_PROMPT = (
-    Path(__file__).parent / "prompts" / "onboarding_nudge.md"
-).read_text(encoding="utf-8")
-
 type _PlaylistDraftProvider = Callable[[], PlaylistDraft | None]
 
 
 class MessageManager:
+    _SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "system_prompt.md").read_text(
+        encoding="utf-8"
+    )
+    _ONBOARDING_NUDGE_PROMPT = (
+        Path(__file__).parent / "prompts" / "onboarding_nudge.md"
+    ).read_text(encoding="utf-8")
+
     def __init__(
         self,
         system_prompt: str | None = None,
@@ -36,7 +36,7 @@ class MessageManager:
         max_playlist_tracks: int = 75,
         history: list[Message] | None = None,
     ) -> None:
-        self._system_prompt = system_prompt or _SYSTEM_PROMPT
+        self._system_prompt = system_prompt or self._SYSTEM_PROMPT
         self._phase = phase
         self._playlist_draft_provider = playlist_draft_provider
         self._max_playlist_tracks = max_playlist_tracks
@@ -112,7 +112,7 @@ class MessageManager:
             return
         if self._has_any_onboarding_question_call():
             return
-        self._inject_confirmed_context(messages, _ONBOARDING_NUDGE_PROMPT)
+        self._inject_confirmed_context(messages, self._ONBOARDING_NUDGE_PROMPT)
 
     def _inject_confirmed_context(self, messages: list[Message], content: str) -> None:
         # Context Injection Pattern: UserMessage + AssistantMessage("Understood.")

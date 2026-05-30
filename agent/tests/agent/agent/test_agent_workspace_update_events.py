@@ -10,9 +10,10 @@ from agent.agent import (
     Agent,
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
+    QuestionAskedEvent,
     ToolCallEvent,
     ToolResultEvent,
-    SuspendedForInputEvent,
+    SuspendedForUserInputEvent,
     WorkspaceUpdatedEvent,
 )
 from agent.tools import ToolContext, Tools
@@ -109,8 +110,7 @@ class TestAgentWorkspaceUpdateEvents:
                 _ChatResponse(completion="Der Entwurf ist bereit.", tool_calls=[]),
             ]
         )
-        agent = Agent(llm=llm, tools=tools)
-        agent.advance(Phase.BUILD)
+        agent = Agent(llm=llm, tools=tools, phase=Phase.BUILD)
 
         events = [event async for event in agent.stream("Bau mir ein Deck")]
 
@@ -133,11 +133,7 @@ class TestAgentWorkspaceUpdateEvents:
         assert tool_call.status_label == "Baue das 80er-Deck"
         assert isinstance(tool_result, ToolResultEvent)
         assert isinstance(workspace_update, WorkspaceUpdatedEvent)
-        serialized_result = json.loads(tool_result.result)
-        assert serialized_result["success"] is True
-        assert serialized_result["extracted_content"] == (
-            'Playlist "80er Party" created.'
-        )
+        assert tool_result.result == 'Playlist "80er Party" created.'
         assert workspace_update.playlist_draft.name == "80er Party"
         assert workspace_update.playlist_draft.tracks == []
         assert store.drain_playlist_draft_updates() == []
@@ -156,10 +152,9 @@ class TestAgentWorkspaceUpdateEvents:
         assert "ask_onboarding_question" in tool_names
 
     @pytest.mark.asyncio
-    async def test_agent_uses_build_tools_after_explicit_phase_advance(self) -> None:
+    async def test_agent_uses_build_tools_when_started_in_build_phase(self) -> None:
         llm = _FakeLlm([_ChatResponse(completion="ok", tool_calls=[])])
-        agent = Agent(llm=llm)
-        agent.advance(Phase.BUILD)
+        agent = Agent(llm=llm, phase=Phase.BUILD)
 
         _ = [event async for event in agent.stream("Bau mir ein Deck")]
 
@@ -171,12 +166,12 @@ class TestAgentWorkspaceUpdateEvents:
         assert "create_playlist" in tool_names
 
     @pytest.mark.asyncio
-    async def test_onboarding_question_tool_suspends_run(self) -> None:
+    async def test_last_onboarding_question_suspends_run(self) -> None:
         tool_args = {
             "question": "Fuer wen ist die Playlist?",
             "options": ["Freunde", "Familie"],
             "status": "Frage stellen",
-            "is_last_question": False,
+            "is_last_question": True,
         }
 
         llm = _FakeLlm(
@@ -200,5 +195,41 @@ class TestAgentWorkspaceUpdateEvents:
 
         events = [event async for event in agent.stream("Start")]
 
-        assert any(isinstance(event, SuspendedForInputEvent) for event in events)
+        assert any(isinstance(event, SuspendedForUserInputEvent) for event in events)
         assert len(llm.tool_schema_batches) == 1
+
+    @pytest.mark.asyncio
+    async def test_non_last_onboarding_question_does_not_suspend_run(self) -> None:
+        tool_args = {
+            "question": "Fuer wen ist die Playlist?",
+            "options": ["Freunde", "Familie"],
+            "status": "Frage stellen",
+            "is_last_question": False,
+        }
+
+        llm = _FakeLlm(
+            [
+                _ChatResponse(
+                    completion="",
+                    tool_calls=[
+                        ToolCall(
+                            id="call-1",
+                            function={
+                                "name": "ask_onboarding_question",
+                                "arguments": json.dumps(tool_args),
+                            },
+                        )
+                    ],
+                ),
+                _ChatResponse(completion="done", tool_calls=[]),
+            ]
+        )
+        agent = Agent(llm=llm)
+
+        events = [event async for event in agent.stream("Start")]
+
+        assert any(isinstance(event, QuestionAskedEvent) for event in events)
+        assert not any(
+            isinstance(event, SuspendedForUserInputEvent) for event in events
+        )
+        assert len(llm.tool_schema_batches) == 2

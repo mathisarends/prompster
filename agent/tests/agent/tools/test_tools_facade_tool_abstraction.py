@@ -1,5 +1,3 @@
-import json
-
 from llmify.messages import ToolCall
 import pytest
 from pydantic import BaseModel
@@ -129,21 +127,6 @@ class TestToolsFacadeAbstraction:
         parsed = tools.parse_args(tool_call)
 
         assert parsed == {}
-
-    def test_serialize_result_serializes_action_result_contract(self) -> None:
-        tools = Tools()
-        serialized = tools.serialize_result(
-            ActionResult(
-                success=True,
-                extracted_content="value=3",
-            )
-        )
-
-        assert json.loads(serialized) == {
-            "success": True,
-            "extracted_content": "value=3",
-            "error": None,
-        }
 
     @pytest.mark.asyncio
     async def test_set_context_updates_executor_dependency_resolution(self) -> None:
