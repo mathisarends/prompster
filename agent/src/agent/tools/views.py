@@ -15,7 +15,6 @@ class ActionType(StrEnum):
     SEARCH = "search"
     FETCH = "fetch"
     MUTATE = "mutate"
-    INTERACT = "interact"
 
 
 class Phase(StrEnum):
@@ -58,7 +57,6 @@ class Tool:
         included_in_phases: Iterable[Phase] | None = None,
         schema: dict | None = None,
         param_model: type[BaseModel] | None = None,
-        suspends_for_input: bool = False,
     ) -> None:
         self.name = name
         self.description = description
@@ -67,7 +65,6 @@ class Tool:
         self.included_in_phases = frozenset(included_in_phases or ())
         self._schema = schema
         self.param_model = param_model
-        self.suspends_for_input = suspends_for_input
         self._status_label = status_label
         self._schema_builder = (
             None if schema else ToolSchemaBuilder(self.fn, param_model)
@@ -160,16 +157,3 @@ class PlaylistIdParams(ToolParams):
 
 class GenerateCardsParams(ToolParams):
     playlist_id: str
-
-
-class AskFollowUpOption(BaseModel):
-    label: str
-
-
-class AskFollowUpQuestion(BaseModel):
-    question: str
-    options: list[AskFollowUpOption] = Field(min_length=1, max_length=4)
-
-
-class AskFollowUpParams(ToolParams):
-    questions: list[AskFollowUpQuestion] = Field(min_length=1, max_length=4)

@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import type {
-  FollowUpQuestionResponse,
-  FollowUpRequest,
-  SessionResponse,
-} from "@/api/generated/model";
+import type { SessionResponse } from "@/api/generated/model";
 import {
   getGetSessionQueryKey,
   getListSessionsQueryKey,
@@ -13,8 +9,7 @@ import {
   stopMessage as stopSessionMessage,
   useGetSession,
 } from "@/api/generated/session-api";
-import { streamFollowUp, streamSendMessage } from "@/api/session-stream";
-import type { FollowUpQuestionOption } from "@/components/chat/follow-up-questions";
+import { streamSendMessage } from "@/api/session-stream";
 
 import {
   chatReducer,
@@ -38,7 +33,6 @@ export type UseChatSessionResult = {
   title?: string;
   entries: ChatEntry[];
   playlist: ChatPlaylist | null;
-  followUpDrafts: Record<string, string>;
   isTitlePending: boolean;
   isStreaming: boolean;
   isStopping: boolean;
@@ -47,14 +41,6 @@ export type UseChatSessionResult = {
   isError: boolean;
   sendMessage: (text: string) => void;
   stopMessage: () => void;
-  answerFollowUp: (
-    groupId: string,
-    question: FollowUpQuestionResponse,
-    answer: string,
-    option?: FollowUpQuestionOption,
-  ) => void;
-  skipFollowUps: (groupId: string) => void;
-  updateFollowUpDraft: (questionId: string, value: string) => void;
   removePlaylistTrack: (trackId: string) => Promise<void>;
 };
 
@@ -195,20 +181,11 @@ export const useChatSession = ({
         {
           type: "stream/started",
           userMessageText: text,
-          skipPendingFollowUps: true,
         },
         (streamOptions) =>
           streamSendMessage(sessionId, { content: text }, streamOptions),
       );
     },
-    [runEventStream, sessionId],
-  );
-
-  const streamFollowUpResponse = useCallback(
-    (body: FollowUpRequest) =>
-      runEventStream({ type: "stream/started" }, (streamOptions) =>
-        streamFollowUp(sessionId, body, streamOptions),
-      ),
     [runEventStream, sessionId],
   );
 
@@ -275,50 +252,6 @@ export const useChatSession = ({
     })();
   }, [sessionId]);
 
-  const answerFollowUp = useCallback(
-    (
-      groupId: string,
-      question: FollowUpQuestionResponse,
-      answer: string,
-      option?: FollowUpQuestionOption,
-    ) => {
-      if (isStreamingRef.current) return;
-
-      dispatch({
-        type: "follow-up/answered",
-        groupId,
-        questionId: question.id,
-        answerText: answer,
-        optionId: option?.id,
-      });
-      void streamFollowUpResponse({
-        action: "answer",
-        answers: [
-          option
-            ? { questionId: question.id, optionId: option.id }
-            : { questionId: question.id, text: answer },
-        ],
-      });
-    },
-    [streamFollowUpResponse],
-  );
-
-  const skipFollowUps = useCallback(
-    (groupId: string) => {
-      if (isStreamingRef.current) return;
-      dispatch({ type: "follow-up/skipped", groupId });
-      void streamFollowUpResponse({ action: "skip_remaining" });
-    },
-    [streamFollowUpResponse],
-  );
-
-  const updateFollowUpDraft = useCallback(
-    (questionId: string, value: string) => {
-      dispatch({ type: "follow-up/draft-changed", questionId, value });
-    },
-    [],
-  );
-
   const removePlaylistTrackFromSession = useCallback(
     async (trackId: string) => {
       if (!sessionId) {
@@ -339,7 +272,6 @@ export const useChatSession = ({
     title: resolvedTitle,
     entries: state.entries,
     playlist: state.playlist,
-    followUpDrafts: state.followUpDrafts,
     isTitlePending,
     isStreaming: state.isStreaming,
     isStopping,
@@ -348,9 +280,6 @@ export const useChatSession = ({
     isError,
     sendMessage,
     stopMessage,
-    answerFollowUp,
-    skipFollowUps,
-    updateFollowUpDraft,
     removePlaylistTrack: removePlaylistTrackFromSession,
   };
 };

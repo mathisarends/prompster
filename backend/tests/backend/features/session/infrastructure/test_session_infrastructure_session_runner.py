@@ -110,7 +110,7 @@ class TestSessionRunnerHistoryRendering:
 
     def test_trailing_unbound_event_becomes_a_synthetic_user_message(self) -> None:
         # Curation event recorded without a following user message
-        # (e.g. resuming after follow-up answers) gets a synthetic UserMessage
+        # gets a synthetic UserMessage
         # so the LLM still sees the manual change in turn order.
         event = UserCurationEvent(
             id=uuid4(),

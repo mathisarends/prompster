@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  useLocation,
-  useNavigationType,
-  useParams,
-} from "react-router-dom";
+import { useLocation, useNavigationType, useParams } from "react-router-dom";
 
 import type {
   SessionResponse,
@@ -55,7 +51,6 @@ export const ChatPage = () => {
     title,
     entries,
     playlist,
-    followUpDrafts,
     isTitlePending,
     isStreaming,
     isStopping,
@@ -63,9 +58,6 @@ export const ChatPage = () => {
     isError,
     sendMessage,
     stopMessage,
-    answerFollowUp,
-    skipFollowUps,
-    updateFollowUpDraft,
     removePlaylistTrack,
   } = useChatSession({
     sessionId,
@@ -147,7 +139,6 @@ export const ChatPage = () => {
               session={session}
               title={title}
               entries={entries}
-              followUpDrafts={followUpDrafts}
               isTitlePending={isTitlePending}
               isStreaming={isStreaming}
               isStopping={isStopping}
@@ -155,9 +146,6 @@ export const ChatPage = () => {
               isError={isError}
               sendMessage={sendMessage}
               stopMessage={stopMessage}
-              answerFollowUp={answerFollowUp}
-              skipFollowUps={skipFollowUps}
-              updateFollowUpDraft={updateFollowUpDraft}
               userCurationPlaybackState={userCurationPlaybackState}
               onToggleUserCurationTrackPlayback={
                 toggleUserCurationEventTrackPlayback
@@ -187,7 +175,6 @@ export const ChatPage = () => {
             session={session}
             title={title}
             entries={entries}
-            followUpDrafts={followUpDrafts}
             isTitlePending={isTitlePending}
             isStreaming={isStreaming}
             isStopping={isStopping}
@@ -195,9 +182,6 @@ export const ChatPage = () => {
             isError={isError}
             sendMessage={sendMessage}
             stopMessage={stopMessage}
-            answerFollowUp={answerFollowUp}
-            skipFollowUps={skipFollowUps}
-            updateFollowUpDraft={updateFollowUpDraft}
             userCurationPlaybackState={userCurationPlaybackState}
             onToggleUserCurationTrackPlayback={
               toggleUserCurationEventTrackPlayback

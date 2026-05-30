@@ -6,7 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AssistantMessageEntryResponse } from "./assistantMessageEntryResponse";
-import type { FollowUpQuestionGroupEntryResponse } from "./followUpQuestionGroupEntryResponse";
 import type { PlaylistPayload } from "./playlistPayload";
 import type { ToolCallSequenceEntryResponse } from "./toolCallSequenceEntryResponse";
 import type { UserMessageEntryResponse } from "./userMessageEntryResponse";
@@ -19,7 +18,6 @@ export interface SessionSnapshotPayload {
     | UserMessageEntryResponse
     | AssistantMessageEntryResponse
     | ToolCallSequenceEntryResponse
-    | FollowUpQuestionGroupEntryResponse
   )[];
   playlist?: PlaylistPayload | null;
 }

@@ -7,8 +7,6 @@ from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
     FailedCall,
-    FollowUpQuestion,
-    FollowUpQuestionGroup,
     PendingCall,
     Playlist,
     PlaylistReference,
@@ -24,9 +22,6 @@ from backend.features.session.domain import (
 from backend.features.session.presentation.schemas import (
     ArtistReferenceResponse,
     AssistantMessageEntryResponse,
-    FollowUpOptionResponse,
-    FollowUpQuestionGroupEntryResponse,
-    FollowUpQuestionResponse,
     PlaylistResponse,
     PlaylistReferenceResponse,
     PlaylistTrackResponse,
@@ -91,8 +86,6 @@ def to_entry_response(entry: SessionEntry) -> SessionEntryResponse:
         )
     if isinstance(entry, ToolCallSequence):
         return to_tool_call_sequence_response(entry)
-    if isinstance(entry, FollowUpQuestionGroup):
-        return to_follow_up_group_response(entry)
     raise TypeError(f"Unsupported session entry: {type(entry).__name__}")
 
 
@@ -130,32 +123,6 @@ def to_tool_call_response(call: ToolCall) -> ToolCallResponse:
         state=state,
         result=result,
         error=error,
-    )
-
-
-def to_follow_up_group_response(
-    group: FollowUpQuestionGroup,
-) -> FollowUpQuestionGroupEntryResponse:
-    return FollowUpQuestionGroupEntryResponse(
-        id=group.id,
-        created_at=group.created_at,
-        questions=[to_follow_up_question_response(q) for q in group.questions],
-    )
-
-
-def to_follow_up_question_response(
-    question: FollowUpQuestion,
-) -> FollowUpQuestionResponse:
-    return FollowUpQuestionResponse(
-        id=question.id,
-        question=question.question,
-        options=[
-            FollowUpOptionResponse(id=option.id, label=option.label)
-            for option in question.options
-        ],
-        state=question.state.value,
-        answer_text=question.answer_text,
-        answered_option_id=question.answered_option_id,
     )
 
 

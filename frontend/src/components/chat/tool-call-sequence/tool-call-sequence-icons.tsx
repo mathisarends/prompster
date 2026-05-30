@@ -2,16 +2,12 @@ import {
   CircleAlert,
   Download,
   Loader2,
-  MessageCircleQuestion,
   Search,
   Sparkles,
   Wrench,
 } from "lucide-react";
 
-import type {
-  ToolCallItem,
-  ToolCallStatus,
-} from "./tool-call-sequence.types";
+import type { ToolCallItem, ToolCallStatus } from "./tool-call-sequence.types";
 
 const renderActionIcon = (actionType: ToolCallItem["actionType"]) => {
   if (actionType === "search") {
@@ -35,15 +31,6 @@ const renderActionIcon = (actionType: ToolCallItem["actionType"]) => {
   if (actionType === "mutate") {
     return (
       <Sparkles
-        className="size-[14px] shrink-0 text-muted-foreground/80"
-        strokeWidth={2}
-      />
-    );
-  }
-
-  if (actionType === "interact") {
-    return (
-      <MessageCircleQuestion
         className="size-[14px] shrink-0 text-muted-foreground/80"
         strokeWidth={2}
       />

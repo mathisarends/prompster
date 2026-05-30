@@ -6,7 +6,6 @@ class ToolActionType(StrEnum):
     SEARCH = "search"
     FETCH = "fetch"
     MUTATE = "mutate"
-    INTERACT = "interact"
 
 
 @dataclass(frozen=True)

@@ -7,9 +7,7 @@ from backend.features.session.domain.exceptions import (
     ArtistReferenceNotFoundError,
     InvalidSessionPhaseTransitionError,
     NoCurrentAssistantMessageError,
-    NoPendingFollowUpGroupError,
     NoPendingToolCallSequenceError,
-    PendingFollowUpQuestionsError,
     PendingToolCallsError,
     PlaylistTrackLimitExceededError,
     PlaylistTrackPinnedError,
@@ -24,10 +22,6 @@ from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
     FailedCall,
-    FollowUpOption,
-    FollowUpQuestion,
-    FollowUpQuestionGroup,
-    FollowUpQuestionState,
     PendingCall,
     Phase,
     PlaylistTrack,
@@ -56,16 +50,6 @@ def make_pending_call(call_id: str = "tc-1") -> PendingCall:
     return PendingCall(
         id=call_id,
         function=ToolFunction(name="search_track", arguments={"query": "daft punk"}),
-    )
-
-
-def make_pending_follow_up(question: str = "Welches Genre?") -> FollowUpQuestion:
-    return FollowUpQuestion(
-        question=question,
-        options=[
-            FollowUpOption(id="house", label="House"),
-            FollowUpOption(id="techno", label="Techno"),
-        ],
     )
 
 
@@ -192,16 +176,6 @@ class TestSessionDomainSession:
 
         with pytest.raises(PendingToolCallsError, match="tool calls are pending"):
             session.add_user_message("noch ein song")
-
-    def test_add_user_message_raises_when_follow_up_questions_pending(
-        self, session: Session
-    ) -> None:
-        session.add_follow_up_questions([make_pending_follow_up()])
-
-        with pytest.raises(
-            PendingFollowUpQuestionsError, match="follow-up questions are pending"
-        ):
-            session.add_user_message("antwort")
 
     def test_add_tool_call_auto_creates_sequence(self, session: Session) -> None:
         sequence = session.add_tool_call(make_pending_call("tc-1"))
@@ -799,79 +773,6 @@ class TestSessionDomainSession:
             NoPendingToolCallSequenceError, match="no pending tool call sequence"
         ):
             session.resolve_tool_call("tc-1", "ok")
-
-    def test_add_follow_up_questions_creates_group_entry(
-        self, session: Session
-    ) -> None:
-        question = make_pending_follow_up()
-
-        group = session.add_follow_up_questions([question])
-
-        assert isinstance(group, FollowUpQuestionGroup)
-        assert session.entries[-1] is group
-
-    def test_answer_follow_up_with_option_resolves_question(
-        self, session: Session
-    ) -> None:
-        question = make_pending_follow_up()
-        session.add_follow_up_questions([question])
-
-        answered = session.answer_follow_up_with_option(question.id, "house")
-
-        assert answered is question
-        assert answered.state == FollowUpQuestionState.ANSWERED
-        assert answered.answer_text == "House"
-        assert answered.answered_option_id == "house"
-
-    def test_answer_follow_up_with_text_resolves_question(
-        self, session: Session
-    ) -> None:
-        question = make_pending_follow_up()
-        session.add_follow_up_questions([question])
-
-        answered = session.answer_follow_up_with_text(question.id, "  chillwave  ")
-
-        assert answered is question
-        assert answered.state == FollowUpQuestionState.ANSWERED
-        assert answered.answer_text == "chillwave"
-        assert answered.answered_option_id is None
-
-    def test_skip_follow_up_marks_question_skipped(self, session: Session) -> None:
-        question = make_pending_follow_up()
-        session.add_follow_up_questions([question])
-
-        skipped = session.skip_follow_up(question.id)
-
-        assert skipped is question
-        assert skipped.state == FollowUpQuestionState.SKIPPED
-
-    def test_skip_remaining_follow_ups_marks_only_pending_questions(
-        self, session: Session
-    ) -> None:
-        first_question = make_pending_follow_up("Welches Genre?")
-        second_question = make_pending_follow_up("Welche Stimmung?")
-        third_question = make_pending_follow_up("Welches Tempo?")
-        session.add_follow_up_questions(
-            [first_question, second_question, third_question]
-        )
-        first_question.answer_with_text("house")
-
-        skipped_questions = session.skip_remaining_follow_ups(
-            question_id=second_question.id
-        )
-
-        assert skipped_questions == (second_question, third_question)
-        assert first_question.state == FollowUpQuestionState.ANSWERED
-        assert second_question.state == FollowUpQuestionState.SKIPPED
-        assert third_question.state == FollowUpQuestionState.SKIPPED
-
-    def test_answer_follow_up_raises_without_pending_group(
-        self, session: Session
-    ) -> None:
-        with pytest.raises(
-            NoPendingFollowUpGroupError, match="no pending follow-up question group"
-        ):
-            session.answer_follow_up_with_text(uuid4(), "anything")
 
     def test_has_access_allows_owner(self, session: Session, owner_id: UUID) -> None:
         session.has_access(owner_id)

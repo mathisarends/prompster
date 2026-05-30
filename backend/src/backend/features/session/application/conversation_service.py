@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
@@ -11,7 +10,6 @@ from backend.features.session.application.events import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionEvent,
-    SessionFollowUpGroupAdded,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
@@ -27,7 +25,6 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerAssistantMessageChunk,
     SessionRunnerCancelled,
     SessionRunnerEvent,
-    SessionRunnerFollowUpRequested,
     SessionRunnerPlaylistTracksAdded,
     SessionRunnerPlaylistTracksRemoved,
     SessionRunnerPlaylistTracksReplaced,
@@ -40,7 +37,6 @@ from backend.features.session.application.ports.title_generator import (
 )
 from backend.features.session.domain import (
     AssistantMessage,
-    FollowUpQuestionGroup,
     NoPendingToolCallSequenceError,
     Session,
     SessionRepository,
@@ -51,13 +47,6 @@ from backend.features.session.domain import (
 from backend.features.user.application import UserMessageRateLimitService
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class FollowUpAnswer:
-    question_id: UUID
-    option_id: str | None
-    text: str | None
 
 
 @dataclass(frozen=True)
@@ -108,9 +97,6 @@ class SessionConversationService:
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         await self._user_message_rate_limit_service.consume(user_id=user_id)
-        resolved_tool_call = self._prepare_follow_up_context_for_message(
-            session=session
-        )
         session.add_user_message(
             content=content,
             attachments=self._to_user_message_attachments(attachments or []),
@@ -121,7 +107,6 @@ class SessionConversationService:
         )
         async for event in self._persist_and_resume_agent(
             session=session,
-            resolved_tool_call=resolved_tool_call,
             title_task=title_task,
         ):
             yield event
@@ -143,13 +128,10 @@ class SessionConversationService:
         self,
         *,
         session: Session,
-        resolved_tool_call: _ResolvedToolCall | None = None,
         title_task: asyncio.Task[str] | None = None,
     ) -> AsyncIterator[SessionEvent]:
         try:
             await self._persist_session(session=session)
-            for event in self._to_tool_call_resolution_events(resolved_tool_call):
-                yield event
             async for event in self._run_agent_and_consume_user_curation_events(
                 session=session
             ):
@@ -238,51 +220,6 @@ class SessionConversationService:
         await self._get_authorized(session_id=session_id, user_id=user_id)
         return await self._runner.stop(session_id=session_id)
 
-    async def answer_follow_ups(
-        self,
-        *,
-        session_id: UUID,
-        user_id: UUID,
-        answers: list[FollowUpAnswer],
-    ) -> AsyncIterator[SessionEvent]:
-        session = await self._get_authorized(session_id=session_id, user_id=user_id)
-        pending_group = session.require_pending_follow_up_group()
-        for answer in answers:
-            self._apply_follow_up_answer(session=session, answer=answer)
-        if not pending_group.is_complete:
-            await self._persist_session(session=session)
-            return
-
-        await self._user_message_rate_limit_service.consume(user_id=user_id)
-        resolved_tool_call = self._resolve_pending_tool_call(
-            session=session,
-            result=self._serialize_follow_up_answers(pending_group),
-        )
-        async for event in self._persist_and_resume_agent(
-            session=session,
-            resolved_tool_call=resolved_tool_call,
-        ):
-            yield event
-
-    async def skip_remaining_follow_ups(
-        self,
-        *,
-        session_id: UUID,
-        user_id: UUID,
-    ) -> AsyncIterator[SessionEvent]:
-        session = await self._get_authorized(session_id=session_id, user_id=user_id)
-        pending_group = session.require_pending_follow_up_group()
-        await self._user_message_rate_limit_service.consume(user_id=user_id)
-        resolved_tool_call = self._skip_remaining_follow_ups(
-            session=session,
-            pending_group=pending_group,
-        )
-        async for event in self._persist_and_resume_agent(
-            session=session,
-            resolved_tool_call=resolved_tool_call,
-        ):
-            yield event
-
     async def _persist_session(self, *, session: Session) -> None:
         await self._session_repository.save(session=session)
 
@@ -311,72 +248,10 @@ class SessionConversationService:
             for attachment in attachments
         ]
 
-    def _apply_follow_up_answer(
-        self,
-        *,
-        session: Session,
-        answer: FollowUpAnswer,
-    ) -> None:
-        if answer.option_id is not None:
-            session.answer_follow_up_with_option(
-                question_id=answer.question_id,
-                option_id=answer.option_id,
-            )
-            return
-
-        session.answer_follow_up_with_text(
-            question_id=answer.question_id,
-            text=answer.text or "",
-        )
-
     async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
         session = await self._session_repository.get_by_id(session_id=session_id)
         session.has_access(user_id)
         return session
-
-    def _prepare_follow_up_context_for_message(
-        self, *, session: Session
-    ) -> _ResolvedToolCall | None:
-        pending_group = session.pending_follow_up_group()
-        if pending_group is None:
-            return None
-
-        return self._skip_remaining_follow_ups(
-            session=session,
-            pending_group=pending_group,
-        )
-
-    def _skip_remaining_follow_ups(
-        self,
-        *,
-        session: Session,
-        pending_group: FollowUpQuestionGroup,
-    ) -> _ResolvedToolCall | None:
-        current_question = pending_group.current_question
-        if current_question is None:
-            return None
-
-        session.skip_remaining_follow_ups(question_id=current_question.id)
-        return self._resolve_pending_tool_call(
-            session=session,
-            result=self._serialize_follow_up_answers(pending_group),
-        )
-
-    def _resolve_pending_tool_call(
-        self,
-        *,
-        session: Session,
-        result: str,
-    ) -> _ResolvedToolCall:
-        sequence = self._require_pending_tool_call_sequence(session=session)
-        call = sequence.pending_calls[0]
-        session.resolve_tool_call(tool_call_id=call.id, result=result)
-        return _ResolvedToolCall(
-            sequence_id=sequence.id,
-            tool_call_id=call.id,
-            result=result,
-            sequence_completed=sequence.is_complete,
-        )
 
     def _require_pending_tool_call_sequence(
         self, *, session: Session
@@ -387,21 +262,6 @@ class SessionConversationService:
                 f"Session {session.id} has no pending tool call sequence."
             )
         return sequence
-
-    def _serialize_follow_up_answers(self, group: FollowUpQuestionGroup) -> str:
-        return json.dumps(
-            {
-                "answers": [
-                    {
-                        "question": question.question,
-                        "state": question.state.value,
-                        "answer": question.answer_text,
-                    }
-                    for question in group.questions
-                ]
-            },
-            ensure_ascii=False,
-        )
 
     def _to_tool_call_resolution_events(
         self,
@@ -488,12 +348,6 @@ class SessionConversationService:
                 return await self._handle_tool_call_completed(
                     event=event,
                     session=session,
-                )
-            case SessionRunnerFollowUpRequested():
-                return await self._handle_follow_up_requested(
-                    event=event,
-                    session=session,
-                    state=state,
                 )
             case SessionRunnerPlaylistUpdated():
                 return await self._handle_playlist_updated(
@@ -614,20 +468,6 @@ class SessionConversationService:
                     sequence_completed=sequence.is_complete,
                 )
             ),
-        )
-
-    async def _handle_follow_up_requested(
-        self,
-        *,
-        event: SessionRunnerFollowUpRequested,
-        session: Session,
-        state: _AgentRunState,
-    ) -> tuple[SessionEvent, ...]:
-        group = session.add_follow_up_questions(event.questions)
-        state.stopped = True
-        return await self._persisted_events(
-            session=session,
-            events=(SessionFollowUpGroupAdded(group=group),),
         )
 
     async def _handle_playlist_updated(

@@ -3,7 +3,6 @@ import { ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import type {
-  FollowUpQuestionResponse,
   SessionResponse,
   UserCurationEventResponse,
 } from "@/api/generated/model";
@@ -12,15 +11,13 @@ import { ChatInputBox } from "@/components/chat/chat-input-box";
 import { ChatMessageSkeleton } from "@/components/chat/chat-message-skeleton";
 import { ChatPageHeader } from "@/components/chat/chat-page-header";
 import { ChatThinkingIndicator } from "@/components/chat/chat-thinking-indicator";
-import { FollowUpQuestionGroup } from "@/components/chat/follow-up-questions";
 import { ToolCallAccordion } from "@/components/chat/tool-call-sequence";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserChatMessage } from "@/components/chat/user-chat-message";
 import { UserCurationEventContext } from "@/components/chat/user-curation";
 import { useStickyScroll } from "@/hooks/useStickyScroll";
 import { cn } from "@/lib/utils";
-import type { FollowUpQuestionOption } from "@/components/chat/follow-up-questions";
-import { type ChatEntry, getPendingFollowUpQuestion, toToolCallItems } from "@/pages/chat-page.state";
+import { type ChatEntry, toToolCallItems } from "@/pages/chat-page.state";
 
 type UserCurationTrackPlaybackState = {
   activeTrackUri: string | null;
@@ -33,7 +30,6 @@ type ChatSessionPaneProps = {
   session?: SessionResponse;
   title?: string;
   entries: ChatEntry[];
-  followUpDrafts: Record<string, string>;
   isTitlePending: boolean;
   isStreaming: boolean;
   isStopping: boolean;
@@ -41,16 +37,10 @@ type ChatSessionPaneProps = {
   isError: boolean;
   sendMessage: (text: string) => void;
   stopMessage: () => void;
-  answerFollowUp: (
-    groupId: string,
-    question: FollowUpQuestionResponse,
-    answer: string,
-    option?: FollowUpQuestionOption,
-  ) => void;
-  skipFollowUps: (groupId: string) => void;
-  updateFollowUpDraft: (questionId: string, value: string) => void;
   userCurationPlaybackState: UserCurationTrackPlaybackState;
-  onToggleUserCurationTrackPlayback?: (event: UserCurationEventResponse) => void;
+  onToggleUserCurationTrackPlayback?: (
+    event: UserCurationEventResponse,
+  ) => void;
 };
 
 const shouldShowThinkingPlaceholder = (
@@ -73,7 +63,6 @@ export const ChatSessionPane = ({
   session,
   title,
   entries,
-  followUpDrafts,
   isTitlePending,
   isStreaming,
   isStopping,
@@ -81,9 +70,6 @@ export const ChatSessionPane = ({
   isError,
   sendMessage,
   stopMessage,
-  answerFollowUp,
-  skipFollowUps,
-  updateFollowUpDraft,
   userCurationPlaybackState,
   onToggleUserCurationTrackPlayback,
 }: ChatSessionPaneProps) => {
@@ -92,7 +78,6 @@ export const ChatSessionPane = ({
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const { showScrollToBottomButton, scrollToBottom } =
     useStickyScroll(scrollViewportRef);
-  const pendingFollowUp = getPendingFollowUpQuestion(entries);
   const showThinkingPlaceholder = shouldShowThinkingPlaceholder(
     entries,
     isStreaming,
@@ -122,28 +107,6 @@ export const ChatSessionPane = ({
             />
           </div>
         );
-
-      case "follow_up_question_group": {
-        const hasPendingQuestion = entry.questions.some(
-          (question) => question.state === "pending",
-        );
-        if (hasPendingQuestion) return null;
-
-        return (
-          <FollowUpQuestionGroup
-            key={entry.id}
-            group={entry}
-            draftValue=""
-            disabled={isStreaming}
-            onDraftChange={updateFollowUpDraft}
-            onAnswer={(question, answer, option) =>
-              answerFollowUp(entry.id, question, answer, option)
-            }
-            onSkip={() => skipFollowUps(entry.id)}
-            className="max-w-[82%]"
-          />
-        );
-      }
     }
   };
 
@@ -218,24 +181,6 @@ export const ChatSessionPane = ({
                 : undefined
             }
           />
-          {pendingFollowUp ? (
-            <FollowUpQuestionGroup
-              group={pendingFollowUp.group}
-              draftValue={followUpDrafts[pendingFollowUp.question.id] ?? ""}
-              disabled={isStreaming}
-              onDraftChange={updateFollowUpDraft}
-              onAnswer={(question, answer, option) =>
-                answerFollowUp(
-                  pendingFollowUp.group.id,
-                  question,
-                  answer,
-                  option,
-                )
-              }
-              onSkip={() => skipFollowUps(pendingFollowUp.group.id)}
-              className="px-0 pt-0"
-            />
-          ) : null}
           <ChatInputBox
             value={prompt}
             onChange={setPrompt}

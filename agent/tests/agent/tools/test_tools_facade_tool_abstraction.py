@@ -30,8 +30,6 @@ class TestToolsFacadeAbstraction:
         assert tools.get("create_playlist").action_type == ActionType.MUTATE
         assert tools.get("add_playlist_tracks") is not None
         assert tools.get("add_playlist_tracks").action_type == ActionType.MUTATE
-        assert tools.get("ask_follow_up") is not None
-        assert tools.get("ask_follow_up").action_type == ActionType.INTERACT
 
     def test_default_tools_are_filtered_by_phase(self) -> None:
         tools = Tools()
@@ -44,8 +42,7 @@ class TestToolsFacadeAbstraction:
             schema["function"]["name"] for schema in tools.to_schema(phase=Phase.BUILD)
         }
 
-        assert onboarding_tool_names == {"ask_follow_up"}
-        assert "ask_follow_up" not in build_tool_names
+        assert onboarding_tool_names == set()
         assert {
             "search_tracks",
             "search_albums",

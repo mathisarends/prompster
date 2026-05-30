@@ -21,7 +21,6 @@ class EntryKind(StrEnum):
     USER_MESSAGE = "user_message"
     ASSISTANT_MESSAGE = "assistant_message"
     TOOL_CALL_SEQUENCE = "tool_call_sequence"
-    FOLLOW_UP_QUESTION_GROUP = "follow_up_question_group"
 
 
 class SessionMessageAttachmentKind(StrEnum):
@@ -93,29 +92,6 @@ class ToolCallSequenceEntryResponse(Schema):
     calls: list[ToolCallResponse]
 
 
-class FollowUpOptionResponse(Schema):
-    id: str
-    label: str
-
-
-class FollowUpQuestionResponse(Schema):
-    id: UUID
-    question: str
-    options: list[FollowUpOptionResponse]
-    state: Literal["pending", "answered", "skipped"]
-    answer_text: str | None = None
-    answered_option_id: str | None = None
-
-
-class FollowUpQuestionGroupEntryResponse(Schema):
-    kind: Literal[EntryKind.FOLLOW_UP_QUESTION_GROUP] = (
-        EntryKind.FOLLOW_UP_QUESTION_GROUP
-    )
-    id: UUID
-    created_at: datetime
-    questions: list[FollowUpQuestionResponse]
-
-
 class PlaylistTrackResponse(Schema):
     id: UUID
     title: str
@@ -178,7 +154,6 @@ SessionEntryResponse = Annotated[
         UserMessageEntryResponse,
         AssistantMessageEntryResponse,
         ToolCallSequenceEntryResponse,
-        FollowUpQuestionGroupEntryResponse,
     ],
     Field(discriminator="kind"),
 ]
@@ -226,43 +201,6 @@ class SendMessageRequest(Schema):
             if key in seen:
                 raise ValueError("Duplicate attachments are not allowed.")
             seen.add(key)
-        return self
-
-
-class FollowUpAction(StrEnum):
-    ANSWER = "answer"
-    SKIP_REMAINING = "skip_remaining"
-
-
-class FollowUpAnswerRequest(Schema):
-    question_id: UUID
-    option_id: str | None = Field(default=None, min_length=1, max_length=120)
-    text: str | None = Field(default=None, min_length=1, max_length=4000)
-
-    @model_validator(mode="after")
-    def require_exactly_one_answer(self) -> Self:
-        has_option = self.option_id is not None
-        has_text = self.text is not None
-        if has_option == has_text:
-            raise ValueError("Provide exactly one of option_id or text.")
-        return self
-
-
-class FollowUpRequest(Schema):
-    action: FollowUpAction
-    answers: list[FollowUpAnswerRequest] = Field(default_factory=list)
-
-    @model_validator(mode="after")
-    def require_action_fields(self) -> Self:
-        if self.action == FollowUpAction.ANSWER:
-            if not self.answers:
-                raise ValueError(
-                    "Provide at least one answer for a follow-up answer action."
-                )
-            return self
-
-        if self.answers:
-            raise ValueError("Do not provide answers for a follow-up skip action.")
         return self
 
 

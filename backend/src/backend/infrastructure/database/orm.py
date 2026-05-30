@@ -141,10 +141,6 @@ class SessionModel(DatabaseEntity, table=True):
         back_populates="session",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    follow_up_question_groups: list["SessionFollowUpQuestionGroupModel"] = Relationship(
-        back_populates="session",
-        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
-    )
     playlist: "SessionPlaylistModel" = Relationship(
         back_populates="session",
         sa_relationship_kwargs={
@@ -340,43 +336,6 @@ class SessionToolCallModel(DatabaseEntity, table=True):
     error: str | None = None
 
     sequence: SessionToolCallSequenceModel = Relationship(back_populates="calls")
-
-
-class SessionFollowUpQuestionGroupModel(DatabaseEntity, table=True):
-    __tablename__ = "session_follow_up_question_groups"
-    __table_args__ = (
-        Index(
-            "ix_session_follow_up_question_groups_session_position",
-            "session_id",
-            "position",
-        ),
-    )
-
-    session_id: UUID = Field(foreign_key="sessions.id")
-    position: int
-
-    session: SessionModel = Relationship(back_populates="follow_up_question_groups")
-    questions: list["SessionFollowUpQuestionModel"] = Relationship(
-        back_populates="group",
-        sa_relationship_kwargs={
-            "cascade": "all, delete-orphan",
-            "order_by": "SessionFollowUpQuestionModel.position",
-        },
-    )
-
-
-class SessionFollowUpQuestionModel(DatabaseEntity, table=True):
-    __tablename__ = "session_follow_up_questions"
-
-    group_id: UUID = Field(foreign_key="session_follow_up_question_groups.id")
-    position: int
-    question: str
-    options: list[dict[str, object]] = Field(sa_column=Column(JSON, nullable=False))
-    state: str
-    answer_text: str | None = None
-    answered_option_id: str | None = None
-
-    group: SessionFollowUpQuestionGroupModel = Relationship(back_populates="questions")
 
 
 class SessionPlaylistModel(DatabaseEntity, table=True):

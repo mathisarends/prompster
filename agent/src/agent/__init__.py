@@ -3,7 +3,6 @@ from .events import (
     AgentEvent,
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
-    FollowUpRequestedEvent,
     RunCompletedEvent,
     RunStartedEvent,
     StepStartedEvent,
@@ -13,7 +12,7 @@ from .events import (
 )
 from .views import UserEvent, UserEvents
 from .tools import Spotify
-from .tools.views import AskFollowUpOption, AskFollowUpQuestion, Phase
+from .tools.views import Phase
 from .playlist import (
     PlaylistDraft,
     PlaylistDraftCreated,
@@ -37,10 +36,7 @@ __all__ = [
     "AgentEvent",
     "AssistantMessageChunkEvent",
     "AssistantMessageEvent",
-    "AskFollowUpOption",
-    "AskFollowUpQuestion",
     "Phase",
-    "FollowUpRequestedEvent",
     "RunCompletedEvent",
     "RunStartedEvent",
     "StepStartedEvent",

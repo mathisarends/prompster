@@ -1,9 +1,3 @@
-from .follow_up_question import (
-    FollowUpOption,
-    FollowUpQuestion,
-    FollowUpQuestionState,
-)
-from .follow_up_question_group import FollowUpQuestionGroup
 from .messages import (
     AssistantMessage,
     UserCurationEvent,
@@ -33,10 +27,6 @@ __all__ = [
     "AssistantMessage",
     "CompletedCall",
     "FailedCall",
-    "FollowUpOption",
-    "FollowUpQuestion",
-    "FollowUpQuestionGroup",
-    "FollowUpQuestionState",
     "PendingCall",
     "Playlist",
     "PlaylistReference",

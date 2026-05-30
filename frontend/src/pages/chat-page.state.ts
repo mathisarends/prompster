@@ -1,7 +1,5 @@
 import type {
   AssistantMessageEntryResponse,
-  FollowUpQuestionGroupEntryResponse,
-  FollowUpQuestionResponse,
   PlaylistPayload,
   PlaylistResponse,
   SessionResponse,
@@ -47,31 +45,15 @@ export type ChatToolCallGroupEntry = Omit<
   kind: "tool_call_group";
 };
 
-export type ChatFollowUpQuestionGroupEntry = Omit<
-  FollowUpQuestionGroupEntryResponse,
-  "kind"
-> & {
-  kind: "follow_up_question_group";
-};
-
 export type ChatEntry =
   | ChatUserEntry
   | ChatAssistantEntry
-  | ChatToolCallGroupEntry
-  | ChatFollowUpQuestionGroupEntry;
-
-export type PendingFollowUpQuestion = {
-  group: ChatFollowUpQuestionGroupEntry;
-  question: FollowUpQuestionResponse;
-  questionIndex: number;
-  totalQuestions: number;
-};
+  | ChatToolCallGroupEntry;
 
 export type ChatState = {
   title?: string;
   entries: ChatEntry[];
   playlist: ChatPlaylist | null;
-  followUpDrafts: Record<string, string>;
   isStreaming: boolean;
   errorMessage?: string;
 };
@@ -82,26 +64,15 @@ export type ChatAction =
   | {
       type: "stream/started";
       userMessageText?: string;
-      skipPendingFollowUps?: boolean;
     }
   | { type: "stream/finished" }
   | { type: "stream/stopped" }
   | { type: "stream/failed"; message: string }
-  | { type: "stream/event"; event: SessionServerEvent }
-  | { type: "follow-up/draft-changed"; questionId: string; value: string }
-  | {
-      type: "follow-up/answered";
-      groupId: string;
-      questionId: string;
-      answerText: string;
-      optionId?: string;
-    }
-  | { type: "follow-up/skipped"; groupId: string };
+  | { type: "stream/event"; event: SessionServerEvent };
 
 export const createInitialChatState = (): ChatState => ({
   entries: [],
   playlist: null,
-  followUpDrafts: {},
   isStreaming: false,
 });
 
@@ -122,20 +93,18 @@ export const chatReducer = (
     case "session/reset":
       return createInitialChatState();
 
-    case "stream/started": {
-      const entries = action.skipPendingFollowUps
-        ? skipPendingFollowUpEntries(state.entries)
-        : state.entries;
-
+    case "stream/started":
       return {
         ...state,
         entries: action.userMessageText
-          ? [...entries, createOptimisticUserEntry(action.userMessageText)]
-          : entries,
+          ? [
+              ...state.entries,
+              createOptimisticUserEntry(action.userMessageText),
+            ]
+          : state.entries,
         isStreaming: true,
         errorMessage: undefined,
       };
-    }
 
     case "stream/finished":
       return {
@@ -160,39 +129,6 @@ export const chatReducer = (
 
     case "stream/event":
       return reduceServerEvent(state, action.event);
-
-    case "follow-up/draft-changed":
-      return {
-        ...state,
-        followUpDrafts: {
-          ...state.followUpDrafts,
-          [action.questionId]: action.value,
-        },
-      };
-
-    case "follow-up/answered":
-      return {
-        ...state,
-        entries: answerFollowUpQuestion(
-          state.entries,
-          action.groupId,
-          action.questionId,
-          action.answerText,
-          action.optionId,
-        ),
-        followUpDrafts: omitDraft(state.followUpDrafts, action.questionId),
-      };
-
-    case "follow-up/skipped":
-      return {
-        ...state,
-        entries: skipFollowUpGroup(state.entries, action.groupId),
-        followUpDrafts: omitGroupDrafts(
-          state.followUpDrafts,
-          state.entries,
-          action.groupId,
-        ),
-      };
   }
 };
 
@@ -204,29 +140,6 @@ export const getLatestUserMessageContent = (
   for (let index = session.entries.length - 1; index >= 0; index -= 1) {
     const entry = session.entries[index];
     if (entry.kind === "user_message") return entry.content;
-  }
-
-  return undefined;
-};
-
-export const getPendingFollowUpQuestion = (
-  entries: ChatEntry[],
-): PendingFollowUpQuestion | undefined => {
-  for (let entryIndex = entries.length - 1; entryIndex >= 0; entryIndex -= 1) {
-    const entry = entries[entryIndex];
-    if (entry.kind !== "follow_up_question_group") continue;
-
-    const questionIndex = entry.questions.findIndex(
-      (question) => question.state === "pending",
-    );
-    if (questionIndex === -1) continue;
-
-    return {
-      group: entry,
-      question: entry.questions[questionIndex],
-      questionIndex,
-      totalQuestions: entry.questions.length,
-    };
   }
 
   return undefined;
@@ -248,13 +161,6 @@ export const getScrollKey = (entry: ChatEntry): string => {
             `${call.id}:${call.state}:${call.result?.length ?? 0}:${call.error?.length ?? 0}`,
         )
         .join(",")}`;
-    case "follow_up_question_group":
-      return `${entry.id}:${entry.questions
-        .map(
-          (question) =>
-            `${question.id}:${question.state}:${question.answerText?.length ?? 0}`,
-        )
-        .join(",")}`;
   }
 };
 
@@ -270,13 +176,9 @@ const normalizeSessionEntry = (entry: SessionEntryResponse): ChatEntry => {
       return normalizeAssistantEntry(entry);
     case "tool_call_sequence":
       return normalizeToolCallGroupEntry(entry);
-    case "follow_up_question_group":
-      return normalizeFollowUpQuestionGroupEntry(entry);
   }
 
   if ("calls" in entry) return normalizeToolCallGroupEntry(entry);
-  if ("questions" in entry) return normalizeFollowUpQuestionGroupEntry(entry);
-
   return normalizeAssistantEntry(entry as AssistantMessageEntryResponse);
 };
 
@@ -300,13 +202,6 @@ const normalizeToolCallGroupEntry = (
 ): ChatToolCallGroupEntry => ({
   ...entry,
   kind: "tool_call_group",
-});
-
-const normalizeFollowUpQuestionGroupEntry = (
-  entry: FollowUpQuestionGroupEntryResponse,
-): ChatFollowUpQuestionGroupEntry => ({
-  ...entry,
-  kind: "follow_up_question_group",
 });
 
 const normalizePlaylist = (playlist: PlaylistLike): ChatPlaylist | null => {
@@ -490,15 +385,6 @@ const reduceServerEvent = (
       return {
         ...state,
         entries: completeToolCallGroup(state.entries, event.sequenceId),
-      };
-
-    case "follow_up.group_added":
-      return {
-        ...state,
-        entries: upsertChatEntry(
-          state.entries,
-          normalizeFollowUpQuestionGroupEntry(event.group),
-        ),
       };
 
     case "playlist.set": {
@@ -715,63 +601,6 @@ const removeLastPendingToolCall = (entries: ChatEntry[]): ChatEntry[] => {
   return entries;
 };
 
-const answerFollowUpQuestion = (
-  entries: ChatEntry[],
-  groupId: string,
-  questionId: string,
-  answerText: string,
-  optionId: string | undefined,
-) =>
-  entries.map((entry) => {
-    if (entry.kind !== "follow_up_question_group" || entry.id !== groupId) {
-      return entry;
-    }
-
-    return {
-      ...entry,
-      questions: entry.questions.map((question) =>
-        question.id === questionId
-          ? {
-              ...question,
-              state: "answered" as const,
-              answerText,
-              answeredOptionId: optionId ?? null,
-            }
-          : question,
-      ),
-    };
-  });
-
-const skipFollowUpGroup = (entries: ChatEntry[], groupId: string) =>
-  entries.map((entry) => {
-    if (entry.kind !== "follow_up_question_group" || entry.id !== groupId) {
-      return entry;
-    }
-
-    return {
-      ...entry,
-      questions: entry.questions.map((question) =>
-        question.state === "pending"
-          ? { ...question, state: "skipped" as const }
-          : question,
-      ),
-    };
-  });
-
-const skipPendingFollowUpEntries = (entries: ChatEntry[]) =>
-  entries.map((entry) => {
-    if (entry.kind !== "follow_up_question_group") return entry;
-
-    return {
-      ...entry,
-      questions: entry.questions.map((question) =>
-        question.state === "pending"
-          ? { ...question, state: "skipped" as const }
-          : question,
-      ),
-    };
-  });
-
 const upsertStreamErrorEntry = (
   entries: ChatEntry[],
   message: string,
@@ -799,29 +628,6 @@ const upsertStreamErrorEntry = (
       isStreaming: false,
     },
   ];
-};
-
-const omitDraft = (drafts: Record<string, string>, questionId: string) => {
-  const remainingDrafts = { ...drafts };
-  delete remainingDrafts[questionId];
-  return remainingDrafts;
-};
-
-const omitGroupDrafts = (
-  drafts: Record<string, string>,
-  entries: ChatEntry[],
-  groupId: string,
-) => {
-  const group = entries.find(
-    (entry): entry is ChatFollowUpQuestionGroupEntry =>
-      entry.kind === "follow_up_question_group" && entry.id === groupId,
-  );
-  if (!group) return drafts;
-
-  return group.questions.reduce(
-    (remainingDrafts, question) => omitDraft(remainingDrafts, question.id),
-    drafts,
-  );
 };
 
 const toToolCallItem = (call: ToolCallResponse): ToolCallItem => ({

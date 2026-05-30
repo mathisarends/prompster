@@ -4,7 +4,6 @@ import uuid
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from agent.tools.views import AskFollowUpQuestion
 from agent.playlist import PlaylistDraft, PlaylistDraftUpdate
 
 if TYPE_CHECKING:
@@ -57,12 +56,6 @@ class ToolResultEvent(AgentEvent):
 class WorkspaceUpdatedEvent(AgentEvent):
     playlist_draft: PlaylistDraft
     update: PlaylistDraftUpdate
-
-
-@dataclass(kw_only=True)
-class FollowUpRequestedEvent(AgentEvent):
-    tool_call_id: str
-    questions: list[AskFollowUpQuestion]
 
 
 @dataclass(kw_only=True)

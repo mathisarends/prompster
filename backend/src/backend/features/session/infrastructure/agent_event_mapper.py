@@ -1,7 +1,6 @@
 from agent.agent import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
-    FollowUpRequestedEvent,
     ToolCallEvent,
     ToolResultEvent,
     WorkspaceUpdatedEvent,
@@ -13,13 +12,10 @@ from agent.playlist import (
     PlaylistDraftTracksRemoved,
     PlaylistDraftTracksReplaced,
 )
-from agent.tools.views import AskFollowUpQuestion
-
 from backend.features.session.application.ports.session_runner import (
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
     SessionRunnerEvent,
-    SessionRunnerFollowUpRequested,
     SessionRunnerPlaylistTrackReplacement,
     SessionRunnerPlaylistTracksAdded,
     SessionRunnerPlaylistTracksRemoved,
@@ -29,8 +25,6 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerToolCallStarted,
 )
 from backend.features.session.domain import (
-    FollowUpOption,
-    FollowUpQuestion,
     PendingCall,
     Playlist,
     PlaylistTrack,
@@ -57,8 +51,6 @@ class AgentSessionEventMapper:
                 return [self._map_tool_call_started(event)]
             case ToolResultEvent():
                 return [self._map_tool_call_completed(event)]
-            case FollowUpRequestedEvent():
-                return [self._map_follow_up_requested(event)]
             case WorkspaceUpdatedEvent():
                 return [self._map_workspace_updated(event)]
             case _:
@@ -95,15 +87,6 @@ class AgentSessionEventMapper:
         return SessionRunnerToolCallCompleted(
             tool_call_id=event.tool_call_id,
             result=event.result,
-        )
-
-    def _map_follow_up_requested(
-        self, event: FollowUpRequestedEvent
-    ) -> SessionRunnerFollowUpRequested:
-        return SessionRunnerFollowUpRequested(
-            questions=[
-                self._to_follow_up_question(question) for question in event.questions
-            ]
         )
 
     def _map_workspace_updated(
@@ -144,15 +127,6 @@ class AgentSessionEventMapper:
             return ToolActionType(value)
         except ValueError:
             return None
-
-    def _to_follow_up_question(self, question: AskFollowUpQuestion) -> FollowUpQuestion:
-        return FollowUpQuestion(
-            question=question.question,
-            options=[
-                FollowUpOption(id=str(index + 1), label=option.label)
-                for index, option in enumerate(question.options)
-            ],
-        )
 
     def _to_playlist(self, playlist_draft: PlaylistDraft) -> Playlist:
         return Playlist(

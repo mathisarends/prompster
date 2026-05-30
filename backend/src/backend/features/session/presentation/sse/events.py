@@ -7,7 +7,6 @@ from pydantic import Field
 
 from backend.features.session.presentation.schemas import (
     AssistantMessageEntryResponse,
-    FollowUpQuestionGroupEntryResponse,
     PlaylistTrackResponse,
     SessionEntryResponse,
     ToolCallSequenceEntryResponse,
@@ -32,8 +31,6 @@ class SessionEventType(StrEnum):
     TOOL_CALL_RESOLVED = "tool_call.resolved"
     TOOL_CALL_FAILED = "tool_call.failed"
     TOOL_CALL_SEQUENCE_COMPLETED = "tool_call.sequence_completed"
-
-    FOLLOW_UP_GROUP_ADDED = "follow_up.group_added"
 
     PLAYLIST_SET = "playlist.set"
     PLAYLIST_TRACK_ADDED = "playlist.track_added"
@@ -128,13 +125,6 @@ class ToolCallSequenceCompletedEvent(_SessionEventSchema):
     sequence_id: UUID
 
 
-class FollowUpGroupAddedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.FOLLOW_UP_GROUP_ADDED] = (
-        SessionEventType.FOLLOW_UP_GROUP_ADDED
-    )
-    group: FollowUpQuestionGroupEntryResponse
-
-
 class PlaylistSetEvent(_SessionEventSchema):
     type: Literal[SessionEventType.PLAYLIST_SET] = SessionEventType.PLAYLIST_SET
     playlist: PlaylistPayload
@@ -188,7 +178,6 @@ ServerEvent = Annotated[
         ToolCallResolvedEvent,
         ToolCallFailedEvent,
         ToolCallSequenceCompletedEvent,
-        FollowUpGroupAddedEvent,
         PlaylistSetEvent,
         PlaylistTrackAddedEvent,
         PlaylistTrackRemovedEvent,

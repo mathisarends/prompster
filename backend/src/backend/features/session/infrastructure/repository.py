@@ -10,10 +10,6 @@ from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
     FailedCall,
-    FollowUpOption,
-    FollowUpQuestion,
-    FollowUpQuestionGroup,
-    FollowUpQuestionState,
     PendingCall,
     Playlist,
     PlaylistReference,
@@ -37,8 +33,6 @@ from backend.infrastructure.database.orm import (
     PlaylistTrackModel,
     SessionArtistReferenceModel,
     SessionAssistantMessageModel,
-    SessionFollowUpQuestionGroupModel,
-    SessionFollowUpQuestionModel,
     SessionModel,
     SessionPlaylistReferenceModel,
     SessionPlaylistModel,
@@ -129,8 +123,6 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             entries.append((row.position, self._to_domain_assistant_message(row)))
         for row in orm.tool_call_sequences:
             entries.append((row.position, self._to_domain_tool_call_sequence(row)))
-        for row in orm.follow_up_question_groups:
-            entries.append((row.position, self._to_domain_follow_up_group(row)))
         entries.sort(key=lambda item: item[0])
         user_curation_events = sorted(
             orm.user_curation_events,
@@ -271,14 +263,9 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         existing_tool_sequence_rows = {
             row.id: row for row in orm.tool_call_sequences if row.id is not None
         }
-        existing_follow_up_group_rows = {
-            row.id: row for row in orm.follow_up_question_groups if row.id is not None
-        }
-
         user_rows: list[SessionUserMessageModel] = []
         assistant_rows: list[SessionAssistantMessageModel] = []
         tool_sequence_rows: list[SessionToolCallSequenceModel] = []
-        follow_group_rows: list[SessionFollowUpQuestionGroupModel] = []
 
         for position, entry in enumerate(entries):
             if isinstance(entry, UserMessage):
@@ -308,20 +295,10 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
                         existing_sequence=existing_tool_sequence_rows.get(entry.id),
                     )
                 )
-            elif isinstance(entry, FollowUpQuestionGroup):
-                follow_group_rows.append(
-                    self._to_orm_follow_up_group(
-                        group=entry,
-                        session_id=session_id,
-                        position=position,
-                        existing_group=existing_follow_up_group_rows.get(entry.id),
-                    )
-                )
 
         orm.user_messages = user_rows
         orm.assistant_messages = assistant_rows
         orm.tool_call_sequences = tool_sequence_rows
-        orm.follow_up_question_groups = follow_group_rows
 
     def _to_orm_user_message(
         self,
@@ -466,9 +443,6 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
                 selectinload(SessionModel.artist_references),
                 selectinload(SessionModel.tool_call_sequences).selectinload(
                     SessionToolCallSequenceModel.calls
-                ),
-                selectinload(SessionModel.follow_up_question_groups).selectinload(
-                    SessionFollowUpQuestionGroupModel.questions
                 ),
                 selectinload(SessionModel.playlist).selectinload(
                     SessionPlaylistModel.tracks
@@ -657,81 +631,6 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             return ToolActionType(value)
         except ValueError:
             return None
-
-    def _to_domain_follow_up_group(
-        self, row: SessionFollowUpQuestionGroupModel
-    ) -> FollowUpQuestionGroup:
-        questions = sorted(row.questions, key=lambda q: q.position)
-        return FollowUpQuestionGroup(
-            id=row.id,
-            questions=[self._to_domain_follow_up_question(q) for q in questions],
-            created_time=row.created_at,
-        )
-
-    def _to_domain_follow_up_question(
-        self, row: SessionFollowUpQuestionModel
-    ) -> FollowUpQuestion:
-        options_payload = row.options or []
-        options = [
-            FollowUpOption(id=str(item.get("id", "")), label=str(item.get("label", "")))
-            for item in options_payload
-            if isinstance(item, dict)
-        ]
-        return FollowUpQuestion(
-            id=row.id,
-            question=row.question,
-            options=options,
-            state=FollowUpQuestionState(row.state),
-            answer_text=row.answer_text,
-            answered_option_id=row.answered_option_id,
-            created_time=row.created_at,
-        )
-
-    def _to_orm_follow_up_group(
-        self,
-        *,
-        group: FollowUpQuestionGroup,
-        session_id: UUID,
-        position: int,
-        existing_group: SessionFollowUpQuestionGroupModel | None = None,
-    ) -> SessionFollowUpQuestionGroupModel:
-        orm = existing_group or SessionFollowUpQuestionGroupModel(id=group.id)
-        orm.session_id = session_id
-        orm.position = position
-        orm.created_at = group.created_at
-
-        existing_questions = {question.id: question for question in orm.questions}
-        orm.questions = [
-            self._to_orm_follow_up_question(
-                question=question,
-                group_id=group.id,
-                position=question_position,
-                existing_question=existing_questions.get(question.id),
-            )
-            for question_position, question in enumerate(group.questions)
-        ]
-        return orm
-
-    def _to_orm_follow_up_question(
-        self,
-        *,
-        question: FollowUpQuestion,
-        group_id: UUID,
-        position: int,
-        existing_question: SessionFollowUpQuestionModel | None = None,
-    ) -> SessionFollowUpQuestionModel:
-        orm = existing_question or SessionFollowUpQuestionModel(id=question.id)
-        orm.group_id = group_id
-        orm.position = position
-        orm.question = question.question
-        orm.options = [
-            {"id": option.id, "label": option.label} for option in question.options
-        ]
-        orm.state = question.state.value
-        orm.answer_text = question.answer_text
-        orm.answered_option_id = question.answered_option_id
-        orm.created_at = question.created_at
-        return orm
 
     def _to_orm_playlist(
         self,

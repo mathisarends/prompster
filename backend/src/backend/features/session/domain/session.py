@@ -6,9 +6,7 @@ from backend.features.session.domain.exceptions import (
     ArtistReferenceNotFoundError,
     InvalidSessionPhaseTransitionError,
     NoCurrentAssistantMessageError,
-    NoPendingFollowUpGroupError,
     NoPendingToolCallSequenceError,
-    PendingFollowUpQuestionsError,
     PendingToolCallsError,
     PlaylistTrackLimitExceededError,
     PlaylistTrackPinnedError,
@@ -24,8 +22,6 @@ from backend.features.session.domain.entities import (
     AssistantMessage,
     CompletedCall,
     FailedCall,
-    FollowUpQuestion,
-    FollowUpQuestionGroup,
     PendingCall,
     Playlist,
     PlaylistReference,
@@ -333,11 +329,6 @@ class Session(Aggregate):
                 f"Cannot add user message to session {self.id} "
                 "while tool calls are pending."
             )
-        if self._find_pending_follow_up_group() is not None:
-            raise PendingFollowUpQuestionsError(
-                f"Cannot add user message to session {self.id} "
-                "while follow-up questions are pending."
-            )
         message = UserMessage(
             content=content,
             attachments=attachments,
@@ -387,41 +378,6 @@ class Session(Aggregate):
         if removed is not None and not sequence.calls:
             self._entries.remove(sequence)
         return removed
-
-    def add_follow_up_questions(
-        self, questions: list[FollowUpQuestion]
-    ) -> FollowUpQuestionGroup:
-        group = FollowUpQuestionGroup(questions=questions)
-        self._entries.append(group)
-        return group
-
-    def answer_follow_up_with_option(
-        self, question_id: UUID, option_id: str
-    ) -> FollowUpQuestion:
-        group = self._require_pending_follow_up_group()
-        return group.answer_with_option(question_id, option_id)
-
-    def answer_follow_up_with_text(
-        self, question_id: UUID, text: str
-    ) -> FollowUpQuestion:
-        group = self._require_pending_follow_up_group()
-        return group.answer_with_text(question_id, text)
-
-    def skip_follow_up(self, question_id: UUID) -> FollowUpQuestion:
-        group = self._require_pending_follow_up_group()
-        return group.skip(question_id)
-
-    def skip_remaining_follow_ups(
-        self, question_id: UUID
-    ) -> tuple[FollowUpQuestion, ...]:
-        group = self._require_pending_follow_up_group()
-        return tuple(group.skip_remaining_from(question_id))
-
-    def pending_follow_up_group(self) -> FollowUpQuestionGroup | None:
-        return self._find_pending_follow_up_group()
-
-    def require_pending_follow_up_group(self) -> FollowUpQuestionGroup:
-        return self._require_pending_follow_up_group()
 
     def _require_track(self, track_id: UUID) -> PlaylistTrack:
         if self._playlist is None:
@@ -611,20 +567,6 @@ class Session(Aggregate):
     def _find_pending_tool_call_sequence(self) -> ToolCallSequence | None:
         for entry in reversed(self._entries):
             if isinstance(entry, ToolCallSequence) and not entry.is_complete:
-                return entry
-        return None
-
-    def _require_pending_follow_up_group(self) -> FollowUpQuestionGroup:
-        group = self._find_pending_follow_up_group()
-        if group is None:
-            raise NoPendingFollowUpGroupError(
-                f"Session {self.id} has no pending follow-up question group."
-            )
-        return group
-
-    def _find_pending_follow_up_group(self) -> FollowUpQuestionGroup | None:
-        for entry in reversed(self._entries):
-            if isinstance(entry, FollowUpQuestionGroup) and not entry.is_complete:
                 return entry
         return None
 

@@ -1,5 +1,4 @@
 import type {
-  FollowUpRequest,
   SendMessageRequest,
   SessionEventSchema,
 } from "@/api/generated/model";
@@ -16,7 +15,7 @@ type StreamSendMessageOptions = {
   onEvent?: (event: SessionServerEvent) => void;
 };
 
-type StreamRequestBody = SendMessageRequest | FollowUpRequest;
+type StreamRequestBody = SendMessageRequest;
 
 const getApiUrl = (path: string) => {
   const baseUrl = String(
@@ -34,17 +33,6 @@ export const streamSendMessage = async (
   options: StreamSendMessageOptions,
 ) =>
   streamSessionRequest(`/api/v1/sessions/${sessionId}/messages`, body, options);
-
-export const streamFollowUp = async (
-  sessionId: string,
-  body: FollowUpRequest,
-  options: StreamSendMessageOptions,
-) =>
-  streamSessionRequest(
-    `/api/v1/sessions/${sessionId}/follow-ups`,
-    body,
-    options,
-  );
 
 const streamSessionRequest = async (
   path: string,

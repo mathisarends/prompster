@@ -56,7 +56,6 @@ def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
     orm.user_messages = [existing_row]
     orm.assistant_messages = []
     orm.tool_call_sequences = []
-    orm.follow_up_question_groups = []
 
     repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
     repository._sync_entries(orm=orm, session_id=session_id, entries=session.entries)
@@ -180,7 +179,6 @@ def test_session_phase_mapping_roundtrip() -> None:
     orm.user_messages = []
     orm.assistant_messages = []
     orm.tool_call_sequences = []
-    orm.follow_up_question_groups = []
     orm.user_curation_events = []
     orm.playlist_references = []
     orm.artist_references = []
@@ -426,7 +424,6 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
     ]
     orm.assistant_messages = []
     orm.tool_call_sequences = []
-    orm.follow_up_question_groups = []
     orm.user_curation_events = [
         SessionUserCurationEventModel(
             id=uuid4(),

@@ -6,14 +6,7 @@ from fastapi.responses import StreamingResponse
 
 from backend.features.session.application import SessionEvent
 from backend.features.session.domain import (
-    EmptyFollowUpAnswerError,
-    FollowUpOptionNotFoundError,
-    FollowUpQuestionAlreadyResolvedError,
-    FollowUpQuestionNotFoundError,
-    FollowUpQuestionOutOfOrderError,
-    NoPendingFollowUpGroupError,
     NoPendingToolCallSequenceError,
-    PendingFollowUpQuestionsError,
     PendingToolCallsError,
     ToolCallAlreadyResolvedError,
     ToolCallNotFoundError,
@@ -26,14 +19,7 @@ from backend.features.session.presentation.sse.events import (
 from backend.features.session.presentation.sse.mappers import to_server_event
 
 _COMMAND_ERRORS = (
-    EmptyFollowUpAnswerError,
-    FollowUpOptionNotFoundError,
-    FollowUpQuestionAlreadyResolvedError,
-    FollowUpQuestionNotFoundError,
-    FollowUpQuestionOutOfOrderError,
-    NoPendingFollowUpGroupError,
     NoPendingToolCallSequenceError,
-    PendingFollowUpQuestionsError,
     PendingToolCallsError,
     ToolCallAlreadyResolvedError,
     ToolCallNotFoundError,

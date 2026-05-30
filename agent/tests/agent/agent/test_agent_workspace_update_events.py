@@ -10,8 +10,6 @@ from agent.agent import (
     Agent,
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
-    FollowUpRequestedEvent,
-    RunCompletedEvent,
     ToolCallEvent,
     ToolResultEvent,
     WorkspaceUpdatedEvent,
@@ -73,54 +71,6 @@ class TestAgentWorkspaceUpdateEvents:
 
         assert chunks == ["Hallo", " Welt"]
         assert completed.content == "Hallo Welt"
-
-    @pytest.mark.asyncio
-    async def test_follow_up_suspends_until_resume(self) -> None:
-        tool_args = {
-            "status": "Frage nach der Richtung",
-            "questions": [
-                {
-                    "question": "Welche Richtung?",
-                    "options": [{"label": "80er"}],
-                }
-            ],
-        }
-        llm = _FakeLlm(
-            [
-                _ChatResponse(
-                    completion="",
-                    tool_calls=[
-                        ToolCall(
-                            id="call-1",
-                            function={
-                                "name": "ask_follow_up",
-                                "arguments": json.dumps(tool_args),
-                            },
-                        )
-                    ],
-                ),
-                _ChatResponse(completion="Ich baue ein 80er-Deck.", tool_calls=[]),
-            ]
-        )
-        agent = Agent(llm=llm)
-
-        events = [event async for event in agent.stream("Bau mir ein Deck")]
-
-        follow_up = next(
-            event for event in events if isinstance(event, FollowUpRequestedEvent)
-        )
-        assert follow_up.tool_call_id == "call-1"
-        assert follow_up.questions[0].question == "Welche Richtung?"
-        assert not any(isinstance(event, RunCompletedEvent) for event in events)
-
-        resumed_events = [
-            event async for event in agent.resume(tool_call_id="call-1", answer="80er")
-        ]
-
-        completed = next(
-            event for event in resumed_events if isinstance(event, RunCompletedEvent)
-        )
-        assert completed.output == "Ich baue ein 80er-Deck."
 
     @pytest.mark.asyncio
     async def test_stream_emits_workspace_update_after_tool_result(self) -> None:
@@ -202,7 +152,7 @@ class TestAgentWorkspaceUpdateEvents:
             schema["function"]["name"] for schema in llm.tool_schema_batches[0]
         }
         assert agent.phase == Phase.ONBOARDING
-        assert tool_names == {"ask_follow_up"}
+        assert tool_names == set()
 
     @pytest.mark.asyncio
     async def test_agent_uses_build_tools_after_explicit_phase_advance(self) -> None:
@@ -216,6 +166,5 @@ class TestAgentWorkspaceUpdateEvents:
             schema["function"]["name"] for schema in llm.tool_schema_batches[0]
         }
         assert agent.phase == Phase.BUILD
-        assert "ask_follow_up" not in tool_names
         assert "search_tracks" in tool_names
         assert "create_playlist" in tool_names

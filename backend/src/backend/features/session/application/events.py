@@ -3,7 +3,6 @@ from uuid import UUID
 
 from backend.features.session.domain import (
     AssistantMessage,
-    FollowUpQuestionGroup,
     Playlist,
     PlaylistTrack,
     ToolCallSequence,
@@ -56,11 +55,6 @@ class SessionToolCallSequenceCompleted:
 
 
 @dataclass(frozen=True)
-class SessionFollowUpGroupAdded:
-    group: FollowUpQuestionGroup
-
-
-@dataclass(frozen=True)
 class SessionPlaylistSet:
     playlist: Playlist
 
@@ -98,7 +92,6 @@ type SessionEvent = (
     | SessionToolCallResolved
     | SessionToolCallFailed
     | SessionToolCallSequenceCompleted
-    | SessionFollowUpGroupAdded
     | SessionPlaylistSet
     | SessionPlaylistTrackAdded
     | SessionPlaylistTrackRemoved

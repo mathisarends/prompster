@@ -4,7 +4,6 @@ from uuid import uuid4
 from agent.agent import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
-    FollowUpRequestedEvent,
     ToolCallEvent,
     ToolResultEvent,
     WorkspaceUpdatedEvent,
@@ -17,12 +16,10 @@ from agent.playlist import (
     PlaylistDraftTracksRemoved,
     PlaylistDraftTracksReplaced,
 )
-from agent.tools.views import AskFollowUpOption, AskFollowUpQuestion
 
 from backend.features.session.application.ports.session_runner import (
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
-    SessionRunnerFollowUpRequested,
     SessionRunnerPlaylistTracksAdded,
     SessionRunnerPlaylistTracksRemoved,
     SessionRunnerPlaylistTracksReplaced,
@@ -61,7 +58,7 @@ class TestToolCallMapping:
                 tool_call_id="call_1",
                 name="add_tracks",
                 args={"query": "80s synth"},
-                status_label="Adding tracks…",
+                status_label="Adding tracks...",
                 action_type=None,
             )
         )
@@ -72,12 +69,10 @@ class TestToolCallMapping:
         assert event.call.id == "call_1"
         assert event.call.function.name == "add_tracks"
         assert event.call.function.arguments == {"query": "80s synth"}
-        assert event.call.function.status_label == "Adding tracks…"
+        assert event.call.function.status_label == "Adding tracks..."
         assert event.call.function.action_type is None
 
     def test_unknown_action_type_string_becomes_none(self) -> None:
-        # Defensive: a future agent release may invent a new action_type
-        # we don't know yet — we must not crash the stream.
         mapper = AgentSessionEventMapper()
 
         result = mapper.map(
@@ -118,36 +113,6 @@ class TestToolCallMapping:
         assert result == [
             SessionRunnerToolCallCompleted(tool_call_id="call_1", result="ok")
         ]
-
-
-class TestFollowUpMapping:
-    def test_follow_up_questions_get_1_indexed_option_ids(self) -> None:
-        # The agent doesn't ship option ids — the runner assigns "1", "2", …
-        # in render order so the frontend can echo a stable selection back.
-        mapper = AgentSessionEventMapper()
-
-        result = mapper.map(
-            FollowUpRequestedEvent(
-                tool_call_id="call_followup",
-                questions=[
-                    AskFollowUpQuestion(
-                        question="Welche Stimmung?",
-                        options=[
-                            AskFollowUpOption(label="tanzbar"),
-                            AskFollowUpOption(label="chillig"),
-                        ],
-                    )
-                ],
-            )
-        )
-
-        assert len(result) == 1
-        event = result[0]
-        assert isinstance(event, SessionRunnerFollowUpRequested)
-        assert len(event.questions) == 1
-        assert event.questions[0].question == "Welche Stimmung?"
-        assert [o.id for o in event.questions[0].options] == ["1", "2"]
-        assert [o.label for o in event.questions[0].options] == ["tanzbar", "chillig"]
 
 
 class TestWorkspaceUpdateMapping:
@@ -229,10 +194,6 @@ class TestWorkspaceUpdateMapping:
     def test_unknown_workspace_update_falls_back_to_full_playlist_snapshot(
         self,
     ) -> None:
-        # The mapper has explicit cases for added/removed/replaced and treats
-        # anything else as "I don't know what changed — resend the whole
-        # playlist." This is the safety net that keeps the frontend in sync
-        # if the agent introduces a new update variant.
         @dataclass
         class _UnknownUpdate:
             pass
@@ -250,14 +211,11 @@ class TestWorkspaceUpdateMapping:
         assert isinstance(event, SessionRunnerPlaylistUpdated)
         assert event.playlist.id == draft.id
         assert event.playlist.name == draft.name
-        assert [t.title for t in event.playlist.tracks] == ["Take On Me"]
+        assert [track.title for track in event.playlist.tracks] == ["Take On Me"]
 
 
 class TestUnknownEvent:
     def test_unknown_event_type_yields_no_runner_events(self) -> None:
-        # The mapper must never crash on an unexpected event. The runner's
-        # loop relies on getting back an iterable — empty list means
-        # "ignore and keep streaming".
         mapper = AgentSessionEventMapper()
 
         result = mapper.map(object())

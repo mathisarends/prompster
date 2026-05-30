@@ -20,7 +20,6 @@ from agent.tools.views import (
     AlbumTracksParams,
     ArtistAlbumsParams,
     ArtistTopTracksParams,
-    AskFollowUpParams,
     CreateDraftPlaylistParams,
     Phase,
     PlaylistIdParams,
@@ -71,7 +70,6 @@ class Tools:
         status_label: Callable[[P], str] | None = None,
         action_type: ActionType = ActionType.FETCH,
         included_in_phases: set[Phase] | None = None,
-        suspends_for_input: bool = False,
     ) -> Callable:
         def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
             self._register(
@@ -83,7 +81,6 @@ class Tools:
                     action_type=action_type,
                     included_in_phases=included_in_phases,
                     param_model=params,
-                    suspends_for_input=suspends_for_input,
                 )
             )
             return fn
@@ -336,25 +333,5 @@ class Tools:
                 playlist_tracks = await spotify.get_playlist_tracks(params)
                 store.cache_tracks(playlist_tracks.tracks)
                 return ActionResult.ok(playlist_tracks.content)
-            except Exception as error:
-                return ActionResult.fail(error)
-
-        @self.action(
-            description=(
-                "Ask the user one or more clarifying questions before proceeding. "
-                "Use this when the task is ambiguous and user input is required. "
-                "Provide 1-4 questions, each with 1-4 selectable options. "
-                "The user may also type a free-text answer or skip a question."
-            ),
-            params=AskFollowUpParams,
-            status_label=lambda params: params.status,
-            action_type=ActionType.INTERACT,
-            included_in_phases={Phase.ONBOARDING, Phase.BUILD},
-            suspends_for_input=True,
-        )
-        async def ask_follow_up(params: AskFollowUpParams) -> ActionResult:
-            try:
-                follow_up_payload = params.model_dump_json()
-                return ActionResult.ok(follow_up_payload)
             except Exception as error:
                 return ActionResult.fail(error)

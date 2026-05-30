@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from backend.features.session.domain import (
-    FollowUpQuestion,
     PendingCall,
     Playlist,
     PlaylistTrack,
@@ -31,11 +30,6 @@ class SessionRunnerToolCallStarted:
 class SessionRunnerToolCallCompleted:
     tool_call_id: str
     result: str
-
-
-@dataclass(frozen=True)
-class SessionRunnerFollowUpRequested:
-    questions: list[FollowUpQuestion]
 
 
 @dataclass(frozen=True)
@@ -77,7 +71,6 @@ type SessionRunnerEvent = (
     | SessionRunnerAssistantMessageChunk
     | SessionRunnerToolCallStarted
     | SessionRunnerToolCallCompleted
-    | SessionRunnerFollowUpRequested
     | SessionRunnerPlaylistUpdated
     | SessionRunnerPlaylistTracksAdded
     | SessionRunnerPlaylistTracksRemoved

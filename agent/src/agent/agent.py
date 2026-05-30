@@ -8,7 +8,6 @@ from agent.events import (
     AgentEvent,
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
-    FollowUpRequestedEvent,
     RunCompletedEvent,
     RunStartedEvent,
     StepStartedEvent,
@@ -18,7 +17,7 @@ from agent.events import (
 )
 from agent.messages import MessageManager
 from agent.tools import Tools, Spotify
-from agent.tools.views import AskFollowUpParams, Phase
+from agent.tools.views import Phase
 from agent.playlist import PlaylistDraftStore
 from agent.tokens import TokenTracker
 from agent.views import UserEvent
@@ -91,13 +90,6 @@ class Agent:
         async for event in self._run_loop():
             yield event
 
-    async def resume(
-        self, tool_call_id: str, answer: str
-    ) -> AsyncGenerator[AgentEvent, None]:
-        self._messages.add_tool_result(tool_call_id=tool_call_id, content=answer)
-        async for event in self._run_loop():
-            yield event
-
     async def _run_loop(self) -> AsyncGenerator[AgentEvent, None]:
         iteration = 0
         while True:
@@ -131,8 +123,6 @@ class Agent:
                     return
                 async for event in self._handle_tool_call(call):
                     yield event
-                    if isinstance(event, FollowUpRequestedEvent):
-                        return
 
     async def _stream_llm_response(
         self,
@@ -168,14 +158,6 @@ class Agent:
             status_label=tool.render_status(args) if tool else None,
             action_type=tool.action_type if tool else None,
         )
-
-        if tool is not None and tool.suspends_for_input:
-            parsed = AskFollowUpParams.model_validate(args)
-            yield FollowUpRequestedEvent(
-                tool_call_id=call.id,
-                questions=parsed.questions,
-            )
-            return  # suspend - resume() injects the answer as tool result
 
         result = await self._tools.execute(
             call.function.name,

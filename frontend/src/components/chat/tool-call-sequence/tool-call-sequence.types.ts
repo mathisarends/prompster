@@ -1,5 +1,5 @@
 export type ToolCallStatus = "pending" | "running" | "completed" | "failed";
-export type ToolCallActionType = "search" | "fetch" | "mutate" | "interact";
+export type ToolCallActionType = "search" | "fetch" | "mutate";
 
 export type ToolCallItem = {
   id: string;

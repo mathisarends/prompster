@@ -1,5 +1,4 @@
 from .conversation_service import (
-    FollowUpAnswer,
     SessionConversationService,
     SessionMessageAttachment,
 )
@@ -9,7 +8,6 @@ from .events import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionEvent,
-    SessionFollowUpGroupAdded,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
@@ -29,13 +27,11 @@ from .spotify_playlist_exporter import (
 
 __all__ = [
     "ExportedSpotifyPlaylist",
-    "FollowUpAnswer",
     "SessionAssistantMessageChunk",
     "SessionAssistantMessageCancelled",
     "SessionAssistantMessageCompleted",
     "SessionAssistantMessageStarted",
     "SessionEvent",
-    "SessionFollowUpGroupAdded",
     "SessionPlaylistExporter",
     "SessionSpotifyPlaylistExporter",
     "SessionPlaylistSet",

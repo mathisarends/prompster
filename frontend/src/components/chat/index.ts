@@ -5,7 +5,6 @@ export * from "./chat-page-header";
 export * from "./chat-search-dialog";
 export * from "./chat-thinking-indicator";
 export * from "./chat-workspace-panel";
-export * from "./follow-up-questions";
 export * from "./markdown-renderer";
 export * from "./send-button";
 export * from "./transcription-button";

@@ -62,34 +62,6 @@ class NoCurrentAssistantMessageError(Exception):
     pass
 
 
-class FollowUpQuestionNotFoundError(Exception):
-    pass
-
-
-class FollowUpQuestionAlreadyResolvedError(Exception):
-    pass
-
-
-class FollowUpQuestionOutOfOrderError(Exception):
-    pass
-
-
-class FollowUpOptionNotFoundError(Exception):
-    pass
-
-
-class EmptyFollowUpAnswerError(Exception):
-    pass
-
-
-class NoPendingFollowUpGroupError(Exception):
-    pass
-
-
-class PendingFollowUpQuestionsError(Exception):
-    pass
-
-
 class UserCurationEventNotFoundError(Exception):
     pass
 

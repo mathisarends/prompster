@@ -4,7 +4,6 @@ from backend.features.session.application import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionEvent,
-    SessionFollowUpGroupAdded,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
@@ -17,7 +16,6 @@ from backend.features.session.application import (
 )
 from backend.features.session.domain import Playlist
 from backend.features.session.presentation.mapper import (
-    to_follow_up_group_response,
     to_playlist_track_response,
     to_tool_call_sequence_response,
 )
@@ -29,7 +27,6 @@ from backend.features.session.presentation.sse.events import (
     AssistantMessageCancelledEvent,
     AssistantMessageCompletedEvent,
     AssistantMessageStartedEvent,
-    FollowUpGroupAddedEvent,
     PlaylistPayload,
     PlaylistSetEvent,
     PlaylistTrackAddedEvent,
@@ -93,9 +90,6 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
 
     if isinstance(event, SessionToolCallSequenceCompleted):
         return ToolCallSequenceCompletedEvent(sequence_id=event.sequence_id)
-
-    if isinstance(event, SessionFollowUpGroupAdded):
-        return FollowUpGroupAddedEvent(group=to_follow_up_group_response(event.group))
 
     if isinstance(event, SessionPlaylistSet):
         return PlaylistSetEvent(playlist=_to_playlist_payload(event.playlist))

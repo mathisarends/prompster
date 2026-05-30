@@ -6,7 +6,6 @@ from starlette.responses import StreamingResponse
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.session.application import (
-    FollowUpAnswer,
     SessionMessageAttachment,
     SessionConversationService,
     SessionService,
@@ -22,8 +21,6 @@ from backend.features.session.presentation.mapper import (
 from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
     ErrorResponse,
-    FollowUpAction,
-    FollowUpRequest,
     PlaylistTrackResponse,
     SendMessageRequest,
     SessionCreateRequest,
@@ -170,7 +167,7 @@ async def send_message(
             content=body.content,
             attachments=[
                 SessionMessageAttachment(
-                    kind=attachment.kind.value,
+                    kind=attachment.kind,
                     external_id=attachment.external_id,
                     title=attachment.title,
                     subtitle=attachment.subtitle,
@@ -199,45 +196,6 @@ async def stop_message(
         user_id=authenticated_user_id,
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.post(
-    "/{session_id}/follow-ups",
-    status_code=status.HTTP_200_OK,
-    operation_id="handle_follow_up",
-    responses=_event_stream_response
-    | _auth_errors
-    | _bad_request
-    | _not_found
-    | _too_many,
-)
-async def handle_follow_up(
-    session_id: UUID,
-    authenticated_user_id: AuthenticatedUserId,
-    body: FollowUpRequest,
-    service: FromDishka[SessionConversationService],
-) -> StreamingResponse:
-    if body.action == FollowUpAction.ANSWER:
-        return stream_session_events(
-            service.answer_follow_ups(
-                session_id=session_id,
-                user_id=authenticated_user_id,
-                answers=[
-                    FollowUpAnswer(
-                        question_id=a.question_id,
-                        option_id=a.option_id,
-                        text=a.text,
-                    )
-                    for a in body.answers
-                ],
-            )
-        )
-
-    return stream_session_events(
-        service.skip_remaining_follow_ups(
-            session_id=session_id, user_id=authenticated_user_id
-        )
-    )
 
 
 @router.post(

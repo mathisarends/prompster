@@ -49,9 +49,8 @@ class AgentHistoryBuilder:
             session=session, bound_event_ids=bound_event_ids
         )
         if trailing_events:
-            # No user message followed these manual changes yet (e.g. agent is
-            # resuming after follow-up answers). Surface them in a synthetic
-            # UserMessage so the LLM still sees the curation block in turn order.
+            # No user message followed these manual changes yet. Surface them
+            # in a synthetic UserMessage so the LLM sees the curation block.
             messages.append(
                 LLMUserMessage(content=render_user_message_content("", trailing_events))
             )

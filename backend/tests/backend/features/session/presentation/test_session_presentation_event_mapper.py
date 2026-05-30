@@ -6,7 +6,6 @@ from backend.features.session.application import (
     SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
-    SessionFollowUpGroupAdded,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
@@ -16,9 +15,6 @@ from backend.features.session.application import (
 )
 from backend.features.session.domain import (
     AssistantMessage,
-    FollowUpOption,
-    FollowUpQuestion,
-    FollowUpQuestionGroup,
     PendingCall,
     Playlist,
     PlaylistTrack,
@@ -31,7 +27,6 @@ from backend.features.session.presentation.sse.events import (
     AssistantMessageCancelledEvent,
     AssistantMessageCompletedEvent,
     AssistantMessageStartedEvent,
-    FollowUpGroupAddedEvent,
     PlaylistSetEvent,
     PlaylistTrackAddedEvent,
     PlaylistTrackRemovedEvent,
@@ -132,23 +127,6 @@ class TestSessionEventMapper:
         assert event.sequence_id == sequence_id
         assert event.tool_call_id == "call-1"
         assert event.result == "done"
-
-    def test_to_server_event_maps_follow_up_group_added(self) -> None:
-        group = FollowUpQuestionGroup(
-            questions=[
-                FollowUpQuestion(
-                    question="Welches Genre?",
-                    options=[FollowUpOption(id="1", label="House")],
-                )
-            ]
-        )
-
-        event = to_server_event(SessionFollowUpGroupAdded(group=group))
-
-        assert isinstance(event, FollowUpGroupAddedEvent)
-        assert event.type == SessionEventType.FOLLOW_UP_GROUP_ADDED
-        assert event.group.id == group.id
-        assert event.group.questions[0].question == "Welches Genre?"
 
     def test_to_server_event_maps_playlist_set(self) -> None:
         playlist = Playlist(

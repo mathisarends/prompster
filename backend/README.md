@@ -6,7 +6,7 @@ Encapsulates:
 
 - HTTP & SSE API under `/api/v1` with `dishka` DI container
 - Google OAuth 2.0 authentication + JWT session management
-- Persistent chat sessions with tool-call and follow-up history (PostgreSQL via SQLModel / asyncpg)
+- Persistent chat sessions with tool-call history (PostgreSQL via SQLModel / asyncpg)
 - File storage for generated assets (S3 via aioboto3)
 - Spotify integration (OAuth token management, playlist creation)
 - PDF playlist deck generation (Typst + QR codes)
@@ -17,7 +17,7 @@ Encapsulates:
 | Feature | Responsibility |
 |---|---|
 | `auth` | Google OAuth flow, JWT issuance & refresh, cookie handling |
-| `session` | Chat session CRUD, agent run streaming, follow-up Q&A, PDF export |
+| `session` | Chat session CRUD, agent run streaming, PDF export |
 | `spotify` | Spotify account connection, playlist write-back |
 | `user` | User profile read / update |
 
@@ -28,7 +28,6 @@ Agent events emitted by the `agent` package are mapped to server-sent events and
 ```
 POST /api/v1/sessions/{id}/run   → starts or resumes an agent run
 GET  /api/v1/sessions/{id}/run   → SSE stream of AgentEvent → ServerEvent
-POST /api/v1/sessions/{id}/answer → injects a follow-up answer
 GET  /api/v1/sessions/{id}/export → streams a PDF deck
 ```
 
