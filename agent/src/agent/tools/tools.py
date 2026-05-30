@@ -119,11 +119,6 @@ class Tools:
             logger.error("Failed to parse tool args JSON: %s", error)
             return {}
 
-    def serialize_result(self, result: ActionResult) -> str:
-        if not isinstance(result, ActionResult):
-            raise TypeError(f"Expected ActionResult, received {type(result).__name__}")
-        return result.model_dump_json()
-
     def _register_default_tools(self) -> None:
         @self.action(
             description=(

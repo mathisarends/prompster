@@ -46,6 +46,9 @@ class ActionResult(BaseModel):
     def fail(cls, error: Exception | str) -> Self:
         return cls(success=False, extracted_content="", error=str(error))
 
+    def to_content(self) -> str:
+        return self.extracted_content if self.success else f"Error: {self.error}"
+
 
 class Tool:
     def __init__(

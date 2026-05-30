@@ -18,7 +18,7 @@ from agent.events import (
 )
 from agent.messages import MessageManager
 from agent.tools import Tools, Spotify
-from agent.tools.views import ActionResult, AskOnboardingQuestionParams, Phase
+from agent.tools.views import AskOnboardingQuestionParams, Phase
 from agent.playlist import PlaylistDraftStore
 from agent.tokens import TokenTracker
 from agent.views import UserEvent
@@ -173,12 +173,10 @@ class Agent:
         ):
             params = tool.param_model.model_validate(args)
             assert isinstance(params, AskOnboardingQuestionParams)
-            serialized = ActionResult.ok(
-                extracted_content=f"Frage gestellt: {params.question}"
-            ).model_dump_json()
-            self._messages.add_tool_result(tool_call_id=call.id, content=serialized)
+            content = f"Frage gestellt: {params.question}"
+            self._messages.add_tool_result(tool_call_id=call.id, content=content)
             yield ToolResultEvent(
-                tool_call_id=call.id, name=call.function.name, result=serialized
+                tool_call_id=call.id, name=call.function.name, result=content
             )
             yield SuspendedForInputEvent(
                 question=params.question,
@@ -192,11 +190,11 @@ class Agent:
             args,
             phase=self._phase,
         )
-        serialized = self._tools.serialize_result(result)
+        content = result.to_content()
         yield ToolResultEvent(
             tool_call_id=call.id,
             name=call.function.name,
-            result=serialized,
+            result=content,
         )
         for update in self._playlist_store.drain_playlist_draft_updates():
             yield WorkspaceUpdatedEvent(
@@ -205,5 +203,5 @@ class Agent:
             )
         self._messages.add_tool_result(
             tool_call_id=call.id,
-            content=serialized,
+            content=content,
         )
