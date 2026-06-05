@@ -36,6 +36,13 @@ class _ActiveRun:
     cancellation: asyncio.Event
     agent: Agent
 
+    def stop(self) -> None:
+        self.cancellation.set()
+        self.agent.request_stop()
+
+    def is_cancelled(self) -> bool:
+        return self.cancellation.is_set()
+
 
 class _ActiveRunRegistry:
     def __init__(self) -> None:
@@ -46,18 +53,17 @@ class _ActiveRunRegistry:
         async with self._lock:
             self._runs[session_id] = run
 
-    async def unregister_if_current(self, *, session_id: UUID, run: _ActiveRun) -> None:
+    async def complete(self, *, session_id: UUID, run: _ActiveRun) -> None:
         async with self._lock:
             if self._runs.get(session_id) is run:
-                self._runs.pop(session_id, None)
+                del self._runs[session_id]
 
     async def stop(self, *, session_id: UUID) -> bool:
         async with self._lock:
             active_run = self._runs.get(session_id)
             if active_run is None:
                 return False
-            active_run.cancellation.set()
-            active_run.agent.request_stop()
+            active_run.stop()
             return True
 
 
@@ -83,18 +89,16 @@ class AgentSessionRunner(SessionRunner):
         await self._active_runs.register(session_id=session.id, run=active_run)
         try:
             async for event in agent.stream():
-                if active_run.cancellation.is_set():
+                if active_run.is_cancelled():
                     yield SessionRunnerCancelled()
                     return
                 for session_event in self._event_mapper.map(event):
                     yield session_event
-                    if active_run.cancellation.is_set():
+                    if active_run.is_cancelled():
                         yield SessionRunnerCancelled()
                         return
         finally:
-            await self._active_runs.unregister_if_current(
-                session_id=session.id, run=active_run
-            )
+            await self._active_runs.complete(session_id=session.id, run=active_run)
             await agent.close()
 
     async def stop(self, *, session_id: UUID) -> bool:

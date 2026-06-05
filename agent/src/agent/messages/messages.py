@@ -21,25 +21,17 @@ type _PlaylistDraftProvider = Callable[[], PlaylistDraft | None]
 
 
 class MessageManager:
-    _SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "system_prompt.md").read_text(
-        encoding="utf-8"
-    )
-    _ONBOARDING_NUDGE_PROMPT = """\
-You are now gathering context for a playlist. Ask 3-5 semantically relevant
-clarifying questions based on the user's request. For every question, provide
-3-8 concise, meaningful answer options. The UI offers a separate free-text
-answer, so do not add a generic "Other" option. Topic guidance (NOT hardcoded -
-choose what is relevant):
-- Who is it for / what is the occasion?
-- Which decades / eras?
-- How broad or focused should the selection be?
-- Mood / vibe?
-- Any special requests?
-
-Call `ask_onboarding_question` ONCE for each question.
-Set `is_last_question=false` until the final question.
-Set `is_last_question=true` only for the final question.
-"""
+    _SHARED_PROMPT = (
+        Path(__file__).parent / "prompts" / "shared_system_prompt.md"
+    ).read_text(encoding="utf-8")
+    _PHASE_PROMPTS: dict[Phase, str] = {
+        Phase.ONBOARDING: (
+            Path(__file__).parent / "prompts" / "onboarding_system_prompt.md"
+        ).read_text(encoding="utf-8"),
+        Phase.BUILD: (
+            Path(__file__).parent / "prompts" / "building_system_prompt.md"
+        ).read_text(encoding="utf-8"),
+    }
 
     def __init__(
         self,
@@ -49,7 +41,11 @@ Set `is_last_question=true` only for the final question.
         max_playlist_tracks: int = 75,
         history: list[Message] | None = None,
     ) -> None:
-        self._system_prompt = system_prompt or self._SYSTEM_PROMPT
+        if system_prompt:
+            self._system_prompt = system_prompt
+        else:
+            phase_prompt = self._PHASE_PROMPTS.get(phase, "")
+            self._system_prompt = f"{self._SHARED_PROMPT}\n\n{phase_prompt}".strip()
         self._phase = phase
         self._playlist_draft_provider = playlist_draft_provider
         self._max_playlist_tracks = max_playlist_tracks
@@ -60,7 +56,6 @@ Set `is_last_question=true` only for the final question.
 
     def all(self) -> list[Message]:
         messages: list[Message] = [SystemMessage(content=self._system_prompt)]
-        self._inject_onboarding_nudge(messages)
 
         playlist_context = self._render_playlist_context()
         if playlist_context is not None:
@@ -120,33 +115,9 @@ Set `is_last_question=true` only for the final question.
         lines.append("</created_playlist>")
         return "\n".join(lines)
 
-    def _inject_onboarding_nudge(self, messages: list[Message]) -> None:
-        if self._phase != Phase.ONBOARDING:
-            return
-        if self._has_any_onboarding_question_call():
-            return
-        self._inject_confirmed_context(messages, self._ONBOARDING_NUDGE_PROMPT)
-
     def _inject_confirmed_context(self, messages: list[Message], content: str) -> None:
         # Context Injection Pattern: UserMessage + AssistantMessage("Understood.")
         # Prevents consecutive UserMessages and ensures the model treats the
         # state as confirmed context rather than an open question.
         messages.append(UserMessage(content=content))
         messages.append(AssistantMessage(content="Understood."))
-
-    def _has_any_onboarding_question_call(self) -> bool:
-        for message in self._messages:
-            if not isinstance(message, AssistantMessage):
-                continue
-            if not message.tool_calls:
-                continue
-            for tool_call in message.tool_calls:
-                function_name = None
-                function = getattr(tool_call, "function", None)
-                if isinstance(function, dict):
-                    function_name = function.get("name")
-                else:
-                    function_name = getattr(function, "name", None)
-                if function_name == "ask_onboarding_question":
-                    return True
-        return False
