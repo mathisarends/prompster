@@ -5,11 +5,13 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
+import type { OnboardingQuestionSelectionMode } from "./onboardingQuestionSelectionMode";
 
 export interface OnboardingQuestionResponse {
   id: string;
   sequenceNumber: number;
   questionText: string;
   options?: string[];
+  selectionMode?: OnboardingQuestionSelectionMode;
   isLastQuestion: boolean;
 }

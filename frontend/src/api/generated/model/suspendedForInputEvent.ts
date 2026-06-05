@@ -5,12 +5,14 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
+import type { OnboardingQuestionSelectionMode } from "./onboardingQuestionSelectionMode";
 
 export interface SuspendedForInputEvent {
   type?: "session.suspended_for_input";
   kind: string;
   question?: string | null;
   options?: string[];
+  selectionMode?: OnboardingQuestionSelectionMode;
   questionId?: string | null;
   isLastQuestion?: boolean;
 }

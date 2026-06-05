@@ -521,8 +521,12 @@ def test_onboarding_question_mapping_roundtrip() -> None:
     question = session.add_onboarding_question(
         question_text="Fuer wen ist die Playlist?",
         options=("Freunde", "Familie"),
+        selection_mode=OnboardingQuestionSelectionMode.MULTI_SELECT,
     )
-    session.answer_onboarding_question(question_id=question.id, answer="Freunde")
+    session.answer_onboarding_question(
+        question_id=question.id,
+        answers=["Freunde", "Familie"],
+    )
 
     repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
     orm = SessionModel(
@@ -547,7 +551,9 @@ def test_onboarding_question_mapping_roundtrip() -> None:
 
     assert len(orm.onboarding_questions) == 1
     assert orm.onboarding_questions[0].question_text == "Fuer wen ist die Playlist?"
-    assert orm.onboarding_questions[0].answer == "Freunde"
+    assert orm.onboarding_questions[0].selection_mode == "multi_select"
+    assert orm.onboarding_questions[0].answer == "Freunde, Familie"
+    assert orm.onboarding_questions[0].answers == ["Freunde", "Familie"]
     assert orm.onboarding_questions[0].is_answered is True
 
     mapped = repository._to_domain_onboarding_question(
@@ -557,7 +563,9 @@ def test_onboarding_question_mapping_roundtrip() -> None:
             sequence_number=1,
             question_text="Fuer wen ist die Playlist?",
             options=["Freunde", "Familie"],
-            answer="Freunde",
+            selection_mode="multi_select",
+            answers=["Freunde", "Familie"],
+            answer="Freunde, Familie",
             is_answered=True,
             answered_at=question.answered_at,
             created_at=question.created_at,
@@ -567,3 +575,5 @@ def test_onboarding_question_mapping_roundtrip() -> None:
     assert mapped.id == question.id
     assert mapped.sequence_number == 1
     assert mapped.options == ("Freunde", "Familie")
+    assert mapped.selection_mode == OnboardingQuestionSelectionMode.MULTI_SELECT
+    assert mapped.answers == ("Freunde", "Familie")

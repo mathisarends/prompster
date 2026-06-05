@@ -8,9 +8,7 @@
 
 export interface SubmitOnboardingAnswerRequest {
   questionId: string;
-  /**
-   * @minLength 1
-   * @maxLength 2000
-   */
-  answer: string;
+  answer?: string | null;
+  /** @maxItems 8 */
+  answers?: string[];
 }
