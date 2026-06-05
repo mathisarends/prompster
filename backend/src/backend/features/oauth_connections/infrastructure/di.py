@@ -5,12 +5,14 @@ from backend.env import EnvSettings
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.infrastructure.oauth_state_settings import OAuthStateSettings
 from backend.features.oauth_connections.application import (
-    OAuthTokenCipher,
     SpotifyOAuthConnectionService,
     SpotifyOAuthProvider,
     SpotifyTokenService,
 )
 from backend.features.oauth_connections.domain import OAuthConnectionRepository
+from backend.features.oauth_connections.infrastructure.oauth_token_cipher import (
+    OAuthTokenCipher,
+)
 from backend.features.oauth_connections.infrastructure.repository import (
     SqlOAuthConnectionRepository,
 )

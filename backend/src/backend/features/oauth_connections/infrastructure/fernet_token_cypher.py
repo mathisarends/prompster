@@ -1,6 +1,8 @@
 from cryptography.fernet import Fernet, InvalidToken
 
-from backend.features.oauth_connections.application.ports import OAuthTokenCipher
+from backend.features.oauth_connections.infrastructure.oauth_token_cipher import (
+    OAuthTokenCipher,
+)
 
 
 class FernetOAuthTokenCipher(OAuthTokenCipher):

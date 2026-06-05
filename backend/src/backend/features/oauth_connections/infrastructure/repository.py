@@ -3,7 +3,9 @@ from uuid import UUID
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.features.oauth_connections.application.ports import OAuthTokenCipher
+from backend.features.oauth_connections.infrastructure.oauth_token_cipher import (
+    OAuthTokenCipher,
+)
 from backend.features.oauth_connections.domain import (
     OAuthConnection,
     OAuthConnectionRepository,
