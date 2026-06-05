@@ -6,19 +6,6 @@ from agent.playlist import PlaylistDraft
 from agent.playlist.views import PlaylistDraftTrack
 
 
-def _render_user_events_block(events: Sequence[UserEvent]) -> str:
-    """Render UserEvents as a single ``<user_events>`` XML block.
-
-    The block is meant to be embedded inside the same ``UserMessage`` content
-    as the user's text - it represents manual playlist changes the user made
-    just before that turn.
-    """
-    lines = ["<user_events>"]
-    lines.extend(_render_event(event) for event in events)
-    lines.append("</user_events>")
-    return "\n".join(lines)
-
-
 def render_user_message_content(
     content: str,
     curation_events: Sequence[UserEvent] | None = None,
@@ -30,6 +17,19 @@ def render_user_message_content(
     if not content:
         return block
     return f"{block}\n\n{content}"
+
+
+def _render_user_events_block(events: Sequence[UserEvent]) -> str:
+    """Render UserEvents as a single ``<user_events>`` XML block.
+
+    The block is meant to be embedded inside the same ``UserMessage`` content
+    as the user's text - it represents manual playlist changes the user made
+    just before that turn.
+    """
+    lines = ["<user_events>"]
+    lines.extend(_render_event(event) for event in events)
+    lines.append("</user_events>")
+    return "\n".join(lines)
 
 
 def _render_event(event: UserEvent) -> str:

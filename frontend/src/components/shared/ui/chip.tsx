@@ -26,7 +26,8 @@ export const Chip = ({
       disabled={disabled}
       className={cn(
         "flex items-center gap-1.5 rounded-full border border-border/60 bg-card/40 px-4 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:border-border hover:bg-card/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
-        active && (activeClassName ?? "border-border bg-card/80 text-foreground"),
+        active &&
+          (activeClassName ?? "border-border bg-card/80 text-foreground"),
       )}
     >
       {Icon ? <Icon className="size-3.5" /> : null}

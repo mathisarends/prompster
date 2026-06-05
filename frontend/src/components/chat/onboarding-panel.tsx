@@ -201,7 +201,9 @@ const OnboardingQuestionBlock = ({
         <Textarea
           id={freeTextId}
           value={draft?.freeText ?? ""}
-          onChange={(event) => onFreeTextChange(question.id, event.target.value)}
+          onChange={(event) =>
+            onFreeTextChange(question.id, event.target.value)
+          }
           placeholder="Freitext ..."
           rows={3}
           disabled={disabled}
