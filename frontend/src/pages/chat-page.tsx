@@ -6,7 +6,10 @@ import type {
   UserCurationEventResponse,
 } from "@/api/generated/model";
 import { ChatSessionPane } from "@/components/chat/chat-session-pane";
-import { OnboardingPanel } from "@/components/chat/onboarding-panel";
+import {
+  OnboardingPanel,
+  type OnboardingAnswer,
+} from "@/components/chat/onboarding-panel";
 import { DeckWorkspaceView } from "@/components/deck/deck-workspace-view";
 import {
   ResizableHandle,
@@ -59,7 +62,7 @@ export const ChatPage = () => {
     isLoadingSession,
     isError,
     sendMessage,
-    submitOnboardingAnswer,
+    submitOnboardingAnswers,
     stopMessage,
     removePlaylistTrack,
   } = useChatSession({
@@ -120,19 +123,13 @@ export const ChatPage = () => {
 
   const isOnboardingPending =
     pendingInput?.kind === "onboarding_question" &&
-    Boolean(pendingInput.questionId);
+    pendingInput.questions.some((question) => Boolean(question.id));
 
   const handleOnboardingSubmit = useCallback(
-    (answer: string) => {
-      const questionId = pendingInput?.questionId;
-      if (!questionId) return;
-      submitOnboardingAnswer(
-        questionId,
-        answer,
-        Boolean(pendingInput?.isLastQuestion),
-      );
+    (answers: OnboardingAnswer[]) => {
+      submitOnboardingAnswers(answers);
     },
-    [pendingInput, submitOnboardingAnswer],
+    [submitOnboardingAnswers],
   );
 
   const showWorkspace =
@@ -141,7 +138,7 @@ export const ChatPage = () => {
   const workspaceContent =
     isOnboardingPending && pendingInput ? (
       <OnboardingPanel
-        key={pendingInput.questionId}
+        key={pendingInput.questions.map((question) => question.id).join(":")}
         pendingInput={pendingInput}
         isSubmitting={isStreaming}
         onSubmit={handleOnboardingSubmit}
@@ -227,7 +224,9 @@ export const ChatPage = () => {
           {isOnboardingPending && pendingInput ? (
             <div className="absolute inset-x-0 bottom-0 z-30 max-h-[78%] border-t border-white/[0.06] shadow-2xl shadow-black/40">
               <OnboardingPanel
-                key={pendingInput.questionId}
+                key={pendingInput.questions
+                  .map((question) => question.id)
+                  .join(":")}
                 pendingInput={pendingInput}
                 isSubmitting={isStreaming}
                 onSubmit={handleOnboardingSubmit}

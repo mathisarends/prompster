@@ -1,5 +1,6 @@
 import type {
   AssistantMessageEntryResponse,
+  OnboardingQuestionResponse,
   PlaylistPayload,
   PlaylistResponse,
   SessionResponse,
@@ -64,10 +65,19 @@ export type ChatState = {
 
 export type PendingInput = {
   kind: string;
+  questions: PendingOnboardingQuestion[];
   question?: string | null;
   options: string[];
   questionId?: string | null;
   isLastQuestion?: boolean;
+};
+
+export type PendingOnboardingQuestion = {
+  id: string;
+  sequenceNumber?: number;
+  question: string | null;
+  options: string[];
+  isLastQuestion: boolean;
 };
 
 export type ChatAction =
@@ -239,17 +249,31 @@ const normalizePlaylist = (playlist: PlaylistLike): ChatPlaylist | null => {
 const getPendingInput = (session: SessionLike): PendingInput | null => {
   if (!("openOnboardingQuestions" in session)) return null;
 
-  const question = session.openOnboardingQuestions?.[0];
+  const questions = (session.openOnboardingQuestions ?? []).map(
+    toPendingOnboardingQuestion,
+  );
+  const question = questions[0];
   if (!question) return null;
 
   return {
     kind: "onboarding_question",
-    question: question.questionText,
-    options: question.options ?? [],
+    questions,
+    question: question.question,
+    options: question.options,
     questionId: question.id,
     isLastQuestion: question.isLastQuestion,
   };
 };
+
+const toPendingOnboardingQuestion = (
+  question: OnboardingQuestionResponse,
+): PendingOnboardingQuestion => ({
+  id: question.id,
+  sequenceNumber: question.sequenceNumber,
+  question: question.questionText,
+  options: question.options ?? [],
+  isLastQuestion: question.isLastQuestion,
+});
 
 const nextPlaylistRevision = (playlist: ChatPlaylist | null) =>
   (playlist?.uiRevision ?? 0) + 1;
@@ -348,6 +372,18 @@ const reduceServerEvent = (
       ...state,
       pendingInput: {
         kind,
+        questions: [
+          {
+            id: payload.questionId ?? "",
+            question: payload.question ?? null,
+            options: Array.isArray(payload.options)
+              ? payload.options.filter(
+                  (option): option is string => typeof option === "string",
+                )
+              : [],
+            isLastQuestion: payload.isLastQuestion ?? false,
+          },
+        ],
         question: payload.question ?? null,
         options: Array.isArray(payload.options)
           ? payload.options.filter(
@@ -367,6 +403,7 @@ const reduceServerEvent = (
         title: event.session.title,
         entries: normalizeSessionEntries(event.session.entries),
         playlist: normalizePlaylist(event.session.playlist),
+        pendingInput: getPendingInput(event.session),
         errorMessage: undefined,
       };
 

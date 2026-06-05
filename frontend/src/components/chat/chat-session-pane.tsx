@@ -90,7 +90,7 @@ export const ChatSessionPane = ({
   );
   const isOnboardingQuestionPending =
     pendingInput?.kind === "onboarding_question" &&
-    Boolean(pendingInput.questionId);
+    pendingInput.questions.some((question) => Boolean(question.id));
 
   const submitPrompt = (text: string) => {
     sendMessage(text);

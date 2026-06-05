@@ -25,6 +25,11 @@ import {
 } from "./chat-page.state";
 
 type StreamOptions = Parameters<typeof streamSendMessage>[2];
+type OnboardingAnswerPayload = {
+  questionId: string;
+  answer: string;
+  isLastQuestion?: boolean;
+};
 
 type UseChatSessionParams = {
   sessionId: string;
@@ -46,11 +51,7 @@ export type UseChatSessionResult = {
   isLoadingSession: boolean;
   isError: boolean;
   sendMessage: (text: string) => void;
-  submitOnboardingAnswer: (
-    questionId: string,
-    answer: string,
-    isLastQuestion?: boolean,
-  ) => void;
+  submitOnboardingAnswers: (answers: OnboardingAnswerPayload[]) => void;
   stopMessage: () => void;
   removePlaylistTrack: (trackId: string) => Promise<void>;
 };
@@ -236,32 +237,40 @@ export const useChatSession = ({
     [streamAssistantResponse],
   );
 
-  const submitOnboardingAnswer = useCallback(
-    (questionId: string, answer: string, isLastQuestion = false) => {
-      const normalizedAnswer = answer.trim();
-      if (!normalizedAnswer) return;
+  const submitOnboardingAnswers = useCallback(
+    (answers: OnboardingAnswerPayload[]) => {
+      const normalizedAnswers = answers
+        .map((answer) => ({
+          ...answer,
+          answer: answer.answer.trim(),
+        }))
+        .filter((answer) => answer.questionId && answer.answer);
+      if (normalizedAnswers.length === 0) return;
 
       void (async () => {
-        await runEventStream(
-          {
-            type: "stream/started",
-          },
-          (streamOptions) =>
-            streamSubmitOnboardingAnswer(
-              sessionId,
-              { questionId, answer: normalizedAnswer },
-              streamOptions,
-            ),
-        );
-
-        if (isLastQuestion) {
+        for (const answer of normalizedAnswers) {
           await runEventStream(
             {
               type: "stream/started",
             },
             (streamOptions) =>
-              streamCompleteOnboarding(sessionId, streamOptions),
+              streamSubmitOnboardingAnswer(
+                sessionId,
+                { questionId: answer.questionId, answer: answer.answer },
+                streamOptions,
+              ),
           );
+
+          if (answer.isLastQuestion) {
+            await runEventStream(
+              {
+                type: "stream/started",
+              },
+              (streamOptions) =>
+                streamCompleteOnboarding(sessionId, streamOptions),
+            );
+            break;
+          }
         }
       })();
     },
@@ -323,7 +332,7 @@ export const useChatSession = ({
     isLoadingSession: isLoading && state.entries.length === 0,
     isError,
     sendMessage,
-    submitOnboardingAnswer,
+    submitOnboardingAnswers,
     stopMessage,
     removePlaylistTrack: removePlaylistTrackFromSession,
   };
