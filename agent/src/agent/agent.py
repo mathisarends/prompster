@@ -187,9 +187,11 @@ class Agent:
                 yield SuspendedForUserInputEvent(
                     question=request.question,
                     options=list(request.options),
+                    selection_mode=request.selection_mode,
                 )
             else:
                 yield QuestionAskedEvent(
                     question=request.question,
                     options=list(request.options),
+                    selection_mode=request.selection_mode,
                 )

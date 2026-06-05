@@ -359,12 +359,21 @@ class SessionOnboardingQuestionModel(DatabaseEntity, table=True):
         default_factory=list,
         sa_column=Column(JSON, nullable=False),
     )
+    selection_mode: str = Field(
+        default="single_select",
+        max_length=32,
+        sa_column_kwargs={"server_default": text("'single_select'")},
+    )
     is_last_question: bool = Field(
         default=False,
         sa_type=Boolean(),
         sa_column_kwargs={"server_default": text("false")},
     )
     answer: str | None = None
+    answers: list[str] = Field(
+        default_factory=list,
+        sa_column=Column(JSON, nullable=False),
+    )
     is_answered: bool = Field(
         default=False,
         sa_type=Boolean(),

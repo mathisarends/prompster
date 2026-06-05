@@ -3,6 +3,7 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 from backend.features.session.domain import (
+    OnboardingQuestionSelectionMode,
     PendingCall,
     Phase,
     PlaylistTrack,

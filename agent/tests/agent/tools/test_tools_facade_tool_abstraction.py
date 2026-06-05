@@ -71,6 +71,21 @@ class TestToolsFacadeAbstraction:
         assert options["minItems"] == 3
         assert options["maxItems"] == 8
 
+    def test_onboarding_question_schema_exposes_selection_mode_enum(self) -> None:
+        tools = Tools()
+
+        schema = next(
+            schema
+            for schema in tools.to_schema(phase=Phase.ONBOARDING)
+            if schema["function"]["name"] == "ask_onboarding_question"
+        )
+        selection_mode = schema["function"]["parameters"]["properties"][
+            "selection_mode"
+        ]
+
+        assert selection_mode["default"] == "single_select"
+        assert selection_mode["enum"] == ["single_select", "multi_select"]
+
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         "options",

@@ -28,6 +28,7 @@ type StreamOptions = Parameters<typeof streamSendMessage>[2];
 type OnboardingAnswerPayload = {
   questionId: string;
   answer: string;
+  answers?: string[];
   isLastQuestion?: boolean;
 };
 
@@ -242,9 +243,12 @@ export const useChatSession = ({
       const normalizedAnswers = answers
         .map((answer) => ({
           ...answer,
+          answers: (answer.answers?.length ? answer.answers : [answer.answer])
+            .map((value) => value.trim())
+            .filter(Boolean),
           answer: answer.answer.trim(),
         }))
-        .filter((answer) => answer.questionId && answer.answer);
+        .filter((answer) => answer.questionId && answer.answers.length > 0);
       if (normalizedAnswers.length === 0) return;
 
       void (async () => {
@@ -256,7 +260,11 @@ export const useChatSession = ({
             (streamOptions) =>
               streamSubmitOnboardingAnswer(
                 sessionId,
-                { questionId: answer.questionId, answer: answer.answer },
+                {
+                  questionId: answer.questionId,
+                  answer: answer.answers.join(", "),
+                  answers: answer.answers,
+                },
                 streamOptions,
               ),
           );

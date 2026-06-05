@@ -23,6 +23,7 @@ from backend.features.session.domain.entities import (
     CompletedCall,
     FailedCall,
     OnboardingQuestion,
+    OnboardingQuestionSelectionMode,
     PendingCall,
     Playlist,
     PlaylistReference,
@@ -342,6 +343,9 @@ class Session(Aggregate):
         *,
         question_text: str,
         options: tuple[str, ...] = (),
+        selection_mode: OnboardingQuestionSelectionMode | str = (
+            OnboardingQuestionSelectionMode.SINGLE_SELECT
+        ),
         is_last_question: bool = False,
     ) -> OnboardingQuestion:
         sequence_number = len(self._onboarding_questions) + 1
@@ -349,17 +353,23 @@ class Session(Aggregate):
             sequence_number=sequence_number,
             question_text=question_text,
             options=options,
+            selection_mode=selection_mode,
             is_last_question=is_last_question,
         )
         self._onboarding_questions.append(question)
         return question
 
     def answer_onboarding_question(
-        self, *, question_id: UUID, answer: str
+        self,
+        *,
+        question_id: UUID,
+        answer: str | None = None,
+        answers: tuple[str, ...] | list[str] | None = None,
     ) -> OnboardingQuestion:
-        normalized = answer.strip()
-        if not normalized:
-            raise ValueError("Onboarding answer must not be empty.")
+        normalized_answers = self._normalize_onboarding_answers(
+            answer=answer,
+            answers=answers,
+        )
 
         for question in self._onboarding_questions:
             if question.id != question_id:
@@ -368,12 +378,64 @@ class Session(Aggregate):
                 raise ValueError(
                     f"Onboarding question {question_id} is already answered."
                 )
-            question.answer_with(normalized, answered_at=datetime.now(timezone.utc))
+            self._assert_onboarding_answer_count(
+                question=question,
+                answers=normalized_answers,
+            )
+            question.answer_with(
+                normalized_answers,
+                answered_at=datetime.now(timezone.utc),
+            )
             if question.is_last_question:
                 self._reconstruct_onboarding_history()
             return question
 
         raise ValueError(f"Onboarding question {question_id} not found.")
+
+    def _normalize_onboarding_answers(
+        self,
+        *,
+        answer: str | None,
+        answers: tuple[str, ...] | list[str] | None,
+    ) -> tuple[str, ...]:
+        raw_answers = list(answers or ())
+        if answer is not None:
+            raw_answers.append(answer)
+
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for raw_answer in raw_answers:
+            value = raw_answer.strip()
+            if not value:
+                continue
+            dedupe_key = value.casefold()
+            if dedupe_key in seen:
+                raise ValueError("Duplicate onboarding answers are not allowed.")
+            seen.add(dedupe_key)
+            normalized.append(value)
+
+        if not normalized:
+            raise ValueError("Onboarding answer must not be empty.")
+
+        return tuple(normalized)
+
+    def _assert_onboarding_answer_count(
+        self,
+        *,
+        question: OnboardingQuestion,
+        answers: tuple[str, ...],
+    ) -> None:
+        if question.selection_mode == OnboardingQuestionSelectionMode.SINGLE_SELECT:
+            if len(answers) != 1:
+                raise ValueError(
+                    "Single-select onboarding questions require exactly one answer."
+                )
+            return
+
+        if len(answers) < 1:
+            raise ValueError(
+                "Multi-select onboarding questions require at least one answer."
+            )
 
     def _reconstruct_onboarding_history(self) -> None:
         self._entries = [

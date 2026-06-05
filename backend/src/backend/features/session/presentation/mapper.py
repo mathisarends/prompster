@@ -238,5 +238,6 @@ def to_onboarding_question_response(
         sequence_number=question.sequence_number,
         question_text=question.question_text,
         options=list(question.options),
+        selection_mode=question.selection_mode,
         is_last_question=question.is_last_question,
     )

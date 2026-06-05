@@ -4,6 +4,7 @@ from uuid import UUID
 
 from backend.features.session.domain import (
     AssistantMessage,
+    OnboardingQuestionSelectionMode,
     Playlist,
     PlaylistTrack,
     ToolCallSequence,
@@ -94,6 +95,9 @@ class SessionSuspendedForInput:
     kind: SuspensionKind
     question: str | None = None
     options: list[str] | None = None
+    selection_mode: OnboardingQuestionSelectionMode = (
+        OnboardingQuestionSelectionMode.SINGLE_SELECT
+    )
     question_id: UUID | None = None
     is_last_question: bool = False
 

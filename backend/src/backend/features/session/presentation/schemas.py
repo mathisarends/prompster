@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import Field, model_validator
 
-from backend.features.session.domain import Phase
+from backend.features.session.domain import OnboardingQuestionSelectionMode, Phase
 from backend.presentation.schema import Schema
 
 
@@ -151,6 +151,9 @@ class OnboardingQuestionResponse(Schema):
     sequence_number: int
     question_text: str
     options: list[str] = Field(default_factory=list)
+    selection_mode: OnboardingQuestionSelectionMode = (
+        OnboardingQuestionSelectionMode.SINGLE_SELECT
+    )
     is_last_question: bool
 
 
@@ -217,7 +220,16 @@ class SendMessageRequest(Schema):
 
 class SubmitOnboardingAnswerRequest(Schema):
     question_id: UUID
-    answer: str = Field(min_length=1, max_length=2000)
+    answer: str | None = Field(default=None, min_length=1, max_length=2000)
+    answers: list[str] = Field(default_factory=list, max_length=8)
+
+    @model_validator(mode="after")
+    def validate_answer_payload(self) -> Self:
+        if self.answer is not None and self.answer.strip():
+            return self
+        if any(answer.strip() for answer in self.answers):
+            return self
+        raise ValueError("At least one onboarding answer is required.")
 
 
 class AddPlaylistTrackRequest(Schema):

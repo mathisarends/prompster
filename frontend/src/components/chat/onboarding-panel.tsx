@@ -12,6 +12,7 @@ import type {
 export type OnboardingAnswer = {
   questionId: string;
   answer: string;
+  answers: string[];
   isLastQuestion: boolean;
 };
 
@@ -23,12 +24,17 @@ type OnboardingPanelProps = {
 };
 
 type AnswerDraft = {
-  selectedOption: string | null;
+  selectedOptions: string[];
   freeText: string;
 };
 
-const getQuestionAnswer = (draft: AnswerDraft | undefined) =>
-  (draft?.freeText.trim() || draft?.selectedOption?.trim()) ?? "";
+const getQuestionAnswers = (draft: AnswerDraft | undefined) => {
+  const freeText = draft?.freeText.trim();
+  if (freeText) return [freeText];
+  return (draft?.selectedOptions ?? [])
+    .map((option) => option.trim())
+    .filter(Boolean);
+};
 
 const isOtherOption = (option: string) =>
   /^(other|other\.{1,3}|andere|sonstiges)$/i.test(option.trim());
@@ -46,6 +52,7 @@ export const OnboardingPanel = ({
           id: pendingInput.questionId ?? "",
           question: pendingInput.question ?? null,
           options: pendingInput.options ?? [],
+          selectionMode: pendingInput.selectionMode ?? "single_select",
           isLastQuestion: Boolean(pendingInput.isLastQuestion),
         },
       ];
@@ -55,22 +62,31 @@ export const OnboardingPanel = ({
   const answers = questions
     .map((question) => ({
       questionId: question.id,
-      answer: getQuestionAnswer(drafts[question.id]),
+      answers: getQuestionAnswers(drafts[question.id]),
+      answer: getQuestionAnswers(drafts[question.id]).join(", "),
       isLastQuestion: question.isLastQuestion,
     }))
-    .filter((answer) => answer.questionId && answer.answer.length > 0);
+    .filter((answer) => answer.questionId && answer.answers.length > 0);
   const canSubmit = answers.length === questions.length && !isSubmitting;
 
-  const handleSelectOption = (questionId: string, option: string) => {
+  const handleSelectOption = (question: PendingOnboardingQuestion, option: string) => {
     setDrafts((current) => {
-      const draft = current[questionId] ?? {
-        selectedOption: null,
+      const draft = current[question.id] ?? {
+        selectedOptions: [],
         freeText: "",
       };
+      const selectedOptions =
+        question.selectionMode === "multi_select"
+          ? draft.selectedOptions.includes(option)
+            ? draft.selectedOptions.filter((selected) => selected !== option)
+            : [...draft.selectedOptions, option]
+          : draft.selectedOptions[0] === option
+            ? []
+            : [option];
       return {
         ...current,
-        [questionId]: {
-          selectedOption: draft.selectedOption === option ? null : option,
+        [question.id]: {
+          selectedOptions,
           freeText: "",
         },
       };
@@ -81,9 +97,9 @@ export const OnboardingPanel = ({
     setDrafts((current) => ({
       ...current,
       [questionId]: {
-        selectedOption: value
-          ? null
-          : (current[questionId]?.selectedOption ?? null),
+        selectedOptions: value
+          ? []
+          : (current[questionId]?.selectedOptions ?? []),
         freeText: value,
       },
     }));
@@ -143,7 +159,7 @@ type OnboardingQuestionBlockProps = {
   draft: AnswerDraft | undefined;
   disabled: boolean;
   showDivider: boolean;
-  onSelectOption: (questionId: string, option: string) => void;
+  onSelectOption: (question: PendingOnboardingQuestion, option: string) => void;
   onFreeTextChange: (questionId: string, value: string) => void;
 };
 
@@ -176,7 +192,7 @@ const OnboardingQuestionBlock = ({
 
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
-          const active = draft?.selectedOption === option;
+          const active = draft?.selectedOptions.includes(option) ?? false;
           return (
             <Chip
               key={option}
@@ -185,7 +201,7 @@ const OnboardingQuestionBlock = ({
               active={active}
               activeClassName="border-primary/55 bg-primary/15 text-primary shadow-[0_0_0_1px_hsl(141_73%_42%/0.12)] hover:border-primary/70 hover:bg-primary/20 hover:text-primary"
               disabled={disabled}
-              onClick={() => onSelectOption(question.id, option)}
+              onClick={() => onSelectOption(question, option)}
             />
           );
         })}

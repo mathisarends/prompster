@@ -199,6 +199,7 @@ async def submit_onboarding_answer(
             user_id=authenticated_user_id,
             question_id=body.question_id,
             answer=body.answer,
+            answers=body.answers,
         )
     )
 

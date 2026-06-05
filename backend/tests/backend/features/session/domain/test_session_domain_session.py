@@ -22,6 +22,7 @@ from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
     FailedCall,
+    OnboardingQuestionSelectionMode,
     PendingCall,
     Phase,
     PlaylistTrack,
@@ -167,6 +168,38 @@ class TestSessionDomainSession:
         assert question.is_answered is True
         assert question.answer == "80er"
         assert question.answered_at is not None
+
+    def test_single_select_onboarding_question_rejects_multiple_answers(
+        self, session: Session
+    ) -> None:
+        question = session.add_onboarding_question(
+            question_text="Welche Stimmung?",
+            options=("Ruhig", "Energiegeladen"),
+        )
+
+        with pytest.raises(ValueError, match="exactly one answer"):
+            session.answer_onboarding_question(
+                question_id=question.id,
+                answers=["Ruhig", "Energiegeladen"],
+            )
+
+    def test_multi_select_onboarding_question_accepts_multiple_answers(
+        self, session: Session
+    ) -> None:
+        question = session.add_onboarding_question(
+            question_text="Welche Genres?",
+            options=("Pop", "Rock", "Soul"),
+            selection_mode=OnboardingQuestionSelectionMode.MULTI_SELECT,
+        )
+
+        session.answer_onboarding_question(
+            question_id=question.id,
+            answers=[" Pop ", "Rock"],
+        )
+
+        assert question.is_answered is True
+        assert question.answers == ("Pop", "Rock")
+        assert question.answer == "Pop, Rock"
 
     def test_answering_last_question_reconstructs_history(
         self, session: Session

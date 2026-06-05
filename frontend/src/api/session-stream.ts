@@ -18,7 +18,8 @@ type StreamSendMessageOptions = {
 type StreamRequestBody = SendMessageRequest | SubmitOnboardingAnswerBody;
 type SubmitOnboardingAnswerBody = {
   questionId: string;
-  answer: string;
+  answer?: string;
+  answers?: string[];
 };
 
 const getApiUrl = (path: string) => {

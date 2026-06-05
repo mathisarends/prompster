@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from agent.playlist import PlaylistDraft, PlaylistDraftUpdate
 
-from agent.tools.views import ActionType
+from agent.tools.views import ActionType, OnboardingSelectionMode
 
 
 class AgentEvent(BaseModel):
@@ -48,6 +48,7 @@ class QuestionAskedEvent(AgentEvent):
 
     question: str | None = None
     options: list[str] = Field(default_factory=list)
+    selection_mode: OnboardingSelectionMode = OnboardingSelectionMode.SINGLE_SELECT
 
 
 class SuspendedForUserInputEvent(AgentEvent):
@@ -55,6 +56,7 @@ class SuspendedForUserInputEvent(AgentEvent):
 
     question: str | None = None
     options: list[str] = Field(default_factory=list)
+    selection_mode: OnboardingSelectionMode = OnboardingSelectionMode.SINGLE_SELECT
     is_last_question: bool = True
 
 

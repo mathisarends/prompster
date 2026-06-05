@@ -125,6 +125,8 @@ class Tools:
             description=(
                 "Stelle dem User eine einzelne Onboarding-Klärungsfrage. "
                 "Gib immer 3-8 konkrete Auswahlmöglichkeiten mit. "
+                "Nutze selection_mode=multi_select nur, wenn mehrere Antworten "
+                "gleichzeitig sinnvoll sind. "
                 "Markiere nur die letzte Onboarding-Frage mit is_last_question."
             ),
             params=AskOnboardingQuestionParams,
@@ -140,6 +142,7 @@ class Tools:
                 input_request=InputRequest(
                     question=params.question,
                     options=params.options,
+                    selection_mode=params.selection_mode,
                     is_last_question=params.is_last_question,
                 ),
             )

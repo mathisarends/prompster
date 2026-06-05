@@ -21,9 +21,15 @@ class Phase(StrEnum):
     BUILD = "build"
 
 
+class OnboardingSelectionMode(StrEnum):
+    SINGLE_SELECT = "single_select"
+    MULTI_SELECT = "multi_select"
+
+
 class InputRequest(BaseModel):
     question: str
     options: list[str] = Field(default_factory=list)
+    selection_mode: OnboardingSelectionMode = OnboardingSelectionMode.SINGLE_SELECT
     is_last_question: bool = False
 
 

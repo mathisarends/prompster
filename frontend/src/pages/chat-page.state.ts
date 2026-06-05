@@ -68,6 +68,7 @@ export type PendingInput = {
   questions: PendingOnboardingQuestion[];
   question?: string | null;
   options: string[];
+  selectionMode?: "single_select" | "multi_select";
   questionId?: string | null;
   isLastQuestion?: boolean;
 };
@@ -77,6 +78,7 @@ export type PendingOnboardingQuestion = {
   sequenceNumber?: number;
   question: string | null;
   options: string[];
+  selectionMode: "single_select" | "multi_select";
   isLastQuestion: boolean;
 };
 
@@ -260,6 +262,7 @@ const getPendingInput = (session: SessionLike): PendingInput | null => {
     questions,
     question: question.question,
     options: question.options,
+    selectionMode: question.selectionMode ?? "single_select",
     questionId: question.id,
     isLastQuestion: question.isLastQuestion,
   };
@@ -272,6 +275,7 @@ const toPendingOnboardingQuestion = (
   sequenceNumber: question.sequenceNumber,
   question: question.questionText,
   options: question.options ?? [],
+  selectionMode: question.selectionMode ?? "single_select",
   isLastQuestion: question.isLastQuestion,
 });
 
@@ -358,6 +362,7 @@ const reduceServerEvent = (
       kind?: string;
       question?: string | null;
       options?: unknown;
+      selectionMode?: "single_select" | "multi_select";
       questionId?: string | null;
       isLastQuestion?: boolean;
     };
@@ -381,6 +386,7 @@ const reduceServerEvent = (
                   (option): option is string => typeof option === "string",
                 )
               : [],
+            selectionMode: payload.selectionMode ?? "single_select",
             isLastQuestion: payload.isLastQuestion ?? false,
           },
         ],
@@ -390,6 +396,7 @@ const reduceServerEvent = (
               (option): option is string => typeof option === "string",
             )
           : [],
+        selectionMode: payload.selectionMode ?? "single_select",
         questionId: payload.questionId ?? null,
         isLastQuestion: payload.isLastQuestion ?? false,
       },

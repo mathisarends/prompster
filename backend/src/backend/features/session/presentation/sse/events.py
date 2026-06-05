@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pydantic import Field
 
+from backend.features.session.domain import OnboardingQuestionSelectionMode
 from backend.features.session.presentation.schemas import (
     AssistantMessageEntryResponse,
     PlaylistTrackResponse,
@@ -163,6 +164,9 @@ class SuspendedForInputEvent(_SessionEventSchema):
     kind: str
     question: str | None = None
     options: list[str] = Field(default_factory=list)
+    selection_mode: OnboardingQuestionSelectionMode = (
+        OnboardingQuestionSelectionMode.SINGLE_SELECT
+    )
     question_id: UUID | None = None
     is_last_question: bool = False
 

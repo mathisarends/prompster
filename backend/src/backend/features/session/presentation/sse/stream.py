@@ -25,6 +25,7 @@ _COMMAND_ERRORS = (
     PendingToolCallsError,
     ToolCallAlreadyResolvedError,
     ToolCallNotFoundError,
+    ValueError,
 )
 
 _SERVER_EVENT_ADAPTER: TypeAdapter[ServerEvent] = TypeAdapter(ServerEvent)

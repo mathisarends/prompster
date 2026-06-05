@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 from backend.features.session.domain import (
+    OnboardingQuestionSelectionMode,
     PendingCall,
     Playlist,
     PlaylistTrack,
@@ -68,11 +69,17 @@ class SessionRunnerCancelled(_RunnerEvent):
 class SessionRunnerQuestionAsked(_RunnerEvent):
     question: str | None = None
     options: list[str] | None = None
+    selection_mode: OnboardingQuestionSelectionMode = (
+        OnboardingQuestionSelectionMode.SINGLE_SELECT
+    )
 
 
 class SessionRunnerSuspendedForInput(_RunnerEvent):
     question: str | None = None
     options: list[str] | None = None
+    selection_mode: OnboardingQuestionSelectionMode = (
+        OnboardingQuestionSelectionMode.SINGLE_SELECT
+    )
     is_last_question: bool = False
 
 

@@ -134,6 +134,7 @@ class AgentSessionEventMapper:
         return SessionRunnerQuestionAsked(
             question=event.question,
             options=list(event.options),
+            selection_mode=event.selection_mode,
         )
 
     def _map_suspended_for_input(
@@ -142,6 +143,7 @@ class AgentSessionEventMapper:
         return SessionRunnerSuspendedForInput(
             question=event.question,
             options=list(event.options),
+            selection_mode=event.selection_mode,
             is_last_question=event.is_last_question,
         )
 

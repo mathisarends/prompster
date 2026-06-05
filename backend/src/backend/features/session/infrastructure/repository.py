@@ -467,8 +467,10 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             row.sequence_number = question.sequence_number
             row.question_text = question.question_text
             row.options = list(question.options)
+            row.selection_mode = question.selection_mode.value
             row.is_last_question = question.is_last_question
             row.answer = question.answer
+            row.answers = list(question.answers)
             row.is_answered = question.is_answered
             row.answered_at = question.answered_at
             row.created_at = question.created_at
@@ -575,8 +577,10 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             sequence_number=row.sequence_number,
             question_text=row.question_text,
             options=tuple(row.options or ()),
+            selection_mode=row.selection_mode or "single_select",
             is_last_question=row.is_last_question,
             answer=row.answer,
+            answers=tuple(row.answers or ()) or None,
             is_answered=row.is_answered,
             answered_at=row.answered_at,
             created_time=row.created_at,

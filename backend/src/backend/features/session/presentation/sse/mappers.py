@@ -120,6 +120,7 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
             kind=event.kind,
             question=event.question,
             options=list(event.options or []),
+            selection_mode=event.selection_mode,
             question_id=event.question_id,
             is_last_question=event.is_last_question,
         )

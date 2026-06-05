@@ -121,12 +121,14 @@ class SessionConversationService:
         session_id: UUID,
         user_id: UUID,
         question_id: UUID,
-        answer: str,
+        answer: str | None = None,
+        answers: list[str] | None = None,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         answered_question = session.answer_onboarding_question(
             question_id=question_id,
             answer=answer,
+            answers=answers,
         )
         if answered_question.is_last_question:
             await self._persist_session(session=session)
@@ -653,6 +655,7 @@ class SessionConversationService:
         session.add_onboarding_question(
             question_text=event.question,
             options=tuple(event.options or []),
+            selection_mode=event.selection_mode,
         )
         return await self._persisted_events(session=session)
 
@@ -674,6 +677,7 @@ class SessionConversationService:
             question = session.add_onboarding_question(
                 question_text=event.question,
                 options=tuple(event.options or []),
+                selection_mode=event.selection_mode,
                 is_last_question=event.is_last_question,
             )
             question_id = question.id
@@ -682,6 +686,7 @@ class SessionConversationService:
                 kind=SuspensionKind.ONBOARDING_QUESTION,
                 question=event.question,
                 options=list(event.options or []),
+                selection_mode=event.selection_mode,
                 question_id=question_id,
                 is_last_question=event.is_last_question,
             )
