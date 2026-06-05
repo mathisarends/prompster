@@ -32,7 +32,7 @@ class SpotifySearch(SpotifySearchPort):
         self._spotify = spotify
         self._search_cache = search_cache
 
-    async def search_unified(
+    async def search(
         self,
         *,
         query: str,

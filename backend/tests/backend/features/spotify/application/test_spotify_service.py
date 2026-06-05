@@ -195,7 +195,7 @@ class TestSpotifySearch:
         service = _make_search(cast(Any, spotify))
 
         result = asyncio.run(
-            service.search_unified(
+            service.search(
                 query="muse",
                 limit=5,
                 types={SpotifySearchType.ARTIST},
@@ -219,7 +219,7 @@ class TestSpotifySearch:
         )
         service = _make_search(cast(Any, spotify))
 
-        result = asyncio.run(service.search_unified(query="muse"))
+        result = asyncio.run(service.search(query="muse"))
 
         assert len(result.tracks) == 1
         assert len(result.playlists) == 1
@@ -236,7 +236,7 @@ class TestSpotifySearch:
         )
         service = _make_search(cast(Any, spotify))
 
-        result = asyncio.run(service.search_unified(query="  "))
+        result = asyncio.run(service.search(query="  "))
 
         assert result.tracks == []
         assert result.playlists == []
@@ -251,7 +251,7 @@ class TestSpotifySearch:
 
         async def _run() -> tuple[Any, Any]:
             first = asyncio.create_task(
-                service.search_unified(
+                service.search(
                     query="sk",
                     limit=8,
                     types={SpotifySearchType.TRACK},
@@ -260,7 +260,7 @@ class TestSpotifySearch:
             )
             await asyncio.sleep(0.01)
             second = asyncio.create_task(
-                service.search_unified(
+                service.search(
                     query="ski",
                     limit=8,
                     types={SpotifySearchType.TRACK},
@@ -284,7 +284,7 @@ class TestSpotifySearch:
 
         async def _run() -> tuple[Any, Any]:
             first = asyncio.create_task(
-                service.search_unified(
+                service.search(
                     query="muse",
                     limit=8,
                     types={SpotifySearchType.TRACK},
@@ -292,7 +292,7 @@ class TestSpotifySearch:
                 )
             )
             second = asyncio.create_task(
-                service.search_unified(
+                service.search(
                     query="muse",
                     limit=8,
                     types={SpotifySearchType.TRACK},

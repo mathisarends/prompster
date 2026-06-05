@@ -57,7 +57,7 @@ class SpotifyUnifiedSearchResult:
 
 class SpotifySearch(ABC):
     @abstractmethod
-    async def search_unified(
+    async def search(
         self,
         *,
         query: str,

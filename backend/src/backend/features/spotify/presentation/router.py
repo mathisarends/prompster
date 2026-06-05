@@ -42,7 +42,7 @@ async def search_spotify(
         description="Search resource types",
     ),
 ) -> SpotifyUnifiedSearchResponse:
-    search_results = await spotify_search.search_unified(
+    search_results = await spotify_search.search(
         query=query,
         limit=limit,
         types=types,

@@ -16,7 +16,7 @@ class OAuthConnection(Aggregate):
         user_id: UUID,
         provider: OAuthProvider,
         provider_user_id: str,
-        encrypted_refresh_token: bytes,
+        refresh_token: str,
         scope: str,
         connected_at: datetime,
         is_premium: bool = False,
@@ -27,13 +27,13 @@ class OAuthConnection(Aggregate):
         self.user_id = user_id
         self.provider = provider
         self.provider_user_id = provider_user_id
-        self.encrypted_refresh_token = encrypted_refresh_token
+        self.refresh_token = refresh_token
         self.scope = scope
         self.connected_at = connected_at
         self.is_premium = is_premium
 
-    def rotate_refresh_token(self, *, new_encrypted_refresh_token: bytes) -> None:
-        self.encrypted_refresh_token = new_encrypted_refresh_token
+    def rotate_refresh_token(self, *, new_refresh_token: str) -> None:
+        self.refresh_token = new_refresh_token
 
     def update_premium_status(self, *, is_premium: bool) -> None:
         self.is_premium = is_premium
