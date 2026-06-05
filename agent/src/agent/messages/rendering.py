@@ -2,10 +2,11 @@ from collections.abc import Sequence
 from html import escape
 
 from agent.views import UserEvent
+from agent.playlist import PlaylistDraft
 from agent.playlist.views import PlaylistDraftTrack
 
 
-def render_user_events_block(events: Sequence[UserEvent]) -> str:
+def _render_user_events_block(events: Sequence[UserEvent]) -> str:
     """Render UserEvents as a single ``<user_events>`` XML block.
 
     The block is meant to be embedded inside the same ``UserMessage`` content
@@ -25,7 +26,7 @@ def render_user_message_content(
     """Compose a user message body, prepending a ``<user_events>`` block when given."""
     if not curation_events:
         return content
-    block = render_user_events_block(curation_events)
+    block = _render_user_events_block(curation_events)
     if not content:
         return block
     return f"{block}\n\n{content}"
@@ -37,6 +38,30 @@ def _render_event(event: UserEvent) -> str:
         f'at="{escape(event.occurred_at.isoformat(), quote=True)}">'
         f"{escape(event.label)}</event>"
     )
+
+
+def render_playlist_context(
+    playlist_draft: PlaylistDraft,
+    *,
+    max_tracks: int,
+) -> str:
+    track_count = len(playlist_draft.tracks)
+    remaining_tracks = max(0, max_tracks - track_count)
+    lines = [
+        (
+            f'<created_playlist id="{playlist_draft.id}" '
+            f'name="{escape(playlist_draft.name, quote=True)}" '
+            f'track_count="{track_count}" '
+            f'max_tracks="{max_tracks}" '
+            f'remaining_tracks="{remaining_tracks}" '
+            'pinned_tracks="hard_constraints">'
+        ),
+    ]
+    lines.extend(
+        render_track_tag(track, include_pinned=True) for track in playlist_draft.tracks
+    )
+    lines.append("</created_playlist>")
+    return "\n".join(lines)
 
 
 def render_track_tag(

@@ -16,10 +16,9 @@ from datetime import datetime, timezone
 from llmify import AssistantMessage, SystemMessage, ToolResultMessage, UserMessage
 from llmify.messages import ToolCall
 
-from agent.messages import (
-    MessageManager,
-    render_user_events_block,
-    render_user_message_content,
+from agent.messages import MessageManager, render_user_message_content
+from agent.messages.rendering import (
+    _render_user_events_block as render_user_events_block,
 )
 from agent.tools.views import Phase
 from agent.views import UserCurationEventType, UserEvent

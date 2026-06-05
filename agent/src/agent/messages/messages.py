@@ -1,5 +1,4 @@
 from collections.abc import Callable, Sequence
-from html import escape
 from pathlib import Path
 
 from llmify import (
@@ -14,8 +13,7 @@ from llmify import (
 from agent.views import UserEvent
 from agent.playlist import PlaylistDraft
 from agent.tools.views import Phase
-from agent.messages.rendering import render_track_tag
-from .rendering import render_user_message_content
+from .rendering import render_playlist_context, render_user_message_content
 
 type _PlaylistDraftProvider = Callable[[], PlaylistDraft | None]
 
@@ -95,25 +93,9 @@ class MessageManager:
         )
         if playlist_draft is None:
             return None
-
-        track_count = len(playlist_draft.tracks)
-        remaining_tracks = max(0, self._max_playlist_tracks - track_count)
-        lines = [
-            (
-                f'<created_playlist id="{playlist_draft.id}" '
-                f'name="{escape(playlist_draft.name, quote=True)}" '
-                f'track_count="{track_count}" '
-                f'max_tracks="{self._max_playlist_tracks}" '
-                f'remaining_tracks="{remaining_tracks}" '
-                'pinned_tracks="hard_constraints">'
-            ),
-        ]
-        lines.extend(
-            render_track_tag(track, include_pinned=True)
-            for track in playlist_draft.tracks
+        return render_playlist_context(
+            playlist_draft, max_tracks=self._max_playlist_tracks
         )
-        lines.append("</created_playlist>")
-        return "\n".join(lines)
 
     def _inject_confirmed_context(self, messages: list[Message], content: str) -> None:
         # Context Injection Pattern: UserMessage + AssistantMessage("Understood.")
