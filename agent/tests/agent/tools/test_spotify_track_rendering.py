@@ -1,6 +1,11 @@
+import logging
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
+from types import SimpleNamespace
 
 from agent.tools.handler.spotify import (
+    Spotify,
     _format_album,
     _format_playlist,
     _track_lookup_result,
@@ -40,6 +45,17 @@ class _Playlist:
     name: str
     items: _TrackCount | None
     tracks: _TrackCount | None = None
+
+
+class _RetryHookClient:
+    def __init__(self) -> None:
+        self.hook = None
+
+    @contextmanager
+    def retry_hook(self, hook) -> Iterator[None]:
+        self.hook = hook
+        yield
+        self.hook = None
 
 
 class TestSpotifyTrackRendering:
@@ -97,3 +113,26 @@ class TestSpotifyTrackRendering:
         assert _format_playlist(playlist) == (
             '<playlist id="37i9dQZF1DX4UtSsGT1Sbe" label="All Out 80s" tracks="100" />'
         )
+
+    def test_retry_logging_context_logs_spotifyify_retry_hook(self, caplog) -> None:
+        client = _RetryHookClient()
+        spotify = Spotify(client=client)
+
+        with caplog.at_level(logging.WARNING, logger="agent.tools.handler.spotify"):
+            with spotify._retry_logging():
+                assert client.hook is not None
+                client.hook(
+                    SimpleNamespace(
+                        method=SimpleNamespace(value="GET"),
+                        path="/search",
+                        status_code=429,
+                        retry_in_seconds=2.0,
+                        retry_number=1,
+                        max_retries=3,
+                    )
+                )
+            assert client.hook is None
+
+        assert "Retrying Spotify request" in caplog.text
+        assert "path=/search" in caplog.text
+        assert "status_code=429" in caplog.text

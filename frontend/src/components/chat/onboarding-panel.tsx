@@ -3,7 +3,6 @@ import { ArrowRight, Check } from "lucide-react";
 
 import { Chip } from "@/components/shared/ui/chip";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type {
   PendingInput,
@@ -30,6 +29,9 @@ type AnswerDraft = {
 
 const getQuestionAnswer = (draft: AnswerDraft | undefined) =>
   (draft?.freeText.trim() || draft?.selectedOption?.trim()) ?? "";
+
+const isOtherOption = (option: string) =>
+  /^(other|other\.{1,3}|andere|sonstiges)$/i.test(option.trim());
 
 export const OnboardingPanel = ({
   pendingInput,
@@ -154,62 +156,86 @@ const OnboardingQuestionBlock = ({
   onSelectOption,
   onFreeTextChange,
 }: OnboardingQuestionBlockProps) => {
-  const options = question.options ?? [];
+  const options = (question.options ?? []).filter(
+    (option) => !isOtherOption(option),
+  );
   const freeTextId = `onboarding-free-text-${question.id || index}`;
 
   return (
     <div
       className={cn(
-        "space-y-5",
-        showDivider && "border-t border-white/[0.06] pt-8",
+        "space-y-4",
+        showDivider && "border-t border-white/[0.06] pt-7",
       )}
     >
-      <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-[0.16em] text-primary/80">
-          Frage {question.sequenceNumber ?? index + 1}
-        </p>
+      <div className="space-y-1.5">
         <h3 className="text-balance text-xl font-medium leading-snug text-foreground">
           {question.question || "Erzähl mir etwas mehr über deine Playlist."}
         </h3>
       </div>
 
-      {options.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {options.map((option) => {
-            const active = draft?.selectedOption === option;
-            return (
-              <Chip
-                key={option}
-                label={option}
-                icon={active ? Check : undefined}
-                active={active}
-                activeClassName="border-primary/55 bg-primary/15 text-primary shadow-[0_0_0_1px_hsl(141_73%_42%/0.12)] hover:border-primary/70 hover:bg-primary/20 hover:text-primary"
-                disabled={disabled}
-                onClick={() => onSelectOption(question.id, option)}
-              />
-            );
-          })}
-        </div>
-      ) : null}
-
-      <div className="space-y-2">
-        <label htmlFor={freeTextId} className="text-sm text-muted-foreground">
-          {options.length > 0
-            ? "Oder formuliere es in eigenen Worten"
-            : "Deine Antwort"}
-        </label>
-        <Textarea
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const active = draft?.selectedOption === option;
+          return (
+            <Chip
+              key={option}
+              label={option}
+              icon={active ? Check : undefined}
+              active={active}
+              activeClassName="border-primary/55 bg-primary/15 text-primary shadow-[0_0_0_1px_hsl(141_73%_42%/0.12)] hover:border-primary/70 hover:bg-primary/20 hover:text-primary"
+              disabled={disabled}
+              onClick={() => onSelectOption(question.id, option)}
+            />
+          );
+        })}
+        <WritableAnswerChip
           id={freeTextId}
           value={draft?.freeText ?? ""}
-          onChange={(event) =>
-            onFreeTextChange(question.id, event.target.value)
-          }
-          placeholder="Freitext ..."
-          rows={3}
           disabled={disabled}
-          className="resize-none border-border/60 bg-card/40"
+          hasOptions={options.length > 0}
+          onChange={(value) => onFreeTextChange(question.id, value)}
         />
       </div>
     </div>
+  );
+};
+
+type WritableAnswerChipProps = {
+  id: string;
+  value: string;
+  disabled: boolean;
+  hasOptions: boolean;
+  onChange: (value: string) => void;
+};
+
+const WritableAnswerChip = ({
+  id,
+  value,
+  disabled,
+  hasOptions,
+  onChange,
+}: WritableAnswerChipProps) => {
+  const active = value.trim().length > 0;
+
+  return (
+    <label
+      htmlFor={id}
+      className={cn(
+        "flex h-10 min-w-36 max-w-full items-center rounded-full border border-border/60 bg-card/40 px-4 text-sm text-muted-foreground backdrop-blur-sm transition-colors focus-within:border-primary/60 focus-within:bg-primary/10 focus-within:text-foreground",
+        active &&
+          "border-primary/55 bg-primary/15 text-primary shadow-[0_0_0_1px_hsl(141_73%_42%/0.12)]",
+        disabled && "pointer-events-none opacity-50",
+      )}
+    >
+      <input
+        id={id}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={hasOptions ? "Other..." : "Antwort..."}
+        disabled={disabled}
+        className="h-full min-w-0 flex-1 bg-transparent text-sm text-inherit outline-none placeholder:text-muted-foreground"
+      />
+    </label>
   );
 };

@@ -1,19 +1,32 @@
 import asyncio
+import logging
+from collections.abc import Iterator
+from contextlib import contextmanager
 from types import SimpleNamespace
 from typing import Any, cast
 
-from backend.features.spotify.application import SpotifySearchType
+from backend.features.spotify.application import (
+    SpotifySearchType,
+    SpotifyUnifiedSearchResult,
+)
 from backend.features.spotify.infrastructure.spotify_search_cache import (
     SpotifySearchCache,
 )
-from backend.features.spotify.infrastructure.spotify_service import SpotifyService
+from backend.features.spotify.infrastructure.spotify_playlist_creator import (
+    SpotifyPlaylistCreator,
+)
+from backend.features.spotify.infrastructure.spotify_search import SpotifySearch
 
 
-def _make_service(spotify: Any) -> SpotifyService:
-    return SpotifyService(
+def _make_search(spotify: Any) -> SpotifySearch:
+    return SpotifySearch(
         spotify=spotify,
         search_cache=SpotifySearchCache(),
     )
+
+
+def _make_playlist_creator() -> SpotifyPlaylistCreator:
+    return SpotifyPlaylistCreator()
 
 
 class _TracksStub:
@@ -69,6 +82,13 @@ class _SpotifyStub:
         self.tracks = _TracksStub(items=track_items or [])
         self.playlists = _PlaylistsStub(items=playlist_items or [])
         self.artists = _ArtistsStub(items=artist_items or [])
+        self.retry_hook_callback = None
+
+    @contextmanager
+    def retry_hook(self, hook) -> Iterator[None]:
+        self.retry_hook_callback = hook
+        yield
+        self.retry_hook_callback = None
 
 
 def _make_track() -> SimpleNamespace:
@@ -108,10 +128,10 @@ def _make_playlist() -> SimpleNamespace:
     )
 
 
-class TestSpotifyService:
+class TestSpotifySearch:
     def test_search_tracks_uses_default_limit(self) -> None:
         spotify = _SpotifyStub(track_items=[_make_track()])
-        service = _make_service(cast(Any, spotify))
+        service = _make_search(cast(Any, spotify))
 
         result = asyncio.run(service._search_tracks(query="muse"))
 
@@ -123,7 +143,7 @@ class TestSpotifyService:
 
     def test_search_tracks_uses_explicit_limit(self) -> None:
         spotify = _SpotifyStub(track_items=[_make_track()])
-        service = _make_service(cast(Any, spotify))
+        service = _make_search(cast(Any, spotify))
 
         result = asyncio.run(service._search_tracks(query="muse", limit=7))
 
@@ -133,7 +153,7 @@ class TestSpotifyService:
 
     def test_search_tracks_short_circuits_blank_query(self) -> None:
         spotify = _SpotifyStub(track_items=[_make_track()])
-        service = _make_service(cast(Any, spotify))
+        service = _make_search(cast(Any, spotify))
 
         result = asyncio.run(service._search_tracks(query="   "))
 
@@ -143,7 +163,7 @@ class TestSpotifyService:
 
     def test_search_artists_uses_default_limit(self) -> None:
         spotify = _SpotifyStub(artist_items=[_make_artist()])
-        service = _make_service(cast(Any, spotify))
+        service = _make_search(cast(Any, spotify))
 
         result = asyncio.run(service._search_artists(query="muse"))
 
@@ -158,7 +178,7 @@ class TestSpotifyService:
 
     def test_search_artists_short_circuits_blank_query(self) -> None:
         spotify = _SpotifyStub(artist_items=[_make_artist()])
-        service = _make_service(cast(Any, spotify))
+        service = _make_search(cast(Any, spotify))
 
         result = asyncio.run(service._search_artists(query="   "))
 
@@ -172,7 +192,7 @@ class TestSpotifyService:
             playlist_items=[_make_playlist()],
             artist_items=[_make_artist()],
         )
-        service = _make_service(cast(Any, spotify))
+        service = _make_search(cast(Any, spotify))
 
         result = asyncio.run(
             service.search_unified(
@@ -197,7 +217,7 @@ class TestSpotifyService:
             playlist_items=[_make_playlist()],
             artist_items=[_make_artist()],
         )
-        service = _make_service(cast(Any, spotify))
+        service = _make_search(cast(Any, spotify))
 
         result = asyncio.run(service.search_unified(query="muse"))
 
@@ -214,7 +234,7 @@ class TestSpotifyService:
             playlist_items=[_make_playlist()],
             artist_items=[_make_artist()],
         )
-        service = _make_service(cast(Any, spotify))
+        service = _make_search(cast(Any, spotify))
 
         result = asyncio.run(service.search_unified(query="  "))
 
@@ -225,98 +245,9 @@ class TestSpotifyService:
         assert spotify.playlists.received_query is None
         assert spotify.artists.received_query is None
 
-    def test_create_private_playlist_uses_user_token_flow(self) -> None:
-        spotify = _SpotifyStub()
-        service = _make_service(cast(Any, spotify))
-        calls: list[tuple[str, str, dict | None, str]] = []
-        responses: list[dict | None] = [{"id": "user-1"}, {"id": "playlist-1"}]
-
-        async def _request_user_api(
-            *,
-            access_token: str,
-            method: str,
-            path: str,
-            payload: dict | None = None,
-        ) -> dict | list | None:
-            calls.append((method, path, payload, access_token))
-            return responses.pop(0)
-
-        service._request_user_api = _request_user_api  # type: ignore[method-assign]
-
-        playlist_id = asyncio.run(
-            service.create_private_playlist(
-                access_token="token-123",
-                name="Roadtrip",
-                description="Late night drive",
-            )
-        )
-
-        assert playlist_id == "playlist-1"
-        assert calls == [
-            ("GET", "/me", None, "token-123"),
-            (
-                "POST",
-                "/users/user-1/playlists",
-                {
-                    "name": "Roadtrip",
-                    "description": "Late night drive",
-                    "public": False,
-                },
-                "token-123",
-            ),
-        ]
-
-    def test_update_playlist_and_replace_tracks_use_user_token(self) -> None:
-        spotify = _SpotifyStub()
-        service = _make_service(cast(Any, spotify))
-        calls: list[tuple[str, str, dict | None, str]] = []
-
-        async def _request_user_api(
-            *,
-            access_token: str,
-            method: str,
-            path: str,
-            payload: dict | None = None,
-        ) -> dict | list | None:
-            calls.append((method, path, payload, access_token))
-            return None
-
-        service._request_user_api = _request_user_api  # type: ignore[method-assign]
-
-        asyncio.run(
-            service.update_playlist_details(
-                access_token="token-123",
-                playlist_id="playlist-1",
-                name="Updated",
-                description="Updated description",
-            )
-        )
-        asyncio.run(
-            service.replace_playlist_tracks(
-                access_token="token-123",
-                playlist_id="playlist-1",
-                track_uris=["spotify:track:1", "spotify:track:2"],
-            )
-        )
-
-        assert calls == [
-            (
-                "PUT",
-                "/playlists/playlist-1",
-                {"name": "Updated", "description": "Updated description"},
-                "token-123",
-            ),
-            (
-                "PUT",
-                "/playlists/playlist-1/tracks",
-                {"uris": ["spotify:track:1", "spotify:track:2"]},
-                "token-123",
-            ),
-        ]
-
     def test_search_unified_debounces_superseded_requests(self) -> None:
         spotify = _SpotifyStub(track_items=[_make_track()])
-        service = _make_service(cast(Any, spotify))
+        service = _make_search(cast(Any, spotify))
 
         async def _run() -> tuple[Any, Any]:
             first = asyncio.create_task(
@@ -349,7 +280,7 @@ class TestSpotifyService:
 
     def test_search_unified_coalesces_identical_inflight_requests(self) -> None:
         spotify = _SpotifyStub(track_items=[_make_track()])
-        service = _make_service(cast(Any, spotify))
+        service = _make_search(cast(Any, spotify))
 
         async def _run() -> tuple[Any, Any]:
             first = asyncio.create_task(
@@ -375,3 +306,141 @@ class TestSpotifyService:
         assert len(first_result.tracks) == 1
         assert len(second_result.tracks) == 1
         assert spotify.tracks.call_count == 1
+
+    def test_execute_unified_search_logs_spotifyify_retry_hook(self, caplog) -> None:
+        spotify = _SpotifyStub()
+        service = _make_search(cast(Any, spotify))
+
+        async def _execute_unified_search(
+            *,
+            query: str,
+            limit: int,
+            types: set[SpotifySearchType],
+        ) -> SpotifyUnifiedSearchResult:
+            assert spotify.retry_hook_callback is not None
+            spotify.retry_hook_callback(
+                SimpleNamespace(
+                    method=SimpleNamespace(value="GET"),
+                    path="/search",
+                    status_code=429,
+                    retry_in_seconds=2.0,
+                    retry_number=1,
+                    max_retries=3,
+                )
+            )
+            return SpotifyUnifiedSearchResult(tracks=[], playlists=[], artists=[])
+
+        service._execute_unified_search = _execute_unified_search  # type: ignore[method-assign]
+
+        with caplog.at_level(
+            logging.WARNING,
+            logger="backend.features.spotify.infrastructure.spotify_search",
+        ):
+            result = asyncio.run(
+                service._execute_unified_search_with_retry_logging(
+                    query="muse",
+                    limit=20,
+                    types={SpotifySearchType.TRACK},
+                )
+            )
+
+        assert result == SpotifyUnifiedSearchResult(tracks=[], playlists=[], artists=[])
+        assert spotify.retry_hook_callback is None
+        assert "Retrying Spotifyify request" in caplog.text
+        assert "path=/search" in caplog.text
+        assert "status_code=429" in caplog.text
+
+
+class TestSpotifyPlaylistCreator:
+    def test_create_private_playlist_uses_user_token_flow(self) -> None:
+        service = _make_playlist_creator()
+        calls: list[tuple[str, str, dict | None, str]] = []
+        responses: list[dict | None] = [{"id": "user-1"}, {"id": "playlist-1"}]
+
+        async def _request_user_api(
+            *,
+            access_token: str,
+            method: str,
+            path: str,
+            payload: dict | None = None,
+        ) -> dict | list | None:
+            calls.append((method, path, payload, access_token))
+            return responses.pop(0)
+
+        service._request_user_api = _request_user_api  # type: ignore[method-assign]
+
+        try:
+            playlist_id = asyncio.run(
+                service.create_private_playlist(
+                    access_token="token-123",
+                    name="Roadtrip",
+                    description="Late night drive",
+                )
+            )
+        finally:
+            asyncio.run(service.aclose())
+
+        assert playlist_id == "playlist-1"
+        assert calls == [
+            ("GET", "/me", None, "token-123"),
+            (
+                "POST",
+                "/users/user-1/playlists",
+                {
+                    "name": "Roadtrip",
+                    "description": "Late night drive",
+                    "public": False,
+                },
+                "token-123",
+            ),
+        ]
+
+    def test_update_playlist_and_replace_tracks_use_user_token(self) -> None:
+        service = _make_playlist_creator()
+        calls: list[tuple[str, str, dict | None, str]] = []
+
+        async def _request_user_api(
+            *,
+            access_token: str,
+            method: str,
+            path: str,
+            payload: dict | None = None,
+        ) -> dict | list | None:
+            calls.append((method, path, payload, access_token))
+            return None
+
+        service._request_user_api = _request_user_api  # type: ignore[method-assign]
+
+        try:
+            asyncio.run(
+                service.update_playlist_details(
+                    access_token="token-123",
+                    playlist_id="playlist-1",
+                    name="Updated",
+                    description="Updated description",
+                )
+            )
+            asyncio.run(
+                service.replace_playlist_tracks(
+                    access_token="token-123",
+                    playlist_id="playlist-1",
+                    track_uris=["spotify:track:1", "spotify:track:2"],
+                )
+            )
+        finally:
+            asyncio.run(service.aclose())
+
+        assert calls == [
+            (
+                "PUT",
+                "/playlists/playlist-1",
+                {"name": "Updated", "description": "Updated description"},
+                "token-123",
+            ),
+            (
+                "PUT",
+                "/playlists/playlist-1/tracks",
+                {"uris": ["spotify:track:1", "spotify:track:2"]},
+                "token-123",
+            ),
+        ]

@@ -91,7 +91,7 @@ class _MetadataGeneratorStub(PlaylistMetadataGenerator):
         )
 
 
-class _SpotifyServiceStub:
+class _SpotifyPlaylistCreatorStub:
     def __init__(self) -> None:
         self.created_calls: list[tuple[str, str, str]] = []
         self.updated_calls: list[tuple[str, str, str, str]] = []
@@ -170,14 +170,14 @@ class TestSessionSpotifyPlaylistExporter:
             )
         )
         metadata_generator = _MetadataGeneratorStub()
-        spotify_service = _SpotifyServiceStub()
+        spotify_playlist_creator = _SpotifyPlaylistCreatorStub()
         token_service = _TokenServiceStub()
 
         exporter = SessionSpotifyPlaylistExporter(
             session_repository=repository,
             user_repository=user_repository,
             metadata_generator=metadata_generator,
-            spotify_service=spotify_service,  # type: ignore[arg-type]
+            spotify_playlist_creator=spotify_playlist_creator,
             spotify_token_service=token_service,  # type: ignore[arg-type]
         )
 
@@ -190,14 +190,14 @@ class TestSessionSpotifyPlaylistExporter:
         assert len(repository.saved_sessions) == 1
         assert metadata_generator.received_tracks is not None
         assert len(metadata_generator.received_tracks) == 1
-        assert spotify_service.created_calls == [
+        assert spotify_playlist_creator.created_calls == [
             (
                 "token-123",
                 "prompster · Roadtrip Mix",
                 "Night drive through city lights",
             )
         ]
-        assert spotify_service.replaced_calls == [
+        assert spotify_playlist_creator.replaced_calls == [
             ("token-123", "playlist-new", ["spotify:track:123"])
         ]
 
@@ -223,13 +223,13 @@ class TestSessionSpotifyPlaylistExporter:
                 spotify=SpotifyAccount.connected_with(is_premium=True),
             )
         )
-        spotify_service = _SpotifyServiceStub()
+        spotify_playlist_creator = _SpotifyPlaylistCreatorStub()
 
         exporter = SessionSpotifyPlaylistExporter(
             session_repository=repository,
             user_repository=user_repository,
             metadata_generator=_MetadataGeneratorStub(),
-            spotify_service=spotify_service,  # type: ignore[arg-type]
+            spotify_playlist_creator=spotify_playlist_creator,
             spotify_token_service=_TokenServiceStub(),  # type: ignore[arg-type]
         )
 
@@ -237,8 +237,8 @@ class TestSessionSpotifyPlaylistExporter:
 
         assert exported.id == "playlist-existing"
         assert repository.saved_sessions == []
-        assert spotify_service.created_calls == []
-        assert spotify_service.updated_calls == [
+        assert spotify_playlist_creator.created_calls == []
+        assert spotify_playlist_creator.updated_calls == [
             (
                 "token-123",
                 "playlist-existing",
@@ -246,7 +246,7 @@ class TestSessionSpotifyPlaylistExporter:
                 "Night drive through city lights",
             )
         ]
-        assert spotify_service.replaced_calls == [
+        assert spotify_playlist_creator.replaced_calls == [
             ("token-123", "playlist-existing", ["spotify:track:123"])
         ]
 
@@ -271,7 +271,7 @@ class TestSessionSpotifyPlaylistExporter:
                 )
             ),
             metadata_generator=_MetadataGeneratorStub(),
-            spotify_service=_SpotifyServiceStub(),  # type: ignore[arg-type]
+            spotify_playlist_creator=_SpotifyPlaylistCreatorStub(),
             spotify_token_service=_TokenServiceStub(
                 error=SpotifyTokenRevokedException()
             ),  # type: ignore[arg-type]
@@ -294,7 +294,7 @@ class TestSessionSpotifyPlaylistExporter:
                 )
             ),
             metadata_generator=_MetadataGeneratorStub(),
-            spotify_service=_SpotifyServiceStub(),  # type: ignore[arg-type]
+            spotify_playlist_creator=_SpotifyPlaylistCreatorStub(),
             spotify_token_service=_TokenServiceStub(
                 error=SpotifyConnectionNotFoundException()
             ),  # type: ignore[arg-type]

@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -52,3 +53,49 @@ class SpotifyUnifiedSearchResult:
     tracks: list[SpotifyTrack]
     playlists: list[SpotifyPlaylist]
     artists: list[SpotifyArtist]
+
+
+class SpotifySearch(ABC):
+    @abstractmethod
+    async def search_unified(
+        self,
+        *,
+        query: str,
+        limit: int = 20,
+        types: set[SpotifySearchType] | None = None,
+        requester_id: str | None = None,
+    ) -> SpotifyUnifiedSearchResult:
+        raise NotImplementedError
+
+
+class SpotifyPlaylistCreator(ABC):
+    @abstractmethod
+    async def create_private_playlist(
+        self,
+        *,
+        access_token: str,
+        name: str,
+        description: str,
+    ) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def update_playlist_details(
+        self,
+        *,
+        access_token: str,
+        playlist_id: str,
+        name: str,
+        description: str,
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def replace_playlist_tracks(
+        self,
+        *,
+        access_token: str,
+        playlist_id: str,
+        track_uris: list[str],
+    ) -> None:
+        raise NotImplementedError

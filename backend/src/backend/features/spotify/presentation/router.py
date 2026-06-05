@@ -2,8 +2,7 @@ from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Query, status
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.spotify.application import SpotifySearchType
-from backend.features.spotify.infrastructure.spotify_service import SpotifyService
+from backend.features.spotify.application.ports import SpotifySearch, SpotifySearchType
 from backend.features.spotify.presentation.mapper import (
     to_spotify_artist_response,
     to_spotify_playlist_response,
@@ -31,7 +30,7 @@ _auth_errors = {
 )
 async def search_spotify(
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SpotifyService],
+    spotify_search: FromDishka[SpotifySearch],
     query: str = Query(min_length=1, max_length=200, description="Search query"),
     limit: int = Query(default=20, ge=1, le=50),
     types: set[SpotifySearchType] = Query(
@@ -43,7 +42,7 @@ async def search_spotify(
         description="Search resource types",
     ),
 ) -> SpotifyUnifiedSearchResponse:
-    search_results = await service.search_unified(
+    search_results = await spotify_search.search_unified(
         query=query,
         limit=limit,
         types=types,

@@ -6,8 +6,7 @@ from backend.features.oauth_connections.application import (
     SpotifyTokenRevokedException,
     SpotifyTokenService,
 )
-from backend.features.spotify.infrastructure.spotify_service import SpotifyService
-
+from backend.features.spotify.application.ports import SpotifyPlaylistCreator
 from backend.features.session.application.ports import (
     PlaylistMetadataGenerator,
     PlaylistMetadataTrack,
@@ -43,13 +42,13 @@ class SessionSpotifyPlaylistExporter:
         session_repository: SessionRepository,
         user_repository: UserRepository,
         metadata_generator: PlaylistMetadataGenerator,
-        spotify_service: SpotifyService,
+        spotify_playlist_creator: SpotifyPlaylistCreator,
         spotify_token_service: SpotifyTokenService,
     ) -> None:
         self._session_repository = session_repository
         self._user_repository = user_repository
         self._metadata_generator = metadata_generator
-        self._spotify_service = spotify_service
+        self._spotify_playlist_creator = spotify_playlist_creator
         self._spotify_token_service = spotify_token_service
 
     async def export(
@@ -134,12 +133,12 @@ class SessionSpotifyPlaylistExporter:
         description: str,
         track_uris: list[str],
     ) -> str:
-        playlist_id = await self._spotify_service.create_private_playlist(
+        playlist_id = await self._spotify_playlist_creator.create_private_playlist(
             access_token=access_token,
             name=name,
             description=description,
         )
-        await self._spotify_service.replace_playlist_tracks(
+        await self._spotify_playlist_creator.replace_playlist_tracks(
             access_token=access_token,
             playlist_id=playlist_id,
             track_uris=track_uris,
@@ -155,13 +154,13 @@ class SessionSpotifyPlaylistExporter:
         description: str,
         track_uris: list[str],
     ) -> str:
-        await self._spotify_service.update_playlist_details(
+        await self._spotify_playlist_creator.update_playlist_details(
             access_token=access_token,
             playlist_id=playlist_id,
             name=name,
             description=description,
         )
-        await self._spotify_service.replace_playlist_tracks(
+        await self._spotify_playlist_creator.replace_playlist_tracks(
             access_token=access_token,
             playlist_id=playlist_id,
             track_uris=track_uris,

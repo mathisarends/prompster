@@ -4,11 +4,14 @@ from dishka import Provider, Scope, provide
 from spotifyify import SpotifyCredentials, Spotifyify
 from spotifyify.cache_handler import MemoryCacheHandler
 
+import backend.features.spotify.infrastructure.spotify_playlist_creator as playlist_infra
+import backend.features.spotify.infrastructure.spotify_search as spotify_search_infra
+from backend.features.spotify.application.ports import (
+    SpotifyPlaylistCreator,
+    SpotifySearch,
+)
 from backend.features.spotify.infrastructure.spotify_search_cache import (
     SpotifySearchCache,
-)
-from backend.features.spotify.infrastructure.spotify_service import (
-    SpotifyService,
 )
 
 
@@ -36,13 +39,22 @@ class SpotifyProvider(Provider):
         return SpotifySearchCache()
 
     @provide(scope=Scope.APP)
-    async def provide_spotify_service(
+    def provide_spotify_search(
         self,
         spotify: Spotifyify,
         search_cache: SpotifySearchCache,
-    ) -> AsyncGenerator[SpotifyService, None]:
-        service = SpotifyService(spotify=spotify, search_cache=search_cache)
+    ) -> SpotifySearch:
+        return spotify_search_infra.SpotifySearch(
+            spotify=spotify,
+            search_cache=search_cache,
+        )
+
+    @provide(scope=Scope.APP)
+    async def provide_spotify_playlist_creator(
+        self,
+    ) -> AsyncGenerator[SpotifyPlaylistCreator, None]:
+        playlist_creator = playlist_infra.SpotifyPlaylistCreator()
         try:
-            yield service
+            yield playlist_creator
         finally:
-            await service.aclose()
+            await playlist_creator.aclose()

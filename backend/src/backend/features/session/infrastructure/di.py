@@ -5,9 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from spotifyify import Spotifyify
 
 from backend.features.oauth_connections.application import SpotifyTokenService
-from backend.features.session.infrastructure.repository import SqlSessionRepository
-from backend.features.spotify.infrastructure.spotify_service import SpotifyService
-
+from backend.features.spotify.application.ports import SpotifyPlaylistCreator
 from backend.features.session.application import (
     SessionPlaylistExporter,
     SessionConversationService,
@@ -30,13 +28,14 @@ from backend.features.session.infrastructure.agent_event_mapper import (
     AgentSessionEventMapper,
 )
 from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
-from backend.features.session.infrastructure.session_runner import AgentSessionRunner
 from backend.features.session.infrastructure.pdf_generator import (
     TypstPlaylistDeckGenerator,
 )
 from backend.features.session.infrastructure.playlist_metadata_generator import (
     LLMPlaylistMetadataGenerator,
 )
+from backend.features.session.infrastructure.repository import SqlSessionRepository
+from backend.features.session.infrastructure.session_runner import AgentSessionRunner
 from backend.features.session.infrastructure.session_summary_query import (
     SqlSessionSummaryQuery,
 )
@@ -151,13 +150,13 @@ class SessionProvider(Provider):
         session_repository: SessionRepository,
         user_repository: UserRepository,
         metadata_generator: PlaylistMetadataGenerator,
-        spotify_service: SpotifyService,
+        spotify_playlist_creator: SpotifyPlaylistCreator,
         spotify_token_service: SpotifyTokenService,
     ) -> SessionSpotifyPlaylistExporter:
         return SessionSpotifyPlaylistExporter(
             session_repository=session_repository,
             user_repository=user_repository,
             metadata_generator=metadata_generator,
-            spotify_service=spotify_service,
+            spotify_playlist_creator=spotify_playlist_creator,
             spotify_token_service=spotify_token_service,
         )
