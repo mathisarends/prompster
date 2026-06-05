@@ -58,20 +58,19 @@ class OAuthConnectionsProvider(Provider):
     def provide_connection_repository(
         self,
         session: AsyncSession,
+        cipher: OAuthTokenCipher,
     ) -> OAuthConnectionRepository:
-        return SqlOAuthConnectionRepository(session=session)
+        return SqlOAuthConnectionRepository(session=session, token_cipher=cipher)
 
     @provide(scope=Scope.REQUEST)
     def provide_oauth_connection_service(
         self,
         repo: OAuthConnectionRepository,
         provider: SpotifyOAuthProvider,
-        cipher: OAuthTokenCipher,
     ) -> SpotifyOAuthConnectionService:
         return SpotifyOAuthConnectionService(
             connection_repository=repo,
             spotify_oauth_provider=provider,
-            token_cipher=cipher,
         )
 
     @provide(scope=Scope.REQUEST)
@@ -79,12 +78,10 @@ class OAuthConnectionsProvider(Provider):
         self,
         repo: OAuthConnectionRepository,
         provider: SpotifyOAuthProvider,
-        cipher: OAuthTokenCipher,
     ) -> SpotifyTokenService:
         return SpotifyTokenService(
             connection_repository=repo,
             spotify_oauth_provider=provider,
-            token_cipher=cipher,
         )
 
     @provide(scope=Scope.REQUEST)

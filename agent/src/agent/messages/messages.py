@@ -17,20 +17,19 @@ from .rendering import render_playlist_context, render_user_message_content
 
 type _PlaylistDraftProvider = Callable[[], PlaylistDraft | None]
 
+_PROMPTS_DIR = Path(__file__).parent / "prompts"
+_SHARED_PROMPT = (_PROMPTS_DIR / "shared_system_prompt.md").read_text(encoding="utf-8")
+_PHASE_PROMPTS: dict[Phase, str] = {
+    Phase.ONBOARDING: (_PROMPTS_DIR / "onboarding_system_prompt.md").read_text(
+        encoding="utf-8"
+    ),
+    Phase.BUILD: (_PROMPTS_DIR / "building_system_prompt.md").read_text(
+        encoding="utf-8"
+    ),
+}
+
 
 class MessageManager:
-    _SHARED_PROMPT = (
-        Path(__file__).parent / "prompts" / "shared_system_prompt.md"
-    ).read_text(encoding="utf-8")
-    _PHASE_PROMPTS: dict[Phase, str] = {
-        Phase.ONBOARDING: (
-            Path(__file__).parent / "prompts" / "onboarding_system_prompt.md"
-        ).read_text(encoding="utf-8"),
-        Phase.BUILD: (
-            Path(__file__).parent / "prompts" / "building_system_prompt.md"
-        ).read_text(encoding="utf-8"),
-    }
-
     def __init__(
         self,
         system_prompt: str | None = None,
@@ -42,8 +41,8 @@ class MessageManager:
         if system_prompt:
             self._system_prompt = system_prompt
         else:
-            phase_prompt = self._PHASE_PROMPTS.get(phase, "")
-            self._system_prompt = f"{self._SHARED_PROMPT}\n\n{phase_prompt}".strip()
+            phase_prompt = _PHASE_PROMPTS.get(phase, "")
+            self._system_prompt = f"{_SHARED_PROMPT}\n\n{phase_prompt}".strip()
         self._phase = phase
         self._playlist_draft_provider = playlist_draft_provider
         self._max_playlist_tracks = max_playlist_tracks

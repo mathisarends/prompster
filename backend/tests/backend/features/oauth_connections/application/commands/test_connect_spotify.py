@@ -4,7 +4,6 @@ from uuid import UUID, uuid4
 import pytest
 
 from backend.features.oauth_connections.application.ports import (
-    OAuthTokenCipher,
     SpotifyOAuthProvider,
 )
 from backend.features.oauth_connections.application.schemas import (
@@ -86,17 +85,6 @@ class _SpotifyOAuthProviderStub(SpotifyOAuthProvider):
         )
 
 
-class _TokenCipherStub(OAuthTokenCipher):
-    def __init__(self) -> None:  # type: ignore[no-untyped-def]
-        pass
-
-    def encrypt(self, plaintext: str) -> bytes:
-        return f"enc:{plaintext}".encode("utf-8")
-
-    def decrypt(self, ciphertext: bytes) -> str:
-        return ciphertext.decode("utf-8")
-
-
 class TestSpotifyOAuthConnectionService:
     def test_start_binds_user_id_into_state(
         self, monkeypatch: pytest.MonkeyPatch
@@ -107,7 +95,6 @@ class TestSpotifyOAuthConnectionService:
         service = SpotifyOAuthConnectionService(
             connection_repository=repository,
             spotify_oauth_provider=provider,
-            token_cipher=_TokenCipherStub(),
         )
         user_id = uuid4()
 
@@ -124,7 +111,6 @@ class TestSpotifyOAuthConnectionService:
         service = SpotifyOAuthConnectionService(
             connection_repository=repository,
             spotify_oauth_provider=provider,
-            token_cipher=_TokenCipherStub(),
         )
         state_user_id = uuid4()
         state = f"{state_user_id}:nonce-1"
@@ -147,7 +133,6 @@ class TestSpotifyOAuthConnectionService:
         service = SpotifyOAuthConnectionService(
             connection_repository=repository,
             spotify_oauth_provider=provider,
-            token_cipher=_TokenCipherStub(),
         )
         user_id = uuid4()
         state = f"{user_id}:nonce-1"
@@ -169,5 +154,5 @@ class TestSpotifyOAuthConnectionService:
         assert repository.saved_connection.user_id == user_id
         assert repository.saved_connection.provider == OAuthProvider.SPOTIFY
         assert repository.saved_connection.provider_user_id == "spotify-user-1"
-        assert repository.saved_connection.encrypted_refresh_token == b"enc:refresh-1"
+        assert repository.saved_connection.refresh_token == "refresh-1"
         assert repository.saved_connection.is_premium is True

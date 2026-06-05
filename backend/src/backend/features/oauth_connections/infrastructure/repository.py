@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.features.oauth_connections.application.ports import OAuthTokenCipher
 from backend.features.oauth_connections.domain import (
     OAuthConnection,
     OAuthConnectionRepository,
@@ -16,8 +17,9 @@ class SqlOAuthConnectionRepository(
     Repository[OAuthConnectionModel, OAuthConnection],
     OAuthConnectionRepository,
 ):
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: AsyncSession, token_cipher: OAuthTokenCipher) -> None:
         super().__init__(session=session, model=OAuthConnectionModel)
+        self._token_cipher = token_cipher
 
     def _to_domain(self, orm: OAuthConnectionModel) -> OAuthConnection:
         return OAuthConnection(
@@ -26,7 +28,7 @@ class SqlOAuthConnectionRepository(
             user_id=orm.user_id,
             provider=OAuthProvider(orm.provider),
             provider_user_id=orm.provider_user_id,
-            encrypted_refresh_token=orm.refresh_token_encrypted,
+            refresh_token=self._token_cipher.decrypt(orm.refresh_token_encrypted),
             scope=orm.scope,
             connected_at=orm.connected_at,
             is_premium=orm.is_premium,
@@ -39,7 +41,7 @@ class SqlOAuthConnectionRepository(
             user_id=domain.user_id,
             provider=domain.provider.value,
             provider_user_id=domain.provider_user_id,
-            refresh_token_encrypted=domain.encrypted_refresh_token,
+            refresh_token_encrypted=self._token_cipher.encrypt(domain.refresh_token),
             scope=domain.scope,
             connected_at=domain.connected_at,
             is_premium=domain.is_premium,

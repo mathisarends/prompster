@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from backend.features.oauth_connections.application.ports import (
-    OAuthTokenCipher,
     SpotifyOAuthProvider,
 )
 from backend.features.oauth_connections.application.schemas import (
@@ -26,11 +25,9 @@ class SpotifyOAuthConnectionService:
         self,
         connection_repository: OAuthConnectionRepository,
         spotify_oauth_provider: SpotifyOAuthProvider,
-        token_cipher: OAuthTokenCipher,
     ) -> None:
         self._connection_repository = connection_repository
         self._spotify_oauth_provider = spotify_oauth_provider
-        self._token_cipher = token_cipher
 
     def start_connect(self, *, user_id: UUID) -> SpotifyAuthorizationRequest:
         state_payload = f"{user_id}:{secrets.token_urlsafe(self._STATE_TOKEN_BYTES)}"
@@ -90,7 +87,7 @@ class SpotifyOAuthConnectionService:
             user_id=authenticated_user_id,
             provider=OAuthProvider.SPOTIFY,
             provider_user_id=profile.spotify_user_id,
-            encrypted_refresh_token=self._token_cipher.encrypt(tokens.refresh_token),
+            refresh_token=tokens.refresh_token,
             scope=tokens.scope,
             connected_at=datetime.now(timezone.utc),
             is_premium=profile.is_premium,
@@ -113,9 +110,9 @@ class SpotifyOAuthConnectionService:
         )
 
         if tokens.refresh_token is not None:
-            encrypted_refresh = self._token_cipher.encrypt(tokens.refresh_token)
+            refresh_token = tokens.refresh_token
         elif existing is not None:
-            encrypted_refresh = existing.encrypted_refresh_token
+            refresh_token = existing.refresh_token
         else:
             raise ValueError("no_refresh_token")
 
@@ -123,7 +120,7 @@ class SpotifyOAuthConnectionService:
             user_id=user_id,
             provider=OAuthProvider.SPOTIFY,
             provider_user_id=profile.spotify_user_id,
-            encrypted_refresh_token=encrypted_refresh,
+            refresh_token=refresh_token,
             scope=tokens.scope,
             connected_at=datetime.now(timezone.utc),
             is_premium=profile.is_premium,
@@ -141,11 +138,8 @@ class SpotifyOAuthConnectionService:
             return None
 
         try:
-            refresh_token = self._token_cipher.decrypt(
-                connection.encrypted_refresh_token
-            )
             tokens = await self._spotify_oauth_provider.refresh_access_token(
-                refresh_token=refresh_token,
+                refresh_token=connection.refresh_token,
             )
             profile = await self._spotify_oauth_provider.fetch_spotify_user_profile(
                 access_token=tokens.access_token,

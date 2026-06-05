@@ -10,7 +10,6 @@ from backend.features.oauth_connections.application import (
     SpotifyTokenRevokedException,
     SpotifyTokenService,
 )
-from backend.features.oauth_connections.application.ports import OAuthTokenCipher
 from backend.features.oauth_connections.application.schemas import (
     SpotifyTokens,
     SpotifyUserProfile,
@@ -85,25 +84,14 @@ class _SpotifyOAuthProviderStub(SpotifyOAuthProvider):
         return self._tokens
 
 
-class _TokenCipherStub(OAuthTokenCipher):
-    def __init__(self) -> None:  # type: ignore[no-untyped-def]
-        pass
-
-    def encrypt(self, plaintext: str) -> bytes:
-        return f"enc:{plaintext}".encode("utf-8")
-
-    def decrypt(self, ciphertext: bytes) -> str:
-        return ciphertext.decode("utf-8").replace("enc:", "", 1)
-
-
-def _make_connection(*, encrypted_refresh_token: bytes) -> OAuthConnection:
+def _make_connection(*, refresh_token: str) -> OAuthConnection:
     return OAuthConnection(
         id=uuid4(),
         created_time=datetime.now(timezone.utc),
         user_id=uuid4(),
         provider=OAuthProvider.SPOTIFY,
         provider_user_id="spotify-user-1",
-        encrypted_refresh_token=encrypted_refresh_token,
+        refresh_token=refresh_token,
         scope="scope-1",
         connected_at=datetime.now(timezone.utc),
     )
@@ -124,7 +112,6 @@ class TestSpotifyTokenService:
         service = SpotifyTokenService(
             connection_repository=repository,
             spotify_oauth_provider=provider,
-            token_cipher=_TokenCipherStub(),
         )
 
         with pytest.raises(SpotifyConnectionNotFoundException):
@@ -133,13 +120,12 @@ class TestSpotifyTokenService:
     def test_get_valid_access_token_deletes_connection_when_refresh_revoked(
         self,
     ) -> None:
-        connection = _make_connection(encrypted_refresh_token=b"enc:refresh-1")
+        connection = _make_connection(refresh_token="refresh-1")
         repository = _OAuthConnectionRepositoryStub(connection=connection)
         provider = _SpotifyOAuthProviderStub(raises=True)
         service = SpotifyTokenService(
             connection_repository=repository,
             spotify_oauth_provider=provider,
-            token_cipher=_TokenCipherStub(),
         )
 
         with pytest.raises(SpotifyTokenRevokedException):
@@ -148,7 +134,7 @@ class TestSpotifyTokenService:
         assert repository.deleted is True
 
     def test_get_valid_access_token_rotates_refresh_token_when_returned(self) -> None:
-        connection = _make_connection(encrypted_refresh_token=b"enc:refresh-1")
+        connection = _make_connection(refresh_token="refresh-1")
         repository = _OAuthConnectionRepositoryStub(connection=connection)
         provider = _SpotifyOAuthProviderStub(
             tokens=SpotifyTokens(
@@ -162,7 +148,6 @@ class TestSpotifyTokenService:
         service = SpotifyTokenService(
             connection_repository=repository,
             spotify_oauth_provider=provider,
-            token_cipher=_TokenCipherStub(),
         )
 
         token = asyncio.run(service.get_valid_access_token(user_id=connection.user_id))
@@ -172,4 +157,4 @@ class TestSpotifyTokenService:
         assert token.scope == "scope-2"
         assert provider.received_refresh_token == "refresh-1"
         assert repository.saved_connection is connection
-        assert connection.encrypted_refresh_token == b"enc:refresh-2"
+        assert connection.refresh_token == "refresh-2"
