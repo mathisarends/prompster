@@ -33,7 +33,7 @@ requires-dist = [
     { name = "llm", editable = "llm" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
-    { name = "spotifyify", specifier = ">=0.4.0" },
+    { name = "spotifyify", specifier = ">=0.5.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -294,7 +294,7 @@ requires-dist = [
     { name = "qrcode", extras = ["pil"], specifier = ">=8.2" },
     { name = "realtime-whisper", specifier = ">=0.1.0" },
     { name = "resend", specifier = ">=2.30.1" },
-    { name = "spotifyify", specifier = ">=0.4.0" },
+    { name = "spotifyify", specifier = ">=0.5.0" },
     { name = "sqlmodel", specifier = ">=0.0.38" },
     { name = "types-aiobotocore-s3", specifier = ">=2.15.0" },
     { name = "typst", specifier = ">=0.14.9" },
@@ -1180,16 +1180,16 @@ wheels = [
 
 [[package]]
 name = "spotifyify"
-version = "0.4.0"
+version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/89/55/790db64db9e33ad457a82ccca6c548aaba4f0a6bbc724a82e3c1ed960724/spotifyify-0.4.0.tar.gz", hash = "sha256:c213a52e9604e21522aeeba0646f534c65bafa9501954b4663cf876d5dbfcec0", size = 42134, upload-time = "2026-05-31T19:43:52.768Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/69/2c778719dc7aaa88e1f80fb39c4ac335231abf750d93f23f6bb3c5e5d4aa/spotifyify-0.5.0.tar.gz", hash = "sha256:de1e3043328ddcc06ce5cf27f0bfab6d9570fc9fdf74550e698df0815535cdc5", size = 43491, upload-time = "2026-06-05T20:36:57.558Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6a/19/99a9316b96db9ff1d06c972447742cb8ed5da3ae5fe23d72f835919f2324/spotifyify-0.4.0-py3-none-any.whl", hash = "sha256:67c6ac438c7917b026fefe096edc0627511f86ee7996f05d2c4120db255f1017", size = 43088, upload-time = "2026-05-31T19:43:51.532Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/fa/e30442f1370f8e6b25ad70a9cb5df5390a7e06fc134862c4c2538574d91d/spotifyify-0.5.0-py3-none-any.whl", hash = "sha256:95ed8d58d3eb6d0b5aeed8808ab204e509d54c0659e1e8cf93dae43f35d5c2a8", size = 44283, upload-time = "2026-06-05T20:36:56.583Z" },
 ]
 
 [[package]]
