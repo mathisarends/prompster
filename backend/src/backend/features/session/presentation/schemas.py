@@ -155,6 +155,8 @@ class OnboardingQuestionResponse(Schema):
         OnboardingQuestionSelectionMode.SINGLE_SELECT
     )
     is_last_question: bool
+    answers: list[str] = Field(default_factory=list)
+    is_answered: bool = False
 
 
 UserMessageEntryResponse.model_rebuild()
@@ -183,9 +185,7 @@ class SessionResponse(Schema):
     unconsumed_user_curation_events: list[UserCurationEventResponse] = Field(
         default_factory=list
     )
-    open_onboarding_questions: list[OnboardingQuestionResponse] = Field(
-        default_factory=list
-    )
+    onboarding_questions: list[OnboardingQuestionResponse] = Field(default_factory=list)
 
 
 class SessionSummaryResponse(Schema):

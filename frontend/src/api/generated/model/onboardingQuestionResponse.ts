@@ -14,4 +14,6 @@ export interface OnboardingQuestionResponse {
   options?: string[];
   selectionMode?: OnboardingQuestionSelectionMode;
   isLastQuestion: boolean;
+  answers?: string[];
+  isAnswered?: boolean;
 }

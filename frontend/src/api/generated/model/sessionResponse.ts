@@ -30,5 +30,5 @@ export interface SessionResponse {
   playlistReferences?: PlaylistReferenceResponse[];
   artistReferences?: ArtistReferenceResponse[];
   unconsumedUserCurationEvents?: UserCurationEventResponse[];
-  openOnboardingQuestions?: OnboardingQuestionResponse[];
+  onboardingQuestions?: OnboardingQuestionResponse[];
 }

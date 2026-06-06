@@ -62,9 +62,9 @@ def to_session_response(session: Session) -> SessionResponse:
             to_user_curation_event_response(event)
             for event in session.unconsumed_user_curation_events
         ],
-        open_onboarding_questions=[
+        onboarding_questions=[
             to_onboarding_question_response(question)
-            for question in session.open_onboarding_questions
+            for question in session.onboarding_questions
         ],
     )
 
@@ -240,4 +240,6 @@ def to_onboarding_question_response(
         options=list(question.options),
         selection_mode=question.selection_mode,
         is_last_question=question.is_last_question,
+        answers=list(question.answers),
+        is_answered=question.is_answered,
     )

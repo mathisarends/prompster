@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
@@ -14,6 +16,9 @@ from backend.features.session.domain.exceptions import (
     UserCurationEventMissingTrackYearError,
     UserCurationEventNotFoundError,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def _exception_detail(exc: Exception, *, fallback: str) -> str:
@@ -145,10 +150,18 @@ async def _user_curation_event_missing_track_year_handler(
     )
 
 
-async def _bad_request_handler(_: Request, exc: Exception) -> JSONResponse:
+async def _bad_request_handler(request: Request, exc: Exception) -> JSONResponse:
+    detail = _exception_detail(exc, fallback="Bad request")
+    logger.warning(
+        "Bad request on %s %s: %s (%s)",
+        request.method,
+        request.url.path,
+        detail,
+        type(exc).__name__,
+    )
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
-        content={"detail": _exception_detail(exc, fallback="Bad request")},
+        content={"detail": detail},
     )
 
 

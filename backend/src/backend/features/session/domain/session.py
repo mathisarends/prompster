@@ -390,7 +390,10 @@ class Session(Aggregate):
                 continue
             dedupe_key = value.casefold()
             if dedupe_key in seen:
-                raise ValueError("Duplicate onboarding answers are not allowed.")
+                # The API accepts both `answer` and `answers`; clients commonly
+                # send the same value through both fields. Treat such overlaps as
+                # redundant rather than a user-facing duplicate-selection error.
+                continue
             seen.add(dedupe_key)
             normalized.append(value)
 
