@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import type { SessionResponse } from "@/api/generated/model";
 import {
-  completeOnboarding,
   getGetSessionQueryKey,
   getListSessionsQueryKey,
   removePlaylistTrack,
@@ -11,7 +10,10 @@ import {
   stopMessage as stopSessionMessage,
   useGetSession,
 } from "@/api/generated/session-api";
-import { streamSendMessage } from "@/features/chat/api/session-stream";
+import {
+  streamCompleteOnboarding,
+  streamSendMessage,
+} from "@/features/chat/api/session-stream";
 
 import {
   chatReducer,
@@ -294,41 +296,24 @@ export const useChatSession = ({
       if (normalizedAnswers.length === 0) return;
 
       void (async () => {
-        if (!sessionId || isStreamingRef.current) return;
-
-        isStreamingRef.current = true;
-        hasStreamedSinceLoadRef.current = true;
-        dispatch({ type: "stream/started" });
-
-        try {
-          await onboardingPersistenceQueueRef.current.catch(() => undefined);
-          let updatedSession: SessionResponse | undefined;
+        await runEventStream({ type: "stream/started" }, async (streamOptions) => {
+          await onboardingPersistenceQueueRef.current;
           for (const answer of normalizedAnswers) {
-            updatedSession = await submitOnboardingAnswer(sessionId, {
+            await submitOnboardingAnswer(sessionId, {
               questionId: answer.questionId,
               answer: answer.answer,
               answers: answer.answers,
             });
 
             if (answer.isLastQuestion) {
-              updatedSession = await completeOnboarding(sessionId);
-              dispatch({ type: "session/loaded", session: updatedSession });
-              break;
+              await streamCompleteOnboarding(sessionId, streamOptions);
+              return;
             }
           }
-          await invalidateSessionQueries();
-        } catch (error) {
-          dispatch({
-            type: "stream/failed",
-            message: getStreamErrorMessage(error),
-          });
-        } finally {
-          isStreamingRef.current = false;
-          dispatch({ type: "stream/finished" });
-        }
+        });
       })();
     },
-    [invalidateSessionQueries, normalizeOnboardingAnswer, sessionId],
+    [normalizeOnboardingAnswer, runEventStream, sessionId],
   );
 
   const stopMessage = useCallback(() => {

@@ -147,6 +147,7 @@ async def create_session(
 
 @router.post(
     "/{session_id}/messages",
+    response_class=StreamingResponse,
     status_code=status.HTTP_200_OK,
     operation_id="send_message",
     responses=_event_stream_response
@@ -206,21 +207,22 @@ async def submit_onboarding_answer(
 
 @router.post(
     "/{session_id}/onboarding/complete",
-    response_model=SessionResponse,
+    response_class=StreamingResponse,
     status_code=status.HTTP_200_OK,
     operation_id="complete_onboarding",
-    responses=_auth_errors | _bad_request | _not_found,
+    responses=_event_stream_response | _auth_errors | _bad_request | _not_found,
 )
 async def complete_onboarding(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionConversationService],
-) -> SessionResponse:
-    session = await service.complete_onboarding(
-        session_id=session_id,
-        user_id=authenticated_user_id,
+) -> StreamingResponse:
+    return stream_session_events(
+        service.complete_onboarding(
+            session_id=session_id,
+            user_id=authenticated_user_id,
+        )
     )
-    return to_session_response(session)
 
 
 @router.post(

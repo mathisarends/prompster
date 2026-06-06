@@ -15,6 +15,7 @@ from backend.features.session.application.events import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionPlaylistTrackReplaced,
+    SessionSnapshot,
     SessionSuspendedForInput,
     SessionTitleGenerated,
     SessionToolCallSequenceAdded,
@@ -139,10 +140,16 @@ class SessionConversationService:
         *,
         session_id: UUID,
         user_id: UUID,
-    ) -> Session:
+    ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         session.advance_to_building_phase()
-        return await self._persist_session(session=session)
+        await self._persist_session(session=session)
+        yield SessionSnapshot(session=session)
+
+        async for event in self._run_agent_and_consume_user_curation_events(
+            session=session
+        ):
+            yield event
 
     def _maybe_start_title_generation(
         self,

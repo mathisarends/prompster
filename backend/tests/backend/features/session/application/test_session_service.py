@@ -15,6 +15,7 @@ from backend.features.session.application.events import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionPlaylistTrackReplaced,
+    SessionSnapshot,
     SessionSuspendedForInput,
     SessionTitleGenerated,
     SessionToolCallSequenceAdded,
@@ -1053,7 +1054,7 @@ class TestSessionServiceSendMessage:
         assert saved_session is session
         assert repository.saved_sessions == [session]
 
-    def test_complete_onboarding_advances_phase_and_returns_session(
+    def test_complete_onboarding_advances_phase_and_streams_agent(
         self,
     ) -> None:
         owner_id = uuid4()
@@ -1064,20 +1065,27 @@ class TestSessionServiceSendMessage:
             is_last_question=True,
         )
         session.answer_onboarding_question(question_id=question.id, answer="Ja")
-        runner = _SessionRunnerStub(events=[])
+        runner = _SessionRunnerStub(chunks=["Build"])
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_conversation_service(repository=repository, runner=runner)
 
-        saved_session = asyncio.run(
-            service.complete_onboarding(
-                session_id=session.id,
-                user_id=owner_id,
+        events = asyncio.run(
+            _collect_events(
+                service.complete_onboarding(
+                    session_id=session.id,
+                    user_id=owner_id,
+                )
             )
         )
 
         assert session.phase == Phase.BUILD
-        assert saved_session is session
-        assert repository.saved_sessions == [session]
+        assert isinstance(events[0], SessionSnapshot)
+        assert any(
+            isinstance(event, SessionAssistantMessageStarted) for event in events
+        )
+        assert isinstance(events[-1], SessionAssistantMessageCompleted)
+        assert runner.ran_sessions == [session]
+        assert repository.saved_sessions[0] is session
 
     def test_complete_onboarding_rejects_unanswered_questions(self) -> None:
         owner_id = uuid4()
@@ -1094,9 +1102,11 @@ class TestSessionServiceSendMessage:
             match="onboarding questions are unanswered",
         ):
             asyncio.run(
-                service.complete_onboarding(
-                    session_id=session.id,
-                    user_id=owner_id,
+                _collect_events(
+                    service.complete_onboarding(
+                        session_id=session.id,
+                        user_id=owner_id,
+                    )
                 )
             )
 

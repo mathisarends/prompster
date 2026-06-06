@@ -7,6 +7,7 @@ from backend.features.session.domain import (
     OnboardingQuestionSelectionMode,
     Playlist,
     PlaylistTrack,
+    Session,
     ToolCallSequence,
 )
 
@@ -14,6 +15,11 @@ from backend.features.session.domain import (
 class SuspensionKind(StrEnum):
     ONBOARDING_QUESTION = "onboarding_question"
     PLAYLIST_CONTEXT = "playlist_context"
+
+
+@dataclass(frozen=True)
+class SessionSnapshot:
+    session: Session
 
 
 @dataclass(frozen=True)
@@ -114,7 +120,8 @@ class SessionSuspendedForInput:
 
 
 type SessionEvent = (
-    SessionAssistantMessageStarted
+    SessionSnapshot
+    | SessionAssistantMessageStarted
     | SessionAssistantMessageChunk
     | SessionAssistantMessageCompleted
     | SessionAssistantMessageCancelled

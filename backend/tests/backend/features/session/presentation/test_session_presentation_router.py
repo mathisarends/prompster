@@ -1,8 +1,10 @@
 import asyncio
+from collections.abc import AsyncIterator
 from typing import cast
 from uuid import UUID, uuid4
 
 from backend.features.session.application import (
+    SessionEvent,
     SessionConversationService,
     SessionService,
 )
@@ -80,10 +82,15 @@ class _SessionConversationServiceStub:
         *,
         session_id: UUID,
         user_id: UUID,
-    ) -> Session:
+    ) -> AsyncIterator[SessionEvent]:
         self.received_session_id = session_id
         self.received_user_id = user_id
-        return Session(title="Session", entries=[], owner_id=user_id, id=session_id)
+        if False:
+            yield
+
+
+async def _collect_stream_body(response) -> list[str]:
+    return [chunk async for chunk in response.body_iterator]
 
 
 class TestGetSessionByIdRoute:
@@ -230,7 +237,9 @@ class TestCompleteOnboardingRoute:
                 service=cast(SessionConversationService, service),
             )
         )
+        body = asyncio.run(_collect_stream_body(response))
 
         assert service.received_session_id == session_id
         assert service.received_user_id == user_id
-        assert response.id == session_id
+        assert response.media_type == "text/event-stream"
+        assert body == ['event: done\ndata: {"type":"done"}\n\n']

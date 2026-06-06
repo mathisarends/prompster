@@ -9,6 +9,7 @@ from backend.features.session.application import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionPlaylistTrackReplaced,
+    SessionSnapshot,
     SessionSuspendedForInput,
     SessionTitleGenerated,
     SessionToolCallFailed,
@@ -18,6 +19,7 @@ from backend.features.session.application import (
 )
 from backend.features.session.domain import Playlist
 from backend.features.session.presentation.mapper import (
+    to_entry_response,
     to_playlist_track_response,
     to_tool_call_sequence_response,
 )
@@ -36,6 +38,8 @@ from backend.features.session.presentation.sse.events import (
     PlaylistTrackReplacedEvent,
     OnboardingQuestionAskedEvent,
     ServerEvent,
+    SessionSnapshotEvent,
+    SessionSnapshotPayload,
     SuspendedForInputEvent,
     TitleGeneratedEvent,
     ToolCallFailedEvent,
@@ -46,6 +50,21 @@ from backend.features.session.presentation.sse.events import (
 
 
 def to_server_event(event: SessionEvent) -> ServerEvent:
+    if isinstance(event, SessionSnapshot):
+        return SessionSnapshotEvent(
+            session=SessionSnapshotPayload(
+                id=event.session.id,
+                title=event.session.title,
+                created_at=event.session.created_at,
+                entries=[to_entry_response(entry) for entry in event.session.entries],
+                playlist=(
+                    _to_playlist_payload(event.session.playlist)
+                    if event.session.playlist is not None
+                    else None
+                ),
+            )
+        )
+
     if isinstance(event, SessionTitleGenerated):
         return TitleGeneratedEvent(title=event.title)
 

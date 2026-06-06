@@ -13,6 +13,8 @@ type StreamSendMessageOptions = {
   onEvent?: (event: SessionServerEvent) => void;
 };
 
+export type StreamSessionOptions = StreamSendMessageOptions;
+
 const getApiUrl = (path: string) => {
   const baseUrl = String(
     AXIOS_INSTANCE.defaults.baseURL ?? window.location.origin,
@@ -30,18 +32,33 @@ export const streamSendMessage = async (
 ) =>
   streamSessionRequest(`/api/v1/sessions/${sessionId}/messages`, body, options);
 
+export const streamCompleteOnboarding = async (
+  sessionId: string,
+  options: StreamSendMessageOptions,
+) =>
+  streamSessionRequest(
+    `/api/v1/sessions/${sessionId}/onboarding/complete`,
+    undefined,
+    options,
+  );
+
 const streamSessionRequest = async (
   path: string,
-  body: SendMessageRequest,
+  body: SendMessageRequest | undefined,
   { signal, onChunk, onDone, onEvent }: StreamSendMessageOptions,
 ) => {
+  const headers: HeadersInit = {};
+  let requestBody: string | undefined;
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    requestBody = JSON.stringify(body);
+  }
+
   const response = await fetch(getApiUrl(path), {
     method: "POST",
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
+    headers,
+    body: requestBody,
     signal,
   });
 
