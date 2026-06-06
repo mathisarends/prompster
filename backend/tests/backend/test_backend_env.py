@@ -3,17 +3,17 @@ import logging
 import pytest
 from pydantic import ValidationError
 
-from backend.env import EnvSettings
+from backend.env import LoggingLevelSettings
 
 
-class TestEnvSettings:
+class TestLoggingLevelSettings:
     def test_dev_uses_debug_log_level_by_default(self) -> None:
-        settings = EnvSettings(env="dev", log_level=None, _env_file=None)
+        settings = LoggingLevelSettings(env="dev", log_level=None, _env_file=None)
 
         assert settings.effective_log_level == logging.DEBUG
 
     def test_prod_uses_info_log_level_by_default(self) -> None:
-        settings = EnvSettings(env="prod", log_level=None, _env_file=None)
+        settings = LoggingLevelSettings(env="prod", log_level=None, _env_file=None)
 
         assert settings.effective_log_level == logging.INFO
 
@@ -23,10 +23,10 @@ class TestEnvSettings:
     ) -> None:
         monkeypatch.setenv("LOG_LEVEL", "warning")
 
-        settings = EnvSettings(_env_file=None)
+        settings = LoggingLevelSettings(_env_file=None)
 
         assert settings.effective_log_level == logging.WARNING
 
     def test_invalid_log_level_is_rejected(self) -> None:
         with pytest.raises(ValidationError):
-            EnvSettings(log_level="verbose", _env_file=None)
+            LoggingLevelSettings(log_level="verbose", _env_file=None)

@@ -52,6 +52,7 @@ class _SessionConversationServiceStub:
         self.received_user_id: UUID | None = None
         self.received_question_id: UUID | None = None
         self.received_answer: str | None = None
+        self.received_answers: list[str] | None = None
 
     async def stop_message(self, *, session_id: UUID, user_id: UUID) -> bool:
         self.received_session_id = session_id
@@ -65,11 +66,13 @@ class _SessionConversationServiceStub:
         user_id: UUID,
         question_id: UUID,
         answer: str,
+        answers: list[str] | None = None,
     ):
         self.received_session_id = session_id
         self.received_user_id = user_id
         self.received_question_id = question_id
         self.received_answer = answer
+        self.received_answers = answers
         if False:
             yield None
 
@@ -219,6 +222,7 @@ class TestSubmitOnboardingAnswerRoute:
         assert service.received_user_id == user_id
         assert service.received_question_id == question_id
         assert service.received_answer == "Freunde"
+        assert service.received_answers == []
 
 
 class TestCompleteOnboardingRoute:

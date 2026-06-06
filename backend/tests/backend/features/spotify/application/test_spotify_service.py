@@ -451,21 +451,8 @@ class TestSpotifySearch:
 
 class TestSpotifyPlaylistCreator:
     def test_create_private_playlist_uses_user_token_flow(self) -> None:
-        service = _make_playlist_creator()
-        calls: list[tuple[str, str, dict | None, str]] = []
-        responses: list[dict | None] = [{"id": "user-1"}, {"id": "playlist-1"}]
-
-        async def _request_user_api(
-            *,
-            access_token: str,
-            method: str,
-            path: str,
-            payload: dict | None = None,
-        ) -> dict | list | None:
-            calls.append((method, path, payload, access_token))
-            return responses.pop(0)
-
-        service._request_user_api = _request_user_api  # type: ignore[method-assign]
+        spotify = _PlaylistCreatorSpotifyStub()
+        service = _make_playlist_creator(cast(Any, spotify))
 
         try:
             playlist_id = asyncio.run(
@@ -479,35 +466,26 @@ class TestSpotifyPlaylistCreator:
             asyncio.run(service.aclose())
 
         assert playlist_id == "playlist-1"
-        assert calls == [
-            ("GET", "/me", None, "token-123"),
+        assert spotify.playlists.calls == [
             (
-                "POST",
-                "/users/user-1/playlists",
+                "create",
+                ("Roadtrip",),
                 {
-                    "name": "Roadtrip",
-                    "description": "Late night drive",
                     "public": False,
+                    "collaborative": False,
+                    "description": "Late night drive",
+                    "user_id": None,
                 },
-                "token-123",
             ),
         ]
+        assert len(spotify.session_calls) == 1
+        assert spotify.session_calls[0][0] == "token-123"
+        assert callable(spotify.session_calls[0][1])
+        assert spotify.close_called is True
 
     def test_update_playlist_and_replace_tracks_use_user_token(self) -> None:
-        service = _make_playlist_creator()
-        calls: list[tuple[str, str, dict | None, str]] = []
-
-        async def _request_user_api(
-            *,
-            access_token: str,
-            method: str,
-            path: str,
-            payload: dict | None = None,
-        ) -> dict | list | None:
-            calls.append((method, path, payload, access_token))
-            return None
-
-        service._request_user_api = _request_user_api  # type: ignore[method-assign]
+        spotify = _PlaylistCreatorSpotifyStub()
+        service = _make_playlist_creator(cast(Any, spotify))
 
         try:
             asyncio.run(
@@ -528,17 +506,26 @@ class TestSpotifyPlaylistCreator:
         finally:
             asyncio.run(service.aclose())
 
-        assert calls == [
+        assert spotify.playlists.calls == [
             (
-                "PUT",
-                "/playlists/playlist-1",
-                {"name": "Updated", "description": "Updated description"},
-                "token-123",
+                "update",
+                ("playlist-1",),
+                {
+                    "name": "Updated",
+                    "public": None,
+                    "collaborative": None,
+                    "description": "Updated description",
+                },
             ),
             (
-                "PUT",
-                "/playlists/playlist-1/tracks",
-                {"uris": ["spotify:track:1", "spotify:track:2"]},
-                "token-123",
+                "replace",
+                ("playlist-1", ["spotify:track:1", "spotify:track:2"]),
+                {},
             ),
         ]
+        assert [session_call[0] for session_call in spotify.session_calls] == [
+            "token-123",
+            "token-123",
+        ]
+        assert all(callable(session_call[1]) for session_call in spotify.session_calls)
+        assert spotify.close_called is True

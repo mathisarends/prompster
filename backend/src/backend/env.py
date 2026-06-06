@@ -28,10 +28,6 @@ class EnvSettings(BaseSettings):
 
     env: _EnvironmentMode = _EnvironmentMode.DEV
     frontend_base_url: str = "http://127.0.0.1:5173"
-    log_level: _LogLevel | None = Field(
-        default=None,
-        validation_alias=AliasChoices("LOG_LEVEL", "log_level"),
-    )
 
     @property
     def is_dev(self) -> bool:
@@ -44,6 +40,32 @@ class EnvSettings(BaseSettings):
     @property
     def allowed_origins(self) -> list[str]:
         return [self.frontend_base_url]
+
+    @field_validator("frontend_base_url")
+    @classmethod
+    def validate_frontend_url(cls, value: str) -> str:
+        if not value.startswith(("http://", "https://")):
+            raise ValueError("Frontend URL must start with http:// or https://")
+        return value.rstrip("/")
+
+
+class LoggingLevelSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        populate_by_name=True,
+    )
+
+    env: _EnvironmentMode = _EnvironmentMode.DEV
+    log_level: _LogLevel | None = Field(
+        default=None,
+        validation_alias=AliasChoices("LOG_LEVEL", "log_level"),
+    )
+
+    @property
+    def is_dev(self) -> bool:
+        return self.env == _EnvironmentMode.DEV
 
     @property
     def effective_log_level(self) -> int:
@@ -62,13 +84,6 @@ class EnvSettings(BaseSettings):
         if not normalized:
             return None
         return normalized
-
-    @field_validator("frontend_base_url")
-    @classmethod
-    def validate_frontend_url(cls, value: str) -> str:
-        if not value.startswith(("http://", "https://")):
-            raise ValueError("Frontend URL must start with http:// or https://")
-        return value.rstrip("/")
 
 
 class RateLimitSettings(BaseSettings):

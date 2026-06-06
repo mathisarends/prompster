@@ -5,7 +5,7 @@ from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.env import EnvSettings
+from backend.env import EnvSettings, LoggingLevelSettings
 from backend.features import (
     auth,
     llm_options,
@@ -36,13 +36,13 @@ _FEATURES = [
 _INFRASTRUCTURE_PROVIDERS = [DatabaseProvider, StorageBackendProvider]
 
 
-def _setup_logging(env: EnvSettings) -> None:
+def _setup_logging(settings: LoggingLevelSettings) -> None:
     logging.basicConfig(
-        level=env.effective_log_level,
+        level=settings.effective_log_level,
         format=_LOG_FORMAT,
     )
-    logging.getLogger().setLevel(env.effective_log_level)
-    logging.getLogger("backend").setLevel(env.effective_log_level)
+    logging.getLogger().setLevel(settings.effective_log_level)
+    logging.getLogger("backend").setLevel(settings.effective_log_level)
 
 
 def _setup_middleware(app: FastAPI, env: EnvSettings) -> None:
@@ -76,7 +76,7 @@ def _create_container():
 
 def _create_app() -> FastAPI:
     env = EnvSettings()
-    _setup_logging(env)
+    _setup_logging(LoggingLevelSettings())
     logger.info("Creating FastAPI application...")
     app = FastAPI(
         title="Prompster API",
