@@ -209,10 +209,14 @@ export const useChatSession = ({
           userMessageText: text,
         },
         (streamOptions) =>
-          streamSendMessage(sessionId, { content: text }, {
-            ...streamOptions,
-            modelId: selectedModel,
-          }),
+          streamSendMessage(
+            sessionId,
+            { content: text },
+            {
+              ...streamOptions,
+              modelId: selectedModel,
+            },
+          ),
       );
     },
     [runEventStream, selectedModel, sessionId],
@@ -306,24 +310,27 @@ export const useChatSession = ({
       if (normalizedAnswers.length === 0) return;
 
       void (async () => {
-        await runEventStream({ type: "stream/started" }, async (streamOptions) => {
-          await onboardingPersistenceQueueRef.current;
-          for (const answer of normalizedAnswers) {
-            await submitOnboardingAnswer(sessionId, {
-              questionId: answer.questionId,
-              answer: answer.answer,
-              answers: answer.answers,
-            });
-
-            if (answer.isLastQuestion) {
-              await streamCompleteOnboarding(sessionId, {
-                ...streamOptions,
-                modelId: selectedModel,
+        await runEventStream(
+          { type: "stream/started" },
+          async (streamOptions) => {
+            await onboardingPersistenceQueueRef.current;
+            for (const answer of normalizedAnswers) {
+              await submitOnboardingAnswer(sessionId, {
+                questionId: answer.questionId,
+                answer: answer.answer,
+                answers: answer.answers,
               });
-              return;
+
+              if (answer.isLastQuestion) {
+                await streamCompleteOnboarding(sessionId, {
+                  ...streamOptions,
+                  modelId: selectedModel,
+                });
+                return;
+              }
             }
-          }
-        });
+          },
+        );
       })();
     },
     [normalizeOnboardingAnswer, runEventStream, selectedModel, sessionId],

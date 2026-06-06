@@ -11,9 +11,7 @@ import {
   type OnboardingAnswer,
   useChatSession,
 } from "@/features/chat";
-import {
-  DeckWorkspaceView,
-} from "@/features/deck";
+import { DeckWorkspaceView } from "@/features/deck";
 import {
   ResizableHandle,
   ResizablePanel,

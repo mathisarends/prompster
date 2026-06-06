@@ -18,7 +18,9 @@ import { AttachmentPopover } from "@/features/chat/components/attachments/attach
 import type { ChatAttachment } from "@/features/chat/components/attachments/attachment-types";
 import { ModelSelect } from "@/features/chat/components/model-select";
 import { SendButton } from "@/features/chat/components/send-button";
+import { TranscriptionButton } from "@/features/chat/components/transcription-button";
 import { useChatInputAttachments } from "@/features/chat/hooks/use-chat-input-attachments";
+import { useRealtimeTranscription } from "@/features/chat/hooks/useRealtimeTranscription";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { useBufferedControlledValue } from "@/shared/hooks/useBufferedControlledValue";
@@ -77,6 +79,9 @@ type ChatInputContextValue = {
   disabled: boolean;
   isSubmitting: boolean;
   isStopping: boolean;
+  isTranscribing: boolean;
+  isTranscriptionStarting: boolean;
+  toggleTranscription: () => void;
   selectedModel?: string;
   onModelChange?: (modelId: string) => void;
   placeholder?: string;
@@ -334,8 +339,26 @@ const ChatInputSubmit = ({ className }: ChatInputSubmitProps) => {
     handleSendButtonClick,
     isStopping,
     isSubmitting,
+    isTranscribing,
+    isTranscriptionStarting,
     sendButtonAriaLabel,
+    toggleTranscription,
   } = useChatInput();
+
+  const showTranscription =
+    !canStop && (isTranscribing || isTranscriptionStarting || !canSend);
+
+  if (showTranscription) {
+    return (
+      <TranscriptionButton
+        isRecording={isTranscribing}
+        isStarting={isTranscriptionStarting}
+        disabled={disabled || isSubmitting}
+        onClick={toggleTranscription}
+        className={className}
+      />
+    );
+  }
 
   return (
     <SendButton
@@ -495,6 +518,31 @@ const ChatInputBoxComponent = ({
 
     submit();
   }, [canStop, onStop, submit]);
+
+  const {
+    isRecording: isTranscribing,
+    isStarting: isTranscriptionStarting,
+    start: startTranscription,
+    stop: stopTranscription,
+  } = useRealtimeTranscription({
+    value: draftValue,
+    onTranscriptChange: setBufferedValue,
+    disabled,
+  });
+
+  const toggleTranscription = useCallback(() => {
+    if (isTranscribing || isTranscriptionStarting) {
+      void stopTranscription();
+      return;
+    }
+
+    void startTranscription();
+  }, [
+    isTranscribing,
+    isTranscriptionStarting,
+    startTranscription,
+    stopTranscription,
+  ]);
 
   const removeAttachmentMention = useCallback(() => {
     if (!attachmentMention) return;
@@ -715,6 +763,9 @@ const ChatInputBoxComponent = ({
     disabled,
     isSubmitting,
     isStopping,
+    isTranscribing,
+    isTranscriptionStarting,
+    toggleTranscription,
     selectedModel,
     onModelChange,
     placeholder,

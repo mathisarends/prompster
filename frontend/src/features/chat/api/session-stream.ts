@@ -20,10 +20,7 @@ const getApiUrl = (path: string, modelId?: string) => {
   const baseUrl = String(
     AXIOS_INSTANCE.defaults.baseURL ?? window.location.origin,
   );
-  const url = new URL(
-    path,
-    baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`,
-  );
+  const url = new URL(path, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`);
 
   if (modelId) {
     url.searchParams.set("model_id", modelId);

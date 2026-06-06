@@ -11,6 +11,8 @@ _NOISY_LOGGERS = (
     "httpx",
     "httpcore",
     "openai",
+    "websockets",
+    "websockets.client",
     "spotifyify",
     "urllib3",
     "asyncio",
