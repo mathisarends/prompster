@@ -4,7 +4,8 @@ from collections import Counter
 from llmify import ChatModel, SystemMessage, UserMessage
 from pydantic import BaseModel, Field
 
-from agent.deck import DeckDraft, DeckDraftTrack
+from agent.deck import DeckDraftTrack, DeckStore
+from agent.messages import MessageManager
 
 logger = logging.getLogger(__name__)
 
@@ -91,18 +92,21 @@ class DeckCritic:
     artist or one time period relative to the target deck size.
     """
 
-    def __init__(self, llm: ChatModel, *, target_size: int = 50) -> None:
+    def __init__(
+        self,
+        llm: ChatModel,
+        *,
+        deck_store: DeckStore,
+        message_manager: MessageManager,
+        target_size: int = 50,
+    ) -> None:
         self._llm = llm
+        self._deck_store = deck_store
+        self._message_manager = message_manager
         self._target_size = target_size
 
-    async def review(
-        self,
-        draft: DeckDraft | None,
-        *,
-        brief: str | None = None,
-        target_size: int | None = None,
-    ) -> DeckReviewResult:
-        target = target_size or self._target_size
+    async def review(self) -> DeckReviewResult:
+        draft = self._deck_store.draft
         if draft is None or not draft.tracks:
             return DeckReviewResult(
                 content="No deck draft exists yet; nothing to review.",
@@ -119,7 +123,7 @@ class DeckCritic:
                 triggered_llm=False,
             )
 
-        metrics = self._compute_metrics(draft.tracks, target)
+        metrics = self._compute_metrics(draft.tracks, self._target_size)
         concerns = self._detect_concerns(metrics)
 
         logger.info(
@@ -133,6 +137,7 @@ class DeckCritic:
             },
         )
 
+        brief = self._message_manager.conversation_transcript()
         critique = await self._request_critique(draft.tracks, metrics, concerns, brief)
         return DeckReviewResult(
             content=self._render_critique(metrics, concerns, critique),

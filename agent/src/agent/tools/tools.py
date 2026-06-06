@@ -9,7 +9,6 @@ from pydantic import BaseModel
 from agent.deck import (
     DeckStore,
 )
-from agent.messages import MessageManager
 from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
 from agent.tools.handler import DeckCritic, Spotify
@@ -288,14 +287,11 @@ class Tools:
             included_in_phases={Phase.BUILD},
         )
         async def review_deck(
-            store: Inject[DeckStore],
             critic: Inject[DeckCritic],
             params: ReviewDeckParams,
-            messages: Inject[MessageManager] = None,
         ) -> ActionResult:
             try:
-                brief = messages.conversation_transcript() if messages else None
-                result = await critic.review(store.draft, brief=brief)
+                result = await critic.review()
                 return ActionResult.ok(result.content)
             except Exception as error:
                 return ActionResult.fail(error)

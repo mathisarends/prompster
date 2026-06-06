@@ -61,7 +61,7 @@ class MessageManager:
         messages.extend(self._messages)
         return messages
 
-    def conversation_transcript(self, *, max_chars: int = 4000) -> str:
+    def conversation_transcript(self, *, max_chars: int = 16000) -> str:
         """User and assistant turns as plain text, for downstream LLM context.
 
         Skips the system prompt, the injected deck context, tool calls, and tool
@@ -70,13 +70,13 @@ class MessageManager:
         """
         lines: list[str] = []
         for message in self._messages:
-            content = getattr(message, "content", None)
-            if not isinstance(content, str) or not content.strip():
-                continue
-            if isinstance(message, UserMessage):
-                lines.append(f"User: {content.strip()}")
-            elif isinstance(message, AssistantMessage):
-                lines.append(f"Assistant: {content.strip()}")
+            match message:
+                case UserMessage(content=str(content)) if content.strip():
+                    lines.append(f"User: {content.strip()}")
+                case AssistantMessage(content=str(content)) if content.strip():
+                    lines.append(f"Assistant: {content.strip()}")
+                case _:
+                    continue
         transcript = "\n".join(lines)
         if len(transcript) > max_chars:
             transcript = "…\n" + transcript[-max_chars:]

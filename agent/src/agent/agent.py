@@ -40,7 +40,6 @@ class Agent:
         system_prompt: str | None = None,
         spotify: Spotify | None = None,
         deck_store: DeckStore | None = None,
-        critic: DeckCritic | None = None,
         max_deck_tracks: int = 50,
         phase: Phase = Phase.ONBOARDING,
     ) -> None:
@@ -56,13 +55,6 @@ class Agent:
         if existing_store is None:
             self._tools.provide(self._deck_store)
 
-        existing_critic = self._tools.resolve(DeckCritic)
-        self._critic = (
-            critic or existing_critic or DeckCritic(llm, target_size=max_deck_tracks)
-        )
-        if existing_critic is None:
-            self._tools.provide(self._critic)
-
         self._messages = MessageManager(
             system_prompt=system_prompt,
             phase=phase,
@@ -70,7 +62,15 @@ class Agent:
             max_deck_tracks=max_deck_tracks,
             history=history,
         )
-        self._tools.provide(self._messages)
+
+        self._critic = DeckCritic(
+            llm,
+            deck_store=self._deck_store,
+            message_manager=self._messages,
+            target_size=max_deck_tracks,
+        )
+        self._tools.provide(self._critic)
+
         self._token_tracker = TokenTracker()
         self._llm_name = type(llm).__name__
 
