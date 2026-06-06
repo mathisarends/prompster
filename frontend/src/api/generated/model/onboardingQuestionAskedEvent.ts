@@ -10,6 +10,7 @@ import type { OnboardingQuestionSelectionMode } from "./onboardingQuestionSelect
 export interface OnboardingQuestionAskedEvent {
   type?: "session.onboarding_question_asked";
   question: string;
+  hint?: string | null;
   options?: string[];
   selectionMode?: OnboardingQuestionSelectionMode;
   questionId?: string | null;

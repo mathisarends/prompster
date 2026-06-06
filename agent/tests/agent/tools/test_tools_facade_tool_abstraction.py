@@ -63,7 +63,7 @@ class TestToolsFacadeAbstraction:
             "get_album_tracks",
         }.isdisjoint(build_tool_names)
 
-    def test_onboarding_question_schema_requires_three_to_eight_options(self) -> None:
+    def test_onboarding_question_schema_requires_three_to_six_options(self) -> None:
         tools = Tools()
 
         schema = next(
@@ -75,7 +75,20 @@ class TestToolsFacadeAbstraction:
 
         assert "options" in schema["function"]["parameters"]["required"]
         assert options["minItems"] == 3
-        assert options["maxItems"] == 8
+        assert options["maxItems"] == 6
+
+    def test_onboarding_question_schema_exposes_optional_hint(self) -> None:
+        tools = Tools()
+
+        schema = next(
+            schema
+            for schema in tools.to_schema(phase=Phase.ONBOARDING)
+            if schema["function"]["name"] == "ask_onboarding_question"
+        )
+        hint = schema["function"]["parameters"]["properties"]["hint"]
+
+        assert "hint" not in schema["function"]["parameters"]["required"]
+        assert "Optional short note" in hint["description"]
 
     def test_onboarding_question_schema_exposes_selection_mode_enum(self) -> None:
         tools = Tools()
@@ -97,7 +110,7 @@ class TestToolsFacadeAbstraction:
         "options",
         [
             ["Freunde", "Familie"],
-            [str(index) for index in range(9)],
+            [str(index) for index in range(7)],
         ],
     )
     async def test_onboarding_question_rejects_option_counts_outside_range(

@@ -114,6 +114,7 @@ export const OnboardingPanel = ({
             {
               id: pendingInput.questionId ?? "",
               question: pendingInput.question ?? null,
+              hint: pendingInput.hint ?? null,
               options: pendingInput.options ?? [],
               selectionMode: pendingInput.selectionMode ?? "single_select",
               isLastQuestion: Boolean(pendingInput.isLastQuestion),
@@ -123,6 +124,7 @@ export const OnboardingPanel = ({
           ],
     [
       pendingInput.isLastQuestion,
+      pendingInput.hint,
       pendingInput.options,
       pendingInput.question,
       pendingInput.questionId,
@@ -349,6 +351,12 @@ const OnboardingQuestionBlock = ({
           </p>
         ) : null}
       </div>
+
+      {question.hint ? (
+        <p className="pl-[1.875rem] text-sm leading-relaxed text-muted-foreground">
+          {question.hint}
+        </p>
+      ) : null}
 
       <div className="flex max-w-3xl flex-wrap gap-2.5">
         {options.map((option) => {

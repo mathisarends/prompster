@@ -100,6 +100,7 @@ class SessionTitleGenerated:
 class SessionOnboardingQuestionAsked:
     question: str
     options: list[str]
+    hint: str | None = None
     selection_mode: OnboardingQuestionSelectionMode = (
         OnboardingQuestionSelectionMode.SINGLE_SELECT
     )
@@ -111,6 +112,7 @@ class SessionOnboardingQuestionAsked:
 class SessionSuspendedForInput:
     kind: SuspensionKind
     question: str | None = None
+    hint: str | None = None
     options: list[str] | None = None
     selection_mode: OnboardingQuestionSelectionMode = (
         OnboardingQuestionSelectionMode.SINGLE_SELECT

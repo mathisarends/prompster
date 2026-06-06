@@ -11,6 +11,7 @@ export interface SuspendedForInputEvent {
   type?: "session.suspended_for_input";
   kind: string;
   question?: string | null;
+  hint?: string | null;
   options?: string[];
   selectionMode?: OnboardingQuestionSelectionMode;
   questionId?: string | null;

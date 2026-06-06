@@ -139,6 +139,7 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
     if isinstance(event, SessionOnboardingQuestionAsked):
         return OnboardingQuestionAskedEvent(
             question=event.question,
+            hint=event.hint,
             options=list(event.options),
             selection_mode=event.selection_mode,
             question_id=event.question_id,
@@ -149,6 +150,7 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
         return SuspendedForInputEvent(
             kind=event.kind,
             question=event.question,
+            hint=event.hint,
             options=list(event.options or []),
             selection_mode=event.selection_mode,
             question_id=event.question_id,

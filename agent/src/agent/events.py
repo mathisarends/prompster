@@ -46,6 +46,7 @@ class QuestionAskedEvent(AgentEvent):
     """A question that does not suspend the run — the agent keeps going."""
 
     question: str | None = None
+    hint: str | None = None
     options: list[str] = Field(default_factory=list)
     selection_mode: OnboardingSelectionMode = OnboardingSelectionMode.SINGLE_SELECT
 
@@ -54,6 +55,7 @@ class SuspendedForUserInputEvent(AgentEvent):
     """The final question — the run suspends and waits for human-in-the-loop input."""
 
     question: str | None = None
+    hint: str | None = None
     options: list[str] = Field(default_factory=list)
     selection_mode: OnboardingSelectionMode = OnboardingSelectionMode.SINGLE_SELECT
     is_last_question: bool = True

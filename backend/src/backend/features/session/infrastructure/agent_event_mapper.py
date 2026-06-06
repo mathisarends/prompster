@@ -134,6 +134,7 @@ class AgentSessionEventMapper:
     ) -> SessionRunnerQuestionAsked:
         return SessionRunnerQuestionAsked(
             question=event.question,
+            hint=event.hint,
             options=list(event.options),
             selection_mode=event.selection_mode,
         )
@@ -143,6 +144,7 @@ class AgentSessionEventMapper:
     ) -> SessionRunnerSuspendedForInput:
         return SessionRunnerSuspendedForInput(
             question=event.question,
+            hint=event.hint,
             options=list(event.options),
             selection_mode=event.selection_mode,
             is_last_question=event.is_last_question,

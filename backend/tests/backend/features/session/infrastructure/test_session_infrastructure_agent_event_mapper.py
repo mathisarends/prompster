@@ -239,6 +239,7 @@ class TestSuspendedForInputMapping:
         result = mapper.map(
             QuestionAskedEvent(
                 question="Fuer wen ist die Playlist?",
+                hint="Enge Zielgruppen machen das Deck spitzer.",
                 options=["Freunde", "Familie"],
             )
         )
@@ -246,6 +247,7 @@ class TestSuspendedForInputMapping:
         assert result == [
             SessionRunnerQuestionAsked(
                 question="Fuer wen ist die Playlist?",
+                hint="Enge Zielgruppen machen das Deck spitzer.",
                 options=["Freunde", "Familie"],
             )
         ]
@@ -256,6 +258,7 @@ class TestSuspendedForInputMapping:
         result = mapper.map(
             SuspendedForUserInputEvent(
                 question="Fuer wen ist die Playlist?",
+                hint="Enge Zielgruppen machen das Deck spitzer.",
                 options=["Freunde", "Familie"],
                 is_last_question=True,
             )
@@ -264,6 +267,7 @@ class TestSuspendedForInputMapping:
         assert result == [
             SessionRunnerSuspendedForInput(
                 question="Fuer wen ist die Playlist?",
+                hint="Enge Zielgruppen machen das Deck spitzer.",
                 options=["Freunde", "Familie"],
                 is_last_question=True,
             )

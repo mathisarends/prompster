@@ -69,6 +69,7 @@ export type PendingInput = {
   kind: string;
   questions: PendingOnboardingQuestion[];
   question?: string | null;
+  hint?: string | null;
   options: string[];
   selectionMode?: "single_select" | "multi_select";
   questionId?: string | null;
@@ -79,6 +80,7 @@ export type PendingOnboardingQuestion = {
   id: string;
   sequenceNumber?: number;
   question: string | null;
+  hint?: string | null;
   options: string[];
   selectionMode: "single_select" | "multi_select";
   isLastQuestion: boolean;
@@ -304,6 +306,7 @@ const getPendingInput = (session: SessionLike): PendingInput | null => {
     kind: "onboarding_question",
     questions,
     question: activeQuestion.question,
+    hint: activeQuestion.hint,
     options: activeQuestion.options,
     selectionMode: activeQuestion.selectionMode ?? "single_select",
     questionId: activeQuestion.id,
@@ -317,6 +320,7 @@ const toPendingOnboardingQuestion = (
   id: question.id,
   sequenceNumber: question.sequenceNumber,
   question: question.questionText,
+  hint: question.hint ?? null,
   options: question.options ?? [],
   selectionMode: question.selectionMode ?? "single_select",
   isLastQuestion: question.isLastQuestion,
@@ -424,6 +428,7 @@ const reduceServerEvent = (
     const incomingQuestion: PendingOnboardingQuestion = {
       id: event.questionId ?? "",
       question: event.question ?? null,
+      hint: event.hint ?? null,
       options: [...(event.options ?? [])],
       selectionMode: event.selectionMode ?? "single_select",
       isLastQuestion: event.isLastQuestion ?? false,
@@ -450,6 +455,7 @@ const reduceServerEvent = (
         kind,
         questions,
         question: incomingQuestion.question,
+        hint: incomingQuestion.hint,
         options: incomingQuestion.options,
         selectionMode: incomingQuestion.selectionMode,
         questionId: incomingQuestion.id || null,

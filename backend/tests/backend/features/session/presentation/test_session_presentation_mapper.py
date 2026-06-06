@@ -44,6 +44,7 @@ def test_to_session_response_maps_all_onboarding_questions_with_answers() -> Non
     )
     open_question = session.add_onboarding_question(
         question_text="Which mood?",
+        hint="A focused mood makes the deck easier to tune.",
         options=("Relaxed", "Energetic"),
         is_last_question=True,
     )
@@ -66,6 +67,7 @@ def test_to_session_response_maps_all_onboarding_questions_with_answers() -> Non
     assert still_open.id == open_question.id
     assert still_open.sequence_number == 2
     assert still_open.question_text == "Which mood?"
+    assert still_open.hint == "A focused mood makes the deck easier to tune."
     assert still_open.options == [
         "Relaxed",
         "Energetic",

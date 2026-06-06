@@ -68,6 +68,7 @@ class SessionRunnerCancelled(_RunnerEvent):
 
 class SessionRunnerQuestionAsked(_RunnerEvent):
     question: str | None = None
+    hint: str | None = None
     options: list[str] | None = None
     selection_mode: OnboardingQuestionSelectionMode = (
         OnboardingQuestionSelectionMode.SINGLE_SELECT
@@ -76,6 +77,7 @@ class SessionRunnerQuestionAsked(_RunnerEvent):
 
 class SessionRunnerSuspendedForInput(_RunnerEvent):
     question: str | None = None
+    hint: str | None = None
     options: list[str] | None = None
     selection_mode: OnboardingQuestionSelectionMode = (
         OnboardingQuestionSelectionMode.SINGLE_SELECT

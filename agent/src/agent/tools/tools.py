@@ -122,8 +122,10 @@ class Tools:
     def _register_default_tools(self) -> None:
         @self.action(
             description=(
-                "Stelle dem User eine einzelne Onboarding-Klärungsfrage. "
-                "Gib immer 3-8 konkrete Auswahlmöglichkeiten mit. "
+                "Stelle dem User eine einzelne Onboarding-Klaerungsfrage. "
+                "Gib immer 3-6 konkrete Optionen mit. "
+                "Nutze hint nur fuer kurze Warnungen, Tipps oder Kontext, "
+                "den der User vor der Antwort sehen sollte. "
                 "Nutze selection_mode=multi_select nur, wenn mehrere Antworten "
                 "gleichzeitig sinnvoll sind. "
                 "Markiere nur die letzte Onboarding-Frage mit is_last_question."
@@ -141,6 +143,7 @@ class Tools:
                 extracted_content=f"Frage gestellt: {params.question}",
                 input_request=InputRequest(
                     question=params.question,
+                    hint=params.hint,
                     options=params.options,
                     selection_mode=params.selection_mode,
                     is_last_question=params.is_last_question,

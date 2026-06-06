@@ -356,6 +356,7 @@ class SessionOnboardingQuestionModel(DatabaseEntity, table=True):
     session_id: UUID = Field(foreign_key="sessions.id", ondelete="CASCADE")
     sequence_number: int
     question_text: str
+    hint: str | None = None
     options: list[str] = Field(
         default_factory=list,
         sa_column=Column(JSON, nullable=False),

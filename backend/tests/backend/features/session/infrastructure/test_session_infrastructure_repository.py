@@ -523,6 +523,7 @@ def test_onboarding_question_mapping_roundtrip() -> None:
     session = Session(title="Roadtrip", entries=[], owner_id=owner_id, id=session_id)
     question = session.add_onboarding_question(
         question_text="Fuer wen ist die Playlist?",
+        hint="Enge Zielgruppen machen das Deck spitzer.",
         options=("Freunde", "Familie"),
         selection_mode=OnboardingQuestionSelectionMode.MULTI_SELECT,
     )
@@ -554,6 +555,9 @@ def test_onboarding_question_mapping_roundtrip() -> None:
 
     assert len(orm.onboarding_questions) == 1
     assert orm.onboarding_questions[0].question_text == "Fuer wen ist die Playlist?"
+    assert (
+        orm.onboarding_questions[0].hint == "Enge Zielgruppen machen das Deck spitzer."
+    )
     assert orm.onboarding_questions[0].selection_mode == "multi_select"
     assert orm.onboarding_questions[0].answer == "Freunde, Familie"
     assert orm.onboarding_questions[0].answers == ["Freunde", "Familie"]
@@ -565,6 +569,7 @@ def test_onboarding_question_mapping_roundtrip() -> None:
             session_id=session_id,
             sequence_number=1,
             question_text="Fuer wen ist die Playlist?",
+            hint="Enge Zielgruppen machen das Deck spitzer.",
             options=["Freunde", "Familie"],
             selection_mode="multi_select",
             answers=["Freunde", "Familie"],
@@ -577,6 +582,7 @@ def test_onboarding_question_mapping_roundtrip() -> None:
 
     assert mapped.id == question.id
     assert mapped.sequence_number == 1
+    assert mapped.hint == "Enge Zielgruppen machen das Deck spitzer."
     assert mapped.options == ("Freunde", "Familie")
     assert mapped.selection_mode == OnboardingQuestionSelectionMode.MULTI_SELECT
     assert mapped.answers == ("Freunde", "Familie")

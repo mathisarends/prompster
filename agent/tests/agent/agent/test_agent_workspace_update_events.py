@@ -169,6 +169,7 @@ class TestAgentWorkspaceUpdateEvents:
     async def test_last_onboarding_question_suspends_run(self) -> None:
         tool_args = {
             "question": "Fuer wen ist die Playlist?",
+            "hint": "Enge Zielgruppen machen das Deck spitzer.",
             "options": ["Freunde", "Familie", "Kolleg:innen"],
             "status": "Frage stellen",
             "is_last_question": True,
@@ -200,6 +201,7 @@ class TestAgentWorkspaceUpdateEvents:
         suspended = next(
             event for event in events if isinstance(event, SuspendedForUserInputEvent)
         )
+        assert suspended.hint == "Enge Zielgruppen machen das Deck spitzer."
         assert suspended.options == [
             "Freunde",
             "Familie",
@@ -211,6 +213,7 @@ class TestAgentWorkspaceUpdateEvents:
     async def test_non_last_onboarding_question_does_not_suspend_run(self) -> None:
         tool_args = {
             "question": "Fuer wen ist die Playlist?",
+            "hint": "Die Zielgruppe hilft beim Schwierigkeitsgrad.",
             "options": ["Freunde", "Familie", "Kolleg:innen"],
             "status": "Frage stellen",
             "is_last_question": False,
@@ -242,6 +245,7 @@ class TestAgentWorkspaceUpdateEvents:
         question = next(
             event for event in events if isinstance(event, QuestionAskedEvent)
         )
+        assert question.hint == "Die Zielgruppe hilft beim Schwierigkeitsgrad."
         assert question.options == [
             "Freunde",
             "Familie",

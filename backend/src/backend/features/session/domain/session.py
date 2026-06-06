@@ -327,6 +327,7 @@ class Session(Aggregate):
         self,
         *,
         question_text: str,
+        hint: str | None = None,
         options: tuple[str, ...] = (),
         selection_mode: OnboardingQuestionSelectionMode | str = (
             OnboardingQuestionSelectionMode.SINGLE_SELECT
@@ -337,6 +338,7 @@ class Session(Aggregate):
         question = OnboardingQuestion(
             sequence_number=sequence_number,
             question_text=question_text,
+            hint=hint,
             options=self._with_decide_for_me_option(options),
             selection_mode=selection_mode,
             is_last_question=is_last_question,

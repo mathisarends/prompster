@@ -16,6 +16,7 @@ class OnboardingQuestion(Entity):
         *,
         sequence_number: int,
         question_text: str,
+        hint: str | None = None,
         options: tuple[str, ...] = (),
         selection_mode: OnboardingQuestionSelectionMode | str = (
             OnboardingQuestionSelectionMode.SINGLE_SELECT
@@ -31,6 +32,7 @@ class OnboardingQuestion(Entity):
         super().__init__(id=id, created_time=created_time)
         self.sequence_number = sequence_number
         self.question_text = question_text
+        self.hint = hint
         self.options = tuple(options)
         self.selection_mode = OnboardingQuestionSelectionMode(selection_mode)
         self.answers = tuple(

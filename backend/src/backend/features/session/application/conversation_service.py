@@ -670,6 +670,7 @@ class SessionConversationService:
 
         question = session.add_onboarding_question(
             question_text=event.question,
+            hint=event.hint,
             options=tuple(event.options or []),
             selection_mode=event.selection_mode,
         )
@@ -679,6 +680,7 @@ class SessionConversationService:
                 SessionOnboardingQuestionAsked(
                     question=question.question_text,
                     options=list(question.options),
+                    hint=question.hint,
                     selection_mode=question.selection_mode,
                     question_id=question.id,
                     is_last_question=question.is_last_question,
@@ -704,6 +706,7 @@ class SessionConversationService:
         if event.question is not None:
             question = session.add_onboarding_question(
                 question_text=event.question,
+                hint=event.hint,
                 options=tuple(event.options or []),
                 selection_mode=event.selection_mode,
                 is_last_question=event.is_last_question,
@@ -714,6 +717,7 @@ class SessionConversationService:
             SessionSuspendedForInput(
                 kind=SuspensionKind.ONBOARDING_QUESTION,
                 question=event.question,
+                hint=event.hint,
                 options=suspended_options,
                 selection_mode=event.selection_mode,
                 question_id=question_id,

@@ -154,6 +154,7 @@ class OnboardingQuestionResponse(Schema):
     id: UUID
     sequence_number: int
     question_text: str
+    hint: str | None = None
     options: list[str] = Field(default_factory=list)
     selection_mode: OnboardingQuestionSelectionMode = (
         OnboardingQuestionSelectionMode.SINGLE_SELECT

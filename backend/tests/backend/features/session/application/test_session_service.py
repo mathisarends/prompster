@@ -922,10 +922,12 @@ class TestSessionServiceSendMessage:
             events=[
                 SessionRunnerQuestionAsked(
                     question="Fuer wen ist die Playlist?",
+                    hint="Enge Zielgruppen machen das Deck spitzer.",
                     options=["Freunde", "Familie"],
                 ),
                 SessionRunnerSuspendedForInput(
                     question="Welche Dekade?",
+                    hint="Schmalere Jahrzehnte erhoehen die Wiedererkennbarkeit.",
                     options=["80er", "90er"],
                     is_last_question=True,
                 ),
@@ -950,6 +952,10 @@ class TestSessionServiceSendMessage:
             "Fuer wen ist die Playlist?",
             "Welche Dekade?",
         ]
+        assert [question.hint for question in session.onboarding_questions] == [
+            "Enge Zielgruppen machen das Deck spitzer.",
+            "Schmalere Jahrzehnte erhoehen die Wiedererkennbarkeit.",
+        ]
         assert [
             question.is_last_question for question in session.onboarding_questions
         ] == [
@@ -966,6 +972,7 @@ class TestSessionServiceSendMessage:
         ]
         assert len(question_events) == 1
         assert question_events[0].question == "Fuer wen ist die Playlist?"
+        assert question_events[0].hint == "Enge Zielgruppen machen das Deck spitzer."
         assert question_events[0].options == [
             "Freunde",
             "Familie",
@@ -973,6 +980,10 @@ class TestSessionServiceSendMessage:
         ]
         assert len(suspended_events) == 1
         assert suspended_events[0].question == "Welche Dekade?"
+        assert (
+            suspended_events[0].hint
+            == "Schmalere Jahrzehnte erhoehen die Wiedererkennbarkeit."
+        )
         assert suspended_events[0].options == ["80er", "90er", DECIDE_FOR_ME_OPTION]
 
     def test_onboarding_tool_call_events_are_not_persisted_or_emitted(self) -> None:

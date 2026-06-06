@@ -28,6 +28,7 @@ class OnboardingSelectionMode(StrEnum):
 
 class InputRequest(BaseModel):
     question: str
+    hint: str | None = None
     options: list[str] = Field(default_factory=list)
     selection_mode: OnboardingSelectionMode = OnboardingSelectionMode.SINGLE_SELECT
     is_last_question: bool = False

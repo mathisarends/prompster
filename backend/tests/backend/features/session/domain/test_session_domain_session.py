@@ -141,6 +141,7 @@ class TestSessionDomainSession:
     def test_add_onboarding_question_assigns_sequence(self, session: Session) -> None:
         first = session.add_onboarding_question(
             question_text="Fuer wen ist die Playlist?",
+            hint="Enge Zielgruppen machen das Deck spitzer.",
             options=("Freunde", "Familie"),
         )
         second = session.add_onboarding_question(
@@ -149,6 +150,7 @@ class TestSessionDomainSession:
         )
 
         assert first.sequence_number == 1
+        assert first.hint == "Enge Zielgruppen machen das Deck spitzer."
         assert second.sequence_number == 2
         assert len(session.onboarding_questions) == 2
 

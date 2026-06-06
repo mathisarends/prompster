@@ -190,12 +190,14 @@ class Agent:
             if request.is_last_question:
                 yield SuspendedForUserInputEvent(
                     question=request.question,
+                    hint=request.hint,
                     options=list(request.options),
                     selection_mode=request.selection_mode,
                 )
             else:
                 yield QuestionAskedEvent(
                     question=request.question,
+                    hint=request.hint,
                     options=list(request.options),
                     selection_mode=request.selection_mode,
                 )

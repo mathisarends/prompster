@@ -200,6 +200,7 @@ class TestSessionEventMapper:
             SessionSuspendedForInput(
                 kind="onboarding_question",
                 question="Fuer wen ist die Playlist?",
+                hint="Enge Zielgruppen machen das Deck spitzer.",
                 options=["Freunde", "Familie"],
                 question_id=uuid4(),
                 is_last_question=True,
@@ -210,6 +211,7 @@ class TestSessionEventMapper:
         assert event.type == SessionEventType.SUSPENDED_FOR_INPUT
         assert event.kind == "onboarding_question"
         assert event.question == "Fuer wen ist die Playlist?"
+        assert event.hint == "Enge Zielgruppen machen das Deck spitzer."
         assert event.is_last_question is True
 
     def test_to_server_event_maps_onboarding_question_asked(self) -> None:
@@ -218,6 +220,7 @@ class TestSessionEventMapper:
         event = to_server_event(
             SessionOnboardingQuestionAsked(
                 question="Fuer wen ist die Playlist?",
+                hint="Enge Zielgruppen machen das Deck spitzer.",
                 options=["Freunde", "Familie"],
                 question_id=question_id,
             )
@@ -226,5 +229,6 @@ class TestSessionEventMapper:
         assert isinstance(event, OnboardingQuestionAskedEvent)
         assert event.type == SessionEventType.ONBOARDING_QUESTION_ASKED
         assert event.question == "Fuer wen ist die Playlist?"
+        assert event.hint == "Enge Zielgruppen machen das Deck spitzer."
         assert event.options == ["Freunde", "Familie"]
         assert event.question_id == question_id

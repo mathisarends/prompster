@@ -59,6 +59,14 @@ class PlaylistIdParams(ToolParams):
 class AskOnboardingQuestionParams(ToolParams):
     status: str = "Stelle Onboarding-Frage..."
     question: str
+    hint: str | None = Field(
+        default=None,
+        description=(
+            "Optional short note shown below the question in the UI. "
+            "Use for warnings, tips, or contextual info the user should see "
+            "before answering."
+        ),
+    )
     selection_mode: OnboardingSelectionMode = Field(
         default=OnboardingSelectionMode.SINGLE_SELECT,
         description=(
@@ -68,7 +76,7 @@ class AskOnboardingQuestionParams(ToolParams):
     )
     options: list[str] = Field(
         min_length=3,
-        max_length=8,
-        description="3-8 concise, meaningful suggested answers for the user.",
+        max_length=6,
+        description="3-6 concise, meaningful suggested answers for the user.",
     )
     is_last_question: bool = False

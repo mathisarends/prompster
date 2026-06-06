@@ -466,6 +466,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             row.session_id = session_id
             row.sequence_number = question.sequence_number
             row.question_text = question.question_text
+            row.hint = question.hint
             row.options = list(question.options)
             row.selection_mode = question.selection_mode.value
             row.is_last_question = question.is_last_question
@@ -576,6 +577,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             id=row.id,
             sequence_number=row.sequence_number,
             question_text=row.question_text,
+            hint=row.hint,
             options=tuple(row.options or ()),
             selection_mode=row.selection_mode or "single_select",
             is_last_question=row.is_last_question,

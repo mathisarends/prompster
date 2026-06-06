@@ -10,10 +10,13 @@
    tool calls, no waiting for user input between questions. The entire
    onboarding sequence is one LLM turn: brief text, then consecutive tool calls,
    with only the final tool call setting is_last_question=true.
-3. Every onboarding question must include 3-8 concise, meaningful answer
+3. Every onboarding question must include 3-6 concise, meaningful answer
    options. Offer genuinely distinct directions that help shape the deck. The UI
    provides a separate free-text answer, so do not waste an option on a generic
    "Other" answer.
+   Use the optional `hint` field only for short warnings, tips, or context that
+   the user should see before answering, for example when a narrow scope may
+   reduce replayability.
    Use `selection_mode="single_select"` when the user should choose exactly one
    answer. Use `selection_mode="multi_select"` only when it is useful to combine
    multiple answers, such as genres, decades, moods, or no-gos.

@@ -11,6 +11,7 @@ export interface OnboardingQuestionResponse {
   id: string;
   sequenceNumber: number;
   questionText: string;
+  hint?: string | null;
   options?: string[];
   selectionMode?: OnboardingQuestionSelectionMode;
   isLastQuestion: boolean;
