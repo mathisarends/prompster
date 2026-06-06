@@ -1,5 +1,5 @@
 from dishka import Provider, Scope, provide
-from llm import LLMCredentials, create_gpt_5_4
+from llm import LLMCredentials, create_gpt_5_4_mini
 from llmify import ChatModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from spotifyify import Spotifyify
@@ -44,7 +44,6 @@ from backend.features.session.infrastructure.title_generator import (
 )
 from backend.features.user.application import UserMessageRateLimitService
 from backend.features.user.domain import UserRepository
-from llm import create_gpt_5_4_mini
 
 
 class SessionProvider(Provider):

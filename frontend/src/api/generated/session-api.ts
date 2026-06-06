@@ -40,7 +40,6 @@ import type {
 } from "./model";
 
 import { customInstance } from "../http-client";
-import type { ErrorType, BodyType } from "../http-client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -67,7 +66,7 @@ export const getGetSessionEventSchemaQueryKey = () => {
 
 export const getGetSessionEventSchemaInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventSchema>>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorResponse,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -97,11 +96,11 @@ export const getGetSessionEventSchemaInfiniteQueryOptions = <
 export type GetSessionEventSchemaInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSessionEventSchema>>
 >;
-export type GetSessionEventSchemaInfiniteQueryError = ErrorType<ErrorResponse>;
+export type GetSessionEventSchemaInfiniteQueryError = ErrorResponse;
 
 export function useGetSessionEventSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventSchema>>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorResponse,
 >(
   options: {
     query: Partial<
@@ -127,7 +126,7 @@ export function useGetSessionEventSchemaInfinite<
 };
 export function useGetSessionEventSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventSchema>>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorResponse,
 >(
   options?: {
     query?: Partial<
@@ -153,7 +152,7 @@ export function useGetSessionEventSchemaInfinite<
 };
 export function useGetSessionEventSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventSchema>>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorResponse,
 >(
   options?: {
     query?: Partial<
@@ -175,7 +174,7 @@ export function useGetSessionEventSchemaInfinite<
 
 export function useGetSessionEventSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventSchema>>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorResponse,
 >(
   options?: {
     query?: Partial<
@@ -205,7 +204,7 @@ export function useGetSessionEventSchemaInfinite<
 
 export const getGetSessionEventSchemaQueryOptions = <
   TData = Awaited<ReturnType<typeof getSessionEventSchema>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorResponse,
 >(options?: {
   query?: Partial<
     UseQueryOptions<
@@ -234,11 +233,11 @@ export const getGetSessionEventSchemaQueryOptions = <
 export type GetSessionEventSchemaQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSessionEventSchema>>
 >;
-export type GetSessionEventSchemaQueryError = ErrorType<ErrorResponse>;
+export type GetSessionEventSchemaQueryError = ErrorResponse;
 
 export function useGetSessionEventSchema<
   TData = Awaited<ReturnType<typeof getSessionEventSchema>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorResponse,
 >(
   options: {
     query: Partial<
@@ -264,7 +263,7 @@ export function useGetSessionEventSchema<
 };
 export function useGetSessionEventSchema<
   TData = Awaited<ReturnType<typeof getSessionEventSchema>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorResponse,
 >(
   options?: {
     query?: Partial<
@@ -290,7 +289,7 @@ export function useGetSessionEventSchema<
 };
 export function useGetSessionEventSchema<
   TData = Awaited<ReturnType<typeof getSessionEventSchema>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorResponse,
 >(
   options?: {
     query?: Partial<
@@ -312,7 +311,7 @@ export function useGetSessionEventSchema<
 
 export function useGetSessionEventSchema<
   TData = Awaited<ReturnType<typeof getSessionEventSchema>>,
-  TError = ErrorType<ErrorResponse>,
+  TError = ErrorResponse,
 >(
   options?: {
     query?: Partial<
@@ -364,7 +363,7 @@ export const getListSessionsQueryKey = (params?: ListSessionsParams) => {
 
 export const getListSessionsInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -397,13 +396,13 @@ export const getListSessionsInfiniteQueryOptions = <
 export type ListSessionsInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof listSessions>>
 >;
-export type ListSessionsInfiniteQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type ListSessionsInfiniteQueryError =
+  | ErrorResponse
+  | HTTPValidationError;
 
 export function useListSessionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   params: undefined | ListSessionsParams,
   options: {
@@ -430,7 +429,7 @@ export function useListSessionsInfinite<
 };
 export function useListSessionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -457,7 +456,7 @@ export function useListSessionsInfinite<
 };
 export function useListSessionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -480,7 +479,7 @@ export function useListSessionsInfinite<
 
 export function useListSessionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -511,7 +510,7 @@ export function useListSessionsInfinite<
 
 export const getListSessionsQueryOptions = <
   TData = Awaited<ReturnType<typeof listSessions>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -539,13 +538,11 @@ export const getListSessionsQueryOptions = <
 export type ListSessionsQueryResult = NonNullable<
   Awaited<ReturnType<typeof listSessions>>
 >;
-export type ListSessionsQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type ListSessionsQueryError = ErrorResponse | HTTPValidationError;
 
 export function useListSessions<
   TData = Awaited<ReturnType<typeof listSessions>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   params: undefined | ListSessionsParams,
   options: {
@@ -568,7 +565,7 @@ export function useListSessions<
 };
 export function useListSessions<
   TData = Awaited<ReturnType<typeof listSessions>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -591,7 +588,7 @@ export function useListSessions<
 };
 export function useListSessions<
   TData = Awaited<ReturnType<typeof listSessions>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -610,7 +607,7 @@ export function useListSessions<
 
 export function useListSessions<
   TData = Awaited<ReturnType<typeof listSessions>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -637,7 +634,7 @@ export function useListSessions<
  * @summary Create Session
  */
 export const createSession = (
-  sessionCreateRequest: BodyType<SessionCreateRequest>,
+  sessionCreateRequest: SessionCreateRequest,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
@@ -654,16 +651,16 @@ export const createSession = (
 };
 
 export const getCreateSessionQueryKey = (
-  sessionCreateRequest?: BodyType<SessionCreateRequest>,
+  sessionCreateRequest?: SessionCreateRequest,
 ) => {
   return ["POST", `/api/v1/sessions`, sessionCreateRequest] as const;
 };
 
 export const getCreateSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
-  sessionCreateRequest: BodyType<SessionCreateRequest>,
+  sessionCreateRequest: SessionCreateRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
@@ -690,15 +687,13 @@ export const getCreateSessionQueryOptions = <
 export type CreateSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof createSession>>
 >;
-export type CreateSessionQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type CreateSessionQueryError = ErrorResponse | HTTPValidationError;
 
 export function useCreateSession<
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
-  sessionCreateRequest: BodyType<SessionCreateRequest>,
+  sessionCreateRequest: SessionCreateRequest,
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
@@ -719,9 +714,9 @@ export function useCreateSession<
 };
 export function useCreateSession<
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
-  sessionCreateRequest: BodyType<SessionCreateRequest>,
+  sessionCreateRequest: SessionCreateRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
@@ -742,9 +737,9 @@ export function useCreateSession<
 };
 export function useCreateSession<
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
-  sessionCreateRequest: BodyType<SessionCreateRequest>,
+  sessionCreateRequest: SessionCreateRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
@@ -761,9 +756,9 @@ export function useCreateSession<
 
 export function useCreateSession<
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
-  sessionCreateRequest: BodyType<SessionCreateRequest>,
+  sessionCreateRequest: SessionCreateRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
@@ -811,7 +806,7 @@ export const getGetSessionQueryKey = (sessionId: string) => {
 
 export const getGetSessionInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof getSession>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -849,13 +844,11 @@ export const getGetSessionInfiniteQueryOptions = <
 export type GetSessionInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSession>>
 >;
-export type GetSessionInfiniteQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type GetSessionInfiniteQueryError = ErrorResponse | HTTPValidationError;
 
 export function useGetSessionInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSession>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options: {
@@ -882,7 +875,7 @@ export function useGetSessionInfinite<
 };
 export function useGetSessionInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSession>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -909,7 +902,7 @@ export function useGetSessionInfinite<
 };
 export function useGetSessionInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSession>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -932,7 +925,7 @@ export function useGetSessionInfinite<
 
 export function useGetSessionInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSession>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -963,7 +956,7 @@ export function useGetSessionInfinite<
 
 export const getGetSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof getSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -996,13 +989,11 @@ export const getGetSessionQueryOptions = <
 export type GetSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSession>>
 >;
-export type GetSessionQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type GetSessionQueryError = ErrorResponse | HTTPValidationError;
 
 export function useGetSession<
   TData = Awaited<ReturnType<typeof getSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options: {
@@ -1025,7 +1016,7 @@ export function useGetSession<
 };
 export function useGetSession<
   TData = Awaited<ReturnType<typeof getSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -1048,7 +1039,7 @@ export function useGetSession<
 };
 export function useGetSession<
   TData = Awaited<ReturnType<typeof getSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -1067,7 +1058,7 @@ export function useGetSession<
 
 export function useGetSession<
   TData = Awaited<ReturnType<typeof getSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -1095,7 +1086,7 @@ export function useGetSession<
  */
 export const updateSession = (
   sessionId: string,
-  sessionUpdateRequest: BodyType<SessionUpdateRequest>,
+  sessionUpdateRequest: SessionUpdateRequest,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
@@ -1113,7 +1104,7 @@ export const updateSession = (
 
 export const getUpdateSessionQueryKey = (
   sessionId: string,
-  sessionUpdateRequest?: BodyType<SessionUpdateRequest>,
+  sessionUpdateRequest?: SessionUpdateRequest,
 ) => {
   return [
     "PATCH",
@@ -1124,10 +1115,10 @@ export const getUpdateSessionQueryKey = (
 
 export const getUpdateSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof updateSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sessionUpdateRequest: BodyType<SessionUpdateRequest>,
+  sessionUpdateRequest: SessionUpdateRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof updateSession>>, TError, TData>
@@ -1160,16 +1151,14 @@ export const getUpdateSessionQueryOptions = <
 export type UpdateSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof updateSession>>
 >;
-export type UpdateSessionQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type UpdateSessionQueryError = ErrorResponse | HTTPValidationError;
 
 export function useUpdateSession<
   TData = Awaited<ReturnType<typeof updateSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sessionUpdateRequest: BodyType<SessionUpdateRequest>,
+  sessionUpdateRequest: SessionUpdateRequest,
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof updateSession>>, TError, TData>
@@ -1190,10 +1179,10 @@ export function useUpdateSession<
 };
 export function useUpdateSession<
   TData = Awaited<ReturnType<typeof updateSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sessionUpdateRequest: BodyType<SessionUpdateRequest>,
+  sessionUpdateRequest: SessionUpdateRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof updateSession>>, TError, TData>
@@ -1214,10 +1203,10 @@ export function useUpdateSession<
 };
 export function useUpdateSession<
   TData = Awaited<ReturnType<typeof updateSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sessionUpdateRequest: BodyType<SessionUpdateRequest>,
+  sessionUpdateRequest: SessionUpdateRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof updateSession>>, TError, TData>
@@ -1234,10 +1223,10 @@ export function useUpdateSession<
 
 export function useUpdateSession<
   TData = Awaited<ReturnType<typeof updateSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sessionUpdateRequest: BodyType<SessionUpdateRequest>,
+  sessionUpdateRequest: SessionUpdateRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof updateSession>>, TError, TData>
@@ -1282,7 +1271,7 @@ export const getDeleteSessionQueryKey = (sessionId: string) => {
 
 export const getDeleteSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof deleteSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -1316,13 +1305,11 @@ export const getDeleteSessionQueryOptions = <
 export type DeleteSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof deleteSession>>
 >;
-export type DeleteSessionQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type DeleteSessionQueryError = ErrorResponse | HTTPValidationError;
 
 export function useDeleteSession<
   TData = Awaited<ReturnType<typeof deleteSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options: {
@@ -1345,7 +1332,7 @@ export function useDeleteSession<
 };
 export function useDeleteSession<
   TData = Awaited<ReturnType<typeof deleteSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -1368,7 +1355,7 @@ export function useDeleteSession<
 };
 export function useDeleteSession<
   TData = Awaited<ReturnType<typeof deleteSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -1387,7 +1374,7 @@ export function useDeleteSession<
 
 export function useDeleteSession<
   TData = Awaited<ReturnType<typeof deleteSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -1415,7 +1402,7 @@ export function useDeleteSession<
  */
 export const sendMessage = (
   sessionId: string,
-  sendMessageRequest: BodyType<SendMessageRequest>,
+  sendMessageRequest: SendMessageRequest,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
@@ -1433,7 +1420,7 @@ export const sendMessage = (
 
 export const getSendMessageQueryKey = (
   sessionId: string,
-  sendMessageRequest?: BodyType<SendMessageRequest>,
+  sendMessageRequest?: SendMessageRequest,
 ) => {
   return [
     "POST",
@@ -1444,10 +1431,10 @@ export const getSendMessageQueryKey = (
 
 export const getSendMessageQueryOptions = <
   TData = Awaited<ReturnType<typeof sendMessage>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sendMessageRequest: BodyType<SendMessageRequest>,
+  sendMessageRequest: SendMessageRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof sendMessage>>, TError, TData>
@@ -1480,16 +1467,14 @@ export const getSendMessageQueryOptions = <
 export type SendMessageQueryResult = NonNullable<
   Awaited<ReturnType<typeof sendMessage>>
 >;
-export type SendMessageQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type SendMessageQueryError = ErrorResponse | HTTPValidationError;
 
 export function useSendMessage<
   TData = Awaited<ReturnType<typeof sendMessage>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sendMessageRequest: BodyType<SendMessageRequest>,
+  sendMessageRequest: SendMessageRequest,
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof sendMessage>>, TError, TData>
@@ -1510,10 +1495,10 @@ export function useSendMessage<
 };
 export function useSendMessage<
   TData = Awaited<ReturnType<typeof sendMessage>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sendMessageRequest: BodyType<SendMessageRequest>,
+  sendMessageRequest: SendMessageRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof sendMessage>>, TError, TData>
@@ -1534,10 +1519,10 @@ export function useSendMessage<
 };
 export function useSendMessage<
   TData = Awaited<ReturnType<typeof sendMessage>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sendMessageRequest: BodyType<SendMessageRequest>,
+  sendMessageRequest: SendMessageRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof sendMessage>>, TError, TData>
@@ -1554,10 +1539,10 @@ export function useSendMessage<
 
 export function useSendMessage<
   TData = Awaited<ReturnType<typeof sendMessage>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sendMessageRequest: BodyType<SendMessageRequest>,
+  sendMessageRequest: SendMessageRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof sendMessage>>, TError, TData>
@@ -1587,7 +1572,7 @@ export function useSendMessage<
  */
 export const submitOnboardingAnswer = (
   sessionId: string,
-  submitOnboardingAnswerRequest: BodyType<SubmitOnboardingAnswerRequest>,
+  submitOnboardingAnswerRequest: SubmitOnboardingAnswerRequest,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
@@ -1605,7 +1590,7 @@ export const submitOnboardingAnswer = (
 
 export const getSubmitOnboardingAnswerQueryKey = (
   sessionId: string,
-  submitOnboardingAnswerRequest?: BodyType<SubmitOnboardingAnswerRequest>,
+  submitOnboardingAnswerRequest?: SubmitOnboardingAnswerRequest,
 ) => {
   return [
     "POST",
@@ -1616,10 +1601,10 @@ export const getSubmitOnboardingAnswerQueryKey = (
 
 export const getSubmitOnboardingAnswerQueryOptions = <
   TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  submitOnboardingAnswerRequest: BodyType<SubmitOnboardingAnswerRequest>,
+  submitOnboardingAnswerRequest: SubmitOnboardingAnswerRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1662,16 +1647,16 @@ export const getSubmitOnboardingAnswerQueryOptions = <
 export type SubmitOnboardingAnswerQueryResult = NonNullable<
   Awaited<ReturnType<typeof submitOnboardingAnswer>>
 >;
-export type SubmitOnboardingAnswerQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type SubmitOnboardingAnswerQueryError =
+  | ErrorResponse
+  | HTTPValidationError;
 
 export function useSubmitOnboardingAnswer<
   TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  submitOnboardingAnswerRequest: BodyType<SubmitOnboardingAnswerRequest>,
+  submitOnboardingAnswerRequest: SubmitOnboardingAnswerRequest,
   options: {
     query: Partial<
       UseQueryOptions<
@@ -1696,10 +1681,10 @@ export function useSubmitOnboardingAnswer<
 };
 export function useSubmitOnboardingAnswer<
   TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  submitOnboardingAnswerRequest: BodyType<SubmitOnboardingAnswerRequest>,
+  submitOnboardingAnswerRequest: SubmitOnboardingAnswerRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1724,10 +1709,10 @@ export function useSubmitOnboardingAnswer<
 };
 export function useSubmitOnboardingAnswer<
   TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  submitOnboardingAnswerRequest: BodyType<SubmitOnboardingAnswerRequest>,
+  submitOnboardingAnswerRequest: SubmitOnboardingAnswerRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1748,10 +1733,10 @@ export function useSubmitOnboardingAnswer<
 
 export function useSubmitOnboardingAnswer<
   TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  submitOnboardingAnswerRequest: BodyType<SubmitOnboardingAnswerRequest>,
+  submitOnboardingAnswerRequest: SubmitOnboardingAnswerRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1804,7 +1789,7 @@ export const getCompleteOnboardingQueryKey = (sessionId: string) => {
 
 export const getCompleteOnboardingQueryOptions = <
   TData = Awaited<ReturnType<typeof completeOnboarding>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -1842,13 +1827,11 @@ export const getCompleteOnboardingQueryOptions = <
 export type CompleteOnboardingQueryResult = NonNullable<
   Awaited<ReturnType<typeof completeOnboarding>>
 >;
-export type CompleteOnboardingQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type CompleteOnboardingQueryError = ErrorResponse | HTTPValidationError;
 
 export function useCompleteOnboarding<
   TData = Awaited<ReturnType<typeof completeOnboarding>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options: {
@@ -1875,7 +1858,7 @@ export function useCompleteOnboarding<
 };
 export function useCompleteOnboarding<
   TData = Awaited<ReturnType<typeof completeOnboarding>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -1902,7 +1885,7 @@ export function useCompleteOnboarding<
 };
 export function useCompleteOnboarding<
   TData = Awaited<ReturnType<typeof completeOnboarding>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -1925,7 +1908,7 @@ export function useCompleteOnboarding<
 
 export function useCompleteOnboarding<
   TData = Awaited<ReturnType<typeof completeOnboarding>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -1976,7 +1959,7 @@ export const getStopMessageQueryKey = (sessionId: string) => {
 
 export const getStopMessageQueryOptions = <
   TData = Awaited<ReturnType<typeof stopMessage>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -2009,13 +1992,11 @@ export const getStopMessageQueryOptions = <
 export type StopMessageQueryResult = NonNullable<
   Awaited<ReturnType<typeof stopMessage>>
 >;
-export type StopMessageQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type StopMessageQueryError = ErrorResponse | HTTPValidationError;
 
 export function useStopMessage<
   TData = Awaited<ReturnType<typeof stopMessage>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options: {
@@ -2038,7 +2019,7 @@ export function useStopMessage<
 };
 export function useStopMessage<
   TData = Awaited<ReturnType<typeof stopMessage>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -2061,7 +2042,7 @@ export function useStopMessage<
 };
 export function useStopMessage<
   TData = Awaited<ReturnType<typeof stopMessage>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -2080,7 +2061,7 @@ export function useStopMessage<
 
 export function useStopMessage<
   TData = Awaited<ReturnType<typeof stopMessage>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -2108,7 +2089,7 @@ export function useStopMessage<
  */
 export const addPlaylistTrack = (
   sessionId: string,
-  addPlaylistTrackRequest: BodyType<AddPlaylistTrackRequest>,
+  addPlaylistTrackRequest: AddPlaylistTrackRequest,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
@@ -2126,7 +2107,7 @@ export const addPlaylistTrack = (
 
 export const getAddPlaylistTrackQueryKey = (
   sessionId: string,
-  addPlaylistTrackRequest?: BodyType<AddPlaylistTrackRequest>,
+  addPlaylistTrackRequest?: AddPlaylistTrackRequest,
 ) => {
   return [
     "POST",
@@ -2137,10 +2118,10 @@ export const getAddPlaylistTrackQueryKey = (
 
 export const getAddPlaylistTrackQueryOptions = <
   TData = Awaited<ReturnType<typeof addPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  addPlaylistTrackRequest: BodyType<AddPlaylistTrackRequest>,
+  addPlaylistTrackRequest: AddPlaylistTrackRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -2183,16 +2164,14 @@ export const getAddPlaylistTrackQueryOptions = <
 export type AddPlaylistTrackQueryResult = NonNullable<
   Awaited<ReturnType<typeof addPlaylistTrack>>
 >;
-export type AddPlaylistTrackQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type AddPlaylistTrackQueryError = ErrorResponse | HTTPValidationError;
 
 export function useAddPlaylistTrack<
   TData = Awaited<ReturnType<typeof addPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  addPlaylistTrackRequest: BodyType<AddPlaylistTrackRequest>,
+  addPlaylistTrackRequest: AddPlaylistTrackRequest,
   options: {
     query: Partial<
       UseQueryOptions<
@@ -2217,10 +2196,10 @@ export function useAddPlaylistTrack<
 };
 export function useAddPlaylistTrack<
   TData = Awaited<ReturnType<typeof addPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  addPlaylistTrackRequest: BodyType<AddPlaylistTrackRequest>,
+  addPlaylistTrackRequest: AddPlaylistTrackRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -2245,10 +2224,10 @@ export function useAddPlaylistTrack<
 };
 export function useAddPlaylistTrack<
   TData = Awaited<ReturnType<typeof addPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  addPlaylistTrackRequest: BodyType<AddPlaylistTrackRequest>,
+  addPlaylistTrackRequest: AddPlaylistTrackRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -2269,10 +2248,10 @@ export function useAddPlaylistTrack<
 
 export function useAddPlaylistTrack<
   TData = Awaited<ReturnType<typeof addPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  addPlaylistTrackRequest: BodyType<AddPlaylistTrackRequest>,
+  addPlaylistTrackRequest: AddPlaylistTrackRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -2332,7 +2311,7 @@ export const getPinPlaylistTrackQueryKey = (
 
 export const getPinPlaylistTrackQueryOptions = <
   TData = Awaited<ReturnType<typeof pinPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2376,13 +2355,11 @@ export const getPinPlaylistTrackQueryOptions = <
 export type PinPlaylistTrackQueryResult = NonNullable<
   Awaited<ReturnType<typeof pinPlaylistTrack>>
 >;
-export type PinPlaylistTrackQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type PinPlaylistTrackQueryError = ErrorResponse | HTTPValidationError;
 
 export function usePinPlaylistTrack<
   TData = Awaited<ReturnType<typeof pinPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2410,7 +2387,7 @@ export function usePinPlaylistTrack<
 };
 export function usePinPlaylistTrack<
   TData = Awaited<ReturnType<typeof pinPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2438,7 +2415,7 @@ export function usePinPlaylistTrack<
 };
 export function usePinPlaylistTrack<
   TData = Awaited<ReturnType<typeof pinPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2462,7 +2439,7 @@ export function usePinPlaylistTrack<
 
 export function usePinPlaylistTrack<
   TData = Awaited<ReturnType<typeof pinPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2525,7 +2502,7 @@ export const getUnpinPlaylistTrackQueryKey = (
 
 export const getUnpinPlaylistTrackQueryOptions = <
   TData = Awaited<ReturnType<typeof unpinPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2569,13 +2546,11 @@ export const getUnpinPlaylistTrackQueryOptions = <
 export type UnpinPlaylistTrackQueryResult = NonNullable<
   Awaited<ReturnType<typeof unpinPlaylistTrack>>
 >;
-export type UnpinPlaylistTrackQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type UnpinPlaylistTrackQueryError = ErrorResponse | HTTPValidationError;
 
 export function useUnpinPlaylistTrack<
   TData = Awaited<ReturnType<typeof unpinPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2603,7 +2578,7 @@ export function useUnpinPlaylistTrack<
 };
 export function useUnpinPlaylistTrack<
   TData = Awaited<ReturnType<typeof unpinPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2631,7 +2606,7 @@ export function useUnpinPlaylistTrack<
 };
 export function useUnpinPlaylistTrack<
   TData = Awaited<ReturnType<typeof unpinPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2655,7 +2630,7 @@ export function useUnpinPlaylistTrack<
 
 export function useUnpinPlaylistTrack<
   TData = Awaited<ReturnType<typeof unpinPlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2715,7 +2690,7 @@ export const getRemovePlaylistTrackQueryKey = (
 
 export const getRemovePlaylistTrackQueryOptions = <
   TData = Awaited<ReturnType<typeof removePlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2760,13 +2735,11 @@ export const getRemovePlaylistTrackQueryOptions = <
 export type RemovePlaylistTrackQueryResult = NonNullable<
   Awaited<ReturnType<typeof removePlaylistTrack>>
 >;
-export type RemovePlaylistTrackQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type RemovePlaylistTrackQueryError = ErrorResponse | HTTPValidationError;
 
 export function useRemovePlaylistTrack<
   TData = Awaited<ReturnType<typeof removePlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2794,7 +2767,7 @@ export function useRemovePlaylistTrack<
 };
 export function useRemovePlaylistTrack<
   TData = Awaited<ReturnType<typeof removePlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2822,7 +2795,7 @@ export function useRemovePlaylistTrack<
 };
 export function useRemovePlaylistTrack<
   TData = Awaited<ReturnType<typeof removePlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2846,7 +2819,7 @@ export function useRemovePlaylistTrack<
 
 export function useRemovePlaylistTrack<
   TData = Awaited<ReturnType<typeof removePlaylistTrack>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   trackId: string,
@@ -2909,7 +2882,7 @@ export const getRestoreUserCurationEventQueryKey = (
 
 export const getRestoreUserCurationEventQueryOptions = <
   TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   eventId: string,
@@ -2954,13 +2927,13 @@ export const getRestoreUserCurationEventQueryOptions = <
 export type RestoreUserCurationEventQueryResult = NonNullable<
   Awaited<ReturnType<typeof restoreUserCurationEvent>>
 >;
-export type RestoreUserCurationEventQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type RestoreUserCurationEventQueryError =
+  | ErrorResponse
+  | HTTPValidationError;
 
 export function useRestoreUserCurationEvent<
   TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   eventId: string,
@@ -2988,7 +2961,7 @@ export function useRestoreUserCurationEvent<
 };
 export function useRestoreUserCurationEvent<
   TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   eventId: string,
@@ -3016,7 +2989,7 @@ export function useRestoreUserCurationEvent<
 };
 export function useRestoreUserCurationEvent<
   TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   eventId: string,
@@ -3040,7 +3013,7 @@ export function useRestoreUserCurationEvent<
 
 export function useRestoreUserCurationEvent<
   TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   eventId: string,
@@ -3116,7 +3089,7 @@ export const getExportSessionPlaylistQueryKey = (
 
 export const getExportSessionPlaylistInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -3157,13 +3130,13 @@ export const getExportSessionPlaylistInfiniteQueryOptions = <
 export type ExportSessionPlaylistInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof exportSessionPlaylist>>
 >;
-export type ExportSessionPlaylistInfiniteQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type ExportSessionPlaylistInfiniteQueryError =
+  | ErrorResponse
+  | HTTPValidationError;
 
 export function useExportSessionPlaylistInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   params: undefined | ExportSessionPlaylistParams,
@@ -3191,7 +3164,7 @@ export function useExportSessionPlaylistInfinite<
 };
 export function useExportSessionPlaylistInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -3219,7 +3192,7 @@ export function useExportSessionPlaylistInfinite<
 };
 export function useExportSessionPlaylistInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -3243,7 +3216,7 @@ export function useExportSessionPlaylistInfinite<
 
 export function useExportSessionPlaylistInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -3279,7 +3252,7 @@ export function useExportSessionPlaylistInfinite<
 
 export const getExportSessionPlaylistQueryOptions = <
   TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -3320,13 +3293,13 @@ export const getExportSessionPlaylistQueryOptions = <
 export type ExportSessionPlaylistQueryResult = NonNullable<
   Awaited<ReturnType<typeof exportSessionPlaylist>>
 >;
-export type ExportSessionPlaylistQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type ExportSessionPlaylistQueryError =
+  | ErrorResponse
+  | HTTPValidationError;
 
 export function useExportSessionPlaylist<
   TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   params: undefined | ExportSessionPlaylistParams,
@@ -3354,7 +3327,7 @@ export function useExportSessionPlaylist<
 };
 export function useExportSessionPlaylist<
   TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -3382,7 +3355,7 @@ export function useExportSessionPlaylist<
 };
 export function useExportSessionPlaylist<
   TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -3406,7 +3379,7 @@ export function useExportSessionPlaylist<
 
 export function useExportSessionPlaylist<
   TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -3464,7 +3437,7 @@ export const getExportSessionPlaylistToSpotifyQueryKey = (
 
 export const getExportSessionPlaylistToSpotifyQueryOptions = <
   TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -3504,13 +3477,13 @@ export const getExportSessionPlaylistToSpotifyQueryOptions = <
 export type ExportSessionPlaylistToSpotifyQueryResult = NonNullable<
   Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>
 >;
-export type ExportSessionPlaylistToSpotifyQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type ExportSessionPlaylistToSpotifyQueryError =
+  | ErrorResponse
+  | HTTPValidationError;
 
 export function useExportSessionPlaylistToSpotify<
   TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options: {
@@ -3537,7 +3510,7 @@ export function useExportSessionPlaylistToSpotify<
 };
 export function useExportSessionPlaylistToSpotify<
   TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -3564,7 +3537,7 @@ export function useExportSessionPlaylistToSpotify<
 };
 export function useExportSessionPlaylistToSpotify<
   TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -3587,7 +3560,7 @@ export function useExportSessionPlaylistToSpotify<
 
 export function useExportSessionPlaylistToSpotify<
   TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -3637,7 +3610,7 @@ export const getStarSessionQueryKey = (sessionId: string) => {
 
 export const getStarSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof starSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -3670,13 +3643,11 @@ export const getStarSessionQueryOptions = <
 export type StarSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof starSession>>
 >;
-export type StarSessionQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type StarSessionQueryError = ErrorResponse | HTTPValidationError;
 
 export function useStarSession<
   TData = Awaited<ReturnType<typeof starSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options: {
@@ -3699,7 +3670,7 @@ export function useStarSession<
 };
 export function useStarSession<
   TData = Awaited<ReturnType<typeof starSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -3722,7 +3693,7 @@ export function useStarSession<
 };
 export function useStarSession<
   TData = Awaited<ReturnType<typeof starSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -3741,7 +3712,7 @@ export function useStarSession<
 
 export function useStarSession<
   TData = Awaited<ReturnType<typeof starSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -3784,7 +3755,7 @@ export const getUnstarSessionQueryKey = (sessionId: string) => {
 
 export const getUnstarSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof unstarSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -3818,13 +3789,11 @@ export const getUnstarSessionQueryOptions = <
 export type UnstarSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof unstarSession>>
 >;
-export type UnstarSessionQueryError = ErrorType<
-  ErrorResponse | HTTPValidationError
->;
+export type UnstarSessionQueryError = ErrorResponse | HTTPValidationError;
 
 export function useUnstarSession<
   TData = Awaited<ReturnType<typeof unstarSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options: {
@@ -3847,7 +3816,7 @@ export function useUnstarSession<
 };
 export function useUnstarSession<
   TData = Awaited<ReturnType<typeof unstarSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -3870,7 +3839,7 @@ export function useUnstarSession<
 };
 export function useUnstarSession<
   TData = Awaited<ReturnType<typeof unstarSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {
@@ -3889,7 +3858,7 @@ export function useUnstarSession<
 
 export function useUnstarSession<
   TData = Awaited<ReturnType<typeof unstarSession>>,
-  TError = ErrorType<ErrorResponse | HTTPValidationError>,
+  TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
   options?: {

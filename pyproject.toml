@@ -12,6 +12,3 @@ members = [
     "agent",
     "llm",
 ]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/llm"]

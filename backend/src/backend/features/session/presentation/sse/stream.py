@@ -16,6 +16,7 @@ from backend.features.session.presentation.sse.events import (
     DoneEvent,
     ErrorEvent,
     ServerEvent,
+    SessionEventType,
 )
 from backend.features.session.presentation.sse.mappers import to_server_event
 
@@ -52,10 +53,16 @@ async def _stream(events: AsyncIterator[SessionEvent]) -> AsyncIterator[str]:
     yield _to_sse(DoneEvent())
 
 
+# High-frequency events (one per streamed token) — logging each one floods the
+# output, so we skip them in the per-event debug log.
+_HIGH_FREQUENCY_EVENTS = frozenset({SessionEventType.ASSISTANT_MESSAGE_CHUNK})
+
+
 def _to_sse(event: ServerEvent) -> str:
     event_name = event.type.value
     data = _SERVER_EVENT_ADAPTER.dump_json(event, by_alias=True).decode()
-    logger.debug("Emitting SSE event: name=%s data=%s", event_name, data)
+    if event.type not in _HIGH_FREQUENCY_EVENTS:
+        logger.debug("Emitting SSE event: name=%s data=%s", event_name, data)
     return f"event: {event_name}\ndata: {data}\n\n"
 
 

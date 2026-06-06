@@ -326,11 +326,12 @@ class SessionConversationService:
         state = _AgentRunState()
 
         async for event in self._runner.run(session=session):
-            logger.debug(
-                "Runner event received for session %s: %s",
-                session.id,
-                type(event).__name__,
-            )
+            if not isinstance(event, SessionRunnerAssistantMessageChunk):
+                logger.debug(
+                    "Runner event received for session %s: %s",
+                    session.id,
+                    type(event).__name__,
+                )
             session_events = await self._handle_runner_event(
                 event=event,
                 session=session,
@@ -341,11 +342,12 @@ class SessionConversationService:
                 on_cancelled()
 
             for session_event in session_events:
-                logger.debug(
-                    "Session event emitted for session %s: %s",
-                    session.id,
-                    type(session_event).__name__,
-                )
+                if not isinstance(session_event, SessionAssistantMessageChunk):
+                    logger.debug(
+                        "Session event emitted for session %s: %s",
+                        session.id,
+                        type(session_event).__name__,
+                    )
                 yield session_event
 
             if state.stopped:

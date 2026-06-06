@@ -29,7 +29,6 @@ import type {
 } from "./model";
 
 import { customInstance } from "../http-client";
-import type { ErrorType } from "../http-client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -56,7 +55,7 @@ export const getGetMeQueryKey = () => {
 
 export const getGetMeInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof getMe>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<Awaited<ReturnType<typeof getMe>>, TError, TData>
@@ -81,11 +80,11 @@ export const getGetMeInfiniteQueryOptions = <
 export type GetMeInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof getMe>>
 >;
-export type GetMeInfiniteQueryError = ErrorType<ErrorDto>;
+export type GetMeInfiniteQueryError = ErrorDto;
 
 export function useGetMeInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getMe>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options: {
     query: Partial<
@@ -107,7 +106,7 @@ export function useGetMeInfinite<
 };
 export function useGetMeInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getMe>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -129,7 +128,7 @@ export function useGetMeInfinite<
 };
 export function useGetMeInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getMe>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -147,7 +146,7 @@ export function useGetMeInfinite<
 
 export function useGetMeInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getMe>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -173,7 +172,7 @@ export function useGetMeInfinite<
 
 export const getGetMeQueryOptions = <
   TData = Awaited<ReturnType<typeof getMe>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(options?: {
   query?: Partial<
     UseQueryOptions<Awaited<ReturnType<typeof getMe>>, TError, TData>
@@ -196,11 +195,11 @@ export const getGetMeQueryOptions = <
 };
 
 export type GetMeQueryResult = NonNullable<Awaited<ReturnType<typeof getMe>>>;
-export type GetMeQueryError = ErrorType<ErrorDto>;
+export type GetMeQueryError = ErrorDto;
 
 export function useGetMe<
   TData = Awaited<ReturnType<typeof getMe>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options: {
     query: Partial<
@@ -222,7 +221,7 @@ export function useGetMe<
 };
 export function useGetMe<
   TData = Awaited<ReturnType<typeof getMe>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -244,7 +243,7 @@ export function useGetMe<
 };
 export function useGetMe<
   TData = Awaited<ReturnType<typeof getMe>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -262,7 +261,7 @@ export function useGetMe<
 
 export function useGetMe<
   TData = Awaited<ReturnType<typeof getMe>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -303,7 +302,7 @@ export const getDeleteMeQueryKey = () => {
 
 export const getDeleteMeQueryOptions = <
   TData = Awaited<ReturnType<typeof deleteMe>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(options?: {
   query?: Partial<
     UseQueryOptions<Awaited<ReturnType<typeof deleteMe>>, TError, TData>
@@ -328,11 +327,11 @@ export const getDeleteMeQueryOptions = <
 export type DeleteMeQueryResult = NonNullable<
   Awaited<ReturnType<typeof deleteMe>>
 >;
-export type DeleteMeQueryError = ErrorType<ErrorDto>;
+export type DeleteMeQueryError = ErrorDto;
 
 export function useDeleteMe<
   TData = Awaited<ReturnType<typeof deleteMe>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options: {
     query: Partial<
@@ -354,7 +353,7 @@ export function useDeleteMe<
 };
 export function useDeleteMe<
   TData = Awaited<ReturnType<typeof deleteMe>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -376,7 +375,7 @@ export function useDeleteMe<
 };
 export function useDeleteMe<
   TData = Awaited<ReturnType<typeof deleteMe>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -394,7 +393,7 @@ export function useDeleteMe<
 
 export function useDeleteMe<
   TData = Awaited<ReturnType<typeof deleteMe>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -439,7 +438,7 @@ export const getGetDeleteInformationQueryKey = () => {
 
 export const getGetDeleteInformationInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof getDeleteInformation>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -469,11 +468,11 @@ export const getGetDeleteInformationInfiniteQueryOptions = <
 export type GetDeleteInformationInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof getDeleteInformation>>
 >;
-export type GetDeleteInformationInfiniteQueryError = ErrorType<ErrorDto>;
+export type GetDeleteInformationInfiniteQueryError = ErrorDto;
 
 export function useGetDeleteInformationInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getDeleteInformation>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options: {
     query: Partial<
@@ -499,7 +498,7 @@ export function useGetDeleteInformationInfinite<
 };
 export function useGetDeleteInformationInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getDeleteInformation>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -525,7 +524,7 @@ export function useGetDeleteInformationInfinite<
 };
 export function useGetDeleteInformationInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getDeleteInformation>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -547,7 +546,7 @@ export function useGetDeleteInformationInfinite<
 
 export function useGetDeleteInformationInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getDeleteInformation>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -577,7 +576,7 @@ export function useGetDeleteInformationInfinite<
 
 export const getGetDeleteInformationQueryOptions = <
   TData = Awaited<ReturnType<typeof getDeleteInformation>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(options?: {
   query?: Partial<
     UseQueryOptions<
@@ -606,11 +605,11 @@ export const getGetDeleteInformationQueryOptions = <
 export type GetDeleteInformationQueryResult = NonNullable<
   Awaited<ReturnType<typeof getDeleteInformation>>
 >;
-export type GetDeleteInformationQueryError = ErrorType<ErrorDto>;
+export type GetDeleteInformationQueryError = ErrorDto;
 
 export function useGetDeleteInformation<
   TData = Awaited<ReturnType<typeof getDeleteInformation>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options: {
     query: Partial<
@@ -636,7 +635,7 @@ export function useGetDeleteInformation<
 };
 export function useGetDeleteInformation<
   TData = Awaited<ReturnType<typeof getDeleteInformation>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -662,7 +661,7 @@ export function useGetDeleteInformation<
 };
 export function useGetDeleteInformation<
   TData = Awaited<ReturnType<typeof getDeleteInformation>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -684,7 +683,7 @@ export function useGetDeleteInformation<
 
 export function useGetDeleteInformation<
   TData = Awaited<ReturnType<typeof getDeleteInformation>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<

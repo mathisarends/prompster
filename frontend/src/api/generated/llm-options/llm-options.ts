@@ -25,7 +25,6 @@ import type {
 import type { LLMOptionsResponse } from "../model";
 
 import { customInstance } from "../../http-client";
-import type { ErrorType } from "../../http-client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -52,7 +51,7 @@ export const getListLlmOptionsQueryKey = () => {
 
 export const getListLlmOptionsInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof listLlmOptions>>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -82,11 +81,11 @@ export const getListLlmOptionsInfiniteQueryOptions = <
 export type ListLlmOptionsInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof listLlmOptions>>
 >;
-export type ListLlmOptionsInfiniteQueryError = ErrorType<unknown>;
+export type ListLlmOptionsInfiniteQueryError = unknown;
 
 export function useListLlmOptionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listLlmOptions>>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options: {
     query: Partial<
@@ -112,7 +111,7 @@ export function useListLlmOptionsInfinite<
 };
 export function useListLlmOptionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listLlmOptions>>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -138,7 +137,7 @@ export function useListLlmOptionsInfinite<
 };
 export function useListLlmOptionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listLlmOptions>>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -160,7 +159,7 @@ export function useListLlmOptionsInfinite<
 
 export function useListLlmOptionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listLlmOptions>>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -190,7 +189,7 @@ export function useListLlmOptionsInfinite<
 
 export const getListLlmOptionsQueryOptions = <
   TData = Awaited<ReturnType<typeof listLlmOptions>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(options?: {
   query?: Partial<
     UseQueryOptions<Awaited<ReturnType<typeof listLlmOptions>>, TError, TData>
@@ -215,11 +214,11 @@ export const getListLlmOptionsQueryOptions = <
 export type ListLlmOptionsQueryResult = NonNullable<
   Awaited<ReturnType<typeof listLlmOptions>>
 >;
-export type ListLlmOptionsQueryError = ErrorType<unknown>;
+export type ListLlmOptionsQueryError = unknown;
 
 export function useListLlmOptions<
   TData = Awaited<ReturnType<typeof listLlmOptions>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options: {
     query: Partial<
@@ -241,7 +240,7 @@ export function useListLlmOptions<
 };
 export function useListLlmOptions<
   TData = Awaited<ReturnType<typeof listLlmOptions>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -263,7 +262,7 @@ export function useListLlmOptions<
 };
 export function useListLlmOptions<
   TData = Awaited<ReturnType<typeof listLlmOptions>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -281,7 +280,7 @@ export function useListLlmOptions<
 
 export function useListLlmOptions<
   TData = Awaited<ReturnType<typeof listLlmOptions>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<

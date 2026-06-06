@@ -31,7 +31,6 @@ import type {
 } from "../model";
 
 import { customInstance } from "../../http-client";
-import type { ErrorType } from "../../http-client";
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -58,7 +57,7 @@ export const getSpotifyConnectQueryKey = () => {
 
 export const getSpotifyConnectInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyConnect>>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -88,11 +87,11 @@ export const getSpotifyConnectInfiniteQueryOptions = <
 export type SpotifyConnectInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof spotifyConnect>>
 >;
-export type SpotifyConnectInfiniteQueryError = ErrorType<unknown>;
+export type SpotifyConnectInfiniteQueryError = unknown;
 
 export function useSpotifyConnectInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyConnect>>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options: {
     query: Partial<
@@ -118,7 +117,7 @@ export function useSpotifyConnectInfinite<
 };
 export function useSpotifyConnectInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyConnect>>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -144,7 +143,7 @@ export function useSpotifyConnectInfinite<
 };
 export function useSpotifyConnectInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyConnect>>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -166,7 +165,7 @@ export function useSpotifyConnectInfinite<
 
 export function useSpotifyConnectInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyConnect>>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -196,7 +195,7 @@ export function useSpotifyConnectInfinite<
 
 export const getSpotifyConnectQueryOptions = <
   TData = Awaited<ReturnType<typeof spotifyConnect>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(options?: {
   query?: Partial<
     UseQueryOptions<Awaited<ReturnType<typeof spotifyConnect>>, TError, TData>
@@ -221,11 +220,11 @@ export const getSpotifyConnectQueryOptions = <
 export type SpotifyConnectQueryResult = NonNullable<
   Awaited<ReturnType<typeof spotifyConnect>>
 >;
-export type SpotifyConnectQueryError = ErrorType<unknown>;
+export type SpotifyConnectQueryError = unknown;
 
 export function useSpotifyConnect<
   TData = Awaited<ReturnType<typeof spotifyConnect>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options: {
     query: Partial<
@@ -247,7 +246,7 @@ export function useSpotifyConnect<
 };
 export function useSpotifyConnect<
   TData = Awaited<ReturnType<typeof spotifyConnect>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -269,7 +268,7 @@ export function useSpotifyConnect<
 };
 export function useSpotifyConnect<
   TData = Awaited<ReturnType<typeof spotifyConnect>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -287,7 +286,7 @@ export function useSpotifyConnect<
 
 export function useSpotifyConnect<
   TData = Awaited<ReturnType<typeof spotifyConnect>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -328,7 +327,7 @@ export const getSpotifyDisconnectQueryKey = () => {
 
 export const getSpotifyDisconnectQueryOptions = <
   TData = Awaited<ReturnType<typeof spotifyDisconnect>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(options?: {
   query?: Partial<
     UseQueryOptions<
@@ -357,11 +356,11 @@ export const getSpotifyDisconnectQueryOptions = <
 export type SpotifyDisconnectQueryResult = NonNullable<
   Awaited<ReturnType<typeof spotifyDisconnect>>
 >;
-export type SpotifyDisconnectQueryError = ErrorType<unknown>;
+export type SpotifyDisconnectQueryError = unknown;
 
 export function useSpotifyDisconnect<
   TData = Awaited<ReturnType<typeof spotifyDisconnect>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options: {
     query: Partial<
@@ -387,7 +386,7 @@ export function useSpotifyDisconnect<
 };
 export function useSpotifyDisconnect<
   TData = Awaited<ReturnType<typeof spotifyDisconnect>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -413,7 +412,7 @@ export function useSpotifyDisconnect<
 };
 export function useSpotifyDisconnect<
   TData = Awaited<ReturnType<typeof spotifyDisconnect>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -435,7 +434,7 @@ export function useSpotifyDisconnect<
 
 export function useSpotifyDisconnect<
   TData = Awaited<ReturnType<typeof spotifyDisconnect>>,
-  TError = ErrorType<unknown>,
+  TError = unknown,
 >(
   options?: {
     query?: Partial<
@@ -484,7 +483,7 @@ export const getSpotifyGetAccessTokenQueryKey = () => {
 
 export const getSpotifyGetAccessTokenInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyGetAccessToken>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -514,11 +513,11 @@ export const getSpotifyGetAccessTokenInfiniteQueryOptions = <
 export type SpotifyGetAccessTokenInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof spotifyGetAccessToken>>
 >;
-export type SpotifyGetAccessTokenInfiniteQueryError = ErrorType<ErrorDto>;
+export type SpotifyGetAccessTokenInfiniteQueryError = ErrorDto;
 
 export function useSpotifyGetAccessTokenInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyGetAccessToken>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options: {
     query: Partial<
@@ -544,7 +543,7 @@ export function useSpotifyGetAccessTokenInfinite<
 };
 export function useSpotifyGetAccessTokenInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyGetAccessToken>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -570,7 +569,7 @@ export function useSpotifyGetAccessTokenInfinite<
 };
 export function useSpotifyGetAccessTokenInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyGetAccessToken>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -592,7 +591,7 @@ export function useSpotifyGetAccessTokenInfinite<
 
 export function useSpotifyGetAccessTokenInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyGetAccessToken>>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -622,7 +621,7 @@ export function useSpotifyGetAccessTokenInfinite<
 
 export const getSpotifyGetAccessTokenQueryOptions = <
   TData = Awaited<ReturnType<typeof spotifyGetAccessToken>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(options?: {
   query?: Partial<
     UseQueryOptions<
@@ -651,11 +650,11 @@ export const getSpotifyGetAccessTokenQueryOptions = <
 export type SpotifyGetAccessTokenQueryResult = NonNullable<
   Awaited<ReturnType<typeof spotifyGetAccessToken>>
 >;
-export type SpotifyGetAccessTokenQueryError = ErrorType<ErrorDto>;
+export type SpotifyGetAccessTokenQueryError = ErrorDto;
 
 export function useSpotifyGetAccessToken<
   TData = Awaited<ReturnType<typeof spotifyGetAccessToken>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options: {
     query: Partial<
@@ -681,7 +680,7 @@ export function useSpotifyGetAccessToken<
 };
 export function useSpotifyGetAccessToken<
   TData = Awaited<ReturnType<typeof spotifyGetAccessToken>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -707,7 +706,7 @@ export function useSpotifyGetAccessToken<
 };
 export function useSpotifyGetAccessToken<
   TData = Awaited<ReturnType<typeof spotifyGetAccessToken>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -729,7 +728,7 @@ export function useSpotifyGetAccessToken<
 
 export function useSpotifyGetAccessToken<
   TData = Awaited<ReturnType<typeof spotifyGetAccessToken>>,
-  TError = ErrorType<ErrorDto>,
+  TError = ErrorDto,
 >(
   options?: {
     query?: Partial<
@@ -785,7 +784,7 @@ export const getSearchSpotifyQueryKey = (params?: SearchSpotifyParams) => {
 
 export const getSearchSpotifyInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof searchSpotify>>>,
-  TError = ErrorType<ErrorDto | HTTPValidationError>,
+  TError = ErrorDto | HTTPValidationError,
 >(
   params: SearchSpotifyParams,
   options?: {
@@ -818,13 +817,11 @@ export const getSearchSpotifyInfiniteQueryOptions = <
 export type SearchSpotifyInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof searchSpotify>>
 >;
-export type SearchSpotifyInfiniteQueryError = ErrorType<
-  ErrorDto | HTTPValidationError
->;
+export type SearchSpotifyInfiniteQueryError = ErrorDto | HTTPValidationError;
 
 export function useSearchSpotifyInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof searchSpotify>>>,
-  TError = ErrorType<ErrorDto | HTTPValidationError>,
+  TError = ErrorDto | HTTPValidationError,
 >(
   params: SearchSpotifyParams,
   options: {
@@ -851,7 +848,7 @@ export function useSearchSpotifyInfinite<
 };
 export function useSearchSpotifyInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof searchSpotify>>>,
-  TError = ErrorType<ErrorDto | HTTPValidationError>,
+  TError = ErrorDto | HTTPValidationError,
 >(
   params: SearchSpotifyParams,
   options?: {
@@ -878,7 +875,7 @@ export function useSearchSpotifyInfinite<
 };
 export function useSearchSpotifyInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof searchSpotify>>>,
-  TError = ErrorType<ErrorDto | HTTPValidationError>,
+  TError = ErrorDto | HTTPValidationError,
 >(
   params: SearchSpotifyParams,
   options?: {
@@ -901,7 +898,7 @@ export function useSearchSpotifyInfinite<
 
 export function useSearchSpotifyInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof searchSpotify>>>,
-  TError = ErrorType<ErrorDto | HTTPValidationError>,
+  TError = ErrorDto | HTTPValidationError,
 >(
   params: SearchSpotifyParams,
   options?: {
@@ -932,7 +929,7 @@ export function useSearchSpotifyInfinite<
 
 export const getSearchSpotifyQueryOptions = <
   TData = Awaited<ReturnType<typeof searchSpotify>>,
-  TError = ErrorType<ErrorDto | HTTPValidationError>,
+  TError = ErrorDto | HTTPValidationError,
 >(
   params: SearchSpotifyParams,
   options?: {
@@ -960,11 +957,11 @@ export const getSearchSpotifyQueryOptions = <
 export type SearchSpotifyQueryResult = NonNullable<
   Awaited<ReturnType<typeof searchSpotify>>
 >;
-export type SearchSpotifyQueryError = ErrorType<ErrorDto | HTTPValidationError>;
+export type SearchSpotifyQueryError = ErrorDto | HTTPValidationError;
 
 export function useSearchSpotify<
   TData = Awaited<ReturnType<typeof searchSpotify>>,
-  TError = ErrorType<ErrorDto | HTTPValidationError>,
+  TError = ErrorDto | HTTPValidationError,
 >(
   params: SearchSpotifyParams,
   options: {
@@ -987,7 +984,7 @@ export function useSearchSpotify<
 };
 export function useSearchSpotify<
   TData = Awaited<ReturnType<typeof searchSpotify>>,
-  TError = ErrorType<ErrorDto | HTTPValidationError>,
+  TError = ErrorDto | HTTPValidationError,
 >(
   params: SearchSpotifyParams,
   options?: {
@@ -1010,7 +1007,7 @@ export function useSearchSpotify<
 };
 export function useSearchSpotify<
   TData = Awaited<ReturnType<typeof searchSpotify>>,
-  TError = ErrorType<ErrorDto | HTTPValidationError>,
+  TError = ErrorDto | HTTPValidationError,
 >(
   params: SearchSpotifyParams,
   options?: {
@@ -1029,7 +1026,7 @@ export function useSearchSpotify<
 
 export function useSearchSpotify<
   TData = Awaited<ReturnType<typeof searchSpotify>>,
-  TError = ErrorType<ErrorDto | HTTPValidationError>,
+  TError = ErrorDto | HTTPValidationError,
 >(
   params: SearchSpotifyParams,
   options?: {
