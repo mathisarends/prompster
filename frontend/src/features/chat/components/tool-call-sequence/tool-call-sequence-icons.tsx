@@ -13,7 +13,7 @@ const renderActionIcon = (actionType: ToolCallItem["actionType"]) => {
   if (actionType === "search") {
     return (
       <Search
-        className="size-[14px] shrink-0 text-muted-foreground/80"
+        className="size-[13px] shrink-0 text-foreground/65"
         strokeWidth={2}
       />
     );
@@ -22,7 +22,7 @@ const renderActionIcon = (actionType: ToolCallItem["actionType"]) => {
   if (actionType === "fetch") {
     return (
       <Download
-        className="size-[14px] shrink-0 text-muted-foreground/80"
+        className="size-[13px] shrink-0 text-foreground/65"
         strokeWidth={2}
       />
     );
@@ -31,7 +31,7 @@ const renderActionIcon = (actionType: ToolCallItem["actionType"]) => {
   if (actionType === "mutate") {
     return (
       <Sparkles
-        className="size-[14px] shrink-0 text-muted-foreground/80"
+        className="size-[13px] shrink-0 text-foreground/65"
         strokeWidth={2}
       />
     );
@@ -39,7 +39,7 @@ const renderActionIcon = (actionType: ToolCallItem["actionType"]) => {
 
   return (
     <Wrench
-      className="size-[14px] shrink-0 text-muted-foreground/80"
+      className="size-[13px] shrink-0 text-foreground/65"
       strokeWidth={2}
     />
   );
@@ -54,14 +54,14 @@ export const TimelineIcon = ({
 }) => {
   if (status === "running") {
     return (
-      <Loader2 className="size-[14px] shrink-0 animate-spin text-primary" />
+      <Loader2 className="size-[13px] shrink-0 animate-spin text-primary" />
     );
   }
 
   if (status === "failed") {
     return (
       <CircleAlert
-        className="size-[14px] shrink-0 text-destructive"
+        className="size-[13px] shrink-0 text-destructive"
         strokeWidth={2.25}
       />
     );

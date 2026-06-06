@@ -11,7 +11,7 @@ class ToolParams(BaseModel):
         description=(
             "Kurzes deutsches Status-Label im Präsens (max. ~50 Zeichen), das dem "
             "Nutzer anzeigt, was du gerade tust. Beispiele: \"Suche nach 'Abba'\", "
-            '"Album-Tracks laden", "Playlist-Entwurf bauen: \'80er Party\'".'
+            '"Playlist durchstöbern", "Playlist-Entwurf bauen: \'80er Party\'".'
         ),
     )
 

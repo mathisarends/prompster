@@ -72,22 +72,44 @@ export const ToolCallAccordion = ({
             return (
               <li
                 key={call.id}
-                className="relative flex items-start gap-3 pb-3 last:pb-0"
+                className="chat-tool-item relative flex items-start gap-3 pb-3 last:pb-0"
+                style={{ animationDelay: `${Math.min(index * 60, 360)}ms` }}
               >
                 {!isLast && (
                   <span
                     aria-hidden="true"
-                    className="absolute bottom-0 left-[7px] top-[22px] w-px bg-white/20"
+                    className={cn(
+                      "absolute bottom-0 left-[10px] top-[26px] w-[2px] rounded-full chat-tool-connector",
+                      status === "running"
+                        ? "chat-tool-connector--running"
+                        : status === "completed"
+                          ? "chat-tool-connector--completed"
+                          : status === "failed"
+                            ? "chat-tool-connector--completed"
+                            : undefined,
+                    )}
                   />
                 )}
-                <span className="relative z-[1] mt-[3px] flex shrink-0">
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "chat-tool-node relative z-[1] mt-[1px] shrink-0",
+                    status === "running"
+                      ? "chat-tool-node--running"
+                      : status === "failed"
+                        ? "chat-tool-node--failed"
+                        : status === "completed"
+                          ? "chat-tool-node--completed"
+                          : undefined,
+                  )}
+                >
                   <TimelineIcon call={call} status={status} />
                 </span>
                 <span
                   className={cn(
-                    "block min-w-0 break-words text-[13px] leading-5",
+                    "block min-w-0 break-words pt-[2px] text-[13px] leading-5",
                     status === "running"
-                      ? "font-medium text-foreground"
+                      ? "chat-tool-running-text font-medium"
                       : status === "failed"
                         ? "font-medium text-destructive"
                         : "text-muted-foreground",

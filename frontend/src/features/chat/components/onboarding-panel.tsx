@@ -141,7 +141,6 @@ export const OnboardingPanel = ({
   );
   const currentStep = Math.min(stepIndex, steps.length - 1);
   const stepQuestions = steps[currentStep] ?? [];
-  const isMultiStep = steps.length > 1;
   const isLastStep = currentStep === steps.length - 1;
   const firstQuestionNumber = currentStep * QUESTIONS_PER_STEP + 1;
 
@@ -236,36 +235,32 @@ export const OnboardingPanel = ({
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
             Einleitende Fragen
           </p>
-          {isMultiStep ? (
-            <p className="text-xs font-medium tabular-nums text-muted-foreground">
-              Schritt {currentStep + 1} / {steps.length}
-            </p>
-          ) : null}
+          <p className="text-xs font-medium tabular-nums text-muted-foreground">
+            Schritt {currentStep + 1} / {steps.length}
+          </p>
         </div>
 
-        {isMultiStep ? (
-          <div className="flex gap-1.5" aria-hidden>
-            {steps.map((group, index) => {
-              const groupAnswered = group.every(
-                (question) =>
-                  getQuestionAnswers(drafts[question.id]).length > 0,
-              );
-              const isCurrent = index === currentStep;
-              return (
-                <span
-                  key={index}
-                  className={cn(
-                    "h-1 flex-1 rounded-full transition-colors",
-                    index < currentStep || groupAnswered
-                      ? "bg-primary/70"
-                      : "bg-white/10",
-                    isCurrent && "bg-primary",
-                  )}
-                />
-              );
-            })}
-          </div>
-        ) : null}
+        <div className="flex gap-1.5" aria-hidden>
+          {steps.map((group, index) => {
+            const groupAnswered = group.every(
+              (question) =>
+                getQuestionAnswers(drafts[question.id]).length > 0,
+            );
+            const isCurrent = index === currentStep;
+            return (
+              <span
+                key={index}
+                className={cn(
+                  "h-1 flex-1 rounded-full transition-colors",
+                  index < currentStep || groupAnswered
+                    ? "bg-primary/70"
+                    : "bg-white/10",
+                  isCurrent && "bg-primary",
+                )}
+              />
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-7 py-10">

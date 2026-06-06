@@ -9,6 +9,11 @@ import type {
   ToolCallResponse,
   UserMessageEntryResponse,
 } from "@/api/generated/model";
+import {
+  EntryKind,
+  SessionEventType,
+  ToolCallState,
+} from "@/api/generated/model";
 import type { SessionServerEvent } from "@/features/chat/api/session-stream";
 import type { ToolCallItem, ToolCallStatus } from "@/features/chat/types";
 
@@ -30,12 +35,12 @@ export type ChatPlaylist = {
 };
 
 export type ChatUserEntry = Omit<UserMessageEntryResponse, "kind"> & {
-  kind: "user_message";
+  kind: typeof EntryKind.user_message;
   isOptimistic?: boolean;
 };
 
 export type ChatAssistantEntry = Omit<AssistantMessageEntryResponse, "kind"> & {
-  kind: "assistant_message";
+  kind: typeof EntryKind.assistant_message;
   isStreaming?: boolean;
 };
 
@@ -90,6 +95,27 @@ export const ChatActionType = {
   STREAM_FAILED: "stream/failed",
   PENDING_INPUT_CLEAR: "pending_input/clear",
   STREAM_EVENT: "stream/event",
+} as const;
+
+const ChatEventType = {
+  SESSION_SNAPSHOT: SessionEventType.sessionsnapshot,
+  TITLE_GENERATED: SessionEventType.sessiontitle_generated,
+  ASSISTANT_STARTED: SessionEventType.messageassistant_started,
+  ASSISTANT_CHUNK: SessionEventType.messageassistant_chunk,
+  ASSISTANT_COMPLETED: SessionEventType.messageassistant_completed,
+  ASSISTANT_CANCELLED: SessionEventType.messageassistant_cancelled,
+  TOOL_CALL_SEQUENCE_ADDED: SessionEventType.tool_callsequence_added,
+  TOOL_CALL_RESOLVED: SessionEventType.tool_callresolved,
+  TOOL_CALL_FAILED: SessionEventType.tool_callfailed,
+  TOOL_CALL_SEQUENCE_COMPLETED: SessionEventType.tool_callsequence_completed,
+  PLAYLIST_SET: SessionEventType.playlistset,
+  PLAYLIST_TRACK_ADDED: SessionEventType.playlisttrack_added,
+  PLAYLIST_TRACK_REMOVED: SessionEventType.playlisttrack_removed,
+  PLAYLIST_TRACK_REPLACED: SessionEventType.playlisttrack_replaced,
+  ONBOARDING_QUESTION_ASKED: SessionEventType.sessiononboarding_question_asked,
+  SUSPENDED_FOR_INPUT: SessionEventType.sessionsuspended_for_input,
+  DONE: SessionEventType.done,
+  ERROR: SessionEventType.error,
 } as const;
 
 export type ChatAction =
@@ -183,7 +209,7 @@ export const getLatestUserMessageContent = (
 
   for (let index = session.entries.length - 1; index >= 0; index -= 1) {
     const entry = session.entries[index];
-    if (entry.kind === "user_message") return entry.content;
+    if (entry.kind === EntryKind.user_message) return entry.content;
   }
 
   return undefined;
@@ -195,9 +221,9 @@ export const toToolCallItems = (
 
 export const getScrollKey = (entry: ChatEntry): string => {
   switch (entry.kind) {
-    case "user_message":
-    case "assistant_message":
-      return `${entry.id}:${entry.content.length}:${entry.kind === "assistant_message" && entry.isStreaming ? "streaming" : "done"}`;
+    case EntryKind.user_message:
+    case EntryKind.assistant_message:
+      return `${entry.id}:${entry.content.length}:${entry.kind === EntryKind.assistant_message && entry.isStreaming ? "streaming" : "done"}`;
     case "tool_call_group":
       return `${entry.id}:${entry.calls
         .map(
@@ -214,11 +240,11 @@ const normalizeSessionEntries = (
 
 const normalizeSessionEntry = (entry: SessionEntryResponse): ChatEntry => {
   switch (entry.kind) {
-    case "user_message":
+    case EntryKind.user_message:
       return normalizeUserEntry(entry);
-    case "assistant_message":
+    case EntryKind.assistant_message:
       return normalizeAssistantEntry(entry);
-    case "tool_call_sequence":
+    case EntryKind.tool_call_sequence:
       return normalizeToolCallGroupEntry(entry);
   }
 
@@ -230,14 +256,14 @@ const normalizeUserEntry = (
   entry: UserMessageEntryResponse,
 ): ChatUserEntry => ({
   ...entry,
-  kind: "user_message",
+  kind: EntryKind.user_message,
 });
 
 const normalizeAssistantEntry = (
   entry: AssistantMessageEntryResponse,
 ): ChatAssistantEntry => ({
   ...entry,
-  kind: "assistant_message",
+  kind: EntryKind.assistant_message,
   isStreaming: false,
 });
 
@@ -375,40 +401,32 @@ const reduceServerEvent = (
   state: ChatState,
   event: SessionServerEvent,
 ): ChatState => {
-  const eventType = (event as { type?: string }).type;
+  if (!event) return state;
+
   if (
-    eventType === "session.suspended_for_input" ||
-    eventType === "session.onboarding_question_asked"
+    event.type === ChatEventType.SUSPENDED_FOR_INPUT ||
+    event.type === ChatEventType.ONBOARDING_QUESTION_ASKED
   ) {
-    const payload = event as {
-      type?: string;
-      kind?: string;
-      question?: string | null;
-      options?: unknown;
-      selectionMode?: "single_select" | "multi_select";
-      questionId?: string | null;
-      isLastQuestion?: boolean;
-    };
     const kind =
-      payload.type === "session.onboarding_question_asked"
+      event.type === ChatEventType.ONBOARDING_QUESTION_ASKED
         ? "onboarding_question"
-        : (payload.kind ?? "onboarding_question");
+        : "kind" in event
+          ? event.kind
+          : "onboarding_question";
+
     if (kind !== "onboarding_question") {
       return {
         ...state,
         pendingInput: null,
       };
     }
+
     const incomingQuestion: PendingOnboardingQuestion = {
-      id: payload.questionId ?? "",
-      question: payload.question ?? null,
-      options: Array.isArray(payload.options)
-        ? payload.options.filter(
-            (option): option is string => typeof option === "string",
-          )
-        : [],
-      selectionMode: payload.selectionMode ?? "single_select",
-      isLastQuestion: payload.isLastQuestion ?? false,
+      id: event.questionId ?? "",
+      question: event.question ?? null,
+      options: [...(event.options ?? [])],
+      selectionMode: event.selectionMode ?? "single_select",
+      isLastQuestion: event.isLastQuestion ?? false,
       answers: [],
       isAnswered: false,
     };
@@ -441,7 +459,7 @@ const reduceServerEvent = (
   }
 
   switch (event.type) {
-    case "session.snapshot":
+    case ChatEventType.SESSION_SNAPSHOT:
       return {
         ...state,
         title: event.session.title,
@@ -451,13 +469,13 @@ const reduceServerEvent = (
         errorMessage: undefined,
       };
 
-    case "session.title_generated":
+    case ChatEventType.TITLE_GENERATED:
       return {
         ...state,
         title: event.title,
       };
 
-    case "message.assistant_started":
+    case ChatEventType.ASSISTANT_STARTED:
       return {
         ...state,
         entries: startAssistantMessage(
@@ -467,7 +485,7 @@ const reduceServerEvent = (
         ),
       };
 
-    case "message.assistant_chunk":
+    case ChatEventType.ASSISTANT_CHUNK:
       return {
         ...state,
         entries: appendAssistantMessageChunk(
@@ -477,7 +495,7 @@ const reduceServerEvent = (
         ),
       };
 
-    case "message.assistant_completed":
+    case ChatEventType.ASSISTANT_COMPLETED:
       return {
         ...state,
         entries: upsertChatEntry(
@@ -486,13 +504,13 @@ const reduceServerEvent = (
         ),
       };
 
-    case "message.assistant_cancelled":
+    case ChatEventType.ASSISTANT_CANCELLED:
       return {
         ...state,
         entries: cancelAssistantMessage(state.entries, event.messageId),
       };
 
-    case "tool_call.sequence_added":
+    case ChatEventType.TOOL_CALL_SEQUENCE_ADDED:
       return {
         ...state,
         entries: upsertChatEntry(
@@ -501,7 +519,7 @@ const reduceServerEvent = (
         ),
       };
 
-    case "tool_call.resolved":
+    case ChatEventType.TOOL_CALL_RESOLVED:
       return {
         ...state,
         entries: updateToolCall(
@@ -509,14 +527,14 @@ const reduceServerEvent = (
           event.sequenceId,
           event.toolCallId,
           {
-            state: "completed",
+            state: ToolCallState.completed,
             result: event.result,
             error: null,
           },
         ),
       };
 
-    case "tool_call.failed":
+    case ChatEventType.TOOL_CALL_FAILED:
       return {
         ...state,
         entries: updateToolCall(
@@ -524,20 +542,20 @@ const reduceServerEvent = (
           event.sequenceId,
           event.toolCallId,
           {
-            state: "failed",
+            state: ToolCallState.failed,
             result: null,
             error: event.error,
           },
         ),
       };
 
-    case "tool_call.sequence_completed":
+    case ChatEventType.TOOL_CALL_SEQUENCE_COMPLETED:
       return {
         ...state,
         entries: completeToolCallGroup(state.entries, event.sequenceId),
       };
 
-    case "playlist.set": {
+    case ChatEventType.PLAYLIST_SET: {
       const playlist = normalizePlaylist(event.playlist);
       if (!playlist) return { ...state, playlist: null };
 
@@ -551,7 +569,7 @@ const reduceServerEvent = (
       };
     }
 
-    case "playlist.track_added":
+    case ChatEventType.PLAYLIST_TRACK_ADDED:
       return {
         ...state,
         playlist: addPlaylistTrack(
@@ -561,7 +579,7 @@ const reduceServerEvent = (
         ),
       };
 
-    case "playlist.track_removed":
+    case ChatEventType.PLAYLIST_TRACK_REMOVED:
       return {
         ...state,
         playlist: removePlaylistTrack(
@@ -571,7 +589,7 @@ const reduceServerEvent = (
         ),
       };
 
-    case "playlist.track_replaced":
+    case ChatEventType.PLAYLIST_TRACK_REPLACED:
       return {
         ...state,
         playlist: replacePlaylistTrack(
@@ -582,14 +600,14 @@ const reduceServerEvent = (
         ),
       };
 
-    case "done":
+    case ChatEventType.DONE:
       return {
         ...state,
         entries: finishStreamingAssistantEntries(state.entries),
         isStreaming: false,
       };
 
-    case "error":
+    case ChatEventType.ERROR:
       return {
         ...state,
         entries: upsertStreamErrorEntry(state.entries, event.message),
@@ -603,7 +621,7 @@ const reduceServerEvent = (
 };
 
 const createOptimisticUserEntry = (text: string): ChatUserEntry => ({
-  kind: "user_message",
+  kind: EntryKind.user_message,
   id: `user-${crypto.randomUUID()}`,
   content: text,
   createdAt: new Date().toISOString(),
@@ -615,7 +633,7 @@ const createAssistantEntry = (
   content = "",
   createdAt = new Date().toISOString(),
 ): ChatAssistantEntry => ({
-  kind: "assistant_message",
+  kind: EntryKind.assistant_message,
   id,
   content,
   createdAt,
@@ -646,7 +664,7 @@ const startAssistantMessage = (
 
   const nextEntries = [...entries];
   const entry = nextEntries[index];
-  if (entry.kind === "assistant_message") {
+  if (entry.kind === EntryKind.assistant_message) {
     nextEntries[index] = { ...entry, createdAt, isStreaming: true };
   }
   return nextEntries;
@@ -664,7 +682,7 @@ const appendAssistantMessageChunk = (
 
   const nextEntries = [...entries];
   const entry = nextEntries[index];
-  if (entry.kind === "assistant_message") {
+  if (entry.kind === EntryKind.assistant_message) {
     nextEntries[index] = {
       ...entry,
       content: `${entry.content}${chunk}`,
@@ -676,12 +694,12 @@ const appendAssistantMessageChunk = (
 
 const cancelAssistantMessage = (entries: ChatEntry[], messageId: string) => {
   const entry = entries.find((candidate) => candidate.id === messageId);
-  if (entry?.kind === "assistant_message" && !entry.content) {
+  if (entry?.kind === EntryKind.assistant_message && !entry.content) {
     return entries.filter((candidate) => candidate.id !== messageId);
   }
 
   return entries.map((candidate) =>
-    candidate.id === messageId && candidate.kind === "assistant_message"
+    candidate.id === messageId && candidate.kind === EntryKind.assistant_message
       ? { ...candidate, isStreaming: false }
       : candidate,
   );
@@ -689,7 +707,7 @@ const cancelAssistantMessage = (entries: ChatEntry[], messageId: string) => {
 
 const finishStreamingAssistantEntries = (entries: ChatEntry[]) =>
   entries.map((entry) =>
-    entry.kind === "assistant_message"
+    entry.kind === EntryKind.assistant_message
       ? { ...entry, isStreaming: false }
       : entry,
   );
@@ -719,8 +737,8 @@ const completeToolCallGroup = (entries: ChatEntry[], groupId: string) =>
     return {
       ...entry,
       calls: entry.calls.map((call) =>
-        call.state === "pending"
-          ? { ...call, state: "completed" as const }
+        call.state === ToolCallState.pending
+          ? { ...call, state: ToolCallState.completed }
           : call,
       ),
     };
@@ -732,7 +750,7 @@ const removeLastPendingToolCall = (entries: ChatEntry[]): ChatEntry[] => {
     if (entry.kind !== "tool_call_group") continue;
 
     const pendingIndex = entry.calls.findLastIndex(
-      (call) => call.state === "pending",
+      (call) => call.state === ToolCallState.pending,
     );
     if (pendingIndex === -1) continue;
 
@@ -757,7 +775,8 @@ const upsertStreamErrorEntry = (
 ): ChatEntry[] => {
   for (let index = entries.length - 1; index >= 0; index -= 1) {
     const entry = entries[index];
-    if (entry.kind !== "assistant_message" || !entry.isStreaming) continue;
+    if (entry.kind !== EntryKind.assistant_message || !entry.isStreaming)
+      continue;
 
     const nextEntries = [...entries];
     nextEntries[index] = {
@@ -771,7 +790,7 @@ const upsertStreamErrorEntry = (
   return [
     ...entries,
     {
-      kind: "assistant_message",
+      kind: EntryKind.assistant_message,
       id: `assistant-error-${crypto.randomUUID()}`,
       content: message,
       createdAt: new Date().toISOString(),
@@ -789,8 +808,8 @@ const toToolCallItem = (call: ToolCallResponse): ToolCallItem => ({
 });
 
 const toToolCallStatus = (call: ToolCallResponse): ToolCallStatus => {
-  if (call.state === "pending") return "running";
-  if (call.state === "failed") return "failed";
+  if (call.state === ToolCallState.pending) return "running";
+  if (call.state === ToolCallState.failed) return "failed";
   return "completed";
 };
 
@@ -798,8 +817,8 @@ const formatToolCallName = (call: ToolCallResponse) =>
   call.function.statusLabel ?? call.function.name.replaceAll("_", " ");
 
 const getToolCallDetail = (call: ToolCallResponse) => {
-  if (call.state === "failed") return call.error ?? undefined;
-  if (call.state === "completed") return call.result ?? undefined;
+  if (call.state === ToolCallState.failed) return call.error ?? undefined;
+  if (call.state === ToolCallState.completed) return call.result ?? undefined;
 
   const argumentKeys = Object.keys(call.function.arguments);
   if (argumentKeys.length === 0) return undefined;

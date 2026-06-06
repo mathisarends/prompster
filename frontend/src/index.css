@@ -259,6 +259,44 @@ body {
   }
 }
 
+@keyframes chat-tool-item-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chat-tool-node-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 hsl(141 80% 50% / 0.45),
+      0 0 12px hsl(141 80% 50% / 0.35);
+  }
+  70% {
+    box-shadow:
+      0 0 0 6px hsl(141 80% 50% / 0),
+      0 0 16px hsl(141 80% 50% / 0.45);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 hsl(141 80% 50% / 0),
+      0 0 12px hsl(141 80% 50% / 0.3);
+  }
+}
+
+@keyframes chat-tool-connector-flow {
+  0% {
+    background-position: 0 -200%;
+  }
+  100% {
+    background-position: 0 200%;
+  }
+}
+
 .chat-assistant-message {
   animation: chat-message-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -396,7 +434,69 @@ body {
   animation: chat-tool-running-flash 3.8s ease-in-out infinite;
 }
 
+.chat-tool-item {
+  animation: chat-tool-item-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chat-tool-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 9999px;
+  border: 1px solid hsl(0 0% 100% / 0.1);
+  background: hsl(0 0% 100% / 0.04);
+  transition:
+    border-color 240ms ease,
+    background-color 240ms ease;
+}
+
+.chat-tool-node--completed {
+  border-color: hsl(141 60% 45% / 0.28);
+  background: hsl(141 60% 45% / 0.08);
+}
+
+.chat-tool-node--running {
+  border-color: hsl(141 74% 55% / 0.7);
+  background: hsl(141 74% 45% / 0.16);
+  animation: chat-tool-node-pulse 1.8s ease-out infinite;
+}
+
+.chat-tool-node--failed {
+  border-color: hsl(var(--destructive-h, 0) 70% 55% / 0.5);
+  background: hsl(0 70% 55% / 0.12);
+}
+
+.chat-tool-connector {
+  background: hsl(0 0% 100% / 0.14);
+}
+
+.chat-tool-connector--completed {
+  background: hsl(141 60% 50% / 0.45);
+}
+
+.chat-tool-connector--running {
+  background-image: linear-gradient(
+    to bottom,
+    hsl(141 70% 55% / 0.65) 0%,
+    hsl(141 70% 55% / 0.1) 45%,
+    hsl(141 70% 55% / 0.65) 100%
+  );
+  background-size: 100% 220%;
+  animation: chat-tool-connector-flow 1.6s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .chat-tool-item {
+    animation: none;
+  }
+  .chat-tool-node--running {
+    animation: none;
+  }
+  .chat-tool-connector--running {
+    animation: none;
+  }
   .chat-assistant-message {
     animation: none;
   }

@@ -20,8 +20,10 @@ class TestToolsFacadeAbstraction:
 
         assert tools.get("search_tracks") is not None
         assert tools.get("search_tracks").action_type == ActionType.SEARCH
-        assert tools.get("get_album_tracks") is not None
-        assert tools.get("get_album_tracks").action_type == ActionType.FETCH
+        assert tools.get("search_albums") is None
+        assert tools.get("get_artist_albums") is None
+        assert tools.get("get_artist_top_tracks") is None
+        assert tools.get("get_album_tracks") is None
         assert tools.get("get_spotify_playlist_tracks") is not None
         assert tools.get("get_spotify_playlist_tracks").action_type == ActionType.FETCH
         assert tools.get("create_playlist") is not None
@@ -47,17 +49,19 @@ class TestToolsFacadeAbstraction:
         }.issubset(onboarding_tool_names)
         assert {
             "search_tracks",
-            "search_albums",
             "search_playlists",
-            "get_artist_albums",
-            "get_artist_top_tracks",
-            "get_album_tracks",
             "get_spotify_playlist_tracks",
             "create_playlist",
             "add_playlist_tracks",
             "remove_playlist_tracks",
             "replace_playlist_tracks",
         }.issubset(build_tool_names)
+        assert {
+            "search_albums",
+            "get_artist_albums",
+            "get_artist_top_tracks",
+            "get_album_tracks",
+        }.isdisjoint(build_tool_names)
 
     def test_onboarding_question_schema_requires_three_to_eight_options(self) -> None:
         tools = Tools()

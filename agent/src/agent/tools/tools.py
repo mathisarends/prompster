@@ -14,10 +14,7 @@ from agent.tools.executor import ToolExecutor
 from agent.tools.handler import Spotify
 from agent.tools.params import (
     AddDraftPlaylistTracksParams,
-    AlbumTracksParams,
     AskOnboardingQuestionParams,
-    ArtistAlbumsParams,
-    ArtistTopTracksParams,
     CreateDraftPlaylistParams,
     PlaylistIdParams,
     RemoveDraftPlaylistTracksParams,
@@ -174,22 +171,6 @@ class Tools:
             action_type=ActionType.SEARCH,
             included_in_phases={Phase.BUILD},
         )
-        async def search_albums(
-            spotify: Inject[Spotify],
-            params: SearchParams,
-        ) -> ActionResult:
-            try:
-                albums = await spotify.search_albums(params)
-                return ActionResult.ok(albums)
-            except Exception as error:
-                return ActionResult.fail(error)
-
-        @self.action(
-            params=SearchParams,
-            status_label=lambda params: params.status,
-            action_type=ActionType.SEARCH,
-            included_in_phases={Phase.BUILD},
-        )
         async def search_playlists(
             spotify: Inject[Spotify],
             params: SearchParams,
@@ -197,58 +178,6 @@ class Tools:
             try:
                 playlists = await spotify.search_playlists(params)
                 return ActionResult.ok(playlists)
-            except Exception as error:
-                return ActionResult.fail(error)
-
-        @self.action(
-            params=ArtistAlbumsParams,
-            status_label=lambda params: params.status,
-            action_type=ActionType.FETCH,
-            included_in_phases={Phase.BUILD},
-        )
-        async def get_artist_albums(
-            spotify: Inject[Spotify],
-            params: ArtistAlbumsParams,
-        ) -> ActionResult:
-            try:
-                artist_albums = await spotify.get_artist_albums(params)
-                return ActionResult.ok(artist_albums)
-            except Exception as error:
-                return ActionResult.fail(error)
-
-        @self.action(
-            params=ArtistTopTracksParams,
-            status_label=lambda params: params.status,
-            action_type=ActionType.FETCH,
-            included_in_phases={Phase.BUILD},
-        )
-        async def get_artist_top_tracks(
-            spotify: Inject[Spotify],
-            store: Inject[PlaylistDraftStore],
-            params: ArtistTopTracksParams,
-        ) -> ActionResult:
-            try:
-                top_tracks = await spotify.get_artist_top_tracks(params)
-                store.cache_tracks(top_tracks.tracks)
-                return ActionResult.ok(top_tracks.content)
-            except Exception as error:
-                return ActionResult.fail(error)
-
-        @self.action(
-            params=AlbumTracksParams,
-            status_label=lambda params: params.status,
-            action_type=ActionType.FETCH,
-            included_in_phases={Phase.BUILD},
-        )
-        async def get_album_tracks(
-            spotify: Inject[Spotify],
-            store: Inject[PlaylistDraftStore],
-            params: AlbumTracksParams,
-        ) -> ActionResult:
-            try:
-                album_tracks = await spotify.get_album_tracks(params)
-                store.cache_tracks(album_tracks.tracks)
-                return ActionResult.ok(album_tracks.content)
             except Exception as error:
                 return ActionResult.fail(error)
 

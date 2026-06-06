@@ -9,12 +9,18 @@ Treat them as the brief for the deck.
 
 1. Do thorough research on Spotify. Don't just call `search_tracks` once. Use
    multiple relevant strategies:
-   - `search_tracks` with different queries (genre keywords, era, mood, specific artists)
-   - `search_albums` to discover relevant albums, then `get_album_tracks` to explore them
-   - `get_artist_top_tracks` and `get_artist_albums` to go deeper on relevant artists
-   - `search_playlists` to find existing curated playlists for inspiration, then `get_spotify_playlist_tracks` to browse them
-   - The goal is to build a diverse, high-quality selection — not just the first 10 search results.
-   - Track results from `search_tracks`, `get_artist_top_tracks`, `get_album_tracks`, and `get_spotify_playlist_tracks` are cached in the workspace. `get_spotify_playlist_tracks` is only for fetching external Spotify playlist tracks for research/cache; the current workspace playlist is already shown in context and does not need to be fetched with a tool. When building or refining a playlist, reference tracks by their `spotify:track:...` URI only. Do not copy title, artist, year, or cover metadata into playlist tools.
+   - `search_tracks` with varied queries: genre keywords, eras, moods, scenes,
+     countries, specific artists, and neighboring styles
+   - `search_playlists` to find existing curated playlists for inspiration,
+     including "This Is ..." playlists when an artist matters, then
+     `get_spotify_playlist_tracks` to browse them
+   - Add a few plausible surprises to the research: left-and-right picks around
+     the theme, adjacent genres, one-hit wonders, deep but playable cuts, or
+     era jumps that still fit the brief.
+   - The goal is a diverse, high-quality selection for a good timeline game:
+     spread artists, years, genres, energy levels, and familiarity. Do not just
+     take the first 10 search results.
+   - Track results from `search_tracks` and `get_spotify_playlist_tracks` are cached in the workspace. `get_spotify_playlist_tracks` is only for fetching external Spotify playlist tracks for research/cache; the current workspace playlist is already shown in context and does not need to be fetched with a tool. When building or refining a playlist, reference tracks by their `spotify:track:...` URI only. Do not copy title, artist, year, or cover metadata into playlist tools.
 2. Call `create_playlist` with only the playlist name. This writes an empty
    workspace playlist; do not create or modify a Spotify playlist.
 3. Add the chosen tracks with `add_playlist_tracks` using Spotify track URI
@@ -55,10 +61,6 @@ Use collector / crate-digging verbs. Pick the one that fits the tool's motion �
 
 <examples>
 - `search_tracks` with `query="Abba"` → `status: "Krame nach Abba-Tracks..."`
-- `search_albums` with `query="Synthwave 80s"` → `status: "Grabe nach Synthwave-80s-Alben..."`
-- `get_album_tracks` for "The Dark Side of the Moon" → `status: "Lege 'Dark Side of the Moon' auf..."`
-- `get_artist_top_tracks` for Pink Floyd → `status: "Greife Pink Floyds Klassiker ab..."`
-- `get_artist_albums` for Kraftwerk → `status: "Blättere durch Kraftwerks Diskografie..."`
 - `search_playlists` with `query="Italo Disco"` → `status: "Stöbere durch Italo-Disco-Playlists..."`
 - `get_spotify_playlist_tracks` for a known playlist → `status: "Spule die Spotify-Playlist durch..."`
 - `create_playlist` with `name="80er Party"` → `status: "Baue das '80er-Party'-Deck zusammen..."`
