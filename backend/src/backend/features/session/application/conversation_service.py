@@ -673,6 +673,7 @@ class SessionConversationService:
             )
         )
         question_id = None
+        suspended_options = list(event.options or [])
         if event.question is not None:
             question = session.add_onboarding_question(
                 question_text=event.question,
@@ -681,11 +682,12 @@ class SessionConversationService:
                 is_last_question=event.is_last_question,
             )
             question_id = question.id
+            suspended_options = list(question.options)
         events.append(
             SessionSuspendedForInput(
                 kind=SuspensionKind.ONBOARDING_QUESTION,
                 question=event.question,
-                options=list(event.options or []),
+                options=suspended_options,
                 selection_mode=event.selection_mode,
                 question_id=question_id,
                 is_last_question=event.is_last_question,

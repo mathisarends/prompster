@@ -20,7 +20,11 @@ from .exceptions import (
     UserCurationEventNotFoundError,
 )
 from .repository import SessionRepository
-from .session import Session, MAX_PLAYLIST_TRACKS
+from .session import (
+    DECIDE_FOR_ME_OPTION,
+    MAX_PLAYLIST_TRACKS,
+    Session,
+)
 from .views import Phase
 from .entities import (
     ArtistReference,
@@ -53,6 +57,7 @@ __all__ = [
     "ArtistReferenceNotFoundError",
     "AssistantMessage",
     "CompletedCall",
+    "DECIDE_FOR_ME_OPTION",
     "FailedCall",
     "InvalidSessionPhaseTransitionError",
     "NoCurrentAssistantMessageError",

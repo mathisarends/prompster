@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from backend.features.session.domain import Session
+from backend.features.session.domain import DECIDE_FOR_ME_OPTION, Session
 from backend.features.session.presentation.mapper import to_session_response
 
 
@@ -58,5 +58,9 @@ def test_to_session_response_maps_only_open_onboarding_questions() -> None:
     assert response.open_onboarding_questions[0].id == open_question.id
     assert response.open_onboarding_questions[0].sequence_number == 2
     assert response.open_onboarding_questions[0].question_text == "Which mood?"
-    assert response.open_onboarding_questions[0].options == ["Relaxed", "Energetic"]
+    assert response.open_onboarding_questions[0].options == [
+        "Relaxed",
+        "Energetic",
+        DECIDE_FOR_ME_OPTION,
+    ]
     assert response.open_onboarding_questions[0].is_last_question is True

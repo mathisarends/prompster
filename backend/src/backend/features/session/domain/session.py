@@ -39,6 +39,7 @@ from backend.features.session.domain.views import Phase
 from backend.shared.ddd import Aggregate
 
 MAX_PLAYLIST_TRACKS = 50
+DECIDE_FOR_ME_OPTION = "Entscheide für mich"
 
 
 class Session(Aggregate):
@@ -352,7 +353,7 @@ class Session(Aggregate):
         question = OnboardingQuestion(
             sequence_number=sequence_number,
             question_text=question_text,
-            options=options,
+            options=self._with_decide_for_me_option(options),
             selection_mode=selection_mode,
             is_last_question=is_last_question,
         )
@@ -378,6 +379,7 @@ class Session(Aggregate):
                 raise ValueError(
                     f"Onboarding question {question_id} is already answered."
                 )
+            self._assert_onboarding_decide_for_me_selection(answers=normalized_answers)
             self._assert_onboarding_answer_count(
                 question=question,
                 answers=normalized_answers,
@@ -436,6 +438,27 @@ class Session(Aggregate):
             raise ValueError(
                 "Multi-select onboarding questions require at least one answer."
             )
+
+    def _assert_onboarding_decide_for_me_selection(
+        self,
+        *,
+        answers: tuple[str, ...],
+    ) -> None:
+        if DECIDE_FOR_ME_OPTION not in answers:
+            return
+        if len(answers) != 1:
+            raise ValueError(
+                'The "Entscheide für mich" option must be selected on its own.'
+            )
+
+    def _with_decide_for_me_option(
+        self,
+        options: tuple[str, ...] | list[str],
+    ) -> tuple[str, ...]:
+        normalized_options = tuple(options)
+        if DECIDE_FOR_ME_OPTION in normalized_options:
+            return normalized_options
+        return (*normalized_options, DECIDE_FOR_ME_OPTION)
 
     def _reconstruct_onboarding_history(self) -> None:
         self._entries = [

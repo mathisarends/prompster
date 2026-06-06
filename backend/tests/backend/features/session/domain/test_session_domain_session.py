@@ -21,6 +21,7 @@ from backend.features.session.domain.exceptions import (
 from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
+    DECIDE_FOR_ME_OPTION,
     FailedCall,
     OnboardingQuestionSelectionMode,
     PendingCall,
@@ -169,6 +170,16 @@ class TestSessionDomainSession:
         assert question.answer == "80er"
         assert question.answered_at is not None
 
+    def test_add_onboarding_question_appends_decide_for_me_option(
+        self, session: Session
+    ) -> None:
+        question = session.add_onboarding_question(
+            question_text="Welche Stimmung?",
+            options=("Ruhig", "Energiegeladen"),
+        )
+
+        assert question.options == ("Ruhig", "Energiegeladen", DECIDE_FOR_ME_OPTION)
+
     def test_single_select_onboarding_question_rejects_multiple_answers(
         self, session: Session
     ) -> None:
@@ -200,6 +211,21 @@ class TestSessionDomainSession:
         assert question.is_answered is True
         assert question.answers == ("Pop", "Rock")
         assert question.answer == "Pop, Rock"
+
+    def test_decide_for_me_rejects_combined_onboarding_answers(
+        self, session: Session
+    ) -> None:
+        question = session.add_onboarding_question(
+            question_text="Welche Genres?",
+            options=("Pop", "Rock", "Soul"),
+            selection_mode=OnboardingQuestionSelectionMode.MULTI_SELECT,
+        )
+
+        with pytest.raises(ValueError, match="must be selected on its own"):
+            session.answer_onboarding_question(
+                question_id=question.id,
+                answers=[DECIDE_FOR_ME_OPTION, "Rock"],
+            )
 
     def test_answering_last_question_reconstructs_history(
         self, session: Session

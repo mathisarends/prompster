@@ -52,6 +52,7 @@ from backend.features.session.application.session_service import (
 from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
+    DECIDE_FOR_ME_OPTION,
     InvalidSessionPhaseTransitionError,
     PendingCall,
     Phase,
@@ -960,6 +961,7 @@ class TestSessionServiceSendMessage:
         ]
         assert len(suspended_events) == 1
         assert suspended_events[0].question == "Welche Dekade?"
+        assert suspended_events[0].options == ["80er", "90er", DECIDE_FOR_ME_OPTION]
 
     def test_submit_onboarding_answer_for_last_question_persists_without_advancing_phase(
         self,
