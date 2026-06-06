@@ -93,3 +93,22 @@ class TranscriptionSession(Protocol):
 
 class TranscriptionSessionFactory(Protocol):
     def create(self, *, options: TranscriptionOptions) -> TranscriptionSession: ...
+
+
+@dataclass(frozen=True)
+class TranscriptionResult:
+    text: str
+    language: str | None = None
+
+
+class AudioTranscriber(Protocol):
+    """One-shot transcription of a complete audio recording.
+
+    Unlike the realtime session, this takes the full audio at once and
+    returns the final transcript, e.g. for a recording uploaded from the
+    frontend.
+    """
+
+    async def transcribe(
+        self, *, data: bytes, encoding: str
+    ) -> TranscriptionResult: ...

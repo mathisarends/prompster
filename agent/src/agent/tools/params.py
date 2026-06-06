@@ -52,6 +52,10 @@ class PlaylistIdParams(ToolParams):
     playlist_id: str
 
 
+class ReviewDeckParams(ToolParams):
+    status: str = "Prüfe das Deck auf Balance..."
+
+
 class AskOnboardingQuestionParams(ToolParams):
     status: str = "Stelle Onboarding-Frage..."
     question: str

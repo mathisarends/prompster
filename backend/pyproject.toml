@@ -29,6 +29,8 @@ dependencies = [
     "qrcode[pil]>=8.2",
     "realtime-whisper>=0.1.0",
     "tokenary>=0.1.0",
+    "transcriptify>=0.1.0",
+    "python-multipart>=0.0.20",
 ]
 
 [project.scripts]

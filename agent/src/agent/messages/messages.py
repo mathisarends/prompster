@@ -61,6 +61,27 @@ class MessageManager:
         messages.extend(self._messages)
         return messages
 
+    def conversation_transcript(self, *, max_chars: int = 4000) -> str:
+        """User and assistant turns as plain text, for downstream LLM context.
+
+        Skips the system prompt, the injected deck context, tool calls, and tool
+        results so a critic LLM sees what the user actually asked for. Keeps the
+        most recent turns when the transcript would exceed ``max_chars``.
+        """
+        lines: list[str] = []
+        for message in self._messages:
+            content = getattr(message, "content", None)
+            if not isinstance(content, str) or not content.strip():
+                continue
+            if isinstance(message, UserMessage):
+                lines.append(f"User: {content.strip()}")
+            elif isinstance(message, AssistantMessage):
+                lines.append(f"Assistant: {content.strip()}")
+        transcript = "\n".join(lines)
+        if len(transcript) > max_chars:
+            transcript = "…\n" + transcript[-max_chars:]
+        return transcript
+
     def add_user(
         self,
         content: str,

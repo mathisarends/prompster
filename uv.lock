@@ -264,12 +264,14 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
+    { name = "python-multipart" },
     { name = "qrcode", extra = ["pil"] },
     { name = "realtime-whisper" },
     { name = "resend" },
     { name = "spotifyify" },
     { name = "sqlmodel" },
     { name = "tokenary" },
+    { name = "transcriptify" },
     { name = "types-aiobotocore-s3" },
     { name = "typst" },
     { name = "uvicorn" },
@@ -294,12 +296,14 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
     { name = "pyjwt", specifier = ">=2.10.1" },
+    { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "qrcode", extras = ["pil"], specifier = ">=8.2" },
     { name = "realtime-whisper", specifier = ">=0.1.0" },
     { name = "resend", specifier = ">=2.30.1" },
     { name = "spotifyify", specifier = ">=0.5.0" },
     { name = "sqlmodel", specifier = ">=0.0.38" },
     { name = "tokenary", specifier = ">=0.1.0" },
+    { name = "transcriptify", specifier = ">=0.1.0" },
     { name = "types-aiobotocore-s3", specifier = ">=2.15.0" },
     { name = "typst", specifier = ">=0.14.9" },
     { name = "uvicorn", specifier = ">=0.35.0" },
@@ -1093,6 +1097,15 @@ wheels = [
 ]
 
 [[package]]
+name = "python-multipart"
+version = "0.0.32"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5b/42/55c32bb9b12693c092ad250a0e82edb5b31ddeda6eb772de5f308b3804ad/python_multipart-0.0.32.tar.gz", hash = "sha256:be54b7f3fa167bb83e4fcd936b887b708f4e57fe75911c02aebf53efaf8d938e", size = 46881, upload-time = "2026-06-04T16:18:58.647Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/04/e8135ebd1ad02c56ec633277529b2602ff99ff634be76cdba5744cf554fd/python_multipart-0.0.32-py3-none-any.whl", hash = "sha256:ff6d3f776f16878c894e52e107296ffc890e913c611b1a4ec6c44e2821fe2e23", size = 30042, upload-time = "2026-06-04T16:18:57.319Z" },
+]
+
+[[package]]
 name = "qrcode"
 version = "8.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1275,6 +1288,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/09/a9/6ba95a270c6f1fbcd8dac228323f2777d886cb206987444e4bce66338dd4/tqdm-4.67.3.tar.gz", hash = "sha256:7d825f03f89244ef73f1d4ce193cb1774a8179fd96f31d7e1dcde62092b960bb", size = 169598, upload-time = "2026-02-03T17:35:53.048Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl", hash = "sha256:ee1e4c0e59148062281c49d80b25b67771a127c85fc9676d3be5f243206826bf", size = 78374, upload-time = "2026-02-03T17:35:50.982Z" },
+]
+
+[[package]]
+name = "transcriptify"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "openai" },
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/11/64/342537626c9fd6ebffde3c501378634158df3a4fddb1a2a4ef87e4af01d9/transcriptify-0.1.0.tar.gz", hash = "sha256:1b26fcd289ba1ad1f899dc5ae68d50168dbe4d5957c26ae8d1beec03d98c9923", size = 1081152, upload-time = "2026-03-24T07:45:08.355Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/76/66/924d3ad0c7426ae3925757d313203d0749b9fda8fd14ac26f98ee5299bda/transcriptify-0.1.0-py3-none-any.whl", hash = "sha256:a06023baf51a49053f01b944d420bf523c04545155209aa4ac82e7635cb1481f", size = 13004, upload-time = "2026-03-24T07:45:06.554Z" },
 ]
 
 [[package]]

@@ -1,5 +1,6 @@
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from transcriptify import WhisperModel
 
 from backend.features.transcription.application import (
     NoiseReduction,
@@ -21,3 +22,4 @@ class TranscriptionSettings(BaseSettings):
     noise_reduction: NoiseReduction = NoiseReduction.FAR_FIELD
     include_logprobs: bool = False
     provider: RealtimeProvider = RealtimeProvider.OPENAI
+    file_model: WhisperModel = WhisperModel.GPT_4O_TRANSCRIBE

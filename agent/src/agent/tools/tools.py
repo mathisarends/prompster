@@ -9,15 +9,17 @@ from pydantic import BaseModel
 from agent.deck import (
     DeckStore,
 )
+from agent.messages import MessageManager
 from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
-from agent.tools.handler import Spotify
+from agent.tools.handler import DeckCritic, Spotify
 from agent.tools.params import (
     AddDraftDeckTracksParams,
     AskOnboardingQuestionParams,
     PlaylistIdParams,
     RemoveDraftDeckTracksParams,
     ReplaceDraftDeckTracksParams,
+    ReviewDeckParams,
     SearchParams,
 )
 from agent.tools.schemas import ToolSchema
@@ -271,5 +273,29 @@ class Tools:
                 playlist_tracks = await spotify.get_playlist_tracks(params)
                 store.cache_tracks(playlist_tracks.tracks)
                 return ActionResult.ok(playlist_tracks.content)
+            except Exception as error:
+                return ActionResult.fail(error)
+
+        @self.action(
+            description=(
+                "Get critic feedback on the current Hitster deck near the end of a "
+                "build loop. Returns concrete, structured suggestions you can act on "
+                "with remove_deck_tracks/replace_deck_tracks/add_deck_tracks."
+            ),
+            params=ReviewDeckParams,
+            status_label=lambda params: params.status,
+            action_type=ActionType.FETCH,
+            included_in_phases={Phase.BUILD},
+        )
+        async def review_deck(
+            store: Inject[DeckStore],
+            critic: Inject[DeckCritic],
+            params: ReviewDeckParams,
+            messages: Inject[MessageManager] = None,
+        ) -> ActionResult:
+            try:
+                brief = messages.conversation_transcript() if messages else None
+                result = await critic.review(store.draft, brief=brief)
+                return ActionResult.ok(result.content)
             except Exception as error:
                 return ActionResult.fail(error)

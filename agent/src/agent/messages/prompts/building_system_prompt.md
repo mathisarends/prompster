@@ -62,6 +62,12 @@ but still cover the widest useful time spectrum available within that boundary.
    for successful operations. Failed operations put the reason in `error`. If a
    URI is missing from the workspace cache, fetch/search that track first, then
    retry with the URI ref.
+6. Before you wrap up a build or a larger refinement, call `review_deck` once.
+   It statically checks artist concentration and year/decade coverage relative
+   to the target deck size and, only when the deck is skewed, returns concrete
+   critic suggestions. If it recommends refinement, act on the named issues with
+   `remove_deck_tracks`/`replace_deck_tracks`/`add_deck_tracks` and then finish;
+   if it reports the deck is balanced, do not over-edit.
 </workflow>
 
 <status_phrases>

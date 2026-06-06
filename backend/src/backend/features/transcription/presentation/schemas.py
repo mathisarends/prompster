@@ -92,3 +92,8 @@ TranscriptionServerEvent = Annotated[
     ],
     Field(discriminator="type"),
 ]
+
+
+class TranscriptionResponse(Schema):
+    text: str
+    language: str | None = None

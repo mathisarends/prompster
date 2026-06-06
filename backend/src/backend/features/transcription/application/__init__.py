@@ -1,4 +1,5 @@
 from .ports import (
+    AudioTranscriber,
     NoiseReduction,
     RealtimeProvider,
     SessionConnected,
@@ -11,11 +12,13 @@ from .ports import (
     TranscriptionErrorDetails,
     TranscriptionEvent,
     TranscriptionOptions,
+    TranscriptionResult,
     TranscriptionSession,
     TranscriptionSessionFactory,
 )
 
 __all__ = [
+    "AudioTranscriber",
     "NoiseReduction",
     "RealtimeProvider",
     "SessionConnected",
@@ -28,6 +31,7 @@ __all__ = [
     "TranscriptionErrorDetails",
     "TranscriptionEvent",
     "TranscriptionOptions",
+    "TranscriptionResult",
     "TranscriptionSession",
     "TranscriptionSessionFactory",
 ]
