@@ -17,11 +17,11 @@ from backend.features.user.domain import (
 )
 
 if TYPE_CHECKING:
+    from backend.features.oauth_connections.application.ports import (
+        SpotifyOAuthProvider,
+    )
     from backend.features.oauth_connections.application.spotify_oauth_connection_service import (
         SpotifyOAuthConnectionService,
-    )
-    from backend.features.oauth_connections.infrastructure.spotify_login_oauth_client import (
-        SpotifyLoginOAuthClient,
     )
 
 
@@ -31,7 +31,7 @@ class SpotifyOAuthFlow:
     def __init__(
         self,
         user_repository: UserRepository,
-        spotify_oauth_client: SpotifyLoginOAuthClient,
+        spotify_oauth_client: SpotifyOAuthProvider,
         token_issuer: TokenIssuer,
         connection_service: SpotifyOAuthConnectionService,
     ) -> None:

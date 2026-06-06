@@ -118,7 +118,7 @@ async def spotify_login(
 
 
 @auth_router.get(
-    "/spotify/login/callback",
+    "/spotify/callback",
     response_model=None,
     operation_id="spotify_login_callback",
     include_in_schema=False,

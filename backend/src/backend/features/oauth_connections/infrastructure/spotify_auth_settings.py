@@ -26,7 +26,6 @@ class SpotifyAuthSettings(BaseSettings):
         default="https://api.spotify.com/v1/me",
     )
     state_cookie_name: str = "spotify_oauth_state"
-    login_redirect_uri: str = Field(default="")
     login_state_cookie_name: str = "spotify_login_state"
     token_encryption_key: str = Field(default="")
 
@@ -57,7 +56,6 @@ class SpotifyAuthSettings(BaseSettings):
 
     @field_validator(
         "redirect_uri",
-        "login_redirect_uri",
         "authorization_endpoint",
         "token_endpoint",
         "userinfo_endpoint",
