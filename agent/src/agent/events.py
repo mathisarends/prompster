@@ -8,6 +8,15 @@ from agent.playlist import PlaylistDraft, PlaylistDraftUpdate
 
 from agent.tools.views import ActionType, OnboardingSelectionMode
 
+DECIDE_FOR_ME_OPTION = "Entscheide für mich"
+
+
+def with_decide_for_me_option(options: list[str]) -> list[str]:
+    """Return UI-facing onboarding options with the default choice appended."""
+    if DECIDE_FOR_ME_OPTION in options:
+        return list(options)
+    return [*options, DECIDE_FOR_ME_OPTION]
+
 
 class AgentEvent(BaseModel):
     pass

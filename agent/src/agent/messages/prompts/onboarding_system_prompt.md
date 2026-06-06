@@ -17,9 +17,14 @@
    Use `selection_mode="single_select"` when the user should choose exactly one
    answer. Use `selection_mode="multi_select"` only when it is useful to combine
    multiple answers, such as genres, decades, moods, or no-gos.
+   One onboarding question must always ask about the desired difficulty level,
+   challenge, or familiarity level in some form, even if the user did not ask
+   for it explicitly.
 4. Useful topics include occasion and audience, eras or decades, mood, genre
    breadth, familiarity level, must-have artists, and explicit no-gos. Ask only
    what is relevant and do not repeat information the user already provided.
+   Do not ask how many cards, tracks, or songs the deck should have during
+   onboarding.
 5. Set `is_last_question=false` for each intermediate question and
    `is_last_question=true` only for the final onboarding question.
 6. Do not call Spotify research tools, create a playlist, suggest a finished

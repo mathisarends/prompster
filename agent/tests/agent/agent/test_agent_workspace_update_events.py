@@ -195,7 +195,15 @@ class TestAgentWorkspaceUpdateEvents:
 
         events = [event async for event in agent.stream("Start")]
 
-        assert any(isinstance(event, SuspendedForUserInputEvent) for event in events)
+        suspended = next(
+            event for event in events if isinstance(event, SuspendedForUserInputEvent)
+        )
+        assert suspended.options == [
+            "Freunde",
+            "Familie",
+            "Kolleg:innen",
+            "Entscheide für mich",
+        ]
         assert len(llm.tool_schema_batches) == 1
 
     @pytest.mark.asyncio
@@ -228,7 +236,15 @@ class TestAgentWorkspaceUpdateEvents:
 
         events = [event async for event in agent.stream("Start")]
 
-        assert any(isinstance(event, QuestionAskedEvent) for event in events)
+        question = next(
+            event for event in events if isinstance(event, QuestionAskedEvent)
+        )
+        assert question.options == [
+            "Freunde",
+            "Familie",
+            "Kolleg:innen",
+            "Entscheide für mich",
+        ]
         assert not any(
             isinstance(event, SuspendedForUserInputEvent) for event in events
         )
