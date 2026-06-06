@@ -3,17 +3,15 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import type { SessionResponse } from "@/api/generated/model";
 import {
+  completeOnboarding,
   getGetSessionQueryKey,
   getListSessionsQueryKey,
   removePlaylistTrack,
+  submitOnboardingAnswer,
   stopMessage as stopSessionMessage,
   useGetSession,
 } from "@/api/generated/session-api";
-import {
-  streamCompleteOnboarding,
-  streamSendMessage,
-  streamSubmitOnboardingAnswer,
-} from "@/api/session-stream";
+import { streamSendMessage } from "@/api/session-stream";
 
 import {
   chatReducer,
@@ -52,6 +50,7 @@ export type UseChatSessionResult = {
   isLoadingSession: boolean;
   isError: boolean;
   sendMessage: (text: string) => void;
+  persistOnboardingAnswer: (answer: OnboardingAnswerPayload) => void;
   submitOnboardingAnswers: (answers: OnboardingAnswerPayload[]) => void;
   stopMessage: () => void;
   removePlaylistTrack: (trackId: string) => Promise<void>;
@@ -82,6 +81,9 @@ export const useChatSession = ({
   const isStoppingRef = useRef(false);
   const initialStreamStartedRef = useRef(false);
   const hasStreamedSinceLoadRef = useRef(false);
+  const onboardingPersistenceQueueRef = useRef<Promise<void>>(
+    Promise.resolve(),
+  );
 
   const {
     data: session,
@@ -113,10 +115,16 @@ export const useChatSession = ({
     abortControllerRef.current = null;
     isStreamingRef.current = false;
     isStoppingRef.current = false;
-    setIsStopping(false);
     initialStreamStartedRef.current = false;
     hasStreamedSinceLoadRef.current = false;
     dispatch({ type: "session/reset" });
+
+    const resetStoppingTimeout = window.setTimeout(() => {
+      setIsStopping(false);
+    }, 0);
+    return () => {
+      window.clearTimeout(resetStoppingTimeout);
+    };
   }, [sessionId]);
 
   useEffect(() => {
@@ -238,51 +246,89 @@ export const useChatSession = ({
     [streamAssistantResponse],
   );
 
+  const normalizeOnboardingAnswer = useCallback(
+    (answer: OnboardingAnswerPayload) => {
+      const answers = (
+        answer.answers?.length ? answer.answers : [answer.answer]
+      )
+        .map((value) => value.trim())
+        .filter(Boolean);
+      if (!answer.questionId || answers.length === 0) return null;
+
+      return {
+        ...answer,
+        answer: answers.join(", "),
+        answers,
+      };
+    },
+    [],
+  );
+
+  const persistOnboardingAnswer = useCallback(
+    (answer: OnboardingAnswerPayload) => {
+      const normalizedAnswer = normalizeOnboardingAnswer(answer);
+      if (!normalizedAnswer || !sessionId) return;
+
+      const request = onboardingPersistenceQueueRef.current.then(async () => {
+        await submitOnboardingAnswer(sessionId, {
+          questionId: normalizedAnswer.questionId,
+          answer: normalizedAnswer.answer,
+          answers: normalizedAnswer.answers,
+        });
+      });
+      onboardingPersistenceQueueRef.current = request.catch((error) => {
+        dispatch({
+          type: "stream/failed",
+          message: getStreamErrorMessage(error),
+        });
+      });
+    },
+    [normalizeOnboardingAnswer, sessionId],
+  );
+
   const submitOnboardingAnswers = useCallback(
     (answers: OnboardingAnswerPayload[]) => {
       const normalizedAnswers = answers
-        .map((answer) => ({
-          ...answer,
-          answers: (answer.answers?.length ? answer.answers : [answer.answer])
-            .map((value) => value.trim())
-            .filter(Boolean),
-          answer: answer.answer.trim(),
-        }))
-        .filter((answer) => answer.questionId && answer.answers.length > 0);
+        .map(normalizeOnboardingAnswer)
+        .filter((answer) => answer !== null);
       if (normalizedAnswers.length === 0) return;
 
       void (async () => {
-        for (const answer of normalizedAnswers) {
-          await runEventStream(
-            {
-              type: "stream/started",
-            },
-            (streamOptions) =>
-              streamSubmitOnboardingAnswer(
-                sessionId,
-                {
-                  questionId: answer.questionId,
-                  answer: answer.answers.join(", "),
-                  answers: answer.answers,
-                },
-                streamOptions,
-              ),
-          );
+        if (!sessionId || isStreamingRef.current) return;
 
-          if (answer.isLastQuestion) {
-            await runEventStream(
-              {
-                type: "stream/started",
-              },
-              (streamOptions) =>
-                streamCompleteOnboarding(sessionId, streamOptions),
-            );
-            break;
+        isStreamingRef.current = true;
+        hasStreamedSinceLoadRef.current = true;
+        dispatch({ type: "stream/started" });
+
+        try {
+          await onboardingPersistenceQueueRef.current.catch(() => undefined);
+          let updatedSession: SessionResponse | undefined;
+          for (const answer of normalizedAnswers) {
+            updatedSession = await submitOnboardingAnswer(sessionId, {
+              questionId: answer.questionId,
+              answer: answer.answer,
+              answers: answer.answers,
+            });
+
+            if (answer.isLastQuestion) {
+              updatedSession = await completeOnboarding(sessionId);
+              dispatch({ type: "session/loaded", session: updatedSession });
+              break;
+            }
           }
+          await invalidateSessionQueries();
+        } catch (error) {
+          dispatch({
+            type: "stream/failed",
+            message: getStreamErrorMessage(error),
+          });
+        } finally {
+          isStreamingRef.current = false;
+          dispatch({ type: "stream/finished" });
         }
       })();
     },
-    [runEventStream, sessionId],
+    [invalidateSessionQueries, normalizeOnboardingAnswer, sessionId],
   );
 
   const stopMessage = useCallback(() => {
@@ -340,6 +386,7 @@ export const useChatSession = ({
     isLoadingSession: isLoading && state.entries.length === 0,
     isError,
     sendMessage,
+    persistOnboardingAnswer,
     submitOnboardingAnswers,
     stopMessage,
     removePlaylistTrack: removePlaylistTrackFromSession,

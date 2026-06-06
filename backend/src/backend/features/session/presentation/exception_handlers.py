@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from backend.features.session.domain.exceptions import (
+    InvalidSessionPhaseTransitionError,
     PlaylistTrackNotFoundError,
     PlaylistTrackPinnedError,
     SessionAccessDeniedError,
@@ -144,7 +145,7 @@ async def _user_curation_event_missing_track_year_handler(
     )
 
 
-async def _bad_request_handler(_: Request, exc: ValueError) -> JSONResponse:
+async def _bad_request_handler(_: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={"detail": _exception_detail(exc, fallback="Bad request")},
@@ -181,4 +182,5 @@ def register_session_exception_handlers(app: FastAPI) -> None:
         UserCurationEventMissingTrackYearError,
         _user_curation_event_missing_track_year_handler,
     )
+    app.add_exception_handler(InvalidSessionPhaseTransitionError, _bad_request_handler)
     app.add_exception_handler(ValueError, _bad_request_handler)

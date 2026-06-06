@@ -125,29 +125,24 @@ class SessionConversationService:
         question_id: UUID,
         answer: str | None = None,
         answers: list[str] | None = None,
-    ) -> AsyncIterator[SessionEvent]:
+    ) -> Session:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
-        answered_question = session.answer_onboarding_question(
+        session.answer_onboarding_question(
             question_id=question_id,
             answer=answer,
             answers=answers,
         )
-        if answered_question.is_last_question:
-            await self._persist_session(session=session)
-            return
-        async for event in self._persist_and_resume_agent(session=session):
-            yield event
+        return await self._persist_session(session=session)
 
     async def complete_onboarding(
         self,
         *,
         session_id: UUID,
         user_id: UUID,
-    ) -> AsyncIterator[SessionEvent]:
+    ) -> Session:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         session.advance_to_building_phase()
-        await self._persist_session(session=session)
-        yield SessionSuspendedForInput(kind=SuspensionKind.PLAYLIST_CONTEXT)
+        return await self._persist_session(session=session)
 
     def _maybe_start_title_generation(
         self,
@@ -258,8 +253,8 @@ class SessionConversationService:
         await self._get_authorized(session_id=session_id, user_id=user_id)
         return await self._runner.stop(session_id=session_id)
 
-    async def _persist_session(self, *, session: Session) -> None:
-        await self._session_repository.save(session=session)
+    async def _persist_session(self, *, session: Session) -> Session:
+        return await self._session_repository.save(session=session)
 
     async def _persisted_events(
         self,

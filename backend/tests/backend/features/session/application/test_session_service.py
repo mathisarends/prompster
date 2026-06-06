@@ -170,8 +170,10 @@ class _SessionRunnerStub(SessionRunner):
         self._chunks = chunks or ["Hello", " world"]
         self._events = events
         self.stopped_session_ids: list[UUID] = []
+        self.ran_sessions: list[Session] = []
 
     async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
+        self.ran_sessions.append(session)
         if self._events is not None:
             for event in self._events:
                 yield event
@@ -879,7 +881,7 @@ class TestSessionServiceSendMessage:
         assert stopped is True
         assert runner.stopped_session_ids == [session.id]
 
-    def test_submit_onboarding_answer_persists_and_resumes_runner(self) -> None:
+    def test_submit_onboarding_answer_persists_single_answer(self) -> None:
         owner_id = uuid4()
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
         question = session.add_onboarding_question(
@@ -897,24 +899,20 @@ class TestSessionServiceSendMessage:
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_conversation_service(repository=repository, runner=runner)
 
-        events = asyncio.run(
-            _collect_events(
-                service.submit_onboarding_answer(
-                    session_id=session.id,
-                    user_id=owner_id,
-                    question_id=question.id,
-                    answer="Freunde",
-                )
+        saved_session = asyncio.run(
+            service.submit_onboarding_answer(
+                session_id=session.id,
+                user_id=owner_id,
+                question_id=question.id,
+                answer="Freunde",
             )
         )
 
         assert question.is_answered is True
         assert question.answer == "Freunde"
-        assert any(
-            isinstance(event, SessionSuspendedForInput)
-            and event.kind == SuspensionKind.ONBOARDING_QUESTION
-            for event in events
-        )
+        assert saved_session is session
+        assert repository.saved_sessions == [session]
+        assert runner.ran_sessions == []
 
     def test_persists_intermediate_onboarding_question_without_suspending(self) -> None:
         owner_id = uuid4()
@@ -1041,23 +1039,21 @@ class TestSessionServiceSendMessage:
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_conversation_service(repository=repository)
 
-        events = asyncio.run(
-            _collect_events(
-                service.submit_onboarding_answer(
-                    session_id=session.id,
-                    user_id=owner_id,
-                    question_id=question.id,
-                    answer="Ja",
-                )
+        saved_session = asyncio.run(
+            service.submit_onboarding_answer(
+                session_id=session.id,
+                user_id=owner_id,
+                question_id=question.id,
+                answer="Ja",
             )
         )
 
         assert question.is_answered is True
         assert session.phase == Phase.ONBOARDING
-        assert events == []
+        assert saved_session is session
         assert repository.saved_sessions == [session]
 
-    def test_complete_onboarding_advances_phase_and_emits_playlist_context(
+    def test_complete_onboarding_advances_phase_and_returns_session(
         self,
     ) -> None:
         owner_id = uuid4()
@@ -1072,19 +1068,16 @@ class TestSessionServiceSendMessage:
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_conversation_service(repository=repository, runner=runner)
 
-        events = asyncio.run(
-            _collect_events(
-                service.complete_onboarding(
-                    session_id=session.id,
-                    user_id=owner_id,
-                )
+        saved_session = asyncio.run(
+            service.complete_onboarding(
+                session_id=session.id,
+                user_id=owner_id,
             )
         )
 
         assert session.phase == Phase.BUILD
-        assert events == [
-            SessionSuspendedForInput(kind=SuspensionKind.PLAYLIST_CONTEXT)
-        ]
+        assert saved_session is session
+        assert repository.saved_sessions == [session]
 
     def test_complete_onboarding_rejects_unanswered_questions(self) -> None:
         owner_id = uuid4()
@@ -1101,11 +1094,9 @@ class TestSessionServiceSendMessage:
             match="onboarding questions are unanswered",
         ):
             asyncio.run(
-                _collect_events(
-                    service.complete_onboarding(
-                        session_id=session.id,
-                        user_id=owner_id,
-                    )
+                service.complete_onboarding(
+                    session_id=session.id,
+                    user_id=owner_id,
                 )
             )
 

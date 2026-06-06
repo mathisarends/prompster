@@ -1591,7 +1591,7 @@ export const submitOnboardingAnswer = (
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  return customInstance<unknown | string>(
+  return customInstance<SessionResponse>(
     {
       url: `/api/v1/sessions/${sessionId}/onboarding-answer`,
       method: "POST",
@@ -1788,7 +1788,7 @@ export const completeOnboarding = (
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  return customInstance<unknown | string>(
+  return customInstance<SessionResponse>(
     {
       url: `/api/v1/sessions/${sessionId}/onboarding/complete`,
       method: "POST",

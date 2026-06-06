@@ -62,6 +62,7 @@ export const ChatPage = () => {
     isLoadingSession,
     isError,
     sendMessage,
+    persistOnboardingAnswer,
     submitOnboardingAnswers,
     stopMessage,
     removePlaylistTrack,
@@ -132,16 +133,23 @@ export const ChatPage = () => {
     [submitOnboardingAnswers],
   );
 
+  const handleOnboardingAnswerChange = useCallback(
+    (answer: OnboardingAnswer) => {
+      persistOnboardingAnswer(answer);
+    },
+    [persistOnboardingAnswer],
+  );
+
   const showWorkspace =
     (Boolean(playlist) || isOnboardingPending) && canShowWorkspace;
 
   const workspaceContent =
     isOnboardingPending && pendingInput ? (
       <OnboardingPanel
-        key={pendingInput.questions.map((question) => question.id).join(":")}
         pendingInput={pendingInput}
         deckTitle={title}
         isSubmitting={isStreaming}
+        onAnswerChange={handleOnboardingAnswerChange}
         onSubmit={handleOnboardingSubmit}
       />
     ) : playlist ? (
@@ -225,12 +233,10 @@ export const ChatPage = () => {
           {isOnboardingPending && pendingInput ? (
             <div className="absolute inset-x-0 bottom-0 z-30 max-h-[78%] border-t border-white/[0.06] shadow-2xl shadow-black/40">
               <OnboardingPanel
-                key={pendingInput.questions
-                  .map((question) => question.id)
-                  .join(":")}
                 pendingInput={pendingInput}
                 deckTitle={title}
                 isSubmitting={isStreaming}
+                onAnswerChange={handleOnboardingAnswerChange}
                 onSubmit={handleOnboardingSubmit}
               />
             </div>

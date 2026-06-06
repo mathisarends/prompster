@@ -65,27 +65,25 @@ class _SessionConversationServiceStub:
         session_id: UUID,
         user_id: UUID,
         question_id: UUID,
-        answer: str,
+        answer: str | None,
         answers: list[str] | None = None,
-    ):
+    ) -> Session:
         self.received_session_id = session_id
         self.received_user_id = user_id
         self.received_question_id = question_id
         self.received_answer = answer
         self.received_answers = answers
-        if False:
-            yield None
+        return Session(title="Session", entries=[], owner_id=user_id, id=session_id)
 
     async def complete_onboarding(
         self,
         *,
         session_id: UUID,
         user_id: UUID,
-    ):
+    ) -> Session:
         self.received_session_id = session_id
         self.received_user_id = user_id
-        if False:
-            yield None
+        return Session(title="Session", entries=[], owner_id=user_id, id=session_id)
 
 
 class TestGetSessionByIdRoute:
@@ -211,18 +209,12 @@ class TestSubmitOnboardingAnswerRoute:
             )
         )
 
-        async def _consume() -> None:
-            async for _ in response.body_iterator:
-                break
-
-        asyncio.run(_consume())
-
-        assert response.media_type == "text/event-stream"
         assert service.received_session_id == session_id
         assert service.received_user_id == user_id
         assert service.received_question_id == question_id
         assert service.received_answer == "Freunde"
         assert service.received_answers == []
+        assert response.id == session_id
 
 
 class TestCompleteOnboardingRoute:
@@ -239,12 +231,6 @@ class TestCompleteOnboardingRoute:
             )
         )
 
-        async def _consume() -> None:
-            async for _ in response.body_iterator:
-                break
-
-        asyncio.run(_consume())
-
-        assert response.media_type == "text/event-stream"
         assert service.received_session_id == session_id
         assert service.received_user_id == user_id
+        assert response.id == session_id

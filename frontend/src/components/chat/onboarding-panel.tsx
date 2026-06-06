@@ -20,6 +20,7 @@ type OnboardingPanelProps = {
   pendingInput: PendingInput;
   deckTitle?: string;
   isSubmitting: boolean;
+  onAnswerChange?: (answer: OnboardingAnswer) => void;
   onSubmit: (answers: OnboardingAnswer[]) => void;
   className?: string;
 };
@@ -45,6 +46,29 @@ const isOtherOption = (option: string) =>
 const isExclusiveOption = (option: string) =>
   /(entscheide für mich|decide for me|egal|überrasch)/i.test(option.trim());
 
+const getNextSelectedOptions = (
+  question: PendingOnboardingQuestion,
+  selectedOptions: string[],
+  option: string,
+) => {
+  if (question.selectionMode !== "multi_select") {
+    return selectedOptions[0] === option ? [] : [option];
+  }
+
+  if (selectedOptions.includes(option)) {
+    return selectedOptions.filter((selected) => selected !== option);
+  }
+
+  if (isExclusiveOption(option)) {
+    return [option];
+  }
+
+  return [
+    ...selectedOptions.filter((selected) => !isExclusiveOption(selected)),
+    option,
+  ];
+};
+
 const chunk = <T,>(items: T[], size: number): T[][] => {
   const groups: T[][] = [];
   for (let index = 0; index < items.length; index += size) {
@@ -56,6 +80,7 @@ const chunk = <T,>(items: T[], size: number): T[][] => {
 export const OnboardingPanel = ({
   pendingInput,
   isSubmitting,
+  onAnswerChange,
   onSubmit,
   className,
 }: OnboardingPanelProps) => {
@@ -118,33 +143,34 @@ export const OnboardingPanel = ({
     question: PendingOnboardingQuestion,
     option: string,
   ) => {
+    const currentDraft = drafts[question.id] ?? {
+      selectedOptions: [],
+      freeText: "",
+    };
+    const nextDraft = {
+      selectedOptions: getNextSelectedOptions(
+        question,
+        currentDraft.selectedOptions,
+        option,
+      ),
+      freeText: "",
+    };
+
     setDrafts((current) => {
-      const draft = current[question.id] ?? {
-        selectedOptions: [],
-        freeText: "",
-      };
-      const selectedOptions =
-        question.selectionMode === "multi_select"
-          ? draft.selectedOptions.includes(option)
-            ? draft.selectedOptions.filter((selected) => selected !== option)
-            : isExclusiveOption(option)
-              ? [option]
-              : [
-                  ...draft.selectedOptions.filter(
-                    (selected) => !isExclusiveOption(selected),
-                  ),
-                  option,
-                ]
-          : draft.selectedOptions[0] === option
-            ? []
-            : [option];
       return {
         ...current,
-        [question.id]: {
-          selectedOptions,
-          freeText: "",
-        },
+        [question.id]: nextDraft,
       };
+    });
+
+    const nextAnswers = getQuestionAnswers(nextDraft);
+    if (nextAnswers.length === 0) return;
+
+    onAnswerChange?.({
+      questionId: question.id,
+      answer: nextAnswers.join(", "),
+      answers: nextAnswers,
+      isLastQuestion: question.isLastQuestion,
     });
   };
 

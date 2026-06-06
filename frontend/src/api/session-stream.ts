@@ -15,13 +15,6 @@ type StreamSendMessageOptions = {
   onEvent?: (event: SessionServerEvent) => void;
 };
 
-type StreamRequestBody = SendMessageRequest | SubmitOnboardingAnswerBody;
-type SubmitOnboardingAnswerBody = {
-  questionId: string;
-  answer?: string;
-  answers?: string[];
-};
-
 const getApiUrl = (path: string) => {
   const baseUrl = String(
     AXIOS_INSTANCE.defaults.baseURL ?? window.location.origin,
@@ -39,30 +32,9 @@ export const streamSendMessage = async (
 ) =>
   streamSessionRequest(`/api/v1/sessions/${sessionId}/messages`, body, options);
 
-export const streamSubmitOnboardingAnswer = async (
-  sessionId: string,
-  body: SubmitOnboardingAnswerBody,
-  options: StreamSendMessageOptions,
-) =>
-  streamSessionRequest(
-    `/api/v1/sessions/${sessionId}/onboarding-answer`,
-    body,
-    options,
-  );
-
-export const streamCompleteOnboarding = async (
-  sessionId: string,
-  options: StreamSendMessageOptions,
-) =>
-  streamSessionRequest(
-    `/api/v1/sessions/${sessionId}/onboarding/complete`,
-    undefined,
-    options,
-  );
-
 const streamSessionRequest = async (
   path: string,
-  body: StreamRequestBody | undefined,
+  body: SendMessageRequest,
   { signal, onChunk, onDone, onEvent }: StreamSendMessageOptions,
 ) => {
   const response = await fetch(getApiUrl(path), {
@@ -71,7 +43,7 @@ const streamSessionRequest = async (
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(body ?? {}),
+    body: JSON.stringify(body),
     signal,
   });
 

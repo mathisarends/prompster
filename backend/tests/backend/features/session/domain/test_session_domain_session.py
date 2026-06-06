@@ -208,6 +208,24 @@ class TestSessionDomainSession:
         assert question.answers == ("Pop", "Rock")
         assert question.answer == "Pop, Rock"
 
+    def test_answer_onboarding_question_replaces_previous_answer(
+        self, session: Session
+    ) -> None:
+        question = session.add_onboarding_question(
+            question_text="Welche Genres?",
+            options=("Pop", "Rock", "Soul"),
+            selection_mode=OnboardingQuestionSelectionMode.MULTI_SELECT,
+        )
+        session.answer_onboarding_question(question_id=question.id, answers=["Pop"])
+
+        session.answer_onboarding_question(
+            question_id=question.id,
+            answers=["Pop", "Rock"],
+        )
+
+        assert question.is_answered is True
+        assert question.answers == ("Pop", "Rock")
+
     def test_decide_for_me_rejects_combined_onboarding_answers(
         self, session: Session
     ) -> None:
@@ -223,7 +241,7 @@ class TestSessionDomainSession:
                 answers=[DECIDE_FOR_ME_OPTION, "Rock"],
             )
 
-    def test_answering_last_question_reconstructs_history(
+    def test_answering_last_question_does_not_reconstruct_history(
         self, session: Session
     ) -> None:
         session.add_user_message(content="Erstelle eine Playlist")
@@ -234,6 +252,25 @@ class TestSessionDomainSession:
         )
         session.answer_onboarding_question(question_id=first.id, answer="Freunde")
         session.answer_onboarding_question(question_id=last.id, answer="80er")
+
+        entry_types = [type(e).__name__ for e in session.entries]
+        assert "ToolCallSequence" in entry_types
+        contents = [getattr(e, "content", None) for e in session.entries]
+        assert not any("Fuer wen? -> Freunde" in (c or "") for c in contents)
+
+    def test_advance_to_building_phase_reconstructs_onboarding_history(
+        self, session: Session
+    ) -> None:
+        session.add_user_message(content="Erstelle eine Playlist")
+        session.add_tool_call(make_onboarding_call())
+        first = session.add_onboarding_question(question_text="Fuer wen?")
+        last = session.add_onboarding_question(
+            question_text="Welche Dekade?", is_last_question=True
+        )
+        session.answer_onboarding_question(question_id=first.id, answer="Freunde")
+        session.answer_onboarding_question(question_id=last.id, answer="80er")
+
+        session.advance_to_building_phase()
 
         entry_types = [type(e).__name__ for e in session.entries]
         assert "ToolCallSequence" not in entry_types

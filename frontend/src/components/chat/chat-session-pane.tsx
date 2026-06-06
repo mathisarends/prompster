@@ -11,6 +11,7 @@ import { ChatInputBox } from "@/components/chat/chat-input-box";
 import { ChatMessageSkeleton } from "@/components/chat/chat-message-skeleton";
 import { ChatPageHeader } from "@/components/chat/chat-page-header";
 import { ChatThinkingIndicator } from "@/components/chat/chat-thinking-indicator";
+import { OnboardingQuestionsIndicator } from "@/components/chat/onboarding-questions-indicator";
 import { ToolCallAccordion } from "@/components/chat/tool-call-sequence";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserChatMessage } from "@/components/chat/user-chat-message";
@@ -91,6 +92,10 @@ export const ChatSessionPane = ({
   const isOnboardingQuestionPending =
     pendingInput?.kind === "onboarding_question" &&
     pendingInput.questions.some((question) => Boolean(question.id));
+  const pendingOnboardingQuestionCount =
+    pendingInput?.kind === "onboarding_question"
+      ? pendingInput.questions.filter((question) => Boolean(question.id)).length
+      : 0;
 
   const submitPrompt = (text: string) => {
     sendMessage(text);
@@ -157,6 +162,11 @@ export const ChatSessionPane = ({
                     )}
                     {showThinkingPlaceholder && (
                       <ChatThinkingIndicator className="px-1 py-2" />
+                    )}
+                    {isOnboardingQuestionPending && (
+                      <OnboardingQuestionsIndicator
+                        count={pendingOnboardingQuestionCount}
+                      />
                     )}
                   </>
                 )}

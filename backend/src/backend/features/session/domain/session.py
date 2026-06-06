@@ -359,10 +359,6 @@ class Session(Aggregate):
         for question in self._onboarding_questions:
             if question.id != question_id:
                 continue
-            if question.is_answered:
-                raise ValueError(
-                    f"Onboarding question {question_id} is already answered."
-                )
             self._assert_onboarding_decide_for_me_selection(answers=normalized_answers)
             self._assert_onboarding_answer_count(
                 question=question,
@@ -372,8 +368,6 @@ class Session(Aggregate):
                 normalized_answers,
                 answered_at=datetime.now(timezone.utc),
             )
-            if question.is_last_question:
-                self._reconstruct_onboarding_history()
             return question
 
         raise ValueError(f"Onboarding question {question_id} not found.")
@@ -701,6 +695,7 @@ class Session(Aggregate):
             raise InvalidSessionPhaseTransitionError(
                 f"Cannot advance session {self.id} while onboarding questions are unanswered."
             )
+        self._reconstruct_onboarding_history()
         self._phase = Phase.BUILD
 
     def has_access(self, user_id: UUID) -> None:
