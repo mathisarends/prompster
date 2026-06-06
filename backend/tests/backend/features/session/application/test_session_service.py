@@ -51,6 +51,7 @@ from backend.features.session.application.ports.title_generator import (
 )
 from backend.features.session.application.conversation_service import (
     SessionConversationService,
+    SessionImageAttachmentReference,
     SessionImageAttachmentUpload,
 )
 from backend.features.session.application.session_service import (
@@ -151,6 +152,9 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
     def __init__(self) -> None:
         self.deleted_session_ids: list[UUID] = []
         self.saved_payloads: list[tuple[UUID, UUID, UUID, str, str, bytes]] = []
+        self.saved_uploaded_payloads: list[tuple[UUID, UUID, str, str, bytes]] = []
+        self.existing_storage_keys: set[str] = set()
+        self.cleanup_calls: list[tuple[UUID, set[str]]] = []
 
     async def save_image_attachment(
         self,
@@ -181,6 +185,36 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
             size_bytes=len(content),
         )
 
+    async def save_uploaded_image_attachment(
+        self,
+        *,
+        session_id: UUID,
+        attachment_id: UUID,
+        file_name: str,
+        content_type: str,
+        content: bytes,
+    ) -> StoredAttachment:
+        self.saved_uploaded_payloads.append(
+            (
+                session_id,
+                attachment_id,
+                file_name,
+                content_type,
+                content,
+            )
+        )
+        storage_key = f"sessions/{session_id}/uploads/{attachment_id}.png"
+        self.existing_storage_keys.add(storage_key)
+        return StoredAttachment(
+            storage_key=storage_key,
+            content_type=content_type,
+            file_name=file_name,
+            size_bytes=len(content),
+        )
+
+    async def exists(self, *, storage_key: str) -> bool:
+        return storage_key in self.existing_storage_keys
+
     async def load_bytes(self, *, storage_key: str) -> bytes:
         return b""
 
@@ -194,6 +228,14 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
 
     async def delete_session_attachments(self, *, session_id: UUID) -> None:
         self.deleted_session_ids.append(session_id)
+
+    async def delete_unreferenced_uploaded_image_attachments(
+        self,
+        *,
+        session_id: UUID,
+        referenced_storage_keys: set[str],
+    ) -> None:
+        self.cleanup_calls.append((session_id, referenced_storage_keys))
 
 
 class _SessionTitleGeneratorStub(SessionTitleGenerator):
@@ -580,7 +622,7 @@ class TestSessionServiceSendMessage:
 
         assert runner.ran_model_ids == ["gpt-5.4"]
 
-    def test_stores_image_attachments_on_send_message(self) -> None:
+    def test_uploads_image_attachment(self) -> None:
         owner_id = uuid4()
         session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
@@ -590,6 +632,35 @@ class TestSessionServiceSendMessage:
             message_attachment_store=attachment_store,
         )
 
+        uploaded = asyncio.run(
+            service.upload_image_attachment(
+                session_id=session.id,
+                user_id=owner_id,
+                image=SessionImageAttachmentUpload(
+                    file_name="shot.png",
+                    content_type="image/png",
+                    content=b"1234",
+                ),
+            )
+        )
+
+        assert uploaded.storage_key.startswith(f"sessions/{session.id}/uploads/")
+        assert uploaded.content_type == "image/png"
+        assert len(attachment_store.saved_uploaded_payloads) == 1
+
+    def test_references_uploaded_image_attachments_on_send_message(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        repository = _SessionRepositoryStub(session_by_id=session)
+        attachment_store = _MessageAttachmentStoreStub()
+        service = _make_conversation_service(
+            repository=repository,
+            message_attachment_store=attachment_store,
+        )
+        attachment_id = uuid4()
+        storage_key = f"sessions/{session.id}/uploads/{attachment_id}.png"
+        attachment_store.existing_storage_keys.add(storage_key)
+
         asyncio.run(
             _collect_events(
                 service.send_message(
@@ -597,10 +668,12 @@ class TestSessionServiceSendMessage:
                     user_id=owner_id,
                     content="analysiere den screenshot",
                     image_attachments=[
-                        SessionImageAttachmentUpload(
+                        SessionImageAttachmentReference(
+                            id=attachment_id,
+                            storage_key=storage_key,
                             file_name="shot.png",
                             content_type="image/png",
-                            content=b"1234",
+                            size_bytes=4,
                         )
                     ],
                 )
@@ -612,11 +685,14 @@ class TestSessionServiceSendMessage:
         )
         assert len(message.image_attachments) == 1
         assert message.image_attachments[0].content_type == "image/png"
-        assert len(attachment_store.saved_payloads) == 1
+        assert message.image_attachments[0].storage_key == storage_key
+        assert attachment_store.saved_payloads == []
+        assert attachment_store.cleanup_calls == [(session.id, {storage_key})]
 
     def test_rejects_invalid_image_content_type(self) -> None:
         owner_id = uuid4()
         session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        attachment_id = uuid4()
         service = _make_conversation_service(
             repository=_SessionRepositoryStub(session_by_id=session),
         )
@@ -629,10 +705,14 @@ class TestSessionServiceSendMessage:
                         user_id=owner_id,
                         content="analysiere den screenshot",
                         image_attachments=[
-                            SessionImageAttachmentUpload(
+                            SessionImageAttachmentReference(
+                                id=attachment_id,
+                                storage_key=(
+                                    f"sessions/{session.id}/uploads/{attachment_id}.gif"
+                                ),
                                 file_name="shot.gif",
                                 content_type="image/gif",
-                                content=b"1234",
+                                size_bytes=4,
                             )
                         ],
                     )

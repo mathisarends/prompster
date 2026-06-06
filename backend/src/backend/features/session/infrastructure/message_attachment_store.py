@@ -37,6 +37,33 @@ class StorageMessageAttachmentStore(MessageAttachmentStore):
             size_bytes=len(content),
         )
 
+    async def save_uploaded_image_attachment(
+        self,
+        *,
+        session_id: UUID,
+        attachment_id: UUID,
+        file_name: str,
+        content_type: str,
+        content: bytes,
+    ) -> StoredAttachment:
+        ext = _resolve_extension(file_name=file_name, content_type=content_type)
+        storage_key = f"sessions/{session_id}/uploads/{attachment_id}.{ext}"
+        normalized_file_name = file_name.strip() or f"attachment.{ext}"
+        await self._storage_backend.upload_bytes(
+            path=storage_key,
+            data=content,
+            content_type=content_type,
+        )
+        return StoredAttachment(
+            storage_key=storage_key,
+            content_type=content_type,
+            file_name=normalized_file_name,
+            size_bytes=len(content),
+        )
+
+    async def exists(self, *, storage_key: str) -> bool:
+        return await self._storage_backend.exists(path=storage_key)
+
     async def load_bytes(self, *, storage_key: str) -> bytes:
         return await self._storage_backend.download_bytes(path=storage_key)
 
@@ -53,6 +80,19 @@ class StorageMessageAttachmentStore(MessageAttachmentStore):
 
     async def delete_session_attachments(self, *, session_id: UUID) -> None:
         await self._storage_backend.delete_folder(path=f"sessions/{session_id}/")
+
+    async def delete_unreferenced_uploaded_image_attachments(
+        self,
+        *,
+        session_id: UUID,
+        referenced_storage_keys: set[str],
+    ) -> None:
+        prefix = f"sessions/{session_id}/uploads/"
+        files = await self._storage_backend.list_files(path=prefix)
+        for file in files:
+            storage_key = f"{prefix}{file.name}"
+            if storage_key not in referenced_storage_keys:
+                await self._storage_backend.delete_file(path=storage_key)
 
 
 _CONTENT_TYPE_TO_EXTENSION = {

@@ -1,12 +1,18 @@
 import asyncio
 from collections.abc import AsyncIterator
+from io import BytesIO
 from typing import cast
 from uuid import UUID, uuid4
 
+from fastapi import UploadFile
 from llm import OpenAIModelName
+from starlette.datastructures import Headers
 
 from backend.features.session.application import (
     SessionEvent,
+    SessionImageAttachmentReference,
+    SessionImageAttachmentUpload,
+    SessionMessageAttachment,
     SessionConversationService,
     SessionService,
 )
@@ -15,6 +21,7 @@ from backend.features.session.application.ports import (
     StoredAttachment,
 )
 from backend.features.session.domain import (
+    ImageAttachment,
     Session,
     UserCurationEvent,
     UserCurationEventType,
@@ -23,10 +30,15 @@ from backend.features.session.presentation.router import (
     complete_onboarding,
     get_session_by_id,
     restore_session_user_curation_event,
+    send_message,
     submit_onboarding_answer,
     stop_message,
+    upload_session_image_attachment,
 )
 from backend.features.session.presentation.schemas import (
+    SendMessageRequest,
+    SessionMessageAttachmentKind,
+    SessionMessageAttachmentRequest,
     SubmitOnboardingAnswerRequest,
     UserCurationEventTypeResponse,
 )
@@ -58,10 +70,53 @@ class _SessionConversationServiceStub:
     def __init__(self) -> None:
         self.received_session_id: UUID | None = None
         self.received_user_id: UUID | None = None
+        self.received_content: str | None = None
+        self.received_attachments: list[SessionMessageAttachment] | None = None
+        self.received_image_attachments: (
+            list[SessionImageAttachmentReference] | None
+        ) = None
+        self.received_upload: SessionImageAttachmentUpload | None = None
         self.received_question_id: UUID | None = None
         self.received_answer: str | None = None
         self.received_answers: list[str] | None = None
         self.received_model_id: str | None = None
+
+    async def send_message(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        content: str,
+        attachments: list[SessionMessageAttachment] | None = None,
+        image_attachments: list[SessionImageAttachmentReference] | None = None,
+        model_id: str | None = None,
+    ) -> AsyncIterator[SessionEvent]:
+        self.received_session_id = session_id
+        self.received_user_id = user_id
+        self.received_content = content
+        self.received_attachments = attachments
+        self.received_image_attachments = image_attachments
+        self.received_model_id = model_id
+        if False:
+            yield
+
+    async def upload_image_attachment(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        image: SessionImageAttachmentUpload,
+    ) -> ImageAttachment:
+        self.received_session_id = session_id
+        self.received_user_id = user_id
+        self.received_upload = image
+        return ImageAttachment(
+            id=uuid4(),
+            storage_key=f"sessions/{session_id}/uploads/uploaded.png",
+            content_type=image.content_type,
+            file_name=image.file_name,
+            size_bytes=len(image.content),
+        )
 
     async def stop_message(self, *, session_id: UUID, user_id: UUID) -> bool:
         self.received_session_id = session_id
@@ -116,6 +171,25 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
             size_bytes=len(content),
         )
 
+    async def save_uploaded_image_attachment(
+        self,
+        *,
+        session_id,
+        attachment_id,
+        file_name,
+        content_type,
+        content,
+    ) -> StoredAttachment:
+        return StoredAttachment(
+            storage_key=f"sessions/{session_id}/uploads/{attachment_id}.png",
+            content_type=content_type,
+            file_name=file_name,
+            size_bytes=len(content),
+        )
+
+    async def exists(self, *, storage_key: str) -> bool:
+        return True
+
     async def load_bytes(self, *, storage_key: str) -> bytes:
         return b""
 
@@ -128,6 +202,14 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
         return f"https://example.com/{storage_key}"
 
     async def delete_session_attachments(self, *, session_id) -> None:
+        return None
+
+    async def delete_unreferenced_uploaded_image_attachments(
+        self,
+        *,
+        session_id,
+        referenced_storage_keys: set[str],
+    ) -> None:
         return None
 
 
@@ -243,6 +325,78 @@ class TestStopMessageRoute:
         assert response.status_code == 204
         assert service.received_session_id == session_id
         assert service.received_user_id == user_id
+
+
+class TestSendMessageRoute:
+    def test_routes_json_body_to_conversation_service(self) -> None:
+        session_id = uuid4()
+        user_id = uuid4()
+        service = _SessionConversationServiceStub()
+
+        response = asyncio.run(
+            send_message(
+                session_id=session_id,
+                authenticated_user_id=user_id,
+                body=SendMessageRequest(
+                    content="Hallo",
+                    attachments=[
+                        SessionMessageAttachmentRequest(
+                            kind=SessionMessageAttachmentKind.SPOTIFY_ARTIST,
+                            external_id="artist-1",
+                            title="Artist 1",
+                        )
+                    ],
+                ),
+                service=cast(SessionConversationService, service),
+                model_id=OpenAIModelName.GPT_5_4,
+            )
+        )
+        body = asyncio.run(_collect_stream_body(response))
+
+        assert service.received_session_id == session_id
+        assert service.received_user_id == user_id
+        assert service.received_content == "Hallo"
+        assert service.received_attachments is not None
+        assert len(service.received_attachments) == 1
+        assert service.received_attachments[0].external_id == "artist-1"
+        assert service.received_image_attachments == []
+        assert service.received_model_id == OpenAIModelName.GPT_5_4
+        assert response.media_type == "text/event-stream"
+        assert body == ['event: done\ndata: {"type":"done"}\n\n']
+
+
+class TestUploadSessionImageAttachmentRoute:
+    def test_uploads_image_and_returns_reference(self) -> None:
+        session_id = uuid4()
+        user_id = uuid4()
+        service = _SessionConversationServiceStub()
+        file = UploadFile(
+            file=BytesIO(b"1234"),
+            filename="shot.png",
+            headers=Headers({"content-type": "image/png"}),
+        )
+
+        response = asyncio.run(
+            upload_session_image_attachment(
+                session_id=session_id,
+                authenticated_user_id=user_id,
+                service=cast(SessionConversationService, service),
+                attachment_store=cast(
+                    MessageAttachmentStore, _MessageAttachmentStoreStub()
+                ),
+                file=file,
+            )
+        )
+
+        assert service.received_session_id == session_id
+        assert service.received_user_id == user_id
+        assert service.received_upload is not None
+        assert service.received_upload.content == b"1234"
+        assert response.storage_key == f"sessions/{session_id}/uploads/uploaded.png"
+        assert response.url == f"https://example.com/{response.storage_key}"
+        assert response.content_type == "image/png"
+        assert response.file_name == "shot.png"
+        assert response.size_bytes == 4
 
 
 class TestSubmitOnboardingAnswerRoute:

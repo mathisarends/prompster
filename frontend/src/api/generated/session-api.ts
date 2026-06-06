@@ -24,6 +24,7 @@ import type {
 
 import type {
   AddPlaylistTrackRequest,
+  BodySendMessage,
   CompleteOnboardingParams,
   ErrorResponse,
   ExportSessionPlaylistParams,
@@ -31,7 +32,6 @@ import type {
   ListSessionsParams,
   PlaylistTrackResponse,
   SendMessageParams,
-  SendMessageRequest,
   SessionCreateRequest,
   SessionResponse,
   SessionSummaryListResponse,
@@ -1109,17 +1109,34 @@ export function useDeleteSession<
  */
 export const sendMessage = (
   sessionId: string,
-  sendMessageRequest: SendMessageRequest,
+  bodySendMessage: BodySendMessage,
   params?: SendMessageParams,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
+  const formData = new FormData();
+  formData.append(`content`, bodySendMessage.content);
+  if (bodySendMessage.attachments !== undefined) {
+    bodySendMessage.attachments.forEach((value) =>
+      formData.append(`attachments`, value),
+    );
+  }
+  if (
+    bodySendMessage.reference_attachments_json !== undefined &&
+    bodySendMessage.reference_attachments_json !== null
+  ) {
+    formData.append(
+      `reference_attachments_json`,
+      bodySendMessage.reference_attachments_json,
+    );
+  }
+
   return customInstance<string>(
     {
       url: `/api/v1/sessions/${sessionId}/messages`,
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      data: sendMessageRequest,
+      headers: { "Content-Type": "multipart/form-data" },
+      data: formData,
       params,
       signal,
     },
@@ -1129,14 +1146,14 @@ export const sendMessage = (
 
 export const getSendMessageQueryKey = (
   sessionId: string,
-  sendMessageRequest?: SendMessageRequest,
+  bodySendMessage?: BodySendMessage,
   params?: SendMessageParams,
 ) => {
   return [
     "POST",
     `/api/v1/sessions/${sessionId}/messages`,
     ...(params ? [params] : []),
-    sendMessageRequest,
+    bodySendMessage,
   ] as const;
 };
 
@@ -1145,7 +1162,7 @@ export const getSendMessageQueryOptions = <
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sendMessageRequest: SendMessageRequest,
+  bodySendMessage: BodySendMessage,
   params?: SendMessageParams,
   options?: {
     query?: Partial<
@@ -1158,12 +1175,11 @@ export const getSendMessageQueryOptions = <
 
   const queryKey =
     queryOptions?.queryKey ??
-    getSendMessageQueryKey(sessionId, sendMessageRequest, params);
+    getSendMessageQueryKey(sessionId, bodySendMessage, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof sendMessage>>> = ({
     signal,
-  }) =>
-    sendMessage(sessionId, sendMessageRequest, params, requestOptions, signal);
+  }) => sendMessage(sessionId, bodySendMessage, params, requestOptions, signal);
 
   return {
     queryKey,
@@ -1187,7 +1203,7 @@ export function useSendMessage<
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sendMessageRequest: SendMessageRequest,
+  bodySendMessage: BodySendMessage,
   params: undefined | SendMessageParams,
   options: {
     query: Partial<
@@ -1212,7 +1228,7 @@ export function useSendMessage<
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sendMessageRequest: SendMessageRequest,
+  bodySendMessage: BodySendMessage,
   params?: SendMessageParams,
   options?: {
     query?: Partial<
@@ -1237,7 +1253,7 @@ export function useSendMessage<
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sendMessageRequest: SendMessageRequest,
+  bodySendMessage: BodySendMessage,
   params?: SendMessageParams,
   options?: {
     query?: Partial<
@@ -1258,7 +1274,7 @@ export function useSendMessage<
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  sendMessageRequest: SendMessageRequest,
+  bodySendMessage: BodySendMessage,
   params?: SendMessageParams,
   options?: {
     query?: Partial<
@@ -1272,7 +1288,7 @@ export function useSendMessage<
 } {
   const queryOptions = getSendMessageQueryOptions(
     sessionId,
-    sendMessageRequest,
+    bodySendMessage,
     params,
     options,
   );

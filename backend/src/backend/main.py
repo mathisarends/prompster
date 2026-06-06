@@ -22,7 +22,7 @@ from backend.infrastructure.di import (
     StorageBackendProvider,
 )
 from backend.lifespan import lifespan
-from backend.presentation import LoggingMiddleware, PascalCaseRouter
+from backend.presentation import LoggingMiddleware, PascalCaseRouter, health_router
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +52,8 @@ def _setup_middleware(app: FastAPI, env: EnvSettings) -> None:
 
 
 def _register_features(app: FastAPI) -> None:
+    app.include_router(health_router)
+
     api_v1_router = PascalCaseRouter(prefix="/api/v1")
     for feature in _FEATURES:
         if feature.register_exception_handlers is not None:

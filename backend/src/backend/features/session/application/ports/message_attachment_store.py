@@ -26,6 +26,22 @@ class MessageAttachmentStore(ABC):
         pass
 
     @abstractmethod
+    async def save_uploaded_image_attachment(
+        self,
+        *,
+        session_id: UUID,
+        attachment_id: UUID,
+        file_name: str,
+        content_type: str,
+        content: bytes,
+    ) -> StoredAttachment:
+        pass
+
+    @abstractmethod
+    async def exists(self, *, storage_key: str) -> bool:
+        pass
+
+    @abstractmethod
     async def load_bytes(self, *, storage_key: str) -> bytes:
         pass
 
@@ -40,4 +56,13 @@ class MessageAttachmentStore(ABC):
 
     @abstractmethod
     async def delete_session_attachments(self, *, session_id: UUID) -> None:
+        pass
+
+    @abstractmethod
+    async def delete_unreferenced_uploaded_image_attachments(
+        self,
+        *,
+        session_id: UUID,
+        referenced_storage_keys: set[str],
+    ) -> None:
         pass

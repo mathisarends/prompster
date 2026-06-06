@@ -102,6 +102,25 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
             size_bytes=len(content),
         )
 
+    async def save_uploaded_image_attachment(
+        self,
+        *,
+        session_id,
+        attachment_id,
+        file_name,
+        content_type,
+        content,
+    ) -> StoredAttachment:
+        return StoredAttachment(
+            storage_key=f"sessions/{session_id}/uploads/{attachment_id}.png",
+            content_type=content_type,
+            file_name=file_name,
+            size_bytes=len(content),
+        )
+
+    async def exists(self, *, storage_key: str) -> bool:
+        return True
+
     async def load_bytes(self, *, storage_key: str) -> bytes:
         return b""
 
@@ -114,6 +133,14 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
         return f"https://example.com/{storage_key}"
 
     async def delete_session_attachments(self, *, session_id) -> None:
+        return None
+
+    async def delete_unreferenced_uploaded_image_attachments(
+        self,
+        *,
+        session_id,
+        referenced_storage_keys: set[str],
+    ) -> None:
         return None
 
 

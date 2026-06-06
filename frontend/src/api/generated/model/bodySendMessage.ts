@@ -5,14 +5,13 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { SessionMessageAttachmentRequest } from "./sessionMessageAttachmentRequest";
 
-export interface SendMessageRequest {
+export interface BodySendMessage {
   /**
    * @minLength 1
    * @maxLength 4000
    */
   content: string;
-  /** @maxItems 25 */
-  attachments?: SessionMessageAttachmentRequest[];
+  attachments?: Blob[];
+  reference_attachments_json?: string | null;
 }

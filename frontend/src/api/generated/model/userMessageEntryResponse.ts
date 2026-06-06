@@ -5,6 +5,7 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
+import type { ImageAttachmentResponse } from "./imageAttachmentResponse";
 import type { SessionMessageAttachmentResponse } from "./sessionMessageAttachmentResponse";
 import type { UserCurationEventResponse } from "./userCurationEventResponse";
 
@@ -13,6 +14,7 @@ export interface UserMessageEntryResponse {
   id: string;
   content: string;
   attachments?: SessionMessageAttachmentResponse[];
+  imageAttachments?: ImageAttachmentResponse[];
   userCurationEvents?: UserCurationEventResponse[];
   createdAt: string;
 }

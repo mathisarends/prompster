@@ -58,6 +58,18 @@ class ImageAttachmentResponse(Schema):
     size_bytes: int
 
 
+class UploadedImageAttachmentResponse(ImageAttachmentResponse):
+    storage_key: str
+
+
+class ImageAttachmentReferenceRequest(Schema):
+    id: UUID
+    storage_key: str = Field(min_length=1, max_length=1024)
+    content_type: str = Field(min_length=1, max_length=128)
+    file_name: str = Field(min_length=1, max_length=300)
+    size_bytes: int = Field(gt=0)
+
+
 class UserMessageEntryResponse(Schema):
     kind: Literal[EntryKind.USER_MESSAGE] = EntryKind.USER_MESSAGE
     id: UUID
@@ -217,6 +229,10 @@ class SendMessageRequest(Schema):
         default_factory=list,
         max_length=25,
     )
+    image_attachments: list[ImageAttachmentReferenceRequest] = Field(
+        default_factory=list,
+        max_length=5,
+    )
 
     @model_validator(mode="after")
     def validate_unique_attachments(self) -> Self:
@@ -226,6 +242,16 @@ class SendMessageRequest(Schema):
             if key in seen:
                 raise ValueError("Duplicate attachments are not allowed.")
             seen.add(key)
+        image_ids: set[UUID] = set()
+        image_storage_keys: set[str] = set()
+        for attachment in self.image_attachments:
+            if (
+                attachment.id in image_ids
+                or attachment.storage_key in image_storage_keys
+            ):
+                raise ValueError("Duplicate image attachments are not allowed.")
+            image_ids.add(attachment.id)
+            image_storage_keys.add(attachment.storage_key)
         return self
 
 

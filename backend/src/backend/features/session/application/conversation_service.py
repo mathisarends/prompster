@@ -81,6 +81,15 @@ class SessionImageAttachmentUpload:
 
 
 @dataclass(frozen=True)
+class SessionImageAttachmentReference:
+    id: UUID
+    storage_key: str
+    content_type: str
+    file_name: str
+    size_bytes: int
+
+
+@dataclass(frozen=True)
 class _ResolvedToolCall:
     sequence_id: UUID
     tool_call_id: str
@@ -118,23 +127,22 @@ class SessionConversationService:
         user_id: UUID,
         content: str,
         attachments: list[SessionMessageAttachment] | None = None,
-        image_attachments: list[SessionImageAttachmentUpload] | None = None,
+        image_attachments: list[SessionImageAttachmentReference] | None = None,
         model_id: str | None = None,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         await self._user_message_rate_limit_service.consume(user_id=user_id)
 
         message_id = uuid4()
-        stored_images = await self._store_image_attachments(
+        referenced_images = await self._resolve_image_attachment_references(
             session_id=session.id,
-            message_id=message_id,
             image_attachments=image_attachments or [],
         )
         session.add_user_message(
             content=content,
             message_id=message_id,
             attachments=self._to_user_message_attachments(attachments or []),
-            image_attachments=stored_images,
+            image_attachments=referenced_images,
         )
         title_task = self._maybe_start_title_generation(
             session=session,
@@ -144,8 +152,36 @@ class SessionConversationService:
             session=session,
             title_task=title_task,
             model_id=model_id,
+            cleanup_uploaded_image_attachments=bool(referenced_images),
         ):
             yield event
+
+    async def upload_image_attachment(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        image: SessionImageAttachmentUpload,
+    ) -> ImageAttachment:
+        session = await self._get_authorized(session_id=session_id, user_id=user_id)
+        self._validate_image_attachments(image_attachments=[image])
+        attachment_id = uuid4()
+        normalized_content_type = self._normalize_content_type(image.content_type)
+        stored = await self._message_attachment_store.save_uploaded_image_attachment(
+            session_id=session.id,
+            attachment_id=attachment_id,
+            file_name=image.file_name,
+            content_type=normalized_content_type,
+            content=image.content,
+        )
+        return ImageAttachment(
+            id=attachment_id,
+            storage_key=stored.storage_key,
+            content_type=stored.content_type,
+            file_name=stored.file_name,
+            size_bytes=stored.size_bytes,
+            created_time=datetime.now(timezone.utc),
+        )
 
     async def submit_onboarding_answer(
         self,
@@ -201,9 +237,14 @@ class SessionConversationService:
         session: Session,
         title_task: asyncio.Task[str] | None = None,
         model_id: str | None = None,
+        cleanup_uploaded_image_attachments: bool = False,
     ) -> AsyncIterator[SessionEvent]:
         try:
             await self._persist_session(session=session)
+            if cleanup_uploaded_image_attachments:
+                await self._cleanup_unreferenced_uploaded_image_attachments(
+                    session=session,
+                )
             async for event in self._run_agent_and_consume_user_curation_events(
                 session=session,
                 model_id=model_id,
@@ -321,40 +362,28 @@ class SessionConversationService:
             for attachment in attachments
         ]
 
-    async def _store_image_attachments(
+    async def _resolve_image_attachment_references(
         self,
         *,
         session_id: UUID,
-        message_id: UUID,
-        image_attachments: list[SessionImageAttachmentUpload],
+        image_attachments: list[SessionImageAttachmentReference],
     ) -> list[ImageAttachment]:
-        self._validate_image_attachments(image_attachments=image_attachments)
+        await self._validate_image_attachment_references(
+            session_id=session_id,
+            image_attachments=image_attachments,
+        )
         created_at = datetime.now(timezone.utc)
-        result: list[ImageAttachment] = []
-
-        for image in image_attachments:
-            attachment_id = uuid4()
-            normalized_content_type = self._normalize_content_type(image.content_type)
-            stored = await self._message_attachment_store.save_image_attachment(
-                session_id=session_id,
-                message_id=message_id,
-                attachment_id=attachment_id,
+        return [
+            ImageAttachment(
+                id=image.id,
+                storage_key=image.storage_key,
+                content_type=self._normalize_content_type(image.content_type),
                 file_name=image.file_name,
-                content_type=normalized_content_type,
-                content=image.content,
+                size_bytes=image.size_bytes,
+                created_time=created_at,
             )
-            result.append(
-                ImageAttachment(
-                    id=attachment_id,
-                    storage_key=stored.storage_key,
-                    content_type=stored.content_type,
-                    file_name=stored.file_name,
-                    size_bytes=stored.size_bytes,
-                    created_time=created_at,
-                )
-            )
-
-        return result
+            for image in image_attachments
+        ]
 
     def _validate_image_attachments(
         self,
@@ -363,18 +392,77 @@ class SessionConversationService:
     ) -> None:
         if len(image_attachments) > _MAX_IMAGE_ATTACHMENTS_PER_MESSAGE:
             raise ValueError(
-                f"A maximum of {_MAX_IMAGE_ATTACHMENTS_PER_MESSAGE} images is allowed per message."
+                f"A maximum of {_MAX_IMAGE_ATTACHMENTS_PER_MESSAGE} images is "
+                "allowed per message."
             )
 
         for image in image_attachments:
             content_type = self._normalize_content_type(image.content_type)
             if content_type not in _ALLOWED_IMAGE_CONTENT_TYPES:
                 raise ValueError(f"Unsupported image content type: {content_type}.")
+            if len(image.content) == 0:
+                raise ValueError(f"Image '{image.file_name}' is empty.")
             if len(image.content) > _MAX_IMAGE_ATTACHMENT_SIZE_BYTES:
                 raise ValueError(
                     f"Image '{image.file_name}' exceeds the maximum allowed size of "
                     f"{_MAX_IMAGE_ATTACHMENT_SIZE_BYTES // (1024 * 1024)} MB."
                 )
+
+    async def _validate_image_attachment_references(
+        self,
+        *,
+        session_id: UUID,
+        image_attachments: list[SessionImageAttachmentReference],
+    ) -> None:
+        if len(image_attachments) > _MAX_IMAGE_ATTACHMENTS_PER_MESSAGE:
+            raise ValueError(
+                f"A maximum of {_MAX_IMAGE_ATTACHMENTS_PER_MESSAGE} images is "
+                "allowed per message."
+            )
+
+        seen_ids: set[UUID] = set()
+        seen_storage_keys: set[str] = set()
+        prefix = f"sessions/{session_id}/uploads/"
+        for image in image_attachments:
+            if image.id in seen_ids or image.storage_key in seen_storage_keys:
+                raise ValueError("Duplicate image attachments are not allowed.")
+            seen_ids.add(image.id)
+            seen_storage_keys.add(image.storage_key)
+
+            content_type = self._normalize_content_type(image.content_type)
+            if content_type not in _ALLOWED_IMAGE_CONTENT_TYPES:
+                raise ValueError(f"Unsupported image content type: {content_type}.")
+            if image.size_bytes <= 0:
+                raise ValueError(f"Image '{image.file_name}' is empty.")
+            if image.size_bytes > _MAX_IMAGE_ATTACHMENT_SIZE_BYTES:
+                raise ValueError(
+                    f"Image '{image.file_name}' exceeds the maximum allowed size of "
+                    f"{_MAX_IMAGE_ATTACHMENT_SIZE_BYTES // (1024 * 1024)} MB."
+                )
+            if not image.storage_key.startswith(prefix):
+                raise ValueError("Image attachment does not belong to this session.")
+            if f"/{image.id}." not in image.storage_key:
+                raise ValueError("Image attachment id does not match its storage key.")
+            if not await self._message_attachment_store.exists(
+                storage_key=image.storage_key,
+            ):
+                raise ValueError("Image attachment was not found.")
+
+    async def _cleanup_unreferenced_uploaded_image_attachments(
+        self,
+        *,
+        session: Session,
+    ) -> None:
+        referenced_storage_keys: set[str] = set()
+        for entry in session.entries:
+            image_attachments = getattr(entry, "image_attachments", ())
+            for attachment in image_attachments:
+                referenced_storage_keys.add(attachment.storage_key)
+
+        await self._message_attachment_store.delete_unreferenced_uploaded_image_attachments(
+            session_id=session.id,
+            referenced_storage_keys=referenced_storage_keys,
+        )
 
     def _normalize_content_type(self, content_type: str) -> str:
         return content_type.split(";", 1)[0].strip().lower()

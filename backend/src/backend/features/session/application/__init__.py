@@ -1,5 +1,6 @@
 from .conversation_service import (
     SessionConversationService,
+    SessionImageAttachmentReference,
     SessionImageAttachmentUpload,
     SessionMessageAttachment,
 )
@@ -51,6 +52,7 @@ __all__ = [
     "SessionToolCallSequenceCompleted",
     "SessionToolCallResolved",
     "SessionConversationService",
+    "SessionImageAttachmentReference",
     "SessionImageAttachmentUpload",
     "SessionMessageAttachment",
     "SessionService",

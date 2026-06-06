@@ -1,5 +1,6 @@
 import pytest
 from pydantic import ValidationError
+from uuid import uuid4
 
 from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
@@ -33,6 +34,24 @@ class TestSendMessageRequest:
         assert request.attachments[0].kind.value == "spotify-playlist"
         assert request.attachments[0].external_id == "37i9dQZF1DX4dyzvuaRJ0n"
 
+    def test_accepts_image_attachment_references(self) -> None:
+        attachment_id = uuid4()
+        request = SendMessageRequest(
+            content="analysiere das bild",
+            image_attachments=[
+                {
+                    "id": attachment_id,
+                    "storage_key": f"sessions/session-id/uploads/{attachment_id}.png",
+                    "content_type": "image/png",
+                    "file_name": "shot.png",
+                    "size_bytes": 1234,
+                }
+            ],
+        )
+
+        assert len(request.image_attachments) == 1
+        assert request.image_attachments[0].id == attachment_id
+
     def test_rejects_duplicate_attachments(self) -> None:
         with pytest.raises(ValidationError, match="Duplicate attachments"):
             SendMessageRequest(
@@ -47,6 +66,29 @@ class TestSendMessageRequest:
                         "kind": "spotify-artist",
                         "external_id": "1dfeR4HaWDbWqFHLkxsg1d",
                         "title": "Queen",
+                    },
+                ],
+            )
+
+    def test_rejects_duplicate_image_attachments(self) -> None:
+        attachment_id = uuid4()
+        with pytest.raises(ValidationError, match="Duplicate image attachments"):
+            SendMessageRequest(
+                content="duplikat",
+                image_attachments=[
+                    {
+                        "id": attachment_id,
+                        "storage_key": f"sessions/session-id/uploads/{attachment_id}.png",
+                        "content_type": "image/png",
+                        "file_name": "shot.png",
+                        "size_bytes": 1234,
+                    },
+                    {
+                        "id": attachment_id,
+                        "storage_key": f"sessions/session-id/uploads/{attachment_id}.png",
+                        "content_type": "image/png",
+                        "file_name": "shot.png",
+                        "size_bytes": 1234,
                     },
                 ],
             )
