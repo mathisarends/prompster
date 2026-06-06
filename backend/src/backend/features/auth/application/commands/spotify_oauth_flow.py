@@ -15,6 +15,7 @@ from backend.features.user.domain import (
     User,
     UserRepository,
 )
+from backend.shared.email import EmailSender
 
 if TYPE_CHECKING:
     from backend.features.oauth_connections.application.ports import (
@@ -23,6 +24,8 @@ if TYPE_CHECKING:
     from backend.features.oauth_connections.application.spotify_oauth_connection_service import (
         SpotifyOAuthConnectionService,
     )
+
+from ._welcome_email import build_welcome_email
 
 
 class SpotifyOAuthFlow:
@@ -34,11 +37,15 @@ class SpotifyOAuthFlow:
         spotify_oauth_client: SpotifyOAuthProvider,
         token_issuer: TokenIssuer,
         connection_service: SpotifyOAuthConnectionService,
+        email_sender: EmailSender,
+        send_welcome_email_on_auth_signup: bool = True,
     ) -> None:
         self._user_repository = user_repository
         self._spotify_oauth_client = spotify_oauth_client
         self._token_issuer = token_issuer
         self._connection_service = connection_service
+        self._email_sender = email_sender
+        self._send_welcome_email_on_auth_signup = send_welcome_email_on_auth_signup
 
     def login(self) -> SpotifyLoginAuthorizationRequest:
         oauth_state = secrets.token_urlsafe(self._STATE_TOKEN_BYTES)
@@ -113,6 +120,8 @@ class SpotifyOAuthFlow:
                     subject=profile.spotify_user_id,
                 ),
             )
+            if self._send_welcome_email_on_auth_signup:
+                await self._send_welcome_email(user=existing_user)
         else:
             existing_user = await self._sync_profile_image(
                 user=existing_user,
@@ -142,3 +151,6 @@ class SpotifyOAuthFlow:
 
         user.profile_image_url = profile_image_url
         return await self._user_repository.update(user=user)
+
+    async def _send_welcome_email(self, *, user: User) -> None:
+        await self._email_sender.send(build_welcome_email(user=user))

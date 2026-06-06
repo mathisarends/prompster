@@ -50,11 +50,20 @@ class SessionMessageAttachmentResponse(Schema):
     spotify_id: str | None = None
 
 
+class ImageAttachmentResponse(Schema):
+    id: UUID
+    url: str | None = None
+    content_type: str
+    file_name: str
+    size_bytes: int
+
+
 class UserMessageEntryResponse(Schema):
     kind: Literal[EntryKind.USER_MESSAGE] = EntryKind.USER_MESSAGE
     id: UUID
     content: str
     attachments: list[SessionMessageAttachmentResponse] = Field(default_factory=list)
+    image_attachments: list[ImageAttachmentResponse] = Field(default_factory=list)
     user_curation_events: list["UserCurationEventResponse"] = Field(
         default_factory=list
     )

@@ -18,6 +18,7 @@ from backend.features.user.domain import (
     User,
     UserRepository,
 )
+from backend.shared.email import EmailMessage, EmailSender
 
 
 class _UserRepositoryStub(UserRepository):
@@ -124,6 +125,14 @@ class _TokenIssuerStub(TokenIssuer):
         raise AssertionError("validate is not used in Google OAuth flow tests")
 
 
+class _EmailSenderStub(EmailSender):
+    def __init__(self) -> None:
+        self.sent_messages: list[EmailMessage] = []
+
+    async def send(self, message: EmailMessage) -> None:
+        self.sent_messages.append(message)
+
+
 class TestGoogleOAuthFlowCallback:
     def test_handle_callback_returns_invalid_credentials_for_missing_expected_state(
         self,
@@ -131,7 +140,7 @@ class TestGoogleOAuthFlowCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub()
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlow(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer, _EmailSenderStub())
 
         result = asyncio.run(
             handler.callback(
@@ -150,7 +159,7 @@ class TestGoogleOAuthFlowCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub()
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlow(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer, _EmailSenderStub())
 
         result = asyncio.run(
             handler.callback(
@@ -167,7 +176,7 @@ class TestGoogleOAuthFlowCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub(exchange_error=ValueError("invalid code"))
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlow(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer, _EmailSenderStub())
 
         result = asyncio.run(
             handler.callback(
@@ -191,7 +200,7 @@ class TestGoogleOAuthFlowCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlow(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer, _EmailSenderStub())
 
         result = asyncio.run(
             handler.callback(
@@ -219,7 +228,8 @@ class TestGoogleOAuthFlowCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(expected_session)
-        handler = GoogleOAuthFlow(repository, provider, issuer)
+        email_sender = _EmailSenderStub()
+        handler = GoogleOAuthFlow(repository, provider, issuer, email_sender)
 
         result = asyncio.run(
             handler.callback(
@@ -245,6 +255,46 @@ class TestGoogleOAuthFlowCallback:
         assert repository.created_auth_identity.subject == "google-sub-1"
         assert repository.updated_user is None
         assert issuer.received_user_id == repository.created_user.id
+        assert len(email_sender.sent_messages) == 1
+        assert email_sender.sent_messages[0].to == "newuser@example.com"
+        assert "Willkommen bei Prompster" in email_sender.sent_messages[0].subject
+
+    def test_handle_callback_does_not_send_welcome_email_when_toggle_disabled(
+        self,
+    ) -> None:
+        identity = GoogleIdentity(
+            subject="google-sub-1",
+            email="  NewUser@Example.com  ",
+            name="   ",
+            email_verified=True,
+        )
+        expected_session = AuthSession(
+            access_token="access-1", refresh_token="refresh-1"
+        )
+        repository = _UserRepositoryStub()
+        provider = _GoogleOAuthProviderStub(identity=identity)
+        issuer = _TokenIssuerStub(expected_session)
+        email_sender = _EmailSenderStub()
+        handler = GoogleOAuthFlow(
+            repository,
+            provider,
+            issuer,
+            email_sender,
+            send_welcome_email_on_auth_signup=False,
+        )
+
+        result = asyncio.run(
+            handler.callback(
+                code="code-1",
+                state="state-1",
+                error=None,
+                expected_oauth_state="state-1",
+            )
+        )
+
+        assert result == GoogleCallbackResult.success(session=expected_session)
+        assert repository.created_user is not None
+        assert email_sender.sent_messages == []
 
     def test_handle_callback_returns_invalid_credentials_for_email_identity_mismatch(
         self,
@@ -263,7 +313,7 @@ class TestGoogleOAuthFlowCallback:
         repository = _UserRepositoryStub(existing_email_user=existing_user)
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlow(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer, _EmailSenderStub())
 
         result = asyncio.run(
             handler.callback(
@@ -294,7 +344,8 @@ class TestGoogleOAuthFlowCallback:
         repository = _UserRepositoryStub(existing_identity_user=existing_user)
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(expected_session)
-        handler = GoogleOAuthFlow(repository, provider, issuer)
+        email_sender = _EmailSenderStub()
+        handler = GoogleOAuthFlow(repository, provider, issuer, email_sender)
 
         result = asyncio.run(
             handler.callback(
@@ -314,6 +365,7 @@ class TestGoogleOAuthFlowCallback:
         )
         assert repository.updated_user is None
         assert issuer.received_user_id == existing_user.id
+        assert email_sender.sent_messages == []
 
     def test_handle_callback_updates_existing_user_profile_image(self) -> None:
         existing_user = User(
@@ -334,7 +386,7 @@ class TestGoogleOAuthFlowCallback:
         repository = _UserRepositoryStub(existing_identity_user=existing_user)
         provider = _GoogleOAuthProviderStub(identity=identity)
         issuer = _TokenIssuerStub(expected_session)
-        handler = GoogleOAuthFlow(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer, _EmailSenderStub())
 
         result = asyncio.run(
             handler.callback(
@@ -359,7 +411,7 @@ class TestGoogleOAuthFlowCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub()
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlow(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer, _EmailSenderStub())
 
         result = asyncio.run(
             handler.callback(
@@ -377,7 +429,7 @@ class TestGoogleOAuthFlowCallback:
         repository = _UserRepositoryStub()
         provider = _GoogleOAuthProviderStub()
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
-        handler = GoogleOAuthFlow(repository, provider, issuer)
+        handler = GoogleOAuthFlow(repository, provider, issuer, _EmailSenderStub())
 
         result = asyncio.run(
             handler.callback(

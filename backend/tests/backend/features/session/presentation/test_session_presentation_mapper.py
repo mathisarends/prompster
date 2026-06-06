@@ -1,6 +1,10 @@
 from uuid import uuid4
 
-from backend.features.session.domain import DECIDE_FOR_ME_OPTION, Session
+from backend.features.session.domain import (
+    DECIDE_FOR_ME_OPTION,
+    ImageAttachment,
+    Session,
+)
 from backend.features.session.presentation.mapper import to_session_response
 
 
@@ -34,6 +38,32 @@ def test_to_session_response_maps_references() -> None:
     assert len(response.artist_references) == 1
     assert response.artist_references[0].id == artist_reference.id
     assert response.artist_references[0].genres == ["rock", "glam rock"]
+
+
+def test_to_session_response_maps_image_attachments_with_signed_urls() -> None:
+    owner_id = uuid4()
+    session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+    message = session.add_user_message("check this")
+    message.image_attachments = (
+        ImageAttachment(
+            id=uuid4(),
+            storage_key="sessions/a/messages/b/attachments/c.png",
+            content_type="image/png",
+            file_name="screen.png",
+            size_bytes=128,
+        ),
+    )
+
+    response = to_session_response(
+        session,
+        image_urls_by_storage_key={
+            "sessions/a/messages/b/attachments/c.png": "https://signed.example/c.png"
+        },
+    )
+
+    first_entry = response.entries[0]
+    assert first_entry.kind == "user_message"
+    assert first_entry.image_attachments[0].url == "https://signed.example/c.png"
 
 
 def test_to_session_response_maps_all_onboarding_questions_with_answers() -> None:

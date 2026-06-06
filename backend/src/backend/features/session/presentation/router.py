@@ -1,18 +1,24 @@
+import json
+from typing import Annotated
 from uuid import UUID
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, File, Form, Query, Response, UploadFile, status
 from llm import OpenAIModelName
+from pydantic import TypeAdapter, ValidationError
 from starlette.responses import StreamingResponse
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.session.application import (
+    SessionImageAttachmentUpload,
     SessionMessageAttachment,
     SessionConversationService,
     SessionService,
     SessionPlaylistExporter,
     SessionSpotifyPlaylistExporter,
 )
+from backend.features.session.application.ports import MessageAttachmentStore
+from backend.features.session.domain import Session
 from backend.features.session.presentation.mapper import (
     to_playlist_track_response,
     to_session_response,
@@ -23,7 +29,7 @@ from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
     ErrorResponse,
     PlaylistTrackResponse,
-    SendMessageRequest,
+    SessionMessageAttachmentRequest,
     SubmitOnboardingAnswerRequest,
     SessionCreateRequest,
     SessionResponse,
@@ -105,12 +111,16 @@ async def get_session_by_id(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
+    attachment_store: FromDishka[MessageAttachmentStore],
 ) -> SessionResponse:
     session = await service.get_by_id(
         session_id=session_id,
         user_id=authenticated_user_id,
     )
-    return to_session_response(session)
+    return await _to_session_response_with_signed_urls(
+        session=session,
+        attachment_store=attachment_store,
+    )
 
 
 @router.post(
@@ -124,12 +134,16 @@ async def create_session(
     authenticated_user_id: AuthenticatedUserId,
     body: SessionCreateRequest,
     service: FromDishka[SessionService],
+    attachment_store: FromDishka[MessageAttachmentStore],
 ) -> SessionResponse:
     session = await service.create(
         owner_id=authenticated_user_id,
         initial_prompt=body.initial_prompt,
     )
-    return to_session_response(session)
+    return await _to_session_response_with_signed_urls(
+        session=session,
+        attachment_store=attachment_store,
+    )
 
 
 @router.post(
@@ -146,27 +160,31 @@ async def create_session(
 async def send_message(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    body: SendMessageRequest,
+    content: Annotated[str, Form(min_length=1, max_length=4000)],
+    attachments: Annotated[list[UploadFile], File(default_factory=list)],
     service: FromDishka[SessionConversationService],
+    reference_attachments_json: Annotated[str | None, Form()] = None,
     model_id: OpenAIModelName | None = None,
 ) -> StreamingResponse:
+    reference_attachments = _parse_reference_attachments(reference_attachments_json)
+    uploaded_images: list[SessionImageAttachmentUpload] = []
+    for attachment in attachments:
+        uploaded_images.append(
+            SessionImageAttachmentUpload(
+                file_name=attachment.filename or "attachment",
+                content_type=attachment.content_type or "application/octet-stream",
+                content=await attachment.read(),
+            )
+        )
+
     return stream_session_events(
         service.send_message(
             session_id=session_id,
             user_id=authenticated_user_id,
-            content=body.content,
+            content=content,
             model_id=model_id,
-            attachments=[
-                SessionMessageAttachment(
-                    kind=attachment.kind,
-                    external_id=attachment.external_id,
-                    title=attachment.title,
-                    subtitle=attachment.subtitle,
-                    image_url=attachment.image_url,
-                    spotify_id=attachment.spotify_id,
-                )
-                for attachment in body.attachments
-            ],
+            attachments=reference_attachments,
+            image_attachments=uploaded_images,
         )
     )
 
@@ -183,6 +201,7 @@ async def submit_onboarding_answer(
     authenticated_user_id: AuthenticatedUserId,
     body: SubmitOnboardingAnswerRequest,
     service: FromDishka[SessionConversationService],
+    attachment_store: FromDishka[MessageAttachmentStore],
 ) -> SessionResponse:
     session = await service.submit_onboarding_answer(
         session_id=session_id,
@@ -191,7 +210,10 @@ async def submit_onboarding_answer(
         answer=body.answer,
         answers=body.answers,
     )
-    return to_session_response(session)
+    return await _to_session_response_with_signed_urls(
+        session=session,
+        attachment_store=attachment_store,
+    )
 
 
 @router.post(
@@ -291,13 +313,17 @@ async def restore_session_user_curation_event(
     event_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
+    attachment_store: FromDishka[MessageAttachmentStore],
 ) -> SessionResponse:
     session = await service.restore_user_curation_event(
         session_id=session_id,
         user_id=authenticated_user_id,
         event_id=event_id,
     )
-    return to_session_response(session)
+    return await _to_session_response_with_signed_urls(
+        session=session,
+        attachment_store=attachment_store,
+    )
 
 
 @router.get(
@@ -357,13 +383,17 @@ async def update_session(
     authenticated_user_id: AuthenticatedUserId,
     body: SessionUpdateRequest,
     service: FromDishka[SessionService],
+    attachment_store: FromDishka[MessageAttachmentStore],
 ) -> SessionResponse:
     session = await service.update(
         session_id=session_id,
         user_id=authenticated_user_id,
         title=body.title,
     )
-    return to_session_response(session)
+    return await _to_session_response_with_signed_urls(
+        session=session,
+        attachment_store=attachment_store,
+    )
 
 
 @router.post(
@@ -377,12 +407,16 @@ async def star_session(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
+    attachment_store: FromDishka[MessageAttachmentStore],
 ) -> SessionResponse:
     session = await service.star(
         session_id=session_id,
         user_id=authenticated_user_id,
     )
-    return to_session_response(session)
+    return await _to_session_response_with_signed_urls(
+        session=session,
+        attachment_store=attachment_store,
+    )
 
 
 @router.post(
@@ -396,12 +430,16 @@ async def unstar_session(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
+    attachment_store: FromDishka[MessageAttachmentStore],
 ) -> SessionResponse:
     session = await service.unstar(
         session_id=session_id,
         user_id=authenticated_user_id,
     )
-    return to_session_response(session)
+    return await _to_session_response_with_signed_urls(
+        session=session,
+        attachment_store=attachment_store,
+    )
 
 
 @router.delete(
@@ -417,3 +455,64 @@ async def delete_session(
 ) -> Response:
     await service.delete(session_id=session_id, user_id=authenticated_user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+async def _to_session_response_with_signed_urls(
+    *,
+    session: Session,
+    attachment_store: MessageAttachmentStore,
+) -> SessionResponse:
+    image_urls_by_storage_key = await _build_image_urls_by_storage_key(
+        session=session,
+        attachment_store=attachment_store,
+    )
+    return to_session_response(
+        session,
+        image_urls_by_storage_key=image_urls_by_storage_key,
+    )
+
+
+def _parse_reference_attachments(
+    payload: str | None,
+) -> list[SessionMessageAttachment]:
+    if payload is None or not payload.strip():
+        return []
+
+    try:
+        parsed = TypeAdapter(list[SessionMessageAttachmentRequest]).validate_python(
+            json.loads(payload)
+        )
+    except (json.JSONDecodeError, ValidationError) as exc:
+        raise ValueError("Invalid reference_attachments_json payload.") from exc
+
+    return [
+        SessionMessageAttachment(
+            kind=attachment.kind,
+            external_id=attachment.external_id,
+            title=attachment.title,
+            subtitle=attachment.subtitle,
+            image_url=attachment.image_url,
+            spotify_id=attachment.spotify_id,
+        )
+        for attachment in parsed
+    ]
+
+
+async def _build_image_urls_by_storage_key(
+    *,
+    session: Session,
+    attachment_store: MessageAttachmentStore,
+) -> dict[str, str]:
+    storage_keys: set[str] = set()
+    for entry in session.entries:
+        image_attachments = getattr(entry, "image_attachments", ())
+        for attachment in image_attachments:
+            storage_keys.add(attachment.storage_key)
+
+    urls: dict[str, str] = {}
+    for storage_key in storage_keys:
+        urls[storage_key] = await attachment_store.create_signed_url(
+            storage_key=storage_key,
+            expires_in_seconds=900,
+        )
+    return urls

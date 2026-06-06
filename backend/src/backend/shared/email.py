@@ -7,7 +7,7 @@ class EmailMessage:
     to: str
     subject: str
     html: str
-    from_email: str = "noreply@yourdomain.com"
+    from_email: str | None = None
 
 
 class EmailSender(ABC):

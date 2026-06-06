@@ -69,11 +69,30 @@ class UserMessageAttachment:
         self.spotify_id = spotify_id
 
 
+class ImageAttachment(Entity):
+    def __init__(
+        self,
+        *,
+        storage_key: str,
+        content_type: str,
+        file_name: str,
+        size_bytes: int,
+        id: UUID | None = None,
+        created_time: datetime | None = None,
+    ) -> None:
+        super().__init__(id=id, created_time=created_time)
+        self.storage_key = storage_key
+        self.content_type = content_type
+        self.file_name = file_name
+        self.size_bytes = size_bytes
+
+
 class UserMessage(Entity):
     def __init__(
         self,
         content: str,
         attachments: list[UserMessageAttachment] | None = None,
+        image_attachments: list[ImageAttachment] | None = None,
         user_curation_events: list[UserCurationEvent] | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
@@ -81,6 +100,7 @@ class UserMessage(Entity):
         super().__init__(id=id, created_time=created_time)
         self.content = content
         self.attachments = tuple(attachments or [])
+        self.image_attachments = tuple(image_attachments or [])
         self.user_curation_events = tuple(user_curation_events or [])
 
 

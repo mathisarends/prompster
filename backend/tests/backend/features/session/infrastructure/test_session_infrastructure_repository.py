@@ -3,6 +3,7 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 from backend.features.session.domain import (
+    ImageAttachment,
     OnboardingQuestionSelectionMode,
     PendingCall,
     Phase,
@@ -25,6 +26,7 @@ from backend.infrastructure.database.orm import (
     SessionModel,
     SessionPlaylistReferenceModel,
     SessionUserMessageAttachmentModel,
+    SessionUserMessageImageAttachmentModel,
     SessionUserMessageModel,
 )
 
@@ -124,6 +126,72 @@ def test_user_message_attachment_mapping_roundtrip() -> None:
         domain_message.attachments[0].kind == UserMessageAttachmentKind.SPOTIFY_PLAYLIST
     )
     assert domain_message.attachments[0].title == "Lo-Fi Beats"
+
+
+def test_user_message_image_attachment_mapping_roundtrip() -> None:
+    owner_id = uuid4()
+    session_id = uuid4()
+    message_id = uuid4()
+    image_attachment_id = uuid4()
+
+    session = Session(title="Roadtrip", entries=[], owner_id=owner_id, id=session_id)
+    session.add_user_message(
+        "analysiere den screenshot",
+        image_attachments=[
+            ImageAttachment(
+                id=image_attachment_id,
+                storage_key=(
+                    f"sessions/abc/messages/def/attachments/{image_attachment_id}.png"
+                ),
+                content_type="image/png",
+                file_name="screenshot.png",
+                size_bytes=2048,
+            )
+        ],
+    )
+    message = session.entries[0]
+    assert isinstance(message, UserMessage)
+    message.id = message_id
+
+    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    orm_message = repository._to_orm_user_message(
+        message=message,
+        session_id=session_id,
+        position=0,
+    )
+
+    assert len(orm_message.image_attachments) == 1
+    assert orm_message.image_attachments[0].storage_key.endswith(".png")
+    assert orm_message.image_attachments[0].content_type == "image/png"
+
+    domain_message = repository._to_domain_user_message(
+        SessionUserMessageModel(
+            id=message_id,
+            session_id=session_id,
+            position=0,
+            content="analysiere den screenshot",
+            created_at=message.created_at,
+            attachments=[],
+            image_attachments=[
+                SessionUserMessageImageAttachmentModel(
+                    id=image_attachment_id,
+                    user_message_id=message_id,
+                    storage_key=(
+                        "sessions/abc/messages/def/attachments/"
+                        f"{image_attachment_id}.png"
+                    ),
+                    content_type="image/png",
+                    file_name="screenshot.png",
+                    size_bytes=2048,
+                    created_at=message.created_at,
+                )
+            ],
+        )
+    )
+
+    assert len(domain_message.image_attachments) == 1
+    assert domain_message.image_attachments[0].file_name == "screenshot.png"
+    assert domain_message.image_attachments[0].size_bytes == 2048
 
 
 def test_playlist_track_mapping_preserves_lock_state() -> None:

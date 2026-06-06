@@ -172,6 +172,13 @@ class SessionUserMessageModel(DatabaseEntity, table=True):
             "order_by": "SessionUserMessageAttachmentModel.position",
         },
     )
+    image_attachments: list["SessionUserMessageImageAttachmentModel"] = Relationship(
+        back_populates="user_message",
+        sa_relationship_kwargs={
+            "cascade": "all, delete-orphan",
+            "order_by": "SessionUserMessageImageAttachmentModel.created_at",
+        },
+    )
 
 
 class SessionUserMessageAttachmentModel(DatabaseEntity, table=True):
@@ -194,6 +201,32 @@ class SessionUserMessageAttachmentModel(DatabaseEntity, table=True):
     spotify_id: str | None = Field(default=None, max_length=128)
 
     user_message: SessionUserMessageModel = Relationship(back_populates="attachments")
+
+
+class SessionUserMessageImageAttachmentModel(DatabaseEntity, table=True):
+    __tablename__ = "session_user_message_image_attachments"
+    __table_args__ = (
+        Index(
+            "ix_session_user_message_image_attachments_user_message_id",
+            "user_message_id",
+        ),
+    )
+
+    user_message_id: UUID = Field(
+        sa_column=Column(
+            ForeignKey("session_user_messages.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        )
+    )
+    storage_key: str
+    content_type: str = Field(max_length=128)
+    file_name: str
+    size_bytes: int
+
+    user_message: SessionUserMessageModel = Relationship(
+        back_populates="image_attachments"
+    )
 
 
 class SessionAssistantMessageModel(DatabaseEntity, table=True):

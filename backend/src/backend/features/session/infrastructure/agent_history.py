@@ -1,15 +1,21 @@
 import json
+from base64 import b64encode
 from uuid import UUID
 
 from agent import UserEvent
 from agent.messages import render_user_message_content
-from llmify.messages import (
+from llmify import (
     AssistantMessage as LLMAssistantMessage,
+    ContentPartImageParam,
+    ContentPartTextParam,
+    ImageURL,
     Message as LLMMessage,
     ToolCall as LLMToolCall,
     ToolResultMessage as LLMToolResultMessage,
     UserMessage as LLMUserMessage,
 )
+
+from backend.features.session.application.ports import MessageAttachmentStore
 
 from backend.features.session.domain import (
     AssistantMessage,
@@ -32,14 +38,17 @@ class AgentHistoryBuilder:
     on every run.
     """
 
-    def build(self, *, session: Session) -> list[LLMMessage]:
+    def __init__(self, message_attachment_store: MessageAttachmentStore) -> None:
+        self._message_attachment_store = message_attachment_store
+
+    async def build(self, *, session: Session) -> list[LLMMessage]:
         bound_event_ids: set[UUID] = set()
         messages: list[LLMMessage] = []
         for entry in session.entries:
             if isinstance(entry, UserMessage):
                 for event in entry.user_curation_events:
                     bound_event_ids.add(event.id)
-                messages.append(self._to_user_message(entry))
+                messages.append(await self._to_user_message(entry))
             elif isinstance(entry, AssistantMessage):
                 messages.append(LLMAssistantMessage(content=entry.content))
             elif isinstance(entry, ToolCallSequence):
@@ -57,13 +66,31 @@ class AgentHistoryBuilder:
 
         return messages
 
-    def _to_user_message(self, message: UserMessage) -> LLMUserMessage:
-        return LLMUserMessage(
-            content=render_user_message_content(
-                self._to_user_message_content(message),
-                self._to_user_events_for_message(message=message),
-            )
+    async def _to_user_message(self, message: UserMessage) -> LLMUserMessage:
+        rendered_text = render_user_message_content(
+            self._to_user_message_content(message),
+            self._to_user_events_for_message(message=message),
         )
+        if not message.image_attachments:
+            return LLMUserMessage(content=rendered_text)
+
+        content = [ContentPartTextParam(text=rendered_text or " ")]
+        for attachment in message.image_attachments:
+            image_bytes = await self._message_attachment_store.load_bytes(
+                storage_key=attachment.storage_key
+            )
+            encoded = b64encode(image_bytes).decode("ascii")
+            content.append(
+                ContentPartImageParam(
+                    image_url=ImageURL(
+                        url=(f"data:{attachment.content_type};base64,{encoded}"),
+                        media_type=attachment.content_type,
+                        detail="auto",
+                    )
+                )
+            )
+
+        return LLMUserMessage(content=content)
 
     def _to_tool_call_messages(self, sequence: ToolCallSequence) -> list[LLMMessage]:
         messages: list[LLMMessage] = []

@@ -1,0 +1,72 @@
+from pathlib import PurePosixPath
+from uuid import UUID
+
+from backend.features.session.application.ports import (
+    MessageAttachmentStore,
+    StoredAttachment,
+)
+from backend.infrastructure.storage import StorageBackend
+
+
+class StorageMessageAttachmentStore(MessageAttachmentStore):
+    def __init__(self, storage_backend: StorageBackend) -> None:
+        self._storage_backend = storage_backend
+
+    async def save_image_attachment(
+        self,
+        *,
+        session_id: UUID,
+        message_id: UUID,
+        attachment_id: UUID,
+        file_name: str,
+        content_type: str,
+        content: bytes,
+    ) -> StoredAttachment:
+        ext = _resolve_extension(file_name=file_name, content_type=content_type)
+        storage_key = f"sessions/{session_id}/messages/{message_id}/attachments/{attachment_id}.{ext}"
+        normalized_file_name = file_name.strip() or f"attachment.{ext}"
+        await self._storage_backend.upload_bytes(
+            path=storage_key,
+            data=content,
+            content_type=content_type,
+        )
+        return StoredAttachment(
+            storage_key=storage_key,
+            content_type=content_type,
+            file_name=normalized_file_name,
+            size_bytes=len(content),
+        )
+
+    async def load_bytes(self, *, storage_key: str) -> bytes:
+        return await self._storage_backend.download_bytes(path=storage_key)
+
+    async def create_signed_url(
+        self,
+        *,
+        storage_key: str,
+        expires_in_seconds: int,
+    ) -> str:
+        return await self._storage_backend.create_signed_url(
+            path=storage_key,
+            ttl_seconds=expires_in_seconds,
+        )
+
+    async def delete_session_attachments(self, *, session_id: UUID) -> None:
+        await self._storage_backend.delete_folder(path=f"sessions/{session_id}/")
+
+
+_CONTENT_TYPE_TO_EXTENSION = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+}
+
+
+def _resolve_extension(*, file_name: str, content_type: str) -> str:
+    inferred = _CONTENT_TYPE_TO_EXTENSION.get(content_type.lower())
+    if inferred is not None:
+        return inferred
+    suffix = PurePosixPath(file_name).suffix.strip().lstrip(".").lower()
+    if suffix:
+        return "".join(ch for ch in suffix if ch.isalnum()) or "bin"
+    return "bin"

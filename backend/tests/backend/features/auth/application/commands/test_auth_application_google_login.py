@@ -20,6 +20,7 @@ from backend.features.user.domain import (
     User,
     UserRepository,
 )
+from backend.shared.email import EmailMessage, EmailSender
 
 
 class _UserRepositoryStub(UserRepository):
@@ -86,6 +87,11 @@ class _GoogleOAuthProviderStub(GoogleOAuthProvider):
         raise AssertionError("Google login must not exchange an authorization code")
 
 
+class _EmailSenderStub(EmailSender):
+    async def send(self, message: EmailMessage) -> None:
+        raise AssertionError("Google login must not send emails")
+
+
 class TestGoogleOAuthFlowLogin:
     def test_handle_login_generates_oauth_state_and_builds_authorization_request(
         self,
@@ -97,6 +103,7 @@ class TestGoogleOAuthFlowLogin:
             user_repository=_UserRepositoryStub(),
             google_oauth_provider=provider,
             token_issuer=_TokenIssuerStub(),
+            email_sender=_EmailSenderStub(),
         )
 
         result = handler.login()

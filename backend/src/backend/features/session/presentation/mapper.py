@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+
 from backend.features.session.application import ExportedSpotifyPlaylist
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
@@ -7,6 +9,7 @@ from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
     FailedCall,
+    ImageAttachment,
     OnboardingQuestion,
     PendingCall,
     Playlist,
@@ -36,19 +39,30 @@ from backend.features.session.presentation.schemas import (
     ToolCallState,
     ToolFunctionResponse,
     SessionMessageAttachmentResponse,
+    ImageAttachmentResponse,
     UserCurationEventResponse,
     UserMessageEntryResponse,
 )
 
 
-def to_session_response(session: Session) -> SessionResponse:
+def to_session_response(
+    session: Session,
+    *,
+    image_urls_by_storage_key: Mapping[str, str] | None = None,
+) -> SessionResponse:
     return SessionResponse(
         id=session.id,
         title=session.title,
         is_starred=session.is_starred,
         phase=session.phase,
         created_at=session.created_at,
-        entries=[to_entry_response(entry) for entry in session.entries],
+        entries=[
+            to_entry_response(
+                entry,
+                image_urls_by_storage_key=image_urls_by_storage_key,
+            )
+            for entry in session.entries
+        ],
         playlist=to_playlist_response(session.playlist),
         playlist_references=[
             to_playlist_reference_response(reference)
@@ -69,7 +83,11 @@ def to_session_response(session: Session) -> SessionResponse:
     )
 
 
-def to_entry_response(entry: SessionEntry) -> SessionEntryResponse:
+def to_entry_response(
+    entry: SessionEntry,
+    *,
+    image_urls_by_storage_key: Mapping[str, str] | None = None,
+) -> SessionEntryResponse:
     if isinstance(entry, UserMessage):
         return UserMessageEntryResponse(
             id=entry.id,
@@ -77,6 +95,13 @@ def to_entry_response(entry: SessionEntry) -> SessionEntryResponse:
             attachments=[
                 to_user_message_attachment_response(attachment)
                 for attachment in entry.attachments
+            ],
+            image_attachments=[
+                to_image_attachment_response(
+                    attachment,
+                    image_urls_by_storage_key=image_urls_by_storage_key,
+                )
+                for attachment in entry.image_attachments
             ],
             user_curation_events=[
                 to_user_curation_event_response(event)
@@ -210,6 +235,20 @@ def to_user_message_attachment_response(
         subtitle=attachment.subtitle,
         image_url=attachment.image_url,
         spotify_id=attachment.spotify_id,
+    )
+
+
+def to_image_attachment_response(
+    attachment: ImageAttachment,
+    *,
+    image_urls_by_storage_key: Mapping[str, str] | None = None,
+) -> ImageAttachmentResponse:
+    return ImageAttachmentResponse(
+        id=attachment.id,
+        url=(image_urls_by_storage_key or {}).get(attachment.storage_key),
+        content_type=attachment.content_type,
+        file_name=attachment.file_name,
+        size_bytes=attachment.size_bytes,
     )
 
 

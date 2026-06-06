@@ -13,6 +13,9 @@ from backend.features.user.domain import (
     User,
     UserRepository,
 )
+from backend.shared.email import EmailSender
+
+from ._welcome_email import build_welcome_email
 
 
 class GoogleOAuthFlow:
@@ -23,10 +26,14 @@ class GoogleOAuthFlow:
         user_repository: UserRepository,
         google_oauth_provider: GoogleOAuthProvider,
         token_issuer: TokenIssuer,
+        email_sender: EmailSender,
+        send_welcome_email_on_auth_signup: bool = True,
     ) -> None:
         self._user_repository = user_repository
         self._google_oauth_provider = google_oauth_provider
         self._token_issuer = token_issuer
+        self._email_sender = email_sender
+        self._send_welcome_email_on_auth_signup = send_welcome_email_on_auth_signup
 
     def login(self) -> GoogleAuthorizationRequest:
         oauth_state = secrets.token_urlsafe(self._STATE_TOKEN_BYTES)
@@ -120,6 +127,8 @@ class GoogleOAuthFlow:
                     subject=identity.subject,
                 ),
             )
+            if self._send_welcome_email_on_auth_signup:
+                await self._send_welcome_email(user=existing_user)
         else:
             existing_user = await self._sync_profile_image(
                 user=existing_user,
@@ -139,3 +148,6 @@ class GoogleOAuthFlow:
 
         user.profile_image_url = profile_image_url
         return await self._user_repository.update(user=user)
+
+    async def _send_welcome_email(self, *, user: User) -> None:
+        await self._email_sender.send(build_welcome_email(user=user))

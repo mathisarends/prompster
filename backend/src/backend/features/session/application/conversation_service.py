@@ -2,6 +2,8 @@ import asyncio
 import logging
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from uuid import uuid4
 from uuid import UUID
 
 from backend.features.session.application.events import (
@@ -41,8 +43,10 @@ from backend.features.session.application.ports.session_runner import (
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
+from backend.features.session.application.ports import MessageAttachmentStore
 from backend.features.session.domain import (
     AssistantMessage,
+    ImageAttachment,
     NoPendingToolCallSequenceError,
     Session,
     SessionRepository,
@@ -54,6 +58,10 @@ from backend.features.user.application import UserMessageRateLimitService
 
 logger = logging.getLogger(__name__)
 
+_ALLOWED_IMAGE_CONTENT_TYPES = frozenset({"image/png", "image/jpeg", "image/webp"})
+_MAX_IMAGE_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024
+_MAX_IMAGE_ATTACHMENTS_PER_MESSAGE = 5
+
 
 @dataclass(frozen=True)
 class SessionMessageAttachment:
@@ -63,6 +71,13 @@ class SessionMessageAttachment:
     subtitle: str | None = None
     image_url: str | None = None
     spotify_id: str | None = None
+
+
+@dataclass(frozen=True)
+class SessionImageAttachmentUpload:
+    file_name: str
+    content_type: str
+    content: bytes
 
 
 @dataclass(frozen=True)
@@ -86,11 +101,13 @@ class SessionConversationService:
         self,
         session_repository: SessionRepository,
         runner: SessionRunner,
+        message_attachment_store: MessageAttachmentStore,
         user_message_rate_limit_service: UserMessageRateLimitService,
         title_generator: SessionTitleGenerator,
     ) -> None:
         self._session_repository = session_repository
         self._runner = runner
+        self._message_attachment_store = message_attachment_store
         self._user_message_rate_limit_service = user_message_rate_limit_service
         self._title_generator = title_generator
 
@@ -101,13 +118,23 @@ class SessionConversationService:
         user_id: UUID,
         content: str,
         attachments: list[SessionMessageAttachment] | None = None,
+        image_attachments: list[SessionImageAttachmentUpload] | None = None,
         model_id: str | None = None,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         await self._user_message_rate_limit_service.consume(user_id=user_id)
+
+        message_id = uuid4()
+        stored_images = await self._store_image_attachments(
+            session_id=session.id,
+            message_id=message_id,
+            image_attachments=image_attachments or [],
+        )
         session.add_user_message(
             content=content,
+            message_id=message_id,
             attachments=self._to_user_message_attachments(attachments or []),
+            image_attachments=stored_images,
         )
         title_task = self._maybe_start_title_generation(
             session=session,
@@ -293,6 +320,64 @@ class SessionConversationService:
             )
             for attachment in attachments
         ]
+
+    async def _store_image_attachments(
+        self,
+        *,
+        session_id: UUID,
+        message_id: UUID,
+        image_attachments: list[SessionImageAttachmentUpload],
+    ) -> list[ImageAttachment]:
+        self._validate_image_attachments(image_attachments=image_attachments)
+        created_at = datetime.now(timezone.utc)
+        result: list[ImageAttachment] = []
+
+        for image in image_attachments:
+            attachment_id = uuid4()
+            normalized_content_type = self._normalize_content_type(image.content_type)
+            stored = await self._message_attachment_store.save_image_attachment(
+                session_id=session_id,
+                message_id=message_id,
+                attachment_id=attachment_id,
+                file_name=image.file_name,
+                content_type=normalized_content_type,
+                content=image.content,
+            )
+            result.append(
+                ImageAttachment(
+                    id=attachment_id,
+                    storage_key=stored.storage_key,
+                    content_type=stored.content_type,
+                    file_name=stored.file_name,
+                    size_bytes=stored.size_bytes,
+                    created_time=created_at,
+                )
+            )
+
+        return result
+
+    def _validate_image_attachments(
+        self,
+        *,
+        image_attachments: list[SessionImageAttachmentUpload],
+    ) -> None:
+        if len(image_attachments) > _MAX_IMAGE_ATTACHMENTS_PER_MESSAGE:
+            raise ValueError(
+                f"A maximum of {_MAX_IMAGE_ATTACHMENTS_PER_MESSAGE} images is allowed per message."
+            )
+
+        for image in image_attachments:
+            content_type = self._normalize_content_type(image.content_type)
+            if content_type not in _ALLOWED_IMAGE_CONTENT_TYPES:
+                raise ValueError(f"Unsupported image content type: {content_type}.")
+            if len(image.content) > _MAX_IMAGE_ATTACHMENT_SIZE_BYTES:
+                raise ValueError(
+                    f"Image '{image.file_name}' exceeds the maximum allowed size of "
+                    f"{_MAX_IMAGE_ATTACHMENT_SIZE_BYTES // (1024 * 1024)} MB."
+                )
+
+    def _normalize_content_type(self, content_type: str) -> str:
+        return content_type.split(";", 1)[0].strip().lower()
 
     async def _get_authorized(self, *, session_id: UUID, user_id: UUID) -> Session:
         session = await self._session_repository.get_by_id(session_id=session_id)

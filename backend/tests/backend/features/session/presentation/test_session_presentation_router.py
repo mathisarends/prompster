@@ -10,6 +10,10 @@ from backend.features.session.application import (
     SessionConversationService,
     SessionService,
 )
+from backend.features.session.application.ports import (
+    MessageAttachmentStore,
+    StoredAttachment,
+)
 from backend.features.session.domain import (
     Session,
     UserCurationEvent,
@@ -94,6 +98,39 @@ class _SessionConversationServiceStub:
             yield
 
 
+class _MessageAttachmentStoreStub(MessageAttachmentStore):
+    async def save_image_attachment(
+        self,
+        *,
+        session_id,
+        message_id,
+        attachment_id,
+        file_name,
+        content_type,
+        content,
+    ) -> StoredAttachment:
+        return StoredAttachment(
+            storage_key=f"sessions/{session_id}/{attachment_id}",
+            content_type=content_type,
+            file_name=file_name,
+            size_bytes=len(content),
+        )
+
+    async def load_bytes(self, *, storage_key: str) -> bytes:
+        return b""
+
+    async def create_signed_url(
+        self,
+        *,
+        storage_key: str,
+        expires_in_seconds: int,
+    ) -> str:
+        return f"https://example.com/{storage_key}"
+
+    async def delete_session_attachments(self, *, session_id) -> None:
+        return None
+
+
 async def _collect_stream_body(response) -> list[str]:
     return [chunk async for chunk in response.body_iterator]
 
@@ -134,6 +171,9 @@ class TestGetSessionByIdRoute:
                 session_id=session_id,
                 authenticated_user_id=user_id,
                 service=cast(SessionService, service),
+                attachment_store=cast(
+                    MessageAttachmentStore, _MessageAttachmentStoreStub()
+                ),
             )
         )
 
@@ -172,6 +212,9 @@ class TestRestoreUserCurationEventRoute:
                 event_id=event.id,
                 authenticated_user_id=user_id,
                 service=cast(SessionService, service),
+                attachment_store=cast(
+                    MessageAttachmentStore, _MessageAttachmentStoreStub()
+                ),
             )
         )
 
@@ -218,6 +261,9 @@ class TestSubmitOnboardingAnswerRoute:
                     answer="Freunde",
                 ),
                 service=cast(SessionConversationService, service),
+                attachment_store=cast(
+                    MessageAttachmentStore, _MessageAttachmentStoreStub()
+                ),
             )
         )
 

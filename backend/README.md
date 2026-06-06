@@ -44,4 +44,4 @@ GET  /api/v1/sessions/{id}/export → streams a PDF deck
 uv run backend        # starts uvicorn on the configured port
 ```
 
-Requires environment variables defined in `backend/src/backend/env.py` (database URL, JWT secret, OAuth credentials, S3 config, etc.).
+Requires environment variables defined in settings modules (database URL, JWT secret, OAuth credentials, S3 config, `RESEND_API_KEY`, etc.).

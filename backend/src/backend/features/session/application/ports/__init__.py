@@ -1,4 +1,5 @@
 from .playlist_deck_generator import PlaylistDeckGenerator, PlaylistDeckTrack
+from .message_attachment_store import MessageAttachmentStore, StoredAttachment
 from .playlist_metadata_generator import (
     PlaylistMetadata,
     PlaylistMetadataGenerator,
@@ -24,6 +25,7 @@ from .session_summary_query import SessionSummary, SessionSummaryQuery
 from .title_generator import SessionTitleGenerator
 
 __all__ = [
+    "MessageAttachmentStore",
     "PlaylistDeckGenerator",
     "PlaylistDeckTrack",
     "PlaylistMetadata",
@@ -46,4 +48,5 @@ __all__ = [
     "SessionSummary",
     "SessionSummaryQuery",
     "SessionTitleGenerator",
+    "StoredAttachment",
 ]

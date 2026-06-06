@@ -42,11 +42,16 @@ from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
     SessionSummaryQuery,
 )
+from backend.features.session.application.ports.message_attachment_store import (
+    MessageAttachmentStore,
+    StoredAttachment,
+)
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
 from backend.features.session.application.conversation_service import (
     SessionConversationService,
+    SessionImageAttachmentUpload,
 )
 from backend.features.session.application.session_service import (
     SessionService,
@@ -142,6 +147,55 @@ class _SessionSummaryQueryStub(SessionSummaryQuery):
         return self._summaries
 
 
+class _MessageAttachmentStoreStub(MessageAttachmentStore):
+    def __init__(self) -> None:
+        self.deleted_session_ids: list[UUID] = []
+        self.saved_payloads: list[tuple[UUID, UUID, UUID, str, str, bytes]] = []
+
+    async def save_image_attachment(
+        self,
+        *,
+        session_id: UUID,
+        message_id: UUID,
+        attachment_id: UUID,
+        file_name: str,
+        content_type: str,
+        content: bytes,
+    ) -> StoredAttachment:
+        self.saved_payloads.append(
+            (
+                session_id,
+                message_id,
+                attachment_id,
+                file_name,
+                content_type,
+                content,
+            )
+        )
+        return StoredAttachment(
+            storage_key=(
+                f"sessions/{session_id}/messages/{message_id}/attachments/{attachment_id}.png"
+            ),
+            content_type=content_type,
+            file_name=file_name,
+            size_bytes=len(content),
+        )
+
+    async def load_bytes(self, *, storage_key: str) -> bytes:
+        return b""
+
+    async def create_signed_url(
+        self,
+        *,
+        storage_key: str,
+        expires_in_seconds: int,
+    ) -> str:
+        return f"https://example.com/{storage_key}"
+
+    async def delete_session_attachments(self, *, session_id: UUID) -> None:
+        self.deleted_session_ids.append(session_id)
+
+
 class _SessionTitleGeneratorStub(SessionTitleGenerator):
     def __init__(
         self,
@@ -211,10 +265,13 @@ def _make_management_service(
     *,
     repository: _SessionRepositoryStub | None = None,
     summary_query: _SessionSummaryQueryStub | None = None,
+    message_attachment_store: _MessageAttachmentStoreStub | None = None,
 ) -> SessionService:
     return SessionService(
         session_repository=repository or _SessionRepositoryStub(),
         session_summary_query=summary_query or _SessionSummaryQueryStub(summaries=[]),
+        message_attachment_store=message_attachment_store
+        or _MessageAttachmentStoreStub(),
     )
 
 
@@ -222,12 +279,15 @@ def _make_conversation_service(
     *,
     repository: _SessionRepositoryStub | None = None,
     runner: _SessionRunnerStub | None = None,
+    message_attachment_store: _MessageAttachmentStoreStub | None = None,
     quota_service: _UserMessageQuotaServiceStub | None = None,
     title_generator: _SessionTitleGeneratorStub | None = None,
 ) -> SessionConversationService:
     return SessionConversationService(
         session_repository=repository or _SessionRepositoryStub(),
         runner=runner or _SessionRunnerStub(),
+        message_attachment_store=message_attachment_store
+        or _MessageAttachmentStoreStub(),
         user_message_rate_limit_service=quota_service or _UserMessageQuotaServiceStub(),
         title_generator=title_generator or _SessionTitleGeneratorStub(),
     )
@@ -309,11 +369,16 @@ class TestSessionServiceDelete:
         owner_id = uuid4()
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_management_service(repository=repository)
+        attachment_store = _MessageAttachmentStoreStub()
+        service = _make_management_service(
+            repository=repository,
+            message_attachment_store=attachment_store,
+        )
 
         asyncio.run(service.delete(session_id=session.id, user_id=owner_id))
 
         assert repository.deleted_session_id == session.id
+        assert attachment_store.deleted_session_ids == [session.id]
 
     def test_raises_when_user_does_not_own_session(self) -> None:
         session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
@@ -514,6 +579,65 @@ class TestSessionServiceSendMessage:
         )
 
         assert runner.ran_model_ids == ["gpt-5.4"]
+
+    def test_stores_image_attachments_on_send_message(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        repository = _SessionRepositoryStub(session_by_id=session)
+        attachment_store = _MessageAttachmentStoreStub()
+        service = _make_conversation_service(
+            repository=repository,
+            message_attachment_store=attachment_store,
+        )
+
+        asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="analysiere den screenshot",
+                    image_attachments=[
+                        SessionImageAttachmentUpload(
+                            file_name="shot.png",
+                            content_type="image/png",
+                            content=b"1234",
+                        )
+                    ],
+                )
+            )
+        )
+
+        message = next(
+            entry for entry in session.entries if isinstance(entry, UserMessage)
+        )
+        assert len(message.image_attachments) == 1
+        assert message.image_attachments[0].content_type == "image/png"
+        assert len(attachment_store.saved_payloads) == 1
+
+    def test_rejects_invalid_image_content_type(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        service = _make_conversation_service(
+            repository=_SessionRepositoryStub(session_by_id=session),
+        )
+
+        with pytest.raises(ValueError, match="Unsupported image content type"):
+            asyncio.run(
+                _collect_events(
+                    service.send_message(
+                        session_id=session.id,
+                        user_id=owner_id,
+                        content="analysiere den screenshot",
+                        image_attachments=[
+                            SessionImageAttachmentUpload(
+                                file_name="shot.gif",
+                                content_type="image/gif",
+                                content=b"1234",
+                            )
+                        ],
+                    )
+                )
+            )
 
     def test_generates_title_for_untitled_session_during_message_stream(self) -> None:
         owner_id = uuid4()

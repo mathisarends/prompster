@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from backend.features.session.domain import (
     AssistantMessage,
+    ImageAttachment,
     UserCurationEvent,
     UserCurationEventType,
     UserMessage,
@@ -55,6 +56,19 @@ class TestUserMessage:
 
         assert len(message.user_curation_events) == 1
         assert message.user_curation_events[0] is event
+
+    def test_keeps_image_attachment_references(self) -> None:
+        image = ImageAttachment(
+            storage_key="sessions/abc/messages/def/attachments/ghi.png",
+            content_type="image/png",
+            file_name="screenshot.png",
+            size_bytes=1024,
+        )
+
+        message = UserMessage(content="check this", image_attachments=[image])
+
+        assert len(message.image_attachments) == 1
+        assert message.image_attachments[0].storage_key.endswith("ghi.png")
 
 
 class TestAssistantMessage:

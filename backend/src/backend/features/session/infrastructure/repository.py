@@ -29,6 +29,7 @@ from backend.features.session.domain import (
     UserMessage,
     UserMessageAttachment,
     UserMessageAttachmentKind,
+    ImageAttachment,
 )
 from backend.infrastructure.database.orm import (
     PlaylistTrackModel,
@@ -43,6 +44,7 @@ from backend.infrastructure.database.orm import (
     SessionUserCurationEventModel,
     SessionUserMessageModel,
     SessionUserMessageAttachmentModel,
+    SessionUserMessageImageAttachmentModel,
 )
 from backend.infrastructure.database.repository import Repository
 
@@ -340,6 +342,9 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm_message.created_at = message.created_at
 
         existing_attachments = {row.position: row for row in orm_message.attachments}
+        existing_image_attachments = {
+            row.id: row for row in orm_message.image_attachments if row.id is not None
+        }
         orm_message.attachments = [
             self._to_orm_user_message_attachment(
                 attachment=attachment,
@@ -348,6 +353,14 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
                 existing_attachment=existing_attachments.get(attachment_position),
             )
             for attachment_position, attachment in enumerate(message.attachments)
+        ]
+        orm_message.image_attachments = [
+            self._to_orm_user_message_image_attachment(
+                attachment=attachment,
+                user_message_id=message.id,
+                existing_attachment=existing_image_attachments.get(attachment.id),
+            )
+            for attachment in message.image_attachments
         ]
         return orm_message
 
@@ -368,6 +381,24 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm_attachment.subtitle = attachment.subtitle
         orm_attachment.image_url = attachment.image_url
         orm_attachment.spotify_id = attachment.spotify_id
+        return orm_attachment
+
+    def _to_orm_user_message_image_attachment(
+        self,
+        *,
+        attachment: ImageAttachment,
+        user_message_id: UUID,
+        existing_attachment: SessionUserMessageImageAttachmentModel | None = None,
+    ) -> SessionUserMessageImageAttachmentModel:
+        orm_attachment = existing_attachment or SessionUserMessageImageAttachmentModel(
+            id=attachment.id
+        )
+        orm_attachment.user_message_id = user_message_id
+        orm_attachment.storage_key = attachment.storage_key
+        orm_attachment.content_type = attachment.content_type
+        orm_attachment.file_name = attachment.file_name
+        orm_attachment.size_bytes = attachment.size_bytes
+        orm_attachment.created_at = attachment.created_at
         return orm_attachment
 
     def _sync_user_curation_events(
@@ -492,6 +523,9 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
                 selectinload(SessionModel.user_messages).selectinload(
                     SessionUserMessageModel.attachments
                 ),
+                selectinload(SessionModel.user_messages).selectinload(
+                    SessionUserMessageModel.image_attachments
+                ),
                 selectinload(SessionModel.assistant_messages),
                 selectinload(SessionModel.user_curation_events),
                 selectinload(SessionModel.playlist_references),
@@ -600,12 +634,20 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
 
     def _to_domain_user_message(self, row: SessionUserMessageModel) -> UserMessage:
         attachments = sorted(row.attachments, key=lambda item: item.position)
+        image_attachments = sorted(
+            row.image_attachments,
+            key=lambda item: item.created_at or row.created_at,
+        )
         return UserMessage(
             id=row.id,
             content=row.content,
             attachments=[
                 self._to_domain_user_message_attachment(attachment)
                 for attachment in attachments
+            ],
+            image_attachments=[
+                self._to_domain_user_message_image_attachment(attachment)
+                for attachment in image_attachments
             ],
             created_time=row.created_at,
         )
@@ -621,6 +663,19 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             subtitle=row.subtitle,
             image_url=row.image_url,
             spotify_id=row.spotify_id,
+        )
+
+    def _to_domain_user_message_image_attachment(
+        self,
+        row: SessionUserMessageImageAttachmentModel,
+    ) -> ImageAttachment:
+        return ImageAttachment(
+            id=row.id,
+            storage_key=row.storage_key,
+            content_type=row.content_type,
+            file_name=row.file_name,
+            size_bytes=row.size_bytes,
+            created_time=row.created_at,
         )
 
     def _to_domain_assistant_message(

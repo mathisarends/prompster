@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChartColumn, Download, ListMusic } from "lucide-react";
+import { Download, ListMusic } from "lucide-react";
 import { toast } from "sonner";
 
 import type {
@@ -17,7 +17,6 @@ import {
 } from "@/api/generated/session-api";
 import { ChatWorkspacePanel } from "@/shared/components/workspace-panel-shell";
 import { DeckPlaylist } from "@/features/deck/components/deck-playlist";
-import { DeckTimeline } from "@/features/deck/components/deck-timeline";
 import {
   DeckExportActions,
   SpotifyExportResultDialog,
@@ -183,10 +182,6 @@ export const DeckWorkspaceView = ({
                 <ListMusic className="size-4" />
                 Playlist
               </TabsTrigger>
-              <TabsTrigger value="analyse">
-                <ChartColumn className="size-4" />
-                Analyse
-              </TabsTrigger>
               <TabsTrigger value="export">
                 <Download className="size-4" />
                 Export
@@ -229,13 +224,6 @@ export const DeckWorkspaceView = ({
               addingSpotifyTrackId={addingSpotifyTrackId}
               controller={controller}
             />
-          </TabsContent>
-
-          <TabsContent
-            value="analyse"
-            className="flex min-h-0 flex-1 flex-col overflow-hidden"
-          >
-            <DeckTimeline tracks={tracks} />
           </TabsContent>
 
           <TabsContent

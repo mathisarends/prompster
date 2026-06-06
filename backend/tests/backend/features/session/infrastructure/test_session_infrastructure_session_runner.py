@@ -10,6 +10,10 @@ from llmify.messages import (
 
 from agent.tools.views import Phase as AgentPhase
 from backend.features.session.application import SessionConversationService
+from backend.features.session.application.ports import (
+    MessageAttachmentStore,
+    StoredAttachment,
+)
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
     SessionRunnerCancelled,
@@ -80,6 +84,39 @@ class _CancelledRunner(SessionRunner):
         yield SessionRunnerCancelled()
 
 
+class _MessageAttachmentStoreStub(MessageAttachmentStore):
+    async def save_image_attachment(
+        self,
+        *,
+        session_id,
+        message_id,
+        attachment_id,
+        file_name,
+        content_type,
+        content,
+    ) -> StoredAttachment:
+        return StoredAttachment(
+            storage_key=f"sessions/{session_id}/{attachment_id}",
+            content_type=content_type,
+            file_name=file_name,
+            size_bytes=len(content),
+        )
+
+    async def load_bytes(self, *, storage_key: str) -> bytes:
+        return b""
+
+    async def create_signed_url(
+        self,
+        *,
+        storage_key: str,
+        expires_in_seconds: int,
+    ) -> str:
+        return f"https://example.com/{storage_key}"
+
+    async def delete_session_attachments(self, *, session_id) -> None:
+        return None
+
+
 class TestAgentPhaseMapping:
     def test_agent_phase_uses_persisted_session_phase(self) -> None:
         session = Session(
@@ -108,7 +145,9 @@ class TestSessionRunnerHistoryRendering:
         )
         session.add_user_message("mach weiter")
 
-        history = AgentHistoryBuilder().build(session=session)
+        history = asyncio.run(
+            AgentHistoryBuilder(_MessageAttachmentStoreStub()).build(session=session)
+        )
 
         user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
         assert len(user_messages) == 2
@@ -138,7 +177,9 @@ class TestSessionRunnerHistoryRendering:
             user_curation_events=[event],
         )
 
-        history = AgentHistoryBuilder().build(session=session)
+        history = asyncio.run(
+            AgentHistoryBuilder(_MessageAttachmentStoreStub()).build(session=session)
+        )
 
         assert len(history) == 1
         assert isinstance(history[0], LLMUserMessage)
@@ -164,7 +205,9 @@ class TestSessionRunnerHistoryRendering:
         for event in session.unconsumed_user_curation_events:
             event.mark_consumed()
 
-        history = AgentHistoryBuilder().build(session=session)
+        history = asyncio.run(
+            AgentHistoryBuilder(_MessageAttachmentStoreStub()).build(session=session)
+        )
 
         user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
         assert "<user_events>" in user_messages[1].content
@@ -175,7 +218,9 @@ class TestSessionRunnerHistoryRendering:
         session.add_user_message("hi")
         session.add_assistant_message("hey")
 
-        history = AgentHistoryBuilder().build(session=session)
+        history = asyncio.run(
+            AgentHistoryBuilder(_MessageAttachmentStoreStub()).build(session=session)
+        )
 
         user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
         assert [m.content for m in user_messages] == ["hi"]
@@ -210,7 +255,9 @@ class TestSessionRunnerHistoryRendering:
         for event in session.user_curation_events:
             event.mark_consumed()
 
-        history = AgentHistoryBuilder().build(session=session)
+        history = asyncio.run(
+            AgentHistoryBuilder(_MessageAttachmentStoreStub()).build(session=session)
+        )
 
         # The pin event's timestamp is generated at runtime — pull it out so
         # the golden output below stays deterministic.
@@ -257,6 +304,7 @@ class TestSendMessageConsumesCurationEvents:
         service = SessionConversationService(
             session_repository=repository,
             runner=_EmptyRunner(),
+            message_attachment_store=_MessageAttachmentStoreStub(),
             user_message_rate_limit_service=_NoOpQuotaService(),
             title_generator=_TitleGeneratorStub(),
         )
@@ -293,6 +341,7 @@ class TestSendMessageConsumesCurationEvents:
         service = SessionConversationService(
             session_repository=repository,
             runner=_CancelledRunner(),
+            message_attachment_store=_MessageAttachmentStoreStub(),
             user_message_rate_limit_service=_NoOpQuotaService(),
             title_generator=_TitleGeneratorStub(),
         )

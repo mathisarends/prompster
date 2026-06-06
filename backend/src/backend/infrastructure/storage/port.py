@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from backend.infrastructure.storage.views import (
-    ContentType,
     StorageFile,
     UploadResponse,
 )
@@ -10,12 +9,16 @@ from backend.infrastructure.storage.views import (
 class StorageBackend(ABC):
     @abstractmethod
     async def upload_bytes(
-        self, path: str, data: bytes, content_type: ContentType | None = None
+        self, path: str, data: bytes, content_type: str | None = None
     ) -> UploadResponse:
         pass
 
     @abstractmethod
-    async def delete_file(self, path: str) -> None:
+    async def download_bytes(self, path: str) -> bytes:
+        pass
+
+    @abstractmethod
+    async def delete(self, path: str) -> None:
         pass
 
     @abstractmethod
@@ -27,9 +30,15 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    async def get_signed_url(self, path: str, ttl_seconds: int = 3600) -> str:
+    async def create_signed_url(self, path: str, ttl_seconds: int = 3600) -> str:
         pass
 
     @abstractmethod
     async def exists(self, path: str) -> bool:
         pass
+
+    async def delete_file(self, path: str) -> None:
+        await self.delete(path)
+
+    async def get_signed_url(self, path: str, ttl_seconds: int = 3600) -> str:
+        return await self.create_signed_url(path=path, ttl_seconds=ttl_seconds)

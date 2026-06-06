@@ -1,5 +1,6 @@
 from .conversation_service import (
     SessionConversationService,
+    SessionImageAttachmentUpload,
     SessionMessageAttachment,
 )
 from .events import (
@@ -50,6 +51,7 @@ __all__ = [
     "SessionToolCallSequenceCompleted",
     "SessionToolCallResolved",
     "SessionConversationService",
+    "SessionImageAttachmentUpload",
     "SessionMessageAttachment",
     "SessionService",
 ]

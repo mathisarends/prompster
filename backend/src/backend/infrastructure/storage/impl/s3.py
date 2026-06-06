@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, AsyncIterator
 import aioboto3
 from backend.infrastructure.storage.port import StorageBackend
 from backend.infrastructure.storage.views import (
-    ContentType,
     StorageFile,
     UploadResponse,
 )
@@ -106,7 +105,7 @@ class S3StorageBackend(StorageBackend):
             yield client
 
     async def upload_bytes(
-        self, path: str, data: bytes, content_type: ContentType | None = None
+        self, path: str, data: bytes, content_type: str | None = None
     ) -> UploadResponse:
         async with self._get_client() as s3:
             await s3.put_object(
@@ -118,7 +117,13 @@ class S3StorageBackend(StorageBackend):
 
         return UploadResponse(storage_path=path)
 
-    async def delete_file(self, path: str) -> None:
+    async def download_bytes(self, path: str) -> bytes:
+        async with self._get_client() as s3:
+            response = await s3.get_object(Bucket=self._bucket, Key=path)
+            body = response["Body"]
+            return await body.read()
+
+    async def delete(self, path: str) -> None:
         async with self._get_client() as s3:
             await s3.delete_object(Bucket=self._bucket, Key=path)
 
@@ -160,7 +165,7 @@ class S3StorageBackend(StorageBackend):
             if not obj.is_folder()
         ]
 
-    async def get_signed_url(self, path: str, ttl_seconds: int = 3600) -> str:
+    async def create_signed_url(self, path: str, ttl_seconds: int = 3600) -> str:
         params = _S3PresignedUrlParams(bucket=self._bucket, key=path)
 
         async with self._get_client() as s3:

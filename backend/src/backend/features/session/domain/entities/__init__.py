@@ -1,5 +1,6 @@
 from .messages import (
     AssistantMessage,
+    ImageAttachment,
     UserCurationEvent,
     UserCurationEventType,
     UserMessage,
@@ -28,6 +29,7 @@ __all__ = [
     "AssistantMessage",
     "CompletedCall",
     "FailedCall",
+    "ImageAttachment",
     "OnboardingQuestion",
     "OnboardingQuestionSelectionMode",
     "PendingCall",

@@ -2,7 +2,7 @@ from backend.features.user.infrastructure.repository import SqlUserRepository
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.env import EnvSettings
+from backend.env import EnvSettings, FeatureToggleSettings
 from backend.features.auth.application import (
     GoogleOAuthFlow,
     SessionRefresher,
@@ -29,12 +29,17 @@ from backend.features.oauth_connections.application import (
     SpotifyOAuthProvider,
 )
 from backend.features.user.domain import UserRepository
+from backend.shared.email import EmailSender
 
 
 class AuthProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_env_settings(self) -> EnvSettings:
         return EnvSettings()
+
+    @provide(scope=Scope.APP)
+    def provide_feature_toggle_settings(self) -> FeatureToggleSettings:
+        return FeatureToggleSettings()
 
     @provide(scope=Scope.APP)
     def provide_auth_settings(self) -> AuthSettings:
@@ -72,11 +77,15 @@ class AuthProvider(Provider):
         user_repository: UserRepository,
         google_oauth_provider: GoogleOAuthProvider,
         token_issuer: TokenIssuer,
+        email_sender: EmailSender,
+        feature_toggle_settings: FeatureToggleSettings,
     ) -> GoogleOAuthFlow:
         return GoogleOAuthFlow(
             user_repository=user_repository,
             google_oauth_provider=google_oauth_provider,
             token_issuer=token_issuer,
+            email_sender=email_sender,
+            send_welcome_email_on_auth_signup=feature_toggle_settings.send_welcome_email_on_auth_signup,
         )
 
     @provide(scope=Scope.REQUEST)
@@ -86,12 +95,16 @@ class AuthProvider(Provider):
         spotify_oauth_provider: SpotifyOAuthProvider,
         token_issuer: TokenIssuer,
         connection_service: SpotifyOAuthConnectionService,
+        email_sender: EmailSender,
+        feature_toggle_settings: FeatureToggleSettings,
     ) -> SpotifyOAuthFlow:
         return SpotifyOAuthFlow(
             user_repository=user_repository,
             spotify_oauth_client=spotify_oauth_provider,
             token_issuer=token_issuer,
             connection_service=connection_service,
+            email_sender=email_sender,
+            send_welcome_email_on_auth_signup=feature_toggle_settings.send_welcome_email_on_auth_signup,
         )
 
     @provide(scope=Scope.REQUEST)

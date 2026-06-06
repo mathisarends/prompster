@@ -13,6 +13,7 @@ from backend.features.session.application import (
     SessionSpotifyPlaylistExporter,
 )
 from backend.features.session.application.ports import (
+    MessageAttachmentStore,
     PlaylistDeckGenerator,
     PlaylistMetadataGenerator,
 )
@@ -34,6 +35,9 @@ from backend.features.session.infrastructure.pdf_generator import (
 from backend.features.session.infrastructure.playlist_metadata_generator import (
     LLMPlaylistMetadataGenerator,
 )
+from backend.features.session.infrastructure.message_attachment_store import (
+    StorageMessageAttachmentStore,
+)
 from backend.features.session.infrastructure.repository import SqlSessionRepository
 from backend.features.session.infrastructure.session_runner import AgentSessionRunner
 from backend.features.session.infrastructure.session_summary_query import (
@@ -44,6 +48,7 @@ from backend.features.session.infrastructure.title_generator import (
 )
 from backend.features.user.application import UserMessageRateLimitService
 from backend.features.user.domain import UserRepository
+from backend.infrastructure.storage import StorageBackend
 
 
 class SessionProvider(Provider):
@@ -67,8 +72,18 @@ class SessionProvider(Provider):
         return AgentSessionEventMapper()
 
     @provide(scope=Scope.APP)
-    def provide_agent_history_builder(self) -> AgentHistoryBuilder:
-        return AgentHistoryBuilder()
+    def provide_message_attachment_store(
+        self,
+        storage_backend: StorageBackend,
+    ) -> MessageAttachmentStore:
+        return StorageMessageAttachmentStore(storage_backend=storage_backend)
+
+    @provide(scope=Scope.APP)
+    def provide_agent_history_builder(
+        self,
+        message_attachment_store: MessageAttachmentStore,
+    ) -> AgentHistoryBuilder:
+        return AgentHistoryBuilder(message_attachment_store=message_attachment_store)
 
     @provide(scope=Scope.APP)
     def provide_session_runner(
@@ -103,10 +118,12 @@ class SessionProvider(Provider):
         self,
         session_repository: SessionRepository,
         session_summary_query: SessionSummaryQuery,
+        message_attachment_store: MessageAttachmentStore,
     ) -> SessionService:
         return SessionService(
             session_repository=session_repository,
             session_summary_query=session_summary_query,
+            message_attachment_store=message_attachment_store,
         )
 
     @provide(scope=Scope.REQUEST)
@@ -114,12 +131,14 @@ class SessionProvider(Provider):
         self,
         session_repository: SessionRepository,
         runner: SessionRunner,
+        message_attachment_store: MessageAttachmentStore,
         user_message_rate_limit_service: UserMessageRateLimitService,
         title_generator: SessionTitleGenerator,
     ) -> SessionConversationService:
         return SessionConversationService(
             session_repository=session_repository,
             runner=runner,
+            message_attachment_store=message_attachment_store,
             user_message_rate_limit_service=user_message_rate_limit_service,
             title_generator=title_generator,
         )

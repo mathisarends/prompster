@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from backend.features.session.application.ports import MessageAttachmentStore
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
     SessionSummaryQuery,
@@ -17,9 +18,11 @@ class SessionService:
         self,
         session_repository: SessionRepository,
         session_summary_query: SessionSummaryQuery,
+        message_attachment_store: MessageAttachmentStore,
     ) -> None:
         self._session_repository = session_repository
         self._session_summary_query = session_summary_query
+        self._message_attachment_store = message_attachment_store
 
     async def get_by_id(self, *, session_id: UUID, user_id: UUID) -> Session:
         return await self._get_authorized(session_id=session_id, user_id=user_id)
@@ -46,6 +49,9 @@ class SessionService:
     async def delete(self, *, session_id: UUID, user_id: UUID) -> None:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         await self._session_repository.delete(session_id=session.id)
+        await self._message_attachment_store.delete_session_attachments(
+            session_id=session.id
+        )
 
     async def star(self, *, session_id: UUID, user_id: UUID) -> Session:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)

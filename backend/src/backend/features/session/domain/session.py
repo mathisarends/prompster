@@ -21,6 +21,7 @@ from backend.features.session.domain.entities import (
     AssistantMessage,
     CompletedCall,
     FailedCall,
+    ImageAttachment,
     OnboardingQuestion,
     OnboardingQuestionSelectionMode,
     PendingCall,
@@ -439,7 +440,9 @@ class Session(Aggregate):
     def add_user_message(
         self,
         content: str,
+        message_id: UUID | None = None,
         attachments: list[UserMessageAttachment] | None = None,
+        image_attachments: list[ImageAttachment] | None = None,
     ) -> UserMessage:
         if self._find_pending_tool_call_sequence() is not None:
             raise PendingToolCallsError(
@@ -448,7 +451,9 @@ class Session(Aggregate):
             )
         message = UserMessage(
             content=content,
+            id=message_id,
             attachments=attachments,
+            image_attachments=image_attachments,
             user_curation_events=self._unbound_unconsumed_user_curation_events(),
         )
         self._entries.append(message)

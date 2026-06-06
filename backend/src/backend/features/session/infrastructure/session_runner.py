@@ -93,7 +93,7 @@ class AgentSessionRunner(SessionRunner):
         session: Session,
         model_id: str | None = None,
     ) -> AsyncIterator[SessionRunnerEvent]:
-        agent = self._create_agent(session=session, model_id=model_id)
+        agent = await self._create_agent(session=session, model_id=model_id)
         active_run = _ActiveRun(cancellation=asyncio.Event(), agent=agent)
         await self._active_runs.register(session_id=session.id, run=active_run)
         try:
@@ -113,7 +113,12 @@ class AgentSessionRunner(SessionRunner):
     async def stop(self, *, session_id: UUID) -> bool:
         return await self._active_runs.stop(session_id=session_id)
 
-    def _create_agent(self, *, session: Session, model_id: str | None = None) -> Agent:
+    async def _create_agent(
+        self,
+        *,
+        session: Session,
+        model_id: str | None = None,
+    ) -> Agent:
         llm = self._llm
         if model_id is not None:
             selected_model = ensure_supported_openai_model(model_id)
@@ -124,7 +129,7 @@ class AgentSessionRunner(SessionRunner):
 
         return Agent(
             llm=llm,
-            history=self._history_builder.build(session=session),
+            history=await self._history_builder.build(session=session),
             system_prompt=self._system_prompt,
             spotify=Spotify(client=self._spotify),
             deck_store=_to_deck_store(session.playlist),
