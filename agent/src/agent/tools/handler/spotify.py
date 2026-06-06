@@ -4,7 +4,16 @@ from contextlib import contextmanager
 from typing import Self
 
 from pydantic import BaseModel
-from spotifyify import RetryEvent, Spotifyify, Track
+from spotifyify import (
+    Image,
+    Playlist,
+    RetryEvent,
+    SimplifiedAlbum,
+    SimplifiedArtist,
+    SimplifiedPlaylist,
+    Spotifyify,
+    Track,
+)
 
 from agent.playlist import PlaylistDraftTrack
 from agent.messages.rendering import (
@@ -54,12 +63,23 @@ class Spotify:
 
     async def search_tracks(self, params: SearchParams) -> SpotifyTrackLookupResult:
         await self.open()
+        query_limit = min(params.limit, 50)
+        logger.info(
+            "Spotify search_tracks: query=%r limit=%d",
+            params.query,
+            query_limit,
+        )
         with self._retry_logging():
             page = await self._client.tracks.find(
                 params.query,
-                limit=min(params.limit, 50),
+                limit=query_limit,
             )
         tracks = page.items or []
+        logger.info(
+            "Spotify search_tracks: found=%d query=%r",
+            len(tracks),
+            params.query,
+        )
         if not tracks:
             return SpotifyTrackLookupResult(content="No tracks found.", tracks=[])
         return _track_lookup_result(
@@ -70,24 +90,46 @@ class Spotify:
 
     async def search_albums(self, params: SearchParams) -> str:
         await self.open()
+        query_limit = min(params.limit, 50)
+        logger.info(
+            "Spotify search_albums: query=%r limit=%d",
+            params.query,
+            query_limit,
+        )
         with self._retry_logging():
             page = await self._client.albums.find(
                 params.query,
-                limit=min(params.limit, 50),
+                limit=query_limit,
             )
         albums = page.items or []
+        logger.info(
+            "Spotify search_albums: found=%d query=%r",
+            len(albums),
+            params.query,
+        )
         if not albums:
             return "No albums found."
         return "\n".join(_format_album(album) for album in albums)
 
     async def search_playlists(self, params: SearchParams) -> str:
         await self.open()
+        query_limit = min(params.limit, 50)
+        logger.info(
+            "Spotify search_playlists: query=%r limit=%d",
+            params.query,
+            query_limit,
+        )
         with self._retry_logging():
             page = await self._client.playlists.find(
                 params.query,
-                limit=min(params.limit, 50),
+                limit=query_limit,
             )
         playlists = [playlist for playlist in (page.items or []) if playlist]
+        logger.info(
+            "Spotify search_playlists: found=%d query=%r",
+            len(playlists),
+            params.query,
+        )
         if not playlists:
             return "No playlists found."
         return "\n".join(_format_playlist(playlist) for playlist in playlists)
@@ -95,6 +137,12 @@ class Spotify:
     async def get_artist_albums(self, params: ArtistAlbumsParams) -> str:
         artist_id = _normalize_spotify_id(params.artist_id, "artist")
         await self.open()
+        logger.info(
+            "Spotify get_artist_albums: artist_id=%s include_groups=%s limit=%d",
+            artist_id,
+            params.include_groups,
+            params.limit,
+        )
         with self._retry_logging():
             page = await self._client.artists.albums(
                 artist_id,
@@ -102,6 +150,11 @@ class Spotify:
                 limit=params.limit,
             )
         albums = page.items or []
+        logger.info(
+            "Spotify get_artist_albums: found=%d artist_id=%s",
+            len(albums),
+            artist_id,
+        )
         if not albums:
             return "No albums found."
         return "\n".join(_format_album(album) for album in albums)
@@ -112,11 +165,21 @@ class Spotify:
     ) -> SpotifyTrackLookupResult:
         artist_id = _normalize_spotify_id(params.artist_id, "artist")
         await self.open()
+        logger.info(
+            "Spotify get_artist_top_tracks: artist_id=%s market=%s",
+            artist_id,
+            params.country,
+        )
         with self._retry_logging():
             tracks = await self._client.artists.top_tracks(
                 artist_id,
                 market=params.country,
             )
+        logger.info(
+            "Spotify get_artist_top_tracks: found=%d artist_id=%s",
+            len(tracks),
+            artist_id,
+        )
         if not tracks:
             return SpotifyTrackLookupResult(content="No top tracks found.", tracks=[])
         return _track_lookup_result(
@@ -131,10 +194,16 @@ class Spotify:
     ) -> SpotifyTrackLookupResult:
         album_id = _normalize_spotify_id(params.album_id, "album")
         await self.open()
+        logger.info("Spotify get_album_tracks: album_id=%s", album_id)
         with self._retry_logging():
             album = await self._client.albums.get(album_id)
             page = await self._client.albums.tracks(album_id, limit=50, offset=0)
         tracks = page.items or []
+        logger.info(
+            "Spotify get_album_tracks: found=%d album_id=%s",
+            len(tracks),
+            album_id,
+        )
         if not tracks:
             return SpotifyTrackLookupResult(content="No tracks found.", tracks=[])
         album_cover_url = _cover_url(album.images)
@@ -150,8 +219,14 @@ class Spotify:
     ) -> SpotifyTrackLookupResult:
         playlist_id = _normalize_spotify_id(params.playlist_id, "playlist")
         await self.open()
+        logger.info("Spotify get_playlist_tracks: playlist_id=%s", playlist_id)
         with self._retry_logging():
             tracks = await self._get_playlist_tracks(playlist_id)
+        logger.info(
+            "Spotify get_playlist_tracks: found=%d playlist_id=%s",
+            len(tracks),
+            playlist_id,
+        )
         if not tracks:
             return SpotifyTrackLookupResult(content="Playlist is empty.", tracks=[])
         return _track_lookup_result(
@@ -202,9 +277,9 @@ def _log_retry(event: RetryEvent) -> None:
     )
 
 
-def _playlist_track_count(playlist) -> int:
+def _playlist_track_count(playlist: Playlist | SimplifiedPlaylist) -> int:
     tracks = playlist.items or playlist.tracks
-    return tracks.total if tracks else 0
+    return tracks.total if tracks and tracks.total is not None else 0
 
 
 def _normalize_spotify_id(value: str, resource_type: str) -> str:
@@ -220,12 +295,12 @@ def _normalize_spotify_id(value: str, resource_type: str) -> str:
     return value
 
 
-def _artist_names(artists) -> str:
+def _artist_names(artists: list[SimplifiedArtist] | None) -> str:
     names = [artist.name for artist in (artists or []) if artist and artist.name]
     return ", ".join(names) if names else "Unknown artist"
 
 
-def _track_title(track) -> str:
+def _track_title(track: Track) -> str:
     return track.name or "Unknown title"
 
 
@@ -243,7 +318,7 @@ def _track_cover_url(track: Track) -> str | None:
     return _cover_url(track.album.images) if track.album else None
 
 
-def _cover_url(images) -> str | None:
+def _cover_url(images: list[Image] | None) -> str | None:
     if not images:
         return None
     return images[0].url
@@ -291,7 +366,7 @@ def _playlist_draft_track(
     )
 
 
-def _format_album(album) -> str:
+def _format_album(album: SimplifiedAlbum) -> str:
     return render_album_tag(
         uri=album.uri,
         name=album.name,
@@ -301,7 +376,7 @@ def _format_album(album) -> str:
     )
 
 
-def _format_playlist(playlist) -> str:
+def _format_playlist(playlist: Playlist | SimplifiedPlaylist) -> str:
     return render_playlist_tag(
         id=playlist.id,
         name=playlist.name,

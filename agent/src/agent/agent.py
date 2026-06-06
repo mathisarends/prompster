@@ -16,7 +16,6 @@ from agent.events import (
     ToolCallEvent,
     ToolResultEvent,
     WorkspaceUpdatedEvent,
-    with_decide_for_me_option,
 )
 from agent.messages import MessageManager
 from agent.tools import Tools, Spotify
@@ -188,12 +187,12 @@ class Agent:
             if request.is_last_question:
                 yield SuspendedForUserInputEvent(
                     question=request.question,
-                    options=with_decide_for_me_option(request.options),
+                    options=list(request.options),
                     selection_mode=request.selection_mode,
                 )
             else:
                 yield QuestionAskedEvent(
                     question=request.question,
-                    options=with_decide_for_me_option(request.options),
+                    options=list(request.options),
                     selection_mode=request.selection_mode,
                 )

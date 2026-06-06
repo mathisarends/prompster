@@ -204,7 +204,6 @@ class TestAgentWorkspaceUpdateEvents:
             "Freunde",
             "Familie",
             "Kolleg:innen",
-            "Entscheide für mich",
         ]
         assert len(llm.tool_schema_batches) == 1
 
@@ -245,7 +244,6 @@ class TestAgentWorkspaceUpdateEvents:
             "Freunde",
             "Familie",
             "Kolleg:innen",
-            "Entscheide für mich",
         ]
         assert not any(
             isinstance(event, SuspendedForUserInputEvent) for event in events
