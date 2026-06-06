@@ -9,14 +9,17 @@ import {
   useContext,
   useEffect,
   useRef,
-  useState,
 } from "react";
+
+import { Plus } from "lucide-react";
 
 import { AttachmentList } from "@/features/chat/components/attachments/attachment-list";
 import { AttachmentPopover } from "@/features/chat/components/attachments/attachment-popover";
 import type { ChatAttachment } from "@/features/chat/components/attachments/attachment-types";
+import { ModelSelect } from "@/features/chat/components/model-select";
 import { SendButton } from "@/features/chat/components/send-button";
 import { useChatInputAttachments } from "@/features/chat/hooks/use-chat-input-attachments";
+import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { useBufferedControlledValue } from "@/shared/hooks/useBufferedControlledValue";
 import { cn } from "@/shared/lib/utils";
@@ -43,12 +46,12 @@ type ChatInputBoxProps = {
   clearOnSubmit?: boolean;
   attachments?: ChatAttachment[];
   onAttachmentsChange?: (attachments: ChatAttachment[]) => void;
+  selectedModel?: string;
+  onModelChange?: (modelId: string) => void;
 };
 
 type ChatInputContextValue = {
   textareaRef: RefObject<HTMLTextAreaElement | null>;
-  inputContentRef: RefObject<HTMLDivElement | null>;
-  textMirrorRef: RefObject<HTMLDivElement | null>;
   text: string;
   setText: (value: string) => void;
   flushText: () => void;
@@ -69,12 +72,13 @@ type ChatInputContextValue = {
   removeAttachmentMention: () => void;
   isAttachmentUiEnabled: boolean;
   isAttachmentMentionActive: boolean;
-  isSingleLine: boolean;
   canSend: boolean;
   canStop: boolean;
   disabled: boolean;
   isSubmitting: boolean;
   isStopping: boolean;
+  selectedModel?: string;
+  onModelChange?: (modelId: string) => void;
   placeholder?: string;
   textareaClassName?: string;
   rows?: number;
@@ -104,6 +108,15 @@ type ChatInputToolbarProps = {
   className?: string;
 };
 
+type ChatInputModelSelectProps = {
+  className?: string;
+};
+
+type ChatInputAddButtonProps = {
+  className?: string;
+  onClick?: () => void;
+};
+
 type ChatInputAddAttachmentProps = {
   className?: string;
 };
@@ -117,6 +130,8 @@ type ChatInputBoxCompound = typeof ChatInputBoxComponent & {
   Content: typeof ChatInputContent;
   TextArea: typeof ChatInputTextArea;
   Toolbar: typeof ChatInputToolbar;
+  ModelSelect: typeof ChatInputModelSelect;
+  AddButton: typeof ChatInputAddButton;
   AddAttachment: typeof ChatInputAddAttachment;
   Submit: typeof ChatInputSubmit;
 };
@@ -151,7 +166,9 @@ const isTextCharacterKey = (event: KeyboardEvent) => {
 const useChatInput = () => {
   const context = useContext(ChatInputContext);
   if (!context) {
-    throw new Error("ChatInputBox subcomponents must be used inside ChatInputBox.");
+    throw new Error(
+      "ChatInputBox subcomponents must be used inside ChatInputBox.",
+    );
   }
 
   return context;
@@ -177,40 +194,17 @@ const ChatInputPreviewList = () => {
 };
 
 const ChatInputContent = ({ children, className }: ChatInputContentProps) => {
-  const {
-    inputContentRef,
-    isSingleLine,
-    placeholder,
-    text,
-    textMirrorRef,
-  } = useChatInput();
-
   return (
-    <div
-      ref={inputContentRef}
-      className={cn(
-        isSingleLine
-          ? "relative flex items-center gap-2"
-          : "relative flex flex-col gap-3",
-        className,
-      )}
-    >
-      <div
-        ref={textMirrorRef}
-        aria-hidden="true"
-        className="pointer-events-none absolute -z-10 whitespace-pre-wrap break-words p-0 text-base opacity-0 md:text-base"
-      >
-        {(text || placeholder || " ").endsWith("\n")
-          ? `${text || placeholder || " "}\n `
-          : text || placeholder || " "}
-      </div>
-
+    <div className={cn("relative flex flex-col gap-3", className)}>
       {children ?? (
         <>
           <ChatInputTextArea />
-          <ChatInputToolbar>
-            <ChatInputAddAttachment />
-            <ChatInputSubmit />
+          <ChatInputToolbar className="-mx-1">
+            <ChatInputAddButton />
+            <div className="ml-auto flex items-center gap-2">
+              <ChatInputModelSelect />
+              <ChatInputSubmit />
+            </div>
           </ChatInputToolbar>
         </>
       )}
@@ -218,17 +212,13 @@ const ChatInputContent = ({ children, className }: ChatInputContentProps) => {
   );
 };
 
-const ChatInputTextArea = ({
-  className,
-  ...props
-}: ChatInputTextAreaProps) => {
+const ChatInputTextArea = ({ className, ...props }: ChatInputTextAreaProps) => {
   const {
     disabled,
     flushText,
     handleTextareaChange,
     handleTextareaKeyDown,
     handleTextareaSelect,
-    isSingleLine,
     placeholder,
     rows,
     text,
@@ -248,8 +238,7 @@ const ChatInputTextArea = ({
       onKeyDown={handleTextareaKeyDown}
       placeholder={placeholder}
       className={cn(
-        "max-h-72 min-h-9 flex-1 resize-none border-none bg-transparent p-0 pt-0.5 text-base shadow-none focus-visible:ring-0 md:text-base",
-        !isSingleLine && "min-h-15",
+        "max-h-72 min-h-10 flex-1 resize-none border-none bg-transparent p-0 pt-0.5 text-base shadow-none focus-visible:ring-0 md:text-base",
         textareaClassName,
         className,
       )}
@@ -259,18 +248,46 @@ const ChatInputTextArea = ({
 };
 
 const ChatInputToolbar = ({ children, className }: ChatInputToolbarProps) => {
-  const { isSingleLine } = useChatInput();
+  return (
+    <div className={cn("flex items-center gap-1.5", className)}>{children}</div>
+  );
+};
+
+const ChatInputAddButton = ({
+  className,
+  onClick,
+}: ChatInputAddButtonProps) => {
+  const { disabled, isSubmitting } = useChatInput();
 
   return (
-    <div
+    <Button
+      type="button"
+      size="icon"
+      variant="ghost"
+      onClick={onClick}
+      disabled={disabled || isSubmitting}
+      aria-label="Hinzufügen"
       className={cn(
-        "flex items-center gap-1.5",
-        isSingleLine ? "shrink-0" : "justify-end",
+        "size-9 rounded-full text-muted-foreground hover:text-foreground",
         className,
       )}
     >
-      {children}
-    </div>
+      <Plus className="size-5" />
+    </Button>
+  );
+};
+
+const ChatInputModelSelect = ({ className }: ChatInputModelSelectProps) => {
+  const { disabled, isSubmitting, onModelChange, selectedModel } =
+    useChatInput();
+
+  return (
+    <ModelSelect
+      value={selectedModel}
+      onChange={onModelChange}
+      disabled={disabled || isSubmitting}
+      className={className}
+    />
   );
 };
 
@@ -323,7 +340,9 @@ const ChatInputSubmit = ({ className }: ChatInputSubmitProps) => {
   return (
     <SendButton
       onClick={handleSendButtonClick}
-      disabled={disabled || (isSubmitting && !canStop) || (!canStop && !canSend)}
+      disabled={
+        disabled || (isSubmitting && !canStop) || (!canStop && !canSend)
+      }
       isLoading={isSubmitting}
       isStopMode={canStop}
       isStopping={isStopping}
@@ -338,9 +357,12 @@ const ChatInputBoxDefault = () => (
     <ChatInputPreviewList />
     <ChatInputContent>
       <ChatInputTextArea />
-      <ChatInputToolbar>
-        <ChatInputAddAttachment />
-        <ChatInputSubmit />
+      <ChatInputToolbar className="-mx-1">
+        <ChatInputAddButton />
+        <div className="ml-auto flex items-center gap-2">
+          <ChatInputModelSelect />
+          <ChatInputSubmit />
+        </div>
       </ChatInputToolbar>
     </ChatInputContent>
   </>
@@ -363,17 +385,15 @@ const ChatInputBoxComponent = ({
   clearOnSubmit = true,
   attachments: controlledAttachments,
   onAttachmentsChange,
+  selectedModel,
+  onModelChange,
 }: ChatInputBoxProps) => {
   // Temporarily disabled in the chat input UI. Keep attachment logic in place
   // so the feature can be re-enabled quickly without reconstructing behavior.
   const isAttachmentUiEnabled = false;
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const inputContentRef = useRef<HTMLDivElement>(null);
-  const textMirrorRef = useRef<HTMLDivElement>(null);
   const textareaSelectionRef = useRef({ start: 0, end: 0 });
-  const measureFrameRef = useRef<number | null>(null);
-  const [isSingleLine, setIsSingleLine] = useState(true);
   const {
     attachments,
     attachmentMention,
@@ -610,55 +630,6 @@ const ChatInputBoxComponent = ({
     [],
   );
 
-  const measureSingleLine = useCallback(() => {
-    const textarea = textareaRef.current;
-    const inputContent = inputContentRef.current;
-    const textMirror = textMirrorRef.current;
-    if (!textarea || !inputContent || !textMirror) return;
-
-    if (measureFrameRef.current !== null) return;
-
-    measureFrameRef.current = requestAnimationFrame(() => {
-      measureFrameRef.current = null;
-
-      const styles = window.getComputedStyle(textarea);
-      const inlineTextareaWidth = Math.max(inputContent.clientWidth - 88, 0);
-      textMirror.style.width = `${inlineTextareaWidth}px`;
-
-      const lineHeight =
-        Number.parseFloat(styles.lineHeight) ||
-        Number.parseFloat(styles.fontSize) * 1.2;
-      const singleLineHeight = Math.ceil(lineHeight);
-      const nextIsSingleLine = textMirror.scrollHeight <= singleLineHeight + 1;
-
-      setIsSingleLine((current) =>
-        current === nextIsSingleLine ? current : nextIsSingleLine,
-      );
-    });
-  }, []);
-
-  useEffect(() => {
-    const inputContent = inputContentRef.current;
-    if (!inputContent) return;
-
-    measureSingleLine();
-
-    const resizeObserver = new ResizeObserver(measureSingleLine);
-    resizeObserver.observe(inputContent);
-
-    return () => {
-      resizeObserver.disconnect();
-      if (measureFrameRef.current !== null) {
-        cancelAnimationFrame(measureFrameRef.current);
-        measureFrameRef.current = null;
-      }
-    };
-  }, [measureSingleLine]);
-
-  useEffect(() => {
-    measureSingleLine();
-  }, [draftValue, placeholder, measureSingleLine]);
-
   useEffect(() => {
     const handleDocumentKeyDown = (event: KeyboardEvent) => {
       const textarea = textareaRef.current;
@@ -694,34 +665,31 @@ const ChatInputBoxComponent = ({
     );
   };
 
-  const handleTextareaKeyDown: ChatInputContextValue["handleTextareaKeyDown"] = (
-    e,
-  ) => {
-    if (isRenderedAttachmentMentionActive) {
-      if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter") {
-        e.preventDefault();
-        return;
+  const handleTextareaKeyDown: ChatInputContextValue["handleTextareaKeyDown"] =
+    (e) => {
+      if (isRenderedAttachmentMentionActive) {
+        if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter") {
+          e.preventDefault();
+          return;
+        }
+
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setAttachmentPopoverOpen(false);
+          setAttachmentMention(null);
+          focusTextareaAt(e.currentTarget.selectionStart);
+          return;
+        }
       }
 
-      if (e.key === "Escape") {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        setAttachmentPopoverOpen(false);
-        setAttachmentMention(null);
-        focusTextareaAt(e.currentTarget.selectionStart);
-        return;
+        submit();
       }
-    }
-
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      submit();
-    }
-  };
+    };
 
   const contextValue: ChatInputContextValue = {
     textareaRef,
-    inputContentRef,
-    textMirrorRef,
     text: draftValue,
     setText: setBufferedValue,
     flushText: flushBufferedValue,
@@ -742,12 +710,13 @@ const ChatInputBoxComponent = ({
     removeAttachmentMention,
     isAttachmentUiEnabled,
     isAttachmentMentionActive: isRenderedAttachmentMentionActive,
-    isSingleLine,
     canSend,
     canStop,
     disabled,
     isSubmitting,
     isStopping,
+    selectedModel,
+    onModelChange,
     placeholder,
     textareaClassName,
     rows,
@@ -759,7 +728,7 @@ const ChatInputBoxComponent = ({
       <div
         onClick={focusTextareaFromContainer}
         className={cn(
-          "cursor-text overflow-hidden rounded-2xl bg-card/55 px-5 py-3 backdrop-blur-md sm:px-4 sm:py-3",
+          "cursor-text overflow-hidden rounded-2xl bg-card/55 px-5 py-3 backdrop-blur-md sm:px-5 sm:py-4",
           className,
         )}
       >
@@ -774,6 +743,8 @@ ChatInputPreviewList.displayName = "ChatInputBox.PreviewList";
 ChatInputContent.displayName = "ChatInputBox.Content";
 ChatInputTextArea.displayName = "ChatInputBox.TextArea";
 ChatInputToolbar.displayName = "ChatInputBox.Toolbar";
+ChatInputModelSelect.displayName = "ChatInputBox.ModelSelect";
+ChatInputAddButton.displayName = "ChatInputBox.AddButton";
 ChatInputAddAttachment.displayName = "ChatInputBox.AddAttachment";
 ChatInputSubmit.displayName = "ChatInputBox.Submit";
 
@@ -785,5 +756,7 @@ ChatInputBox.PreviewList = ChatInputPreviewList;
 ChatInputBox.Content = ChatInputContent;
 ChatInputBox.TextArea = ChatInputTextArea;
 ChatInputBox.Toolbar = ChatInputToolbar;
+ChatInputBox.ModelSelect = ChatInputModelSelect;
+ChatInputBox.AddButton = ChatInputAddButton;
 ChatInputBox.AddAttachment = ChatInputAddAttachment;
 ChatInputBox.Submit = ChatInputSubmit;

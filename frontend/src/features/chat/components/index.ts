@@ -4,6 +4,7 @@ export * from "./chat-input-box";
 export * from "./chat-page-header";
 export * from "./chat-session-pane";
 export * from "./chat-thinking-indicator";
+export * from "./model-select";
 export * from "./send-button";
 export * from "./transcription-button";
 export * from "./tool-call-sequence";

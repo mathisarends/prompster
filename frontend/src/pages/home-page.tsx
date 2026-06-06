@@ -75,11 +75,6 @@ export const HomePage = () => {
               <h1 className="mx-auto max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
                 Welche Musik soll dein Deck haben?
               </h1>
-              <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-lg">
-                Egal ob für die WG-Party, den Roadtrip oder als persönliches
-                Geschenk: Sag uns in einem Satz, was du suchst. Wir bauen dir
-                daraus Karte für Karte dein Wunsch-Deck.
-              </p>
             </div>
 
             <div className="space-y-4">
