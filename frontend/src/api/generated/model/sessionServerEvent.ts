@@ -25,28 +25,28 @@ import type { ToolCallSequenceAddedEvent } from "./toolCallSequenceAddedEvent";
 import type { ToolCallSequenceCompletedEvent } from "./toolCallSequenceCompletedEvent";
 
 /**
- * References every server event shape for OpenAPI client generation.
+ * Any event the backend may push over the SSE stream.
+
+Exposed via a schema-only endpoint so the discriminated union of every
+event shape lands in the OpenAPI document for frontend client generation.
  */
-export interface SessionEventSchema {
-  /** Any event the backend may push over the stream. */
-  serverEvent?:
-    | SessionSnapshotEvent
-    | TitleGeneratedEvent
-    | AssistantMessageStartedEvent
-    | AssistantMessageChunkEvent
-    | AssistantMessageCompletedEvent
-    | AssistantMessageCancelledEvent
-    | ToolCallSequenceAddedEvent
-    | ToolCallResolvedEvent
-    | ToolCallFailedEvent
-    | ToolCallSequenceCompletedEvent
-    | PlaylistSetEvent
-    | PlaylistTrackAddedEvent
-    | PlaylistTrackRemovedEvent
-    | PlaylistTrackReplacedEvent
-    | OnboardingQuestionAskedEvent
-    | SuspendedForInputEvent
-    | DoneEvent
-    | ErrorEvent
-    | null;
-}
+export type SessionServerEvent =
+  | SessionSnapshotEvent
+  | TitleGeneratedEvent
+  | AssistantMessageStartedEvent
+  | AssistantMessageChunkEvent
+  | AssistantMessageCompletedEvent
+  | AssistantMessageCancelledEvent
+  | ToolCallSequenceAddedEvent
+  | ToolCallResolvedEvent
+  | ToolCallFailedEvent
+  | ToolCallSequenceCompletedEvent
+  | PlaylistSetEvent
+  | PlaylistTrackAddedEvent
+  | PlaylistTrackRemovedEvent
+  | PlaylistTrackReplacedEvent
+  | OnboardingQuestionAskedEvent
+  | SuspendedForInputEvent
+  | DoneEvent
+  | ErrorEvent
+  | null;

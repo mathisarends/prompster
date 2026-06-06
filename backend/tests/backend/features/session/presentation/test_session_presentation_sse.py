@@ -1,7 +1,7 @@
 import asyncio
 
 from backend.features.session.domain import InvalidSessionPhaseTransitionError
-from backend.features.session.presentation.sse import SessionEventSchema
+from backend.features.session.presentation.sse import SessionServerEvent
 from backend.features.session.presentation.sse.events import (
     DoneEvent,
     SessionEventType,
@@ -9,12 +9,17 @@ from backend.features.session.presentation.sse.events import (
 from backend.features.session.presentation.sse.stream import _stream, _to_sse
 
 
-class TestSessionEventSchema:
-    def test_references_only_server_events(self) -> None:
-        schema = SessionEventSchema()
+class TestSessionServerEvent:
+    def test_wraps_discriminated_server_event_union(self) -> None:
+        schema = SessionServerEvent(DoneEvent())
 
-        assert schema.server_event is None
-        assert not hasattr(schema, "client_event")
+        assert schema.root is not None
+        assert schema.root.type == SessionEventType.DONE
+
+    def test_allows_empty_schema_payload(self) -> None:
+        schema = SessionServerEvent(None)
+
+        assert schema.root is None
 
 
 class TestServerSentEvents:

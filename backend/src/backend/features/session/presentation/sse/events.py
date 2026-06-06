@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import Annotated, Literal, Union
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, RootModel
 
 from backend.features.session.domain import OnboardingQuestionSelectionMode
 from backend.features.session.presentation.schemas import (
@@ -221,10 +221,9 @@ ServerEvent = Annotated[
 ]
 
 
-class SessionEventSchema(Schema):
-    """References every server event shape for OpenAPI client generation."""
+class SessionServerEvent(RootModel[ServerEvent | None]):
+    """Any event the backend may push over the SSE stream.
 
-    server_event: ServerEvent | None = Field(
-        default=None,
-        description="Any event the backend may push over the stream.",
-    )
+    Exposed via a schema-only endpoint so the discriminated union of every
+    event shape lands in the OpenAPI document for frontend client generation.
+    """

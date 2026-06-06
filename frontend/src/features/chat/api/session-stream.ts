@@ -1,12 +1,10 @@
 import type {
   SendMessageRequest,
-  SessionEventSchema,
+  SessionServerEvent as SessionServerEventPayload,
 } from "@/api/generated/model";
 import { AXIOS_INSTANCE } from "@/shared/api/http-client";
 
-export type SessionServerEvent = NonNullable<
-  NonNullable<SessionEventSchema["serverEvent"]>
->;
+export type SessionServerEvent = NonNullable<SessionServerEventPayload>;
 
 type StreamSendMessageOptions = {
   signal?: AbortSignal;

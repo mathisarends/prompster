@@ -31,7 +31,7 @@ from backend.features.session.presentation.schemas import (
     SpotifyPlaylistExportResponse,
 )
 from backend.features.session.presentation.sse import (
-    SessionEventSchema,
+    SessionServerEvent,
     stream_session_events,
 )
 
@@ -63,15 +63,15 @@ _pdf_response = {
 
 @router.get(
     "/events/schema",
-    response_model=SessionEventSchema,
+    response_model=SessionServerEvent,
     status_code=status.HTTP_200_OK,
     operation_id="get_session_event_schema",
     responses=_auth_errors,
 )
 async def get_session_event_schema(
     _authenticated_user_id: AuthenticatedUserId,
-) -> SessionEventSchema:
-    return SessionEventSchema()
+) -> SessionServerEvent:
+    return SessionServerEvent(None)
 
 
 @router.get(

@@ -31,8 +31,8 @@ import type {
   PlaylistTrackResponse,
   SendMessageRequest,
   SessionCreateRequest,
-  SessionEventSchema,
   SessionResponse,
+  SessionServerEvent,
   SessionSummaryListResponse,
   SessionUpdateRequest,
   SpotifyPlaylistExportResponse,
@@ -50,7 +50,7 @@ export const getSessionEventSchema = (
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  return customInstance<SessionEventSchema>(
+  return customInstance<SessionServerEvent | null>(
     { url: `/api/v1/sessions/events/schema`, method: "GET", signal },
     options,
   );
