@@ -459,10 +459,17 @@ class SessionConversationService:
             for attachment in image_attachments:
                 referenced_storage_keys.add(attachment.storage_key)
 
-        await self._message_attachment_store.delete_unreferenced_uploaded_image_attachments(
-            session_id=session.id,
-            referenced_storage_keys=referenced_storage_keys,
-        )
+        try:
+            await self._message_attachment_store.delete_unreferenced_uploaded_image_attachments(
+                session_id=session.id,
+                referenced_storage_keys=referenced_storage_keys,
+            )
+        except Exception:
+            logger.warning(
+                "Failed to clean up unreferenced image attachments for session %s.",
+                session.id,
+                exc_info=True,
+            )
 
     def _normalize_content_type(self, content_type: str) -> str:
         return content_type.split(";", 1)[0].strip().lower()
