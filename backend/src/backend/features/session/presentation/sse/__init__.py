@@ -1,4 +1,4 @@
-from .events import SessionServerEvent
+from .events import SessionEventTypeSchema, SessionServerEvent
 from .stream import stream_session_events
 
-__all__ = ["SessionServerEvent", "stream_session_events"]
+__all__ = ["SessionEventTypeSchema", "SessionServerEvent", "stream_session_events"]

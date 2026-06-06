@@ -15,10 +15,6 @@ from backend.features.session.presentation.schemas import (
 from backend.presentation.schema import Schema
 
 
-class _SessionEventSchema(Schema):
-    pass
-
-
 class SessionEventType(StrEnum):
     SESSION_SNAPSHOT = "session.snapshot"
     TITLE_GENERATED = "session.title_generated"
@@ -44,13 +40,17 @@ class SessionEventType(StrEnum):
     ERROR = "error"
 
 
-class PlaylistPayload(_SessionEventSchema):
+class _SessionEventSchema(Schema):
+    type: SessionEventType
+
+
+class PlaylistPayload(Schema):
     id: UUID
     name: str | None = None
     tracks: list[PlaylistTrackResponse]
 
 
-class SessionSnapshotPayload(_SessionEventSchema):
+class SessionSnapshotPayload(Schema):
     id: UUID
     title: str
     created_at: datetime
@@ -219,6 +219,10 @@ ServerEvent = Annotated[
     ],
     Field(discriminator="type"),
 ]
+
+
+class SessionEventTypeSchema(RootModel[SessionEventType]):
+    """Schema-only model to expose SessionEventType in OpenAPI."""
 
 
 class SessionServerEvent(RootModel[ServerEvent | None]):

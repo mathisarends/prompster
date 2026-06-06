@@ -20,6 +20,7 @@ from backend.features.session.presentation.mapper import (
 )
 from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
+    EntryKindSchema,
     ErrorResponse,
     PlaylistTrackResponse,
     SendMessageRequest,
@@ -31,6 +32,7 @@ from backend.features.session.presentation.schemas import (
     SpotifyPlaylistExportResponse,
 )
 from backend.features.session.presentation.sse import (
+    SessionEventTypeSchema,
     SessionServerEvent,
     stream_session_events,
 )
@@ -72,6 +74,32 @@ async def get_session_event_schema(
     _authenticated_user_id: AuthenticatedUserId,
 ) -> SessionServerEvent:
     return SessionServerEvent(None)
+
+
+@router.get(
+    "/events/type/schema",
+    response_model=SessionEventTypeSchema,
+    status_code=status.HTTP_200_OK,
+    operation_id="get_session_event_type_schema",
+    responses=_auth_errors,
+)
+async def get_session_event_type_schema(
+    _authenticated_user_id: AuthenticatedUserId,
+) -> SessionEventTypeSchema:
+    return SessionEventTypeSchema("done")
+
+
+@router.get(
+    "/entries/kind/schema",
+    response_model=EntryKindSchema,
+    status_code=status.HTTP_200_OK,
+    operation_id="get_session_entry_kind_schema",
+    responses=_auth_errors,
+)
+async def get_session_entry_kind_schema(
+    _authenticated_user_id: AuthenticatedUserId,
+) -> EntryKindSchema:
+    return EntryKindSchema("user_message")
 
 
 @router.get(

@@ -24,6 +24,7 @@ import type {
 
 import type {
   AddPlaylistTrackRequest,
+  EntryKind,
   ErrorResponse,
   ExportSessionPlaylistParams,
   HTTPValidationError,
@@ -31,6 +32,7 @@ import type {
   PlaylistTrackResponse,
   SendMessageRequest,
   SessionCreateRequest,
+  SessionEventType,
   SessionResponse,
   SessionServerEvent,
   SessionSummaryListResponse,
@@ -328,6 +330,598 @@ export function useGetSessionEventSchema<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetSessionEventSchemaQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get Session Event Type Schema
+ */
+export const getSessionEventTypeSchema = (
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<SessionEventType>(
+    { url: `/api/v1/sessions/events/type/schema`, method: "GET", signal },
+    options,
+  );
+};
+
+export const getGetSessionEventTypeSchemaInfiniteQueryKey = () => {
+  return ["infinite", `/api/v1/sessions/events/type/schema`] as const;
+};
+
+export const getGetSessionEventTypeSchemaQueryKey = () => {
+  return [`/api/v1/sessions/events/type/schema`] as const;
+};
+
+export const getGetSessionEventTypeSchemaInfiniteQueryOptions = <
+  TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventTypeSchema>>>,
+  TError = ErrorResponse,
+>(options?: {
+  query?: Partial<
+    UseInfiniteQueryOptions<
+      Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSessionEventTypeSchemaInfiniteQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSessionEventTypeSchema>>
+  > = ({ signal }) => getSessionEventTypeSchema(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseInfiniteQueryOptions<
+    Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetSessionEventTypeSchemaInfiniteQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSessionEventTypeSchema>>
+>;
+export type GetSessionEventTypeSchemaInfiniteQueryError = ErrorResponse;
+
+export function useGetSessionEventTypeSchemaInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventTypeSchema>>>,
+  TError = ErrorResponse,
+>(
+  options: {
+    query: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionEventTypeSchema>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSessionEventTypeSchemaInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventTypeSchema>>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionEventTypeSchema>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSessionEventTypeSchemaInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventTypeSchema>>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Session Event Type Schema
+ */
+
+export function useGetSessionEventTypeSchemaInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventTypeSchema>>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getGetSessionEventTypeSchemaInfiniteQueryOptions(options);
+
+  const query = useInfiniteQuery(
+    queryOptions,
+    queryClient,
+  ) as UseInfiniteQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getGetSessionEventTypeSchemaQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+  TError = ErrorResponse,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSessionEventTypeSchemaQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSessionEventTypeSchema>>
+  > = ({ signal }) => getSessionEventTypeSchema(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetSessionEventTypeSchemaQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSessionEventTypeSchema>>
+>;
+export type GetSessionEventTypeSchemaQueryError = ErrorResponse;
+
+export function useGetSessionEventTypeSchema<
+  TData = Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+  TError = ErrorResponse,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionEventTypeSchema>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSessionEventTypeSchema<
+  TData = Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionEventTypeSchema>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSessionEventTypeSchema<
+  TData = Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Session Event Type Schema
+ */
+
+export function useGetSessionEventTypeSchema<
+  TData = Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetSessionEventTypeSchemaQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get Session Entry Kind Schema
+ */
+export const getSessionEntryKindSchema = (
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<EntryKind>(
+    { url: `/api/v1/sessions/entries/kind/schema`, method: "GET", signal },
+    options,
+  );
+};
+
+export const getGetSessionEntryKindSchemaInfiniteQueryKey = () => {
+  return ["infinite", `/api/v1/sessions/entries/kind/schema`] as const;
+};
+
+export const getGetSessionEntryKindSchemaQueryKey = () => {
+  return [`/api/v1/sessions/entries/kind/schema`] as const;
+};
+
+export const getGetSessionEntryKindSchemaInfiniteQueryOptions = <
+  TData = InfiniteData<Awaited<ReturnType<typeof getSessionEntryKindSchema>>>,
+  TError = ErrorResponse,
+>(options?: {
+  query?: Partial<
+    UseInfiniteQueryOptions<
+      Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSessionEntryKindSchemaInfiniteQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSessionEntryKindSchema>>
+  > = ({ signal }) => getSessionEntryKindSchema(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseInfiniteQueryOptions<
+    Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetSessionEntryKindSchemaInfiniteQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSessionEntryKindSchema>>
+>;
+export type GetSessionEntryKindSchemaInfiniteQueryError = ErrorResponse;
+
+export function useGetSessionEntryKindSchemaInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getSessionEntryKindSchema>>>,
+  TError = ErrorResponse,
+>(
+  options: {
+    query: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionEntryKindSchema>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSessionEntryKindSchemaInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getSessionEntryKindSchema>>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionEntryKindSchema>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSessionEntryKindSchemaInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getSessionEntryKindSchema>>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Session Entry Kind Schema
+ */
+
+export function useGetSessionEntryKindSchemaInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getSessionEntryKindSchema>>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getGetSessionEntryKindSchemaInfiniteQueryOptions(options);
+
+  const query = useInfiniteQuery(
+    queryOptions,
+    queryClient,
+  ) as UseInfiniteQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getGetSessionEntryKindSchemaQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+  TError = ErrorResponse,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSessionEntryKindSchemaQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSessionEntryKindSchema>>
+  > = ({ signal }) => getSessionEntryKindSchema(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetSessionEntryKindSchemaQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSessionEntryKindSchema>>
+>;
+export type GetSessionEntryKindSchemaQueryError = ErrorResponse;
+
+export function useGetSessionEntryKindSchema<
+  TData = Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+  TError = ErrorResponse,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionEntryKindSchema>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSessionEntryKindSchema<
+  TData = Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+          TError,
+          Awaited<ReturnType<typeof getSessionEntryKindSchema>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSessionEntryKindSchema<
+  TData = Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Session Entry Kind Schema
+ */
+
+export function useGetSessionEntryKindSchema<
+  TData = Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetSessionEntryKindSchemaQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
@@ -1406,7 +2000,7 @@ export const sendMessage = (
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  return customInstance<unknown | string>(
+  return customInstance<string>(
     {
       url: `/api/v1/sessions/${sessionId}/messages`,
       method: "POST",
@@ -1773,7 +2367,7 @@ export const completeOnboarding = (
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  return customInstance<SessionResponse>(
+  return customInstance<string>(
     {
       url: `/api/v1/sessions/${sessionId}/onboarding/complete`,
       method: "POST",

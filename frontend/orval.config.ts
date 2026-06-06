@@ -17,6 +17,7 @@ export default defineConfig({
       clean: true,
       formatter: "prettier",
       override: {
+        enumGenerationType: "const",
         mutator: {
           path: "./src/api/http-client.ts",
           name: "customInstance",

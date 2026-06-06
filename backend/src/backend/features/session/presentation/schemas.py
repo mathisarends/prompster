@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import Annotated, Literal, Self, Union
 from uuid import UUID
 
-from pydantic import Field, model_validator
+from pydantic import Field, RootModel, model_validator
 
 from backend.features.session.domain import OnboardingQuestionSelectionMode, Phase
 from backend.presentation.schema import Schema
@@ -21,6 +21,10 @@ class EntryKind(StrEnum):
     USER_MESSAGE = "user_message"
     ASSISTANT_MESSAGE = "assistant_message"
     TOOL_CALL_SEQUENCE = "tool_call_sequence"
+
+
+class EntryKindSchema(RootModel[EntryKind]):
+    """Schema-only model to expose EntryKind in OpenAPI."""
 
 
 class SessionMessageAttachmentKind(StrEnum):

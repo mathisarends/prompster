@@ -1,15 +1,39 @@
 import asyncio
+from typing import Literal, get_args, get_origin
 
 from backend.features.session.domain import InvalidSessionPhaseTransitionError
 from backend.features.session.presentation.sse import SessionServerEvent
 from backend.features.session.presentation.sse.events import (
     DoneEvent,
+    PlaylistPayload,
+    ServerEvent,
     SessionEventType,
+    SessionSnapshotPayload,
+    _SessionEventSchema,
 )
 from backend.features.session.presentation.sse.stream import _stream, _to_sse
 
 
 class TestSessionServerEvent:
+    def test_union_events_share_required_type_base(self) -> None:
+        union = get_args(ServerEvent)[0]
+        event_classes = get_args(union)
+
+        assert _SessionEventSchema.model_fields["type"].is_required()
+        assert all(
+            issubclass(event_class, _SessionEventSchema)
+            for event_class in event_classes
+        )
+        assert all(
+            "type" in event_class.__annotations__ for event_class in event_classes
+        )
+        assert all(
+            get_origin(event_class.__annotations__["type"]) is Literal
+            for event_class in event_classes
+        )
+        assert "type" not in PlaylistPayload.model_fields
+        assert "type" not in SessionSnapshotPayload.model_fields
+
     def test_wraps_discriminated_server_event_union(self) -> None:
         schema = SessionServerEvent(DoneEvent())
 

@@ -10,10 +10,7 @@ import type {
   UserMessageEntryResponse,
 } from "@/api/generated/model";
 import type { SessionServerEvent } from "@/features/chat/api/session-stream";
-import type {
-  ToolCallItem,
-  ToolCallStatus,
-} from "@/features/chat/types";
+import type { ToolCallItem, ToolCallStatus } from "@/features/chat/types";
 
 type SessionLike =
   | Pick<
@@ -84,18 +81,29 @@ export type PendingOnboardingQuestion = {
   isAnswered: boolean;
 };
 
+export const ChatActionType = {
+  SESSION_LOADED: "session/loaded",
+  SESSION_RESET: "session/reset",
+  STREAM_STARTED: "stream/started",
+  STREAM_FINISHED: "stream/finished",
+  STREAM_STOPPED: "stream/stopped",
+  STREAM_FAILED: "stream/failed",
+  PENDING_INPUT_CLEAR: "pending_input/clear",
+  STREAM_EVENT: "stream/event",
+} as const;
+
 export type ChatAction =
-  | { type: "session/loaded"; session: SessionLike }
-  | { type: "session/reset" }
+  | { type: typeof ChatActionType.SESSION_LOADED; session: SessionLike }
+  | { type: typeof ChatActionType.SESSION_RESET }
   | {
-      type: "stream/started";
+      type: typeof ChatActionType.STREAM_STARTED;
       userMessageText?: string;
     }
-  | { type: "stream/finished" }
-  | { type: "stream/stopped" }
-  | { type: "stream/failed"; message: string }
-  | { type: "pending_input/clear" }
-  | { type: "stream/event"; event: SessionServerEvent };
+  | { type: typeof ChatActionType.STREAM_FINISHED }
+  | { type: typeof ChatActionType.STREAM_STOPPED }
+  | { type: typeof ChatActionType.STREAM_FAILED; message: string }
+  | { type: typeof ChatActionType.PENDING_INPUT_CLEAR }
+  | { type: typeof ChatActionType.STREAM_EVENT; event: SessionServerEvent };
 
 export const createInitialChatState = (): ChatState => ({
   entries: [],
@@ -109,7 +117,7 @@ export const chatReducer = (
   action: ChatAction,
 ): ChatState => {
   switch (action.type) {
-    case "session/loaded":
+    case ChatActionType.SESSION_LOADED:
       return {
         ...state,
         title: action.session.title,
@@ -119,10 +127,10 @@ export const chatReducer = (
         errorMessage: undefined,
       };
 
-    case "session/reset":
+    case ChatActionType.SESSION_RESET:
       return createInitialChatState();
 
-    case "stream/started":
+    case ChatActionType.STREAM_STARTED:
       return {
         ...state,
         entries: action.userMessageText
@@ -136,20 +144,20 @@ export const chatReducer = (
         errorMessage: undefined,
       };
 
-    case "stream/finished":
+    case ChatActionType.STREAM_FINISHED:
       return {
         ...state,
         entries: finishStreamingAssistantEntries(state.entries),
         isStreaming: false,
       };
 
-    case "stream/stopped":
+    case ChatActionType.STREAM_STOPPED:
       return {
         ...state,
         entries: removeLastPendingToolCall(state.entries),
       };
 
-    case "stream/failed":
+    case ChatActionType.STREAM_FAILED:
       return {
         ...state,
         entries: upsertStreamErrorEntry(state.entries, action.message),
@@ -157,13 +165,13 @@ export const chatReducer = (
         errorMessage: action.message,
       };
 
-    case "pending_input/clear":
+    case ChatActionType.PENDING_INPUT_CLEAR:
       return {
         ...state,
         pendingInput: null,
       };
 
-    case "stream/event":
+    case ChatActionType.STREAM_EVENT:
       return reduceServerEvent(state, action.event);
   }
 };
