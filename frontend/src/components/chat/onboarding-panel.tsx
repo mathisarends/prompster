@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ListChecks } from "lucide-react";
 
 import { Chip } from "@/components/shared/ui/chip";
 import { Button } from "@/components/ui/button";
@@ -272,16 +272,25 @@ const OnboardingQuestionBlock = ({
     (option) => !isOtherOption(option),
   );
   const freeTextId = `onboarding-free-text-${question.id || number}`;
+  const isMultiSelect = question.selectionMode === "multi_select";
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2.5">
-        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary">
-          {number}
-        </span>
-        <h3 className="text-balance text-base font-medium leading-snug text-foreground/90">
-          {question.question || "Erzähl mir etwas mehr über deine Playlist."}
-        </h3>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2.5">
+          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary">
+            {number}
+          </span>
+          <h3 className="text-balance text-base font-medium leading-snug text-foreground/90">
+            {question.question || "Erzähl mir etwas mehr über deine Playlist."}
+          </h3>
+        </div>
+        {isMultiSelect ? (
+          <p className="flex items-center gap-1.5 pl-[1.875rem] text-xs font-medium text-primary/80">
+            <ListChecks className="size-3.5 shrink-0" />
+            Mehrfachauswahl möglich
+          </p>
+        ) : null}
       </div>
 
       <div className="flex max-w-3xl flex-wrap gap-2.5">
