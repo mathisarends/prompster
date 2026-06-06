@@ -1,4 +1,4 @@
-import { Pause, Pin, PinOff, Play, Trash2 } from "lucide-react";
+import { Pause, Play, Trash2 } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
 import {
@@ -24,13 +24,10 @@ type DeckPlaylistTrackItemProps = {
   isPlaying: boolean;
   isPlayable: boolean;
   canRemove: boolean;
-  canTogglePin: boolean;
   isRemoving: boolean;
-  isPinning: boolean;
   onActivateTrack: () => void;
   onTogglePlayPause: () => void;
   onRemoveTrack: () => void;
-  onTogglePin: () => void;
 };
 
 export const DeckPlaylistTrackItem = ({
@@ -39,23 +36,18 @@ export const DeckPlaylistTrackItem = ({
   isPlaying,
   isPlayable,
   canRemove,
-  canTogglePin,
   isRemoving,
-  isPinning,
   onActivateTrack,
   onTogglePlayPause,
   onRemoveTrack,
-  onTogglePin,
 }: DeckPlaylistTrackItemProps) => {
-  const pinLabel = track.isPinned ? "Track entpinnen" : "Track anpinnen";
-
   return (
     <div
       role="button"
       tabIndex={0}
       onDoubleClick={onActivateTrack}
       className={cn(
-        "group relative grid grid-cols-[minmax(0,1fr)_64px_72px] items-center gap-x-3 rounded-md px-2 py-2.5 transition-colors",
+        "group relative grid grid-cols-[minmax(0,1fr)_64px_36px] items-center gap-x-3 rounded-md px-2 py-2.5 transition-colors",
         isActive ? "bg-white/[0.025]" : "hover:bg-white/[0.035]",
         !isPlayable ? "opacity-55" : null,
         isRemoving ? "pointer-events-none opacity-50" : null,
@@ -119,20 +111,6 @@ export const DeckPlaylistTrackItem = ({
               </Tooltip>
             </div>
           </div>
-          {track.isPinned ? (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <span className="absolute -right-1 -top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-primary shadow-sm">
-                    <Pin className="size-2.5 fill-current text-white" />
-                  </span>
-                }
-              />
-              <TooltipContent side="top" sideOffset={8}>
-                Gepinnt – die KI kann diesen Track nicht entfernen
-              </TooltipContent>
-            </Tooltip>
-          ) : null}
         </div>
         <div className="min-w-0">
           <p
@@ -149,39 +127,11 @@ export const DeckPlaylistTrackItem = ({
         </div>
       </div>
 
-      <span className="justify-self-center text-sm font-semibold tabular-nums text-muted-foreground">
+      <span className="justify-self-end text-sm font-semibold tabular-nums text-muted-foreground">
         {track.year}
       </span>
 
       <div className="flex items-center justify-end gap-0.5">
-        {canTogglePin ? (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  aria-label={pinLabel}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onTogglePin();
-                  }}
-                  disabled={isPinning}
-                  className="text-muted-foreground opacity-0 transition-opacity hover:bg-white/[0.06] hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
-                >
-                  {track.isPinned ? (
-                    <PinOff className="size-4" />
-                  ) : (
-                    <Pin className="size-4" />
-                  )}
-                </Button>
-              }
-            />
-            <TooltipContent side="top" sideOffset={8}>
-              {isPinning ? "Wird aktualisiert..." : pinLabel}
-            </TooltipContent>
-          </Tooltip>
-        ) : null}
         {canRemove ? (
           <Tooltip>
             <TooltipTrigger

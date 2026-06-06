@@ -38,16 +38,11 @@ type DeckPlaylistProps = {
   showHeader?: boolean;
   allowLocalRemoval?: boolean;
   onRemoveTrack?: (trackId: string) => Promise<void> | void;
-  onToggleTrackPin?: (
-    trackId: string,
-    isPinned: boolean,
-  ) => Promise<void> | void;
   onAddSpotifyTrack?: (track: SpotifyTrackResponse) => Promise<void> | void;
   onPreviewSpotifyTrack?: (track: SpotifyTrackResponse) => void;
   previewTrack?: PlaylistTrack | null;
   isAddingSpotifyTrack?: boolean;
   addingSpotifyTrackId?: string | null;
-  pinningTrackId?: string | null;
   controller?: DeckPlaylistController;
   playlistUpdate?: {
     revision: number;
@@ -116,7 +111,6 @@ const getTrackSignature = (track: PlaylistTrack) =>
     track.year,
     track.coverUrl,
     track.spotifyUri ?? "",
-    track.isPinned ? "pinned" : "unpinned",
   ].join("\u001f");
 
 const useAnimatedPlaylistTracks = (
@@ -217,13 +211,11 @@ export const DeckPlaylist = ({
   showHeader = true,
   allowLocalRemoval = true,
   onRemoveTrack,
-  onToggleTrackPin,
   onAddSpotifyTrack,
   onPreviewSpotifyTrack,
   previewTrack = null,
   isAddingSpotifyTrack = false,
   addingSpotifyTrackId = null,
-  pinningTrackId = null,
   controller,
   playlistUpdate,
 }: DeckPlaylistProps) => {
@@ -238,7 +230,6 @@ export const DeckPlaylist = ({
   const [showPlaylistSetSkeleton, setShowPlaylistSetSkeleton] = useState(false);
 
   const canRemoveTracks = allowLocalRemoval || Boolean(onRemoveTrack);
-  const canToggleTrackPin = Boolean(onToggleTrackPin);
   const canAddSpotifyTrack = Boolean(onAddSpotifyTrack);
   const hasPlaybackController = Boolean(controller);
 
@@ -334,10 +325,6 @@ export const DeckPlaylist = ({
     playback.removeTrackFromPlayback(trackId);
   };
 
-  const toggleTrackPin = (track: PlaylistTrack) => {
-    void onToggleTrackPin?.(track.id, track.isPinned);
-  };
-
   useEffect(() => {
     onVisibleTrackCountChange?.(filteredTracks.length);
   }, [filteredTracks.length, onVisibleTrackCountChange]);
@@ -363,9 +350,7 @@ export const DeckPlaylist = ({
             isPlaying={playback.isPlaying}
             isPlayable={isPlayable}
             canRemove={canRemoveTracks}
-            canTogglePin={canToggleTrackPin}
             isRemoving={optimistic.loadingIds.has(track.id)}
-            isPinning={pinningTrackId === track.id}
             onActivateTrack={() => {
               if (isPlayable) playback.activateTrack(track.id);
             }}
@@ -388,7 +373,6 @@ export const DeckPlaylist = ({
               }
             }}
             onRemoveTrack={() => removeTrack(track.id)}
-            onTogglePin={() => toggleTrackPin(track)}
           />
         </div>
       );

@@ -209,10 +209,7 @@ class Tools:
                 return ActionResult.fail(error)
 
         @self.action(
-            description=(
-                "Remove tracks from the current Hitster deck by ID. "
-                "Pinned tracks cannot be removed."
-            ),
+            description=("Remove tracks from the current Hitster deck by ID."),
             params=RemoveDraftDeckTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
@@ -231,10 +228,7 @@ class Tools:
                 return ActionResult.fail(error)
 
         @self.action(
-            description=(
-                "Replace tracks in the current Hitster deck by ID. "
-                "Pinned tracks cannot be replaced."
-            ),
+            description=("Replace tracks in the current Hitster deck by ID."),
             params=ReplaceDraftDeckTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,

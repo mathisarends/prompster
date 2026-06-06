@@ -6,7 +6,6 @@ from fastapi.responses import JSONResponse
 from backend.features.session.domain.exceptions import (
     InvalidSessionPhaseTransitionError,
     PlaylistTrackNotFoundError,
-    PlaylistTrackPinnedError,
     SessionAccessDeniedError,
     SessionExportRequiresSpotifyConnectionError,
     SessionPlaylistEmptyError,
@@ -53,16 +52,6 @@ async def _playlist_track_not_found_handler(
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
         content={"detail": _exception_detail(exc, fallback="Playlist track not found")},
-    )
-
-
-async def _playlist_track_pinned_handler(
-    _: Request,
-    exc: PlaylistTrackPinnedError,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_409_CONFLICT,
-        content={"detail": _exception_detail(exc, fallback="Playlist track is pinned")},
     )
 
 
@@ -171,7 +160,6 @@ def register_session_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(
         PlaylistTrackNotFoundError, _playlist_track_not_found_handler
     )
-    app.add_exception_handler(PlaylistTrackPinnedError, _playlist_track_pinned_handler)
     app.add_exception_handler(
         SessionPlaylistEmptyError, _session_playlist_empty_handler
     )

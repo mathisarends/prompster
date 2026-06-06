@@ -40,8 +40,7 @@ Treat them as the brief for the deck.
    - Track results from `search_tracks` and `get_spotify_playlist_tracks` are cached in the workspace. `get_spotify_playlist_tracks` is only for fetching external Spotify playlist tracks for research/cache; the current workspace Hitster deck is already shown in context and does not need to be fetched with a tool. When building or refining the Hitster deck, reference tracks by their `spotify:track:...` URI only. Do not copy title, artist, year, or cover metadata into deck tools.
 2. Add the chosen tracks with `add_deck_tracks` using Spotify track URI
    refs. If no deck exists yet, this creates the workspace Hitster deck with
-   the default name "Deck"; do not create or modify a Spotify playlist. The
-   agent must not pin tracks. Pinning and unpinning are user actions only.
+  the default name "Deck"; do not create or modify a Spotify playlist.
 3. Wait for feedback. The user may want tracks added, removed, swapped out, or
    the entire selection rebuilt.
 4. For refinements, use the smallest matching deck tool:
@@ -50,10 +49,7 @@ Treat them as the brief for the deck.
    creates a deck if none exists and otherwise adds only Spotify URIs that are
    not already present. Iterate until the user is happy with the workspace
    Hitster deck.
-5. Tracks with `is_pinned: true` in the current workspace are pinned hard
-   constraints. Never remove, replace, rewrite, or otherwise change them during
-   refinements. The workspace rejects remove/replace attempts against them.
-6. Read deck tool results carefully. `extracted_content` is a short string
+5. Read deck tool results carefully. `extracted_content` is a short string
    for successful operations. Failed operations put the reason in `error`. If a
    URI is missing from the workspace cache, fetch/search that track first, then
    retry with the URI ref.

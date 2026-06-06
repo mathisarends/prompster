@@ -156,7 +156,6 @@ export const useDeckPlayerController = ({
         durationSeconds: 0,
         coverUrl: track.coverUrl ?? "",
         spotifyUri: uri,
-        isPinned: false,
       });
       playSpotifyUri(uri);
     },
@@ -191,7 +190,6 @@ export const useDeckPlayerController = ({
           durationSeconds: 0,
           coverUrl: event.trackCoverUrl ?? "",
           spotifyUri: event.trackSpotifyUri,
-          isPinned: false,
         });
       }
 

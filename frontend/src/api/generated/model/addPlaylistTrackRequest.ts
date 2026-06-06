@@ -24,5 +24,4 @@ export interface AddPlaylistTrackRequest {
   year: number;
   spotifyUri?: string | null;
   coverUrl?: string | null;
-  isPinned?: boolean;
 }

@@ -63,7 +63,7 @@ class TestMessageManagerBaseline:
         assert [type(m) for m in messages] == [SystemMessage]
         assert messages[0].content == "Prompt"
 
-    def test_onboarding_nudge_is_injected_as_confirmed_context(self) -> None:
+    def test_onboarding_without_deck_context_emits_only_system_message(self) -> None:
         manager = MessageManager(
             system_prompt="Prompt",
             phase=Phase.ONBOARDING,
@@ -71,13 +71,8 @@ class TestMessageManagerBaseline:
 
         messages = manager.all()
 
-        assert [type(m) for m in messages] == [
-            SystemMessage,
-            UserMessage,
-            AssistantMessage,
-        ]
-        assert "ask_onboarding_question" in messages[1].content
-        assert messages[2].content == "Understood."
+        assert [type(m) for m in messages] == [SystemMessage]
+        assert messages[0].content == "Prompt"
 
 
 class TestMessageManagerConversationTurns:
@@ -229,7 +224,7 @@ class TestMessageManagerDeckContext:
     """The current Hitster deck draft is injected as a confirmed context turn."""
 
     def test_draft_renders_as_user_then_assistant_understood(self) -> None:
-        playlist = DeckDraft(
+        deck = DeckDraft(
             name="80er Party",
             tracks=[
                 DeckDraftTrack(
@@ -242,7 +237,7 @@ class TestMessageManagerDeckContext:
         )
         manager = MessageManager(
             system_prompt="Prompt",
-            deck_draft_provider=lambda: playlist,
+            deck_draft_provider=lambda: deck,
         )
 
         messages = manager.all()
@@ -257,12 +252,12 @@ class TestMessageManagerDeckContext:
         ]
         assert messages[2].content == "Understood."
         assert (
-            f'<created_deck id="{playlist.id}" name="80er Party" '
+            f'<created_deck id="{deck.id}" name="80er Party" '
             'track_count="1" max_tracks="75" remaining_tracks="74" '
             'pinned_tracks="hard_constraints">'
         ) in messages[1].content
         assert (
-            f'<track id="{playlist.tracks[0].id}" label="a-ha - Take On Me (1985)" />'
+            f'<track id="{deck.tracks[0].id}" label="a-ha - Take On Me (1985)" />'
         ) in messages[1].content
 
     def test_no_draft_means_no_context_injection(self) -> None:

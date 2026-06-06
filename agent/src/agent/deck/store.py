@@ -44,7 +44,6 @@ class DeckStore:
                 "is_new": self._draft is None,
             },
         )
-        self._assert_pinned_tracks_preserved(draft.tracks)
         update = (
             DeckDraftCreated(deck_draft=draft)
             if self._draft is None
@@ -143,7 +142,6 @@ class DeckStore:
             )
             missing = ", ".join(str(track_id) for track_id in sorted(missing_track_ids))
             raise ValueError(f"Hitster deck track(s) not found: {missing}")
-        self._assert_no_pinned_track_ids(track_id_set)
 
         draft.tracks = [track for track in draft.tracks if track.id not in track_id_set]
         self._pending_updates.append(
@@ -189,7 +187,6 @@ class DeckStore:
             )
             missing = ", ".join(str(track_id) for track_id in sorted(missing_track_ids))
             raise ValueError(f"Hitster deck track(s) not found: {missing}")
-        self._assert_no_pinned_track_ids(set(replacement_by_track_id))
 
         draft.tracks = [
             replacement_by_track_id[track.id].track
@@ -263,7 +260,7 @@ class DeckStore:
                 "Track URI missing from deck cache", extra={"spotify_uri": uri}
             )
             raise ValueError(f"Spotify track URI is not in the workspace cache: {uri}")
-        return track.model_copy(update={"id": uuid4(), "is_pinned": False})
+        return track.model_copy(update={"id": uuid4()})
 
     def drain_deck_draft_updates(self) -> list[DeckDraftUpdate]:
         updates = self._pending_updates.copy()
@@ -291,46 +288,3 @@ class DeckStore:
             seen_uris.add(track.spotify_uri)
             deduplicated.append(track)
         return deduplicated
-
-    def _assert_no_pinned_track_ids(self, track_ids: set[UUID]) -> None:
-        draft = self._require_draft()
-        pinned_track_ids = {
-            track.id for track in draft.tracks if track.is_pinned
-        } & track_ids
-        if pinned_track_ids:
-            logger.warning(
-                "Deck operation attempted to change pinned tracks",
-                extra={
-                    "deck_id": str(draft.id),
-                    "pinned_track_ids": [
-                        str(track_id) for track_id in pinned_track_ids
-                    ],
-                },
-            )
-            pinned = ", ".join(str(track_id) for track_id in sorted(pinned_track_ids))
-            raise ValueError(f"Hitster deck track(s) are pinned: {pinned}")
-
-    def _assert_pinned_tracks_preserved(
-        self,
-        candidate_tracks: list[DeckDraftTrack],
-    ) -> None:
-        if self._draft is None:
-            return
-
-        candidate_by_id = {track.id: track for track in candidate_tracks}
-        for existing_track in self._draft.tracks:
-            if not existing_track.is_pinned:
-                continue
-            candidate = candidate_by_id.get(existing_track.id)
-            if candidate is None or candidate != existing_track:
-                logger.warning(
-                    "Deck save attempted to change pinned track",
-                    extra={
-                        "deck_id": str(self._draft.id),
-                        "track_id": str(existing_track.id),
-                    },
-                )
-                raise ValueError(
-                    f"Hitster deck track is pinned and cannot be changed: "
-                    f"{existing_track.id}"
-                )

@@ -40,10 +40,6 @@ class DeckDraftTrack(BaseModel):
         description="Spotify track URI, e.g. spotify:track:...",
     )
     cover_url: str | None = Field(default=None, description="Album cover image URL.")
-    is_pinned: bool = Field(
-        default=False,
-        description="Whether this track is pinned and must not be removed or replaced.",
-    )
 
     @field_validator("spotify_uri")
     @classmethod

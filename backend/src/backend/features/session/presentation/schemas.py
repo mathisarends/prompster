@@ -103,7 +103,6 @@ class PlaylistTrackResponse(Schema):
     year: int
     spotify_uri: str | None = None
     cover_url: str | None = None
-    is_pinned: bool
 
 
 class PlaylistResponse(Schema):
@@ -113,8 +112,6 @@ class PlaylistResponse(Schema):
 
 
 class UserCurationEventTypeResponse(StrEnum):
-    TRACK_PINNED = "track_pinned"
-    TRACK_UNPINNED = "track_unpinned"
     TRACK_ADDED = "track_added"
     TRACK_REMOVED = "track_removed"
 
@@ -243,7 +240,6 @@ class AddPlaylistTrackRequest(Schema):
     year: int = Field(ge=1900, le=2100)
     spotify_uri: str | None = None
     cover_url: str | None = None
-    is_pinned: bool = True
 
 
 class SpotifyPlaylistExportResponse(Schema):

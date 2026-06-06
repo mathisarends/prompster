@@ -5,8 +5,6 @@ from pydantic import BaseModel
 
 
 class UserCurationEventType(StrEnum):
-    TRACK_PINNED = "track_pinned"
-    TRACK_UNPINNED = "track_unpinned"
     TRACK_ADDED = "track_added"
     TRACK_REMOVED = "track_removed"
 

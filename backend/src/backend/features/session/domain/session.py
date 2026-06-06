@@ -9,7 +9,6 @@ from backend.features.session.domain.exceptions import (
     NoPendingToolCallSequenceError,
     PendingToolCallsError,
     PlaylistTrackLimitExceededError,
-    PlaylistTrackPinnedError,
     PlaylistTrackNotFoundError,
     PlaylistReferenceNotFoundError,
     SessionAccessDeniedError,
@@ -139,7 +138,6 @@ class Session(Aggregate):
         created_time: datetime | None = None,
     ) -> Playlist:
         self._assert_track_limit(total_tracks=len(tracks))
-        self._assert_pinned_tracks_preserved(tracks)
         self._playlist = Playlist(
             id=id,
             tracks=tracks,
@@ -162,7 +160,6 @@ class Session(Aggregate):
         year: int,
         spotify_uri: str | None = None,
         cover_url: str | None = None,
-        is_pinned: bool = True,
         record_user_curation_event: bool = True,
     ) -> PlaylistTrack:
         if self._playlist is None:
@@ -174,7 +171,6 @@ class Session(Aggregate):
             year=year,
             spotify_uri=spotify_uri,
             cover_url=cover_url,
-            is_pinned=is_pinned,
         )
         self._playlist.tracks.append(track)
         if record_user_curation_event:
@@ -204,38 +200,11 @@ class Session(Aggregate):
             raise PlaylistTrackNotFoundError(f"Session {self.id} has no playlist.")
         for index, existing_track in enumerate(self._playlist.tracks):
             if existing_track.id == track_id:
-                if existing_track.is_pinned:
-                    raise PlaylistTrackPinnedError(
-                        f"Track {track_id} is pinned and cannot be replaced."
-                    )
                 self._playlist.tracks[index] = track
                 return self._playlist
         raise PlaylistTrackNotFoundError(
             f"Track {track_id} not found in playlist {self._playlist.id}."
         )
-
-    def pin_track(
-        self, track_id: UUID, record_user_curation_event: bool = True
-    ) -> PlaylistTrack:
-        track = self._require_track(track_id)
-        was_pinned = track.is_pinned
-        track.is_pinned = True
-        if not was_pinned and record_user_curation_event:
-            self._record_user_curation_event(UserCurationEventType.TRACK_PINNED, track)
-        return track
-
-    def unpin_track(
-        self, track_id: UUID, record_user_curation_event: bool = True
-    ) -> PlaylistTrack:
-        track = self._require_track(track_id)
-        was_pinned = track.is_pinned
-        track.is_pinned = False
-        if was_pinned and record_user_curation_event:
-            self._record_user_curation_event(
-                UserCurationEventType.TRACK_UNPINNED,
-                track,
-            )
-        return track
 
     def require_track(self, track_id: UUID) -> PlaylistTrack:
         return self._require_track(track_id)
@@ -537,31 +506,6 @@ class Session(Aggregate):
             f"Track {track_id} not found in playlist {self._playlist.id}."
         )
 
-    def _assert_pinned_tracks_preserved(self, tracks: list[PlaylistTrack]) -> None:
-        if self._playlist is None:
-            return
-
-        candidate_by_id = {track.id: track for track in tracks}
-        for existing_track in self._playlist.tracks:
-            if not existing_track.is_pinned:
-                continue
-            candidate = candidate_by_id.get(existing_track.id)
-            if candidate is None or not self._same_track(existing_track, candidate):
-                raise PlaylistTrackPinnedError(
-                    f"Track {existing_track.id} is pinned and cannot be replaced."
-                )
-
-    def _same_track(self, left: PlaylistTrack, right: PlaylistTrack) -> bool:
-        return (
-            left.id == right.id
-            and left.title == right.title
-            and left.artist == right.artist
-            and left.year == right.year
-            and left.spotify_uri == right.spotify_uri
-            and left.cover_url == right.cover_url
-            and left.is_pinned == right.is_pinned
-        )
-
     def _require_unconsumed_user_curation_event(
         self, event_id: UUID
     ) -> UserCurationEvent:
@@ -579,12 +523,6 @@ class Session(Aggregate):
         )
 
     def _apply_user_curation_event_reversal(self, event: UserCurationEvent) -> None:
-        if event.event_type == UserCurationEventType.TRACK_PINNED:
-            self.unpin_track(event.track_id, record_user_curation_event=False)
-            return
-        if event.event_type == UserCurationEventType.TRACK_UNPINNED:
-            self.pin_track(event.track_id, record_user_curation_event=False)
-            return
         if event.event_type == UserCurationEventType.TRACK_ADDED:
             self.remove_track(event.track_id, record_user_curation_event=False)
             return
@@ -608,7 +546,6 @@ class Session(Aggregate):
             year=event.track_year,
             spotify_uri=event.track_spotify_uri,
             cover_url=event.track_cover_url,
-            is_pinned=False,
         )
         self._playlist.tracks.append(track)
         return track

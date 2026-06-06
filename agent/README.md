@@ -8,7 +8,7 @@ Encapsulates:
 - Streaming event model (`AgentEvent` subclasses)
 - Tool registry with DI-injected dependencies (`Tools`, `ToolContext`)
 - Spotify interaction via `spotifyify` (`Spotify`)
-- Workspace state for playlist drafts (`PlaylistDraftStore`)
+- Workspace state for Hitster deck drafts (`DeckStore`)
 
 Both `backend` and standalone scripts depend on this package so agent logic and tool definitions live in one place.
 
@@ -23,8 +23,8 @@ class Agent:
         messages: MessageManager | None = None,
         system_prompt: str | None = None,
         spotify: Spotify | None = None,
-        playlist_store: PlaylistDraftStore | None = None,
-        max_playlist_tracks: int = 75,
+        deck_store: DeckStore | None = None,
+        max_deck_tracks: int = 75,
     ) -> None: ...
 
     async def prepare(self) -> None          # opens Spotify session
@@ -44,7 +44,7 @@ RunStartedEvent(message: str)
 StepStartedEvent(step: int)
 ToolCallEvent(name: str, args: dict)
 ToolResultEvent(name: str, result: str)
-WorkspaceUpdatedEvent(playlist_draft: PlaylistDraft)
+DeckUpdatedEvent(deck_draft: DeckDraft)
 AssistantMessageEvent(content: str)
 RunCompletedEvent(output: str)
 ```
@@ -65,6 +65,6 @@ async def search_tracks(spotify: Inject[Spotify], params: SearchParams) -> str:
     return await spotify.search_tracks(params)
 ```
 
-Default tools cover: `search_tracks`, `search_playlists`, `get_spotify_playlist_tracks`, `create_playlist`, `add_playlist_tracks`, `remove_playlist_tracks`, `replace_playlist_tracks`.
+Default tools cover: `search_tracks`, `search_playlists`, `get_spotify_playlist_tracks`, `add_deck_tracks`, `remove_deck_tracks`, `replace_deck_tracks`.
 
-Dependencies (`Spotify`, `PlaylistDraftStore`) are resolved at call time via `ToolContext`.
+Dependencies (`Spotify`, `DeckStore`) are resolved at call time via `ToolContext`.

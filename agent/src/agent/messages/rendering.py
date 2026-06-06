@@ -53,13 +53,10 @@ def render_deck_context(
             f'name="{escape(deck_draft.name, quote=True)}" '
             f'track_count="{track_count}" '
             f'max_tracks="{max_tracks}" '
-            f'remaining_tracks="{remaining_tracks}" '
-            'pinned_tracks="hard_constraints">'
+            f'remaining_tracks="{remaining_tracks}">'
         ),
     ]
-    lines.extend(
-        render_track_tag(track, include_pinned=True) for track in deck_draft.tracks
-    )
+    lines.extend(render_track_tag(track) for track in deck_draft.tracks)
     lines.append("</created_deck>")
     return "\n".join(lines)
 
@@ -69,14 +66,11 @@ def render_track_tag(
     *,
     identity_attr: str = "id",
     identity_value: str | None = None,
-    include_pinned: bool = False,
 ) -> str:
     attrs = [
         (identity_attr, identity_value or str(track.id)),
         ("label", _render_track_label(track)),
     ]
-    if include_pinned and track.is_pinned:
-        attrs.append(("pinned", "true"))
     return f"<track {_render_attrs(attrs)} />"
 
 

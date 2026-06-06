@@ -14,10 +14,6 @@ class PlaylistTrackNotFoundError(Exception):
     pass
 
 
-class PlaylistTrackPinnedError(Exception):
-    pass
-
-
 class PlaylistTrackLimitExceededError(Exception):
     pass
 

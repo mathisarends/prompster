@@ -250,49 +250,6 @@ async def add_session_playlist_track(
         year=body.year,
         spotify_uri=body.spotify_uri,
         cover_url=body.cover_url,
-        is_pinned=body.is_pinned,
-    )
-    return to_playlist_track_response(track)
-
-
-@router.post(
-    "/{session_id}/tracks/{track_id}/pin",
-    response_model=PlaylistTrackResponse,
-    status_code=status.HTTP_200_OK,
-    operation_id="pin_playlist_track",
-    responses=_auth_errors | _not_found,
-)
-async def pin_session_playlist_track(
-    session_id: UUID,
-    track_id: UUID,
-    authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionService],
-) -> PlaylistTrackResponse:
-    track = await service.pin_playlist_track(
-        session_id=session_id,
-        user_id=authenticated_user_id,
-        track_id=track_id,
-    )
-    return to_playlist_track_response(track)
-
-
-@router.post(
-    "/{session_id}/tracks/{track_id}/unpin",
-    response_model=PlaylistTrackResponse,
-    status_code=status.HTTP_200_OK,
-    operation_id="unpin_playlist_track",
-    responses=_auth_errors | _not_found,
-)
-async def unpin_session_playlist_track(
-    session_id: UUID,
-    track_id: UUID,
-    authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionService],
-) -> PlaylistTrackResponse:
-    track = await service.unpin_playlist_track(
-        session_id=session_id,
-        user_id=authenticated_user_id,
-        track_id=track_id,
     )
     return to_playlist_track_response(track)
 

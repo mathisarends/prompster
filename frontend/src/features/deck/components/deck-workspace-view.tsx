@@ -14,8 +14,6 @@ import {
   exportSessionPlaylistToSpotify,
   getGetSessionQueryKey,
   getListSessionsQueryKey,
-  pinPlaylistTrack,
-  unpinPlaylistTrack,
 } from "@/api/generated/session-api";
 import { ChatWorkspacePanel } from "@/shared/components/workspace-panel-shell";
 import { DeckPlaylist } from "@/features/deck/components/deck-playlist";
@@ -74,7 +72,6 @@ export const DeckWorkspaceView = ({
         durationSeconds: 0,
         coverUrl: track.coverUrl ?? "",
         spotifyUri: track.spotifyUri ?? null,
-        isPinned: track.isPinned,
       })),
     [playlist.tracks],
   );
@@ -164,25 +161,6 @@ export const DeckWorkspaceView = ({
     },
   });
 
-  const toggleTrackPinMutation = useMutation({
-    mutationFn: ({
-      trackId,
-      isPinned,
-    }: {
-      trackId: string;
-      isPinned: boolean;
-    }) =>
-      isPinned
-        ? unpinPlaylistTrack(sessionId, trackId)
-        : pinPlaylistTrack(sessionId, trackId),
-    onSuccess: async () => {
-      await invalidateSessionQueries();
-    },
-    onError: () => {
-      toast.error("Song konnte nicht aktualisiert werden.");
-    },
-  });
-
   return (
     <>
       {showSpotifyConnectDialog ? (
@@ -243,22 +221,11 @@ export const DeckWorkspaceView = ({
               onAddSpotifyTrack={async (track) => {
                 await addSpotifyTrackMutation.mutateAsync(track);
               }}
-              onToggleTrackPin={async (trackId, isPinned) => {
-                await toggleTrackPinMutation.mutateAsync({
-                  trackId,
-                  isPinned,
-                });
-              }}
               onPreviewSpotifyTrack={
                 showPlaybackControls ? previewSpotifyTrack : undefined
               }
               previewTrack={previewTrack}
               isAddingSpotifyTrack={addSpotifyTrackMutation.isPending}
-              pinningTrackId={
-                toggleTrackPinMutation.isPending
-                  ? toggleTrackPinMutation.variables?.trackId
-                  : null
-              }
               addingSpotifyTrackId={addingSpotifyTrackId}
               controller={controller}
             />

@@ -52,7 +52,7 @@ class SessionProvider(Provider):
         return LLMCredentials()
 
     @provide(scope=Scope.APP)
-    def provide_title_generator_llm(self, credentials: LLMCredentials) -> ChatModel:
+    def provide_llm(self, credentials: LLMCredentials) -> ChatModel:
         return create_gpt_5_4_mini(credentials=credentials)
 
     @provide(scope=Scope.APP)

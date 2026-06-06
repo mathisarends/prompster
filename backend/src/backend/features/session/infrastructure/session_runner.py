@@ -136,7 +136,6 @@ def _to_deck_store(playlist: Playlist | None) -> DeckStore:
                     year=track.year,
                     spotify_uri=track.spotify_uri,
                     cover_url=track.cover_url,
-                    is_pinned=track.is_pinned,
                 )
                 for track in playlist.tracks
             ],

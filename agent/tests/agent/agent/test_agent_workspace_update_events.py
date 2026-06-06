@@ -165,7 +165,8 @@ class TestAgentWorkspaceUpdateEvents:
         }
         assert agent.phase == Phase.BUILD
         assert "search_tracks" in tool_names
-        assert "create_deck" in tool_names
+        assert "add_deck_tracks" in tool_names
+        assert "create_deck" not in tool_names
 
     @pytest.mark.asyncio
     async def test_last_onboarding_question_suspends_run(self) -> None:

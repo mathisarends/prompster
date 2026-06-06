@@ -137,7 +137,12 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         )
         ordered_entries = [entry for _, entry in entries]
         domain_user_curation_events = [
-            self._to_domain_user_curation_event(event) for event in user_curation_events
+            event
+            for event in (
+                self._to_domain_user_curation_event(event)
+                for event in user_curation_events
+            )
+            if event is not None
         ]
         playlist_references = sorted(
             orm.playlist_references,
@@ -529,10 +534,15 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
 
     def _to_domain_user_curation_event(
         self, row: SessionUserCurationEventModel
-    ) -> UserCurationEvent:
+    ) -> UserCurationEvent | None:
+        try:
+            event_type = UserCurationEventType(row.event_type)
+        except ValueError:
+            return None
+
         return UserCurationEvent(
             id=row.id,
-            event_type=UserCurationEventType(row.event_type),
+            event_type=event_type,
             track_id=row.track_id,
             track_title=row.track_title,
             track_artist=row.track_artist,
@@ -775,7 +785,6 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm.year = track.year
         orm.spotify_uri = track.spotify_uri
         orm.cover_url = track.cover_url
-        orm.is_pinned = track.is_pinned
         orm.created_at = track.created_at
         return orm
 
@@ -790,6 +799,5 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             year=orm_track.year,
             spotify_uri=orm_track.spotify_uri,
             cover_url=orm_track.cover_url,
-            is_pinned=orm_track.is_pinned,
             created_time=orm_track.created_at,
         )

@@ -10,8 +10,6 @@ export type UserCurationEventTypeResponse =
   (typeof UserCurationEventTypeResponse)[keyof typeof UserCurationEventTypeResponse];
 
 export const UserCurationEventTypeResponse = {
-  track_pinned: "track_pinned",
-  track_unpinned: "track_unpinned",
   track_added: "track_added",
   track_removed: "track_removed",
 } as const;

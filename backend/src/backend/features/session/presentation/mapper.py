@@ -150,7 +150,6 @@ def to_playlist_track_response(track: PlaylistTrack) -> PlaylistTrackResponse:
         year=track.year,
         spotify_uri=track.spotify_uri,
         cover_url=track.cover_url,
-        is_pinned=track.is_pinned,
     )
 
 
