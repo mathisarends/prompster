@@ -11,7 +11,7 @@ from backend.features.session.presentation.sse import (
 session_schema_router = APIRouter(
     route_class=DishkaRoute,
     prefix="/sessions",
-    tags=["sessions"],
+    tags=["session_schemas"],
 )
 
 _auth_errors = {

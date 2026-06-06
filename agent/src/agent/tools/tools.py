@@ -275,7 +275,8 @@ class Tools:
             except Exception as error:
                 return ActionResult.fail(error)
 
-        @self.action(
+
+"""         @self.action(
             description=(
                 "Get critic feedback on the current Hitster deck near the end of a "
                 "build loop. Returns concrete, structured suggestions you can act on "
@@ -295,3 +296,4 @@ class Tools:
                 return ActionResult.ok(result.content)
             except Exception as error:
                 return ActionResult.fail(error)
+ """

@@ -2,10 +2,10 @@ import {
   CircleAlert,
   Download,
   Loader2,
+  MessageCircle,
   Plus,
   RefreshCw,
   Search,
-  Sparkles,
   Trash2,
   Wrench,
 } from "lucide-react";
@@ -60,7 +60,7 @@ const renderActionIcon = (actionType: ToolCallItem["actionType"]) => {
 
   if (actionType === "self_review") {
     return (
-      <Sparkles
+      <MessageCircle
         className="size-[13px] shrink-0 text-foreground/65"
         strokeWidth={2}
       />
