@@ -445,11 +445,7 @@ class Session(Aggregate):
         return (*normalized_options, DECIDE_FOR_ME_OPTION)
 
     def _reconstruct_onboarding_history(self) -> None:
-        self._entries = [
-            entry
-            for entry in self._entries
-            if not self._is_onboarding_tool_call_sequence(entry)
-        ]
+        self._remove_onboarding_tool_call_sequences()
         answered = [q for q in self._onboarding_questions if q.is_answered]
         if not answered:
             return
@@ -457,14 +453,20 @@ class Session(Aggregate):
         for i, q in enumerate(answered, 1):
             lines.append(f"{i}. {q.question_text} -> {q.answer}")
         self._entries.append(UserMessage(content="\n".join(lines)))
-        self._entries.append(AssistantMessage(content="Understood."))
+
+    def _remove_onboarding_tool_call_sequences(self) -> None:
+        self._entries = [
+            entry
+            for entry in self._entries
+            if not self._is_onboarding_tool_call_sequence(entry)
+        ]
 
     def _is_onboarding_tool_call_sequence(self, entry: SessionEntry) -> bool:
         if not isinstance(entry, ToolCallSequence):
             return False
-        return all(
-            call.function.name == "ask_onboarding_question" for call in entry.calls
-        )
+        if not entry.calls:
+            return False
+        return all(call.function.is_onboarding_question for call in entry.calls)
 
     def add_user_message(
         self,

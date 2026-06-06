@@ -15,6 +15,7 @@ class ToolFunction:
     arguments: dict[str, object]
     status_label: str | None = None
     action_type: ToolActionType | None = None
+    is_onboarding_question: bool = False
 
 
 @dataclass(frozen=True)

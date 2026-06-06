@@ -634,6 +634,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             arguments=row.function_arguments or {},
             status_label=row.function_status_label,
             action_type=self._to_tool_action_type(row.function_action_type),
+            is_onboarding_question=row.function_is_onboarding_question,
         )
         if row.state == _COMPLETED_STATE:
             return CompletedCall(
@@ -693,6 +694,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm.function_action_type = (
             call.function.action_type.value if call.function.action_type else None
         )
+        orm.function_is_onboarding_question = call.function.is_onboarding_question
         orm.state = state
         orm.result = result
         orm.error = error

@@ -335,6 +335,7 @@ class SessionToolCallModel(DatabaseEntity, table=True):
     )
     function_status_label: str | None = None
     function_action_type: str | None = Field(default=None, max_length=32)
+    function_is_onboarding_question: bool = False
     state: str
     result: str | None = None
     error: str | None = None

@@ -19,10 +19,7 @@ from backend.infrastructure.di import DatabaseProvider, StorageBackendProvider
 from backend.lifespan import lifespan
 from backend.presentation import LoggingMiddleware, PascalCaseRouter
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
+_LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +34,15 @@ _FEATURES = [
 ]
 
 _INFRASTRUCTURE_PROVIDERS = [DatabaseProvider, StorageBackendProvider]
+
+
+def _setup_logging(env: EnvSettings) -> None:
+    logging.basicConfig(
+        level=env.effective_log_level,
+        format=_LOG_FORMAT,
+    )
+    logging.getLogger().setLevel(env.effective_log_level)
+    logging.getLogger("backend").setLevel(env.effective_log_level)
 
 
 def _setup_middleware(app: FastAPI, env: EnvSettings) -> None:
@@ -69,8 +75,9 @@ def _create_container():
 
 
 def _create_app() -> FastAPI:
-    logger.info("Creating FastAPI application...")
     env = EnvSettings()
+    _setup_logging(env)
+    logger.info("Creating FastAPI application...")
     app = FastAPI(
         title="Prompster API",
         description="API for Prompster",

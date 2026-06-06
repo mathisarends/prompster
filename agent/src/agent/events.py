@@ -44,6 +44,7 @@ class ToolCallEvent(AgentEvent):
     args: dict[str, Any]
     status_label: str | None = None
     action_type: ActionType | None = None
+    is_onboarding_question: bool = False
 
 
 class ToolResultEvent(AgentEvent):

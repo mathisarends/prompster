@@ -28,6 +28,8 @@ class TestToolsFacadeAbstraction:
         assert tools.get("create_playlist").action_type == ActionType.MUTATE
         assert tools.get("add_playlist_tracks") is not None
         assert tools.get("add_playlist_tracks").action_type == ActionType.MUTATE
+        assert tools.get("ask_onboarding_question") is not None
+        assert tools.get("ask_onboarding_question").is_onboarding_question is True
 
     def test_default_tools_are_filtered_by_phase(self) -> None:
         tools = Tools()

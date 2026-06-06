@@ -64,6 +64,7 @@ class TestToolCallMapping:
                 args={"query": "80s synth"},
                 status_label="Adding tracks...",
                 action_type=None,
+                is_onboarding_question=True,
             )
         )
 
@@ -75,6 +76,7 @@ class TestToolCallMapping:
         assert event.call.function.arguments == {"query": "80s synth"}
         assert event.call.function.status_label == "Adding tracks..."
         assert event.call.function.action_type is None
+        assert event.call.function.is_onboarding_question is True
 
     def test_unknown_action_type_string_becomes_none(self) -> None:
         mapper = AgentSessionEventMapper()

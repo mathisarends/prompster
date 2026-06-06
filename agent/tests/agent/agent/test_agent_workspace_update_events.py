@@ -195,6 +195,8 @@ class TestAgentWorkspaceUpdateEvents:
 
         events = [event async for event in agent.stream("Start")]
 
+        tool_call = next(event for event in events if isinstance(event, ToolCallEvent))
+        assert tool_call.is_onboarding_question is True
         suspended = next(
             event for event in events if isinstance(event, SuspendedForUserInputEvent)
         )

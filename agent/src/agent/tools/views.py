@@ -69,6 +69,7 @@ class Tool:
         status_label: Callable[[Any], str] | None = None,
         action_type: ActionType = ActionType.FETCH,
         included_in_phases: Iterable[Phase] | None = None,
+        is_onboarding_question: bool = False,
         schema: dict | None = None,
         param_model: type[BaseModel] | None = None,
     ) -> None:
@@ -77,6 +78,7 @@ class Tool:
         self.fn = fn
         self.action_type = action_type
         self.included_in_phases = frozenset(included_in_phases or ())
+        self.is_onboarding_question = is_onboarding_question
         self._schema = schema
         self.param_model = param_model
         self._status_label = status_label

@@ -55,6 +55,17 @@ def make_pending_call(call_id: str = "tc-1") -> PendingCall:
     )
 
 
+def make_onboarding_call(call_id: str = "tc-onboarding") -> PendingCall:
+    return PendingCall(
+        id=call_id,
+        function=ToolFunction(
+            name="collect_preference",
+            arguments={"question": "Fuer wen?"},
+            is_onboarding_question=True,
+        ),
+    )
+
+
 class TestSessionDomainSession:
     def test_session_generates_aggregate_identity_by_default(
         self, owner_id: UUID
@@ -216,6 +227,7 @@ class TestSessionDomainSession:
         self, session: Session
     ) -> None:
         session.add_user_message(content="Erstelle eine Playlist")
+        session.add_tool_call(make_onboarding_call())
         first = session.add_onboarding_question(question_text="Fuer wen?")
         last = session.add_onboarding_question(
             question_text="Welche Dekade?", is_last_question=True
@@ -228,6 +240,7 @@ class TestSessionDomainSession:
         contents = [getattr(e, "content", None) for e in session.entries]
         assert any("Fuer wen? -> Freunde" in (c or "") for c in contents)
         assert any("Welche Dekade? -> 80er" in (c or "") for c in contents)
+        assert "Understood." not in contents
 
     def test_star_marks_session_as_starred(self, session: Session) -> None:
         session.star()

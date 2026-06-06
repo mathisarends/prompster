@@ -160,6 +160,7 @@ class Agent:
             args=args,
             status_label=tool.render_status(args) if tool else None,
             action_type=tool.action_type if tool else None,
+            is_onboarding_question=tool.is_onboarding_question if tool else False,
         )
 
         result = await self._tools.execute(

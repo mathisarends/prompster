@@ -74,6 +74,7 @@ class Tools:
         status_label: Callable[[P], str] | None = None,
         action_type: ActionType = ActionType.FETCH,
         included_in_phases: set[Phase] | None = None,
+        is_onboarding_question: bool = False,
     ) -> Callable:
         def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
             self._register(
@@ -84,6 +85,7 @@ class Tools:
                     status_label=status_label,
                     action_type=action_type,
                     included_in_phases=included_in_phases,
+                    is_onboarding_question=is_onboarding_question,
                     param_model=params,
                 )
             )
@@ -133,6 +135,7 @@ class Tools:
             status_label=lambda params: params.status,
             action_type=ActionType.INTERACT,
             included_in_phases={Phase.ONBOARDING},
+            is_onboarding_question=True,
         )
         async def ask_onboarding_question(
             params: AskOnboardingQuestionParams,

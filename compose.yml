@@ -8,6 +8,7 @@ services:
     environment:
       ENV: ${ENV:-dev}
       RELOAD: ${RELOAD:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-}
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://127.0.0.1:5173}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}

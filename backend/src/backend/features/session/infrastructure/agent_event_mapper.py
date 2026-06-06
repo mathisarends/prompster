@@ -85,6 +85,7 @@ class AgentSessionEventMapper:
                     arguments=dict(event.args),
                     status_label=event.status_label,
                     action_type=self._to_tool_action_type(event.action_type),
+                    is_onboarding_question=event.is_onboarding_question,
                 ),
             )
         )
