@@ -44,6 +44,7 @@ from backend.features.session.infrastructure.title_generator import (
 )
 from backend.features.user.application import UserMessageRateLimitService
 from backend.features.user.domain import UserRepository
+from llm import create_gpt_5_4_mini
 
 
 class SessionProvider(Provider):
@@ -53,7 +54,7 @@ class SessionProvider(Provider):
 
     @provide(scope=Scope.APP)
     def provide_title_generator_llm(self, credentials: LLMCredentials) -> ChatModel:
-        return create_gpt_5_4(credentials=credentials)
+        return create_gpt_5_4_mini(credentials=credentials)
 
     @provide(scope=Scope.APP)
     def provide_session_title_generator(

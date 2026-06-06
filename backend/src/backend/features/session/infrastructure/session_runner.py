@@ -3,7 +3,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from uuid import UUID
 
-from agent.agent import Agent
+from agent import Agent
 from agent import Spotify
 from agent.playlist import (
     PlaylistDraft,

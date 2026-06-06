@@ -7,9 +7,9 @@ import {
   createSession,
   getListSessionsQueryKey,
 } from "@/api/generated/session-api";
-import { ChatInputBox } from "@/components/chat/chat-input-box";
-import { Chip } from "@/components/shared/ui/chip";
-import { Badge } from "@/components/ui/badge";
+import { ChatInputBox } from "@/features/chat";
+import { Chip } from "@/shared/ui/chip";
+import { Badge } from "@/shared/ui/badge";
 
 const PROMPT_SUGGESTIONS = [
   {

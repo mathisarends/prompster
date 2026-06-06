@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { AXIOS_INSTANCE } from "@/api/http-client";
-import { useAuth } from "@/auth/use-auth";
+import { Badge } from "@/shared/ui/badge";
+import { Button } from "@/shared/ui/button";
+import { AXIOS_INSTANCE } from "@/shared/api/http-client";
+import { useAuth } from "@/features/auth";
 import { Sparkles } from "lucide-react";
 
 const OAUTH_GOOGLE_MESSAGE_TYPE = "prompster-google-oauth";

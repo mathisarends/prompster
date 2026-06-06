@@ -5,20 +5,21 @@ import type {
   SessionResponse,
   UserCurationEventResponse,
 } from "@/api/generated/model";
-import { ChatSessionPane } from "@/components/chat/chat-session-pane";
 import {
+  ChatSessionPane,
   OnboardingPanel,
   type OnboardingAnswer,
-} from "@/components/chat/onboarding-panel";
-import { DeckWorkspaceView } from "@/components/deck/deck-workspace-view";
+  useChatSession,
+} from "@/features/chat";
+import {
+  DeckWorkspaceView,
+} from "@/features/deck";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
-
-import { useChatSession } from "./chat-page.hook";
+} from "@/shared/ui/resizable";
+import { useLocalStorage } from "@/shared/hooks/useLocalStorage";
 
 type UserCurationTrackPlaybackState = {
   activeTrackUri: string | null;
