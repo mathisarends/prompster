@@ -8,6 +8,7 @@ from agent.events import (
     AgentEvent,
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
+    DeckUpdatedEvent,
     QuestionAskedEvent,
     RunCompletedEvent,
     RunStartedEvent,
@@ -15,12 +16,11 @@ from agent.events import (
     StepStartedEvent,
     ToolCallEvent,
     ToolResultEvent,
-    WorkspaceUpdatedEvent,
 )
 from agent.messages import MessageManager
 from agent.tools import Tools, Spotify
 from agent.tools.views import Phase
-from agent.playlist import PlaylistDraftStore
+from agent.deck import DeckStore
 from agent.tokens import TokenTracker
 from agent.views import UserEvent
 
@@ -39,8 +39,8 @@ class Agent:
         history: list[Message] | None = None,
         system_prompt: str | None = None,
         spotify: Spotify | None = None,
-        playlist_store: PlaylistDraftStore | None = None,
-        max_playlist_tracks: int = 50,
+        deck_store: DeckStore | None = None,
+        max_deck_tracks: int = 50,
         phase: Phase = Phase.ONBOARDING,
     ) -> None:
         self._llm = llm
@@ -50,16 +50,16 @@ class Agent:
         self._spotify = spotify or Spotify()
         self._tools.provide(self._spotify)
 
-        existing_store = self._tools.resolve(PlaylistDraftStore)
-        self._playlist_store = playlist_store or existing_store or PlaylistDraftStore()
+        existing_store = self._tools.resolve(DeckStore)
+        self._deck_store = deck_store or existing_store or DeckStore()
         if existing_store is None:
-            self._tools.provide(self._playlist_store)
+            self._tools.provide(self._deck_store)
 
         self._messages = MessageManager(
             system_prompt=system_prompt,
             phase=phase,
-            playlist_draft_provider=lambda: self._playlist_store.playlist_draft,
-            max_playlist_tracks=max_playlist_tracks,
+            deck_draft_provider=lambda: self._deck_store.draft,
+            max_deck_tracks=max_deck_tracks,
             history=history,
         )
         self._token_tracker = TokenTracker()
@@ -176,9 +176,9 @@ class Agent:
                 name=call.function.name,
                 result=content,
             )
-        for update in self._playlist_store.drain_playlist_draft_updates():
-            yield WorkspaceUpdatedEvent(
-                playlist_draft=update.playlist_draft,
+        for update in self._deck_store.drain_deck_draft_updates():
+            yield DeckUpdatedEvent(
+                deck_draft=update.deck_draft,
                 update=update,
             )
         self._messages.add_tool_result(

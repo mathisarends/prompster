@@ -6,19 +6,18 @@ from typing import Any
 from llmify.messages import ToolCall
 from pydantic import BaseModel
 
-from agent.playlist import (
-    PlaylistDraftStore,
+from agent.deck import (
+    DeckStore,
 )
 from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
 from agent.tools.handler import Spotify
 from agent.tools.params import (
-    AddDraftPlaylistTracksParams,
+    AddDraftDeckTracksParams,
     AskOnboardingQuestionParams,
-    CreateDraftPlaylistParams,
     PlaylistIdParams,
-    RemoveDraftPlaylistTracksParams,
-    ReplaceDraftPlaylistTracksParams,
+    RemoveDraftDeckTracksParams,
+    ReplaceDraftDeckTracksParams,
     SearchParams,
 )
 from agent.tools.schemas import ToolSchema
@@ -158,7 +157,7 @@ class Tools:
         )
         async def search_tracks(
             spotify: Inject[Spotify],
-            store: Inject[PlaylistDraftStore],
+            store: Inject[DeckStore],
             params: SearchParams,
         ) -> ActionResult:
             try:
@@ -186,84 +185,64 @@ class Tools:
 
         @self.action(
             description=(
-                "Create an empty Hitster playlist in the workspace. Use this "
-                "before adding tracks incrementally; it fails if a playlist "
-                "already exists."
+                "Put Spotify track URI refs into the current Hitster deck. Creates "
+                'a workspace deck named "Deck" when none exists, otherwise appends only tracks '
+                "that are not already present by Spotify URI. This does not create "
+                "or mutate a Spotify playlist."
             ),
-            params=CreateDraftPlaylistParams,
+            params=AddDraftDeckTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
             included_in_phases={Phase.BUILD},
         )
-        async def create_playlist(
-            store: Inject[PlaylistDraftStore],
-            params: CreateDraftPlaylistParams,
+        async def add_deck_tracks(
+            store: Inject[DeckStore],
+            params: AddDraftDeckTracksParams,
         ) -> ActionResult:
             try:
-                playlist = store.create_empty_playlist_draft(params.name)
-                return ActionResult.ok(f'Playlist "{playlist.name}" created.')
-            except Exception as error:
-                return ActionResult.fail(error)
-
-        @self.action(
-            description=(
-                "Put Spotify track URI refs into the Hitster playlist. Creates "
-                "a playlist when none exists, otherwise appends only tracks that are "
-                "not already present by Spotify URI."
-            ),
-            params=AddDraftPlaylistTracksParams,
-            status_label=lambda params: params.status,
-            action_type=ActionType.MUTATE,
-            included_in_phases={Phase.BUILD},
-        )
-        async def add_playlist_tracks(
-            store: Inject[PlaylistDraftStore],
-            params: AddDraftPlaylistTracksParams,
-        ) -> ActionResult:
-            try:
-                updated_playlist = store.add_track_refs(params.tracks)
+                updated_deck = store.add_track_refs(params.tracks)
                 return ActionResult.ok(
                     f"{len(params.tracks)} track reference(s) processed for "
-                    f'playlist "{updated_playlist.name}".'
+                    f'Hitster deck "{updated_deck.name}".'
                 )
             except Exception as error:
                 return ActionResult.fail(error)
 
         @self.action(
             description=(
-                "Remove tracks from the current Hitster playlist by ID. "
+                "Remove tracks from the current Hitster deck by ID. "
                 "Pinned tracks cannot be removed."
             ),
-            params=RemoveDraftPlaylistTracksParams,
+            params=RemoveDraftDeckTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
             included_in_phases={Phase.BUILD},
         )
-        async def remove_playlist_tracks(
-            store: Inject[PlaylistDraftStore],
-            params: RemoveDraftPlaylistTracksParams,
+        async def remove_deck_tracks(
+            store: Inject[DeckStore],
+            params: RemoveDraftDeckTracksParams,
         ) -> ActionResult:
             try:
                 store.remove_tracks(params.track_ids)
                 return ActionResult.ok(
-                    f"{len(params.track_ids)} track(s) removed from playlist."
+                    f"{len(params.track_ids)} track(s) removed from Hitster deck."
                 )
             except Exception as error:
                 return ActionResult.fail(error)
 
         @self.action(
             description=(
-                "Replace tracks in the current Hitster playlist by ID. "
+                "Replace tracks in the current Hitster deck by ID. "
                 "Pinned tracks cannot be replaced."
             ),
-            params=ReplaceDraftPlaylistTracksParams,
+            params=ReplaceDraftDeckTracksParams,
             status_label=lambda params: params.status,
             action_type=ActionType.MUTATE,
             included_in_phases={Phase.BUILD},
         )
-        async def replace_playlist_tracks(
-            store: Inject[PlaylistDraftStore],
-            params: ReplaceDraftPlaylistTracksParams,
+        async def replace_deck_tracks(
+            store: Inject[DeckStore],
+            params: ReplaceDraftDeckTracksParams,
         ) -> ActionResult:
             try:
                 store.replace_track_refs(params.replacements)
@@ -276,8 +255,8 @@ class Tools:
         @self.action(
             description=(
                 "Fetch tracks from an external Spotify playlist by playlist ID or URI "
-                "for research. The returned tracks are cached for later playlist tools; "
-                "this does not read or mutate the current workspace playlist."
+                "for research. The returned tracks are cached for later deck tools; "
+                "this does not read or mutate the current workspace Hitster deck."
             ),
             params=PlaylistIdParams,
             status_label=lambda params: params.status,
@@ -286,7 +265,7 @@ class Tools:
         )
         async def get_spotify_playlist_tracks(
             spotify: Inject[Spotify],
-            store: Inject[PlaylistDraftStore],
+            store: Inject[DeckStore],
             params: PlaylistIdParams,
         ) -> ActionResult:
             try:

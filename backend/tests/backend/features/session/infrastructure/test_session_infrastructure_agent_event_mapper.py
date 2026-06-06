@@ -7,16 +7,16 @@ from agent.agent import (
     SuspendedForUserInputEvent,
     ToolCallEvent,
     ToolResultEvent,
-    WorkspaceUpdatedEvent,
+    DeckUpdatedEvent,
 )
-from agent.playlist import (
-    PlaylistDraft,
-    PlaylistDraftCreated,
-    PlaylistDraftTrack,
-    PlaylistDraftTrackReplacement,
-    PlaylistDraftTracksAdded,
-    PlaylistDraftTracksRemoved,
-    PlaylistDraftTracksReplaced,
+from agent.deck import (
+    DeckDraft,
+    DeckDraftCreated,
+    DeckDraftTrack,
+    DeckDraftTrackReplacement,
+    DeckDraftTracksAdded,
+    DeckDraftTracksRemoved,
+    DeckDraftTracksReplaced,
 )
 
 from backend.features.session.application.ports.session_runner import (
@@ -126,20 +126,18 @@ class TestToolCallMapping:
 
 
 class TestWorkspaceUpdateMapping:
-    def _draft(
-        self, *, tracks: list[PlaylistDraftTrack] | None = None
-    ) -> PlaylistDraft:
-        return PlaylistDraft(name="Deck", tracks=tracks or [])
+    def _draft(self, *, tracks: list[DeckDraftTrack] | None = None) -> DeckDraft:
+        return DeckDraft(name="Deck", tracks=tracks or [])
 
     def test_tracks_added_propagates_playlist_id_and_tracks(self) -> None:
         mapper = AgentSessionEventMapper()
         draft = self._draft()
-        added = PlaylistDraftTrack(title="Umbrella", artist="Rihanna", year=2007)
+        added = DeckDraftTrack(title="Umbrella", artist="Rihanna", year=2007)
 
         result = mapper.map(
-            WorkspaceUpdatedEvent(
-                playlist_draft=draft,
-                update=PlaylistDraftTracksAdded(playlist_draft=draft, tracks=[added]),
+            DeckUpdatedEvent(
+                deck_draft=draft,
+                update=DeckDraftTracksAdded(deck_draft=draft, tracks=[added]),
             )
         )
 
@@ -158,11 +156,9 @@ class TestWorkspaceUpdateMapping:
         removed_id = uuid4()
 
         result = mapper.map(
-            WorkspaceUpdatedEvent(
-                playlist_draft=draft,
-                update=PlaylistDraftTracksRemoved(
-                    playlist_draft=draft, track_ids=[removed_id]
-                ),
+            DeckUpdatedEvent(
+                deck_draft=draft,
+                update=DeckDraftTracksRemoved(deck_draft=draft, track_ids=[removed_id]),
             )
         )
 
@@ -176,15 +172,15 @@ class TestWorkspaceUpdateMapping:
         mapper = AgentSessionEventMapper()
         draft = self._draft()
         original_id = uuid4()
-        replacement_track = PlaylistDraftTrack(title="New", artist="Artist", year=2020)
+        replacement_track = DeckDraftTrack(title="New", artist="Artist", year=2020)
 
         result = mapper.map(
-            WorkspaceUpdatedEvent(
-                playlist_draft=draft,
-                update=PlaylistDraftTracksReplaced(
-                    playlist_draft=draft,
+            DeckUpdatedEvent(
+                deck_draft=draft,
+                update=DeckDraftTracksReplaced(
+                    deck_draft=draft,
                     replacements=[
-                        PlaylistDraftTrackReplacement(
+                        DeckDraftTrackReplacement(
                             track_id=original_id, track=replacement_track
                         )
                     ],
@@ -205,13 +201,13 @@ class TestWorkspaceUpdateMapping:
         self,
     ) -> None:
         mapper = AgentSessionEventMapper()
-        track = PlaylistDraftTrack(title="Take On Me", artist="a-ha", year=1985)
+        track = DeckDraftTrack(title="Take On Me", artist="a-ha", year=1985)
         draft = self._draft(tracks=[track])
 
         result = mapper.map(
-            WorkspaceUpdatedEvent(
-                playlist_draft=draft,
-                update=PlaylistDraftCreated(playlist_draft=draft),
+            DeckUpdatedEvent(
+                deck_draft=draft,
+                update=DeckDraftCreated(deck_draft=draft),
             )
         )
 

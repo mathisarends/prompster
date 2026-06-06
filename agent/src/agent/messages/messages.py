@@ -11,11 +11,11 @@ from llmify import (
 )
 
 from agent.views import UserEvent
-from agent.playlist import PlaylistDraft
+from agent.deck import DeckDraft
 from agent.tools.views import Phase
-from .rendering import render_playlist_context, render_user_message_content
+from .rendering import render_deck_context, render_user_message_content
 
-type _PlaylistDraftProvider = Callable[[], PlaylistDraft | None]
+type _DeckDraftProvider = Callable[[], DeckDraft | None]
 
 _PROMPTS_DIR = Path(__file__).parent / "prompts"
 _SHARED_PROMPT = (_PROMPTS_DIR / "shared_system_prompt.md").read_text(encoding="utf-8")
@@ -34,8 +34,8 @@ class MessageManager:
         self,
         system_prompt: str | None = None,
         phase: Phase = Phase.BUILD,
-        playlist_draft_provider: _PlaylistDraftProvider | None = None,
-        max_playlist_tracks: int = 75,
+        deck_draft_provider: _DeckDraftProvider | None = None,
+        max_deck_tracks: int = 75,
         history: list[Message] | None = None,
     ) -> None:
         if system_prompt:
@@ -44,8 +44,8 @@ class MessageManager:
             phase_prompt = _PHASE_PROMPTS.get(phase, "")
             self._system_prompt = f"{_SHARED_PROMPT}\n\n{phase_prompt}".strip()
         self._phase = phase
-        self._playlist_draft_provider = playlist_draft_provider
-        self._max_playlist_tracks = max_playlist_tracks
+        self._deck_draft_provider = deck_draft_provider
+        self._max_deck_tracks = max_deck_tracks
         self._messages: list[Message] = []
         self.reset()
         if history:
@@ -54,9 +54,9 @@ class MessageManager:
     def all(self) -> list[Message]:
         messages: list[Message] = [SystemMessage(content=self._system_prompt)]
 
-        playlist_context = self._render_playlist_context()
-        if playlist_context is not None:
-            self._inject_confirmed_context(messages, playlist_context)
+        deck_context = self._render_deck_context()
+        if deck_context is not None:
+            self._inject_confirmed_context(messages, deck_context)
 
         messages.extend(self._messages)
         return messages
@@ -84,17 +84,15 @@ class MessageManager:
     def reset(self) -> None:
         self._messages = []
 
-    def _render_playlist_context(self) -> str | None:
-        playlist_draft = (
-            self._playlist_draft_provider()
-            if self._playlist_draft_provider is not None
+    def _render_deck_context(self) -> str | None:
+        deck_draft = (
+            self._deck_draft_provider()
+            if self._deck_draft_provider is not None
             else None
         )
-        if playlist_draft is None:
+        if deck_draft is None:
             return None
-        return render_playlist_context(
-            playlist_draft, max_tracks=self._max_playlist_tracks
-        )
+        return render_deck_context(deck_draft, max_tracks=self._max_deck_tracks)
 
     def _inject_confirmed_context(self, messages: list[Message], content: str) -> None:
         # Context Injection Pattern: UserMessage + AssistantMessage("Understood.")

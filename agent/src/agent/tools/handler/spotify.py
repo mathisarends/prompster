@@ -15,7 +15,7 @@ from spotifyify import (
     Track,
 )
 
-from agent.playlist import PlaylistDraftTrack
+from agent.deck import DeckDraftTrack
 from agent.messages.rendering import (
     render_album_tag,
     render_playlist_tag,
@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 class SpotifyTrackLookupResult(BaseModel):
     content: str
-    tracks: list[PlaylistDraftTrack]
+    tracks: list[DeckDraftTrack]
 
 
 class Spotify:
@@ -331,12 +331,12 @@ def _track_lookup_result(
     cover_url_for: Callable[[Track], str | None],
 ) -> SpotifyTrackLookupResult:
     lines: list[str] = []
-    draft_tracks: list[PlaylistDraftTrack] = []
+    draft_tracks: list[DeckDraftTrack] = []
 
     for _, track in enumerate(tracks):
         release_date = release_date_for(track)
         cover_url = cover_url_for(track)
-        draft_track = _playlist_draft_track(track, release_date, cover_url)
+        draft_track = _deck_draft_track(track, release_date, cover_url)
         if draft_track.spotify_uri is not None:
             draft_tracks.append(draft_track)
             lines.append(
@@ -350,12 +350,12 @@ def _track_lookup_result(
     return SpotifyTrackLookupResult(content="\n".join(lines), tracks=draft_tracks)
 
 
-def _playlist_draft_track(
+def _deck_draft_track(
     track: Track,
     release_date: str | None,
     cover_url: str | None,
-) -> PlaylistDraftTrack:
-    return PlaylistDraftTrack(
+) -> DeckDraftTrack:
+    return DeckDraftTrack(
         title=_track_title(track),
         artist=_artist_names(track.artists),
         year=_release_year(release_date) or None,

@@ -5,10 +5,10 @@ from uuid import UUID
 
 from agent import Agent
 from agent import Spotify
-from agent.playlist import (
-    PlaylistDraft,
-    PlaylistDraftTrack,
-    PlaylistDraftStore,
+from agent.deck import (
+    DeckDraft,
+    DeckDraftTrack,
+    DeckStore,
 )
 from agent.tools.views import Phase as AgentPhase
 
@@ -110,8 +110,8 @@ class AgentSessionRunner(SessionRunner):
             history=self._history_builder.build(session=session),
             system_prompt=self._system_prompt,
             spotify=Spotify(client=self._spotify),
-            playlist_store=_to_playlist_draft_store(session.playlist),
-            max_playlist_tracks=MAX_PLAYLIST_TRACKS,
+            deck_store=_to_deck_store(session.playlist),
+            max_deck_tracks=MAX_PLAYLIST_TRACKS,
             phase=_agent_phase_for(session),
         )
 
@@ -120,16 +120,16 @@ def _agent_phase_for(session: Session) -> AgentPhase:
     return AgentPhase(session.phase)
 
 
-def _to_playlist_draft_store(playlist: Playlist | None) -> PlaylistDraftStore:
+def _to_deck_store(playlist: Playlist | None) -> DeckStore:
     if playlist is None:
-        return PlaylistDraftStore()
+        return DeckStore()
 
-    return PlaylistDraftStore(
-        PlaylistDraft(
+    return DeckStore(
+        DeckDraft(
             id=playlist.id,
-            name=playlist.name or "Playlist",
+            name=playlist.name or "Deck",
             tracks=[
-                PlaylistDraftTrack(
+                DeckDraftTrack(
                     id=track.id,
                     title=track.title,
                     artist=track.artist,

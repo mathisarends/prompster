@@ -5,7 +5,7 @@ agent's internal state into the message list that is sent to the LLM. Each
 test focuses on a single rendering rule so that the file can be read
 top-to-bottom as a spec.
 
-Key invariant: curation events (manual playlist changes the user made
+Key invariant: curation events (manual Hitster deck changes the user made
 outside of the agent's tools) live inside the *same* ``UserMessage`` as the
 user's text for that turn — mirroring the backend domain where
 ``UserMessage.user_curation_events`` is part of the user entity.
@@ -22,7 +22,7 @@ from agent.messages.rendering import (
 )
 from agent.tools.views import Phase
 from agent.views import UserCurationEventType, UserEvent
-from agent.playlist import PlaylistDraft, PlaylistDraftTrack
+from agent.deck import DeckDraft, DeckDraftTrack
 
 
 def _event(
@@ -225,14 +225,14 @@ class TestMessageManagerCurationEvents:
         assert messages[4].content == "verstanden"
 
 
-class TestMessageManagerPlaylistContext:
-    """The current playlist draft is injected as a confirmed context turn."""
+class TestMessageManagerDeckContext:
+    """The current Hitster deck draft is injected as a confirmed context turn."""
 
     def test_draft_renders_as_user_then_assistant_understood(self) -> None:
-        playlist = PlaylistDraft(
+        playlist = DeckDraft(
             name="80er Party",
             tracks=[
-                PlaylistDraftTrack(
+                DeckDraftTrack(
                     title="Take On Me",
                     artist="a-ha",
                     year=1985,
@@ -242,7 +242,7 @@ class TestMessageManagerPlaylistContext:
         )
         manager = MessageManager(
             system_prompt="Prompt",
-            playlist_draft_provider=lambda: playlist,
+            deck_draft_provider=lambda: playlist,
         )
 
         messages = manager.all()
@@ -257,7 +257,7 @@ class TestMessageManagerPlaylistContext:
         ]
         assert messages[2].content == "Understood."
         assert (
-            f'<created_playlist id="{playlist.id}" name="80er Party" '
+            f'<created_deck id="{playlist.id}" name="80er Party" '
             'track_count="1" max_tracks="75" remaining_tracks="74" '
             'pinned_tracks="hard_constraints">'
         ) in messages[1].content
@@ -268,7 +268,7 @@ class TestMessageManagerPlaylistContext:
     def test_no_draft_means_no_context_injection(self) -> None:
         manager = MessageManager(
             system_prompt="Prompt",
-            playlist_draft_provider=lambda: None,
+            deck_draft_provider=lambda: None,
         )
         manager.add_user("hi")
 

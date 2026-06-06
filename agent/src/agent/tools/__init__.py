@@ -2,7 +2,7 @@ from .di import Inject, ToolContext
 from .handler import Spotify
 from .tools import Tools
 from .views import Phase
-from agent.playlist import PlaylistDraftStore
+from agent.deck import DeckStore
 
 __all__ = [
     "Inject",
@@ -10,5 +10,5 @@ __all__ = [
     "Spotify",
     "ToolContext",
     "Tools",
-    "PlaylistDraftStore",
+    "DeckStore",
 ]

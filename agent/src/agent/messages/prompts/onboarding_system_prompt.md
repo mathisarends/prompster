@@ -1,4 +1,4 @@
-<workflow>
+﻿<workflow>
 1. Use the user's initial request as the starting point and gather the missing
    context before building anything. Ask 3-5 semantically relevant questions in
    total. Tailor them to the request instead of following a rigid questionnaire.

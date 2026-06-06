@@ -28,6 +28,7 @@ dependencies = [
     "typst>=0.14.9",
     "qrcode[pil]>=8.2",
     "realtime-whisper>=0.1.0",
+    "tokenary>=0.1.0",
 ]
 
 [project.scripts]

@@ -1,18 +1,18 @@
 from agent.agent import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
+    DeckUpdatedEvent,
     QuestionAskedEvent,
     SuspendedForUserInputEvent,
     ToolCallEvent,
     ToolResultEvent,
-    WorkspaceUpdatedEvent,
 )
-from agent.playlist import (
-    PlaylistDraft,
-    PlaylistDraftTrack,
-    PlaylistDraftTracksAdded,
-    PlaylistDraftTracksRemoved,
-    PlaylistDraftTracksReplaced,
+from agent.deck import (
+    DeckDraft,
+    DeckDraftTrack,
+    DeckDraftTracksAdded,
+    DeckDraftTracksRemoved,
+    DeckDraftTracksReplaced,
 )
 from backend.features.session.application.ports.session_runner import (
     SessionRunnerAssistantMessage,
@@ -55,8 +55,8 @@ class AgentSessionEventMapper:
                 return [self._map_tool_call_started(event)]
             case ToolResultEvent():
                 return [self._map_tool_call_completed(event)]
-            case WorkspaceUpdatedEvent():
-                return [self._map_workspace_updated(event)]
+            case DeckUpdatedEvent():
+                return [self._map_deck_updated(event)]
             case QuestionAskedEvent():
                 return [self._map_question_asked(event)]
             case SuspendedForUserInputEvent():
@@ -98,24 +98,22 @@ class AgentSessionEventMapper:
             result=event.result,
         )
 
-    def _map_workspace_updated(
-        self, event: WorkspaceUpdatedEvent
-    ) -> SessionRunnerEvent:
+    def _map_deck_updated(self, event: DeckUpdatedEvent) -> SessionRunnerEvent:
         update = event.update
         match update:
-            case PlaylistDraftTracksAdded():
+            case DeckDraftTracksAdded():
                 return SessionRunnerPlaylistTracksAdded(
-                    playlist_id=update.playlist_draft.id,
+                    playlist_id=update.deck_draft.id,
                     tracks=[self._to_playlist_track(track) for track in update.tracks],
                 )
-            case PlaylistDraftTracksRemoved():
+            case DeckDraftTracksRemoved():
                 return SessionRunnerPlaylistTracksRemoved(
-                    playlist_id=update.playlist_draft.id,
+                    playlist_id=update.deck_draft.id,
                     track_ids=update.track_ids,
                 )
-            case PlaylistDraftTracksReplaced():
+            case DeckDraftTracksReplaced():
                 return SessionRunnerPlaylistTracksReplaced(
-                    playlist_id=update.playlist_draft.id,
+                    playlist_id=update.deck_draft.id,
                     replacements=[
                         SessionRunnerPlaylistTrackReplacement(
                             track_id=replacement.track_id,
@@ -126,7 +124,7 @@ class AgentSessionEventMapper:
                 )
             case _:
                 return SessionRunnerPlaylistUpdated(
-                    playlist=self._to_playlist(event.playlist_draft)
+                    playlist=self._to_playlist(event.deck_draft)
                 )
 
     def _map_question_asked(
@@ -158,14 +156,14 @@ class AgentSessionEventMapper:
         except ValueError:
             return None
 
-    def _to_playlist(self, playlist_draft: PlaylistDraft) -> Playlist:
+    def _to_playlist(self, deck_draft: DeckDraft) -> Playlist:
         return Playlist(
-            id=playlist_draft.id,
-            name=playlist_draft.name,
-            tracks=[self._to_playlist_track(track) for track in playlist_draft.tracks],
+            id=deck_draft.id,
+            name=deck_draft.name,
+            tracks=[self._to_playlist_track(track) for track in deck_draft.tracks],
         )
 
-    def _to_playlist_track(self, track: PlaylistDraftTrack) -> PlaylistTrack:
+    def _to_playlist_track(self, track: DeckDraftTrack) -> PlaylistTrack:
         return PlaylistTrack(
             id=track.id,
             title=track.title,

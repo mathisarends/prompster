@@ -2,8 +2,8 @@ from collections.abc import Sequence
 from html import escape
 
 from agent.views import UserEvent
-from agent.playlist import PlaylistDraft
-from agent.playlist.views import PlaylistDraftTrack
+from agent.deck import DeckDraft
+from agent.deck.views import DeckDraftTrack
 
 
 def render_user_message_content(
@@ -23,7 +23,7 @@ def _render_user_events_block(events: Sequence[UserEvent]) -> str:
     """Render UserEvents as a single ``<user_events>`` XML block.
 
     The block is meant to be embedded inside the same ``UserMessage`` content
-    as the user's text - it represents manual playlist changes the user made
+    as the user's text - it represents manual Hitster deck changes the user made
     just before that turn.
     """
     lines = ["<user_events>"]
@@ -40,17 +40,17 @@ def _render_event(event: UserEvent) -> str:
     )
 
 
-def render_playlist_context(
-    playlist_draft: PlaylistDraft,
+def render_deck_context(
+    deck_draft: DeckDraft,
     *,
     max_tracks: int,
 ) -> str:
-    track_count = len(playlist_draft.tracks)
+    track_count = len(deck_draft.tracks)
     remaining_tracks = max(0, max_tracks - track_count)
     lines = [
         (
-            f'<created_playlist id="{playlist_draft.id}" '
-            f'name="{escape(playlist_draft.name, quote=True)}" '
+            f'<created_deck id="{deck_draft.id}" '
+            f'name="{escape(deck_draft.name, quote=True)}" '
             f'track_count="{track_count}" '
             f'max_tracks="{max_tracks}" '
             f'remaining_tracks="{remaining_tracks}" '
@@ -58,14 +58,14 @@ def render_playlist_context(
         ),
     ]
     lines.extend(
-        render_track_tag(track, include_pinned=True) for track in playlist_draft.tracks
+        render_track_tag(track, include_pinned=True) for track in deck_draft.tracks
     )
-    lines.append("</created_playlist>")
+    lines.append("</created_deck>")
     return "\n".join(lines)
 
 
 def render_track_tag(
-    track: PlaylistDraftTrack,
+    track: DeckDraftTrack,
     *,
     identity_attr: str = "id",
     identity_value: str | None = None,
@@ -110,7 +110,7 @@ def render_playlist_tag(
     return f"<playlist {_render_attrs(attrs)} />"
 
 
-def _render_track_label(track: PlaylistDraftTrack) -> str:
+def _render_track_label(track: DeckDraftTrack) -> str:
     return _render_release_label(track.artist, track.title, track.year)
 
 

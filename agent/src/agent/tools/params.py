@@ -2,7 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from agent.playlist.views import TrackRef, TrackRefReplacement
+from agent.deck.views import TrackRef, TrackRefReplacement
 from agent.tools.views import OnboardingSelectionMode
 
 
@@ -11,7 +11,7 @@ class ToolParams(BaseModel):
         description=(
             "Kurzes deutsches Status-Label im Präsens (max. ~50 Zeichen), das dem "
             "Nutzer anzeigt, was du gerade tust. Beispiele: \"Suche nach 'Abba'\", "
-            '"Playlist durchstöbern", "Playlist-Entwurf bauen: \'80er Party\'".'
+            '"Spotify-Playlist durchstoebern", "Hitster-Deck bauen: \'80er Party\'".'
         ),
     )
 
@@ -36,19 +36,15 @@ class AlbumTracksParams(ToolParams):
     album_id: str = Field(description="URI or ID.")
 
 
-class CreateDraftPlaylistParams(ToolParams):
-    name: str
-
-
-class AddDraftPlaylistTracksParams(ToolParams):
+class AddDraftDeckTracksParams(ToolParams):
     tracks: list[TrackRef] = Field(min_length=1)
 
 
-class RemoveDraftPlaylistTracksParams(ToolParams):
+class RemoveDraftDeckTracksParams(ToolParams):
     track_ids: list[UUID] = Field(min_length=1)
 
 
-class ReplaceDraftPlaylistTracksParams(ToolParams):
+class ReplaceDraftDeckTracksParams(ToolParams):
     replacements: list[TrackRefReplacement] = Field(min_length=1)
 
 

@@ -30,7 +30,7 @@ class TrackRefReplacement(BaseModel):
         return value
 
 
-class PlaylistDraftTrack(BaseModel):
+class DeckDraftTrack(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     title: str = Field(description="Track title.")
     artist: str = Field(description="Primary artist or comma-separated artists.")
@@ -53,13 +53,13 @@ class PlaylistDraftTrack(BaseModel):
         return value
 
 
-class PlaylistDraft(BaseModel):
+class DeckDraft(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     name: str
-    tracks: list[PlaylistDraftTrack]
+    tracks: list[DeckDraftTrack]
 
 
-class PlaylistDraftUpdateKind(StrEnum):
+class DeckDraftUpdateKind(StrEnum):
     CREATED = "created"
     REPLACED = "replaced"
     TRACKS_ADDED = "tracks_added"
@@ -67,60 +67,58 @@ class PlaylistDraftUpdateKind(StrEnum):
     TRACKS_REPLACED = "tracks_replaced"
 
 
-class PlaylistDraftCreated(BaseModel):
-    kind: Literal[PlaylistDraftUpdateKind.CREATED] = PlaylistDraftUpdateKind.CREATED
-    playlist_draft: PlaylistDraft
+class DeckDraftCreated(BaseModel):
+    kind: Literal[DeckDraftUpdateKind.CREATED] = DeckDraftUpdateKind.CREATED
+    deck_draft: DeckDraft
 
 
-class PlaylistDraftReplaced(BaseModel):
-    kind: Literal[PlaylistDraftUpdateKind.REPLACED] = PlaylistDraftUpdateKind.REPLACED
-    playlist_draft: PlaylistDraft
+class DeckDraftReplaced(BaseModel):
+    kind: Literal[DeckDraftUpdateKind.REPLACED] = DeckDraftUpdateKind.REPLACED
+    deck_draft: DeckDraft
 
 
-class PlaylistDraftTracksAdded(BaseModel):
-    kind: Literal[PlaylistDraftUpdateKind.TRACKS_ADDED] = (
-        PlaylistDraftUpdateKind.TRACKS_ADDED
+class DeckDraftTracksAdded(BaseModel):
+    kind: Literal[DeckDraftUpdateKind.TRACKS_ADDED] = DeckDraftUpdateKind.TRACKS_ADDED
+    deck_draft: DeckDraft
+    tracks: list[DeckDraftTrack]
+
+
+class DeckDraftTracksRemoved(BaseModel):
+    kind: Literal[DeckDraftUpdateKind.TRACKS_REMOVED] = (
+        DeckDraftUpdateKind.TRACKS_REMOVED
     )
-    playlist_draft: PlaylistDraft
-    tracks: list[PlaylistDraftTrack]
-
-
-class PlaylistDraftTracksRemoved(BaseModel):
-    kind: Literal[PlaylistDraftUpdateKind.TRACKS_REMOVED] = (
-        PlaylistDraftUpdateKind.TRACKS_REMOVED
-    )
-    playlist_draft: PlaylistDraft
+    deck_draft: DeckDraft
     track_ids: list[UUID]
 
 
-class PlaylistDraftTrackReplacement(BaseModel):
+class DeckDraftTrackReplacement(BaseModel):
     track_id: UUID
-    track: PlaylistDraftTrack
+    track: DeckDraftTrack
 
 
-class PlaylistDraftTracksReplaced(BaseModel):
-    kind: Literal[PlaylistDraftUpdateKind.TRACKS_REPLACED] = (
-        PlaylistDraftUpdateKind.TRACKS_REPLACED
+class DeckDraftTracksReplaced(BaseModel):
+    kind: Literal[DeckDraftUpdateKind.TRACKS_REPLACED] = (
+        DeckDraftUpdateKind.TRACKS_REPLACED
     )
-    playlist_draft: PlaylistDraft
-    replacements: list[PlaylistDraftTrackReplacement]
+    deck_draft: DeckDraft
+    replacements: list[DeckDraftTrackReplacement]
 
 
-class PlaylistDraftOperationStatus(BaseModel):
+class DeckDraftOperationStatus(BaseModel):
     operation: str
     success: bool
     reason: str | None = None
 
 
-class PlaylistDraftToolResult(BaseModel):
-    playlist_draft: PlaylistDraft | None
-    operations: list[PlaylistDraftOperationStatus]
+class DeckDraftToolResult(BaseModel):
+    deck_draft: DeckDraft | None
+    operations: list[DeckDraftOperationStatus]
 
 
-type PlaylistDraftUpdate = (
-    PlaylistDraftCreated
-    | PlaylistDraftReplaced
-    | PlaylistDraftTracksAdded
-    | PlaylistDraftTracksRemoved
-    | PlaylistDraftTracksReplaced
+type DeckDraftUpdate = (
+    DeckDraftCreated
+    | DeckDraftReplaced
+    | DeckDraftTracksAdded
+    | DeckDraftTracksRemoved
+    | DeckDraftTracksReplaced
 )

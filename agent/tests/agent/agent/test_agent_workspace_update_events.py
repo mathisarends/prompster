@@ -14,11 +14,11 @@ from agent.agent import (
     ToolCallEvent,
     ToolResultEvent,
     SuspendedForUserInputEvent,
-    WorkspaceUpdatedEvent,
+    DeckUpdatedEvent,
 )
 from agent.tools import ToolContext, Tools
 from agent.tools.views import ActionType, Phase
-from agent.playlist import PlaylistDraftStore, PlaylistDraftTrack
+from agent.deck import DeckStore, DeckDraftTrack
 
 
 @dataclass
@@ -75,11 +75,11 @@ class TestAgentWorkspaceUpdateEvents:
         assert completed.content == "Hallo Welt"
 
     @pytest.mark.asyncio
-    async def test_stream_emits_workspace_update_after_tool_result(self) -> None:
-        store = PlaylistDraftStore()
+    async def test_stream_emits_deck_update_after_tool_result(self) -> None:
+        store = DeckStore()
         store.cache_tracks(
             [
-                PlaylistDraftTrack(
+                DeckDraftTrack(
                     title="Take On Me",
                     artist="a-ha",
                     year=1985,
@@ -90,8 +90,8 @@ class TestAgentWorkspaceUpdateEvents:
         )
         tools = Tools(ToolContext(store))
         tool_args = {
-            "name": "80er Party",
             "status": "Baue das 80er-Deck",
+            "tracks": [{"uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L"}],
         }
         llm = _FakeLlm(
             [
@@ -101,7 +101,7 @@ class TestAgentWorkspaceUpdateEvents:
                         ToolCall(
                             id="call-1",
                             function={
-                                "name": "create_playlist",
+                                "name": "add_deck_tracks",
                                 "arguments": json.dumps(tool_args),
                             },
                         )
@@ -120,23 +120,25 @@ class TestAgentWorkspaceUpdateEvents:
             if isinstance(event, ToolResultEvent)
         )
         tool_call = next(event for event in events if isinstance(event, ToolCallEvent))
-        workspace_update_index = next(
+        deck_update_index = next(
             index
             for index, event in enumerate(events)
-            if isinstance(event, WorkspaceUpdatedEvent)
+            if isinstance(event, DeckUpdatedEvent)
         )
         tool_result = events[tool_result_index]
-        workspace_update = events[workspace_update_index]
+        deck_update = events[deck_update_index]
 
-        assert workspace_update_index == tool_result_index + 1
+        assert deck_update_index == tool_result_index + 1
         assert tool_call.action_type == ActionType.MUTATE
         assert tool_call.status_label == "Baue das 80er-Deck"
         assert isinstance(tool_result, ToolResultEvent)
-        assert isinstance(workspace_update, WorkspaceUpdatedEvent)
-        assert tool_result.result == 'Playlist "80er Party" created.'
-        assert workspace_update.playlist_draft.name == "80er Party"
-        assert workspace_update.playlist_draft.tracks == []
-        assert store.drain_playlist_draft_updates() == []
+        assert isinstance(deck_update, DeckUpdatedEvent)
+        assert tool_result.result == (
+            '1 track reference(s) processed for Hitster deck "Deck".'
+        )
+        assert deck_update.deck_draft.name == "Deck"
+        assert deck_update.deck_draft.tracks[0].title == "Take On Me"
+        assert store.drain_deck_draft_updates() == []
 
     @pytest.mark.asyncio
     async def test_agent_passes_only_onboarding_tools_by_default(self) -> None:
@@ -163,7 +165,7 @@ class TestAgentWorkspaceUpdateEvents:
         }
         assert agent.phase == Phase.BUILD
         assert "search_tracks" in tool_names
-        assert "create_playlist" in tool_names
+        assert "create_deck" in tool_names
 
     @pytest.mark.asyncio
     async def test_last_onboarding_question_suspends_run(self) -> None:

@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from agent.playlist import PlaylistDraft, PlaylistDraftUpdate
+from agent.deck import DeckDraft, DeckDraftUpdate
 
 from agent.tools.views import ActionType, OnboardingSelectionMode
 
@@ -61,9 +61,9 @@ class SuspendedForUserInputEvent(AgentEvent):
     is_last_question: bool = True
 
 
-class WorkspaceUpdatedEvent(AgentEvent):
-    playlist_draft: PlaylistDraft
-    update: PlaylistDraftUpdate
+class DeckUpdatedEvent(AgentEvent):
+    deck_draft: DeckDraft
+    update: DeckDraftUpdate
 
 
 class RunCompletedEvent(AgentEvent):

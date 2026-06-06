@@ -4,9 +4,9 @@ from pydantic import BaseModel
 
 from agent.tools import ToolContext, Tools
 from agent.tools.views import ActionResult, ActionType, Phase
-from agent.playlist import (
-    PlaylistDraftStore,
-    PlaylistDraftTrack,
+from agent.deck import (
+    DeckStore,
+    DeckDraftTrack,
 )
 
 
@@ -26,10 +26,9 @@ class TestToolsFacadeAbstraction:
         assert tools.get("get_album_tracks") is None
         assert tools.get("get_spotify_playlist_tracks") is not None
         assert tools.get("get_spotify_playlist_tracks").action_type == ActionType.FETCH
-        assert tools.get("create_playlist") is not None
-        assert tools.get("create_playlist").action_type == ActionType.MUTATE
-        assert tools.get("add_playlist_tracks") is not None
-        assert tools.get("add_playlist_tracks").action_type == ActionType.MUTATE
+        assert tools.get("create_deck") is None
+        assert tools.get("add_deck_tracks") is not None
+        assert tools.get("add_deck_tracks").action_type == ActionType.MUTATE
         assert tools.get("ask_onboarding_question") is not None
         assert tools.get("ask_onboarding_question").is_onboarding_question is True
 
@@ -51,10 +50,9 @@ class TestToolsFacadeAbstraction:
             "search_tracks",
             "search_playlists",
             "get_spotify_playlist_tracks",
-            "create_playlist",
-            "add_playlist_tracks",
-            "remove_playlist_tracks",
-            "replace_playlist_tracks",
+            "add_deck_tracks",
+            "remove_deck_tracks",
+            "replace_deck_tracks",
         }.issubset(build_tool_names)
         assert {
             "search_albums",
@@ -204,11 +202,11 @@ class TestToolsFacadeAbstraction:
 
     @pytest.mark.asyncio
     async def test_set_context_updates_executor_dependency_resolution(self) -> None:
-        old_store = PlaylistDraftStore()
-        new_store = PlaylistDraftStore()
+        old_store = DeckStore()
+        new_store = DeckStore()
         new_store.cache_tracks(
             [
-                PlaylistDraftTrack(
+                DeckDraftTrack(
                     title="Take On Me",
                     artist="a-ha",
                     year=1985,
@@ -221,19 +219,21 @@ class TestToolsFacadeAbstraction:
         tools.set_context(ToolContext(new_store))
 
         result = await tools.execute(
-            "create_playlist",
+            "add_deck_tracks",
             {
-                "name": "Context Switch",
                 "status": "Tracks ins Deck legen",
+                "tracks": [{"uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L"}],
             },
         )
 
         assert result.success is True
-        assert result.extracted_content == 'Playlist "Context Switch" created.'
-        playlist_draft = new_store.playlist_draft
-        assert playlist_draft is not None
-        assert playlist_draft.name == "Context Switch"
-        assert old_store.playlist_draft is None
-        assert new_store.playlist_draft is not None
-        assert new_store.playlist_draft.name == "Context Switch"
-        assert new_store.playlist_draft.tracks == []
+        assert result.extracted_content == (
+            '1 track reference(s) processed for Hitster deck "Deck".'
+        )
+        deck_draft = new_store.draft
+        assert deck_draft is not None
+        assert deck_draft.name == "Deck"
+        assert deck_draft.tracks[0].title == "Take On Me"
+        assert old_store.draft is None
+        assert new_store.draft is not None
+        assert new_store.draft.name == "Deck"
