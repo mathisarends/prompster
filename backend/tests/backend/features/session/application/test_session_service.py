@@ -172,9 +172,16 @@ class _SessionRunnerStub(SessionRunner):
         self._events = events
         self.stopped_session_ids: list[UUID] = []
         self.ran_sessions: list[Session] = []
+        self.ran_model_ids: list[str | None] = []
 
-    async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
+    async def run(
+        self,
+        *,
+        session: Session,
+        model_id: str | None = None,
+    ) -> AsyncIterator[SessionRunnerEvent]:
         self.ran_sessions.append(session)
+        self.ran_model_ids.append(model_id)
         if self._events is not None:
             for event in self._events:
                 yield event
@@ -487,6 +494,26 @@ class TestSessionServiceSendMessage:
         )
         assert isinstance(events[-1], SessionAssistantMessageCompleted)
         assert quota_service.consumed_user_ids == [owner_id]
+
+    def test_forwards_model_id_to_runner_on_send_message(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        repository = _SessionRepositoryStub(session_by_id=session)
+        runner = _SessionRunnerStub(chunks=["Hi"])
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="spiele rihanna hits",
+                    model_id="gpt-5.4",
+                )
+            )
+        )
+
+        assert runner.ran_model_ids == ["gpt-5.4"]
 
     def test_generates_title_for_untitled_session_during_message_stream(self) -> None:
         owner_id = uuid4()
@@ -1096,7 +1123,33 @@ class TestSessionServiceSendMessage:
         )
         assert isinstance(events[-1], SessionAssistantMessageCompleted)
         assert runner.ran_sessions == [session]
+        assert runner.ran_model_ids == [None]
         assert repository.saved_sessions[0] is session
+
+    def test_complete_onboarding_forwards_model_id_to_runner(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        question = session.add_onboarding_question(
+            question_text="Letzte Frage?",
+            options=("Ja",),
+            is_last_question=True,
+        )
+        session.answer_onboarding_question(question_id=question.id, answer="Ja")
+        runner = _SessionRunnerStub(chunks=["Build"])
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        asyncio.run(
+            _collect_events(
+                service.complete_onboarding(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    model_id="gpt-5.5",
+                )
+            )
+        )
+
+        assert runner.ran_model_ids == ["gpt-5.5"]
 
     def test_complete_onboarding_rejects_unanswered_questions(self) -> None:
         owner_id = uuid4()

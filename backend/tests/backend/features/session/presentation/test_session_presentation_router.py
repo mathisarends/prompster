@@ -3,6 +3,8 @@ from collections.abc import AsyncIterator
 from typing import cast
 from uuid import UUID, uuid4
 
+from llm import OpenAIModelName
+
 from backend.features.session.application import (
     SessionEvent,
     SessionConversationService,
@@ -55,6 +57,7 @@ class _SessionConversationServiceStub:
         self.received_question_id: UUID | None = None
         self.received_answer: str | None = None
         self.received_answers: list[str] | None = None
+        self.received_model_id: str | None = None
 
     async def stop_message(self, *, session_id: UUID, user_id: UUID) -> bool:
         self.received_session_id = session_id
@@ -82,9 +85,11 @@ class _SessionConversationServiceStub:
         *,
         session_id: UUID,
         user_id: UUID,
+        model_id: str | None = None,
     ) -> AsyncIterator[SessionEvent]:
         self.received_session_id = session_id
         self.received_user_id = user_id
+        self.received_model_id = model_id
         if False:
             yield
 
@@ -241,5 +246,24 @@ class TestCompleteOnboardingRoute:
 
         assert service.received_session_id == session_id
         assert service.received_user_id == user_id
+        assert service.received_model_id is None
         assert response.media_type == "text/event-stream"
+        assert body == ['event: done\ndata: {"type":"done"}\n\n']
+
+    def test_passes_model_id_to_service(self) -> None:
+        session_id = uuid4()
+        user_id = uuid4()
+        service = _SessionConversationServiceStub()
+
+        response = asyncio.run(
+            complete_onboarding(
+                session_id=session_id,
+                authenticated_user_id=user_id,
+                service=cast(SessionConversationService, service),
+                model_id=OpenAIModelName.GPT_5_4,
+            )
+        )
+        body = asyncio.run(_collect_stream_body(response))
+
+        assert service.received_model_id == OpenAIModelName.GPT_5_4
         assert body == ['event: done\ndata: {"type":"done"}\n\n']

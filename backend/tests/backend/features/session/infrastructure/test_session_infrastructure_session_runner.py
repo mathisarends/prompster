@@ -50,7 +50,12 @@ class _SessionRepositoryStub(SessionRepository):
 
 
 class _EmptyRunner(SessionRunner):
-    async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
+    async def run(
+        self,
+        *,
+        session: Session,
+        model_id: str | None = None,
+    ) -> AsyncIterator[SessionRunnerEvent]:
         if False:
             yield
 
@@ -66,7 +71,12 @@ class _TitleGeneratorStub(SessionTitleGenerator):
 
 
 class _CancelledRunner(SessionRunner):
-    async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
+    async def run(
+        self,
+        *,
+        session: Session,
+        model_id: str | None = None,
+    ) -> AsyncIterator[SessionRunnerEvent]:
         yield SessionRunnerCancelled()
 
 

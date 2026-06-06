@@ -101,6 +101,7 @@ class SessionConversationService:
         user_id: UUID,
         content: str,
         attachments: list[SessionMessageAttachment] | None = None,
+        model_id: str | None = None,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         await self._user_message_rate_limit_service.consume(user_id=user_id)
@@ -115,6 +116,7 @@ class SessionConversationService:
         async for event in self._persist_and_resume_agent(
             session=session,
             title_task=title_task,
+            model_id=model_id,
         ):
             yield event
 
@@ -140,6 +142,7 @@ class SessionConversationService:
         *,
         session_id: UUID,
         user_id: UUID,
+        model_id: str | None = None,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         session.advance_to_building_phase()
@@ -147,7 +150,8 @@ class SessionConversationService:
         yield SessionSnapshot(session=session)
 
         async for event in self._run_agent_and_consume_user_curation_events(
-            session=session
+            session=session,
+            model_id=model_id,
         ):
             yield event
 
@@ -169,11 +173,13 @@ class SessionConversationService:
         *,
         session: Session,
         title_task: asyncio.Task[str] | None = None,
+        model_id: str | None = None,
     ) -> AsyncIterator[SessionEvent]:
         try:
             await self._persist_session(session=session)
             async for event in self._run_agent_and_consume_user_curation_events(
-                session=session
+                session=session,
+                model_id=model_id,
             ):
                 yield event
                 for title_event in await self._emit_title_if_ready(
@@ -328,11 +334,12 @@ class SessionConversationService:
         self,
         *,
         session: Session,
+        model_id: str | None = None,
         on_cancelled: Callable[[], None] | None = None,
     ) -> AsyncIterator[SessionEvent]:
         state = _AgentRunState()
 
-        async for event in self._runner.run(session=session):
+        async for event in self._runner.run(session=session, model_id=model_id):
             if not isinstance(event, SessionRunnerAssistantMessageChunk):
                 logger.debug(
                     "Runner event received for session %s: %s",
@@ -771,6 +778,7 @@ class SessionConversationService:
         self,
         *,
         session: Session,
+        model_id: str | None = None,
     ) -> AsyncIterator[SessionEvent]:
         cancelled = False
 
@@ -779,7 +787,9 @@ class SessionConversationService:
             cancelled = True
 
         async for event in self._run_agent(
-            session=session, on_cancelled=_mark_cancelled
+            session=session,
+            model_id=model_id,
+            on_cancelled=_mark_cancelled,
         ):
             yield event
 

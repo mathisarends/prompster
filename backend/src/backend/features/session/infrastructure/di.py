@@ -74,12 +74,14 @@ class SessionProvider(Provider):
     def provide_session_runner(
         self,
         llm: ChatModel,
+        credentials: LLMCredentials,
         spotify: Spotifyify,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,
     ) -> SessionRunner:
         return AgentSessionRunner(
             llm=llm,
+            llm_credentials=credentials,
             spotify=spotify,
             event_mapper=event_mapper,
             history_builder=history_builder,

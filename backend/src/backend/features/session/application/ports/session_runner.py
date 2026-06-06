@@ -102,7 +102,12 @@ type SessionRunnerEvent = (
 
 class SessionRunner(ABC):
     @abstractmethod
-    def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
+    def run(
+        self,
+        *,
+        session: Session,
+        model_id: str | None = None,
+    ) -> AsyncIterator[SessionRunnerEvent]:
         """Runs the agent with the session context and yields runner events."""
 
     async def stop(self, *, session_id: UUID) -> bool:

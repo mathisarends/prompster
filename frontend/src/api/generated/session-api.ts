@@ -24,11 +24,13 @@ import type {
 
 import type {
   AddPlaylistTrackRequest,
+  CompleteOnboardingParams,
   ErrorResponse,
   ExportSessionPlaylistParams,
   HTTPValidationError,
   ListSessionsParams,
   PlaylistTrackResponse,
+  SendMessageParams,
   SendMessageRequest,
   SessionCreateRequest,
   SessionResponse,
@@ -1108,6 +1110,7 @@ export function useDeleteSession<
 export const sendMessage = (
   sessionId: string,
   sendMessageRequest: SendMessageRequest,
+  params?: SendMessageParams,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
@@ -1117,6 +1120,7 @@ export const sendMessage = (
       method: "POST",
       headers: { "Content-Type": "application/json" },
       data: sendMessageRequest,
+      params,
       signal,
     },
     options,
@@ -1126,10 +1130,12 @@ export const sendMessage = (
 export const getSendMessageQueryKey = (
   sessionId: string,
   sendMessageRequest?: SendMessageRequest,
+  params?: SendMessageParams,
 ) => {
   return [
     "POST",
     `/api/v1/sessions/${sessionId}/messages`,
+    ...(params ? [params] : []),
     sendMessageRequest,
   ] as const;
 };
@@ -1140,6 +1146,7 @@ export const getSendMessageQueryOptions = <
 >(
   sessionId: string,
   sendMessageRequest: SendMessageRequest,
+  params?: SendMessageParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof sendMessage>>, TError, TData>
@@ -1151,11 +1158,12 @@ export const getSendMessageQueryOptions = <
 
   const queryKey =
     queryOptions?.queryKey ??
-    getSendMessageQueryKey(sessionId, sendMessageRequest);
+    getSendMessageQueryKey(sessionId, sendMessageRequest, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof sendMessage>>> = ({
     signal,
-  }) => sendMessage(sessionId, sendMessageRequest, requestOptions, signal);
+  }) =>
+    sendMessage(sessionId, sendMessageRequest, params, requestOptions, signal);
 
   return {
     queryKey,
@@ -1180,6 +1188,7 @@ export function useSendMessage<
 >(
   sessionId: string,
   sendMessageRequest: SendMessageRequest,
+  params: undefined | SendMessageParams,
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof sendMessage>>, TError, TData>
@@ -1204,6 +1213,7 @@ export function useSendMessage<
 >(
   sessionId: string,
   sendMessageRequest: SendMessageRequest,
+  params?: SendMessageParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof sendMessage>>, TError, TData>
@@ -1228,6 +1238,7 @@ export function useSendMessage<
 >(
   sessionId: string,
   sendMessageRequest: SendMessageRequest,
+  params?: SendMessageParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof sendMessage>>, TError, TData>
@@ -1248,6 +1259,7 @@ export function useSendMessage<
 >(
   sessionId: string,
   sendMessageRequest: SendMessageRequest,
+  params?: SendMessageParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof sendMessage>>, TError, TData>
@@ -1261,6 +1273,7 @@ export function useSendMessage<
   const queryOptions = getSendMessageQueryOptions(
     sessionId,
     sendMessageRequest,
+    params,
     options,
   );
 
@@ -1475,6 +1488,7 @@ export function useSubmitOnboardingAnswer<
  */
 export const completeOnboarding = (
   sessionId: string,
+  params?: CompleteOnboardingParams,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
@@ -1482,14 +1496,22 @@ export const completeOnboarding = (
     {
       url: `/api/v1/sessions/${sessionId}/onboarding/complete`,
       method: "POST",
+      params,
       signal,
     },
     options,
   );
 };
 
-export const getCompleteOnboardingQueryKey = (sessionId: string) => {
-  return ["POST", `/api/v1/sessions/${sessionId}/onboarding/complete`] as const;
+export const getCompleteOnboardingQueryKey = (
+  sessionId: string,
+  params?: CompleteOnboardingParams,
+) => {
+  return [
+    "POST",
+    `/api/v1/sessions/${sessionId}/onboarding/complete`,
+    ...(params ? [params] : []),
+  ] as const;
 };
 
 export const getCompleteOnboardingQueryOptions = <
@@ -1497,6 +1519,7 @@ export const getCompleteOnboardingQueryOptions = <
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
+  params?: CompleteOnboardingParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1511,11 +1534,12 @@ export const getCompleteOnboardingQueryOptions = <
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
-    queryOptions?.queryKey ?? getCompleteOnboardingQueryKey(sessionId);
+    queryOptions?.queryKey ?? getCompleteOnboardingQueryKey(sessionId, params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof completeOnboarding>>
-  > = ({ signal }) => completeOnboarding(sessionId, requestOptions, signal);
+  > = ({ signal }) =>
+    completeOnboarding(sessionId, params, requestOptions, signal);
 
   return {
     queryKey,
@@ -1539,6 +1563,7 @@ export function useCompleteOnboarding<
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
+  params: undefined | CompleteOnboardingParams,
   options: {
     query: Partial<
       UseQueryOptions<
@@ -1566,6 +1591,7 @@ export function useCompleteOnboarding<
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
+  params?: CompleteOnboardingParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1593,6 +1619,7 @@ export function useCompleteOnboarding<
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
+  params?: CompleteOnboardingParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1616,6 +1643,7 @@ export function useCompleteOnboarding<
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
+  params?: CompleteOnboardingParams,
   options?: {
     query?: Partial<
       UseQueryOptions<
@@ -1630,7 +1658,11 @@ export function useCompleteOnboarding<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getCompleteOnboardingQueryOptions(sessionId, options);
+  const queryOptions = getCompleteOnboardingQueryOptions(
+    sessionId,
+    params,
+    options,
+  );
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

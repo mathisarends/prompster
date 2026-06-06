@@ -11,6 +11,8 @@ from agent.deck import (
     DeckStore,
 )
 from agent.tools.views import Phase as AgentPhase
+from llm import LLMCredentials, create_openai_llm
+from llm.registry import ensure_supported_openai_model
 
 from backend.features.session.domain import MAX_PLAYLIST_TRACKS
 from llmify import ChatModel
@@ -71,20 +73,27 @@ class AgentSessionRunner(SessionRunner):
     def __init__(
         self,
         llm: ChatModel,
+        llm_credentials: LLMCredentials,
         spotify: Spotifyify,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,
         system_prompt: str | None = None,
     ) -> None:
         self._llm = llm
+        self._llm_credentials = llm_credentials
         self._spotify = spotify
         self._event_mapper = event_mapper
         self._history_builder = history_builder
         self._system_prompt = system_prompt
         self._active_runs = _ActiveRunRegistry()
 
-    async def run(self, *, session: Session) -> AsyncIterator[SessionRunnerEvent]:
-        agent = self._create_agent(session=session)
+    async def run(
+        self,
+        *,
+        session: Session,
+        model_id: str | None = None,
+    ) -> AsyncIterator[SessionRunnerEvent]:
+        agent = self._create_agent(session=session, model_id=model_id)
         active_run = _ActiveRun(cancellation=asyncio.Event(), agent=agent)
         await self._active_runs.register(session_id=session.id, run=active_run)
         try:
@@ -104,9 +113,17 @@ class AgentSessionRunner(SessionRunner):
     async def stop(self, *, session_id: UUID) -> bool:
         return await self._active_runs.stop(session_id=session_id)
 
-    def _create_agent(self, *, session: Session) -> Agent:
+    def _create_agent(self, *, session: Session, model_id: str | None = None) -> Agent:
+        llm = self._llm
+        if model_id is not None:
+            selected_model = ensure_supported_openai_model(model_id)
+            llm = create_openai_llm(
+                model=selected_model,
+                credentials=self._llm_credentials,
+            )
+
         return Agent(
-            llm=self._llm,
+            llm=llm,
             history=self._history_builder.build(session=session),
             system_prompt=self._system_prompt,
             spotify=Spotify(client=self._spotify),
