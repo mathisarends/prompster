@@ -41,6 +41,8 @@ type ChatSessionPaneProps = {
   pendingInput: PendingInput | null;
   isLoadingSession: boolean;
   isError: boolean;
+  selectedModel?: string;
+  onModelChange?: (modelId: string) => void;
   sendMessage: (text: string) => void;
   stopMessage: () => void;
   userCurationPlaybackState: UserCurationTrackPlaybackState;
@@ -75,6 +77,8 @@ export const ChatSessionPane = ({
   pendingInput,
   isLoadingSession,
   isError,
+  selectedModel,
+  onModelChange,
   sendMessage,
   stopMessage,
   userCurationPlaybackState,
@@ -222,6 +226,8 @@ export const ChatSessionPane = ({
             }
             isSubmitting={isStreaming}
             isStopping={isStopping}
+            selectedModel={selectedModel}
+            onModelChange={onModelChange}
           />
         </div>
       </div>

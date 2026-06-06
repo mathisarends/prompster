@@ -51,6 +51,8 @@ export type UseChatSessionResult = {
   errorMessage?: string;
   isLoadingSession: boolean;
   isError: boolean;
+  selectedModel?: string;
+  onModelChange: (modelId: string) => void;
   sendMessage: (text: string) => void;
   persistOnboardingAnswer: (answer: OnboardingAnswerPayload) => void;
   submitOnboardingAnswers: (answers: OnboardingAnswerPayload[]) => void;
@@ -76,6 +78,7 @@ export const useChatSession = ({
     createInitialChatState,
   );
   const [isStopping, setIsStopping] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string | undefined>();
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const stopAbortTimeoutRef = useRef<number | null>(null);
@@ -206,11 +209,18 @@ export const useChatSession = ({
           userMessageText: text,
         },
         (streamOptions) =>
-          streamSendMessage(sessionId, { content: text }, streamOptions),
+          streamSendMessage(sessionId, { content: text }, {
+            ...streamOptions,
+            modelId: selectedModel,
+          }),
       );
     },
-    [runEventStream, sessionId],
+    [runEventStream, selectedModel, sessionId],
   );
+
+  const onModelChange = useCallback((modelId: string) => {
+    setSelectedModel(modelId);
+  }, []);
 
   useEffect(() => {
     if (
@@ -306,14 +316,17 @@ export const useChatSession = ({
             });
 
             if (answer.isLastQuestion) {
-              await streamCompleteOnboarding(sessionId, streamOptions);
+              await streamCompleteOnboarding(sessionId, {
+                ...streamOptions,
+                modelId: selectedModel,
+              });
               return;
             }
           }
         });
       })();
     },
-    [normalizeOnboardingAnswer, runEventStream, sessionId],
+    [normalizeOnboardingAnswer, runEventStream, selectedModel, sessionId],
   );
 
   const stopMessage = useCallback(() => {
@@ -370,6 +383,8 @@ export const useChatSession = ({
     errorMessage: state.errorMessage,
     isLoadingSession: isLoading && state.entries.length === 0,
     isError,
+    selectedModel,
+    onModelChange,
     sendMessage,
     persistOnboardingAnswer,
     submitOnboardingAnswers,

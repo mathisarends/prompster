@@ -11,18 +11,25 @@ type StreamSendMessageOptions = {
   onChunk?: (chunk: string) => void;
   onDone?: () => void;
   onEvent?: (event: SessionServerEvent) => void;
+  modelId?: string;
 };
 
 export type StreamSessionOptions = StreamSendMessageOptions;
 
-const getApiUrl = (path: string) => {
+const getApiUrl = (path: string, modelId?: string) => {
   const baseUrl = String(
     AXIOS_INSTANCE.defaults.baseURL ?? window.location.origin,
   );
-  return new URL(
+  const url = new URL(
     path,
     baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`,
-  ).toString();
+  );
+
+  if (modelId) {
+    url.searchParams.set("model_id", modelId);
+  }
+
+  return url.toString();
 };
 
 export const streamSendMessage = async (
@@ -45,7 +52,7 @@ export const streamCompleteOnboarding = async (
 const streamSessionRequest = async (
   path: string,
   body: SendMessageRequest | undefined,
-  { signal, onChunk, onDone, onEvent }: StreamSendMessageOptions,
+  { signal, onChunk, onDone, onEvent, modelId }: StreamSendMessageOptions,
 ) => {
   const headers: HeadersInit = {};
   let requestBody: string | undefined;
@@ -54,7 +61,7 @@ const streamSessionRequest = async (
     requestBody = JSON.stringify(body);
   }
 
-  const response = await fetch(getApiUrl(path), {
+  const response = await fetch(getApiUrl(path, modelId), {
     method: "POST",
     credentials: "include",
     headers,

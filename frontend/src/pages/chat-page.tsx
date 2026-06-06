@@ -62,6 +62,8 @@ export const ChatPage = () => {
     pendingInput,
     isLoadingSession,
     isError,
+    selectedModel,
+    onModelChange,
     sendMessage,
     persistOnboardingAnswer,
     submitOnboardingAnswers,
@@ -192,6 +194,8 @@ export const ChatPage = () => {
               pendingInput={pendingInput}
               isLoadingSession={isLoadingSession}
               isError={isError}
+              selectedModel={selectedModel}
+              onModelChange={onModelChange}
               sendMessage={sendMessage}
               stopMessage={stopMessage}
               userCurationPlaybackState={userCurationPlaybackState}
@@ -224,6 +228,8 @@ export const ChatPage = () => {
             pendingInput={pendingInput}
             isLoadingSession={isLoadingSession}
             isError={isError}
+            selectedModel={selectedModel}
+            onModelChange={onModelChange}
             sendMessage={sendMessage}
             stopMessage={stopMessage}
             userCurationPlaybackState={userCurationPlaybackState}
