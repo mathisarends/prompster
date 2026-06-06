@@ -10,10 +10,14 @@ from agent.tools.schemas import ToolSchema
 
 
 class ActionType(StrEnum):
-    SEARCH = "search"
-    FETCH = "fetch"
-    MUTATE = "mutate"
-    INTERACT = "interact"
+    ASK_ONBOARDING_QUESTION = "ask_onboarding_question"
+    SEARCH_TRACKS = "search_tracks"
+    SEARCH_PLAYLISTS = "search_playlists"
+    ADD_DECK_TRACKS = "add_deck_tracks"
+    REMOVE_DECK_TRACKS = "remove_deck_tracks"
+    REPLACE_DECK_TRACKS = "replace_deck_tracks"
+    GET_SPOTIFY_PLAYLIST_TRACKS = "get_spotify_playlist_tracks"
+    SELF_REVIEW = "self_review"
 
 
 class Phase(StrEnum):
@@ -68,7 +72,7 @@ class Tool:
         description: str | None,
         fn: Callable[..., Any],
         status_label: Callable[[Any], str] | None = None,
-        action_type: ActionType = ActionType.FETCH,
+        action_type: ActionType | None = None,
         included_in_phases: Iterable[Phase] | None = None,
         is_onboarding_question: bool = False,
         schema: dict | None = None,

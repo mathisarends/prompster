@@ -101,7 +101,7 @@ class TestSessionEventMapper:
                     function=ToolFunction(
                         name="search_tracks",
                         arguments={"query": "abba"},
-                        action_type=ToolActionType.SEARCH,
+                        action_type=ToolActionType.SEARCH_TRACKS,
                     ),
                 )
             ]
@@ -113,7 +113,7 @@ class TestSessionEventMapper:
         assert event.type == SessionEventType.TOOL_CALL_SEQUENCE_ADDED
         assert event.sequence.id == sequence.id
         assert event.sequence.calls[0].id == "call-1"
-        assert event.sequence.calls[0].function.action_type == "search"
+        assert event.sequence.calls[0].function.action_type == "search_tracks"
 
     def test_to_server_event_maps_tool_call_resolved(self) -> None:
         sequence_id = uuid4()

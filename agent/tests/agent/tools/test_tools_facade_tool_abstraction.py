@@ -19,17 +19,33 @@ class TestToolsFacadeAbstraction:
         tools = Tools()
 
         assert tools.get("search_tracks") is not None
-        assert tools.get("search_tracks").action_type == ActionType.SEARCH
+        assert tools.get("search_tracks").action_type == ActionType.SEARCH_TRACKS
+        assert tools.get("search_playlists").action_type == ActionType.SEARCH_PLAYLISTS
         assert tools.get("search_albums") is None
         assert tools.get("get_artist_albums") is None
         assert tools.get("get_artist_top_tracks") is None
         assert tools.get("get_album_tracks") is None
         assert tools.get("get_spotify_playlist_tracks") is not None
-        assert tools.get("get_spotify_playlist_tracks").action_type == ActionType.FETCH
+        assert (
+            tools.get("get_spotify_playlist_tracks").action_type
+            == ActionType.GET_SPOTIFY_PLAYLIST_TRACKS
+        )
+        assert tools.get("review_deck").action_type == ActionType.SELF_REVIEW
         assert tools.get("create_deck") is None
         assert tools.get("add_deck_tracks") is not None
-        assert tools.get("add_deck_tracks").action_type == ActionType.MUTATE
+        assert tools.get("add_deck_tracks").action_type == ActionType.ADD_DECK_TRACKS
+        assert (
+            tools.get("remove_deck_tracks").action_type == ActionType.REMOVE_DECK_TRACKS
+        )
+        assert (
+            tools.get("replace_deck_tracks").action_type
+            == ActionType.REPLACE_DECK_TRACKS
+        )
         assert tools.get("ask_onboarding_question") is not None
+        assert (
+            tools.get("ask_onboarding_question").action_type
+            == ActionType.ASK_ONBOARDING_QUESTION
+        )
         assert tools.get("ask_onboarding_question").is_onboarding_question is True
 
     def test_default_tools_are_filtered_by_phase(self) -> None:

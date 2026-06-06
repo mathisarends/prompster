@@ -2,15 +2,18 @@ import {
   CircleAlert,
   Download,
   Loader2,
+  Plus,
+  RefreshCw,
   Search,
   Sparkles,
+  Trash2,
   Wrench,
 } from "lucide-react";
 
 import type { ToolCallItem, ToolCallStatus } from "./tool-call-sequence.types";
 
 const renderActionIcon = (actionType: ToolCallItem["actionType"]) => {
-  if (actionType === "search") {
+  if (actionType === "search_tracks" || actionType === "search_playlists") {
     return (
       <Search
         className="size-[13px] shrink-0 text-foreground/65"
@@ -19,7 +22,7 @@ const renderActionIcon = (actionType: ToolCallItem["actionType"]) => {
     );
   }
 
-  if (actionType === "fetch") {
+  if (actionType === "get_spotify_playlist_tracks") {
     return (
       <Download
         className="size-[13px] shrink-0 text-foreground/65"
@@ -28,9 +31,45 @@ const renderActionIcon = (actionType: ToolCallItem["actionType"]) => {
     );
   }
 
-  if (actionType === "mutate") {
+  if (actionType === "add_deck_tracks") {
+    return (
+      <Plus
+        className="size-[13px] shrink-0 text-foreground/65"
+        strokeWidth={2}
+      />
+    );
+  }
+
+  if (actionType === "remove_deck_tracks") {
+    return (
+      <Trash2
+        className="size-[13px] shrink-0 text-foreground/65"
+        strokeWidth={2}
+      />
+    );
+  }
+
+  if (actionType === "replace_deck_tracks") {
+    return (
+      <RefreshCw
+        className="size-[13px] shrink-0 text-foreground/65"
+        strokeWidth={2}
+      />
+    );
+  }
+
+  if (actionType === "self_review") {
     return (
       <Sparkles
+        className="size-[13px] shrink-0 text-foreground/65"
+        strokeWidth={2}
+      />
+    );
+  }
+
+  if (actionType === "ask_onboarding_question") {
+    return (
+      <Wrench
         className="size-[13px] shrink-0 text-foreground/65"
         strokeWidth={2}
       />

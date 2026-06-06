@@ -134,20 +134,20 @@ class TestToolAbstraction:
         with pytest.raises(TypeError, match="must return ActionResult"):
             await tool.execute({})
 
-    def test_action_type_defaults_to_fetch(self) -> None:
+    def test_action_type_defaults_to_none(self) -> None:
         tool = Tool(name="demo", description="Demo", fn=_sync_returns_empty_result)
 
-        assert tool.action_type == ActionType.FETCH
+        assert tool.action_type is None
 
     def test_action_type_can_be_overridden(self) -> None:
         tool = Tool(
             name="demo",
             description="Demo",
             fn=_sync_returns_empty_result,
-            action_type=ActionType.SEARCH,
+            action_type=ActionType.SEARCH_TRACKS,
         )
 
-        assert tool.action_type == ActionType.SEARCH
+        assert tool.action_type == ActionType.SEARCH_TRACKS
 
     def test_tool_without_phase_metadata_is_included_in_all_phases(self) -> None:
         tool = Tool(name="demo", description="Demo", fn=_sync_returns_empty_result)

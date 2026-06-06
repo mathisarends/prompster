@@ -129,7 +129,7 @@ class TestAgentWorkspaceUpdateEvents:
         deck_update = events[deck_update_index]
 
         assert deck_update_index == tool_result_index + 1
-        assert tool_call.action_type == ActionType.MUTATE
+        assert tool_call.action_type == ActionType.ADD_DECK_TRACKS
         assert tool_call.status_label == "Baue das 80er-Deck"
         assert isinstance(tool_result, ToolResultEvent)
         assert isinstance(deck_update, DeckUpdatedEvent)

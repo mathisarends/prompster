@@ -497,7 +497,7 @@ def test_tool_call_action_type_mapping_roundtrip() -> None:
             name="search_tracks",
             arguments={"query": "abba"},
             status_label="Suche nach 'Abba'",
-            action_type=ToolActionType.SEARCH,
+            action_type=ToolActionType.SEARCH_TRACKS,
             is_onboarding_question=True,
         ),
     )
@@ -508,12 +508,12 @@ def test_tool_call_action_type_mapping_roundtrip() -> None:
         position=0,
     )
 
-    assert orm_call.function_action_type == "search"
+    assert orm_call.function_action_type == "search_tracks"
     assert orm_call.function_is_onboarding_question is True
 
     mapped_call = repository._to_domain_tool_call(orm_call)
 
-    assert mapped_call.function.action_type == ToolActionType.SEARCH
+    assert mapped_call.function.action_type == ToolActionType.SEARCH_TRACKS
     assert mapped_call.function.is_onboarding_question is True
 
 

@@ -69,7 +69,7 @@ class Tools:
         *,
         params: type[P] | None = None,
         status_label: Callable[[P], str] | None = None,
-        action_type: ActionType = ActionType.FETCH,
+        action_type: ActionType | None = None,
         included_in_phases: set[Phase] | None = None,
         is_onboarding_question: bool = False,
     ) -> Callable:
@@ -137,7 +137,7 @@ class Tools:
             ),
             params=AskOnboardingQuestionParams,
             status_label=lambda params: params.status,
-            action_type=ActionType.INTERACT,
+            action_type=ActionType.ASK_ONBOARDING_QUESTION,
             included_in_phases={Phase.ONBOARDING},
             is_onboarding_question=True,
         )
@@ -158,7 +158,7 @@ class Tools:
         @self.action(
             params=SearchParams,
             status_label=lambda params: params.status,
-            action_type=ActionType.SEARCH,
+            action_type=ActionType.SEARCH_TRACKS,
             included_in_phases={Phase.BUILD},
         )
         async def search_tracks(
@@ -176,7 +176,7 @@ class Tools:
         @self.action(
             params=SearchParams,
             status_label=lambda params: params.status,
-            action_type=ActionType.SEARCH,
+            action_type=ActionType.SEARCH_PLAYLISTS,
             included_in_phases={Phase.BUILD},
         )
         async def search_playlists(
@@ -198,7 +198,7 @@ class Tools:
             ),
             params=AddDraftDeckTracksParams,
             status_label=lambda params: params.status,
-            action_type=ActionType.MUTATE,
+            action_type=ActionType.ADD_DECK_TRACKS,
             included_in_phases={Phase.BUILD},
         )
         async def add_deck_tracks(
@@ -218,7 +218,7 @@ class Tools:
             description=("Remove tracks from the current Hitster deck by ID."),
             params=RemoveDraftDeckTracksParams,
             status_label=lambda params: params.status,
-            action_type=ActionType.MUTATE,
+            action_type=ActionType.REMOVE_DECK_TRACKS,
             included_in_phases={Phase.BUILD},
         )
         async def remove_deck_tracks(
@@ -237,7 +237,7 @@ class Tools:
             description=("Replace tracks in the current Hitster deck by ID."),
             params=ReplaceDraftDeckTracksParams,
             status_label=lambda params: params.status,
-            action_type=ActionType.MUTATE,
+            action_type=ActionType.REPLACE_DECK_TRACKS,
             included_in_phases={Phase.BUILD},
         )
         async def replace_deck_tracks(
@@ -260,7 +260,7 @@ class Tools:
             ),
             params=PlaylistIdParams,
             status_label=lambda params: params.status,
-            action_type=ActionType.FETCH,
+            action_type=ActionType.GET_SPOTIFY_PLAYLIST_TRACKS,
             included_in_phases={Phase.BUILD},
         )
         async def get_spotify_playlist_tracks(
@@ -283,7 +283,7 @@ class Tools:
             ),
             params=ReviewDeckParams,
             status_label=lambda params: params.status,
-            action_type=ActionType.FETCH,
+            action_type=ActionType.SELF_REVIEW,
             included_in_phases={Phase.BUILD},
         )
         async def review_deck(
