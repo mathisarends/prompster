@@ -55,22 +55,32 @@ const chunk = <T,>(items: T[], size: number): T[][] => {
 
 export const OnboardingPanel = ({
   pendingInput,
-  deckTitle,
   isSubmitting,
   onSubmit,
   className,
 }: OnboardingPanelProps) => {
-  const questions = pendingInput.questions.length
-    ? pendingInput.questions
-    : [
-        {
-          id: pendingInput.questionId ?? "",
-          question: pendingInput.question ?? null,
-          options: pendingInput.options ?? [],
-          selectionMode: pendingInput.selectionMode ?? "single_select",
-          isLastQuestion: Boolean(pendingInput.isLastQuestion),
-        },
-      ];
+  const questions = useMemo(
+    () =>
+      pendingInput.questions.length
+        ? pendingInput.questions
+        : [
+            {
+              id: pendingInput.questionId ?? "",
+              question: pendingInput.question ?? null,
+              options: pendingInput.options ?? [],
+              selectionMode: pendingInput.selectionMode ?? "single_select",
+              isLastQuestion: Boolean(pendingInput.isLastQuestion),
+            },
+          ],
+    [
+      pendingInput.isLastQuestion,
+      pendingInput.options,
+      pendingInput.question,
+      pendingInput.questionId,
+      pendingInput.questions,
+      pendingInput.selectionMode,
+    ],
+  );
   const [drafts, setDrafts] = useState<Record<string, AnswerDraft>>({});
   const [stepIndex, setStepIndex] = useState(0);
 

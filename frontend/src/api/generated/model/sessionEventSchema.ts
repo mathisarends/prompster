@@ -11,6 +11,7 @@ import type { AssistantMessageCompletedEvent } from "./assistantMessageCompleted
 import type { AssistantMessageStartedEvent } from "./assistantMessageStartedEvent";
 import type { DoneEvent } from "./doneEvent";
 import type { ErrorEvent } from "./errorEvent";
+import type { OnboardingQuestionAskedEvent } from "./onboardingQuestionAskedEvent";
 import type { PlaylistSetEvent } from "./playlistSetEvent";
 import type { PlaylistTrackAddedEvent } from "./playlistTrackAddedEvent";
 import type { PlaylistTrackRemovedEvent } from "./playlistTrackRemovedEvent";
@@ -43,6 +44,7 @@ export interface SessionEventSchema {
     | PlaylistTrackAddedEvent
     | PlaylistTrackRemovedEvent
     | PlaylistTrackReplacedEvent
+    | OnboardingQuestionAskedEvent
     | SuspendedForInputEvent
     | DoneEvent
     | ErrorEvent

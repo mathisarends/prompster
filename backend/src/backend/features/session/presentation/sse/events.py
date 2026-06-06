@@ -37,6 +37,7 @@ class SessionEventType(StrEnum):
     PLAYLIST_TRACK_ADDED = "playlist.track_added"
     PLAYLIST_TRACK_REMOVED = "playlist.track_removed"
     PLAYLIST_TRACK_REPLACED = "playlist.track_replaced"
+    ONBOARDING_QUESTION_ASKED = "session.onboarding_question_asked"
     SUSPENDED_FOR_INPUT = "session.suspended_for_input"
 
     DONE = "done"
@@ -171,6 +172,19 @@ class SuspendedForInputEvent(_SessionEventSchema):
     is_last_question: bool = False
 
 
+class OnboardingQuestionAskedEvent(_SessionEventSchema):
+    type: Literal[SessionEventType.ONBOARDING_QUESTION_ASKED] = (
+        SessionEventType.ONBOARDING_QUESTION_ASKED
+    )
+    question: str
+    options: list[str] = Field(default_factory=list)
+    selection_mode: OnboardingQuestionSelectionMode = (
+        OnboardingQuestionSelectionMode.SINGLE_SELECT
+    )
+    question_id: UUID | None = None
+    is_last_question: bool = False
+
+
 class DoneEvent(_SessionEventSchema):
     type: Literal[SessionEventType.DONE] = SessionEventType.DONE
 
@@ -198,6 +212,7 @@ ServerEvent = Annotated[
         PlaylistTrackAddedEvent,
         PlaylistTrackRemovedEvent,
         PlaylistTrackReplacedEvent,
+        OnboardingQuestionAskedEvent,
         SuspendedForInputEvent,
         DoneEvent,
         ErrorEvent,

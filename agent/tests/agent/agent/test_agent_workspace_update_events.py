@@ -195,8 +195,8 @@ class TestAgentWorkspaceUpdateEvents:
 
         events = [event async for event in agent.stream("Start")]
 
-        tool_call = next(event for event in events if isinstance(event, ToolCallEvent))
-        assert tool_call.is_onboarding_question is True
+        assert not any(isinstance(event, ToolCallEvent) for event in events)
+        assert not any(isinstance(event, ToolResultEvent) for event in events)
         suspended = next(
             event for event in events if isinstance(event, SuspendedForUserInputEvent)
         )
@@ -237,6 +237,8 @@ class TestAgentWorkspaceUpdateEvents:
 
         events = [event async for event in agent.stream("Start")]
 
+        assert not any(isinstance(event, ToolCallEvent) for event in events)
+        assert not any(isinstance(event, ToolResultEvent) for event in events)
         question = next(
             event for event in events if isinstance(event, QuestionAskedEvent)
         )

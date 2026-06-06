@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from collections.abc import AsyncIterator, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from uuid import UUID
 
 from backend.features.session.application.events import (
@@ -10,6 +10,7 @@ from backend.features.session.application.events import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionEvent,
+    SessionOnboardingQuestionAsked,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
@@ -74,6 +75,7 @@ class _ResolvedToolCall:
 @dataclass
 class _AgentRunState:
     current_assistant_message: AssistantMessage | None = None
+    skipped_onboarding_tool_call_ids: set[str] = field(default_factory=set)
     cancelled: bool = False
     stopped: bool = False
 
@@ -384,6 +386,7 @@ class SessionConversationService:
                 return await self._handle_tool_call_completed(
                     event=event,
                     session=session,
+                    state=state,
                 )
             case SessionRunnerPlaylistUpdated():
                 return await self._handle_playlist_updated(
@@ -490,6 +493,10 @@ class SessionConversationService:
                 state=state,
             )
         )
+        if event.call.function.is_onboarding_question:
+            state.skipped_onboarding_tool_call_ids.add(event.call.id)
+            return tuple(events)
+
         sequence = session.add_tool_call(event.call)
         events.append(SessionToolCallSequenceAdded(sequence=sequence))
         return await self._persisted_events(session=session, events=tuple(events))
@@ -499,7 +506,12 @@ class SessionConversationService:
         *,
         event: SessionRunnerToolCallCompleted,
         session: Session,
+        state: _AgentRunState,
     ) -> tuple[SessionEvent, ...]:
+        if event.tool_call_id in state.skipped_onboarding_tool_call_ids:
+            state.skipped_onboarding_tool_call_ids.remove(event.tool_call_id)
+            return ()
+
         sequence = self._require_pending_tool_call_sequence(session=session)
         session.resolve_tool_call(
             tool_call_id=event.tool_call_id,
@@ -652,12 +664,23 @@ class SessionConversationService:
         if event.question is None:
             return ()
 
-        session.add_onboarding_question(
+        question = session.add_onboarding_question(
             question_text=event.question,
             options=tuple(event.options or []),
             selection_mode=event.selection_mode,
         )
-        return await self._persisted_events(session=session)
+        return await self._persisted_events(
+            session=session,
+            events=(
+                SessionOnboardingQuestionAsked(
+                    question=question.question_text,
+                    options=list(question.options),
+                    selection_mode=question.selection_mode,
+                    question_id=question.id,
+                    is_last_question=question.is_last_question,
+                ),
+            ),
+        )
 
     async def _handle_suspended_for_input(
         self,

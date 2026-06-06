@@ -153,14 +153,16 @@ class Agent:
     ) -> AsyncGenerator[AgentEvent, None]:
         args = self._tools.parse_args(call)
         tool = self._tools.get(call.function.name, phase=self._phase)
-        yield ToolCallEvent(
-            tool_call_id=call.id,
-            name=call.function.name,
-            args=args,
-            status_label=tool.render_status(args) if tool else None,
-            action_type=tool.action_type if tool else None,
-            is_onboarding_question=tool.is_onboarding_question if tool else False,
-        )
+        is_onboarding_question = tool.is_onboarding_question if tool else False
+        if not is_onboarding_question:
+            yield ToolCallEvent(
+                tool_call_id=call.id,
+                name=call.function.name,
+                args=args,
+                status_label=tool.render_status(args) if tool else None,
+                action_type=tool.action_type if tool else None,
+                is_onboarding_question=False,
+            )
 
         result = await self._tools.execute(
             call.function.name,
@@ -168,11 +170,12 @@ class Agent:
             phase=self._phase,
         )
         content = result.to_content()
-        yield ToolResultEvent(
-            tool_call_id=call.id,
-            name=call.function.name,
-            result=content,
-        )
+        if not is_onboarding_question:
+            yield ToolResultEvent(
+                tool_call_id=call.id,
+                name=call.function.name,
+                result=content,
+            )
         for update in self._playlist_store.drain_playlist_draft_updates():
             yield WorkspaceUpdatedEvent(
                 playlist_draft=update.playlist_draft,

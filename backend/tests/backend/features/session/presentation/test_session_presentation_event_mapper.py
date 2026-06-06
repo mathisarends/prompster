@@ -6,6 +6,7 @@ from backend.features.session.application import (
     SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
+    SessionOnboardingQuestionAsked,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
@@ -32,6 +33,7 @@ from backend.features.session.presentation.sse.events import (
     PlaylistTrackAddedEvent,
     PlaylistTrackRemovedEvent,
     PlaylistTrackReplacedEvent,
+    OnboardingQuestionAskedEvent,
     SessionEventType,
     SuspendedForInputEvent,
     ToolCallSequenceAddedEvent,
@@ -209,3 +211,20 @@ class TestSessionEventMapper:
         assert event.kind == "onboarding_question"
         assert event.question == "Fuer wen ist die Playlist?"
         assert event.is_last_question is True
+
+    def test_to_server_event_maps_onboarding_question_asked(self) -> None:
+        question_id = uuid4()
+
+        event = to_server_event(
+            SessionOnboardingQuestionAsked(
+                question="Fuer wen ist die Playlist?",
+                options=["Freunde", "Familie"],
+                question_id=question_id,
+            )
+        )
+
+        assert isinstance(event, OnboardingQuestionAskedEvent)
+        assert event.type == SessionEventType.ONBOARDING_QUESTION_ASKED
+        assert event.question == "Fuer wen ist die Playlist?"
+        assert event.options == ["Freunde", "Familie"]
+        assert event.question_id == question_id

@@ -23,6 +23,7 @@ export * from "./listSessionsParams";
 export * from "./lLMOptionResponse";
 export * from "./lLMOptionsResponse";
 export * from "./lLMProvider";
+export * from "./onboardingQuestionAskedEvent";
 export * from "./onboardingQuestionResponse";
 export * from "./onboardingQuestionSelectionMode";
 export * from "./phase";

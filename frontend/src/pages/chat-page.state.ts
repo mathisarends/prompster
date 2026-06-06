@@ -357,8 +357,12 @@ const reduceServerEvent = (
   event: SessionServerEvent,
 ): ChatState => {
   const eventType = (event as { type?: string }).type;
-  if (eventType === "session.suspended_for_input") {
+  if (
+    eventType === "session.suspended_for_input" ||
+    eventType === "session.onboarding_question_asked"
+  ) {
     const payload = event as {
+      type?: string;
       kind?: string;
       question?: string | null;
       options?: unknown;
@@ -366,39 +370,51 @@ const reduceServerEvent = (
       questionId?: string | null;
       isLastQuestion?: boolean;
     };
-    const kind = payload.kind ?? "onboarding_question";
+    const kind =
+      payload.type === "session.onboarding_question_asked"
+        ? "onboarding_question"
+        : (payload.kind ?? "onboarding_question");
     if (kind !== "onboarding_question") {
       return {
         ...state,
         pendingInput: null,
       };
     }
+    const incomingQuestion: PendingOnboardingQuestion = {
+      id: payload.questionId ?? "",
+      question: payload.question ?? null,
+      options: Array.isArray(payload.options)
+        ? payload.options.filter(
+            (option): option is string => typeof option === "string",
+          )
+        : [],
+      selectionMode: payload.selectionMode ?? "single_select",
+      isLastQuestion: payload.isLastQuestion ?? false,
+    };
+    const currentQuestions =
+      state.pendingInput?.kind === "onboarding_question"
+        ? state.pendingInput.questions
+        : [];
+    const existingIndex = currentQuestions.findIndex(
+      (question) => question.id && question.id === incomingQuestion.id,
+    );
+    const questions =
+      existingIndex === -1
+        ? [...currentQuestions, incomingQuestion]
+        : currentQuestions.map((question, index) =>
+            index === existingIndex ? incomingQuestion : question,
+          );
+
     return {
       ...state,
       pendingInput: {
         kind,
-        questions: [
-          {
-            id: payload.questionId ?? "",
-            question: payload.question ?? null,
-            options: Array.isArray(payload.options)
-              ? payload.options.filter(
-                  (option): option is string => typeof option === "string",
-                )
-              : [],
-            selectionMode: payload.selectionMode ?? "single_select",
-            isLastQuestion: payload.isLastQuestion ?? false,
-          },
-        ],
-        question: payload.question ?? null,
-        options: Array.isArray(payload.options)
-          ? payload.options.filter(
-              (option): option is string => typeof option === "string",
-            )
-          : [],
-        selectionMode: payload.selectionMode ?? "single_select",
-        questionId: payload.questionId ?? null,
-        isLastQuestion: payload.isLastQuestion ?? false,
+        questions,
+        question: incomingQuestion.question,
+        options: incomingQuestion.options,
+        selectionMode: incomingQuestion.selectionMode,
+        questionId: incomingQuestion.id || null,
+        isLastQuestion: incomingQuestion.isLastQuestion,
       },
     };
   }

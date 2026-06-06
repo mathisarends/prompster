@@ -4,6 +4,7 @@ from backend.features.session.application import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionEvent,
+    SessionOnboardingQuestionAsked,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
@@ -33,6 +34,7 @@ from backend.features.session.presentation.sse.events import (
     PlaylistTrackAddedEvent,
     PlaylistTrackRemovedEvent,
     PlaylistTrackReplacedEvent,
+    OnboardingQuestionAskedEvent,
     ServerEvent,
     SuspendedForInputEvent,
     TitleGeneratedEvent,
@@ -113,6 +115,15 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
             playlist_id=event.playlist_id,
             track_id=event.track_id,
             track=to_playlist_track_response(event.track),
+        )
+
+    if isinstance(event, SessionOnboardingQuestionAsked):
+        return OnboardingQuestionAskedEvent(
+            question=event.question,
+            options=list(event.options),
+            selection_mode=event.selection_mode,
+            question_id=event.question_id,
+            is_last_question=event.is_last_question,
         )
 
     if isinstance(event, SessionSuspendedForInput):

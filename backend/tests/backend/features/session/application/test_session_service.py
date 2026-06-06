@@ -10,6 +10,7 @@ from backend.features.session.application.events import (
     SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
+    SessionOnboardingQuestionAsked,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
@@ -959,9 +960,73 @@ class TestSessionServiceSendMessage:
         suspended_events = [
             event for event in events if isinstance(event, SessionSuspendedForInput)
         ]
+        question_events = [
+            event
+            for event in events
+            if isinstance(event, SessionOnboardingQuestionAsked)
+        ]
+        assert len(question_events) == 1
+        assert question_events[0].question == "Fuer wen ist die Playlist?"
+        assert question_events[0].options == [
+            "Freunde",
+            "Familie",
+            DECIDE_FOR_ME_OPTION,
+        ]
         assert len(suspended_events) == 1
         assert suspended_events[0].question == "Welche Dekade?"
         assert suspended_events[0].options == ["80er", "90er", DECIDE_FOR_ME_OPTION]
+
+    def test_onboarding_tool_call_events_are_not_persisted_or_emitted(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        onboarding_call = PendingCall(
+            id="call-onboarding",
+            function=ToolFunction(
+                name="ask_onboarding_question",
+                arguments={"question": "Fuer wen ist die Playlist?"},
+                is_onboarding_question=True,
+            ),
+        )
+        runner = _SessionRunnerStub(
+            events=[
+                SessionRunnerToolCallStarted(call=onboarding_call),
+                SessionRunnerToolCallCompleted(
+                    tool_call_id="call-onboarding",
+                    result="Frage gestellt",
+                ),
+                SessionRunnerQuestionAsked(
+                    question="Fuer wen ist die Playlist?",
+                    options=["Freunde", "Familie"],
+                ),
+            ]
+        )
+        repository = _SessionRepositoryStub(session_by_id=session)
+        service = _make_conversation_service(repository=repository, runner=runner)
+
+        events = asyncio.run(
+            _collect_events(
+                service.send_message(
+                    session_id=session.id,
+                    user_id=owner_id,
+                    content="baue eine playlist",
+                )
+            )
+        )
+
+        assert [
+            entry for entry in session.entries if isinstance(entry, ToolCallSequence)
+        ] == []
+        assert not any(
+            isinstance(event, SessionToolCallSequenceAdded) for event in events
+        )
+        assert not any(isinstance(event, SessionToolCallResolved) for event in events)
+        question_events = [
+            event
+            for event in events
+            if isinstance(event, SessionOnboardingQuestionAsked)
+        ]
+        assert len(question_events) == 1
+        assert question_events[0].question_id == session.onboarding_questions[0].id
 
     def test_submit_onboarding_answer_for_last_question_persists_without_advancing_phase(
         self,

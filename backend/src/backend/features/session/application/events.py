@@ -91,6 +91,17 @@ class SessionTitleGenerated:
 
 
 @dataclass(frozen=True)
+class SessionOnboardingQuestionAsked:
+    question: str
+    options: list[str]
+    selection_mode: OnboardingQuestionSelectionMode = (
+        OnboardingQuestionSelectionMode.SINGLE_SELECT
+    )
+    question_id: UUID | None = None
+    is_last_question: bool = False
+
+
+@dataclass(frozen=True)
 class SessionSuspendedForInput:
     kind: SuspensionKind
     question: str | None = None
@@ -116,5 +127,6 @@ type SessionEvent = (
     | SessionPlaylistTrackRemoved
     | SessionPlaylistTrackReplaced
     | SessionTitleGenerated
+    | SessionOnboardingQuestionAsked
     | SessionSuspendedForInput
 )
