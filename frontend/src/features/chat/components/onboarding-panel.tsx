@@ -245,8 +245,7 @@ export const OnboardingPanel = ({
         <div className="flex gap-1.5" aria-hidden>
           {steps.map((group, index) => {
             const groupAnswered = group.every(
-              (question) =>
-                getQuestionAnswers(drafts[question.id]).length > 0,
+              (question) => getQuestionAnswers(drafts[question.id]).length > 0,
             );
             const isCurrent = index === currentStep;
             return (
@@ -353,7 +352,7 @@ const OnboardingQuestionBlock = ({
       </div>
 
       {question.hint ? (
-        <p className="pl-[1.875rem] text-sm leading-relaxed text-muted-foreground">
+        <p className="pl-[0.5rem] text-sm leading-relaxed text-muted-foreground">
           {question.hint}
         </p>
       ) : null}

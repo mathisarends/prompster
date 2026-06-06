@@ -197,7 +197,7 @@ const DeckPlaylistSkeletonTracks = () => (
             <Skeleton className="mt-2 h-3 w-[46%] bg-white/[0.07]" />
           </div>
         </div>
-        <Skeleton className="h-3.5 w-9 justify-self-center bg-white/[0.08]" />
+        <Skeleton className="h-3.5 w-9 justify-self-end bg-white/[0.08]" />
         <Skeleton className="size-8 justify-self-end bg-white/[0.06]" />
       </div>
     ))}

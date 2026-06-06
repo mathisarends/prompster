@@ -1,9 +1,4 @@
-import {
-  Music2,
-  Plus,
-  Trash2,
-  type LucideIcon,
-} from "lucide-react";
+import { Music2, Plus, Trash2, type LucideIcon } from "lucide-react";
 
 import {
   UserCurationEventTypeResponse,

@@ -6,6 +6,11 @@
 <workflow>
 Start from the confirmed onboarding answers and any Spotify playlist references.
 Treat them as the brief for the deck.
+If onboarding granted permission to broaden a specific or niche request, use
+that permission deliberately: include adjacent artists, related scenes,
+neighboring genres, and plausible left-and-right picks while keeping the user's
+core idea recognizable. If the user insisted on a strict niche, stay inside it,
+but still cover the widest useful time spectrum available within that boundary.
 
 1. Do thorough research on Spotify with deliberate query coverage. Don't just
    call `search_tracks` once, and don't repeat the same query with tiny wording
@@ -37,6 +42,10 @@ Treat them as the brief for the deck.
    - The goal is a diverse, high-quality selection for a good timeline game:
      spread artists, years, genres, energy levels, and familiarity. Do not just
      take the first 10 search results.
+   - Pay special attention to year coverage. Avoid clusters of tracks from the
+     same few years unless the user explicitly demanded that exact window.
+     When the theme is narrow, search for early, middle, and late examples
+     inside the niche before accepting a compressed year spread.
    - Track results from `search_tracks` and `get_spotify_playlist_tracks` are cached in the workspace. `get_spotify_playlist_tracks` is only for fetching external Spotify playlist tracks for research/cache; the current workspace Hitster deck is already shown in context and does not need to be fetched with a tool. When building or refining the Hitster deck, reference tracks by their `spotify:track:...` URI only. Do not copy title, artist, year, or cover metadata into deck tools.
 2. Add the chosen tracks with `add_deck_tracks` using Spotify track URI
    refs. If no deck exists yet, this creates the workspace Hitster deck with
