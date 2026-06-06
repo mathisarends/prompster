@@ -80,21 +80,6 @@ class TestSessionDomainSession:
         assert created.id == session_id
         assert created.created_at == created_time
 
-    def test_create_with_initial_prompt_adds_first_user_message(
-        self, owner_id: UUID
-    ) -> None:
-        created = Session.create_with_initial_prompt(
-            title="Roadtrip",
-            initial_prompt="spiele was ruhiges",
-            owner_id=owner_id,
-        )
-
-        assert created.title == "Roadtrip"
-        assert created.owner_id == owner_id
-        assert len(created.entries) == 1
-        assert isinstance(created.entries[0], UserMessage)
-        assert created.entries[0].content == "spiele was ruhiges"
-
     def test_session_is_not_starred_by_default(self, owner_id: UUID) -> None:
         created = Session(title="Roadtrip", entries=[], owner_id=owner_id)
 

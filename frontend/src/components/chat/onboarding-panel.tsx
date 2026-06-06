@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowRight, Check } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 
 import { Chip } from "@/components/shared/ui/chip";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ type AnswerDraft = {
   freeText: string;
 };
 
+const QUESTIONS_PER_STEP = 3;
+
 const getQuestionAnswers = (draft: AnswerDraft | undefined) => {
   const freeText = draft?.freeText.trim();
   if (freeText) return [freeText];
@@ -39,6 +41,17 @@ const getQuestionAnswers = (draft: AnswerDraft | undefined) => {
 
 const isOtherOption = (option: string) =>
   /^(other|other\.{1,3}|andere|sonstiges)$/i.test(option.trim());
+
+const isExclusiveOption = (option: string) =>
+  /(entscheide für mich|decide for me|egal|überrasch)/i.test(option.trim());
+
+const chunk = <T,>(items: T[], size: number): T[][] => {
+  const groups: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    groups.push(items.slice(index, index + size));
+  }
+  return groups;
+};
 
 export const OnboardingPanel = ({
   pendingInput,
@@ -58,20 +71,43 @@ export const OnboardingPanel = ({
           isLastQuestion: Boolean(pendingInput.isLastQuestion),
         },
       ];
-  const isLastQuestion = questions.some((question) => question.isLastQuestion);
   const [drafts, setDrafts] = useState<Record<string, AnswerDraft>>({});
+  const [stepIndex, setStepIndex] = useState(0);
 
-  const answers = questions
-    .map((question) => ({
-      questionId: question.id,
-      answers: getQuestionAnswers(drafts[question.id]),
-      answer: getQuestionAnswers(drafts[question.id]).join(", "),
-      isLastQuestion: question.isLastQuestion,
-    }))
-    .filter((answer) => answer.questionId && answer.answers.length > 0);
-  const canSubmit = answers.length === questions.length && !isSubmitting;
+  const steps = useMemo(
+    () => chunk(questions, QUESTIONS_PER_STEP),
+    [questions],
+  );
+  const currentStep = Math.min(stepIndex, steps.length - 1);
+  const stepQuestions = steps[currentStep] ?? [];
+  const isMultiStep = steps.length > 1;
+  const isLastStep = currentStep === steps.length - 1;
+  const firstQuestionNumber = currentStep * QUESTIONS_PER_STEP + 1;
 
-  const handleSelectOption = (question: PendingOnboardingQuestion, option: string) => {
+  const answers = useMemo(
+    () =>
+      questions
+        .map((question) => ({
+          questionId: question.id,
+          answers: getQuestionAnswers(drafts[question.id]),
+          answer: getQuestionAnswers(drafts[question.id]).join(", "),
+          isLastQuestion: question.isLastQuestion,
+        }))
+        .filter((answer) => answer.questionId && answer.answers.length > 0),
+    [questions, drafts],
+  );
+
+  const stepAnswered = stepQuestions.every(
+    (question) => getQuestionAnswers(drafts[question.id]).length > 0,
+  );
+  const allAnswered = answers.length === questions.length;
+  const canGoNext = stepAnswered && !isSubmitting;
+  const canSubmit = allAnswered && !isSubmitting;
+
+  const handleSelectOption = (
+    question: PendingOnboardingQuestion,
+    option: string,
+  ) => {
     setDrafts((current) => {
       const draft = current[question.id] ?? {
         selectedOptions: [],
@@ -81,7 +117,14 @@ export const OnboardingPanel = ({
         question.selectionMode === "multi_select"
           ? draft.selectedOptions.includes(option)
             ? draft.selectedOptions.filter((selected) => selected !== option)
-            : [...draft.selectedOptions, option]
+            : isExclusiveOption(option)
+              ? [option]
+              : [
+                  ...draft.selectedOptions.filter(
+                    (selected) => !isExclusiveOption(selected),
+                  ),
+                  option,
+                ]
           : draft.selectedOptions[0] === option
             ? []
             : [option];
@@ -107,9 +150,16 @@ export const OnboardingPanel = ({
     }));
   };
 
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    onSubmit(answers);
+  const handleBack = () => {
+    setStepIndex((index) => Math.max(0, index - 1));
+  };
+
+  const handleNext = () => {
+    if (isLastStep) {
+      if (canSubmit) onSubmit(answers);
+      return;
+    }
+    if (canGoNext) setStepIndex((index) => index + 1);
   };
 
   return (
@@ -119,37 +169,81 @@ export const OnboardingPanel = ({
         className,
       )}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-7 py-9">
-        <div className="space-y-2">
+      <div className="shrink-0 space-y-4 px-7 pt-9">
+        <div className="flex items-center justify-between gap-4">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Onboarding
+            Einleitende Fragen
           </p>
-          <h2 className="text-balance text-2xl font-medium leading-snug text-foreground">
-            {deckTitle
-              ? `Ein paar Fragen zum Deck „${deckTitle}“`
-              : "Ein paar Fragen zu deinem Deck"}
-          </h2>
+          {isMultiStep ? (
+            <p className="text-xs font-medium tabular-nums text-muted-foreground">
+              Schritt {currentStep + 1} / {steps.length}
+            </p>
+          ) : null}
         </div>
 
-        <div className="flex flex-col gap-8">
-          {questions.map((question, index) => (
-            <OnboardingQuestionBlock
-              key={question.id || index}
-              question={question}
-              index={index}
-              draft={drafts[question.id]}
-              disabled={isSubmitting}
-              showDivider={index > 0}
-              onSelectOption={handleSelectOption}
-              onFreeTextChange={handleFreeTextChange}
-            />
-          ))}
+        {isMultiStep ? (
+          <div className="flex gap-1.5" aria-hidden>
+            {steps.map((group, index) => {
+              const groupAnswered = group.every(
+                (question) =>
+                  getQuestionAnswers(drafts[question.id]).length > 0,
+              );
+              const isCurrent = index === currentStep;
+              return (
+                <span
+                  key={index}
+                  className={cn(
+                    "h-1 flex-1 rounded-full transition-colors",
+                    index < currentStep || groupAnswered
+                      ? "bg-primary/70"
+                      : "bg-white/10",
+                    isCurrent && "bg-primary",
+                  )}
+                />
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-7 py-10">
+        <div
+          key={currentStep}
+          className="m-auto flex w-full max-w-3xl flex-col gap-8 animate-in fade-in slide-in-from-bottom-1 duration-300"
+        >
+          <div className="flex flex-col gap-12">
+            {stepQuestions.map((question, index) => (
+              <OnboardingQuestionBlock
+                key={question.id || index}
+                question={question}
+                number={firstQuestionNumber + index}
+                draft={drafts[question.id]}
+                disabled={isSubmitting}
+                onSelectOption={handleSelectOption}
+                onFreeTextChange={handleFreeTextChange}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center justify-end border-t border-white/[0.06] px-7 py-4">
-        <Button type="button" onClick={handleSubmit} disabled={!canSubmit}>
-          {isLastQuestion ? "Abschließen" : "Weiter"}
+      <div className="flex shrink-0 items-center justify-between gap-3 border-t border-white/[0.06] px-7 py-4">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={handleBack}
+          disabled={currentStep === 0 || isSubmitting}
+          className={cn(currentStep === 0 && "invisible")}
+        >
+          <ArrowLeft className="size-4" />
+          Zurück
+        </Button>
+        <Button
+          type="button"
+          onClick={handleNext}
+          disabled={isLastStep ? !canSubmit : !canGoNext}
+        >
+          {isLastStep ? "Abschließen" : "Weiter"}
           <ArrowRight className="size-4" />
         </Button>
       </div>
@@ -159,40 +253,38 @@ export const OnboardingPanel = ({
 
 type OnboardingQuestionBlockProps = {
   question: PendingOnboardingQuestion;
-  index: number;
+  number: number;
   draft: AnswerDraft | undefined;
   disabled: boolean;
-  showDivider: boolean;
   onSelectOption: (question: PendingOnboardingQuestion, option: string) => void;
   onFreeTextChange: (questionId: string, value: string) => void;
 };
 
 const OnboardingQuestionBlock = ({
   question,
-  index,
+  number,
   draft,
   disabled,
-  showDivider,
   onSelectOption,
   onFreeTextChange,
 }: OnboardingQuestionBlockProps) => {
   const options = (question.options ?? []).filter(
     (option) => !isOtherOption(option),
   );
-  const freeTextId = `onboarding-free-text-${question.id || index}`;
+  const freeTextId = `onboarding-free-text-${question.id || number}`;
 
   return (
-    <div
-      className={cn(
-        "space-y-4",
-        showDivider && "border-t border-white/[0.06] pt-8",
-      )}
-    >
-      <h3 className="text-balance text-base font-medium leading-snug text-foreground/90">
-        {question.question || "Erzähl mir etwas mehr über deine Playlist."}
-      </h3>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2.5">
+        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary">
+          {number}
+        </span>
+        <h3 className="text-balance text-base font-medium leading-snug text-foreground/90">
+          {question.question || "Erzähl mir etwas mehr über deine Playlist."}
+        </h3>
+      </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex max-w-3xl flex-wrap gap-2.5">
         {options.map((option) => {
           const active = draft?.selectedOptions.includes(option) ?? false;
           return (
@@ -201,7 +293,7 @@ const OnboardingQuestionBlock = ({
               label={option}
               icon={active ? Check : undefined}
               active={active}
-              activeClassName="border-primary/45 bg-primary/15 text-foreground [&>svg]:text-primary hover:border-primary/55 hover:bg-primary/20 hover:text-foreground"
+              activeClassName="border-primary/50 bg-primary/15 text-foreground shadow-[0_2px_16px_-6px_hsl(141_73%_42%/0.5)] [&>svg]:text-primary hover:border-primary/60 hover:bg-primary/20 hover:text-foreground"
               disabled={disabled}
               onClick={() => onSelectOption(question, option)}
             />
@@ -241,7 +333,8 @@ const WritableAnswerChip = ({
       htmlFor={id}
       className={cn(
         "flex h-10 min-w-36 max-w-full items-center rounded-full border border-border/60 bg-card/40 px-4 text-sm text-muted-foreground backdrop-blur-sm transition-colors focus-within:border-primary/60 focus-within:bg-primary/10 focus-within:text-foreground",
-        active && "border-primary/45 bg-primary/15 text-foreground",
+        active &&
+          "border-primary/50 bg-primary/15 text-foreground shadow-[0_2px_16px_-6px_hsl(141_73%_42%/0.5)]",
         disabled && "pointer-events-none opacity-50",
       )}
     >

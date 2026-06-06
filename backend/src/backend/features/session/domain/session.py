@@ -131,22 +131,6 @@ class Session(Aggregate):
     def unconsumed_user_curation_events(self) -> list[UserCurationEvent]:
         return [event for event in self._user_curation_events if not event.consumed]
 
-    @classmethod
-    def create_with_initial_prompt(
-        cls,
-        *,
-        title: str,
-        initial_prompt: str,
-        owner_id: UUID,
-    ) -> Self:
-        session = cls(
-            title=title,
-            entries=[],
-            owner_id=owner_id,
-        )
-        session.add_user_message(content=initial_prompt)
-        return session
-
     def set_playlist(
         self,
         tracks: list[PlaylistTrack],
