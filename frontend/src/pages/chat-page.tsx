@@ -140,6 +140,7 @@ export const ChatPage = () => {
       <OnboardingPanel
         key={pendingInput.questions.map((question) => question.id).join(":")}
         pendingInput={pendingInput}
+        deckTitle={title}
         isSubmitting={isStreaming}
         onSubmit={handleOnboardingSubmit}
       />
@@ -228,6 +229,7 @@ export const ChatPage = () => {
                   .map((question) => question.id)
                   .join(":")}
                 pendingInput={pendingInput}
+                deckTitle={title}
                 isSubmitting={isStreaming}
                 onSubmit={handleOnboardingSubmit}
               />

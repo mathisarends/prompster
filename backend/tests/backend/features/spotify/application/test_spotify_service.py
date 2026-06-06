@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from types import SimpleNamespace
 from typing import Any, cast
 
@@ -25,8 +25,8 @@ def _make_search(spotify: Any) -> SpotifySearch:
     )
 
 
-def _make_playlist_creator() -> SpotifyPlaylistCreator:
-    return SpotifyPlaylistCreator()
+def _make_playlist_creator(spotify: Any | None = None) -> SpotifyPlaylistCreator:
+    return SpotifyPlaylistCreator(spotify=spotify or _PlaylistCreatorSpotifyStub())
 
 
 class _TracksStub:
@@ -89,6 +89,104 @@ class _SpotifyStub:
         self.retry_hook_callback = hook
         yield
         self.retry_hook_callback = None
+
+
+class _PlaylistCreatorPlaylistsStub:
+    def __init__(self, spotify: "_PlaylistCreatorSpotifyStub") -> None:
+        self._spotify = spotify
+        self.created_playlist_id = "playlist-1"
+        self.calls: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
+
+    async def create(
+        self,
+        name: str,
+        *,
+        public: bool = False,
+        collaborative: bool = False,
+        description: str = "",
+        user_id: str | None = None,
+    ) -> SimpleNamespace:
+        self.calls.append(
+            (
+                "create",
+                (name,),
+                {
+                    "public": public,
+                    "collaborative": collaborative,
+                    "description": description,
+                    "user_id": user_id,
+                },
+            )
+        )
+        self._emit_retry()
+        return SimpleNamespace(id=self.created_playlist_id)
+
+    async def update(
+        self,
+        playlist_id: str,
+        *,
+        name: str | None = None,
+        public: bool | None = None,
+        collaborative: bool | None = None,
+        description: str | None = None,
+    ) -> None:
+        self.calls.append(
+            (
+                "update",
+                (playlist_id,),
+                {
+                    "name": name,
+                    "public": public,
+                    "collaborative": collaborative,
+                    "description": description,
+                },
+            )
+        )
+        self._emit_retry()
+
+    async def replace(self, playlist_id: str, uris: list[str]) -> str | None:
+        self.calls.append(("replace", (playlist_id, list(uris)), {}))
+        self._emit_retry()
+        return "snapshot-1"
+
+    def _emit_retry(self) -> None:
+        if self._spotify.retry_hook_callback is None:
+            return
+        self._spotify.retry_hook_callback(
+            SimpleNamespace(
+                method=SimpleNamespace(value="PUT"),
+                path="/playlists/playlist-1",
+                status_code=429,
+                retry_in_seconds=2.0,
+                retry_number=1,
+                max_retries=3,
+            )
+        )
+
+
+class _PlaylistCreatorSpotifyStub:
+    def __init__(self) -> None:
+        self.playlists = _PlaylistCreatorPlaylistsStub(self)
+        self.session_calls: list[tuple[str | None, Any]] = []
+        self.retry_hook_callback = None
+        self.close_called = False
+
+    @asynccontextmanager
+    async def session(
+        self,
+        *,
+        access_token: str | None = None,
+        on_retry=None,
+    ):
+        self.session_calls.append((access_token, on_retry))
+        self.retry_hook_callback = on_retry
+        try:
+            yield
+        finally:
+            self.retry_hook_callback = None
+
+    async def close(self) -> None:
+        self.close_called = True
 
 
 def _make_track() -> SimpleNamespace:

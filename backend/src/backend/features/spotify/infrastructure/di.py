@@ -50,11 +50,8 @@ class SpotifyProvider(Provider):
         )
 
     @provide(scope=Scope.APP)
-    async def provide_spotify_playlist_creator(
+    def provide_spotify_playlist_creator(
         self,
-    ) -> AsyncGenerator[SpotifyPlaylistCreator, None]:
-        playlist_creator = playlist_infra.SpotifyPlaylistCreator()
-        try:
-            yield playlist_creator
-        finally:
-            await playlist_creator.aclose()
+        spotify: Spotifyify,
+    ) -> SpotifyPlaylistCreator:
+        return playlist_infra.SpotifyPlaylistCreator(spotify=spotify)

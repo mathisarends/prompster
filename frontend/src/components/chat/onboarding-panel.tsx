@@ -18,6 +18,7 @@ export type OnboardingAnswer = {
 
 type OnboardingPanelProps = {
   pendingInput: PendingInput;
+  deckTitle?: string;
   isSubmitting: boolean;
   onSubmit: (answers: OnboardingAnswer[]) => void;
   className?: string;
@@ -41,6 +42,7 @@ const isOtherOption = (option: string) =>
 
 export const OnboardingPanel = ({
   pendingInput,
+  deckTitle,
   isSubmitting,
   onSubmit,
   className,
@@ -117,13 +119,15 @@ export const OnboardingPanel = ({
         className,
       )}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-7 overflow-y-auto px-7 py-9">
+      <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-7 py-9">
         <div className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            {isLastQuestion ? "Letzte Frage" : "Kurz zum Einstieg"}
+            Onboarding
           </p>
           <h2 className="text-balance text-2xl font-medium leading-snug text-foreground">
-            Kurz zum Einstieg
+            {deckTitle
+              ? `Ein paar Fragen zum Deck „${deckTitle}“`
+              : "Ein paar Fragen zu deinem Deck"}
           </h2>
         </div>
 
@@ -181,14 +185,12 @@ const OnboardingQuestionBlock = ({
     <div
       className={cn(
         "space-y-4",
-        showDivider && "border-t border-white/[0.06] pt-7",
+        showDivider && "border-t border-white/[0.06] pt-8",
       )}
     >
-      <div className="space-y-1.5">
-        <h3 className="text-balance text-xl font-medium leading-snug text-foreground">
-          {question.question || "Erzähl mir etwas mehr über deine Playlist."}
-        </h3>
-      </div>
+      <h3 className="text-balance text-base font-medium leading-snug text-foreground/90">
+        {question.question || "Erzähl mir etwas mehr über deine Playlist."}
+      </h3>
 
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
@@ -199,7 +201,7 @@ const OnboardingQuestionBlock = ({
               label={option}
               icon={active ? Check : undefined}
               active={active}
-              activeClassName="border-primary/55 bg-primary/15 text-primary shadow-[0_0_0_1px_hsl(141_73%_42%/0.12)] hover:border-primary/70 hover:bg-primary/20 hover:text-primary"
+              activeClassName="border-primary/45 bg-primary/15 text-foreground [&>svg]:text-primary hover:border-primary/55 hover:bg-primary/20 hover:text-foreground"
               disabled={disabled}
               onClick={() => onSelectOption(question, option)}
             />
@@ -239,8 +241,7 @@ const WritableAnswerChip = ({
       htmlFor={id}
       className={cn(
         "flex h-10 min-w-36 max-w-full items-center rounded-full border border-border/60 bg-card/40 px-4 text-sm text-muted-foreground backdrop-blur-sm transition-colors focus-within:border-primary/60 focus-within:bg-primary/10 focus-within:text-foreground",
-        active &&
-          "border-primary/55 bg-primary/15 text-primary shadow-[0_0_0_1px_hsl(141_73%_42%/0.12)]",
+        active && "border-primary/45 bg-primary/15 text-foreground",
         disabled && "pointer-events-none opacity-50",
       )}
     >
