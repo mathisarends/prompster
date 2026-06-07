@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
   Navigate,
   Route,
@@ -8,10 +9,25 @@ import {
 
 import { ProtectedRoute, useAuth } from "@/features/auth";
 import { AppLayout } from "@/app/app-layout";
-import { HomePage } from "@/pages/home-page";
-import { LandingPage } from "@/pages/landing-page";
-import { ChatPage } from "@/pages/chat-page";
-import { CheckoutPage } from "@/pages/checkout-page";
+
+const HomePage = lazy(() =>
+  import("@/pages/home-page").then((m) => ({ default: m.HomePage })),
+);
+const LandingPage = lazy(() =>
+  import("@/pages/landing-page").then((m) => ({ default: m.LandingPage })),
+);
+const ChatPage = lazy(() =>
+  import("@/pages/chat-page").then((m) => ({ default: m.ChatPage })),
+);
+const CheckoutPage = lazy(() =>
+  import("@/pages/checkout-page").then((m) => ({ default: m.CheckoutPage })),
+);
+
+const RouteFallback = () => (
+  <div className="fixed top-0 left-0 right-0 h-0.5 bg-muted overflow-hidden">
+    <div className="h-full bg-foreground/30 animate-[progress_1s_ease-in-out_infinite]" />
+  </div>
+);
 
 const HomePageRoute = () => {
   const location = useLocation();
@@ -37,15 +53,17 @@ const FallbackRoute = () => {
 };
 
 export const AppRoutes = () => (
-  <Routes>
-    <Route path="/" element={<LandingRoute />} />
-    <Route element={<ProtectedRoute />}>
-      <Route element={<AppLayout />}>
-        <Route path="/new" element={<HomePageRoute />} />
-        <Route path="/chat/:chatId" element={<ChatPageRoute />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
+  <Suspense fallback={<RouteFallback />}>
+    <Routes>
+      <Route path="/" element={<LandingRoute />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppLayout />}>
+          <Route path="/new" element={<HomePageRoute />} />
+          <Route path="/chat/:chatId" element={<ChatPageRoute />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+        </Route>
       </Route>
-    </Route>
-    <Route path="*" element={<FallbackRoute />} />
-  </Routes>
+      <Route path="*" element={<FallbackRoute />} />
+    </Routes>
+  </Suspense>
 );
