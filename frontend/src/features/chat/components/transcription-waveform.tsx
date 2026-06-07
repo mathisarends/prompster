@@ -13,12 +13,15 @@ const SMOOTHING = 0.4;
 type TranscriptionWaveformProps = {
   analyser: AnalyserNode | null;
   active: boolean;
+  /** Plays an idle shimmer while the audio pipeline is still connecting. */
+  connecting?: boolean;
   className?: string;
 };
 
 export const TranscriptionWaveform = ({
   analyser,
   active,
+  connecting = false,
   className,
 }: TranscriptionWaveformProps) => {
   const barsRef = useRef<(HTMLSpanElement | null)[]>([]);
@@ -31,6 +34,31 @@ export const TranscriptionWaveform = ({
         if (bar) bar.style.transform = `scaleY(${MIN_SCALE})`;
       });
     };
+
+    // While connecting there is no analyser data yet, so a gentle travelling
+    // wave signals that work is happening instead of showing flat bars.
+    if (connecting && (!analyser || !active)) {
+      let frame = 0;
+      const start = performance.now();
+
+      const renderIdle = (now: number) => {
+        const elapsed = (now - start) / 1000;
+
+        for (let index = 0; index < BAR_COUNT; index += 1) {
+          const phase = (index / BAR_COUNT) * Math.PI * 2;
+          const wave = (Math.sin(elapsed * 5 - phase * 2) + 1) / 2;
+          const scale = MIN_SCALE + wave * 0.3;
+
+          const bar = bars[index];
+          if (bar) bar.style.transform = `scaleY(${scale})`;
+        }
+
+        frame = requestAnimationFrame(renderIdle);
+      };
+
+      frame = requestAnimationFrame(renderIdle);
+      return () => cancelAnimationFrame(frame);
+    }
 
     if (!analyser || !active) {
       resetBars();
@@ -66,7 +94,7 @@ export const TranscriptionWaveform = ({
 
     frame = requestAnimationFrame(render);
     return () => cancelAnimationFrame(frame);
-  }, [analyser, active]);
+  }, [analyser, active, connecting]);
 
   return (
     <div

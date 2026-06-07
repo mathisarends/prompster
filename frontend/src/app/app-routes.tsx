@@ -11,6 +11,7 @@ import { AppLayout } from "@/app/app-layout";
 import { HomePage } from "@/pages/home-page";
 import { LandingPage } from "@/pages/landing-page";
 import { ChatPage } from "@/pages/chat-page";
+import { CheckoutPage } from "@/pages/checkout-page";
 
 const HomePageRoute = () => {
   const location = useLocation();
@@ -42,6 +43,7 @@ export const AppRoutes = () => (
       <Route element={<AppLayout />}>
         <Route path="/new" element={<HomePageRoute />} />
         <Route path="/chat/:chatId" element={<ChatPageRoute />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
       </Route>
     </Route>
     <Route path="*" element={<FallbackRoute />} />

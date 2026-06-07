@@ -22,6 +22,10 @@ import { TranscriptionButton } from "@/features/chat/components/transcription-bu
 import { TranscriptionWaveform } from "@/features/chat/components/transcription-waveform";
 import { useChatInputAttachments } from "@/features/chat/hooks/use-chat-input-attachments";
 import { useRealtimeTranscription } from "@/features/chat/hooks/useRealtimeTranscription";
+import {
+  playTranscriptionStartSound,
+  playTranscriptionStopSound,
+} from "@/features/chat/lib/transcription-sounds";
 import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { useBufferedControlledValue } from "@/shared/hooks/useBufferedControlledValue";
@@ -228,12 +232,17 @@ const ChatInputTextArea = ({ className, ...props }: ChatInputTextAreaProps) => {
     handleTextareaChange,
     handleTextareaKeyDown,
     handleTextareaSelect,
+    isTranscriptionStarting,
     placeholder,
     rows,
     text,
     textareaClassName,
     textareaRef,
   } = useChatInput();
+
+  const effectivePlaceholder = isTranscriptionStarting
+    ? "Mikrofon wird verbunden …"
+    : placeholder;
 
   return (
     <Textarea
@@ -245,7 +254,7 @@ const ChatInputTextArea = ({ className, ...props }: ChatInputTextAreaProps) => {
       onSelect={handleTextareaSelect}
       onBlur={() => flushText()}
       onKeyDown={handleTextareaKeyDown}
-      placeholder={placeholder}
+      placeholder={effectivePlaceholder}
       className={cn(
         "max-h-72 min-h-10 flex-1 resize-none border-none bg-transparent p-0 pt-0.5 text-base shadow-none focus-visible:ring-0 md:text-base",
         textareaClassName,
@@ -266,6 +275,7 @@ const ChatInputWaveform = ({ className }: { className?: string }) => {
     <TranscriptionWaveform
       analyser={transcriptionAnalyser}
       active={isTranscribing}
+      connecting={isTranscriptionStarting}
       className={className}
     />
   );
@@ -553,10 +563,12 @@ const ChatInputBoxComponent = ({
 
   const toggleTranscription = useCallback(() => {
     if (isTranscribing || isTranscriptionStarting) {
+      playTranscriptionStopSound();
       void stopTranscription();
       return;
     }
 
+    playTranscriptionStartSound();
     void startTranscription();
   }, [
     isTranscribing,

@@ -138,7 +138,7 @@ export const DeckPlayer = ({
   const durationLabel = formatDuration(durationSeconds);
 
   return (
-    <div className="deck-player group/player relative isolate -mx-5 -mb-5 mt-3 shrink-0 border-t border-white/[0.06] bg-background/85 px-5 pb-4 pt-3.5 backdrop-blur-xl transition-colors duration-200 hover:bg-background/90 focus-within:bg-background/90">
+    <div className="deck-player group/player relative isolate mt-3 shrink-0 rounded-3xl border border-border/50 bg-card/80 px-5 pb-4 pt-3.5 shadow-2xl shadow-black/20 backdrop-blur-xl transition-colors duration-200 hover:bg-card/90 focus-within:bg-card/90">
       <div className="deck-player-content grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4">
         <div className="deck-player-meta flex min-w-0 items-center gap-3">
           <div className="deck-player-cover relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-white/[0.06] shadow-[0_8px_22px_hsl(0_0%_0%/0.32)] ring-1 ring-white/[0.08]">
