@@ -1,4 +1,4 @@
-import { Copy, Sparkles } from "lucide-react";
+import { Copy } from "lucide-react";
 
 import type { CheckoutDeck } from "../types";
 import { QrCard } from "./qr-card";
@@ -55,11 +55,6 @@ export const DeckPreview = ({ deck }: DeckPreviewProps) => (
           lockedLabel={deck.lockedCardsLabel}
         />
       ))}
-    </div>
-
-    <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/8 px-3 py-1 text-xs font-semibold text-emerald-200">
-      <Sparkles className="size-3.5" />
-      Mockdaten - bereit fuer echte Deckdaten
     </div>
   </section>
 );

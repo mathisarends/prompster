@@ -3,7 +3,7 @@ import asyncio
 import pytest
 from pydantic import ValidationError
 
-from backend.infrastructure.email import ResendEmailSender, ResendEmailSettings
+from backend.infrastructure.resend_email import ResendEmailSender, ResendEmailSettings
 from backend.shared.email import EmailMessage
 
 

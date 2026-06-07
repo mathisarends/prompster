@@ -17,23 +17,23 @@
 }
 
 :root {
-  --background: hsl(222 47% 7%);
+  --background: #070b0c;
   --foreground: hsl(0 0% 96%);
-  --card: hsl(222 34% 11%);
+  --card: hsl(192 17% 9%);
   --card-foreground: hsl(0 0% 96%);
-  --popover: hsl(222 36% 10%);
+  --popover: hsl(192 19% 8%);
   --popover-foreground: hsl(0 0% 96%);
   --primary: hsl(141 73% 42%);
-  --primary-foreground: hsl(216 33% 8%);
-  --secondary: hsl(222 24% 17%);
+  --primary-foreground: hsl(160 36% 7%);
+  --secondary: hsl(192 13% 15%);
   --secondary-foreground: hsl(0 0% 93%);
-  --muted: hsl(222 18% 21%);
+  --muted: hsl(192 11% 18%);
   --muted-foreground: hsl(0 0% 74%);
   --accent: hsl(141 58% 26%);
   --accent-foreground: hsl(0 0% 96%);
   --destructive: hsl(0 70% 52%);
-  --border: hsl(222 20% 24%);
-  --input: hsl(222 20% 19%);
+  --border: hsl(192 13% 21%);
+  --input: hsl(192 13% 17%);
   --ring: hsl(141 70% 45%);
   --chart-1: hsl(141 73% 42%);
   --chart-2: hsl(154 68% 40%);
@@ -41,13 +41,13 @@
   --chart-4: hsl(193 57% 47%);
   --chart-5: hsl(214 72% 56%);
   --radius: 0.625rem;
-  --sidebar: hsl(222 40% 9%);
+  --sidebar: hsl(192 22% 7%);
   --sidebar-foreground: hsl(0 0% 94%);
   --sidebar-primary: hsl(141 73% 42%);
-  --sidebar-primary-foreground: hsl(216 33% 8%);
-  --sidebar-accent: hsl(222 23% 16%);
+  --sidebar-primary-foreground: hsl(160 36% 7%);
+  --sidebar-accent: hsl(192 15% 13%);
   --sidebar-accent-foreground: hsl(0 0% 93%);
-  --sidebar-border: hsl(222 19% 21%);
+  --sidebar-border: hsl(192 13% 18%);
   --sidebar-ring: hsl(141 70% 45%);
   --prompster-scrollbar-size: 0.75rem;
   --prompster-scrollbar-track-offset: 2rem;
@@ -159,6 +159,43 @@ body {
   background:
     radial-gradient(
       circle at 8% 0%,
+      hsl(141 56% 28% / 0.07) 0%,
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 96% 5%,
+      hsl(154 76% 38% / 0.1) 0%,
+      hsl(180 72% 28% / 0.05) 24%,
+      transparent 42%
+    ),
+    linear-gradient(165deg, hsl(192 26% 6%) 0%, hsl(195 30% 4%) 100%);
+}
+
+.home-page-background::before {
+  content: "";
+  position: absolute;
+  top: -5rem;
+  right: -4rem;
+  width: min(38rem, 56vw);
+  height: min(30rem, 46vw);
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 72% 28%,
+    hsl(142 78% 47% / 0.14) 0%,
+    hsl(166 78% 38% / 0.08) 28%,
+    hsl(193 72% 38% / 0.04) 52%,
+    transparent 76%
+  );
+  filter: blur(60px);
+  opacity: 0.85;
+}
+
+.landing-page-background {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 8% 0%,
       hsl(141 56% 28% / 0.16) 0%,
       transparent 32%
     ),
@@ -168,10 +205,10 @@ body {
       hsl(180 72% 28% / 0.12) 24%,
       transparent 44%
     ),
-    linear-gradient(165deg, hsl(222 46% 8%) 0%, hsl(222 52% 5%) 100%);
+    linear-gradient(165deg, hsl(192 26% 6%) 0%, hsl(195 30% 4%) 100%);
 }
 
-.home-page-background::before {
+.landing-page-background::before {
   content: "";
   position: absolute;
   top: -5rem;
@@ -190,6 +227,61 @@ body {
   opacity: 1;
 }
 
+/* Auth card — subtle prismatic neon frame inspired by the Hitster box edge */
+.auth-card-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Soft prismatic aura that frames the card like a luminous box */
+.auth-card-shell::before {
+  content: "";
+  position: absolute;
+  inset: -1.25rem;
+  z-index: -1;
+  border-radius: 1.75rem;
+  background: conic-gradient(
+    from 135deg,
+    hsl(326 90% 60% / 0.55),
+    hsl(266 88% 62% / 0.55),
+    hsl(199 90% 56% / 0.55),
+    hsl(154 80% 50% / 0.5),
+    hsl(48 95% 60% / 0.45),
+    hsl(326 90% 60% / 0.55)
+  );
+  filter: blur(30px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Crisp gradient ring so the card still reads as a defined box */
+.auth-card {
+  position: relative;
+}
+
+.auth-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from 140deg,
+    hsl(326 92% 64% / 0.7),
+    hsl(266 88% 66% / 0.6),
+    hsl(199 92% 60% / 0.6),
+    hsl(154 80% 54% / 0.6),
+    hsl(48 95% 62% / 0.55),
+    hsl(326 92% 64% / 0.7)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
 .chat-page-background::after {
   content: "";
   position: fixed;
@@ -200,8 +292,8 @@ body {
   pointer-events: none;
   background: radial-gradient(
     ellipse at 70% 70%,
-    hsl(258 72% 62% / 0.06) 0%,
-    hsl(230 68% 52% / 0.03) 45%,
+    hsl(154 70% 44% / 0.07) 0%,
+    hsl(180 64% 36% / 0.03) 45%,
     transparent 68%
   );
   filter: blur(100px);
@@ -551,36 +643,36 @@ body {
 }
 
 .dark {
-  --background: hsl(222 47% 6%);
+  --background: #070b0c;
   --foreground: hsl(0 0% 96%);
-  --card: hsl(222 34% 10%);
+  --card: hsl(192 17% 8%);
   --card-foreground: hsl(0 0% 96%);
-  --popover: hsl(222 36% 9%);
+  --popover: hsl(192 19% 7%);
   --popover-foreground: hsl(0 0% 96%);
   --primary: hsl(141 73% 42%);
-  --primary-foreground: hsl(216 33% 8%);
-  --secondary: hsl(222 24% 15%);
+  --primary-foreground: hsl(160 36% 7%);
+  --secondary: hsl(192 13% 13%);
   --secondary-foreground: hsl(0 0% 93%);
-  --muted: hsl(222 18% 19%);
+  --muted: hsl(192 11% 16%);
   --muted-foreground: hsl(0 0% 74%);
   --accent: hsl(141 58% 25%);
   --accent-foreground: hsl(0 0% 96%);
   --destructive: hsl(0 70% 52%);
-  --border: hsl(222 20% 20%);
-  --input: hsl(222 20% 17%);
+  --border: hsl(192 13% 18%);
+  --input: hsl(192 13% 15%);
   --ring: hsl(141 70% 45%);
   --chart-1: hsl(141 73% 42%);
   --chart-2: hsl(154 68% 40%);
   --chart-3: hsl(170 55% 43%);
   --chart-4: hsl(193 57% 47%);
   --chart-5: hsl(214 72% 56%);
-  --sidebar: hsl(222 40% 8%);
+  --sidebar: hsl(192 22% 6%);
   --sidebar-foreground: hsl(0 0% 94%);
   --sidebar-primary: hsl(141 73% 42%);
-  --sidebar-primary-foreground: hsl(216 33% 8%);
-  --sidebar-accent: hsl(222 23% 14%);
+  --sidebar-primary-foreground: hsl(160 36% 7%);
+  --sidebar-accent: hsl(192 15% 12%);
   --sidebar-accent-foreground: hsl(0 0% 93%);
-  --sidebar-border: hsl(222 19% 18%);
+  --sidebar-border: hsl(192 13% 16%);
   --sidebar-ring: hsl(141 70% 45%);
 }
 
@@ -726,7 +818,7 @@ body {
   transform: translate(-50%, -100%);
   border-radius: 6px;
   padding: 3px 7px;
-  background: hsl(222 26% 14% / 0.96);
+  background: hsl(192 18% 11% / 0.96);
   color: hsl(0 0% 95%);
   font-size: 11px;
   font-weight: 600;
@@ -747,7 +839,7 @@ body {
   height: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-top: 5px solid hsl(222 26% 14% / 0.96);
+  border-top: 5px solid hsl(192 18% 11% / 0.96);
 }
 
 .player-slider:disabled {

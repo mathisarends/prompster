@@ -26,7 +26,7 @@ export const PackageSelector = ({
     <section className="space-y-5">
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-white">
-          Paket auswaehlen
+          Paket auswählen
         </h2>
         <p className="mt-1 text-base font-medium text-white/52">
           Einmalzahlung, kein Abo. Du behaeltst dein Deck fuer immer.

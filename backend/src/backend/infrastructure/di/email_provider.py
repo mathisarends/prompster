@@ -1,6 +1,6 @@
 from dishka import Provider, Scope, provide
 
-from backend.infrastructure.email import ResendEmailSender, ResendEmailSettings
+from backend.infrastructure.resend_email import ResendEmailSender, ResendEmailSettings
 from backend.shared.email import EmailSender
 
 

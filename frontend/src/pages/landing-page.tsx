@@ -181,7 +181,7 @@ export const LandingPage = () => {
   const isAnyLoading = isGoogleOAuthLoading || isSpotifyOAuthLoading;
 
   return (
-    <div className="home-page-background min-h-dvh text-foreground">
+    <div className="landing-page-background min-h-dvh text-foreground">
       <main className="relative z-10 flex min-h-dvh flex-col justify-center px-4 py-10 sm:px-8 sm:py-14">
         <div className="mx-auto w-full max-w-md -translate-y-6 sm:-translate-y-8">
           <section className="space-y-8">
@@ -201,38 +201,40 @@ export const LandingPage = () => {
               </p>
             </div>
 
-            <div className="space-y-3 rounded-2xl bg-card/55 p-5 backdrop-blur-md sm:p-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleGoogleSignIn}
-                disabled={isAnyLoading}
-                className="h-10 w-full"
-              >
-                <span className="grid size-5 place-items-center rounded-full bg-white text-xs font-bold text-[#4285f4]">
-                  G
-                </span>
-                {isGoogleOAuthLoading
-                  ? "Google-Anmeldung laeuft..."
-                  : "Mit Google fortfahren"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleSpotifySignIn}
-                disabled={isAnyLoading}
-                className="h-10 w-full"
-              >
-                <SpotifyIcon />
-                {isSpotifyOAuthLoading
-                  ? "Spotify-Anmeldung laeuft..."
-                  : "Mit Spotify fortfahren"}
-              </Button>
-              {oauthError ? (
-                <p className="text-center text-sm text-destructive">
-                  {oauthError}
-                </p>
-              ) : null}
+            <div className="auth-card-shell">
+              <div className="auth-card space-y-3 rounded-2xl bg-card/55 p-5 backdrop-blur-md sm:p-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGoogleSignIn}
+                  disabled={isAnyLoading}
+                  className="h-10 w-full"
+                >
+                  <span className="grid size-5 place-items-center rounded-full bg-white text-xs font-bold text-[#4285f4]">
+                    G
+                  </span>
+                  {isGoogleOAuthLoading
+                    ? "Google-Anmeldung laeuft..."
+                    : "Mit Google fortfahren"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSpotifySignIn}
+                  disabled={isAnyLoading}
+                  className="h-10 w-full"
+                >
+                  <SpotifyIcon />
+                  {isSpotifyOAuthLoading
+                    ? "Spotify-Anmeldung laeuft..."
+                    : "Mit Spotify fortfahren"}
+                </Button>
+                {oauthError ? (
+                  <p className="text-center text-sm text-destructive">
+                    {oauthError}
+                  </p>
+                ) : null}
+              </div>
             </div>
           </section>
         </div>

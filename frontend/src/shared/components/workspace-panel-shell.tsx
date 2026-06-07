@@ -17,7 +17,7 @@ export const ChatWorkspacePanel = ({
   contentClassName,
 }: ChatWorkspacePanelProps) => {
   return (
-    <section className="relative flex h-full min-h-0 flex-col bg-[hsl(222_36%_7%)] text-foreground shadow-2xl shadow-black/30">
+    <section className="relative flex h-full min-h-0 flex-col bg-[linear-gradient(180deg,#0c1314_0%,#080d0e_100%)] text-foreground shadow-2xl shadow-black/30">
       <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-3">
         {onClose ? (
           <Button

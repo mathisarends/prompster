@@ -107,7 +107,7 @@ export const DeckExportActions = ({
         </p>
       ) : null}
 
-      <div className="deck-export-bar -mx-5 -mb-5 mt-3 shrink-0 border-t border-white/[0.08] bg-background/78 px-5 pb-3 pt-4 shadow-[0_-18px_46px_hsl(222_52%_4%/0.36)] backdrop-blur-xl">
+      <div className="deck-export-bar -mx-5 -mb-5 mt-3 shrink-0 border-t border-white/[0.08] bg-background/78 px-5 pb-3 pt-4 shadow-[0_-18px_46px_hsl(195_45%_3%/0.42)] backdrop-blur-xl">
         <div className="flex min-h-16 items-center gap-3 px-1.5">
           <div className="grid size-12 shrink-0 place-items-center rounded-[4px] bg-white/[0.06] text-primary shadow-[0_10px_28px_hsl(0_0%_0%/0.28)] ring-1 ring-white/[0.06]">
             <FileText className="size-5" />

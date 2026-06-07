@@ -98,7 +98,7 @@ export const CheckoutPage = () => {
                   </div>
                   <div className="space-y-4">
                     <h1 className="max-w-2xl text-5xl font-bold leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl">
-                      Dein Deck ist bereit. Waehle dein Paket.
+                      Dein Deck ist bereit. Wähle dein Paket.
                     </h1>
                     <p className="max-w-2xl text-lg font-medium leading-8 text-white/55 sm:text-xl">
                       Lade dein persoenliches Hitster-Deck als druckfertiges PDF

@@ -30,7 +30,7 @@ export const PaymentStep = ({
           Bezahlung
         </h1>
         <p className="mt-4 text-lg font-medium text-white/55">
-          Waehle deine Zahlungsart. Alle Zahlungen laufen verschluesselt ueber
+          Wähle deine Zahlungsart. Alle Zahlungen laufen verschluesselt ueber
           Stripe.
         </p>
       </div>

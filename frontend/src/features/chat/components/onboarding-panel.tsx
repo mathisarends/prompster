@@ -228,7 +228,7 @@ export const OnboardingPanel = ({
   return (
     <section
       className={cn(
-        "flex h-full min-h-0 flex-col bg-[hsl(222_36%_7%)] text-foreground",
+        "flex h-full min-h-0 flex-col bg-[#070b0c] text-foreground",
         className,
       )}
     >

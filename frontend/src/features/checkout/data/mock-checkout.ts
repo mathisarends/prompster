@@ -58,7 +58,7 @@ export const checkoutPackages: CheckoutPackage[] = [
     title: "Schnell gedruckt fuer den naechsten Spieleabend.",
     description: "Einmalzahlung, kein Abo. Du behaeltst dein Deck fuer immer.",
     price: "4,99",
-    ctaLabel: "Basic auswaehlen",
+    ctaLabel: "Basic auswählen",
     features: [
       { label: "20 Spielkarten", included: true },
       { label: "Digitales PDF (A4)", included: true },
@@ -93,9 +93,9 @@ export const checkoutPackages: CheckoutPackage[] = [
     id: "premium",
     name: "Premium",
     title: "Fertig gedruckt auf stabilem Karton - direkt in den Briefkasten.",
-    description: "Einmalzahlung, kein Abo. Du behaeltst dein Deck fuer immer.",
+    description: "Einmalzahlung, kein Abo. Du behältst dein Deck für immer.",
     price: "24,99",
-    ctaLabel: "Premium auswaehlen",
+    ctaLabel: "Premium auswählen",
     features: [
       { label: "50 Spielkarten", included: true },
       { label: "Professionell gedruckt", included: true },

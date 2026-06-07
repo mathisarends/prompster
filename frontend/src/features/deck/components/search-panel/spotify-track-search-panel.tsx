@@ -40,7 +40,7 @@ export const SpotifyTrackSearchPanel = ({
   return (
     <section
       ref={panelRef}
-      className="mb-4 overflow-hidden rounded-md border border-primary/20 bg-popover/95 shadow-[0_22px_54px_hsl(222_52%_4%/0.58)] ring-1 ring-primary/10 animate-in fade-in-0 slide-in-from-top-2 duration-150"
+      className="mb-4 overflow-hidden rounded-md border border-primary/20 bg-popover/95 shadow-[0_22px_54px_hsl(195_45%_3%/0.62)] ring-1 ring-primary/10 animate-in fade-in-0 slide-in-from-top-2 duration-150"
     >
       <div className="prompster-scrollbar max-h-[min(42vh,27rem)] overflow-y-auto px-3 pr-1">
         <div className="space-y-4 py-3">
