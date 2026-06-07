@@ -88,7 +88,7 @@ desktop.ini
 # dotenv files
 .env
 
-docs/node_modules/
+*/node_modules/
 
 .ruff_cache/
 bandit-report.json
