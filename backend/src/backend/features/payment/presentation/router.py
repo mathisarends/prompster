@@ -2,10 +2,10 @@ from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Header, HTTPException, Request, status
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.payment.application import (
-    CheckoutSession,
-    PaymentGateway,
-    PaymentIntent,
+from backend.features.payment.application import PaymentGateway
+from backend.features.payment.presentation.mapper import (
+    to_checkout_session_response,
+    to_payment_intent_response,
 )
 from backend.features.payment.presentation.schemas import (
     CheckoutSessionResponse,
@@ -53,7 +53,7 @@ async def create_checkout_session(
         metadata=metadata,
         coupon_code=body.coupon_code,
     )
-    return _to_checkout_session_response(session)
+    return to_checkout_session_response(session)
 
 
 @payment_router.post(
@@ -104,22 +104,4 @@ async def verify_webhook(
         payload=await request.body(),
         signature=signature,
     )
-    return _to_payment_intent_response(intent)
-
-
-def _to_checkout_session_response(
-    checkout_session: CheckoutSession,
-) -> CheckoutSessionResponse:
-    return CheckoutSessionResponse(
-        session_id=checkout_session.session_id,
-        checkout_url=checkout_session.checkout_url,
-    )
-
-
-def _to_payment_intent_response(payment_intent: PaymentIntent) -> PaymentIntentResponse:
-    return PaymentIntentResponse(
-        payment_id=payment_intent.payment_id,
-        amount=payment_intent.amount,
-        currency=payment_intent.currency,
-        metadata=payment_intent.metadata,
-    )
+    return to_payment_intent_response(intent)

@@ -3,6 +3,9 @@ from uuid import UUID
 
 import pytest
 
+from backend.features.auth.application.commands.auth_signup_notifier import (
+    AuthSignupNotifier,
+)
 from backend.features.auth.application.commands.google_oauth_flow import (
     GoogleOAuthFlow,
 )
@@ -103,7 +106,7 @@ class TestGoogleOAuthFlowLogin:
             user_repository=_UserRepositoryStub(),
             google_oauth_provider=provider,
             token_issuer=_TokenIssuerStub(),
-            email_sender=_EmailSenderStub(),
+            signup_notifier=AuthSignupNotifier(email_sender=_EmailSenderStub()),
         )
 
         result = handler.login()

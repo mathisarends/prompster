@@ -41,7 +41,6 @@ class SpotifyOAuthClient(SpotifyOAuthProvider):
                 "redirect_uri": self._settings.redirect_uri,
                 "scope": SPOTIFY_SCOPE_STRING,
                 "state": normalized_state,
-                "show_dialog": "true",
             }
         )
         return f"{self._settings.authorization_endpoint}?{query}"

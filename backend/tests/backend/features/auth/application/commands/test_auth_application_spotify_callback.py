@@ -1,6 +1,9 @@
 import asyncio
 from uuid import UUID, uuid4
 
+from backend.features.auth.application.commands.auth_signup_notifier import (
+    AuthSignupNotifier,
+)
 from backend.features.auth.application.commands.spotify_oauth_flow import (
     SpotifyOAuthFlow,
 )
@@ -139,6 +142,17 @@ class _EmailSenderStub(EmailSender):
         self.sent_messages.append(message)
 
 
+def _signup_notifier(
+    *,
+    email_sender: EmailSender | None = None,
+    send_welcome_email: bool = True,
+) -> AuthSignupNotifier:
+    return AuthSignupNotifier(
+        email_sender=email_sender or _EmailSenderStub(),
+        send_welcome_email=send_welcome_email,
+    )
+
+
 class TestSpotifyOAuthFlowCallback:
     def test_creates_new_user_and_sends_welcome_email(self) -> None:
         expected_session = AuthSession(
@@ -167,7 +181,7 @@ class TestSpotifyOAuthFlowCallback:
             spotify_oauth_client=provider,
             token_issuer=issuer,
             connection_service=connection_service,
-            email_sender=email_sender,
+            signup_notifier=_signup_notifier(email_sender=email_sender),
         )
 
         result = asyncio.run(
@@ -215,8 +229,10 @@ class TestSpotifyOAuthFlowCallback:
             spotify_oauth_client=provider,
             token_issuer=issuer,
             connection_service=connection_service,
-            email_sender=email_sender,
-            send_welcome_email_on_auth_signup=False,
+            signup_notifier=_signup_notifier(
+                email_sender=email_sender,
+                send_welcome_email=False,
+            ),
         )
 
         result = asyncio.run(
@@ -265,7 +281,7 @@ class TestSpotifyOAuthFlowCallback:
             spotify_oauth_client=provider,
             token_issuer=issuer,
             connection_service=connection_service,
-            email_sender=email_sender,
+            signup_notifier=_signup_notifier(email_sender=email_sender),
         )
 
         result = asyncio.run(

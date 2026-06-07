@@ -19,6 +19,7 @@ import type { ChatAttachment } from "@/features/chat/components/attachments/atta
 import { ModelSelect } from "@/features/chat/components/model-select";
 import { SendButton } from "@/features/chat/components/send-button";
 import { TranscriptionButton } from "@/features/chat/components/transcription-button";
+import { TranscriptionWaveform } from "@/features/chat/components/transcription-waveform";
 import { useChatInputAttachments } from "@/features/chat/hooks/use-chat-input-attachments";
 import { useRealtimeTranscription } from "@/features/chat/hooks/useRealtimeTranscription";
 import { Button } from "@/shared/ui/button";
@@ -81,6 +82,7 @@ type ChatInputContextValue = {
   isStopping: boolean;
   isTranscribing: boolean;
   isTranscriptionStarting: boolean;
+  transcriptionAnalyser: AnalyserNode | null;
   toggleTranscription: () => void;
   selectedModel?: string;
   onModelChange?: (modelId: string) => void;
@@ -134,6 +136,7 @@ type ChatInputBoxCompound = typeof ChatInputBoxComponent & {
   PreviewList: typeof ChatInputPreviewList;
   Content: typeof ChatInputContent;
   TextArea: typeof ChatInputTextArea;
+  Waveform: typeof ChatInputWaveform;
   Toolbar: typeof ChatInputToolbar;
   ModelSelect: typeof ChatInputModelSelect;
   AddButton: typeof ChatInputAddButton;
@@ -204,6 +207,7 @@ const ChatInputContent = ({ children, className }: ChatInputContentProps) => {
       {children ?? (
         <>
           <ChatInputTextArea />
+          <ChatInputWaveform />
           <ChatInputToolbar className="-mx-1">
             <ChatInputAddButton />
             <div className="ml-auto flex items-center gap-2">
@@ -248,6 +252,21 @@ const ChatInputTextArea = ({ className, ...props }: ChatInputTextAreaProps) => {
         className,
       )}
       {...props}
+    />
+  );
+};
+
+const ChatInputWaveform = ({ className }: { className?: string }) => {
+  const { isTranscribing, isTranscriptionStarting, transcriptionAnalyser } =
+    useChatInput();
+
+  if (!isTranscribing && !isTranscriptionStarting) return null;
+
+  return (
+    <TranscriptionWaveform
+      analyser={transcriptionAnalyser}
+      active={isTranscribing}
+      className={className}
     />
   );
 };
@@ -380,6 +399,7 @@ const ChatInputBoxDefault = () => (
     <ChatInputPreviewList />
     <ChatInputContent>
       <ChatInputTextArea />
+      <ChatInputWaveform />
       <ChatInputToolbar className="-mx-1">
         <ChatInputAddButton />
         <div className="ml-auto flex items-center gap-2">
@@ -522,6 +542,7 @@ const ChatInputBoxComponent = ({
   const {
     isRecording: isTranscribing,
     isStarting: isTranscriptionStarting,
+    analyser: transcriptionAnalyser,
     start: startTranscription,
     stop: stopTranscription,
   } = useRealtimeTranscription({
@@ -765,6 +786,7 @@ const ChatInputBoxComponent = ({
     isStopping,
     isTranscribing,
     isTranscriptionStarting,
+    transcriptionAnalyser,
     toggleTranscription,
     selectedModel,
     onModelChange,
@@ -793,6 +815,7 @@ ChatInputBoxComponent.displayName = "ChatInputBox";
 ChatInputPreviewList.displayName = "ChatInputBox.PreviewList";
 ChatInputContent.displayName = "ChatInputBox.Content";
 ChatInputTextArea.displayName = "ChatInputBox.TextArea";
+ChatInputWaveform.displayName = "ChatInputBox.Waveform";
 ChatInputToolbar.displayName = "ChatInputBox.Toolbar";
 ChatInputModelSelect.displayName = "ChatInputBox.ModelSelect";
 ChatInputAddButton.displayName = "ChatInputBox.AddButton";
@@ -806,6 +829,7 @@ export const ChatInputBox = memo(
 ChatInputBox.PreviewList = ChatInputPreviewList;
 ChatInputBox.Content = ChatInputContent;
 ChatInputBox.TextArea = ChatInputTextArea;
+ChatInputBox.Waveform = ChatInputWaveform;
 ChatInputBox.Toolbar = ChatInputToolbar;
 ChatInputBox.ModelSelect = ChatInputModelSelect;
 ChatInputBox.AddButton = ChatInputAddButton;

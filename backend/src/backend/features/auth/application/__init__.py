@@ -1,4 +1,9 @@
-from .commands import GoogleOAuthFlow, SessionRefresher, SpotifyOAuthFlow
+from .commands import (
+    AuthSignupNotifier,
+    GoogleOAuthFlow,
+    SessionRefresher,
+    SpotifyOAuthFlow,
+)
 from .exceptions import (
     InvalidCredentialsException,
     SessionExpiredException,
@@ -6,6 +11,7 @@ from .exceptions import (
 )
 
 __all__ = [
+    "AuthSignupNotifier",
     "GoogleOAuthFlow",
     "InvalidCredentialsException",
     "SessionRefresher",

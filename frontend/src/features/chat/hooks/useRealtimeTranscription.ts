@@ -114,6 +114,8 @@ export const useRealtimeTranscription = ({
 }: UseRealtimeTranscriptionOptions) => {
   const [status, setStatus] = useState<RealtimeTranscriptionStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
   const valueRef = useRef(value);
   const baseTextRef = useRef("");
   const transcriptItemsRef = useRef(new Map<string, string>());
@@ -139,10 +141,13 @@ export const useRealtimeTranscription = ({
     processorRef.current?.disconnect();
     sourceRef.current?.disconnect();
     silentGainRef.current?.disconnect();
+    analyserRef.current?.disconnect();
 
     processorRef.current = null;
     sourceRef.current = null;
     silentGainRef.current = null;
+    analyserRef.current = null;
+    setAnalyser(null);
 
     mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
     mediaStreamRef.current = null;
@@ -280,6 +285,11 @@ export const useRealtimeTranscription = ({
       const silentGain = audioContext.createGain();
       silentGain.gain.value = 0;
 
+      const analyserNode = audioContext.createAnalyser();
+      analyserNode.fftSize = 1024;
+      analyserNode.smoothingTimeConstant = 0.75;
+
+      source.connect(analyserNode);
       source.connect(processor);
       processor.connect(silentGain);
       silentGain.connect(audioContext.destination);
@@ -287,6 +297,8 @@ export const useRealtimeTranscription = ({
       sourceRef.current = source;
       processorRef.current = processor;
       silentGainRef.current = silentGain;
+      analyserRef.current = analyserNode;
+      setAnalyser(analyserNode);
 
       processor.onaudioprocess = (event) => {
         const socket = websocketRef.current;
@@ -343,6 +355,7 @@ export const useRealtimeTranscription = ({
 
   return {
     error,
+    analyser,
     isRecording: status === "recording",
     isStarting: status === "requesting_permission" || status === "connecting",
     start,

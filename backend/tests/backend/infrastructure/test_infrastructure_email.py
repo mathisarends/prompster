@@ -47,7 +47,7 @@ class TestResendEmailSender:
         sender = ResendEmailSender(
             settings=ResendEmailSettings(
                 api_key="resend-key",
-                default_from_email="sender@example.com",
+                from_email="sender@example.com",
                 _env_file=None,
             )
         )
