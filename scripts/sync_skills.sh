@@ -1,14 +1,27 @@
 #!/usr/bin/env bash
 #
-# sync-skills.sh — kopiert die kanonischen Skills aus skills/ in die
-# tool-spezifischen Ordner für Claude Code und Codex.
+# sync_skills.sh — synct die kanonischen Agent-Skills für alle Coding-Agents.
 #
-# Kopieren statt Symlinks, weil Claude Code in .claude/skills/ interne Dateien
-# ablegt; bei Symlinks würde das in die Quelle zurückschreiben.
+# Kanonische Quelle: .agents/skills/  (committet)
+#   Dieser Pfad ist die ökosystem-weite Konvention und wird von den meisten
+#   Tools NATIV gelesen — es muss nichts gesynct werden für:
+#     - Codex CLI ........ läuft den Verzeichnisbaum hoch und scannt .agents/skills/
+#     - GitHub Copilot ... liest .agents/skills/ (und .claude/skills/) direkt
+#     - Cursor / Gemini .. lesen .agents/skills/ direkt
+#
+# Einziger Ausreißer: Claude Code liest ausschließlich .claude/skills/ und
+# kennt keinen konfigurierbaren Pfad. Deshalb ist .claude/skills das einzige
+# Sync-Target. (Feature-Request für .agents/-Support: anthropics/claude-code#56193 —
+# sobald gemerged, kann dieses Script ersatzlos entfallen.)
+#
+# Kopieren statt Symlinks, weil:
+#   1. Claude Code legt in .claude/skills/ interne Dateien ab; bei Symlinks
+#      würde das in die Quelle (.agents/skills) zurückschreiben.
+#   2. Symlinks werden in git/CI/cross-platform schlecht unterstützt.
 #
 # Usage:
-#   ./scripts/sync-skills.sh            # synct nach .claude/skills und .codex/skills
-#   ./scripts/sync-skills.sh --check    # prüft nur, ob Targets aktuell sind (CI)
+#   ./scripts/sync_skills.sh            # synct .agents/skills -> .claude/skills
+#   ./scripts/sync_skills.sh --check    # prüft nur, ob das Target aktuell ist (CI)
 
 set -euo pipefail
 
@@ -21,8 +34,8 @@ else
 fi
 cd "$ROOT"
 
-SRC="skills"
-TARGETS=(".claude/skills" ".codex/skills")
+SRC=".agents/skills"
+TARGETS=(".claude/skills")
 
 if [ ! -d "$SRC" ]; then
   echo "error: '$SRC/' nicht gefunden — vom Repo-Root ausführen." >&2
@@ -32,7 +45,7 @@ fi
 CHECK=0
 [ "${1:-}" = "--check" ] && CHECK=1
 
-# Skill-Ordner einsammeln (alles in skills/ außer README.md auf Top-Level)
+# Skill-Ordner einsammeln (alle Unterordner in .agents/skills/)
 shopt -s nullglob
 have_skill=0
 for entry in "$SRC"/*/; do
@@ -46,12 +59,20 @@ fi
 
 sync_one() {
   local target="$1"
+
+  # Edge-Case: niemals in die Quelle selbst syncen (falls ein Target je auf
+  # .agents/skills zeigt). Schützt die committete Source vor Selbst-Überschreiben.
+  if [ "$(cd "$target" 2>/dev/null && pwd || echo "$target")" = "$(cd "$SRC" && pwd)" ]; then
+    echo "skip: '$target' ist die Quelle selbst — nichts zu tun."
+    return 0
+  fi
+
   if [ "$CHECK" -eq 1 ]; then
     local tmp
     tmp="$(mktemp -d)"
     cp -r "$SRC"/*/ "$tmp"/ 2>/dev/null || true
     if [ ! -d "$target" ] || ! diff -rq "$tmp" "$target" >/dev/null 2>&1; then
-      echo "out-of-date: $target (sync-skills.sh ausführen)" >&2
+      echo "out-of-date: $target (scripts/sync_skills.sh ausführen)" >&2
       rm -rf "$tmp"
       return 1
     fi

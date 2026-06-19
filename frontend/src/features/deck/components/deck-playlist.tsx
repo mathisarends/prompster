@@ -516,6 +516,7 @@ export const DeckPlaylist = ({
 
         {hasPlaybackController ? (
           <DeckPlayer
+            className="-mx-5 -mb-5"
             activeTrack={activeTrack}
             elapsedSeconds={playback.elapsedSeconds}
             durationSeconds={playback.durationSeconds}
