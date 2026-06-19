@@ -17,6 +17,7 @@ from agent.events import (
     ToolCallEvent,
     ToolResultEvent,
 )
+from agent.guardrails import PostRunGuardrails
 from agent.messages import MessageManager
 from agent.tools import DeckCritic, Tools, Spotify
 from agent.tools.views import Phase
@@ -73,6 +74,8 @@ class Agent:
         )
         self._tools.provide(self._critic)
 
+        self._guardrails = PostRunGuardrails(self._deck_store)
+
         self._token_tracker = TokenTracker()
         self._llm_name = type(llm).__name__
 
@@ -116,7 +119,7 @@ class Agent:
                 return
 
             if not response.tool_calls:
-                for event in self._run_completion_guardrails():
+                for event in await self._run_completion_guardrails():
                     yield event
                 self._messages.add_assistant(response.completion)
                 yield AssistantMessageEvent(content=response.completion)
@@ -214,17 +217,12 @@ class Agent:
                     selection_mode=request.selection_mode,
                 )
 
-    def _run_completion_guardrails(self) -> list[DeckUpdatedEvent]:
+    async def _run_completion_guardrails(self) -> list[DeckUpdatedEvent]:
         # The LLM has ended its tool loop here; keep final deck state deterministic
         # before publishing the assistant completion.
-        if self._deck_store.remove_duplicate_tracks() is None:
-            return []
-        return self._drain_deck_draft_update_events()
-
-    def _drain_deck_draft_update_events(self) -> list[DeckUpdatedEvent]:
         return [
             self._to_deck_updated_event(update)
-            for update in self._deck_store.drain_deck_draft_updates()
+            for update in await self._guardrails.run()
         ]
 
     def _to_deck_updated_event(self, update: DeckDraftUpdate) -> DeckUpdatedEvent:
