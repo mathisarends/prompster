@@ -12,6 +12,7 @@ class _StorageBackendStub(StorageBackend):
         self.uploaded: list[tuple[str, bytes, str | None]] = []
         self.deleted_prefixes: list[str] = []
         self.deleted_files: list[str] = []
+        self.moved: list[tuple[str, str]] = []
         self.files_by_prefix: dict[str, list[str]] = {}
 
     async def upload_bytes(
@@ -33,6 +34,9 @@ class _StorageBackendStub(StorageBackend):
     async def delete_folder(self, path: str) -> None:
         self.deleted_prefixes.append(path)
 
+    async def move(self, source_path: str, destination_path: str) -> None:
+        self.moved.append((source_path, destination_path))
+
     async def list_files(self, path: str = ""):
         class _StorageFile:
             def __init__(self, name: str) -> None:
@@ -47,18 +51,16 @@ class _StorageBackendStub(StorageBackend):
         return True
 
 
-def test_save_image_attachment_builds_expected_storage_key() -> None:
+def test_save_stashed_image_attachment_builds_expected_storage_key() -> None:
     backend = _StorageBackendStub()
     store = StorageMessageAttachmentStore(storage_backend=backend)
 
-    session_id = uuid4()
-    message_id = uuid4()
+    user_id = uuid4()
     attachment_id = uuid4()
 
     stored = asyncio.run(
-        store.save_image_attachment(
-            session_id=session_id,
-            message_id=message_id,
+        store.save_stashed_image_attachment(
+            user_id=user_id,
             attachment_id=attachment_id,
             file_name="screenshot.png",
             content_type="image/png",
@@ -66,9 +68,7 @@ def test_save_image_attachment_builds_expected_storage_key() -> None:
         )
     )
 
-    expected_key = (
-        f"sessions/{session_id}/messages/{message_id}/attachments/{attachment_id}.png"
-    )
+    expected_key = f"users/{user_id}/stash/{attachment_id}.png"
     assert stored.storage_key == expected_key
     assert stored.content_type == "image/png"
     assert stored.file_name == "screenshot.png"
@@ -76,59 +76,46 @@ def test_save_image_attachment_builds_expected_storage_key() -> None:
     assert backend.uploaded == [(expected_key, b"1234", "image/png")]
 
 
-def test_save_uploaded_image_attachment_builds_expected_storage_key() -> None:
+def test_promote_stashed_image_attachment_moves_into_chat_folder() -> None:
     backend = _StorageBackendStub()
     store = StorageMessageAttachmentStore(storage_backend=backend)
 
+    user_id = uuid4()
     session_id = uuid4()
     attachment_id = uuid4()
+    stash_key = f"users/{user_id}/stash/{attachment_id}.png"
 
-    stored = asyncio.run(
-        store.save_uploaded_image_attachment(
+    destination_key = asyncio.run(
+        store.promote_stashed_image_attachment(
+            user_id=user_id,
             session_id=session_id,
-            attachment_id=attachment_id,
-            file_name="screenshot.png",
-            content_type="image/png",
-            content=b"1234",
+            stash_storage_key=stash_key,
         )
     )
 
-    expected_key = f"sessions/{session_id}/uploads/{attachment_id}.png"
-    assert stored.storage_key == expected_key
-    assert stored.content_type == "image/png"
-    assert stored.file_name == "screenshot.png"
-    assert stored.size_bytes == 4
-    assert backend.uploaded == [(expected_key, b"1234", "image/png")]
+    expected_key = f"users/{user_id}/chat/{session_id}/{attachment_id}.png"
+    assert destination_key == expected_key
+    assert backend.moved == [(stash_key, expected_key)]
 
 
-def test_delete_session_attachments_deletes_session_prefix() -> None:
+def test_delete_session_attachments_deletes_chat_prefix() -> None:
     backend = _StorageBackendStub()
     store = StorageMessageAttachmentStore(storage_backend=backend)
+    user_id = uuid4()
     session_id = uuid4()
-
-    asyncio.run(store.delete_session_attachments(session_id=session_id))
-
-    assert backend.deleted_prefixes == [f"sessions/{session_id}/"]
-
-
-def test_delete_unreferenced_uploaded_image_attachments_keeps_referenced_files() -> (
-    None
-):
-    backend = _StorageBackendStub()
-    store = StorageMessageAttachmentStore(storage_backend=backend)
-    session_id = uuid4()
-    kept_id = uuid4()
-    deleted_id = uuid4()
-    prefix = f"sessions/{session_id}/uploads/"
-    kept_key = f"{prefix}{kept_id}.png"
-    deleted_key = f"{prefix}{deleted_id}.png"
-    backend.files_by_prefix[prefix] = [f"{kept_id}.png", f"{deleted_id}.png"]
 
     asyncio.run(
-        store.delete_unreferenced_uploaded_image_attachments(
-            session_id=session_id,
-            referenced_storage_keys={kept_key},
-        )
+        store.delete_session_attachments(user_id=user_id, session_id=session_id)
     )
 
-    assert backend.deleted_files == [deleted_key]
+    assert backend.deleted_prefixes == [f"users/{user_id}/chat/{session_id}/"]
+
+
+def test_delete_user_attachments_deletes_user_prefix() -> None:
+    backend = _StorageBackendStub()
+    store = StorageMessageAttachmentStore(storage_backend=backend)
+    user_id = uuid4()
+
+    asyncio.run(store.delete_user_attachments(user_id=user_id))
+
+    assert backend.deleted_prefixes == [f"users/{user_id}/"]

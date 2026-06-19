@@ -1,8 +1,12 @@
 from .conversation_service import (
     SessionConversationService,
+    SessionMessageAttachment,
+)
+from .image_attachment_service import (
+    ImageAttachmentService,
     SessionImageAttachmentReference,
     SessionImageAttachmentUpload,
-    SessionMessageAttachment,
+    StashedImageAttachment,
 )
 from .events import (
     SessionAssistantMessageChunk,
@@ -52,8 +56,10 @@ __all__ = [
     "SessionToolCallSequenceCompleted",
     "SessionToolCallResolved",
     "SessionConversationService",
+    "ImageAttachmentService",
     "SessionImageAttachmentReference",
     "SessionImageAttachmentUpload",
+    "StashedImageAttachment",
     "SessionMessageAttachment",
     "SessionService",
 ]

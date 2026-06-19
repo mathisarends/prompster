@@ -2,6 +2,7 @@ from backend.presentation.feature import Feature
 
 from .infrastructure.di import SessionProvider
 from .presentation import (
+    image_attachment_router,
     register_session_exception_handlers,
     router,
     session_schema_router,
@@ -9,7 +10,7 @@ from .presentation import (
 
 feature = Feature(
     name="session",
-    routers=[router, session_schema_router],
+    routers=[router, image_attachment_router, session_schema_router],
     providers=[SessionProvider],
     register_exception_handlers=register_session_exception_handlers,
 )

@@ -1,3 +1,4 @@
+export * from "./api/image-attachments";
 export * from "./components/chat-input-box";
 export * from "./components/attachments/attachment-types";
 export * from "./components/chat-session-pane";

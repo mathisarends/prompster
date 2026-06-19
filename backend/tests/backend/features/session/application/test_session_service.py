@@ -52,6 +52,9 @@ from backend.features.session.application.ports.title_generator import (
 from backend.features.session.application.conversation_service import (
     SessionConversationService,
     SessionImageAttachmentReference,
+)
+from backend.features.session.application.image_attachment_service import (
+    ImageAttachmentService,
     SessionImageAttachmentUpload,
 )
 from backend.features.session.application.session_service import (
@@ -150,60 +153,31 @@ class _SessionSummaryQueryStub(SessionSummaryQuery):
 
 class _MessageAttachmentStoreStub(MessageAttachmentStore):
     def __init__(self) -> None:
-        self.deleted_session_ids: list[UUID] = []
-        self.saved_payloads: list[tuple[UUID, UUID, UUID, str, str, bytes]] = []
-        self.saved_uploaded_payloads: list[tuple[UUID, UUID, str, str, bytes]] = []
+        self.deleted_sessions: list[tuple[UUID, UUID]] = []
+        self.deleted_user_ids: list[UUID] = []
+        self.saved_stashed_payloads: list[tuple[UUID, UUID, str, str, bytes]] = []
+        self.promoted_calls: list[tuple[UUID, UUID, str]] = []
         self.existing_storage_keys: set[str] = set()
-        self.cleanup_calls: list[tuple[UUID, set[str]]] = []
 
-    async def save_image_attachment(
+    async def save_stashed_image_attachment(
         self,
         *,
-        session_id: UUID,
-        message_id: UUID,
+        user_id: UUID,
         attachment_id: UUID,
         file_name: str,
         content_type: str,
         content: bytes,
     ) -> StoredAttachment:
-        self.saved_payloads.append(
+        self.saved_stashed_payloads.append(
             (
-                session_id,
-                message_id,
+                user_id,
                 attachment_id,
                 file_name,
                 content_type,
                 content,
             )
         )
-        return StoredAttachment(
-            storage_key=(
-                f"sessions/{session_id}/messages/{message_id}/attachments/{attachment_id}.png"
-            ),
-            content_type=content_type,
-            file_name=file_name,
-            size_bytes=len(content),
-        )
-
-    async def save_uploaded_image_attachment(
-        self,
-        *,
-        session_id: UUID,
-        attachment_id: UUID,
-        file_name: str,
-        content_type: str,
-        content: bytes,
-    ) -> StoredAttachment:
-        self.saved_uploaded_payloads.append(
-            (
-                session_id,
-                attachment_id,
-                file_name,
-                content_type,
-                content,
-            )
-        )
-        storage_key = f"sessions/{session_id}/uploads/{attachment_id}.png"
+        storage_key = f"users/{user_id}/stash/{attachment_id}.png"
         self.existing_storage_keys.add(storage_key)
         return StoredAttachment(
             storage_key=storage_key,
@@ -211,6 +185,20 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
             file_name=file_name,
             size_bytes=len(content),
         )
+
+    async def promote_stashed_image_attachment(
+        self,
+        *,
+        user_id: UUID,
+        session_id: UUID,
+        stash_storage_key: str,
+    ) -> str:
+        self.promoted_calls.append((user_id, session_id, stash_storage_key))
+        file_name = stash_storage_key.rsplit("/", 1)[-1]
+        destination_key = f"users/{user_id}/chat/{session_id}/{file_name}"
+        self.existing_storage_keys.discard(stash_storage_key)
+        self.existing_storage_keys.add(destination_key)
+        return destination_key
 
     async def exists(self, *, storage_key: str) -> bool:
         return storage_key in self.existing_storage_keys
@@ -226,16 +214,16 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
     ) -> str:
         return f"https://example.com/{storage_key}"
 
-    async def delete_session_attachments(self, *, session_id: UUID) -> None:
-        self.deleted_session_ids.append(session_id)
-
-    async def delete_unreferenced_uploaded_image_attachments(
+    async def delete_session_attachments(
         self,
         *,
+        user_id: UUID,
         session_id: UUID,
-        referenced_storage_keys: set[str],
     ) -> None:
-        self.cleanup_calls.append((session_id, referenced_storage_keys))
+        self.deleted_sessions.append((user_id, session_id))
+
+    async def delete_user_attachments(self, *, user_id: UUID) -> None:
+        self.deleted_user_ids.append(user_id)
 
 
 class _SessionTitleGeneratorStub(SessionTitleGenerator):
@@ -362,13 +350,10 @@ class TestSessionServiceGetById:
 class TestSessionServiceCreate:
     def test_creates_session_with_pending_empty_title(self) -> None:
         owner_id = uuid4()
-        initial_prompt = "spiele was ruhiges"
         repository = _SessionRepositoryStub()
         service = _make_management_service(repository=repository)
 
-        created = asyncio.run(
-            service.create(owner_id=owner_id, initial_prompt=initial_prompt)
-        )
+        created = asyncio.run(service.create(owner_id=owner_id))
 
         assert created is repository.created_session
         assert created.title == ""
@@ -420,7 +405,7 @@ class TestSessionServiceDelete:
         asyncio.run(service.delete(session_id=session.id, user_id=owner_id))
 
         assert repository.deleted_session_id == session.id
-        assert attachment_store.deleted_session_ids == [session.id]
+        assert attachment_store.deleted_sessions == [(owner_id, session.id)]
 
     def test_raises_when_user_does_not_own_session(self) -> None:
         session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
@@ -622,19 +607,15 @@ class TestSessionServiceSendMessage:
 
         assert runner.ran_model_ids == ["gpt-5.4"]
 
-    def test_uploads_image_attachment(self) -> None:
+    def test_stashes_image_attachment(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
-        repository = _SessionRepositoryStub(session_by_id=session)
         attachment_store = _MessageAttachmentStoreStub()
-        service = _make_conversation_service(
-            repository=repository,
+        service = ImageAttachmentService(
             message_attachment_store=attachment_store,
         )
 
         uploaded = asyncio.run(
-            service.upload_image_attachment(
-                session_id=session.id,
+            service.stash_image(
                 user_id=owner_id,
                 image=SessionImageAttachmentUpload(
                     file_name="shot.png",
@@ -644,11 +625,11 @@ class TestSessionServiceSendMessage:
             )
         )
 
-        assert uploaded.storage_key.startswith(f"sessions/{session.id}/uploads/")
+        assert uploaded.storage_key.startswith(f"users/{owner_id}/stash/")
         assert uploaded.content_type == "image/png"
-        assert len(attachment_store.saved_uploaded_payloads) == 1
+        assert len(attachment_store.saved_stashed_payloads) == 1
 
-    def test_references_uploaded_image_attachments_on_send_message(self) -> None:
+    def test_promotes_stashed_image_attachments_on_send_message(self) -> None:
         owner_id = uuid4()
         session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
@@ -658,7 +639,7 @@ class TestSessionServiceSendMessage:
             message_attachment_store=attachment_store,
         )
         attachment_id = uuid4()
-        storage_key = f"sessions/{session.id}/uploads/{attachment_id}.png"
+        storage_key = f"users/{owner_id}/stash/{attachment_id}.png"
         attachment_store.existing_storage_keys.add(storage_key)
 
         asyncio.run(
@@ -683,11 +664,11 @@ class TestSessionServiceSendMessage:
         message = next(
             entry for entry in session.entries if isinstance(entry, UserMessage)
         )
+        expected_key = f"users/{owner_id}/chat/{session.id}/{attachment_id}.png"
         assert len(message.image_attachments) == 1
         assert message.image_attachments[0].content_type == "image/png"
-        assert message.image_attachments[0].storage_key == storage_key
-        assert attachment_store.saved_payloads == []
-        assert attachment_store.cleanup_calls == [(session.id, {storage_key})]
+        assert message.image_attachments[0].storage_key == expected_key
+        assert attachment_store.promoted_calls == [(owner_id, session.id, storage_key)]
 
     def test_rejects_invalid_image_content_type(self) -> None:
         owner_id = uuid4()
@@ -708,7 +689,7 @@ class TestSessionServiceSendMessage:
                             SessionImageAttachmentReference(
                                 id=attachment_id,
                                 storage_key=(
-                                    f"sessions/{session.id}/uploads/{attachment_id}.gif"
+                                    f"users/{owner_id}/stash/{attachment_id}.gif"
                                 ),
                                 file_name="shot.gif",
                                 content_type="image/gif",

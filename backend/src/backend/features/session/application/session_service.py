@@ -28,12 +28,8 @@ class SessionService:
         return await self._get_authorized(session_id=session_id, user_id=user_id)
 
     @timed()
-    async def create(self, *, owner_id: UUID, initial_prompt: str) -> Session:
-        session = Session(
-            title="",
-            entries=[],
-            owner_id=owner_id,
-        )
+    async def create(self, *, owner_id: UUID) -> Session:
+        session = Session.create(owner_id=owner_id)
         session = await self._session_repository.create(session=session)
         return session
 
@@ -50,7 +46,8 @@ class SessionService:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         await self._session_repository.delete(session_id=session.id)
         await self._message_attachment_store.delete_session_attachments(
-            session_id=session.id
+            user_id=session.owner_id,
+            session_id=session.id,
         )
 
     async def star(self, *, session_id: UUID, user_id: UUID) -> Session:

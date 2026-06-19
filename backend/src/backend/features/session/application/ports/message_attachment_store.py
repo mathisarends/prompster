@@ -13,29 +13,26 @@ class StoredAttachment:
 
 class MessageAttachmentStore(ABC):
     @abstractmethod
-    async def save_image_attachment(
+    async def save_stashed_image_attachment(
         self,
         *,
-        session_id: UUID,
-        message_id: UUID,
+        user_id: UUID,
         attachment_id: UUID,
         file_name: str,
         content_type: str,
         content: bytes,
     ) -> StoredAttachment:
-        pass
+        """Persist a loose, not-yet-referenced image upload in the user's stash."""
 
     @abstractmethod
-    async def save_uploaded_image_attachment(
+    async def promote_stashed_image_attachment(
         self,
         *,
+        user_id: UUID,
         session_id: UUID,
-        attachment_id: UUID,
-        file_name: str,
-        content_type: str,
-        content: bytes,
-    ) -> StoredAttachment:
-        pass
+        stash_storage_key: str,
+    ) -> str:
+        """Move a stashed image into the chat folder and return its new key."""
 
     @abstractmethod
     async def exists(self, *, storage_key: str) -> bool:
@@ -55,14 +52,14 @@ class MessageAttachmentStore(ABC):
         pass
 
     @abstractmethod
-    async def delete_session_attachments(self, *, session_id: UUID) -> None:
+    async def delete_session_attachments(
+        self,
+        *,
+        user_id: UUID,
+        session_id: UUID,
+    ) -> None:
         pass
 
     @abstractmethod
-    async def delete_unreferenced_uploaded_image_attachments(
-        self,
-        *,
-        session_id: UUID,
-        referenced_storage_keys: set[str],
-    ) -> None:
+    async def delete_user_attachments(self, *, user_id: UUID) -> None:
         pass

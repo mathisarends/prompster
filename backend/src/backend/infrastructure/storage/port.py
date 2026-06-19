@@ -26,6 +26,10 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
+    async def move(self, source_path: str, destination_path: str) -> None:
+        pass
+
+    @abstractmethod
     async def list_files(self, path: str = "") -> list[StorageFile]:
         pass
 

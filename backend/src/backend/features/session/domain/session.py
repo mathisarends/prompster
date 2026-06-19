@@ -75,6 +75,10 @@ class Session(Aggregate):
         if self._playlist is not None:
             self._assert_track_limit(total_tracks=len(self._playlist.tracks))
 
+    @classmethod
+    def create(cls, *, owner_id: UUID) -> Self:
+        return cls(title="", entries=[], owner_id=owner_id)
+
     @property
     def title(self) -> str:
         return self._title

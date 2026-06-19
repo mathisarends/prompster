@@ -76,6 +76,14 @@ class TestSessionDomainSession:
         assert created.created_at.tzinfo is not None
         assert created.created_at.utcoffset() == timezone.utc.utcoffset(None)
 
+    def test_create_starts_empty(self, owner_id: UUID) -> None:
+        created = Session.create(owner_id=owner_id)
+
+        assert created.title == ""
+        assert created.owner_id == owner_id
+        assert created.phase == Phase.ONBOARDING
+        assert created.entries == ()
+
     def test_session_keeps_explicit_aggregate_identity(self, owner_id: UUID) -> None:
         session_id = uuid4()
         created_time = datetime(2026, 7, 7, tzinfo=timezone.utc)

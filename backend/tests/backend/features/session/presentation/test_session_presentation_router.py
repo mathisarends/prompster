@@ -9,22 +9,26 @@ from llm import OpenAIModelName
 from starlette.datastructures import Headers
 
 from backend.features.session.application import (
+    ImageAttachmentService,
     SessionEvent,
     SessionImageAttachmentReference,
     SessionImageAttachmentUpload,
     SessionMessageAttachment,
     SessionConversationService,
     SessionService,
+    StashedImageAttachment,
 )
 from backend.features.session.application.ports import (
     MessageAttachmentStore,
     StoredAttachment,
 )
 from backend.features.session.domain import (
-    ImageAttachment,
     Session,
     UserCurationEvent,
     UserCurationEventType,
+)
+from backend.features.session.presentation.image_attachment_router import (
+    upload_image_attachment,
 )
 from backend.features.session.presentation.router import (
     complete_onboarding,
@@ -33,7 +37,6 @@ from backend.features.session.presentation.router import (
     send_message,
     submit_onboarding_answer,
     stop_message,
-    upload_session_image_attachment,
 )
 from backend.features.session.presentation.schemas import (
     SendMessageRequest,
@@ -100,24 +103,6 @@ class _SessionConversationServiceStub:
         if False:
             yield
 
-    async def upload_image_attachment(
-        self,
-        *,
-        session_id: UUID,
-        user_id: UUID,
-        image: SessionImageAttachmentUpload,
-    ) -> ImageAttachment:
-        self.received_session_id = session_id
-        self.received_user_id = user_id
-        self.received_upload = image
-        return ImageAttachment(
-            id=uuid4(),
-            storage_key=f"sessions/{session_id}/uploads/uploaded.png",
-            content_type=image.content_type,
-            file_name=image.file_name,
-            size_bytes=len(image.content),
-        )
-
     async def stop_message(self, *, session_id: UUID, user_id: UUID) -> bool:
         self.received_session_id = session_id
         self.received_user_id = user_id
@@ -154,38 +139,31 @@ class _SessionConversationServiceStub:
 
 
 class _MessageAttachmentStoreStub(MessageAttachmentStore):
-    async def save_image_attachment(
+    async def save_stashed_image_attachment(
         self,
         *,
-        session_id,
-        message_id,
+        user_id,
         attachment_id,
         file_name,
         content_type,
         content,
     ) -> StoredAttachment:
         return StoredAttachment(
-            storage_key=f"sessions/{session_id}/{attachment_id}",
+            storage_key=f"users/{user_id}/stash/{attachment_id}.png",
             content_type=content_type,
             file_name=file_name,
             size_bytes=len(content),
         )
 
-    async def save_uploaded_image_attachment(
+    async def promote_stashed_image_attachment(
         self,
         *,
+        user_id,
         session_id,
-        attachment_id,
-        file_name,
-        content_type,
-        content,
-    ) -> StoredAttachment:
-        return StoredAttachment(
-            storage_key=f"sessions/{session_id}/uploads/{attachment_id}.png",
-            content_type=content_type,
-            file_name=file_name,
-            size_bytes=len(content),
-        )
+        stash_storage_key: str,
+    ) -> str:
+        file_name = stash_storage_key.rsplit("/", 1)[-1]
+        return f"users/{user_id}/chat/{session_id}/{file_name}"
 
     async def exists(self, *, storage_key: str) -> bool:
         return True
@@ -201,16 +179,33 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
     ) -> str:
         return f"https://example.com/{storage_key}"
 
-    async def delete_session_attachments(self, *, session_id) -> None:
+    async def delete_session_attachments(self, *, user_id, session_id) -> None:
         return None
 
-    async def delete_unreferenced_uploaded_image_attachments(
+    async def delete_user_attachments(self, *, user_id) -> None:
+        return None
+
+
+class _ImageAttachmentServiceStub:
+    def __init__(self) -> None:
+        self.received_user_id: UUID | None = None
+        self.received_upload: SessionImageAttachmentUpload | None = None
+
+    async def stash_image(
         self,
         *,
-        session_id,
-        referenced_storage_keys: set[str],
-    ) -> None:
-        return None
+        user_id: UUID,
+        image: SessionImageAttachmentUpload,
+    ) -> StashedImageAttachment:
+        self.received_user_id = user_id
+        self.received_upload = image
+        return StashedImageAttachment(
+            id=uuid4(),
+            storage_key=f"users/{user_id}/stash/uploaded.png",
+            content_type=image.content_type,
+            file_name=image.file_name,
+            size_bytes=len(image.content),
+        )
 
 
 async def _collect_stream_body(response) -> list[str]:
@@ -365,11 +360,10 @@ class TestSendMessageRoute:
         assert body == ['event: done\ndata: {"type":"done"}\n\n']
 
 
-class TestUploadSessionImageAttachmentRoute:
+class TestUploadImageAttachmentRoute:
     def test_uploads_image_and_returns_reference(self) -> None:
-        session_id = uuid4()
         user_id = uuid4()
-        service = _SessionConversationServiceStub()
+        service = _ImageAttachmentServiceStub()
         file = UploadFile(
             file=BytesIO(b"1234"),
             filename="shot.png",
@@ -377,10 +371,9 @@ class TestUploadSessionImageAttachmentRoute:
         )
 
         response = asyncio.run(
-            upload_session_image_attachment(
-                session_id=session_id,
+            upload_image_attachment(
                 authenticated_user_id=user_id,
-                service=cast(SessionConversationService, service),
+                service=cast(ImageAttachmentService, service),
                 attachment_store=cast(
                     MessageAttachmentStore, _MessageAttachmentStoreStub()
                 ),
@@ -388,11 +381,10 @@ class TestUploadSessionImageAttachmentRoute:
             )
         )
 
-        assert service.received_session_id == session_id
         assert service.received_user_id == user_id
         assert service.received_upload is not None
         assert service.received_upload.content == b"1234"
-        assert response.storage_key == f"sessions/{session_id}/uploads/uploaded.png"
+        assert response.storage_key == f"users/{user_id}/stash/uploaded.png"
         assert response.url == f"https://example.com/{response.storage_key}"
         assert response.content_type == "image/png"
         assert response.file_name == "shot.png"

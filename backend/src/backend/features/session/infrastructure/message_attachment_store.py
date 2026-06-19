@@ -12,18 +12,17 @@ class StorageMessageAttachmentStore(MessageAttachmentStore):
     def __init__(self, storage_backend: StorageBackend) -> None:
         self._storage_backend = storage_backend
 
-    async def save_image_attachment(
+    async def save_stashed_image_attachment(
         self,
         *,
-        session_id: UUID,
-        message_id: UUID,
+        user_id: UUID,
         attachment_id: UUID,
         file_name: str,
         content_type: str,
         content: bytes,
     ) -> StoredAttachment:
         ext = _resolve_extension(file_name=file_name, content_type=content_type)
-        storage_key = f"sessions/{session_id}/messages/{message_id}/attachments/{attachment_id}.{ext}"
+        storage_key = f"users/{user_id}/stash/{attachment_id}.{ext}"
         normalized_file_name = file_name.strip() or f"attachment.{ext}"
         await self._storage_backend.upload_bytes(
             path=storage_key,
@@ -37,29 +36,17 @@ class StorageMessageAttachmentStore(MessageAttachmentStore):
             size_bytes=len(content),
         )
 
-    async def save_uploaded_image_attachment(
+    async def promote_stashed_image_attachment(
         self,
         *,
+        user_id: UUID,
         session_id: UUID,
-        attachment_id: UUID,
-        file_name: str,
-        content_type: str,
-        content: bytes,
-    ) -> StoredAttachment:
-        ext = _resolve_extension(file_name=file_name, content_type=content_type)
-        storage_key = f"sessions/{session_id}/uploads/{attachment_id}.{ext}"
-        normalized_file_name = file_name.strip() or f"attachment.{ext}"
-        await self._storage_backend.upload_bytes(
-            path=storage_key,
-            data=content,
-            content_type=content_type,
-        )
-        return StoredAttachment(
-            storage_key=storage_key,
-            content_type=content_type,
-            file_name=normalized_file_name,
-            size_bytes=len(content),
-        )
+        stash_storage_key: str,
+    ) -> str:
+        file_name = PurePosixPath(stash_storage_key).name
+        destination_key = f"users/{user_id}/chat/{session_id}/{file_name}"
+        await self._storage_backend.move(stash_storage_key, destination_key)
+        return destination_key
 
     async def exists(self, *, storage_key: str) -> bool:
         return await self._storage_backend.exists(path=storage_key)
@@ -78,21 +65,18 @@ class StorageMessageAttachmentStore(MessageAttachmentStore):
             ttl_seconds=expires_in_seconds,
         )
 
-    async def delete_session_attachments(self, *, session_id: UUID) -> None:
-        await self._storage_backend.delete_folder(path=f"sessions/{session_id}/")
-
-    async def delete_unreferenced_uploaded_image_attachments(
+    async def delete_session_attachments(
         self,
         *,
+        user_id: UUID,
         session_id: UUID,
-        referenced_storage_keys: set[str],
     ) -> None:
-        prefix = f"sessions/{session_id}/uploads/"
-        files = await self._storage_backend.list_files(path=prefix)
-        for file in files:
-            storage_key = f"{prefix}{file.name}"
-            if storage_key not in referenced_storage_keys:
-                await self._storage_backend.delete_file(path=storage_key)
+        await self._storage_backend.delete_folder(
+            path=f"users/{user_id}/chat/{session_id}/"
+        )
+
+    async def delete_user_attachments(self, *, user_id: UUID) -> None:
+        await self._storage_backend.delete_folder(path=f"users/{user_id}/")
 
 
 _CONTENT_TYPE_TO_EXTENSION = {

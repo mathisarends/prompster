@@ -7,7 +7,11 @@ import {
   createSession,
   getListSessionsQueryKey,
 } from "@/api/generated/session-api";
-import { ChatInputBox, type ChatAttachment } from "@/features/chat";
+import {
+  ChatInputBox,
+  type ChatAttachment,
+  uploadSessionImageFile,
+} from "@/features/chat";
 import { Chip } from "@/shared/ui/chip";
 import { Badge } from "@/shared/ui/badge";
 
@@ -32,6 +36,38 @@ const PROMPT_SUGGESTIONS = [
   },
 ] as const;
 
+const uploadInitialImageAttachments = async (
+  sessionId: string,
+  attachments: ChatAttachment[],
+): Promise<ChatAttachment[]> => {
+  return Promise.all(
+    attachments.map(async (attachment) => {
+      if (
+        attachment.kind !== "image" ||
+        attachment.storageKey ||
+        !attachment.file
+      ) {
+        return attachment;
+      }
+
+      const uploadedImage = await uploadSessionImageFile(
+        sessionId,
+        attachment.file,
+      );
+
+      return {
+        ...attachment,
+        id: uploadedImage.id,
+        storageKey: uploadedImage.storageKey,
+        contentType: uploadedImage.contentType,
+        sizeBytes: uploadedImage.sizeBytes,
+        uploadStatus: "uploaded" as const,
+        uploadError: undefined,
+      };
+    }),
+  );
+};
+
 export const HomePage = () => {
   const [prompt, setPrompt] = useState("");
   const [isCreatingSession, setIsCreatingSession] = useState(false);
@@ -49,6 +85,10 @@ export const HomePage = () => {
 
     try {
       const session = await createSession({ initialPrompt });
+      const initialAttachments = await uploadInitialImageAttachments(
+        session.id,
+        attachments,
+      );
       await queryClient.invalidateQueries({
         queryKey: getListSessionsQueryKey(),
       });
@@ -57,7 +97,7 @@ export const HomePage = () => {
           session,
           streamInitialResponse: true,
           initialPrompt,
-          initialAttachments: attachments,
+          initialAttachments,
         },
       });
     } catch {

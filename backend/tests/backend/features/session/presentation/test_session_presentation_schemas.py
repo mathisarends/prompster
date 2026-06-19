@@ -41,7 +41,7 @@ class TestSendMessageRequest:
             image_attachments=[
                 {
                     "id": attachment_id,
-                    "storage_key": f"sessions/session-id/uploads/{attachment_id}.png",
+                    "storage_key": f"users/user-id/stash/{attachment_id}.png",
                     "content_type": "image/png",
                     "file_name": "shot.png",
                     "size_bytes": 1234,
@@ -78,14 +78,14 @@ class TestSendMessageRequest:
                 image_attachments=[
                     {
                         "id": attachment_id,
-                        "storage_key": f"sessions/session-id/uploads/{attachment_id}.png",
+                        "storage_key": f"users/user-id/stash/{attachment_id}.png",
                         "content_type": "image/png",
                         "file_name": "shot.png",
                         "size_bytes": 1234,
                     },
                     {
                         "id": attachment_id,
-                        "storage_key": f"sessions/session-id/uploads/{attachment_id}.png",
+                        "storage_key": f"users/user-id/stash/{attachment_id}.png",
                         "content_type": "image/png",
                         "file_name": "shot.png",
                         "size_bytes": 1234,

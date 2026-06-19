@@ -7,6 +7,7 @@ from spotifyify import Spotifyify
 from backend.features.oauth_connections.application import SpotifyTokenService
 from backend.features.spotify.application.ports import SpotifyPlaylistCreator
 from backend.features.session.application import (
+    ImageAttachmentService,
     SessionPlaylistExporter,
     SessionConversationService,
     SessionService,
@@ -123,6 +124,15 @@ class SessionProvider(Provider):
         return SessionService(
             session_repository=session_repository,
             session_summary_query=session_summary_query,
+            message_attachment_store=message_attachment_store,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_image_attachment_service(
+        self,
+        message_attachment_store: MessageAttachmentStore,
+    ) -> ImageAttachmentService:
+        return ImageAttachmentService(
             message_attachment_store=message_attachment_store,
         )
 

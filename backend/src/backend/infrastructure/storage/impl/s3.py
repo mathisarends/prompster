@@ -8,6 +8,7 @@ from backend.infrastructure.storage.views import (
     StorageFile,
     UploadResponse,
 )
+from botocore.config import Config
 from botocore.exceptions import ClientError
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -79,6 +80,12 @@ class _S3HeadObjectParams(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+_S3_CLIENT_CONFIG = Config(
+    signature_version="s3v4",
+    s3={"addressing_style": "path"},
+)
+
+
 class S3StorageBackend(StorageBackend):
     def __init__(
         self,
@@ -99,8 +106,10 @@ class S3StorageBackend(StorageBackend):
         async with self._session.client(
             service_name="s3",
             endpoint_url=self._endpoint_url,
+            region_name="us-east-1",
             aws_access_key_id=self._access_key,
             aws_secret_access_key=self._secret_key,
+            config=_S3_CLIENT_CONFIG,
         ) as client:
             yield client
 
@@ -149,6 +158,15 @@ class S3StorageBackend(StorageBackend):
                 Bucket=self._bucket,
                 Delete=delete_request.model_dump(by_alias=True),
             )
+
+    async def move(self, source_path: str, destination_path: str) -> None:
+        async with self._get_client() as s3:
+            await s3.copy_object(
+                Bucket=self._bucket,
+                CopySource={"Bucket": self._bucket, "Key": source_path},
+                Key=destination_path,
+            )
+            await s3.delete_object(Bucket=self._bucket, Key=source_path)
 
     async def list_files(self, path: str = "") -> list[StorageFile]:
         async with self._get_client() as s3:

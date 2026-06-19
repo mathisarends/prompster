@@ -1,15 +1,13 @@
-from typing import Annotated
 from uuid import UUID
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, File, Query, Response, UploadFile, status
+from fastapi import APIRouter, Query, Response, status
 from llm import OpenAIModelName
 from starlette.responses import StreamingResponse
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.session.application import (
     SessionImageAttachmentReference,
-    SessionImageAttachmentUpload,
     SessionMessageAttachment,
     SessionConversationService,
     SessionService,
@@ -37,7 +35,6 @@ from backend.features.session.presentation.schemas import (
     SessionSummaryListResponse,
     SessionUpdateRequest,
     SpotifyPlaylistExportResponse,
-    UploadedImageAttachmentResponse,
 )
 from backend.features.session.presentation.sse import (
     stream_session_events,
@@ -138,10 +135,8 @@ async def create_session(
     service: FromDishka[SessionService],
     attachment_store: FromDishka[MessageAttachmentStore],
 ) -> SessionResponse:
-    session = await service.create(
-        owner_id=authenticated_user_id,
-        initial_prompt=body.initial_prompt,
-    )
+    _ = body
+    session = await service.create(owner_id=authenticated_user_id)
     return await _to_session_response_with_signed_urls(
         session=session,
         attachment_store=attachment_store,
@@ -177,43 +172,6 @@ async def send_message(
                 body.image_attachments,
             ),
         )
-    )
-
-
-@router.post(
-    "/{session_id}/image-attachments",
-    response_model=UploadedImageAttachmentResponse,
-    status_code=status.HTTP_201_CREATED,
-    operation_id="upload_session_image_attachment",
-    responses=_auth_errors | _bad_request | _not_found,
-)
-async def upload_session_image_attachment(
-    session_id: UUID,
-    authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionConversationService],
-    attachment_store: FromDishka[MessageAttachmentStore],
-    file: Annotated[UploadFile, File()],
-) -> UploadedImageAttachmentResponse:
-    image = await service.upload_image_attachment(
-        session_id=session_id,
-        user_id=authenticated_user_id,
-        image=SessionImageAttachmentUpload(
-            file_name=file.filename or "attachment",
-            content_type=file.content_type or "application/octet-stream",
-            content=await file.read(),
-        ),
-    )
-    url = await attachment_store.create_signed_url(
-        storage_key=image.storage_key,
-        expires_in_seconds=900,
-    )
-    return UploadedImageAttachmentResponse(
-        id=image.id,
-        storage_key=image.storage_key,
-        url=url,
-        content_type=image.content_type,
-        file_name=image.file_name,
-        size_bytes=image.size_bytes,
     )
 
 
