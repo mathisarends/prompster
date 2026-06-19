@@ -16,7 +16,7 @@ import {
   streamCompleteOnboarding,
   streamSendMessage,
 } from "@/features/chat/api/session-stream";
-import { uploadSessionImageFile } from "@/features/chat/api/image-attachments";
+import { uploadImageFile } from "@/features/chat/api/image-attachments";
 import type { ChatAttachment } from "@/features/chat/components/attachments";
 
 import {
@@ -255,11 +255,7 @@ export const useChatSession = ({
                 if (uploadedImage) return uploadedImage;
                 if (!attachment.file) return null;
 
-                return uploadSessionImageFile(
-                  sessionId,
-                  attachment.file,
-                  streamOptions.signal,
-                );
+                return uploadImageFile(attachment.file, streamOptions.signal);
               })
               .filter(
                 (

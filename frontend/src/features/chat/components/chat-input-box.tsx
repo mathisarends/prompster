@@ -23,7 +23,7 @@ import { ModelSelect } from "@/features/chat/components/model-select";
 import { SendButton } from "@/features/chat/components/send-button";
 import { TranscriptionButton } from "@/features/chat/components/transcription-button";
 import { TranscriptionWaveform } from "@/features/chat/components/transcription-waveform";
-import { uploadSessionImageFile } from "@/features/chat/api/image-attachments";
+import { uploadImageFile } from "@/features/chat/api/image-attachments";
 import { useChatInputAttachments } from "@/features/chat/hooks/use-chat-input-attachments";
 import { useRealtimeTranscription } from "@/features/chat/hooks/useRealtimeTranscription";
 import {
@@ -56,7 +56,6 @@ type ChatInputBoxProps = {
   clearOnSubmit?: boolean;
   attachments?: ChatAttachment[];
   onAttachmentsChange?: (attachments: ChatAttachment[]) => void;
-  imageUploadSessionId?: string;
   selectedModel?: string;
   onModelChange?: (modelId: string) => void;
 };
@@ -494,7 +493,6 @@ const ChatInputBoxComponent = ({
   clearOnSubmit = true,
   attachments: controlledAttachments,
   onAttachmentsChange,
-  imageUploadSessionId,
   selectedModel,
   onModelChange,
 }: ChatInputBoxProps) => {
@@ -637,22 +635,14 @@ const ChatInputBoxComponent = ({
 
   const startImageUpload = useCallback(
     (attachment: ChatAttachment) => {
-      if (
-        !imageUploadSessionId ||
-        attachment.kind !== "image" ||
-        !attachment.file
-      ) {
+      if (attachment.kind !== "image" || !attachment.file) {
         return;
       }
 
       const controller = new AbortController();
       uploadControllersRef.current.set(attachment.id, controller);
 
-      void uploadSessionImageFile(
-        imageUploadSessionId,
-        attachment.file,
-        controller.signal,
-      )
+      void uploadImageFile(attachment.file, controller.signal)
         .then((image) => {
           uploadControllersRef.current.delete(attachment.id);
           if (controller.signal.aborted) return;
@@ -681,7 +671,7 @@ const ChatInputBoxComponent = ({
           }));
         });
     },
-    [imageUploadSessionId, updateAttachmentById],
+    [updateAttachmentById],
   );
 
   const addImageFiles = useCallback(
@@ -690,9 +680,7 @@ const ChatInputBoxComponent = ({
       if (imageFiles.length === 0) return;
       const imageAttachments = imageFiles.map((file) => {
         const attachment = createImageAttachment(file);
-        return imageUploadSessionId
-          ? { ...attachment, uploadStatus: "uploading" as const }
-          : attachment;
+        return { ...attachment, uploadStatus: "uploading" as const };
       });
 
       const nextAttachments = [...attachmentsRef.current, ...imageAttachments];
@@ -700,7 +688,7 @@ const ChatInputBoxComponent = ({
       setAttachments(nextAttachments);
       imageAttachments.forEach(startImageUpload);
     },
-    [imageUploadSessionId, setAttachments, startImageUpload],
+    [setAttachments, startImageUpload],
   );
 
   const openFilePicker = useCallback(() => {

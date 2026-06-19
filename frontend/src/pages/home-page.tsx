@@ -10,7 +10,7 @@ import {
 import {
   ChatInputBox,
   type ChatAttachment,
-  uploadSessionImageFile,
+  uploadImageFile,
 } from "@/features/chat";
 import { Chip } from "@/shared/ui/chip";
 import { Badge } from "@/shared/ui/badge";
@@ -37,7 +37,6 @@ const PROMPT_SUGGESTIONS = [
 ] as const;
 
 const uploadInitialImageAttachments = async (
-  sessionId: string,
   attachments: ChatAttachment[],
 ): Promise<ChatAttachment[]> => {
   return Promise.all(
@@ -50,10 +49,7 @@ const uploadInitialImageAttachments = async (
         return attachment;
       }
 
-      const uploadedImage = await uploadSessionImageFile(
-        sessionId,
-        attachment.file,
-      );
+      const uploadedImage = await uploadImageFile(attachment.file);
 
       return {
         ...attachment,
@@ -84,11 +80,9 @@ export const HomePage = () => {
     setErrorMessage(null);
 
     try {
+      const initialAttachments =
+        await uploadInitialImageAttachments(attachments);
       const session = await createSession({ initialPrompt });
-      const initialAttachments = await uploadInitialImageAttachments(
-        session.id,
-        attachments,
-      );
       await queryClient.invalidateQueries({
         queryKey: getListSessionsQueryKey(),
       });

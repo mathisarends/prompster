@@ -1,4 +1,4 @@
-import { uploadSessionImageAttachment } from "@/api/generated/session-api";
+import { uploadImageAttachment } from "@/api/generated/image-attachments/image-attachments";
 import type {
   ImageAttachmentReferenceRequest,
   UploadedImageAttachmentResponse,
@@ -14,17 +14,11 @@ export const toImageAttachmentReference = (
   sizeBytes: image.sizeBytes,
 });
 
-export const uploadSessionImageFile = async (
-  sessionId: string,
+export const uploadImageFile = async (
   file: File,
   signal?: AbortSignal,
 ): Promise<ImageAttachmentReferenceRequest> => {
-  const image = await uploadSessionImageAttachment(
-    sessionId,
-    { file },
-    undefined,
-    signal,
-  );
+  const image = await uploadImageAttachment({ file }, undefined, signal);
 
   return toImageAttachmentReference(image);
 };

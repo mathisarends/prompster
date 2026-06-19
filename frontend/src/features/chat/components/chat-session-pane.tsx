@@ -227,7 +227,6 @@ export const ChatSessionPane = ({
             }
             isSubmitting={isStreaming}
             isStopping={isStopping}
-            imageUploadSessionId={sessionId}
             selectedModel={selectedModel}
             onModelChange={onModelChange}
           />

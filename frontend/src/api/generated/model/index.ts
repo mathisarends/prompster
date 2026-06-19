@@ -14,7 +14,7 @@ export * from "./assistantMessageCompletedEvent";
 export * from "./assistantMessageEntryResponse";
 export * from "./assistantMessageStartedEvent";
 export * from "./bodyTranscribeAudio";
-export * from "./bodyUploadSessionImageAttachment";
+export * from "./bodyUploadImageAttachment";
 export * from "./checkoutSessionResponse";
 export * from "./completeOnboardingParams";
 export * from "./couponResponse";
