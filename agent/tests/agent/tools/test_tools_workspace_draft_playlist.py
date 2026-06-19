@@ -199,7 +199,7 @@ class TestWorkspaceDraftPlaylistTool:
         )
         assert create_result.success is True
         assert create_result.extracted_content == (
-            '1 track reference(s) processed for Hitster deck "Deck".'
+            'Added 1 track(s) to Hitster deck "Deck" (1 total).'
         )
         playlist = store.draft
         assert playlist is not None
@@ -220,7 +220,7 @@ class TestWorkspaceDraftPlaylistTool:
 
         assert added_playlist.success is True
         assert added_playlist.extracted_content == (
-            '1 track reference(s) processed for Hitster deck "Deck".'
+            'Added 1 track(s) to Hitster deck "Deck" (2 total).'
         )
         assert store.draft is not None
         assert store.draft.tracks[-1].title == "Billie Jean"
@@ -297,7 +297,8 @@ class TestWorkspaceDraftPlaylistTool:
 
         assert create_result.success is True
         assert create_result.extracted_content == (
-            '2 track reference(s) processed for Hitster deck "Deck".'
+            'Added 1 of 2 track(s) to Hitster deck "Deck" (1 total).'
+            " The others were already in the deck."
         )
         assert store.draft is not None
         assert store.draft.name == "Deck"
@@ -319,7 +320,8 @@ class TestWorkspaceDraftPlaylistTool:
 
         assert add_result.success is True
         assert add_result.extracted_content == (
-            '3 track reference(s) processed for Hitster deck "Deck".'
+            'Added 1 of 3 track(s) to Hitster deck "Deck" (2 total).'
+            " The others were already in the deck."
         )
         assert store.draft is not None
         assert [track.title for track in store.draft.tracks] == [
@@ -374,6 +376,41 @@ class TestWorkspaceDraftPlaylistTool:
         # so the downstream session never exceeds its hard track limit.
         assert [track.title for track in draft.tracks] == ["Take On Me", "Africa"]
         assert store.drain_deck_draft_updates() == []
+
+    @pytest.mark.asyncio
+    async def test_add_deck_tracks_reports_when_deck_is_full(self) -> None:
+        existing = _track(
+            title="Take On Me",
+            artist="a-ha",
+            year=1985,
+            spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+        )
+        store = DeckStore(DeckDraft(name="Deck", tracks=[existing]), max_tracks=1)
+        store.cache_tracks(
+            [
+                _track(
+                    title="Billie Jean",
+                    artist="Michael Jackson",
+                    year=1982,
+                    spotify_uri="spotify:track:5ChkMS8OtdzJeqyybCc9R5",
+                ),
+            ]
+        )
+        tools = Tools(ToolContext(store))
+
+        result = await tools.execute(
+            "add_deck_tracks",
+            {
+                "status": "Songs ins Deck legen",
+                "tracks": [{"uri": "spotify:track:5ChkMS8OtdzJeqyybCc9R5"}],
+            },
+        )
+
+        assert result.success is True
+        assert result.extracted_content == (
+            'Added 0 of 1 track(s) to Hitster deck "Deck" (1 total).'
+            " The deck is full (max 1); extra tracks were skipped."
+        )
 
     @pytest.mark.asyncio
     async def test_pinned_tracks_cannot_be_removed_or_replaced(

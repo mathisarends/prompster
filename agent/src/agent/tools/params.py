@@ -6,6 +6,13 @@ from agent.deck.views import TrackRef, TrackRefReplacement
 from agent.tools.views import OnboardingSelectionMode
 
 
+def _compact_status_value(value: str, max_length: int = 32) -> str:
+    normalized_value = " ".join(value.split())
+    if len(normalized_value) > max_length:
+        return f"{normalized_value[: max_length - 3].rstrip()}..."
+    return normalized_value
+
+
 class ToolParams(BaseModel):
     status: str = Field(
         description=(
@@ -16,9 +23,12 @@ class ToolParams(BaseModel):
     )
 
 
-class SearchParams(ToolParams):
+class SearchParams(BaseModel):
     query: str
     limit: int = 10
+
+    def status_label(self, kind: str) -> str:
+        return f"Suche {kind}: {_compact_status_value(self.query)}"
 
 
 class ArtistAlbumsParams(ToolParams):
@@ -48,8 +58,17 @@ class ReplaceDraftDeckTracksParams(ToolParams):
     replacements: list[TrackRefReplacement] = Field(min_length=1)
 
 
-class PlaylistIdParams(ToolParams):
-    playlist_id: str
+class PlaylistIdParams(BaseModel):
+    playlist_id: str = Field(description="Spotify playlist URI or ID.")
+    playlist_name: str = Field(
+        description=(
+            "Human-readable playlist name from the selected Spotify search result. "
+            "Used only for the visible tool status. Do not put the playlist ID here."
+        ),
+    )
+
+    def status_label(self) -> str:
+        return f"Hole Playlist-Tracks: {_compact_status_value(self.playlist_name)}"
 
 
 class ReviewDeckParams(ToolParams):

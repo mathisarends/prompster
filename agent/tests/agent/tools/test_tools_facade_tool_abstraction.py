@@ -91,6 +91,35 @@ class TestToolsFacadeAbstraction:
         assert options["minItems"] == 2
         assert options["maxItems"] == 4
 
+    def test_spotify_research_tools_do_not_expose_generated_status(self) -> None:
+        tools = Tools()
+
+        schemas = {
+            schema["function"]["name"]: schema["function"]["parameters"]
+            for schema in tools.to_schema(phase=Phase.BUILD)
+        }
+
+        assert "status" not in schemas["search_tracks"]["properties"]
+        assert "status" not in schemas["search_playlists"]["properties"]
+        assert "status" not in schemas["get_spotify_playlist_tracks"]["properties"]
+        assert "playlist_name" in schemas["get_spotify_playlist_tracks"]["required"]
+
+    def test_spotify_research_tool_statuses_are_derived_from_params(self) -> None:
+        tools = Tools()
+
+        assert tools.get("search_tracks").render_status({"query": "ABBA"}) == (
+            "Suche Tracks: ABBA"
+        )
+        assert tools.get("search_playlists").render_status(
+            {"query": "Italo Disco"}
+        ) == ("Suche Playlists: Italo Disco")
+        assert (
+            tools.get("get_spotify_playlist_tracks").render_status(
+                {"playlist_id": "spotify:playlist:123", "playlist_name": "This Is ABBA"}
+            )
+            == "Hole Playlist-Tracks: This Is ABBA"
+        )
+
     def test_onboarding_question_schema_exposes_optional_hint(self) -> None:
         tools = Tools()
 
@@ -277,7 +306,7 @@ class TestToolsFacadeAbstraction:
 
         assert result.success is True
         assert result.extracted_content == (
-            '1 track reference(s) processed for Hitster deck "Deck".'
+            'Added 1 track(s) to Hitster deck "Deck" (1 total).'
         )
         deck_draft = new_store.draft
         assert deck_draft is not None

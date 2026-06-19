@@ -11,14 +11,13 @@ from agent.deck import (
 )
 from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
-from agent.tools.handler import DeckCritic, Spotify
+from agent.tools.handler import Spotify
 from agent.tools.params import (
     AddDraftDeckTracksParams,
     AskOnboardingQuestionParams,
     PlaylistIdParams,
     RemoveDraftDeckTracksParams,
     ReplaceDraftDeckTracksParams,
-    ReviewDeckParams,
     SearchParams,
 )
 from agent.tools.schemas import ToolSchema
@@ -165,7 +164,7 @@ class Tools:
 
         @self.action(
             params=SearchParams,
-            status_label=lambda params: params.status,
+            status_label=lambda params: params.status_label("Tracks"),
             action_type=ActionType.SEARCH_TRACKS,
             included_in_phases={Phase.BUILD},
         )
@@ -183,7 +182,7 @@ class Tools:
 
         @self.action(
             params=SearchParams,
-            status_label=lambda params: params.status,
+            status_label=lambda params: params.status_label("Playlists"),
             action_type=ActionType.SEARCH_PLAYLISTS,
             included_in_phases={Phase.BUILD},
         )
@@ -284,7 +283,7 @@ class Tools:
                 "this does not read or mutate the current workspace Hitster deck."
             ),
             params=PlaylistIdParams,
-            status_label=lambda params: params.status,
+            status_label=lambda params: params.status_label(),
             action_type=ActionType.GET_SPOTIFY_PLAYLIST_TRACKS,
             included_in_phases={Phase.BUILD},
         )

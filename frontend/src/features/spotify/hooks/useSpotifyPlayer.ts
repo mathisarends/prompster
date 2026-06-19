@@ -208,6 +208,14 @@ export const useSpotifyPlayer = (options: UseSpotifyPlayerOptions = {}) => {
             paused: playbackState.paused,
           };
 
+          const currentTrack = playbackState.track_window.current_track;
+          // Spotify relinks tracks to market-specific equivalents, so the SDK
+          // can report a different URI than the one we requested. `linked_from`
+          // carries the originally requested URI; prefer it so the reported
+          // track keeps matching the URI stored on our playlist tracks.
+          const reportedTrackUri =
+            currentTrack?.linked_from?.uri ?? currentTrack?.uri ?? null;
+
           setState((previous) => ({
             ...previous,
             status:
@@ -217,8 +225,7 @@ export const useSpotifyPlayer = (options: UseSpotifyPlayerOptions = {}) => {
             isPaused: playbackState.paused,
             positionMs: nextPositionMs,
             durationMs: playbackState.duration,
-            currentTrackUri:
-              playbackState.track_window.current_track?.uri ?? null,
+            currentTrackUri: reportedTrackUri,
           }));
         };
 

@@ -135,7 +135,7 @@ class TestAgentWorkspaceUpdateEvents:
         assert isinstance(tool_result, ToolResultEvent)
         assert isinstance(deck_update, DeckUpdatedEvent)
         assert tool_result.result == (
-            '1 track reference(s) processed for Hitster deck "Deck".'
+            'Added 1 track(s) to Hitster deck "Deck" (1 total).'
         )
         assert deck_update.deck_draft.name == "Deck"
         assert deck_update.deck_draft.tracks[0].title == "Take On Me"
