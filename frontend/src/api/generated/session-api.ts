@@ -24,7 +24,7 @@ import type {
 
 import type {
   AddPlaylistTrackRequest,
-  BodySendMessage,
+  BodyUploadSessionImageAttachment,
   CompleteOnboardingParams,
   ErrorResponse,
   ExportSessionPlaylistParams,
@@ -32,12 +32,14 @@ import type {
   ListSessionsParams,
   PlaylistTrackResponse,
   SendMessageParams,
+  SendMessageRequest,
   SessionCreateRequest,
   SessionResponse,
   SessionSummaryListResponse,
   SessionUpdateRequest,
   SpotifyPlaylistExportResponse,
   SubmitOnboardingAnswerRequest,
+  UploadedImageAttachmentResponse,
 } from "./model";
 
 import { customInstance } from "../http-client";
@@ -1109,34 +1111,17 @@ export function useDeleteSession<
  */
 export const sendMessage = (
   sessionId: string,
-  bodySendMessage: BodySendMessage,
+  sendMessageRequest: SendMessageRequest,
   params?: SendMessageParams,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  const formData = new FormData();
-  formData.append(`content`, bodySendMessage.content);
-  if (bodySendMessage.attachments !== undefined) {
-    bodySendMessage.attachments.forEach((value) =>
-      formData.append(`attachments`, value),
-    );
-  }
-  if (
-    bodySendMessage.reference_attachments_json !== undefined &&
-    bodySendMessage.reference_attachments_json !== null
-  ) {
-    formData.append(
-      `reference_attachments_json`,
-      bodySendMessage.reference_attachments_json,
-    );
-  }
-
   return customInstance<string>(
     {
       url: `/api/v1/sessions/${sessionId}/messages`,
       method: "POST",
-      headers: { "Content-Type": "multipart/form-data" },
-      data: formData,
+      headers: { "Content-Type": "application/json" },
+      data: sendMessageRequest,
       params,
       signal,
     },
@@ -1146,14 +1131,14 @@ export const sendMessage = (
 
 export const getSendMessageQueryKey = (
   sessionId: string,
-  bodySendMessage?: BodySendMessage,
+  sendMessageRequest?: SendMessageRequest,
   params?: SendMessageParams,
 ) => {
   return [
     "POST",
     `/api/v1/sessions/${sessionId}/messages`,
     ...(params ? [params] : []),
-    bodySendMessage,
+    sendMessageRequest,
   ] as const;
 };
 
@@ -1162,7 +1147,7 @@ export const getSendMessageQueryOptions = <
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  bodySendMessage: BodySendMessage,
+  sendMessageRequest: SendMessageRequest,
   params?: SendMessageParams,
   options?: {
     query?: Partial<
@@ -1175,11 +1160,12 @@ export const getSendMessageQueryOptions = <
 
   const queryKey =
     queryOptions?.queryKey ??
-    getSendMessageQueryKey(sessionId, bodySendMessage, params);
+    getSendMessageQueryKey(sessionId, sendMessageRequest, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof sendMessage>>> = ({
     signal,
-  }) => sendMessage(sessionId, bodySendMessage, params, requestOptions, signal);
+  }) =>
+    sendMessage(sessionId, sendMessageRequest, params, requestOptions, signal);
 
   return {
     queryKey,
@@ -1203,7 +1189,7 @@ export function useSendMessage<
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  bodySendMessage: BodySendMessage,
+  sendMessageRequest: SendMessageRequest,
   params: undefined | SendMessageParams,
   options: {
     query: Partial<
@@ -1228,7 +1214,7 @@ export function useSendMessage<
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  bodySendMessage: BodySendMessage,
+  sendMessageRequest: SendMessageRequest,
   params?: SendMessageParams,
   options?: {
     query?: Partial<
@@ -1253,7 +1239,7 @@ export function useSendMessage<
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  bodySendMessage: BodySendMessage,
+  sendMessageRequest: SendMessageRequest,
   params?: SendMessageParams,
   options?: {
     query?: Partial<
@@ -1274,7 +1260,7 @@ export function useSendMessage<
   TError = ErrorResponse | HTTPValidationError,
 >(
   sessionId: string,
-  bodySendMessage: BodySendMessage,
+  sendMessageRequest: SendMessageRequest,
   params?: SendMessageParams,
   options?: {
     query?: Partial<
@@ -1288,8 +1274,212 @@ export function useSendMessage<
 } {
   const queryOptions = getSendMessageQueryOptions(
     sessionId,
-    bodySendMessage,
+    sendMessageRequest,
     params,
+    options,
+  );
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Upload Session Image Attachment
+ */
+export const uploadSessionImageAttachment = (
+  sessionId: string,
+  bodyUploadSessionImageAttachment: BodyUploadSessionImageAttachment,
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  const formData = new FormData();
+  formData.append(`file`, bodyUploadSessionImageAttachment.file);
+
+  return customInstance<UploadedImageAttachmentResponse>(
+    {
+      url: `/api/v1/sessions/${sessionId}/image-attachments`,
+      method: "POST",
+      headers: { "Content-Type": "multipart/form-data" },
+      data: formData,
+      signal,
+    },
+    options,
+  );
+};
+
+export const getUploadSessionImageAttachmentQueryKey = (
+  sessionId: string,
+  bodyUploadSessionImageAttachment?: BodyUploadSessionImageAttachment,
+) => {
+  return [
+    "POST",
+    `/api/v1/sessions/${sessionId}/image-attachments`,
+    bodyUploadSessionImageAttachment,
+  ] as const;
+};
+
+export const getUploadSessionImageAttachmentQueryOptions = <
+  TData = Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+  TError = ErrorResponse | HTTPValidationError,
+>(
+  sessionId: string,
+  bodyUploadSessionImageAttachment: BodyUploadSessionImageAttachment,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getUploadSessionImageAttachmentQueryKey(
+      sessionId,
+      bodyUploadSessionImageAttachment,
+    );
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof uploadSessionImageAttachment>>
+  > = ({ signal }) =>
+    uploadSessionImageAttachment(
+      sessionId,
+      bodyUploadSessionImageAttachment,
+      requestOptions,
+      signal,
+    );
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: sessionId !== null && sessionId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type UploadSessionImageAttachmentQueryResult = NonNullable<
+  Awaited<ReturnType<typeof uploadSessionImageAttachment>>
+>;
+export type UploadSessionImageAttachmentQueryError =
+  | ErrorResponse
+  | HTTPValidationError;
+
+export function useUploadSessionImageAttachment<
+  TData = Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+  TError = ErrorResponse | HTTPValidationError,
+>(
+  sessionId: string,
+  bodyUploadSessionImageAttachment: BodyUploadSessionImageAttachment,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+          TError,
+          Awaited<ReturnType<typeof uploadSessionImageAttachment>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useUploadSessionImageAttachment<
+  TData = Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+  TError = ErrorResponse | HTTPValidationError,
+>(
+  sessionId: string,
+  bodyUploadSessionImageAttachment: BodyUploadSessionImageAttachment,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+          TError,
+          Awaited<ReturnType<typeof uploadSessionImageAttachment>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useUploadSessionImageAttachment<
+  TData = Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+  TError = ErrorResponse | HTTPValidationError,
+>(
+  sessionId: string,
+  bodyUploadSessionImageAttachment: BodyUploadSessionImageAttachment,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Upload Session Image Attachment
+ */
+
+export function useUploadSessionImageAttachment<
+  TData = Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+  TError = ErrorResponse | HTTPValidationError,
+>(
+  sessionId: string,
+  bodyUploadSessionImageAttachment: BodyUploadSessionImageAttachment,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof uploadSessionImageAttachment>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getUploadSessionImageAttachmentQueryOptions(
+    sessionId,
+    bodyUploadSessionImageAttachment,
     options,
   );
 

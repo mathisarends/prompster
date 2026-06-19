@@ -13,6 +13,7 @@ export interface OnboardingQuestionResponse {
   questionText: string;
   hint?: string | null;
   options?: string[];
+  recommendedOption?: string | null;
   selectionMode?: OnboardingQuestionSelectionMode;
   isLastQuestion: boolean;
   answers?: string[];

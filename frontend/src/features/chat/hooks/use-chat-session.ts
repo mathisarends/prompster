@@ -147,6 +147,7 @@ export const useChatSession = ({
   const isStoppingRef = useRef(false);
   const initialStreamStartedRef = useRef(false);
   const hasStreamedSinceLoadRef = useRef(false);
+  const startInitialStreamRef = useRef<(() => void) | null>(null);
   const onboardingPersistenceQueueRef = useRef<Promise<void>>(
     Promise.resolve(),
   );
@@ -312,35 +313,32 @@ export const useChatSession = ({
     setSelectedModel(modelId);
   }, []);
 
+  // Keep the latest sender in a ref so the initial-stream trigger below does not
+  // depend on `streamAssistantResponse`/`initialAttachments` identity. Those
+  // change when `selectedModel` is set (e.g. the model picker auto-selecting the
+  // default once options load), which would otherwise re-run the trigger effect
+  // and cancel the pending initial send before it ever fires.
+  const initialMessage = initialPrompt?.trim();
+  startInitialStreamRef.current =
+    streamInitialResponse && initialMessage
+      ? () => streamAssistantResponse(initialMessage, initialAttachments)
+      : null;
+
   useEffect(() => {
-    if (
-      !streamInitialResponse ||
-      initialStreamStartedRef.current ||
-      !session ||
-      state.isStreaming
-    ) {
+    if (initialStreamStartedRef.current || !session || state.isStreaming) {
       return;
     }
-
-    const initialMessage = initialPrompt?.trim();
-    if (!initialMessage) return;
+    if (!startInitialStreamRef.current) return;
 
     initialStreamStartedRef.current = true;
     const timeoutId = window.setTimeout(() => {
-      void streamAssistantResponse(initialMessage, initialAttachments);
+      void startInitialStreamRef.current?.();
     }, 0);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [
-    session,
-    state.isStreaming,
-    streamAssistantResponse,
-    streamInitialResponse,
-    initialPrompt,
-    initialAttachments,
-  ]);
+  }, [session, sessionId, state.isStreaming]);
 
   const sendMessage = useCallback(
     (text: string, attachments: ChatAttachment[] = []) => {

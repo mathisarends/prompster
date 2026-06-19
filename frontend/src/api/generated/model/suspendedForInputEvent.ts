@@ -13,6 +13,7 @@ export interface SuspendedForInputEvent {
   question?: string | null;
   hint?: string | null;
   options?: string[];
+  recommendedOption?: string | null;
   selectionMode?: OnboardingQuestionSelectionMode;
   questionId?: string | null;
   isLastQuestion?: boolean;

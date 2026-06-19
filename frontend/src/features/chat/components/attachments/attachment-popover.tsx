@@ -1,12 +1,13 @@
 import {
   type KeyboardEvent,
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import { Paperclip, Search } from "lucide-react";
+import { Music2, Paperclip, Search, Upload } from "lucide-react";
 
 import { useSearchSpotify } from "@/api/generated/spotify/spotify";
 import { SpotifySearchType } from "@/api/generated/model";
@@ -51,6 +52,10 @@ type AttachmentPopoverProps = {
   onTriggerClick?: () => void;
   hideSearchInput?: boolean;
   onPick?: () => void;
+  showActionMenu?: boolean;
+  onUploadClick?: () => void;
+  triggerIcon?: ReactNode;
+  triggerAriaLabel?: string;
 };
 
 type AttachmentSuggestion =
@@ -72,9 +77,16 @@ export const AttachmentPopover = ({
   onQueryChange,
   hideSearchInput = false,
   onPick,
+  showActionMenu = false,
+  onUploadClick,
+  triggerIcon,
+  triggerAriaLabel = "Anhang hinzufuegen oder @ eingeben",
 }: AttachmentPopoverProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [internalQuery, setInternalQuery] = useState("");
+  const [view, setView] = useState<"menu" | "search">(
+    showActionMenu ? "menu" : "search",
+  );
   const [resultFilter, setResultFilter] =
     useState<AttachmentResultFilter>("all");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -82,6 +94,8 @@ export const AttachmentPopover = ({
   const open = controlledOpen ?? internalOpen;
   const query = controlledQuery ?? internalQuery;
   const debouncedQuery = useDebouncedValue(query.trim(), SEARCH_DEBOUNCE_MS);
+  const isActionMenuVisible =
+    showActionMenu && !hideSearchInput && view === "menu";
 
   const setQuery = useCallback(
     (nextQuery: string) => {
@@ -104,13 +118,17 @@ export const AttachmentPopover = ({
     if (!next && controlledQuery === undefined) {
       setQuery("");
     }
+
+    if (!next && showActionMenu) {
+      setView("menu");
+    }
   };
 
   useEffect(() => {
-    if (!open || hideSearchInput) return;
+    if (!open || hideSearchInput || isActionMenuVisible) return;
     const id = window.setTimeout(() => inputRef.current?.focus(), 30);
     return () => window.clearTimeout(id);
-  }, [hideSearchInput, open]);
+  }, [hideSearchInput, isActionMenuVisible, open]);
 
   const parsedRef = useMemo(() => {
     const ref = parseSpotifyRef(query);
@@ -129,7 +147,10 @@ export const AttachmentPopover = ({
   );
 
   const search = useSearchSpotify(searchParams, {
-    query: { enabled: open && canSearch, staleTime: 30_000 },
+    query: {
+      enabled: open && !isActionMenuVisible && canSearch,
+      staleTime: 30_000,
+    },
   });
 
   const attachedKey = useMemo(
@@ -245,6 +266,15 @@ export const AttachmentPopover = ({
     handleListKeyDown(event);
   };
 
+  const handleSearchClick = () => {
+    setView("search");
+  };
+
+  const handleUploadClick = () => {
+    onUploadClick?.();
+    handleOpenChange(false);
+  };
+
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <TooltipProvider delay={300}>
@@ -258,7 +288,7 @@ export const AttachmentPopover = ({
                     variant="ghost"
                     size="icon"
                     disabled={disabled}
-                    aria-label="Anhang hinzufügen oder @ eingeben"
+                    aria-label={triggerAriaLabel}
                     className={cn(
                       "shrink-0 rounded-full text-muted-foreground hover:text-foreground",
                       triggerClassName,
@@ -270,7 +300,7 @@ export const AttachmentPopover = ({
                       onTriggerClick();
                     }}
                   >
-                    <Paperclip className="size-4" />
+                    {triggerIcon ?? <Paperclip className="size-4" />}
                   </Button>
                 }
               />
@@ -286,113 +316,136 @@ export const AttachmentPopover = ({
         side="top"
         align="start"
         sideOffset={10}
-        className="w-80 p-0"
+        className={cn(isActionMenuVisible ? "w-64" : "w-80", "p-0")}
         onKeyDown={handlePopoverKeyDown}
       >
-        {!hideSearchInput && (
-          <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-2.5">
-            <Search className="size-4 shrink-0 text-muted-foreground" />
-            <input
-              ref={inputRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleInputKeyDown}
-              placeholder="Spotify suchen oder Link einfügen"
-              className="h-7 min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-muted-foreground/70"
-            />
+        {isActionMenuVisible ? (
+          <div className="p-1.5">
+            <button
+              type="button"
+              className="flex h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted"
+              onClick={handleUploadClick}
+            >
+              <Upload className="size-4 text-muted-foreground" />
+              Dateien hochladen
+            </button>
+            <button
+              type="button"
+              className="flex h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:bg-muted"
+              onClick={handleSearchClick}
+            >
+              <Music2 className="size-4 text-muted-foreground" />
+              Spotify durchsuchen
+            </button>
           </div>
-        )}
+        ) : (
+          <>
+            {!hideSearchInput && (
+              <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-2.5">
+                <Search className="size-4 shrink-0 text-muted-foreground" />
+                <input
+                  ref={inputRef}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder="Spotify suchen oder Link einfügen"
+                  className="h-7 min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-muted-foreground/70"
+                />
+              </div>
+            )}
 
-        <AttachmentSearchFilters
-          value={resultFilter}
-          onChange={setResultFilter}
-        />
-
-        <div className="prompster-scrollbar max-h-80 overflow-y-auto p-1.5">
-          {parsedRef ? (
-            <ParsedSpotifyAttachmentRow
-              ref={(element) => {
-                itemRefs.current[0] = element;
-              }}
-              parsedRef={parsedRef}
-              onPick={addParsedRef}
-              isHighlighted={highlightedIndex === 0}
-              onMouseEnter={() => setHighlightedIndex(0)}
+            <AttachmentSearchFilters
+              value={resultFilter}
+              onChange={setResultFilter}
             />
-          ) : !canSearch ? (
-            <div className="px-3 py-6 text-center text-[12px] text-muted-foreground">
-              Suche nach Playlists oder Artists bei Spotify.
-              <br />
-              Du kannst auch einen Spotify-Link einfügen.
-            </div>
-          ) : search.isLoading ? (
-            <AttachmentSearchSkeleton />
-          ) : search.isError ? (
-            <div className="px-3 py-6 text-center text-[12px] text-muted-foreground">
-              Spotify-Suche nicht verfügbar.
-            </div>
-          ) : !hasResults ? (
-            <div className="px-3 py-6 text-center text-[12px] text-muted-foreground">
-              Keine Treffer.
-            </div>
-          ) : (
-            <>
-              {visiblePlaylists.length > 0 && (
-                <>
-                  <AttachmentSectionLabel label="Playlists" />
-                  {visiblePlaylists.map((playlist, index) => {
-                    const suggestion = resultSuggestions[index];
-                    if (suggestion?.type !== "attachment") return null;
 
-                    const { attachment } = suggestion;
-                    return (
-                      <AttachmentResultRow
-                        key={`p-${playlist.id}`}
-                        ref={(element) => {
-                          itemRefs.current[index] = element;
-                        }}
-                        attachment={attachment}
-                        isAttached={attachedKey.has(
-                          `${attachment.kind}:${attachment.id}`,
-                        )}
-                        onPick={() => pick(attachment)}
-                        isHighlighted={highlightedIndex === index}
-                        onMouseEnter={() => setHighlightedIndex(index)}
-                      />
-                    );
-                  })}
+            <div className="prompster-scrollbar max-h-80 overflow-y-auto p-1.5">
+              {parsedRef ? (
+                <ParsedSpotifyAttachmentRow
+                  ref={(element) => {
+                    itemRefs.current[0] = element;
+                  }}
+                  parsedRef={parsedRef}
+                  onPick={addParsedRef}
+                  isHighlighted={highlightedIndex === 0}
+                  onMouseEnter={() => setHighlightedIndex(0)}
+                />
+              ) : !canSearch ? (
+                <div className="px-3 py-6 text-center text-[12px] text-muted-foreground">
+                  Suche nach Playlists oder Artists bei Spotify.
+                  <br />
+                  Du kannst auch einen Spotify-Link einfügen.
+                </div>
+              ) : search.isLoading ? (
+                <AttachmentSearchSkeleton />
+              ) : search.isError ? (
+                <div className="px-3 py-6 text-center text-[12px] text-muted-foreground">
+                  Spotify-Suche nicht verfügbar.
+                </div>
+              ) : !hasResults ? (
+                <div className="px-3 py-6 text-center text-[12px] text-muted-foreground">
+                  Keine Treffer.
+                </div>
+              ) : (
+                <>
+                  {visiblePlaylists.length > 0 && (
+                    <>
+                      <AttachmentSectionLabel label="Playlists" />
+                      {visiblePlaylists.map((playlist, index) => {
+                        const suggestion = resultSuggestions[index];
+                        if (suggestion?.type !== "attachment") return null;
+
+                        const { attachment } = suggestion;
+                        return (
+                          <AttachmentResultRow
+                            key={`p-${playlist.id}`}
+                            ref={(element) => {
+                              itemRefs.current[index] = element;
+                            }}
+                            attachment={attachment}
+                            isAttached={attachedKey.has(
+                              `${attachment.kind}:${attachment.id}`,
+                            )}
+                            onPick={() => pick(attachment)}
+                            isHighlighted={highlightedIndex === index}
+                            onMouseEnter={() => setHighlightedIndex(index)}
+                          />
+                        );
+                      })}
+                    </>
+                  )}
+                  {visibleArtists.length > 0 && (
+                    <>
+                      <AttachmentSectionLabel label="Artists" />
+                      {visibleArtists.map((artist, index) => {
+                        const itemIndex = visiblePlaylists.length + index;
+                        const suggestion = resultSuggestions[itemIndex];
+                        if (suggestion?.type !== "attachment") return null;
+
+                        const { attachment } = suggestion;
+                        return (
+                          <AttachmentResultRow
+                            key={`a-${artist.id}`}
+                            ref={(element) => {
+                              itemRefs.current[itemIndex] = element;
+                            }}
+                            attachment={attachment}
+                            isAttached={attachedKey.has(
+                              `${attachment.kind}:${attachment.id}`,
+                            )}
+                            onPick={() => pick(attachment)}
+                            isHighlighted={highlightedIndex === itemIndex}
+                            onMouseEnter={() => setHighlightedIndex(itemIndex)}
+                          />
+                        );
+                      })}
+                    </>
+                  )}
                 </>
               )}
-              {visibleArtists.length > 0 && (
-                <>
-                  <AttachmentSectionLabel label="Artists" />
-                  {visibleArtists.map((artist, index) => {
-                    const itemIndex = visiblePlaylists.length + index;
-                    const suggestion = resultSuggestions[itemIndex];
-                    if (suggestion?.type !== "attachment") return null;
-
-                    const { attachment } = suggestion;
-                    return (
-                      <AttachmentResultRow
-                        key={`a-${artist.id}`}
-                        ref={(element) => {
-                          itemRefs.current[itemIndex] = element;
-                        }}
-                        attachment={attachment}
-                        isAttached={attachedKey.has(
-                          `${attachment.kind}:${attachment.id}`,
-                        )}
-                        onPick={() => pick(attachment)}
-                        isHighlighted={highlightedIndex === itemIndex}
-                        onMouseEnter={() => setHighlightedIndex(itemIndex)}
-                      />
-                    );
-                  })}
-                </>
-              )}
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </PopoverContent>
     </Popover>
   );

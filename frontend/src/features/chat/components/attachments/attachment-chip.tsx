@@ -2,15 +2,10 @@ import { useState } from "react";
 import { Disc3, Image, ListMusic, Music, User, X } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogTitle,
-} from "@/shared/ui/dialog";
 import { cn } from "@/shared/lib/utils";
 
 import type { ChatAttachment, ChatAttachmentKind } from "./attachment-types";
+import { ImageAttachmentPreviewDialog } from "./image-attachment-preview-dialog";
 
 type AttachmentChipProps = {
   attachment: ChatAttachment;
@@ -113,7 +108,7 @@ const ImageAttachmentChip = ({
   const [open, setOpen] = useState(false);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
       <div
         className={cn(
           "group/attachment relative size-28 shrink-0 sm:size-32",
@@ -154,32 +149,11 @@ const ImageAttachmentChip = ({
         )}
       </div>
 
-      <DialogContent
-        backdropClassName="bg-black/74 backdrop-blur-[1px]"
-        className="inset-0 left-0 top-0 flex h-dvh max-h-none w-screen max-w-none translate-x-0 flex-col rounded-none border-0 bg-transparent p-0 text-white shadow-none data-open:zoom-in-100 data-closed:zoom-out-100"
-      >
-        <div className="pointer-events-none fixed inset-x-0 top-0 z-10 flex h-16 items-center justify-end px-5">
-          <DialogTitle className="sr-only">Bildvorschau</DialogTitle>
-          <DialogClose
-            className="pointer-events-auto grid size-10 place-items-center rounded-full text-white/85 outline-none transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70"
-            aria-label="Vorschau schliessen"
-          >
-            <X className="size-5" />
-          </DialogClose>
-        </div>
-
-        <div className="flex min-h-0 flex-1 items-center justify-center p-6 sm:p-10">
-          {attachment.imageUrl ? (
-            <img
-              src={attachment.imageUrl}
-              alt=""
-              className="max-h-[calc(100dvh-5rem)] max-w-[calc(100vw-3rem)] object-contain"
-            />
-          ) : (
-            <Image className="size-12 text-white/55" />
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+      <ImageAttachmentPreviewDialog
+        attachment={attachment}
+        open={open}
+        onOpenChange={setOpen}
+      />
+    </>
   );
 };

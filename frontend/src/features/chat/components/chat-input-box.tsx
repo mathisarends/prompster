@@ -11,6 +11,7 @@ import {
   useContext,
   useEffect,
   useRef,
+  useState,
 } from "react";
 
 import { Plus } from "lucide-react";
@@ -28,7 +29,6 @@ import {
   playTranscriptionStartSound,
   playTranscriptionStopSound,
 } from "@/features/chat/lib/transcription-sounds";
-import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { useBufferedControlledValue } from "@/shared/hooks/useBufferedControlledValue";
 import { cn } from "@/shared/lib/utils";
@@ -335,23 +335,31 @@ const ChatInputAddButton = ({
   className,
   onClick,
 }: ChatInputAddButtonProps) => {
-  const { disabled, isSubmitting, openFilePicker } = useChatInput();
+  const {
+    addAttachment,
+    attachments,
+    disabled,
+    isAttachmentUiEnabled,
+    isSubmitting,
+    openFilePicker,
+  } = useChatInput();
+  const [open, setOpen] = useState(false);
+
+  if (!isAttachmentUiEnabled) return null;
 
   return (
-    <Button
-      type="button"
-      size="icon"
-      variant="ghost"
-      onClick={onClick ?? openFilePicker}
+    <AttachmentPopover
+      attachments={attachments}
+      onAdd={addAttachment}
       disabled={disabled || isSubmitting}
-      aria-label="Bild hinzufuegen"
-      className={cn(
-        "size-9 rounded-full text-muted-foreground hover:text-foreground",
-        className,
-      )}
-    >
-      <Plus className="size-5" />
-    </Button>
+      open={open}
+      onOpenChange={setOpen}
+      showActionMenu
+      onUploadClick={onClick ?? openFilePicker}
+      triggerIcon={<Plus className="size-5" />}
+      triggerAriaLabel="Dateien oder Spotify hinzufuegen"
+      triggerClassName={cn("size-9", className)}
+    />
   );
 };
 
