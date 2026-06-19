@@ -154,6 +154,45 @@ class SessionModel(DatabaseEntity, table=True):
     )
 
 
+class ActiveSessionRunModel(SQLModel, table=True):
+    __tablename__ = "active_session_runs"
+    __table_args__ = (
+        Index("ix_active_session_runs_run_id", "run_id"),
+        Index("ix_active_session_runs_stop_requested", "stop_requested"),
+    )
+
+    session_id: UUID = Field(
+        sa_column=Column(
+            ForeignKey("sessions.id", ondelete="CASCADE"),
+            primary_key=True,
+            nullable=False,
+        )
+    )
+    run_id: UUID
+    stop_requested: bool = Field(
+        default=False,
+        sa_type=Boolean(),
+        sa_column_kwargs={"server_default": text("false")},
+    )
+    created_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),
+        sa_column_kwargs={"server_default": text("now()")},
+    )
+    updated_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),
+        sa_column_kwargs={
+            "server_default": text("now()"),
+            "onupdate": text("now()"),
+        },
+    )
+    stop_requested_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),
+    )
+
+
 class SessionUserMessageModel(DatabaseEntity, table=True):
     __tablename__ = "session_user_messages"
     __table_args__ = (

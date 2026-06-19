@@ -20,7 +20,7 @@ from agent.events import (
 from agent.messages import MessageManager
 from agent.tools import DeckCritic, Tools, Spotify
 from agent.tools.views import Phase
-from agent.deck import DeckStore
+from agent.deck import DeckDraftUpdate, DeckStore
 from agent.tokens import TokenTracker
 from agent.views import UserEvent
 
@@ -114,6 +114,8 @@ class Agent:
                 return
 
             if not response.tool_calls:
+                for event in self._run_completion_guardrails():
+                    yield event
                 self._messages.add_assistant(response.completion)
                 yield AssistantMessageEvent(content=response.completion)
                 yield RunCompletedEvent(output=response.completion)
@@ -186,10 +188,7 @@ class Agent:
                 result=content,
             )
         for update in self._deck_store.drain_deck_draft_updates():
-            yield DeckUpdatedEvent(
-                deck_draft=update.deck_draft,
-                update=update,
-            )
+            yield self._to_deck_updated_event(update)
         self._messages.add_tool_result(
             tool_call_id=call.id,
             content=content,
@@ -212,3 +211,22 @@ class Agent:
                     recommended_option=request.recommended_option,
                     selection_mode=request.selection_mode,
                 )
+
+    def _run_completion_guardrails(self) -> list[DeckUpdatedEvent]:
+        # The LLM has ended its tool loop here; keep final deck state deterministic
+        # before publishing the assistant completion.
+        if self._deck_store.remove_duplicate_tracks() is None:
+            return []
+        return self._drain_deck_draft_update_events()
+
+    def _drain_deck_draft_update_events(self) -> list[DeckUpdatedEvent]:
+        return [
+            self._to_deck_updated_event(update)
+            for update in self._deck_store.drain_deck_draft_updates()
+        ]
+
+    def _to_deck_updated_event(self, update: DeckDraftUpdate) -> DeckUpdatedEvent:
+        return DeckUpdatedEvent(
+            deck_draft=update.deck_draft,
+            update=update,
+        )

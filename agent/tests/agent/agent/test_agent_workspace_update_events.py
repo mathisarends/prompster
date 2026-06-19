@@ -15,10 +15,11 @@ from agent.agent import (
     ToolResultEvent,
     SuspendedForUserInputEvent,
     DeckUpdatedEvent,
+    RunCompletedEvent,
 )
 from agent.tools import ToolContext, Tools
 from agent.tools.views import ActionType, Phase
-from agent.deck import DeckStore, DeckDraftTrack
+from agent.deck import DeckDraft, DeckDraftTrack, DeckDraftTracksRemoved, DeckStore
 
 
 @dataclass
@@ -138,6 +139,65 @@ class TestAgentWorkspaceUpdateEvents:
         )
         assert deck_update.deck_draft.name == "Deck"
         assert deck_update.deck_draft.tracks[0].title == "Take On Me"
+        assert store.drain_deck_draft_updates() == []
+
+    @pytest.mark.asyncio
+    async def test_completion_guardrail_removes_duplicate_deck_tracks(self) -> None:
+        first_track = DeckDraftTrack(
+            title="Take On Me",
+            artist="a-ha",
+            year=1985,
+            spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+            cover_url="https://i.scdn.co/image/take-on-me.jpg",
+        )
+        duplicate_track = DeckDraftTrack(
+            title="Take On Me",
+            artist="a-ha",
+            year=1985,
+            spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+            cover_url="https://i.scdn.co/image/take-on-me-alt.jpg",
+        )
+        other_track = DeckDraftTrack(
+            title="Billie Jean",
+            artist="Michael Jackson",
+            year=1982,
+            spotify_uri="spotify:track:5ChkMS8OtdzJeqyybCc9R5",
+            cover_url="https://i.scdn.co/image/billie-jean.jpg",
+        )
+        store = DeckStore(
+            DeckDraft(
+                name="80er Party",
+                tracks=[first_track, duplicate_track, other_track],
+            )
+        )
+        llm = _FakeLlm(
+            [_ChatResponse(completion="Der Entwurf ist bereit.", tool_calls=[])]
+        )
+        agent = Agent(llm=llm, deck_store=store, phase=Phase.BUILD)
+
+        events = [event async for event in agent.stream("Fertig?")]
+
+        deck_update_index = next(
+            index
+            for index, event in enumerate(events)
+            if isinstance(event, DeckUpdatedEvent)
+        )
+        run_completed_index = next(
+            index
+            for index, event in enumerate(events)
+            if isinstance(event, RunCompletedEvent)
+        )
+        deck_update = events[deck_update_index]
+
+        assert deck_update_index < run_completed_index
+        assert isinstance(deck_update, DeckUpdatedEvent)
+        assert isinstance(deck_update.update, DeckDraftTracksRemoved)
+        assert deck_update.update.track_ids == [duplicate_track.id]
+        assert store.draft is not None
+        assert [track.id for track in store.draft.tracks] == [
+            first_track.id,
+            other_track.id,
+        ]
         assert store.drain_deck_draft_updates() == []
 
     @pytest.mark.asyncio

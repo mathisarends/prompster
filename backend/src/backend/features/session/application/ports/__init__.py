@@ -1,3 +1,4 @@
+from .active_run_store import ActiveSessionRunStore
 from .playlist_deck_generator import PlaylistDeckGenerator, PlaylistDeckTrack
 from .message_attachment_store import MessageAttachmentStore, StoredAttachment
 from .playlist_metadata_generator import (
@@ -25,6 +26,7 @@ from .session_summary_query import SessionSummary, SessionSummaryQuery
 from .title_generator import SessionTitleGenerator
 
 __all__ = [
+    "ActiveSessionRunStore",
     "MessageAttachmentStore",
     "PlaylistDeckGenerator",
     "PlaylistDeckTrack",

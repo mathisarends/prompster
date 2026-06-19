@@ -1,7 +1,7 @@
 import asyncio
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from agent import Agent
 from agent import Spotify
@@ -13,17 +13,17 @@ from agent.deck import (
 from agent.tools.views import Phase as AgentPhase
 from llm import LLMCredentials, create_openai_llm
 from llm.registry import ensure_supported_openai_model
-
-from backend.features.session.domain import MAX_PLAYLIST_TRACKS
 from llmify import ChatModel
 from spotifyify import Spotifyify
 
+from backend.features.session.application.ports import ActiveSessionRunStore
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
     SessionRunnerCancelled,
     SessionRunnerEvent,
 )
 from backend.features.session.domain import (
+    MAX_PLAYLIST_TRACKS,
     Playlist,
     Session,
 )
@@ -35,6 +35,7 @@ from backend.features.session.infrastructure.agent_history import AgentHistoryBu
 
 @dataclass
 class _ActiveRun:
+    run_id: UUID
     cancellation: asyncio.Event
     agent: Agent
 
@@ -46,7 +47,7 @@ class _ActiveRun:
         return self.cancellation.is_set()
 
 
-class _ActiveRunRegistry:
+class AgentRuntimeRegistry:
     def __init__(self) -> None:
         self._runs: dict[UUID, _ActiveRun] = {}
         self._lock = asyncio.Lock()
@@ -77,6 +78,8 @@ class AgentSessionRunner(SessionRunner):
         spotify: Spotifyify,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,
+        active_runs: ActiveSessionRunStore,
+        runtime_registry: AgentRuntimeRegistry,
         system_prompt: str | None = None,
     ) -> None:
         self._llm = llm
@@ -84,8 +87,9 @@ class AgentSessionRunner(SessionRunner):
         self._spotify = spotify
         self._event_mapper = event_mapper
         self._history_builder = history_builder
+        self._active_runs = active_runs
+        self._runtime_registry = runtime_registry
         self._system_prompt = system_prompt
-        self._active_runs = _ActiveRunRegistry()
 
     async def run(
         self,
@@ -94,24 +98,57 @@ class AgentSessionRunner(SessionRunner):
         model_id: str | None = None,
     ) -> AsyncIterator[SessionRunnerEvent]:
         agent = await self._create_agent(session=session, model_id=model_id)
-        active_run = _ActiveRun(cancellation=asyncio.Event(), agent=agent)
-        await self._active_runs.register(session_id=session.id, run=active_run)
+        active_run = _ActiveRun(
+            run_id=uuid4(),
+            cancellation=asyncio.Event(),
+            agent=agent,
+        )
         try:
+            await self._active_runs.register(
+                session_id=session.id,
+                run_id=active_run.run_id,
+            )
+            await self._runtime_registry.register(session_id=session.id, run=active_run)
             async for event in agent.stream():
-                if active_run.is_cancelled():
+                if await self._is_cancelled(
+                    session_id=session.id,
+                    active_run=active_run,
+                ):
                     yield SessionRunnerCancelled()
                     return
                 for session_event in self._event_mapper.map(event):
                     yield session_event
-                    if active_run.is_cancelled():
+                    if await self._is_cancelled(
+                        session_id=session.id,
+                        active_run=active_run,
+                    ):
                         yield SessionRunnerCancelled()
                         return
         finally:
-            await self._active_runs.complete(session_id=session.id, run=active_run)
+            await self._runtime_registry.complete(session_id=session.id, run=active_run)
+            await self._active_runs.complete(
+                session_id=session.id,
+                run_id=active_run.run_id,
+            )
             await agent.close()
 
     async def stop(self, *, session_id: UUID) -> bool:
-        return await self._active_runs.stop(session_id=session_id)
+        runtime_stopped = await self._runtime_registry.stop(session_id=session_id)
+        persisted = await self._active_runs.request_stop(session_id=session_id)
+        return runtime_stopped or persisted
+
+    async def _is_cancelled(
+        self,
+        *,
+        session_id: UUID,
+        active_run: _ActiveRun,
+    ) -> bool:
+        if active_run.is_cancelled():
+            return True
+        return await self._active_runs.is_stop_requested(
+            session_id=session_id,
+            run_id=active_run.run_id,
+        )
 
     async def _create_agent(
         self,

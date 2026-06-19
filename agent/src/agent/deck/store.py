@@ -160,6 +160,45 @@ class DeckStore:
         )
         return draft
 
+    def remove_duplicate_tracks(self) -> DeckDraft | None:
+        if self._draft is None:
+            return None
+
+        draft = self._draft
+        seen_uris: set[str] = set()
+        duplicate_track_ids: list[UUID] = []
+        for track in draft.tracks:
+            if track.spotify_uri is None:
+                continue
+            if track.spotify_uri in seen_uris:
+                duplicate_track_ids.append(track.id)
+                continue
+            seen_uris.add(track.spotify_uri)
+
+        if not duplicate_track_ids:
+            return None
+
+        duplicate_track_id_set = set(duplicate_track_ids)
+        draft.tracks = [
+            track for track in draft.tracks if track.id not in duplicate_track_id_set
+        ]
+        self.cache_tracks(draft.tracks)
+        self._pending_updates.append(
+            DeckDraftTracksRemoved(
+                deck_draft=draft,
+                track_ids=duplicate_track_ids,
+            )
+        )
+        logger.info(
+            "Removed duplicate deck tracks",
+            extra={
+                "deck_id": str(draft.id),
+                "removed_tracks": len(duplicate_track_ids),
+                "total_tracks": len(draft.tracks),
+            },
+        )
+        return draft
+
     def replace_tracks(
         self,
         replacements: list[DeckDraftTrackReplacement],

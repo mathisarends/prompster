@@ -1,7 +1,7 @@
 from dishka import Provider, Scope, provide
 from llm import LLMCredentials, create_gpt_5_4_mini
 from llmify import ChatModel
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from spotifyify import Spotifyify
 
 from backend.features.oauth_connections.application import SpotifyTokenService
@@ -14,6 +14,7 @@ from backend.features.session.application import (
     SessionSpotifyPlaylistExporter,
 )
 from backend.features.session.application.ports import (
+    ActiveSessionRunStore,
     MessageAttachmentStore,
     PlaylistDeckGenerator,
     PlaylistMetadataGenerator,
@@ -26,6 +27,9 @@ from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
 from backend.features.session.domain import SessionRepository
+from backend.features.session.infrastructure.active_run_store import (
+    SqlActiveSessionRunStore,
+)
 from backend.features.session.infrastructure.agent_event_mapper import (
     AgentSessionEventMapper,
 )
@@ -40,7 +44,10 @@ from backend.features.session.infrastructure.message_attachment_store import (
     StorageMessageAttachmentStore,
 )
 from backend.features.session.infrastructure.repository import SqlSessionRepository
-from backend.features.session.infrastructure.session_runner import AgentSessionRunner
+from backend.features.session.infrastructure.session_runner import (
+    AgentRuntimeRegistry,
+    AgentSessionRunner,
+)
 from backend.features.session.infrastructure.session_summary_query import (
     SqlSessionSummaryQuery,
 )
@@ -87,6 +94,17 @@ class SessionProvider(Provider):
         return AgentHistoryBuilder(message_attachment_store=message_attachment_store)
 
     @provide(scope=Scope.APP)
+    def provide_active_session_run_store(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+    ) -> ActiveSessionRunStore:
+        return SqlActiveSessionRunStore(session_factory=session_factory)
+
+    @provide(scope=Scope.APP)
+    def provide_agent_runtime_registry(self) -> AgentRuntimeRegistry:
+        return AgentRuntimeRegistry()
+
+    @provide(scope=Scope.APP)
     def provide_session_runner(
         self,
         llm: ChatModel,
@@ -94,6 +112,8 @@ class SessionProvider(Provider):
         spotify: Spotifyify,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,
+        active_runs: ActiveSessionRunStore,
+        runtime_registry: AgentRuntimeRegistry,
     ) -> SessionRunner:
         return AgentSessionRunner(
             llm=llm,
@@ -101,6 +121,8 @@ class SessionProvider(Provider):
             spotify=spotify,
             event_mapper=event_mapper,
             history_builder=history_builder,
+            active_runs=active_runs,
+            runtime_registry=runtime_registry,
         )
 
     @provide(scope=Scope.REQUEST)
