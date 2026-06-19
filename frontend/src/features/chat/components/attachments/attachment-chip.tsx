@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { Disc3, Image, ListMusic, Music, User, X } from "lucide-react";
+import {
+  AlertCircle,
+  Disc3,
+  Image,
+  ListMusic,
+  Loader2,
+  Music,
+  User,
+  X,
+} from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
@@ -106,6 +115,8 @@ const ImageAttachmentChip = ({
   className,
 }: AttachmentChipProps) => {
   const [open, setOpen] = useState(false);
+  const isUploading = attachment.uploadStatus === "uploading";
+  const isFailed = attachment.uploadStatus === "failed";
 
   return (
     <>
@@ -120,6 +131,7 @@ const ImageAttachmentChip = ({
           onClick={() => setOpen(true)}
           className="block h-full w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.05] text-left shadow-sm shadow-black/20 outline-none ring-offset-background transition hover:border-white/20 focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Bildvorschau oeffnen"
+          disabled={isUploading}
         >
           {attachment.imageUrl ? (
             <img
@@ -131,6 +143,25 @@ const ImageAttachmentChip = ({
           ) : (
             <span className="grid h-full w-full place-items-center text-muted-foreground">
               <Image className="size-7" />
+            </span>
+          )}
+          {(isUploading || isFailed) && (
+            <span
+              className={cn(
+                "absolute inset-0 grid place-items-center rounded-2xl bg-black/55 text-white",
+                isFailed && "bg-destructive/75",
+              )}
+            >
+              {isUploading ? (
+                <Loader2 className="size-6 animate-spin" aria-hidden="true" />
+              ) : (
+                <AlertCircle className="size-6" aria-hidden="true" />
+              )}
+              <span className="sr-only">
+                {isUploading
+                  ? "Bild wird hochgeladen"
+                  : "Bild-Upload fehlgeschlagen"}
+              </span>
             </span>
           )}
         </button>

@@ -15,4 +15,6 @@ export type ChatAttachment = {
   storageKey?: string;
   contentType?: string;
   sizeBytes?: number;
+  uploadStatus?: "uploading" | "uploaded" | "failed";
+  uploadError?: string;
 };

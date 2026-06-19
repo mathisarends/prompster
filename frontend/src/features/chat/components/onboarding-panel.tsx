@@ -8,6 +8,10 @@ import type {
   PendingInput,
   PendingOnboardingQuestion,
 } from "@/features/chat/state/chat-reducer";
+// import {
+//   OnboardingReferencesStep,
+//   type ReferenceSelection,
+// } from "@/features/chat/components/onboarding-references-panel";
 
 export type OnboardingAnswer = {
   questionId: string;
@@ -143,10 +147,24 @@ export const OnboardingPanel = ({
     () => chunk(questions, QUESTIONS_PER_STEP),
     [questions],
   );
+  // Temporarily disable the dedicated references step and keep onboarding on the
+  // question flow only.
+  // const totalSteps = questionSteps.length + 1;
+  // const referencesStepIndex = questionSteps.length;
+  // const currentStep = Math.min(stepIndex, referencesStepIndex);
+  // const isReferencesStep = currentStep === referencesStepIndex;
   const currentStep = Math.min(stepIndex, steps.length - 1);
   const stepQuestions = steps[currentStep] ?? [];
   const isLastStep = currentStep === steps.length - 1;
   const firstQuestionNumber = currentStep * QUESTIONS_PER_STEP + 1;
+  // const handleReferenceSelectionChange = useCallback(
+  //   (selection: ReferenceSelection) => {
+  //     setReferenceCount(
+  //       selection.playlists.length + selection.artists.length,
+  //     );
+  //   },
+  //   [],
+  // );
 
   const answers = useMemo(
     () =>
@@ -263,9 +281,29 @@ export const OnboardingPanel = ({
               />
             );
           })}
+          {/*
+          <span
+            key="references"
+            className={cn(
+              "h-1 flex-1 rounded-full transition-colors",
+              referenceCount > 0 ? "bg-primary/70" : "bg-white/10",
+              isReferencesStep && "bg-primary",
+            )}
+          />
+          */}
         </div>
       </div>
 
+      {/*
+      {isReferencesStep ? (
+        <OnboardingReferencesStep
+          key="references"
+          disabled={isSubmitting}
+          className="animate-in fade-in slide-in-from-bottom-1 duration-300"
+          onSelectionChange={handleReferenceSelectionChange}
+        />
+      ) : (
+      */}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-7 py-10">
         <div
           key={currentStep}
@@ -286,6 +324,9 @@ export const OnboardingPanel = ({
           </div>
         </div>
       </div>
+      {/*
+      )}
+      */}
 
       <div className="flex shrink-0 items-center justify-between gap-3 border-t border-white/[0.06] px-7 py-4">
         <Button
@@ -371,10 +412,6 @@ const OnboardingQuestionBlock = ({
               icon={active ? Check : undefined}
               active={active}
               activeClassName="border-primary/50 bg-primary/15 text-foreground shadow-[0_2px_16px_-6px_hsl(141_73%_42%/0.5)] [&>svg]:text-primary hover:border-primary/60 hover:bg-primary/20 hover:text-foreground"
-              className={cn(
-                recommended &&
-                  "border-primary/35 text-foreground ring-1 ring-primary/15 shadow-[0_0_18px_-12px_hsl(141_73%_42%/0.8)] hover:border-primary/45 hover:ring-primary/25",
-              )}
               trailingContent={
                 recommended ? (
                   <span

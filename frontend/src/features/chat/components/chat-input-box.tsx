@@ -23,6 +23,7 @@ import { ModelSelect } from "@/features/chat/components/model-select";
 import { SendButton } from "@/features/chat/components/send-button";
 import { TranscriptionButton } from "@/features/chat/components/transcription-button";
 import { TranscriptionWaveform } from "@/features/chat/components/transcription-waveform";
+import { uploadSessionImageFile } from "@/features/chat/api/image-attachments";
 import { useChatInputAttachments } from "@/features/chat/hooks/use-chat-input-attachments";
 import { useRealtimeTranscription } from "@/features/chat/hooks/useRealtimeTranscription";
 import {
@@ -55,6 +56,7 @@ type ChatInputBoxProps = {
   clearOnSubmit?: boolean;
   attachments?: ChatAttachment[];
   onAttachmentsChange?: (attachments: ChatAttachment[]) => void;
+  imageUploadSessionId?: string;
   selectedModel?: string;
   onModelChange?: (modelId: string) => void;
 };
@@ -75,6 +77,8 @@ type ChatInputContextValue = {
   addAttachment: (attachment: ChatAttachment) => void;
   addImageFiles: (files: File[]) => void;
   removeAttachment: (attachment: ChatAttachment) => void;
+  isUploadingAttachments: boolean;
+  hasFailedAttachmentUpload: boolean;
   attachmentPopoverOpen: boolean;
   setAttachmentPopoverOpen: (open: boolean) => void;
   attachmentQuery: string;
@@ -490,6 +494,7 @@ const ChatInputBoxComponent = ({
   clearOnSubmit = true,
   attachments: controlledAttachments,
   onAttachmentsChange,
+  imageUploadSessionId,
   selectedModel,
   onModelChange,
 }: ChatInputBoxProps) => {
@@ -498,6 +503,7 @@ const ChatInputBoxComponent = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachmentsRef = useRef<ChatAttachment[]>([]);
+  const uploadControllersRef = useRef(new Map<string, AbortController>());
   const textareaSelectionRef = useRef({ start: 0, end: 0 });
   const {
     attachments,
@@ -534,7 +540,16 @@ const ChatInputBoxComponent = ({
 
   const hasText = draftValue.trim().length > 0;
   const hasAttachments = attachments.length > 0;
-  const canSend = hasText || hasAttachments;
+  const isUploadingAttachments = attachments.some(
+    (attachment) => attachment.uploadStatus === "uploading",
+  );
+  const hasFailedAttachmentUpload = attachments.some(
+    (attachment) => attachment.uploadStatus === "failed",
+  );
+  const canSend =
+    (hasText || hasAttachments) &&
+    !isUploadingAttachments &&
+    !hasFailedAttachmentUpload;
   const canStop = isSubmitting && !!onStop;
   const isRenderedAttachmentMentionActive =
     isAttachmentUiEnabled && isAttachmentMentionActive;
@@ -545,6 +560,7 @@ const ChatInputBoxComponent = ({
 
   useEffect(
     () => () => {
+      uploadControllersRef.current.forEach((controller) => controller.abort());
       attachmentsRef.current.forEach(revokeAttachmentPreview);
     },
     [],
@@ -604,17 +620,87 @@ const ChatInputBoxComponent = ({
     setAttachments,
   ]);
 
+  const updateAttachmentById = useCallback(
+    (
+      attachmentId: string,
+      update: (attachment: ChatAttachment) => ChatAttachment,
+    ) => {
+      const nextAttachments = attachmentsRef.current.map((attachment) =>
+        attachment.id === attachmentId ? update(attachment) : attachment,
+      );
+
+      attachmentsRef.current = nextAttachments;
+      setAttachments(nextAttachments);
+    },
+    [setAttachments],
+  );
+
+  const startImageUpload = useCallback(
+    (attachment: ChatAttachment) => {
+      if (
+        !imageUploadSessionId ||
+        attachment.kind !== "image" ||
+        !attachment.file
+      ) {
+        return;
+      }
+
+      const controller = new AbortController();
+      uploadControllersRef.current.set(attachment.id, controller);
+
+      void uploadSessionImageFile(
+        imageUploadSessionId,
+        attachment.file,
+        controller.signal,
+      )
+        .then((image) => {
+          uploadControllersRef.current.delete(attachment.id);
+          if (controller.signal.aborted) return;
+
+          updateAttachmentById(attachment.id, (current) => ({
+            ...current,
+            id: image.id,
+            storageKey: image.storageKey,
+            contentType: image.contentType,
+            sizeBytes: image.sizeBytes,
+            uploadStatus: "uploaded",
+            uploadError: undefined,
+          }));
+        })
+        .catch((error) => {
+          uploadControllersRef.current.delete(attachment.id);
+          if (controller.signal.aborted) return;
+
+          updateAttachmentById(attachment.id, (current) => ({
+            ...current,
+            uploadStatus: "failed",
+            uploadError:
+              error instanceof Error
+                ? error.message
+                : "Bild konnte nicht hochgeladen werden.",
+          }));
+        });
+    },
+    [imageUploadSessionId, updateAttachmentById],
+  );
+
   const addImageFiles = useCallback(
     (files: File[]) => {
       const imageFiles = files.filter(isImageFile);
       if (imageFiles.length === 0) return;
+      const imageAttachments = imageFiles.map((file) => {
+        const attachment = createImageAttachment(file);
+        return imageUploadSessionId
+          ? { ...attachment, uploadStatus: "uploading" as const }
+          : attachment;
+      });
 
-      setAttachments([
-        ...attachments,
-        ...imageFiles.map((file) => createImageAttachment(file)),
-      ]);
+      const nextAttachments = [...attachmentsRef.current, ...imageAttachments];
+      attachmentsRef.current = nextAttachments;
+      setAttachments(nextAttachments);
+      imageAttachments.forEach(startImageUpload);
     },
-    [attachments, setAttachments],
+    [imageUploadSessionId, setAttachments, startImageUpload],
   );
 
   const openFilePicker = useCallback(() => {
@@ -642,6 +728,8 @@ const ChatInputBoxComponent = ({
 
   const removeAttachmentAndPreview = useCallback(
     (attachment: ChatAttachment) => {
+      uploadControllersRef.current.get(attachment.id)?.abort();
+      uploadControllersRef.current.delete(attachment.id);
       revokeAttachmentPreview(attachment);
       removeAttachment(attachment);
     },
@@ -893,6 +981,8 @@ const ChatInputBoxComponent = ({
     addAttachment,
     addImageFiles,
     removeAttachment: removeAttachmentAndPreview,
+    isUploadingAttachments,
+    hasFailedAttachmentUpload,
     attachmentPopoverOpen,
     setAttachmentPopoverOpen: handleAttachmentPopoverOpenChange,
     attachmentQuery: attachmentMention?.query ?? "",

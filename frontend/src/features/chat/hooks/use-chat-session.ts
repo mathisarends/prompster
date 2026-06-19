@@ -2,7 +2,6 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import type { SessionResponse } from "@/api/generated/model";
-import { AXIOS_INSTANCE } from "@/shared/api/http-client";
 import {
   getGetSessionQueryKey,
   getListSessionsQueryKey,
@@ -17,6 +16,7 @@ import {
   streamCompleteOnboarding,
   streamSendMessage,
 } from "@/features/chat/api/session-stream";
+import { uploadSessionImageFile } from "@/features/chat/api/image-attachments";
 import type { ChatAttachment } from "@/features/chat/components/attachments";
 
 import {
@@ -70,44 +70,6 @@ const getStreamErrorMessage = (error: unknown) => {
   return "Die Antwort konnte nicht geladen werden.";
 };
 
-type UploadedImageAttachmentResponse = {
-  id: string;
-  storageKey?: string;
-  storage_key?: string;
-  contentType?: string;
-  content_type?: string;
-  fileName?: string;
-  file_name?: string;
-  sizeBytes?: number;
-  size_bytes?: number;
-};
-
-const uploadImageAttachment = async (
-  sessionId: string,
-  file: File,
-  signal?: AbortSignal,
-): Promise<ImageAttachmentReferenceRequest> => {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const { data } = await AXIOS_INSTANCE.post<UploadedImageAttachmentResponse>(
-    `/api/v1/sessions/${sessionId}/image-attachments`,
-    formData,
-    {
-      headers: { "Content-Type": "multipart/form-data" },
-      signal,
-    },
-  );
-
-  return {
-    id: data.id,
-    storageKey: data.storageKey ?? data.storage_key ?? "",
-    contentType: data.contentType ?? data.content_type ?? file.type,
-    fileName: data.fileName ?? data.file_name ?? file.name,
-    sizeBytes: data.sizeBytes ?? data.size_bytes ?? file.size,
-  };
-};
-
 const toReferenceAttachment = (
   attachment: ChatAttachment,
 ): SessionMessageAttachmentRequest | null => {
@@ -122,6 +84,20 @@ const toReferenceAttachment = (
     subtitle: attachment.subtitle ?? null,
     imageUrl: attachment.imageUrl ?? null,
     spotifyId: attachment.spotifyId ?? attachment.id,
+  };
+};
+
+const toUploadedImageAttachment = (
+  attachment: ChatAttachment,
+): ImageAttachmentReferenceRequest | null => {
+  if (attachment.kind !== "image" || !attachment.storageKey) return null;
+
+  return {
+    id: attachment.id,
+    storageKey: attachment.storageKey,
+    contentType: attachment.contentType ?? attachment.file?.type ?? "image/*",
+    fileName: attachment.title,
+    sizeBytes: attachment.sizeBytes ?? attachment.file?.size ?? 1,
   };
 };
 
@@ -273,15 +249,25 @@ export const useChatSession = ({
         async (streamOptions) => {
           const imageAttachments = await Promise.all(
             attachments
-              .filter(
-                (attachment) => attachment.kind === "image" && attachment.file,
-              )
-              .map((attachment) =>
-                uploadImageAttachment(
+              .filter((attachment) => attachment.kind === "image")
+              .map((attachment) => {
+                const uploadedImage = toUploadedImageAttachment(attachment);
+                if (uploadedImage) return uploadedImage;
+                if (!attachment.file) return null;
+
+                return uploadSessionImageFile(
                   sessionId,
-                  attachment.file as File,
+                  attachment.file,
                   streamOptions.signal,
-                ),
+                );
+              })
+              .filter(
+                (
+                  attachment,
+                ): attachment is
+                  | ImageAttachmentReferenceRequest
+                  | Promise<ImageAttachmentReferenceRequest> =>
+                  attachment !== null,
               ),
           );
           const referenceAttachments = attachments
