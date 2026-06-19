@@ -194,42 +194,6 @@ def test_user_message_image_attachment_mapping_roundtrip() -> None:
     assert domain_message.image_attachments[0].size_bytes == 2048
 
 
-def test_playlist_track_mapping_preserves_lock_state() -> None:
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
-    playlist_id = uuid4()
-    track = PlaylistTrack(
-        title="Starlight",
-        artist="Muse",
-        year=2006,
-        spotify_uri="spotify:track:abc",
-        cover_url="https://example.com/cover.jpg",
-        is_pinned=True,
-    )
-
-    orm_track = repository._to_orm_track(
-        track=track,
-        playlist_id=playlist_id,
-        position=0,
-    )
-    roundtrip = repository._to_domain_track(
-        PlaylistTrackModel(
-            id=track.id,
-            playlist_id=playlist_id,
-            position=0,
-            title="Starlight",
-            artist="Muse",
-            year=2006,
-            spotify_uri="spotify:track:abc",
-            cover_url="https://example.com/cover.jpg",
-            is_pinned=True,
-            created_at=track.created_at,
-        )
-    )
-
-    assert orm_track.is_pinned is True
-    assert roundtrip.is_pinned is True
-
-
 def test_session_phase_mapping_roundtrip() -> None:
     owner_id = uuid4()
     session_id = uuid4()
@@ -431,7 +395,7 @@ def test_resolve_last_activity_at_includes_references() -> None:
 def test_user_curation_event_mapping_roundtrip() -> None:
     repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
     event = UserCurationEvent(
-        event_type=UserCurationEventType.TRACK_PINNED,
+        event_type=UserCurationEventType.TRACK_ADDED,
         track_id=uuid4(),
         track_title="Starlight",
         track_artist="Muse",
@@ -457,7 +421,7 @@ def test_user_curation_event_mapping_roundtrip() -> None:
     mapped = repository._to_domain_user_curation_event(row)
 
     assert mapped.id == event.id
-    assert mapped.event_type == UserCurationEventType.TRACK_PINNED
+    assert mapped.event_type == UserCurationEventType.TRACK_ADDED
     assert mapped.track_id == event.track_id
     assert mapped.track_title == "Starlight"
     assert mapped.track_artist == "Muse"

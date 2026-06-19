@@ -11,7 +11,7 @@ class _ResendEmailsStub:
     payload: dict[str, object] | None = None
 
     @staticmethod
-    def send(payload: dict[str, object]) -> None:
+    async def send_async(payload: dict[str, object]) -> None:
         _ResendEmailsStub.payload = payload
 
 
@@ -42,7 +42,7 @@ class TestResendEmailSender:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         _ResendEmailsStub.payload = None
-        monkeypatch.setattr("resend.Emails.send", _ResendEmailsStub.send)
+        monkeypatch.setattr("resend.Emails.send_async", _ResendEmailsStub.send_async)
 
         sender = ResendEmailSender(
             settings=ResendEmailSettings(

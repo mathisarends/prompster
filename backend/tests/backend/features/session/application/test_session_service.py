@@ -461,48 +461,6 @@ class TestSessionServiceUnstar:
             asyncio.run(service.unstar(session_id=session.id, user_id=uuid4()))
 
 
-class TestSessionServicePlaylistTrackLocks:
-    def test_locks_playlist_track_and_persists(self) -> None:
-        owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
-        track = session.add_track(title="Starlight", artist="Muse", year=2006)
-        repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_management_service(repository=repository)
-
-        result = asyncio.run(
-            service.pin_playlist_track(
-                session_id=session.id,
-                user_id=owner_id,
-                track_id=track.id,
-            )
-        )
-
-        assert result is track
-        assert track.is_pinned is True
-        assert repository.saved_sessions == [session]
-
-    def test_unlocks_playlist_track_and_persists(self) -> None:
-        owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
-        track = session.add_track(
-            title="Starlight", artist="Muse", year=2006, is_pinned=True
-        )
-        repository = _SessionRepositoryStub(session_by_id=session)
-        service = _make_management_service(repository=repository)
-
-        result = asyncio.run(
-            service.unpin_playlist_track(
-                session_id=session.id,
-                user_id=owner_id,
-                track_id=track.id,
-            )
-        )
-
-        assert result is track
-        assert track.is_pinned is False
-        assert repository.saved_sessions == [session]
-
-
 class TestSessionServiceList:
     def test_delegates_to_session_summary_query(self) -> None:
         owner_id = uuid4()

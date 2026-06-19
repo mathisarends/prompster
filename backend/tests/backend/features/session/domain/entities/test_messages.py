@@ -46,7 +46,7 @@ class TestUserMessage:
 
     def test_keeps_user_curation_event_references(self) -> None:
         event = UserCurationEvent(
-            event_type=UserCurationEventType.TRACK_PINNED,
+            event_type=UserCurationEventType.TRACK_ADDED,
             track_id=uuid4(),
             track_title="Starlight",
             track_artist="Muse",

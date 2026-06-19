@@ -10,7 +10,6 @@ from backend.features.session.domain.exceptions import (
     NoPendingToolCallSequenceError,
     PendingToolCallsError,
     PlaylistTrackLimitExceededError,
-    PlaylistTrackPinnedError,
     PlaylistTrackNotFoundError,
     PlaylistReferenceNotFoundError,
     SessionAccessDeniedError,
@@ -478,7 +477,7 @@ class TestSessionDomainSession:
     def test_add_user_message_binds_pending_user_curation_events(
         self, session: Session
     ) -> None:
-        session.add_track(title="Starlight", artist="Muse", year=2006, is_pinned=False)
+        session.add_track(title="Starlight", artist="Muse", year=2006)
 
         message = session.add_user_message("weiter")
 
@@ -514,7 +513,7 @@ class TestSessionDomainSession:
     def test_restore_user_curation_event_detaches_from_bound_user_message(
         self, session: Session
     ) -> None:
-        session.add_track(title="Starlight", artist="Muse", year=2006, is_pinned=False)
+        session.add_track(title="Starlight", artist="Muse", year=2006)
         message = session.add_user_message("weiter")
         event = message.user_curation_events[0]
 
@@ -566,62 +565,23 @@ class TestSessionDomainSession:
         with pytest.raises(PlaylistTrackNotFoundError, match="not found in playlist"):
             session.remove_track(uuid4())
 
-    def test_lock_and_unpin_track_updates_track_state(self, session: Session) -> None:
-        track = session.add_track(title="Starlight", artist="Muse", year=2006)
-
-        pinned = session.pin_track(track.id)
-        unlocked = session.unpin_track(track.id)
-
-        assert pinned is track
-        assert unlocked is track
-        assert track.is_pinned is False
-
-    def test_pin_track_records_event_only_on_state_change(
-        self, session: Session
-    ) -> None:
-        track = session.add_track(
-            title="Starlight", artist="Muse", year=2006, is_pinned=False
-        )
-
-        session.pin_track(track.id)
-        session.pin_track(track.id)
-
-        event_types = [event.event_type for event in session.user_curation_events]
-        assert event_types == [
-            UserCurationEventType.TRACK_ADDED,
-            UserCurationEventType.TRACK_PINNED,
-        ]
-
-    def test_unpin_track_records_event_only_on_state_change(
-        self, session: Session
-    ) -> None:
-        track = session.add_track(
-            title="Starlight", artist="Muse", year=2006, is_pinned=True
-        )
-
-        session.unpin_track(track.id)
-        session.unpin_track(track.id)
-
-        event_types = [event.event_type for event in session.user_curation_events]
-        assert event_types == [
-            UserCurationEventType.TRACK_ADDED,
-            UserCurationEventType.TRACK_UNPINNED,
-        ]
-
     def test_unconsumed_user_curation_events_filters_consumed(
         self, session: Session
     ) -> None:
-        track = session.add_track(
-            title="Starlight", artist="Muse", year=2006, is_pinned=False
+        session.add_track(title="Starlight", artist="Muse", year=2006)
+        second_track = session.add_track(
+            title="Teardrop",
+            artist="Massive Attack",
+            year=1998,
         )
-        session.pin_track(track.id)
         first_event = session.user_curation_events[0]
         first_event.mark_consumed()
 
         unconsumed = session.unconsumed_user_curation_events
 
         assert len(unconsumed) == 1
-        assert unconsumed[0].event_type == UserCurationEventType.TRACK_PINNED
+        assert unconsumed[0].event_type == UserCurationEventType.TRACK_ADDED
+        assert unconsumed[0].track_id == second_track.id
 
     def test_add_playlist_reference_appends_session_source(
         self, session: Session
@@ -729,7 +689,7 @@ class TestSessionDomainSession:
         session.add_user_message("suche was mit synth")
         session.add_assistant_message("Hier sind ein paar Ideen")
 
-        session.add_track(title="Starlight", artist="Muse", year=2006, is_pinned=False)
+        session.add_track(title="Starlight", artist="Muse", year=2006)
 
         assert len(session.user_curation_events) == 1
         assert session.user_curation_events[0].track_year == 2006
@@ -737,9 +697,7 @@ class TestSessionDomainSession:
     def test_restore_user_curation_event_for_track_added_removes_track_and_event(
         self, session: Session
     ) -> None:
-        track = session.add_track(
-            title="Starlight", artist="Muse", year=2006, is_pinned=False
-        )
+        track = session.add_track(title="Starlight", artist="Muse", year=2006)
         event = session.user_curation_events[0]
 
         session.restore_user_curation_event(event.id)
@@ -757,7 +715,6 @@ class TestSessionDomainSession:
             year=2006,
             spotify_uri="spotify:track:abc",
             cover_url="https://example.com/cover.jpg",
-            is_pinned=False,
         )
         session.remove_track(track.id)
         remove_event = session.user_curation_events[-1]
@@ -772,7 +729,6 @@ class TestSessionDomainSession:
         assert restored.year == 2006
         assert restored.spotify_uri == "spotify:track:abc"
         assert restored.cover_url == "https://example.com/cover.jpg"
-        assert restored.is_pinned is False
         event_types = [event.event_type for event in session.user_curation_events]
         assert event_types == [UserCurationEventType.TRACK_ADDED]
 
@@ -795,36 +751,6 @@ class TestSessionDomainSession:
         with pytest.raises(UserCurationEventMissingTrackYearError, match="track_year"):
             session.restore_user_curation_event(event.id)
 
-    def test_restore_user_curation_event_for_track_pinned_unpins_track(
-        self, session: Session
-    ) -> None:
-        track = session.add_track(
-            title="Starlight", artist="Muse", year=2006, is_pinned=False
-        )
-        session.pin_track(track.id)
-        pin_event = session.user_curation_events[-1]
-
-        session.restore_user_curation_event(pin_event.id)
-
-        assert track.is_pinned is False
-        event_types = [event.event_type for event in session.user_curation_events]
-        assert event_types == [UserCurationEventType.TRACK_ADDED]
-
-    def test_restore_user_curation_event_for_track_unpinned_pins_track(
-        self, session: Session
-    ) -> None:
-        track = session.add_track(
-            title="Starlight", artist="Muse", year=2006, is_pinned=True
-        )
-        session.unpin_track(track.id)
-        unpin_event = session.user_curation_events[-1]
-
-        session.restore_user_curation_event(unpin_event.id)
-
-        assert track.is_pinned is True
-        event_types = [event.event_type for event in session.user_curation_events]
-        assert event_types == [UserCurationEventType.TRACK_ADDED]
-
     def test_restore_user_curation_event_raises_when_event_missing(
         self, session: Session
     ) -> None:
@@ -834,7 +760,7 @@ class TestSessionDomainSession:
     def test_restore_user_curation_event_raises_when_event_already_consumed(
         self, session: Session
     ) -> None:
-        session.add_track(title="Starlight", artist="Muse", year=2006, is_pinned=False)
+        session.add_track(title="Starlight", artist="Muse", year=2006)
         event = session.user_curation_events[0]
         event.mark_consumed()
 
@@ -842,54 +768,6 @@ class TestSessionDomainSession:
             UserCurationEventAlreadyConsumedError, match="already been consumed"
         ):
             session.restore_user_curation_event(event.id)
-
-    def test_restore_user_curation_event_for_pin_raises_when_track_was_removed(
-        self, session: Session
-    ) -> None:
-        track = session.add_track(
-            title="Starlight", artist="Muse", year=2006, is_pinned=False
-        )
-        session.pin_track(track.id)
-        pin_event = session.user_curation_events[-1]
-        session.remove_track(track.id)
-
-        with pytest.raises(PlaylistTrackNotFoundError, match="not found"):
-            session.restore_user_curation_event(pin_event.id)
-
-    def test_replace_track_rejects_pinned_track(self, session: Session) -> None:
-        track = session.add_track(
-            title="Starlight",
-            artist="Muse",
-            year=2006,
-            is_pinned=True,
-        )
-
-        with pytest.raises(PlaylistTrackPinnedError, match="pinned"):
-            session.replace_track(
-                track_id=track.id,
-                track=PlaylistTrack(
-                    title="Time Is Running Out", artist="Muse", year=2003
-                ),
-            )
-
-    def test_set_playlist_preserves_pinned_tracks(self, session: Session) -> None:
-        pinned_track = session.add_track(
-            title="Starlight",
-            artist="Muse",
-            year=2006,
-            is_pinned=True,
-        )
-
-        with pytest.raises(PlaylistTrackPinnedError, match="pinned"):
-            session.set_playlist(
-                tracks=[
-                    PlaylistTrack(title="Teardrop", artist="Massive Attack", year=1998)
-                ]
-            )
-
-        playlist = session.set_playlist(tracks=[pinned_track])
-
-        assert playlist.tracks == [pinned_track]
 
     def test_resolve_tool_call_replaces_with_completed(self, session: Session) -> None:
         session.add_tool_call(make_pending_call("tc-1"))

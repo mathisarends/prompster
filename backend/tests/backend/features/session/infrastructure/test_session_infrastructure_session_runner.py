@@ -85,6 +85,32 @@ class _CancelledRunner(SessionRunner):
 
 
 class _MessageAttachmentStoreStub(MessageAttachmentStore):
+    async def save_stashed_image_attachment(
+        self,
+        *,
+        user_id,
+        attachment_id,
+        file_name,
+        content_type,
+        content,
+    ) -> StoredAttachment:
+        return StoredAttachment(
+            storage_key=f"users/{user_id}/stash/{attachment_id}.png",
+            content_type=content_type,
+            file_name=file_name,
+            size_bytes=len(content),
+        )
+
+    async def promote_stashed_image_attachment(
+        self,
+        *,
+        user_id,
+        session_id,
+        stash_storage_key: str,
+    ) -> str:
+        file_name = stash_storage_key.rsplit("/", 1)[-1]
+        return f"users/{user_id}/chat/{session_id}/{file_name}"
+
     async def save_image_attachment(
         self,
         *,
@@ -132,7 +158,10 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
     ) -> str:
         return f"https://example.com/{storage_key}"
 
-    async def delete_session_attachments(self, *, session_id) -> None:
+    async def delete_session_attachments(self, *, user_id, session_id) -> None:
+        return None
+
+    async def delete_user_attachments(self, *, user_id) -> None:
         return None
 
     async def delete_unreferenced_uploaded_image_attachments(
@@ -167,9 +196,7 @@ class TestSessionRunnerHistoryRendering:
         session = Session(title="Deck", entries=[], owner_id=uuid4())
         session.add_user_message("start")
         session.add_assistant_message("ok")
-        session.add_track(
-            title="Umbrella", artist="Rihanna", year=2007, is_pinned=False
-        )
+        session.add_track(title="Umbrella", artist="Rihanna", year=2007)
         session.add_user_message("mach weiter")
 
         history = asyncio.run(
@@ -225,9 +252,7 @@ class TestSessionRunnerHistoryRendering:
         # history visibility.
         session = Session(title="Deck", entries=[], owner_id=uuid4())
         session.add_user_message("start")
-        session.add_track(
-            title="Umbrella", artist="Rihanna", year=2007, is_pinned=False
-        )
+        session.add_track(title="Umbrella", artist="Rihanna", year=2007)
         session.add_user_message("weiter")
         for event in session.unconsumed_user_curation_events:
             event.mark_consumed()
@@ -253,8 +278,8 @@ class TestSessionRunnerHistoryRendering:
         assert [m.content for m in user_messages] == ["hi"]
 
     def test_full_multi_turn_rendering_keeps_past_events_visible(self) -> None:
-        """Golden output: a 5-turn history where the user pinned a track
-        2 turns ago. The pinned event lives inside its bound UserMessage
+        """Golden output: a 5-turn history where the user added a track
+        2 turns ago. The curation event lives inside its bound UserMessage
         and remains visible on every later run — exactly what the LLM sees.
 
         The session transcript built below maps 1:1 to the asserted
@@ -267,17 +292,17 @@ class TestSessionRunnerHistoryRendering:
         session.add_user_message("Bau mir ein 80er-Deck")
         session.add_assistant_message("Klar, ich starte mit ein paar Klassikern.")
 
-        # Turn 2 — user pins a track BEFORE typing the next message.
-        # The pin is recorded as a curation event and binds to turn-2's UserMessage.
-        session.add_track(title="Take On Me", artist="a-ha", year=1985, is_pinned=True)
-        session.add_user_message("der pin bleibt, sonst gerne austauschen")
+        # Turn 2 — user adds a track BEFORE typing the next message.
+        # The addition is recorded as a curation event and binds to turn-2's UserMessage.
+        session.add_track(title="Take On Me", artist="a-ha", year=1985)
+        session.add_user_message("der track bleibt, sonst gerne austauschen")
         session.add_assistant_message("Verstanden, a-ha bleibt drin.")
 
         # Turn 3 — plain conversation, no manual change.
-        # The earlier pin is now "2 turns ago" — it must still be visible.
+        # The earlier curation event is now "2 turns ago" — it must still be visible.
         session.add_user_message("Mach es etwas tanzbarer")
 
-        # Simulate that previous agent runs already consumed the pin event.
+        # Simulate that previous agent runs already consumed the curation event.
         # consumed=True must NOT hide it from history rendering.
         for event in session.user_curation_events:
             event.mark_consumed()
@@ -286,10 +311,10 @@ class TestSessionRunnerHistoryRendering:
             AgentHistoryBuilder(_MessageAttachmentStoreStub()).build(session=session)
         )
 
-        # The pin event's timestamp is generated at runtime — pull it out so
+        # The event timestamp is generated at runtime — pull it out so
         # the golden output below stays deterministic.
-        pin_event = session.user_curation_events[0]
-        pin_iso = pin_event.occurred_at.isoformat()
+        track_added_event = session.user_curation_events[0]
+        track_added_iso = track_added_event.occurred_at.isoformat()
 
         expected = [
             LLMUserMessage(content="Bau mir ein 80er-Deck"),
@@ -297,11 +322,11 @@ class TestSessionRunnerHistoryRendering:
             LLMUserMessage(
                 content=(
                     "<user_events>\n"
-                    f'<event type="track_added" at="{pin_iso}">'
+                    f'<event type="track_added" at="{track_added_iso}">'
                     "a-ha - Take On Me</event>\n"
                     "</user_events>\n"
                     "\n"
-                    "der pin bleibt, sonst gerne austauschen"
+                    "der track bleibt, sonst gerne austauschen"
                 )
             ),
             LLMAssistantMessage(content="Verstanden, a-ha bleibt drin."),
@@ -316,7 +341,7 @@ class TestSendMessageConsumesCurationEvents:
     def test_send_message_consumes_user_curation_events_after_runner(self) -> None:
         user_id = uuid4()
         event = UserCurationEvent(
-            event_type=UserCurationEventType.TRACK_PINNED,
+            event_type=UserCurationEventType.TRACK_ADDED,
             track_id=uuid4(),
             track_title="Umbrella",
             track_artist="Rihanna",
@@ -353,7 +378,7 @@ class TestSendMessageConsumesCurationEvents:
     ) -> None:
         user_id = uuid4()
         event = UserCurationEvent(
-            event_type=UserCurationEventType.TRACK_PINNED,
+            event_type=UserCurationEventType.TRACK_ADDED,
             track_id=uuid4(),
             track_title="Umbrella",
             track_artist="Rihanna",
