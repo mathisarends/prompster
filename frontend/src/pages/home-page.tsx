@@ -7,7 +7,7 @@ import {
   createSession,
   getListSessionsQueryKey,
 } from "@/api/generated/session-api";
-import { ChatInputBox } from "@/features/chat";
+import { ChatInputBox, type ChatAttachment } from "@/features/chat";
 import { Chip } from "@/shared/ui/chip";
 import { Badge } from "@/shared/ui/badge";
 
@@ -39,19 +39,26 @@ export const HomePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const startChat = async (text: string) => {
+  const startChat = async (text: string, attachments: ChatAttachment[]) => {
     if (isCreatingSession) return;
+
+    const initialPrompt = text.trim() || "Analysiere die angehaengten Bilder.";
 
     setIsCreatingSession(true);
     setErrorMessage(null);
 
     try {
-      const session = await createSession({ initialPrompt: text });
+      const session = await createSession({ initialPrompt });
       await queryClient.invalidateQueries({
         queryKey: getListSessionsQueryKey(),
       });
       navigate(`/chat/${session.id}`, {
-        state: { session, streamInitialResponse: true, initialPrompt: text },
+        state: {
+          session,
+          streamInitialResponse: true,
+          initialPrompt,
+          initialAttachments: attachments,
+        },
       });
     } catch {
       setErrorMessage("Session konnte nicht gestartet werden.");

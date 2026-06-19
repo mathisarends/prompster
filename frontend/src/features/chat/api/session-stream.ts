@@ -1,10 +1,30 @@
-import type {
-  SendMessageRequest,
-  SessionServerEvent as SessionServerEventPayload,
-} from "@/api/generated/model";
+import type { SessionServerEvent as SessionServerEventPayload } from "@/api/generated/model";
 import { AXIOS_INSTANCE } from "@/shared/api/http-client";
 
 export type SessionServerEvent = NonNullable<SessionServerEventPayload>;
+
+export type SessionMessageAttachmentRequest = {
+  kind: "spotify-playlist" | "spotify-artist";
+  externalId: string;
+  title: string;
+  subtitle?: string | null;
+  imageUrl?: string | null;
+  spotifyId?: string | null;
+};
+
+export type ImageAttachmentReferenceRequest = {
+  id: string;
+  storageKey: string;
+  contentType: string;
+  fileName: string;
+  sizeBytes: number;
+};
+
+export type SendMessageRequest = {
+  content: string;
+  attachments?: SessionMessageAttachmentRequest[];
+  imageAttachments?: ImageAttachmentReferenceRequest[];
+};
 
 type StreamSendMessageOptions = {
   signal?: AbortSignal;

@@ -201,6 +201,7 @@ class Agent:
                     question=request.question,
                     hint=request.hint,
                     options=list(request.options),
+                    recommended_option=request.recommended_option,
                     selection_mode=request.selection_mode,
                 )
             else:
@@ -208,5 +209,6 @@ class Agent:
                     question=request.question,
                     hint=request.hint,
                     options=list(request.options),
+                    recommended_option=request.recommended_option,
                     selection_mode=request.selection_mode,
                 )

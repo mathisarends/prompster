@@ -77,7 +77,7 @@ class TestToolsFacadeAbstraction:
             "get_album_tracks",
         }.isdisjoint(build_tool_names)
 
-    def test_onboarding_question_schema_requires_three_to_six_options(self) -> None:
+    def test_onboarding_question_schema_requires_two_to_four_options(self) -> None:
         tools = Tools()
 
         schema = next(
@@ -88,8 +88,8 @@ class TestToolsFacadeAbstraction:
         options = schema["function"]["parameters"]["properties"]["options"]
 
         assert "options" in schema["function"]["parameters"]["required"]
-        assert options["minItems"] == 3
-        assert options["maxItems"] == 6
+        assert options["minItems"] == 2
+        assert options["maxItems"] == 4
 
     def test_onboarding_question_schema_exposes_optional_hint(self) -> None:
         tools = Tools()
@@ -103,6 +103,39 @@ class TestToolsFacadeAbstraction:
 
         assert "hint" not in schema["function"]["parameters"]["required"]
         assert "Optional short note" in hint["description"]
+
+    def test_onboarding_question_schema_exposes_optional_recommended_option(
+        self,
+    ) -> None:
+        tools = Tools()
+
+        schema = next(
+            schema
+            for schema in tools.to_schema(phase=Phase.ONBOARDING)
+            if schema["function"]["name"] == "ask_onboarding_question"
+        )
+        properties = schema["function"]["parameters"]["properties"]
+
+        assert "recommended_option" in properties
+        assert "recommended_option" not in schema["function"]["parameters"]["required"]
+
+    @pytest.mark.asyncio
+    async def test_onboarding_question_threads_recommended_option(self) -> None:
+        tools = Tools()
+
+        result = await tools.execute(
+            "ask_onboarding_question",
+            {
+                "question": "Welche Zeitspanne?",
+                "options": ["Alle Jahrzehnte", "90er bis heute"],
+                "recommended_option": "90er bis heute",
+            },
+            phase=Phase.ONBOARDING,
+        )
+
+        assert result.success is True
+        assert result.input_request is not None
+        assert result.input_request.recommended_option == "90er bis heute"
 
     def test_onboarding_question_schema_exposes_selection_mode_enum(self) -> None:
         tools = Tools()
@@ -123,8 +156,8 @@ class TestToolsFacadeAbstraction:
     @pytest.mark.parametrize(
         "options",
         [
-            ["Freunde", "Familie"],
-            [str(index) for index in range(7)],
+            ["Solo"],
+            [str(index) for index in range(5)],
         ],
     )
     async def test_onboarding_question_rejects_option_counts_outside_range(

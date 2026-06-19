@@ -48,6 +48,7 @@ class QuestionAskedEvent(AgentEvent):
     question: str | None = None
     hint: str | None = None
     options: list[str] = Field(default_factory=list)
+    recommended_option: str | None = None
     selection_mode: OnboardingSelectionMode = OnboardingSelectionMode.SINGLE_SELECT
 
 
@@ -57,6 +58,7 @@ class SuspendedForUserInputEvent(AgentEvent):
     question: str | None = None
     hint: str | None = None
     options: list[str] = Field(default_factory=list)
+    recommended_option: str | None = None
     selection_mode: OnboardingSelectionMode = OnboardingSelectionMode.SINGLE_SELECT
     is_last_question: bool = True
 

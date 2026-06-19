@@ -123,7 +123,14 @@ class Tools:
         @self.action(
             description=(
                 "Stelle dem User eine einzelne Onboarding-Klaerungsfrage. "
-                "Gib immer 3-6 konkrete Optionen mit. "
+                "Gib in der Regel 3 Optionen mit, hoechstens 4. "
+                "Optionen muessen extrem knapp sein: Tags, keine Saetze, "
+                "max. ~3 Woerter (z.B. 'Alle Jahrzehnte' statt 'So breit wie "
+                "moeglich ueber mehrere Jahrzehnte', 'Nur Superhits' statt "
+                "'Nur absolute Klassiker, die fast jeder kennt'). Der User "
+                "soll sie in Sekundenbruchteilen scannen koennen. "
+                "Setze immer genau eine Option als recommended_option (muss "
+                "exakt einem options-Eintrag entsprechen). "
                 "Nutze hint nur fuer kurze Warnungen, Tipps oder Kontext, "
                 "den der User vor der Antwort sehen sollte. "
                 "Wenn die Anfrage sehr spezifisch ist, nutze hint, um die "
@@ -150,6 +157,7 @@ class Tools:
                     question=params.question,
                     hint=params.hint,
                     options=params.options,
+                    recommended_option=params.recommended_option,
                     selection_mode=params.selection_mode,
                     is_last_question=params.is_last_question,
                 ),

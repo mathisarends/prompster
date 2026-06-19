@@ -299,6 +299,7 @@ class Session(Aggregate):
         question_text: str,
         hint: str | None = None,
         options: tuple[str, ...] = (),
+        recommended_option: str | None = None,
         selection_mode: OnboardingQuestionSelectionMode | str = (
             OnboardingQuestionSelectionMode.SINGLE_SELECT
         ),
@@ -310,6 +311,7 @@ class Session(Aggregate):
             question_text=question_text,
             hint=hint,
             options=self._with_decide_for_me_option(options),
+            recommended_option=recommended_option,
             selection_mode=selection_mode,
             is_last_question=is_last_question,
         )

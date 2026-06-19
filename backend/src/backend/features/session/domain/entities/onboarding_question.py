@@ -18,6 +18,7 @@ class OnboardingQuestion(Entity):
         question_text: str,
         hint: str | None = None,
         options: tuple[str, ...] = (),
+        recommended_option: str | None = None,
         selection_mode: OnboardingQuestionSelectionMode | str = (
             OnboardingQuestionSelectionMode.SINGLE_SELECT
         ),
@@ -34,6 +35,7 @@ class OnboardingQuestion(Entity):
         self.question_text = question_text
         self.hint = hint
         self.options = tuple(options)
+        self.recommended_option = recommended_option
         self.selection_mode = OnboardingQuestionSelectionMode(selection_mode)
         self.answers = tuple(
             answers if answers is not None else ([answer] if answer else [])

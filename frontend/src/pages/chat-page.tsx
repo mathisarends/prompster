@@ -7,6 +7,7 @@ import type {
 } from "@/api/generated/model";
 import {
   ChatSessionPane,
+  type ChatAttachment,
   OnboardingPanel,
   type OnboardingAnswer,
   useChatSession,
@@ -35,6 +36,7 @@ type ChatRouteState = {
   session?: SessionResponse;
   streamInitialResponse?: boolean;
   initialPrompt?: string;
+  initialAttachments?: ChatAttachment[];
 };
 
 export const ChatPage = () => {
@@ -74,6 +76,7 @@ export const ChatPage = () => {
       routeState?.streamInitialResponse && navigationType === "PUSH",
     ),
     initialPrompt: routeState?.initialPrompt,
+    initialAttachments: routeState?.initialAttachments,
   });
 
   const [workspaceLayout, setWorkspaceLayout] = useLocalStorage(

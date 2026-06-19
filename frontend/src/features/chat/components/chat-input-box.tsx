@@ -1,6 +1,8 @@
 import {
   createContext,
   memo,
+  type ClipboardEvent,
+  type ChangeEvent,
   type ComponentProps,
   type MouseEvent,
   type ReactNode,
@@ -65,11 +67,13 @@ type ChatInputContextValue = {
   submit: () => void;
   handleSendButtonClick: () => void;
   handleTextareaChange: ComponentProps<typeof Textarea>["onChange"];
+  handleTextareaPaste: ComponentProps<typeof Textarea>["onPaste"];
   handleTextareaSelect: ComponentProps<typeof Textarea>["onSelect"];
   handleTextareaKeyDown: ComponentProps<typeof Textarea>["onKeyDown"];
   focusTextareaFromContainer: (event: MouseEvent<HTMLDivElement>) => void;
   attachments: ChatAttachment[];
   addAttachment: (attachment: ChatAttachment) => void;
+  addImageFiles: (files: File[]) => void;
   removeAttachment: (attachment: ChatAttachment) => void;
   attachmentPopoverOpen: boolean;
   setAttachmentPopoverOpen: (open: boolean) => void;
@@ -94,6 +98,7 @@ type ChatInputContextValue = {
   textareaClassName?: string;
   rows?: number;
   sendButtonAriaLabel: string;
+  openFilePicker: () => void;
 };
 
 type ChatInputTextAreaProps = Omit<
@@ -106,6 +111,7 @@ type ChatInputTextAreaProps = Omit<
   | "onSelect"
   | "onBlur"
   | "onKeyDown"
+  | "onPaste"
   | "placeholder"
 >;
 
@@ -175,6 +181,42 @@ const isTextCharacterKey = (event: KeyboardEvent) => {
   return event.key.length === 1 && event.key !== " ";
 };
 
+const isImageFile = (file: File) => file.type.startsWith("image/");
+
+const formatFileSize = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const createImageAttachment = (file: File): ChatAttachment => {
+  const namedFile =
+    file.name.trim().length > 0
+      ? file
+      : new File([file], `clipboard-${Date.now()}.png`, {
+          type: file.type || "image/png",
+          lastModified: file.lastModified,
+        });
+
+  return {
+    id: crypto.randomUUID(),
+    kind: "image",
+    title: namedFile.name,
+    subtitle: formatFileSize(namedFile.size),
+    imageUrl: URL.createObjectURL(namedFile),
+    file: namedFile,
+    contentType: namedFile.type,
+    sizeBytes: namedFile.size,
+  };
+};
+
+const revokeAttachmentPreview = (attachment: ChatAttachment) => {
+  if (attachment.kind !== "image" || !attachment.imageUrl) return;
+  if (!attachment.imageUrl.startsWith("blob:")) return;
+
+  URL.revokeObjectURL(attachment.imageUrl);
+};
+
 const useChatInput = () => {
   const context = useContext(ChatInputContext);
   if (!context) {
@@ -231,6 +273,7 @@ const ChatInputTextArea = ({ className, ...props }: ChatInputTextAreaProps) => {
     flushText,
     handleTextareaChange,
     handleTextareaKeyDown,
+    handleTextareaPaste,
     handleTextareaSelect,
     isTranscriptionStarting,
     placeholder,
@@ -254,6 +297,7 @@ const ChatInputTextArea = ({ className, ...props }: ChatInputTextAreaProps) => {
       onSelect={handleTextareaSelect}
       onBlur={() => flushText()}
       onKeyDown={handleTextareaKeyDown}
+      onPaste={handleTextareaPaste}
       placeholder={effectivePlaceholder}
       className={cn(
         "max-h-72 min-h-10 flex-1 resize-none border-none bg-transparent p-0 pt-0.5 text-base shadow-none focus-visible:ring-0 md:text-base",
@@ -291,16 +335,16 @@ const ChatInputAddButton = ({
   className,
   onClick,
 }: ChatInputAddButtonProps) => {
-  const { disabled, isSubmitting } = useChatInput();
+  const { disabled, isSubmitting, openFilePicker } = useChatInput();
 
   return (
     <Button
       type="button"
       size="icon"
       variant="ghost"
-      onClick={onClick}
+      onClick={onClick ?? openFilePicker}
       disabled={disabled || isSubmitting}
-      aria-label="Hinzufügen"
+      aria-label="Bild hinzufuegen"
       className={cn(
         "size-9 rounded-full text-muted-foreground hover:text-foreground",
         className,
@@ -441,11 +485,11 @@ const ChatInputBoxComponent = ({
   selectedModel,
   onModelChange,
 }: ChatInputBoxProps) => {
-  // Temporarily disabled in the chat input UI. Keep attachment logic in place
-  // so the feature can be re-enabled quickly without reconstructing behavior.
-  const isAttachmentUiEnabled = false;
+  const isAttachmentUiEnabled = true;
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachmentsRef = useRef<ChatAttachment[]>([]);
   const textareaSelectionRef = useRef({ start: 0, end: 0 });
   const {
     attachments,
@@ -487,6 +531,17 @@ const ChatInputBoxComponent = ({
   const isRenderedAttachmentMentionActive =
     isAttachmentUiEnabled && isAttachmentMentionActive;
 
+  useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
+
+  useEffect(
+    () => () => {
+      attachmentsRef.current.forEach(revokeAttachmentPreview);
+    },
+    [],
+  );
+
   const updateAttachmentMention = useCallback(
     (nextValue: string, cursorPosition: number | null) => {
       syncAttachmentMentionFromCursor(nextValue, cursorPosition);
@@ -518,6 +573,7 @@ const ChatInputBoxComponent = ({
 
     onSubmit(trimmed, attachments);
     if (clearOnSubmit) {
+      attachments.forEach(revokeAttachmentPreview);
       replaceBufferedValue("");
       onChange("");
       setAttachments([]);
@@ -539,6 +595,50 @@ const ChatInputBoxComponent = ({
     replaceBufferedValue,
     setAttachments,
   ]);
+
+  const addImageFiles = useCallback(
+    (files: File[]) => {
+      const imageFiles = files.filter(isImageFile);
+      if (imageFiles.length === 0) return;
+
+      setAttachments([
+        ...attachments,
+        ...imageFiles.map((file) => createImageAttachment(file)),
+      ]);
+    },
+    [attachments, setAttachments],
+  );
+
+  const openFilePicker = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileInputChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      addImageFiles(Array.from(event.currentTarget.files ?? []));
+      event.currentTarget.value = "";
+    },
+    [addImageFiles],
+  );
+
+  const handleTextareaPaste = useCallback(
+    (event: ClipboardEvent<HTMLTextAreaElement>) => {
+      const files = Array.from(event.clipboardData.files).filter(isImageFile);
+      if (files.length === 0) return;
+
+      event.preventDefault();
+      addImageFiles(files);
+    },
+    [addImageFiles],
+  );
+
+  const removeAttachmentAndPreview = useCallback(
+    (attachment: ChatAttachment) => {
+      revokeAttachmentPreview(attachment);
+      removeAttachment(attachment);
+    },
+    [removeAttachment],
+  );
 
   const handleSendButtonClick = useCallback(() => {
     if (canStop) {
@@ -777,12 +877,14 @@ const ChatInputBoxComponent = ({
     submit,
     handleSendButtonClick,
     handleTextareaChange,
+    handleTextareaPaste,
     handleTextareaSelect,
     handleTextareaKeyDown,
     focusTextareaFromContainer,
     attachments,
     addAttachment,
-    removeAttachment,
+    addImageFiles,
+    removeAttachment: removeAttachmentAndPreview,
     attachmentPopoverOpen,
     setAttachmentPopoverOpen: handleAttachmentPopoverOpenChange,
     attachmentQuery: attachmentMention?.query ?? "",
@@ -806,10 +908,20 @@ const ChatInputBoxComponent = ({
     textareaClassName,
     rows,
     sendButtonAriaLabel,
+    openFilePicker,
   };
 
   return (
     <ChatInputContext.Provider value={contextValue}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handleFileInputChange}
+        tabIndex={-1}
+      />
       <div
         onClick={focusTextareaFromContainer}
         className={cn(

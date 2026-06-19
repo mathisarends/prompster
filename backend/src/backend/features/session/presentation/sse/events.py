@@ -166,6 +166,7 @@ class SuspendedForInputEvent(_SessionEventSchema):
     question: str | None = None
     hint: str | None = None
     options: list[str] = Field(default_factory=list)
+    recommended_option: str | None = None
     selection_mode: OnboardingQuestionSelectionMode = (
         OnboardingQuestionSelectionMode.SINGLE_SELECT
     )
@@ -180,6 +181,7 @@ class OnboardingQuestionAskedEvent(_SessionEventSchema):
     question: str
     hint: str | None = None
     options: list[str] = Field(default_factory=list)
+    recommended_option: str | None = None
     selection_mode: OnboardingQuestionSelectionMode = (
         OnboardingQuestionSelectionMode.SINGLE_SELECT
     )

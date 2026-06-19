@@ -142,7 +142,7 @@ export const DeckPlayer = ({
   return (
     <div
       className={cn(
-        "deck-player group/player relative isolate mt-3 shrink-0 border-t border-border/50 bg-card/65 px-5 pb-4 pt-3.5 backdrop-blur transition-colors duration-200 hover:bg-card/75 focus-within:bg-card/75",
+        "deck-player group/player sticky bottom-0 z-10 isolate shrink-0 border-t border-border/50 bg-card/65 px-5 pb-4 pt-3.5 backdrop-blur transition-colors duration-200 hover:bg-card/75 focus-within:bg-card/75",
         className,
       )}
     >

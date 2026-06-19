@@ -277,6 +277,7 @@ def to_onboarding_question_response(
         question_text=question.question_text,
         hint=question.hint,
         options=list(question.options),
+        recommended_option=question.recommended_option,
         selection_mode=question.selection_mode,
         is_last_question=question.is_last_question,
         answers=list(question.answers),

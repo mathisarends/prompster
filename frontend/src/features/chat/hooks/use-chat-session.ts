@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import type { SessionResponse } from "@/api/generated/model";
+import { AXIOS_INSTANCE } from "@/shared/api/http-client";
 import {
   getGetSessionQueryKey,
   getListSessionsQueryKey,
@@ -11,9 +12,12 @@ import {
   useGetSession,
 } from "@/api/generated/session-api";
 import {
+  type ImageAttachmentReferenceRequest,
+  type SessionMessageAttachmentRequest,
   streamCompleteOnboarding,
   streamSendMessage,
 } from "@/features/chat/api/session-stream";
+import type { ChatAttachment } from "@/features/chat/components/attachments";
 
 import {
   chatReducer,
@@ -37,6 +41,7 @@ type UseChatSessionParams = {
   initialSession?: SessionResponse;
   streamInitialResponse?: boolean;
   initialPrompt?: string;
+  initialAttachments?: ChatAttachment[];
 };
 
 export type UseChatSessionResult = {
@@ -53,7 +58,7 @@ export type UseChatSessionResult = {
   isError: boolean;
   selectedModel?: string;
   onModelChange: (modelId: string) => void;
-  sendMessage: (text: string) => void;
+  sendMessage: (text: string, attachments?: ChatAttachment[]) => void;
   persistOnboardingAnswer: (answer: OnboardingAnswerPayload) => void;
   submitOnboardingAnswers: (answers: OnboardingAnswerPayload[]) => void;
   stopMessage: () => void;
@@ -65,11 +70,67 @@ const getStreamErrorMessage = (error: unknown) => {
   return "Die Antwort konnte nicht geladen werden.";
 };
 
+type UploadedImageAttachmentResponse = {
+  id: string;
+  storageKey?: string;
+  storage_key?: string;
+  contentType?: string;
+  content_type?: string;
+  fileName?: string;
+  file_name?: string;
+  sizeBytes?: number;
+  size_bytes?: number;
+};
+
+const uploadImageAttachment = async (
+  sessionId: string,
+  file: File,
+  signal?: AbortSignal,
+): Promise<ImageAttachmentReferenceRequest> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const { data } = await AXIOS_INSTANCE.post<UploadedImageAttachmentResponse>(
+    `/api/v1/sessions/${sessionId}/image-attachments`,
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+      signal,
+    },
+  );
+
+  return {
+    id: data.id,
+    storageKey: data.storageKey ?? data.storage_key ?? "",
+    contentType: data.contentType ?? data.content_type ?? file.type,
+    fileName: data.fileName ?? data.file_name ?? file.name,
+    sizeBytes: data.sizeBytes ?? data.size_bytes ?? file.size,
+  };
+};
+
+const toReferenceAttachment = (
+  attachment: ChatAttachment,
+): SessionMessageAttachmentRequest | null => {
+  if (attachment.kind === "image" || attachment.kind === "spotify-track") {
+    return null;
+  }
+
+  return {
+    kind: attachment.kind,
+    externalId: attachment.spotifyId ?? attachment.id,
+    title: attachment.title,
+    subtitle: attachment.subtitle ?? null,
+    imageUrl: attachment.imageUrl ?? null,
+    spotifyId: attachment.spotifyId ?? attachment.id,
+  };
+};
+
 export const useChatSession = ({
   sessionId,
   initialSession,
   streamInitialResponse,
   initialPrompt,
+  initialAttachments = [],
 }: UseChatSessionParams): UseChatSessionResult => {
   const queryClient = useQueryClient();
   const [state, dispatch] = useReducer(
@@ -202,21 +263,46 @@ export const useChatSession = ({
   );
 
   const streamAssistantResponse = useCallback(
-    (text: string) => {
+    (text: string, attachments: ChatAttachment[] = []) => {
       return runEventStream(
         {
           type: "stream/started",
           userMessageText: text,
         },
-        (streamOptions) =>
-          streamSendMessage(
+        async (streamOptions) => {
+          const imageAttachments = await Promise.all(
+            attachments
+              .filter(
+                (attachment) => attachment.kind === "image" && attachment.file,
+              )
+              .map((attachment) =>
+                uploadImageAttachment(
+                  sessionId,
+                  attachment.file as File,
+                  streamOptions.signal,
+                ),
+              ),
+          );
+          const referenceAttachments = attachments
+            .map(toReferenceAttachment)
+            .filter(
+              (attachment): attachment is SessionMessageAttachmentRequest =>
+                attachment !== null,
+            );
+
+          return streamSendMessage(
             sessionId,
-            { content: text },
+            {
+              content: text || "Analysiere die angehaengten Bilder.",
+              attachments: referenceAttachments,
+              imageAttachments,
+            },
             {
               ...streamOptions,
               modelId: selectedModel,
             },
-          ),
+          );
+        },
       );
     },
     [runEventStream, selectedModel, sessionId],
@@ -241,7 +327,7 @@ export const useChatSession = ({
 
     initialStreamStartedRef.current = true;
     const timeoutId = window.setTimeout(() => {
-      void streamAssistantResponse(initialMessage);
+      void streamAssistantResponse(initialMessage, initialAttachments);
     }, 0);
 
     return () => {
@@ -253,11 +339,12 @@ export const useChatSession = ({
     streamAssistantResponse,
     streamInitialResponse,
     initialPrompt,
+    initialAttachments,
   ]);
 
   const sendMessage = useCallback(
-    (text: string) => {
-      void streamAssistantResponse(text);
+    (text: string, attachments: ChatAttachment[] = []) => {
+      void streamAssistantResponse(text, attachments);
     },
     [streamAssistantResponse],
   );

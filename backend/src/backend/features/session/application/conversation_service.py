@@ -859,6 +859,7 @@ class SessionConversationService:
             question_text=event.question,
             hint=event.hint,
             options=tuple(event.options or []),
+            recommended_option=event.recommended_option,
             selection_mode=event.selection_mode,
         )
         return await self._persisted_events(
@@ -868,6 +869,7 @@ class SessionConversationService:
                     question=question.question_text,
                     options=list(question.options),
                     hint=question.hint,
+                    recommended_option=question.recommended_option,
                     selection_mode=question.selection_mode,
                     question_id=question.id,
                     is_last_question=question.is_last_question,
@@ -890,22 +892,26 @@ class SessionConversationService:
         )
         question_id = None
         suspended_options = list(event.options or [])
+        recommended_option = event.recommended_option
         if event.question is not None:
             question = session.add_onboarding_question(
                 question_text=event.question,
                 hint=event.hint,
                 options=tuple(event.options or []),
+                recommended_option=event.recommended_option,
                 selection_mode=event.selection_mode,
                 is_last_question=event.is_last_question,
             )
             question_id = question.id
             suspended_options = list(question.options)
+            recommended_option = question.recommended_option
         events.append(
             SessionSuspendedForInput(
                 kind=SuspensionKind.ONBOARDING_QUESTION,
                 question=event.question,
                 hint=event.hint,
                 options=suspended_options,
+                recommended_option=recommended_option,
                 selection_mode=event.selection_mode,
                 question_id=question_id,
                 is_last_question=event.is_last_question,

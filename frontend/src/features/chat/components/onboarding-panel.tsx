@@ -235,7 +235,7 @@ export const OnboardingPanel = ({
       <div className="shrink-0 space-y-4 px-7 pt-9">
         <div className="flex items-center justify-between gap-4">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Einleitende Fragen
+            Fragen
           </p>
           <p className="text-xs font-medium tabular-nums text-muted-foreground">
             Schritt {currentStep + 1} / {steps.length}

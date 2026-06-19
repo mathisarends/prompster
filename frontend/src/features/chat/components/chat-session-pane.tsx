@@ -8,6 +8,7 @@ import type {
 } from "@/api/generated/model";
 import { AssistantChatMessage } from "@/features/chat/components/assistant-chat-message";
 import { ChatInputBox } from "@/features/chat/components/chat-input-box";
+import type { ChatAttachment } from "@/features/chat/components/attachments";
 import { ChatMessageSkeleton } from "@/features/chat/components/chat-message-skeleton";
 import { ChatPageHeader } from "@/features/chat/components/chat-page-header";
 import { ChatThinkingIndicator } from "@/features/chat/components/chat-thinking-indicator";
@@ -43,7 +44,7 @@ type ChatSessionPaneProps = {
   isError: boolean;
   selectedModel?: string;
   onModelChange?: (modelId: string) => void;
-  sendMessage: (text: string) => void;
+  sendMessage: (text: string, attachments?: ChatAttachment[]) => void;
   stopMessage: () => void;
   userCurationPlaybackState: UserCurationTrackPlaybackState;
   onToggleUserCurationTrackPlayback?: (
@@ -101,8 +102,8 @@ export const ChatSessionPane = ({
       ? pendingInput.questions.filter((question) => Boolean(question.id)).length
       : 0;
 
-  const submitPrompt = (text: string) => {
-    sendMessage(text);
+  const submitPrompt = (text: string, attachments: ChatAttachment[]) => {
+    sendMessage(text, attachments);
   };
 
   const renderEntry = (entry: ChatEntry, previousEntry?: ChatEntry) => {

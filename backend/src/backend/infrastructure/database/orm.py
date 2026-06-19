@@ -394,6 +394,7 @@ class SessionOnboardingQuestionModel(DatabaseEntity, table=True):
         default_factory=list,
         sa_column=Column(JSON, nullable=False),
     )
+    recommended_option: str | None = None
     selection_mode: str = Field(
         default="single_select",
         max_length=32,

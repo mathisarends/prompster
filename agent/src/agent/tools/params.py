@@ -75,8 +75,19 @@ class AskOnboardingQuestionParams(ToolParams):
         ),
     )
     options: list[str] = Field(
-        min_length=3,
-        max_length=6,
-        description="3-6 concise, meaningful suggested answers for the user.",
+        min_length=2,
+        max_length=4,
+        description=(
+            "2-4 ultra-short tag-style answers (aim for 3). Max ~3 words each, "
+            "no full sentences. E.g. 'Alle Jahrzehnte', not 'So breit wie "
+            "moeglich ueber mehrere Jahrzehnte'."
+        ),
+    )
+    recommended_option: str | None = Field(
+        default=None,
+        description=(
+            "Exactly one of the option strings, marked as your recommendation. "
+            "Must match one entry in options verbatim. Always provide one."
+        ),
     )
     is_last_question: bool = False

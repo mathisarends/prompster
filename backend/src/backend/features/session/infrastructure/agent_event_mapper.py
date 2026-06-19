@@ -134,6 +134,7 @@ class AgentSessionEventMapper:
             question=event.question,
             hint=event.hint,
             options=list(event.options),
+            recommended_option=event.recommended_option,
             selection_mode=event.selection_mode,
         )
 
@@ -144,6 +145,7 @@ class AgentSessionEventMapper:
             question=event.question,
             hint=event.hint,
             options=list(event.options),
+            recommended_option=event.recommended_option,
             selection_mode=event.selection_mode,
             is_last_question=event.is_last_question,
         )

@@ -70,6 +70,7 @@ class SessionRunnerQuestionAsked(_RunnerEvent):
     question: str | None = None
     hint: str | None = None
     options: list[str] | None = None
+    recommended_option: str | None = None
     selection_mode: OnboardingQuestionSelectionMode = (
         OnboardingQuestionSelectionMode.SINGLE_SELECT
     )
@@ -79,6 +80,7 @@ class SessionRunnerSuspendedForInput(_RunnerEvent):
     question: str | None = None
     hint: str | None = None
     options: list[str] | None = None
+    recommended_option: str | None = None
     selection_mode: OnboardingQuestionSelectionMode = (
         OnboardingQuestionSelectionMode.SINGLE_SELECT
     )

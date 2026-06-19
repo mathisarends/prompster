@@ -170,13 +170,13 @@ export const DeckWorkspaceView = ({
         />
       ) : null}
 
-      <ChatWorkspacePanel>
+      <ChatWorkspacePanel contentClassName="px-0 pb-0">
         <Tabs
           defaultValue="playlist"
           onValueChange={setActiveTab}
           className="h-full min-h-0 flex-1 gap-3 overflow-hidden"
         >
-          <div className="flex shrink-0 items-center justify-between gap-3">
+          <div className="flex shrink-0 items-center justify-between gap-3 px-5">
             <TabsList variant="line" className="h-9">
               <TabsTrigger value="playlist">
                 <ListMusic className="size-4" />
@@ -197,7 +197,7 @@ export const DeckWorkspaceView = ({
             className="flex min-h-0 flex-1 flex-col overflow-hidden"
           >
             {showPremiumRequiredHint ? (
-              <div className="mb-3 rounded-md border border-amber-300/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+              <div className="mx-5 mb-3 rounded-md border border-amber-300/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
                 Spotify Premium ist erforderlich für In-Browser-Wiedergabe. Du
                 kannst die Playlist weiterhin kuratieren und nach Spotify
                 exportieren.
@@ -205,6 +205,7 @@ export const DeckWorkspaceView = ({
             ) : null}
 
             <DeckPlaylist
+              className="px-5"
               initialTracks={tracks}
               playlistUpdate={{
                 revision: playlist.uiRevision ?? 0,
@@ -228,7 +229,7 @@ export const DeckWorkspaceView = ({
 
           <TabsContent
             value="export"
-            className="flex min-h-0 flex-1 flex-col overflow-hidden"
+            className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-5"
           >
             <DeckExportActions
               trackCount={tracks.length}
