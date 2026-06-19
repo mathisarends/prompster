@@ -71,6 +71,7 @@ export type PendingInput = {
   question?: string | null;
   hint?: string | null;
   options: string[];
+  recommendedOption?: string | null;
   selectionMode?: "single_select" | "multi_select";
   questionId?: string | null;
   isLastQuestion?: boolean;
@@ -82,6 +83,7 @@ export type PendingOnboardingQuestion = {
   question: string | null;
   hint?: string | null;
   options: string[];
+  recommendedOption?: string | null;
   selectionMode: "single_select" | "multi_select";
   isLastQuestion: boolean;
   answers: string[];
@@ -308,6 +310,7 @@ const getPendingInput = (session: SessionLike): PendingInput | null => {
     question: activeQuestion.question,
     hint: activeQuestion.hint,
     options: activeQuestion.options,
+    recommendedOption: activeQuestion.recommendedOption,
     selectionMode: activeQuestion.selectionMode ?? "single_select",
     questionId: activeQuestion.id,
     isLastQuestion: activeQuestion.isLastQuestion,
@@ -322,6 +325,7 @@ const toPendingOnboardingQuestion = (
   question: question.questionText,
   hint: question.hint ?? null,
   options: question.options ?? [],
+  recommendedOption: question.recommendedOption ?? null,
   selectionMode: question.selectionMode ?? "single_select",
   isLastQuestion: question.isLastQuestion,
   answers: question.answers ?? [],
@@ -430,6 +434,7 @@ const reduceServerEvent = (
       question: event.question ?? null,
       hint: event.hint ?? null,
       options: [...(event.options ?? [])],
+      recommendedOption: event.recommendedOption ?? null,
       selectionMode: event.selectionMode ?? "single_select",
       isLastQuestion: event.isLastQuestion ?? false,
       answers: [],
@@ -457,6 +462,7 @@ const reduceServerEvent = (
         question: incomingQuestion.question,
         hint: incomingQuestion.hint,
         options: incomingQuestion.options,
+        recommendedOption: incomingQuestion.recommendedOption,
         selectionMode: incomingQuestion.selectionMode,
         questionId: incomingQuestion.id || null,
         isLastQuestion: incomingQuestion.isLastQuestion,

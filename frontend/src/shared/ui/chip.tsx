@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/shared/lib/utils";
@@ -8,6 +9,7 @@ type ChipProps = {
   active?: boolean;
   activeClassName?: string;
   className?: string;
+  trailingContent?: ReactNode;
   disabled?: boolean;
   onClick?: () => void;
 };
@@ -18,6 +20,7 @@ export const Chip = ({
   active = false,
   activeClassName,
   className,
+  trailingContent,
   disabled = false,
   onClick,
 }: ChipProps) => {
@@ -35,6 +38,7 @@ export const Chip = ({
     >
       {Icon ? <Icon className="size-3.5 shrink-0" /> : null}
       {label}
+      {trailingContent}
     </button>
   );
 };

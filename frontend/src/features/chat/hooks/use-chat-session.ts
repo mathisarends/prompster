@@ -317,12 +317,15 @@ export const useChatSession = ({
   // depend on `streamAssistantResponse`/`initialAttachments` identity. Those
   // change when `selectedModel` is set (e.g. the model picker auto-selecting the
   // default once options load), which would otherwise re-run the trigger effect
-  // and cancel the pending initial send before it ever fires.
+  // and cancel the pending initial send before it ever fires. This effect is
+  // declared before the trigger so the ref is fresh when the trigger reads it.
   const initialMessage = initialPrompt?.trim();
-  startInitialStreamRef.current =
-    streamInitialResponse && initialMessage
-      ? () => streamAssistantResponse(initialMessage, initialAttachments)
-      : null;
+  useEffect(() => {
+    startInitialStreamRef.current =
+      streamInitialResponse && initialMessage
+        ? () => streamAssistantResponse(initialMessage, initialAttachments)
+        : null;
+  });
 
   useEffect(() => {
     if (initialStreamStartedRef.current || !session || state.isStreaming) {

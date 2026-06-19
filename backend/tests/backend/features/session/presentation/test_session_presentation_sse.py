@@ -67,3 +67,18 @@ class TestServerSentEvents:
             'event: error\ndata: {"type":"error","code":"InvalidSessionPhaseTransitionError","message":"questions unanswered","correlationId":null}\n\n',
             'event: done\ndata: {"type":"done"}\n\n',
         ]
+
+    def test_emits_error_event_when_streaming_raises_unexpectedly(self) -> None:
+        async def _events():
+            raise RuntimeError("boom: image attachment could not be loaded")
+            yield
+
+        async def _collect() -> list[str]:
+            return [event async for event in _stream(_events())]
+
+        events = asyncio.run(_collect())
+
+        assert events == [
+            'event: error\ndata: {"type":"error","code":"InternalError","message":"Die Antwort konnte nicht geladen werden.","correlationId":null}\n\n',
+            'event: done\ndata: {"type":"done"}\n\n',
+        ]

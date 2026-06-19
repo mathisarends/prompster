@@ -116,6 +116,7 @@ export const OnboardingPanel = ({
               question: pendingInput.question ?? null,
               hint: pendingInput.hint ?? null,
               options: pendingInput.options ?? [],
+              recommendedOption: pendingInput.recommendedOption ?? null,
               selectionMode: pendingInput.selectionMode ?? "single_select",
               isLastQuestion: Boolean(pendingInput.isLastQuestion),
               answers: [],
@@ -129,6 +130,7 @@ export const OnboardingPanel = ({
       pendingInput.question,
       pendingInput.questionId,
       pendingInput.questions,
+      pendingInput.recommendedOption,
       pendingInput.selectionMode,
     ],
   );
@@ -329,6 +331,7 @@ const OnboardingQuestionBlock = ({
   const options = (question.options ?? []).filter(
     (option) => !isOtherOption(option),
   );
+  const recommendedOption = question.recommendedOption?.trim();
   const freeTextId = `onboarding-free-text-${question.id || number}`;
   const isMultiSelect = question.selectionMode === "multi_select";
 
@@ -360,6 +363,7 @@ const OnboardingQuestionBlock = ({
       <div className="flex max-w-3xl flex-wrap gap-2.5">
         {options.map((option) => {
           const active = draft?.selectedOptions.includes(option) ?? false;
+          const recommended = recommendedOption === option.trim();
           return (
             <Chip
               key={option}
@@ -367,6 +371,22 @@ const OnboardingQuestionBlock = ({
               icon={active ? Check : undefined}
               active={active}
               activeClassName="border-primary/50 bg-primary/15 text-foreground shadow-[0_2px_16px_-6px_hsl(141_73%_42%/0.5)] [&>svg]:text-primary hover:border-primary/60 hover:bg-primary/20 hover:text-foreground"
+              className={cn(
+                recommended &&
+                  "border-primary/35 text-foreground ring-1 ring-primary/15 shadow-[0_0_18px_-12px_hsl(141_73%_42%/0.8)] hover:border-primary/45 hover:ring-primary/25",
+              )}
+              trailingContent={
+                recommended ? (
+                  <span
+                    className={cn(
+                      "ml-1 rounded-full border border-primary/25 bg-primary/10 px-2 py-0.5 text-[11px] font-medium leading-none text-primary",
+                      active && "border-primary/35 bg-primary/15",
+                    )}
+                  >
+                    Empfehlung
+                  </span>
+                ) : undefined
+              }
               disabled={disabled}
               onClick={() => onSelectOption(question, option)}
             />

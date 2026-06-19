@@ -50,6 +50,13 @@ async def _stream(events: AsyncIterator[SessionEvent]) -> AsyncIterator[str]:
             yield _to_sse(to_server_event(event))
     except _COMMAND_ERRORS as exc:
         yield _to_sse(_to_error_event(exc))
+    except Exception:
+        # An unexpected error (e.g. while running the agent, loading an image
+        # attachment, or calling the LLM) must not kill the stream silently —
+        # otherwise the client receives an empty event stream with no error and
+        # no done event. Log the traceback and surface a generic error event.
+        logger.exception("Unexpected error while streaming session events.")
+        yield _to_sse(_to_unexpected_error_event())
     yield _to_sse(DoneEvent())
 
 
@@ -70,4 +77,11 @@ def _to_error_event(error: Exception) -> ErrorEvent:
     return ErrorEvent(
         code=type(error).__name__,
         message=str(error) or type(error).__name__,
+    )
+
+
+def _to_unexpected_error_event() -> ErrorEvent:
+    return ErrorEvent(
+        code="InternalError",
+        message="Die Antwort konnte nicht geladen werden.",
     )
