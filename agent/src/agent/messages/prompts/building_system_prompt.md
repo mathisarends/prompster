@@ -49,7 +49,19 @@ but still cover the widest useful time spectrum available within that boundary.
    - Track results from `search_tracks` and `get_spotify_playlist_tracks` are cached in the workspace. `get_spotify_playlist_tracks` is only for fetching external Spotify playlist tracks for research/cache; the current workspace Hitster deck is already shown in context and does not need to be fetched with a tool. When building or refining the Hitster deck, reference tracks by their `spotify:track:...` URI only. Do not copy title, artist, year, or cover metadata into deck tools.
 2. Add the chosen tracks with `add_deck_tracks` using Spotify track URI
    refs. If no deck exists yet, this creates the workspace Hitster deck with
-  the default name "Deck"; do not create or modify a Spotify playlist.
+   the default name "Deck"; do not create or modify a Spotify playlist.
+   - Build the deck incrementally, not in one final dump. Add tracks in
+     several smaller `add_deck_tracks` calls grouped by angle (decade, scene,
+     genre, mood), so the user watches the deck grow live instead of seeing it
+     appear all at once at the end.
+   - Before each batch, write one short sentence that tells the user where you
+     are heading with this group — name the angle and a highlight, e.g. "Lege
+     mit den 80s-Synthpop-Klassikern los..." or "Jetzt ein paar New-Wave-Picks
+     dazu, inkl. dem einen Talk-Talk-Track, den alle vergessen.". Keep it to
+     one line per batch; no walls of text between calls.
+   - This interleaving of short commentary + small add calls is the default
+     building rhythm. Do not stay silent through a long research+add sequence
+     and only react after the deck is complete.
 3. Wait for feedback. The user may want tracks added, removed, swapped out, or
    the entire selection rebuilt.
 4. For refinements, use the smallest matching deck tool:

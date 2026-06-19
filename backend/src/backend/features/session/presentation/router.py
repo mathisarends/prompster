@@ -137,7 +137,6 @@ async def create_session(
 ) -> SessionResponse:
     session = await service.create(
         owner_id=authenticated_user_id,
-        initial_prompt=body.initial_prompt,
     )
     return await _to_session_response_with_signed_urls(
         session=session,

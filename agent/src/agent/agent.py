@@ -51,7 +51,9 @@ class Agent:
         self._tools.provide(self._spotify)
 
         existing_store = self._tools.resolve(DeckStore)
-        self._deck_store = deck_store or existing_store or DeckStore()
+        self._deck_store = (
+            deck_store or existing_store or DeckStore(max_tracks=max_deck_tracks)
+        )
         if existing_store is None:
             self._tools.provide(self._deck_store)
 

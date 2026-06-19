@@ -31,6 +31,7 @@ from backend.features.session.presentation.image_attachment_router import (
     upload_image_attachment,
 )
 from backend.features.session.presentation.router import (
+    create_session,
     complete_onboarding,
     get_session_by_id,
     restore_session_user_curation_event,
@@ -40,6 +41,7 @@ from backend.features.session.presentation.router import (
 )
 from backend.features.session.presentation.schemas import (
     SendMessageRequest,
+    SessionCreateRequest,
     SessionMessageAttachmentKind,
     SessionMessageAttachmentRequest,
     SubmitOnboardingAnswerRequest,
@@ -52,11 +54,16 @@ class _SessionServiceStub:
         self._session = session
         self.received_session_id: UUID | None = None
         self.received_user_id: UUID | None = None
+        self.received_owner_id: UUID | None = None
         self.received_restore_event_id: UUID | None = None
 
     async def get_by_id(self, *, session_id: UUID, user_id: UUID) -> Session:
         self.received_session_id = session_id
         self.received_user_id = user_id
+        return self._session
+
+    async def create(self, *, owner_id: UUID) -> Session:
+        self.received_owner_id = owner_id
         return self._session
 
     async def restore_user_curation_event(
@@ -227,10 +234,11 @@ class TestGetSessionByIdRoute:
             consumed=True,
         )
         unconsumed_event = UserCurationEvent(
-            event_type=UserCurationEventType.TRACK_PINNED,
+            event_type=UserCurationEventType.TRACK_REMOVED,
             track_id=unconsumed_track_id,
             track_title="Unconsumed",
             track_artist="Artist B",
+            track_year=2006,
             consumed=False,
         )
 
@@ -260,8 +268,34 @@ class TestGetSessionByIdRoute:
         assert response.unconsumed_user_curation_events[0].id == unconsumed_event.id
         assert (
             response.unconsumed_user_curation_events[0].event_type
-            == UserCurationEventTypeResponse.TRACK_PINNED
+            == UserCurationEventTypeResponse.TRACK_REMOVED
         )
+
+
+class TestCreateSessionRoute:
+    def test_creates_session_without_forwarding_initial_prompt_to_service(self) -> None:
+        user_id = uuid4()
+        session = Session(
+            title="",
+            entries=[],
+            owner_id=user_id,
+        )
+        service = _SessionServiceStub(session=session)
+
+        response = asyncio.run(
+            create_session(
+                authenticated_user_id=user_id,
+                body=SessionCreateRequest(initial_prompt="Bau mir ein 90er Deck"),
+                service=cast(SessionService, service),
+                attachment_store=cast(
+                    MessageAttachmentStore, _MessageAttachmentStoreStub()
+                ),
+            )
+        )
+
+        assert service.received_owner_id == user_id
+        assert response.id == session.id
+        assert response.title == ""
 
 
 class TestRestoreUserCurationEventRoute:
@@ -278,7 +312,6 @@ class TestRestoreUserCurationEventRoute:
             title="Starlight",
             artist="Muse",
             year=2006,
-            is_pinned=False,
         )
         event = session.user_curation_events[0]
         service = _SessionServiceStub(session=session)

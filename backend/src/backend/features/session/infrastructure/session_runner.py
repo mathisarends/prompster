@@ -181,7 +181,7 @@ def _agent_phase_for(session: Session) -> AgentPhase:
 
 def _to_deck_store(playlist: Playlist | None) -> DeckStore:
     if playlist is None:
-        return DeckStore()
+        return DeckStore(max_tracks=MAX_PLAYLIST_TRACKS)
 
     return DeckStore(
         DeckDraft(
@@ -198,5 +198,6 @@ def _to_deck_store(playlist: Playlist | None) -> DeckStore:
                 )
                 for track in playlist.tracks
             ],
-        )
+        ),
+        max_tracks=MAX_PLAYLIST_TRACKS,
     )

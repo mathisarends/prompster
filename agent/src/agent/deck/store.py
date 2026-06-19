@@ -19,8 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 class DeckStore:
-    def __init__(self, draft: DeckDraft | None = None) -> None:
+    def __init__(
+        self, draft: DeckDraft | None = None, max_tracks: int | None = None
+    ) -> None:
         self._draft = draft
+        self._max_tracks = max_tracks
         self._track_cache: dict[str, DeckDraftTrack] = {}
         self._pending_updates: list[DeckDraftUpdate] = []
 
@@ -34,6 +37,18 @@ class DeckStore:
     @property
     def draft(self) -> DeckDraft | None:
         return self._draft
+
+    @property
+    def track_limit(self) -> int | None:
+        return self._max_tracks
+
+    @property
+    def is_full(self) -> bool:
+        return (
+            self._max_tracks is not None
+            and self._draft is not None
+            and len(self._draft.tracks) >= self._max_tracks
+        )
 
     def save_draft(self, draft: DeckDraft) -> DeckDraft:
         logger.info(
@@ -62,9 +77,9 @@ class DeckStore:
                 "has_draft": self._draft is not None,
             },
         )
-        return self.add_tracks(self.resolve_track_refs(track_refs))
+        return self._add_tracks(self.resolve_track_refs(track_refs))
 
-    def add_tracks(self, tracks: list[DeckDraftTrack]) -> DeckDraft:
+    def _add_tracks(self, tracks: list[DeckDraftTrack]) -> DeckDraft:
         logger.info(
             "Adding tracks to deck",
             extra={
@@ -74,14 +89,16 @@ class DeckStore:
         )
         if self._draft is None:
             deduplicated_tracks = self._deduplicate_tracks(tracks)
-            draft = DeckDraft(name="Deck", tracks=deduplicated_tracks)
+            capped_tracks = self._cap_to_limit(deduplicated_tracks, current_count=0)
+            draft = DeckDraft(name="Deck", tracks=capped_tracks)
             logger.info(
                 "Created deck draft via add operation",
                 extra={
                     "deck_id": str(draft.id),
                     "requested_tracks": len(tracks),
-                    "added_tracks": len(deduplicated_tracks),
+                    "added_tracks": len(capped_tracks),
                     "skipped_duplicates": len(tracks) - len(deduplicated_tracks),
+                    "skipped_over_limit": len(deduplicated_tracks) - len(capped_tracks),
                 },
             )
             return self.save_draft(draft)
@@ -92,6 +109,9 @@ class DeckStore:
             tracks, existing_uris=existing_uris
         )
         skipped_duplicates = len(tracks) - len(deduplicated_tracks)
+        deduplicated_tracks = self._cap_to_limit(
+            deduplicated_tracks, current_count=len(draft.tracks)
+        )
         if not deduplicated_tracks:
             logger.info(
                 "No new tracks added to deck",
@@ -99,6 +119,8 @@ class DeckStore:
                     "deck_id": str(draft.id),
                     "requested_tracks": len(tracks),
                     "skipped_duplicates": skipped_duplicates,
+                    "at_limit": self._max_tracks is not None
+                    and len(draft.tracks) >= self._max_tracks,
                 },
             )
             return draft
@@ -312,6 +334,19 @@ class DeckStore:
             logger.warning("Deck operation failed because no draft exists")
             raise ValueError("No Hitster deck draft exists yet.")
         return self._draft
+
+    def _cap_to_limit(
+        self,
+        tracks: list[DeckDraftTrack],
+        *,
+        current_count: int,
+    ) -> list[DeckDraftTrack]:
+        if self._max_tracks is None:
+            return tracks
+        remaining = self._max_tracks - current_count
+        if remaining <= 0:
+            return []
+        return tracks[:remaining]
 
     def _deduplicate_tracks(
         self,

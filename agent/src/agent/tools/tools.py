@@ -214,11 +214,28 @@ class Tools:
             params: AddDraftDeckTracksParams,
         ) -> ActionResult:
             try:
+                before = len(store.draft.tracks) if store.draft is not None else 0
                 updated_deck = store.add_track_refs(params.tracks)
-                return ActionResult.ok(
-                    f"{len(params.tracks)} track reference(s) processed for "
-                    f'Hitster deck "{updated_deck.name}".'
+                added = len(updated_deck.tracks) - before
+                requested = len(params.tracks)
+                total = len(updated_deck.tracks)
+                if added == requested:
+                    return ActionResult.ok(
+                        f"Added {added} track(s) to Hitster deck "
+                        f'"{updated_deck.name}" ({total} total).'
+                    )
+                message = (
+                    f"Added {added} of {requested} track(s) to Hitster deck "
+                    f'"{updated_deck.name}" ({total} total).'
                 )
+                if store.is_full:
+                    message += (
+                        f" The deck is full (max {store.track_limit}); "
+                        "extra tracks were skipped."
+                    )
+                else:
+                    message += " The others were already in the deck."
+                return ActionResult.ok(message)
             except Exception as error:
                 return ActionResult.fail(error)
 

@@ -8,6 +8,7 @@ from agent.deck import (
     DeckDraft,
     DeckDraftTrack,
     DeckStore,
+    TrackRef,
 )
 
 
@@ -148,7 +149,7 @@ class TestWorkspaceDraftPlaylistTool:
         assert search_result.success is True
         assert add_result.success is True
         assert add_result.extracted_content == (
-            '1 track reference(s) processed for Hitster deck "Deck".'
+            'Added 1 track(s) to Hitster deck "Deck" (1 total).'
         )
         assert store.draft is not None
         assert store.draft.tracks[0].title == "Take On Me"
@@ -341,6 +342,37 @@ class TestWorkspaceDraftPlaylistTool:
         )
 
         assert duplicate_result.success is True
+        assert store.drain_deck_draft_updates() == []
+
+    def test_add_tracks_caps_at_max_tracks(self) -> None:
+        existing = [
+            _track(
+                title="Take On Me",
+                artist="a-ha",
+                year=1985,
+                spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+            ),
+            _track(
+                title="Africa",
+                artist="Toto",
+                year=1982,
+                spotify_uri="spotify:track:2374M0fQpWi3dLnB54qaLX",
+            ),
+        ]
+        store = DeckStore(DeckDraft(name="Deck", tracks=existing), max_tracks=2)
+        overflow = _track(
+            title="Billie Jean",
+            artist="Michael Jackson",
+            year=1982,
+            spotify_uri="spotify:track:5ChkMS8OtdzJeqyybCc9R5",
+        )
+        store.cache_tracks([overflow])
+
+        draft = store.add_track_refs([TrackRef(uri=overflow.spotify_uri)])
+
+        # Deck is already full: the overflow ref is dropped and no update emitted,
+        # so the downstream session never exceeds its hard track limit.
+        assert [track.title for track in draft.tracks] == ["Take On Me", "Africa"]
         assert store.drain_deck_draft_updates() == []
 
     @pytest.mark.asyncio
