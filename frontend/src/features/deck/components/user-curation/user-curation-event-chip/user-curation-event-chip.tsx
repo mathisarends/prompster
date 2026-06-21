@@ -16,11 +16,12 @@ import {
 
 type UserCurationEventChipProps = {
   event: UserCurationEventResponse;
-  isRestoring: boolean;
-  isDisabled: boolean;
+  isRestoring?: boolean;
+  isDisabled?: boolean;
   isPlaying: boolean;
-  onRestore: () => void;
+  onRestore?: () => void;
   onTogglePlayback?: (event: UserCurationEventResponse) => void;
+  className?: string;
 };
 
 const UserCurationEventCover = ({
@@ -90,12 +91,18 @@ export const UserCurationEventChip = ({
   isPlaying,
   onRestore,
   onTogglePlayback,
+  className,
 }: UserCurationEventChipProps) => {
   const meta = userCurationEventMeta[event.eventType];
   const Icon = meta.Icon;
 
   return (
-    <div className="group/event flex min-w-0 flex-1 basis-64 items-center gap-2.5 rounded-xl border border-white/[0.06] bg-card/55 py-1.5 pl-1.5 pr-3 shadow-sm shadow-black/20 backdrop-blur-sm sm:max-w-[17rem]">
+    <div
+      className={cn(
+        "group/event flex min-w-0 flex-1 basis-64 items-center gap-2.5 rounded-xl border border-white/[0.06] bg-card/55 py-1.5 pl-1.5 pr-3 shadow-sm shadow-black/20 backdrop-blur-sm sm:max-w-[17rem]",
+        className,
+      )}
+    >
       <UserCurationEventCover
         event={event}
         isPlaying={isPlaying}
@@ -122,30 +129,32 @@ export const UserCurationEventChip = ({
         </p>
       </div>
 
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              disabled={isDisabled}
-              aria-label={meta.restoreTooltip}
-              onClick={onRestore}
-              className="pointer-events-none shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/event:pointer-events-auto group-hover/event:opacity-100 hover:bg-white/10 hover:text-foreground"
-            >
-              {isRestoring ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <Undo2 className="size-3.5" />
-              )}
-            </Button>
-          }
-        />
-        <TooltipContent side="top" sideOffset={6} showArrow={false}>
-          {isRestoring ? "Wird rueckgaengig gemacht..." : meta.restoreTooltip}
-        </TooltipContent>
-      </Tooltip>
+      {onRestore ? (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                disabled={isDisabled}
+                aria-label={meta.restoreTooltip}
+                onClick={onRestore}
+                className="pointer-events-none shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/event:pointer-events-auto group-hover/event:opacity-100 hover:bg-white/10 hover:text-foreground"
+              >
+                {isRestoring ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Undo2 className="size-3.5" />
+                )}
+              </Button>
+            }
+          />
+          <TooltipContent side="top" sideOffset={6} showArrow={false}>
+            {isRestoring ? "Wird rueckgaengig gemacht..." : meta.restoreTooltip}
+          </TooltipContent>
+        </Tooltip>
+      ) : null}
     </div>
   );
 };

@@ -7,6 +7,7 @@ import type {
   SessionSnapshotPayload,
   ToolCallSequenceEntryResponse,
   ToolCallResponse,
+  UserCurationEventResponse,
   UserMessageEntryResponse,
 } from "@/api/generated/model";
 import {
@@ -130,6 +131,7 @@ export type ChatAction =
       type: typeof ChatActionType.STREAM_STARTED;
       userMessageText?: string;
       attachments?: ChatAttachment[];
+      userCurationEvents?: UserCurationEventResponse[];
     }
   | { type: typeof ChatActionType.STREAM_FINISHED }
   | { type: typeof ChatActionType.STREAM_STOPPED }
@@ -171,6 +173,7 @@ export const chatReducer = (
               createOptimisticUserEntry(
                 action.userMessageText,
                 action.attachments,
+                action.userCurationEvents,
               ),
             ]
           : state.entries,
@@ -640,6 +643,7 @@ const reduceServerEvent = (
 const createOptimisticUserEntry = (
   text: string,
   attachments: ChatAttachment[] = [],
+  userCurationEvents: UserCurationEventResponse[] = [],
 ): ChatUserEntry => ({
   kind: EntryKind.user_message,
   id: `user-${crypto.randomUUID()}`,
@@ -647,6 +651,7 @@ const createOptimisticUserEntry = (
   imageAttachments: attachments
     .map(toOptimisticImageAttachment)
     .filter((attachment): attachment is string => attachment !== null),
+  userCurationEvents,
   createdAt: new Date().toISOString(),
   isOptimistic: true,
 });

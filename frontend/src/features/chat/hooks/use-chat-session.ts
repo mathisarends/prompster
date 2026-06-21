@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import type { SessionResponse } from "@/api/generated/model";
+import type {
+  SessionResponse,
+  UserCurationEventResponse,
+} from "@/api/generated/model";
 import {
   getSession,
   getGetSessionQueryKey,
@@ -59,7 +62,11 @@ export type UseChatSessionResult = {
   isError: boolean;
   selectedModel?: string;
   onModelChange: (modelId: string) => void;
-  sendMessage: (text: string, attachments?: ChatAttachment[]) => void;
+  sendMessage: (
+    text: string,
+    attachments?: ChatAttachment[],
+    userCurationEvents?: UserCurationEventResponse[],
+  ) => void;
   persistOnboardingAnswer: (answer: OnboardingAnswerPayload) => void;
   submitOnboardingAnswers: (answers: OnboardingAnswerPayload[]) => void;
   stopMessage: () => void;
@@ -246,12 +253,17 @@ export const useChatSession = ({
   );
 
   const streamAssistantResponse = useCallback(
-    (text: string, attachments: ChatAttachment[] = []) => {
+    (
+      text: string,
+      attachments: ChatAttachment[] = [],
+      userCurationEvents: UserCurationEventResponse[] = [],
+    ) => {
       return runEventStream(
         {
           type: "stream/started",
           userMessageText: text,
           attachments,
+          userCurationEvents,
         },
         async (streamOptions) => {
           const imageAttachments = await Promise.all(
@@ -333,8 +345,12 @@ export const useChatSession = ({
   }, [session, sessionId, state.isStreaming]);
 
   const sendMessage = useCallback(
-    (text: string, attachments: ChatAttachment[] = []) => {
-      void streamAssistantResponse(text, attachments);
+    (
+      text: string,
+      attachments: ChatAttachment[] = [],
+      userCurationEvents: UserCurationEventResponse[] = [],
+    ) => {
+      void streamAssistantResponse(text, attachments, userCurationEvents);
     },
     [streamAssistantResponse],
   );

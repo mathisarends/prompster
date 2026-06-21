@@ -1,21 +1,34 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 
+import type { UserCurationEventResponse } from "@/api/generated/model";
+import { UserCurationEventChip } from "@/features/deck/components/user-curation/user-curation-event-chip";
 import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogTitle,
 } from "@/shared/ui/dialog";
+import { TooltipProvider } from "@/shared/ui/tooltip";
 
 type UserChatMessageProps = {
   text: string;
   imageAttachments?: string[];
+  userCurationEvents?: UserCurationEventResponse[];
+  activeTrackUri?: string | null;
+  isPlaybackActive?: boolean;
+  onToggleUserCurationTrackPlayback?: (
+    event: UserCurationEventResponse,
+  ) => void;
 };
 
 export const UserChatMessage = ({
   text,
   imageAttachments = [],
+  userCurationEvents = [],
+  activeTrackUri,
+  isPlaybackActive = false,
+  onToggleUserCurationTrackPlayback,
 }: UserChatMessageProps) => {
   const hasText = text.trim().length > 0;
 
@@ -23,6 +36,14 @@ export const UserChatMessage = ({
     <div className="ml-auto flex max-w-[82%] flex-col items-end gap-2">
       {imageAttachments.length > 0 && (
         <UserMessageImageGrid imageAttachments={imageAttachments} />
+      )}
+      {userCurationEvents.length > 0 && (
+        <UserMessageCurationEvents
+          events={userCurationEvents}
+          activeTrackUri={activeTrackUri}
+          isPlaybackActive={isPlaybackActive}
+          onToggleTrackPlayback={onToggleUserCurationTrackPlayback}
+        />
       )}
       {hasText && (
         <div className="whitespace-pre-line rounded-2xl bg-white/10 px-4 py-3 text-sm leading-relaxed text-foreground sm:text-base">
@@ -32,6 +53,38 @@ export const UserChatMessage = ({
     </div>
   );
 };
+
+type UserMessageCurationEventsProps = {
+  events: UserCurationEventResponse[];
+  activeTrackUri?: string | null;
+  isPlaybackActive: boolean;
+  onToggleTrackPlayback?: (event: UserCurationEventResponse) => void;
+};
+
+const UserMessageCurationEvents = ({
+  events,
+  activeTrackUri,
+  isPlaybackActive,
+  onToggleTrackPlayback,
+}: UserMessageCurationEventsProps) => (
+  <TooltipProvider delay={180}>
+    <div className="flex max-w-full flex-wrap justify-end gap-2">
+      {events.map((event) => (
+        <UserCurationEventChip
+          key={event.id}
+          event={event}
+          isPlaying={Boolean(
+            isPlaybackActive &&
+              event.trackSpotifyUri &&
+              event.trackSpotifyUri === activeTrackUri,
+          )}
+          onTogglePlayback={onToggleTrackPlayback}
+          className="basis-auto bg-white/[0.04] sm:max-w-[18rem]"
+        />
+      ))}
+    </div>
+  </TooltipProvider>
+);
 
 type UserMessageImageGridProps = {
   imageAttachments: string[];

@@ -44,7 +44,11 @@ type ChatSessionPaneProps = {
   isError: boolean;
   selectedModel?: string;
   onModelChange?: (modelId: string) => void;
-  sendMessage: (text: string, attachments?: ChatAttachment[]) => void;
+  sendMessage: (
+    text: string,
+    attachments?: ChatAttachment[],
+    userCurationEvents?: UserCurationEventResponse[],
+  ) => void;
   stopMessage: () => void;
   userCurationPlaybackState: UserCurationTrackPlaybackState;
   onToggleUserCurationTrackPlayback?: (
@@ -103,7 +107,7 @@ export const ChatSessionPane = ({
       : 0;
 
   const submitPrompt = (text: string, attachments: ChatAttachment[]) => {
-    sendMessage(text, attachments);
+    sendMessage(text, attachments, session?.unconsumedUserCurationEvents ?? []);
   };
 
   const renderEntry = (entry: ChatEntry, previousEntry?: ChatEntry) => {
@@ -114,6 +118,14 @@ export const ChatSessionPane = ({
             key={entry.id}
             text={entry.content}
             imageAttachments={entry.imageAttachments}
+            userCurationEvents={entry.userCurationEvents}
+            activeTrackUri={userCurationPlaybackState.activeTrackUri}
+            isPlaybackActive={userCurationPlaybackState.isPlaying}
+            onToggleUserCurationTrackPlayback={
+              userCurationPlaybackState.canControlPlayback
+                ? onToggleUserCurationTrackPlayback
+                : undefined
+            }
           />
         );
 
@@ -204,17 +216,19 @@ export const ChatSessionPane = ({
 
       <div className="shrink-0 bg-gradient-to-t from-background via-background/85 to-transparent px-4 pb-4 pt-6 sm:px-8 sm:pb-3">
         <div className="mx-auto w-full max-w-4xl">
-          <UserCurationEventContext
-            sessionId={sessionId}
-            events={session?.unconsumedUserCurationEvents ?? []}
-            activeTrackUri={userCurationPlaybackState.activeTrackUri}
-            isPlaybackActive={userCurationPlaybackState.isPlaying}
-            onToggleTrackPlayback={
-              userCurationPlaybackState.canControlPlayback
-                ? onToggleUserCurationTrackPlayback
-                : undefined
-            }
-          />
+          {!isStreaming && (
+            <UserCurationEventContext
+              sessionId={sessionId}
+              events={session?.unconsumedUserCurationEvents ?? []}
+              activeTrackUri={userCurationPlaybackState.activeTrackUri}
+              isPlaybackActive={userCurationPlaybackState.isPlaying}
+              onToggleTrackPlayback={
+                userCurationPlaybackState.canControlPlayback
+                  ? onToggleUserCurationTrackPlayback
+                  : undefined
+              }
+            />
+          )}
           <ChatInputBox
             value={prompt}
             onChange={setPrompt}
