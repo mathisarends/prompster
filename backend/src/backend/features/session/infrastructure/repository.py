@@ -782,7 +782,15 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
     ) -> list[dict] | None:
         if not items:
             return None
-        return [{"title": item.title, "cover_url": item.cover_url} for item in items]
+        return [
+            {
+                "title": item.title,
+                "cover_url": item.cover_url,
+                "artist": item.artist,
+                "track_uri": item.track_uri,
+            }
+            for item in items
+        ]
 
     def _to_domain_tool_result_items(
         self, rows: list[dict] | None
@@ -793,6 +801,8 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             ToolResultItem(
                 title=row.get("title", ""),
                 cover_url=row.get("cover_url"),
+                artist=row.get("artist"),
+                track_uri=row.get("track_uri"),
             )
             for row in rows
         )

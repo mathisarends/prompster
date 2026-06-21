@@ -17,7 +17,12 @@ RESULT_PREVIEW_LIMIT = 10
 
 def track_preview_items(tracks: list[DeckDraftTrack]) -> list[ActionResultItem]:
     return [
-        ActionResultItem(title=track.title, cover_url=track.cover_url)
+        ActionResultItem(
+            title=track.title,
+            cover_url=track.cover_url,
+            artist=track.artist,
+            track_uri=track.spotify_uri,
+        )
         for track in tracks[:RESULT_PREVIEW_LIMIT]
     ]
 

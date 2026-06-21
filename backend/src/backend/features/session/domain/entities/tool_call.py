@@ -24,10 +24,16 @@ class ToolFunction:
 
 @dataclass(frozen=True)
 class ToolResultItem:
-    """A single result a tool surfaced — bare preview metadata (cover + title)."""
+    """A single result a tool surfaced — preview metadata.
+
+    Track results also carry the artist and Spotify track URI; playlists leave
+    those unset.
+    """
 
     title: str
     cover_url: str | None = None
+    artist: str | None = None
+    track_uri: str | None = None
 
 
 @dataclass(frozen=True)

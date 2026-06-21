@@ -161,7 +161,12 @@ def to_tool_call_response(call: ToolCall) -> ToolCallResponse:
 def to_tool_call_result_item_response(
     item: ToolResultItem,
 ) -> ToolCallResultItemResponse:
-    return ToolCallResultItemResponse(title=item.title, cover_url=item.cover_url)
+    return ToolCallResultItemResponse(
+        title=item.title,
+        cover_url=item.cover_url,
+        artist=item.artist,
+        track_uri=item.track_uri,
+    )
 
 
 def to_session_summary_response(session: SessionSummary) -> SessionSummaryResponse:

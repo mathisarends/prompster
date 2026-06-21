@@ -201,7 +201,7 @@ class Tools:
                 playlists = await spotify.search_playlists(params)
                 return ActionResult.ok(
                     playlists.content,
-                    items=_playlist_preview_items(playlists.playlists),
+                    items=playlist_preview_items(playlists.playlists),
                 )
             except Exception as error:
                 return ActionResult.fail(error)
@@ -307,7 +307,7 @@ class Tools:
                 store.cache_tracks(playlist_tracks.tracks)
                 return ActionResult.ok(
                     playlist_tracks.content,
-                    items=_track_preview_items(playlist_tracks.tracks),
+                    items=track_preview_items(playlist_tracks.tracks),
                 )
             except Exception as error:
                 return ActionResult.fail(error)

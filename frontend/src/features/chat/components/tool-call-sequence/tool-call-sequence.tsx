@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ChevronRight, Play } from "lucide-react";
 
 import { cn } from "@/shared/lib/utils";
 
@@ -8,6 +9,14 @@ import type {
   ToolCallItem,
   ToolCallStatus,
 } from "./tool-call-sequence.types";
+
+const SoundBars = () => (
+  <span aria-hidden className="flex h-3.5 w-3.5 items-end justify-center gap-[2px]">
+    <span className="sound-bar h-[70%] w-[2px] rounded-full bg-current [--sound-bar-high:1] [--sound-bar-low:0.35] [animation-delay:-0.12s] [animation-duration:0.72s]" />
+    <span className="sound-bar h-full w-[2px] rounded-full bg-current [--sound-bar-high:0.86] [--sound-bar-low:0.18] [animation-delay:-0.44s] [animation-duration:0.94s]" />
+    <span className="sound-bar h-[58%] w-[2px] rounded-full bg-current [--sound-bar-high:1] [--sound-bar-low:0.28] [animation-delay:-0.28s] [animation-duration:0.82s]" />
+  </span>
+);
 
 const getStatus = (call: ToolCallItem): ToolCallStatus =>
   call.status === "pending" ? "running" : (call.status ?? "completed");
@@ -24,19 +33,21 @@ export const ToolCallAccordion = ({
   calls,
   className,
   defaultOpen = false,
+  activeTrackUri,
+  isPlaying = false,
+  onToggleTrackPlayback,
 }: ToolCallAccordionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const [openCallIds, setOpenCallIds] = useState<Set<string>>(
-    () => new Set(getExpandableCallIds(calls)),
-  );
+  const [openCallIds, setOpenCallIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     setOpenCallIds((current) => {
       const next = new Set(current);
       let changed = false;
-      for (const callId of getExpandableCallIds(calls)) {
-        if (next.has(callId)) continue;
-        next.add(callId);
+      const expandableCallIds = new Set(getExpandableCallIds(calls));
+      for (const callId of current) {
+        if (expandableCallIds.has(callId)) continue;
+        next.delete(callId);
         changed = true;
       }
       return changed ? next : current;
@@ -148,7 +159,7 @@ export const ToolCallAccordion = ({
                     type="button"
                     onClick={canExpand ? () => toggleCall(call.id) : undefined}
                     className={cn(
-                      "flex min-w-0 items-start pt-[2px] text-left text-[13px] leading-5",
+                      "flex min-w-0 items-start gap-1.5 pt-[2px] text-left text-[13px] leading-5",
                       canExpand &&
                         "w-full rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                       !canExpand && "pointer-events-none",
@@ -156,6 +167,15 @@ export const ToolCallAccordion = ({
                     aria-expanded={canExpand ? isCallOpen : undefined}
                     tabIndex={canExpand ? 0 : -1}
                   >
+                    {canExpand && (
+                      <ChevronRight
+                        aria-hidden="true"
+                        className={cn(
+                          "mt-[3px] size-3.5 shrink-0 text-muted-foreground/70 transition-transform",
+                          isCallOpen && "rotate-90",
+                        )}
+                      />
+                    )}
                     <span
                       className={cn(
                         "block min-w-0 break-words",
@@ -173,26 +193,101 @@ export const ToolCallAccordion = ({
                     <div className="mt-2 pl-5">
                       {call.resultItems && call.resultItems.length > 0 && (
                         <ul className="chat-tool-result-list grid max-h-[11.625rem] gap-1.5 overflow-y-auto pr-2">
-                          {call.resultItems.map((item, itemIndex) => (
-                            <li
-                              key={`${call.id}-${item.title}-${itemIndex}`}
-                              className="flex h-9 min-w-0 items-center gap-2 text-xs text-foreground/80"
-                            >
-                              {item.coverUrl ? (
-                                <img
-                                  src={item.coverUrl}
-                                  alt=""
-                                  className="size-7 shrink-0 rounded-sm object-cover"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <span className="size-7 shrink-0 rounded-sm bg-muted/60" />
-                              )}
-                              <span className="min-w-0 truncate">
-                                {item.title}
+                          {call.resultItems.map((item, itemIndex) => {
+                            const trackUri = item.trackUri ?? null;
+                            const isPlayable = Boolean(
+                              trackUri && onToggleTrackPlayback,
+                            );
+                            const isActive = Boolean(
+                              trackUri &&
+                                activeTrackUri &&
+                                trackUri === activeTrackUri,
+                            );
+                            const isItemPlaying = isActive && isPlaying;
+
+                            const cover = (
+                              <span className="relative size-8 shrink-0 overflow-hidden rounded-sm bg-muted/60">
+                                {item.coverUrl ? (
+                                  <img
+                                    src={item.coverUrl}
+                                    alt=""
+                                    className="size-full object-cover"
+                                    loading="lazy"
+                                  />
+                                ) : null}
+                                {isPlayable ? (
+                                  <span
+                                    className={cn(
+                                      "absolute inset-0 grid place-items-center bg-black/55 text-white transition-opacity",
+                                      isItemPlaying
+                                        ? "opacity-100"
+                                        : "opacity-0 group-hover/result:opacity-100",
+                                    )}
+                                  >
+                                    {isItemPlaying ? (
+                                      <SoundBars />
+                                    ) : (
+                                      <Play className="size-3.5 fill-current" />
+                                    )}
+                                  </span>
+                                ) : null}
                               </span>
-                            </li>
-                          ))}
+                            );
+
+                            const label = (
+                              <span className="flex min-w-0 flex-col">
+                                {item.artist ? (
+                                  <span className="min-w-0 truncate text-[11px] text-muted-foreground">
+                                    {item.artist}
+                                  </span>
+                                ) : null}
+                                <span
+                                  className={cn(
+                                    "min-w-0 truncate",
+                                    isActive && "text-primary",
+                                  )}
+                                >
+                                  {item.title}
+                                </span>
+                              </span>
+                            );
+
+                            return (
+                              <li
+                                key={`${call.id}-${item.title}-${itemIndex}`}
+                                className="min-w-0 text-xs text-foreground/80"
+                              >
+                                {isPlayable && trackUri ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      onToggleTrackPlayback?.({
+                                        id: trackUri,
+                                        title: item.title,
+                                        artist: item.artist,
+                                        coverUrl: item.coverUrl,
+                                        spotifyUri: trackUri,
+                                      })
+                                    }
+                                    aria-label={
+                                      isItemPlaying
+                                        ? `${item.title} pausieren`
+                                        : `${item.title} abspielen`
+                                    }
+                                    className="group/result flex w-full min-w-0 items-center gap-2 rounded-sm py-0.5 text-left transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                                  >
+                                    {cover}
+                                    {label}
+                                  </button>
+                                ) : (
+                                  <span className="flex min-w-0 items-center gap-2 py-0.5">
+                                    {cover}
+                                    {label}
+                                  </span>
+                                )}
+                              </li>
+                            );
+                          })}
                         </ul>
                       )}
                     </div>

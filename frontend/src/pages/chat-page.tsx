@@ -12,7 +12,7 @@ import {
   type OnboardingAnswer,
   useChatSession,
 } from "@/features/chat";
-import { DeckWorkspaceView } from "@/features/deck";
+import { DeckWorkspaceView, type PlayableTrackInput } from "@/features/deck";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -30,6 +30,7 @@ type UserCurationTrackPlayerBridge = {
   activeTrackUri: string | null;
   isPlaying: boolean;
   onTogglePlayback: (event: UserCurationEventResponse) => void;
+  onToggleTrackPlayback: (track: PlayableTrackInput) => void;
 } | null;
 
 type ChatRouteState = {
@@ -91,6 +92,9 @@ export const ChatPage = () => {
   const userCurationTrackPlayerRef = useRef<
     ((event: UserCurationEventResponse) => void) | null
   >(null);
+  const toolResultTrackPlayerRef = useRef<
+    ((track: PlayableTrackInput) => void) | null
+  >(null);
   const [userCurationPlaybackState, setUserCurationPlaybackState] =
     useState<UserCurationTrackPlaybackState>({
       activeTrackUri: null,
@@ -110,6 +114,7 @@ export const ChatPage = () => {
   const updateUserCurationTrackPlayer = useCallback(
     (bridge: UserCurationTrackPlayerBridge) => {
       userCurationTrackPlayerRef.current = bridge?.onTogglePlayback ?? null;
+      toolResultTrackPlayerRef.current = bridge?.onToggleTrackPlayback ?? null;
       setUserCurationPlaybackState({
         activeTrackUri: bridge?.activeTrackUri ?? null,
         canControlPlayback: Boolean(bridge),
@@ -122,6 +127,13 @@ export const ChatPage = () => {
   const toggleUserCurationEventTrackPlayback = useCallback(
     (event: UserCurationEventResponse) => {
       userCurationTrackPlayerRef.current?.(event);
+    },
+    [],
+  );
+
+  const toggleToolResultTrackPlayback = useCallback(
+    (track: PlayableTrackInput) => {
+      toolResultTrackPlayerRef.current?.(track);
     },
     [],
   );
@@ -203,6 +215,7 @@ export const ChatPage = () => {
               onToggleUserCurationTrackPlayback={
                 toggleUserCurationEventTrackPlayback
               }
+              onToggleToolResultTrackPlayback={toggleToolResultTrackPlayback}
             />
           </ResizablePanel>
           <ResizableHandle withHandle className="bg-white/[0.06]" />

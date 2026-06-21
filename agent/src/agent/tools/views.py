@@ -44,12 +44,14 @@ class ActionResultItem(BaseModel):
 
     Bare preview metadata so a consumer can show the first results a tool
     produced — e.g. the tracks a search returned or the playlists it found.
-    Intentionally minimal (a cover and a title); add fields only when a
-    consumer actually needs them.
+    Track results also carry the artist and Spotify track URI; playlists leave
+    those unset. Add fields only when a consumer actually needs them.
     """
 
     title: str
     cover_url: str | None = None
+    artist: str | None = None
+    track_uri: str | None = None
 
 
 class ActionResult(BaseModel):

@@ -13,10 +13,19 @@ import type { PlaylistTrack } from "@/features/spotify/lib/playlist-track";
 
 export type SpotifyMode = "loading" | "disconnected" | "non-premium" | "ready";
 
+export type PlayableTrackInput = {
+  id: string;
+  title: string;
+  artist?: string | null;
+  coverUrl?: string | null;
+  spotifyUri: string;
+};
+
 export type CurationTrackPlayerBridge = {
   activeTrackUri: string | null;
   isPlaying: boolean;
   onTogglePlayback: (event: UserCurationEventResponse) => void;
+  onToggleTrackPlayback: (track: PlayableTrackInput) => void;
 };
 
 type UseDeckPlayerControllerOptions = {
@@ -162,11 +171,9 @@ export const useDeckPlayerController = ({
     [playSpotifyUri],
   );
 
-  const toggleCurationEventTrackPlayback = useCallback(
-    (event: UserCurationEventResponse) => {
-      if (!event.trackSpotifyUri) return;
-
-      if (event.trackSpotifyUri === playerState.currentTrackUri) {
+  const toggleTrackPlayback = useCallback(
+    (track: PlayableTrackInput) => {
+      if (track.spotifyUri === playerState.currentTrackUri) {
         if (playerState.isPaused) {
           void resume();
         } else {
@@ -176,24 +183,24 @@ export const useDeckPlayerController = ({
       }
 
       const playlistTrack = tracks.find(
-        (track) =>
-          track.id === event.trackId ||
-          track.spotifyUri === event.trackSpotifyUri,
+        (candidate) =>
+          candidate.id === track.id ||
+          candidate.spotifyUri === track.spotifyUri,
       );
 
       if (!playlistTrack) {
         setPreviewTrack({
-          id: event.trackId,
-          title: event.trackTitle,
-          artist: event.trackArtist,
-          year: event.trackYear?.toString() ?? "",
+          id: track.id,
+          title: track.title,
+          artist: track.artist ?? "",
+          year: "",
           durationSeconds: 0,
-          coverUrl: event.trackCoverUrl ?? "",
-          spotifyUri: event.trackSpotifyUri,
+          coverUrl: track.coverUrl ?? "",
+          spotifyUri: track.spotifyUri,
         });
       }
 
-      playSpotifyUri(event.trackSpotifyUri);
+      playSpotifyUri(track.spotifyUri);
     },
     [
       pause,
@@ -203,6 +210,21 @@ export const useDeckPlayerController = ({
       resume,
       tracks,
     ],
+  );
+
+  const toggleCurationEventTrackPlayback = useCallback(
+    (event: UserCurationEventResponse) => {
+      if (!event.trackSpotifyUri) return;
+
+      toggleTrackPlayback({
+        id: event.trackId,
+        title: event.trackTitle,
+        artist: event.trackArtist,
+        coverUrl: event.trackCoverUrl,
+        spotifyUri: event.trackSpotifyUri,
+      });
+    },
+    [toggleTrackPlayback],
   );
 
   useEffect(() => {
@@ -217,6 +239,7 @@ export const useDeckPlayerController = ({
       activeTrackUri: playerState.currentTrackUri,
       isPlaying: !playerState.isPaused && Boolean(playerState.currentTrackUri),
       onTogglePlayback: toggleCurationEventTrackPlayback,
+      onToggleTrackPlayback: toggleTrackPlayback,
     });
     return () => onCurationTrackPlayerChange(null);
   }, [
@@ -225,6 +248,7 @@ export const useDeckPlayerController = ({
     playerState.isPaused,
     showPlaybackControls,
     toggleCurationEventTrackPlayback,
+    toggleTrackPlayback,
   ]);
 
   useEffect(() => {

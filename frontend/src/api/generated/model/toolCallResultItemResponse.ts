@@ -9,4 +9,6 @@
 export interface ToolCallResultItemResponse {
   title: string;
   coverUrl?: string | null;
+  artist?: string | null;
+  trackUri?: string | null;
 }

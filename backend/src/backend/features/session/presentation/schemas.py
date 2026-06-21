@@ -105,6 +105,8 @@ class ToolFunctionResponse(Schema):
 class ToolCallResultItemResponse(Schema):
     title: str
     cover_url: str | None = None
+    artist: str | None = None
+    track_uri: str | None = None
 
 
 class ToolCallResponse(Schema):

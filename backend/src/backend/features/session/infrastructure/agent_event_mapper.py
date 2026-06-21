@@ -98,7 +98,12 @@ class AgentSessionEventMapper:
             tool_call_id=event.tool_call_id,
             result=event.result,
             items=[
-                ToolResultItem(title=item.title, cover_url=item.cover_url)
+                ToolResultItem(
+                    title=item.title,
+                    cover_url=item.cover_url,
+                    artist=item.artist,
+                    track_uri=item.track_uri,
+                )
                 for item in event.items
             ],
         )

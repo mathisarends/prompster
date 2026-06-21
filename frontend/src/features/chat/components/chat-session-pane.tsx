@@ -17,6 +17,7 @@ import { ToolCallAccordion } from "@/features/chat/components/tool-call-sequence
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { UserChatMessage } from "@/features/chat/components/user-chat-message";
 import { UserCurationEventContext } from "@/features/deck/components/user-curation";
+import type { PlayableTrackInput } from "@/features/deck/hooks/useDeckPlayerController";
 import { useStickyScroll } from "@/shared/hooks/useStickyScroll";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -54,6 +55,7 @@ type ChatSessionPaneProps = {
   onToggleUserCurationTrackPlayback?: (
     event: UserCurationEventResponse,
   ) => void;
+  onToggleToolResultTrackPlayback?: (track: PlayableTrackInput) => void;
 };
 
 const shouldShowThinkingPlaceholder = (
@@ -103,6 +105,7 @@ export const ChatSessionPane = ({
   stopMessage,
   userCurationPlaybackState,
   onToggleUserCurationTrackPlayback,
+  onToggleToolResultTrackPlayback,
 }: ChatSessionPaneProps) => {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState("");
@@ -162,6 +165,13 @@ export const ChatSessionPane = ({
             <ToolCallAccordion
               calls={toToolCallItems(entry)}
               defaultOpen
+              activeTrackUri={userCurationPlaybackState.activeTrackUri}
+              isPlaying={userCurationPlaybackState.isPlaying}
+              onToggleTrackPlayback={
+                userCurationPlaybackState.canControlPlayback
+                  ? onToggleToolResultTrackPlayback
+                  : undefined
+              }
             />
           </div>
         );
