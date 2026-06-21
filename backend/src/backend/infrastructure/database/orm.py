@@ -411,6 +411,10 @@ class SessionToolCallModel(DatabaseEntity, table=True):
     state: str
     result: str | None = None
     error: str | None = None
+    result_items: list[dict] | None = Field(
+        default=None,
+        sa_column=Column(JSON, nullable=True),
+    )
 
     sequence: SessionToolCallSequenceModel = Relationship(back_populates="calls")
 

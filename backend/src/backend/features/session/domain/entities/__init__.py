@@ -19,6 +19,7 @@ from .tool_call import (
     ToolActionType,
     ToolCall,
     ToolFunction,
+    ToolResultItem,
     is_pending,
     is_resolved,
 )
@@ -42,6 +43,7 @@ __all__ = [
     "ToolCall",
     "ToolCallSequence",
     "ToolFunction",
+    "ToolResultItem",
     "UserMessage",
     "UserMessageAttachment",
     "UserMessageAttachmentKind",

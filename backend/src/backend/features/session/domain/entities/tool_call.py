@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 
 
@@ -23,6 +23,14 @@ class ToolFunction:
 
 
 @dataclass(frozen=True)
+class ToolResultItem:
+    """A single result a tool surfaced — bare preview metadata (cover + title)."""
+
+    title: str
+    cover_url: str | None = None
+
+
+@dataclass(frozen=True)
 class PendingCall:
     id: str
     function: ToolFunction
@@ -33,6 +41,7 @@ class CompletedCall:
     id: str
     function: ToolFunction
     result: str
+    items: tuple[ToolResultItem, ...] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)

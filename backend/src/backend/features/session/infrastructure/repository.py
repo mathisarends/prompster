@@ -24,6 +24,7 @@ from backend.features.session.domain import (
     ToolCall,
     ToolCallSequence,
     ToolFunction,
+    ToolResultItem,
     UserCurationEvent,
     UserCurationEventType,
     UserMessage,
@@ -707,7 +708,10 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         )
         if row.state == _COMPLETED_STATE:
             return CompletedCall(
-                id=row.call_id, function=function, result=row.result or ""
+                id=row.call_id,
+                function=function,
+                result=row.result or "",
+                items=self._to_domain_tool_result_items(row.result_items),
             )
         if row.state == _FAILED_STATE:
             return FailedCall(id=row.call_id, function=function, error=row.error or "")
@@ -748,10 +752,13 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
     ) -> SessionToolCallModel:
         if isinstance(call, CompletedCall):
             state, result, error = _COMPLETED_STATE, call.result, None
+            result_items = self._to_orm_tool_result_items(call.items)
         elif isinstance(call, FailedCall):
             state, result, error = _FAILED_STATE, None, call.error
+            result_items = None
         else:
             state, result, error = _PENDING_STATE, None, None
+            result_items = None
 
         orm = existing_call or SessionToolCallModel()
         orm.sequence_id = sequence_id
@@ -767,7 +774,28 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm.state = state
         orm.result = result
         orm.error = error
+        orm.result_items = result_items
         return orm
+
+    def _to_orm_tool_result_items(
+        self, items: tuple[ToolResultItem, ...]
+    ) -> list[dict] | None:
+        if not items:
+            return None
+        return [{"title": item.title, "cover_url": item.cover_url} for item in items]
+
+    def _to_domain_tool_result_items(
+        self, rows: list[dict] | None
+    ) -> tuple[ToolResultItem, ...]:
+        if not rows:
+            return ()
+        return tuple(
+            ToolResultItem(
+                title=row.get("title", ""),
+                cover_url=row.get("cover_url"),
+            )
+            for row in rows
+        )
 
     def _to_tool_action_type(self, value: str | None) -> ToolActionType | None:
         if value is None:

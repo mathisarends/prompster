@@ -58,6 +58,7 @@ from backend.features.session.domain import (
     Session,
     SessionRepository,
     ToolCallSequence,
+    ToolResultItem,
     UserMessageAttachment,
     UserMessageAttachmentKind,
 )
@@ -82,6 +83,7 @@ class _ResolvedToolCall:
     tool_call_id: str
     result: str
     sequence_completed: bool
+    items: tuple[ToolResultItem, ...] = field(default_factory=tuple)
 
 
 @dataclass
@@ -416,6 +418,7 @@ class SessionConversationService:
                 sequence_id=resolved_tool_call.sequence_id,
                 tool_call_id=resolved_tool_call.tool_call_id,
                 result=resolved_tool_call.result,
+                items=resolved_tool_call.items,
             )
         ]
         if resolved_tool_call.sequence_completed:
@@ -623,6 +626,7 @@ class SessionConversationService:
         session.resolve_tool_call(
             tool_call_id=event.tool_call_id,
             result=event.result,
+            items=event.items,
         )
         return await self._persisted_events(
             session=session,
@@ -632,6 +636,7 @@ class SessionConversationService:
                     tool_call_id=event.tool_call_id,
                     result=event.result,
                     sequence_completed=sequence.is_complete,
+                    items=tuple(event.items),
                 )
             ),
         )

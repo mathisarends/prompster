@@ -34,6 +34,7 @@ from backend.features.session.domain import (
     PlaylistTrack,
     ToolActionType,
     ToolFunction,
+    ToolResultItem,
 )
 
 
@@ -96,6 +97,10 @@ class AgentSessionEventMapper:
         return SessionRunnerToolCallCompleted(
             tool_call_id=event.tool_call_id,
             result=event.result,
+            items=[
+                ToolResultItem(title=item.title, cover_url=item.cover_url)
+                for item in event.items
+            ],
         )
 
     def _map_deck_updated(self, event: DeckUpdatedEvent) -> SessionRunnerEvent:

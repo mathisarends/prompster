@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from uuid import UUID
 
@@ -9,6 +9,7 @@ from backend.features.session.domain import (
     PlaylistTrack,
     Session,
     ToolCallSequence,
+    ToolResultItem,
 )
 
 
@@ -53,6 +54,7 @@ class SessionToolCallResolved:
     sequence_id: UUID
     tool_call_id: str
     result: str
+    items: tuple[ToolResultItem, ...] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)

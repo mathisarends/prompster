@@ -12,6 +12,10 @@ from agent.deck import (
 from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
 from agent.tools.handler import Spotify
+from agent.tools.result_previews import (
+    playlist_preview_items,
+    track_preview_items,
+)
 from agent.tools.params import (
     AddDraftDeckTracksParams,
     AskOnboardingQuestionParams,
@@ -176,7 +180,10 @@ class Tools:
             try:
                 tracks = await spotify.search_tracks(params)
                 store.cache_tracks(tracks.tracks)
-                return ActionResult.ok(tracks.content)
+                return ActionResult.ok(
+                    tracks.content,
+                    items=track_preview_items(tracks.tracks),
+                )
             except Exception as error:
                 return ActionResult.fail(error)
 
@@ -192,7 +199,10 @@ class Tools:
         ) -> ActionResult:
             try:
                 playlists = await spotify.search_playlists(params)
-                return ActionResult.ok(playlists)
+                return ActionResult.ok(
+                    playlists.content,
+                    items=_playlist_preview_items(playlists.playlists),
+                )
             except Exception as error:
                 return ActionResult.fail(error)
 
@@ -295,7 +305,10 @@ class Tools:
             try:
                 playlist_tracks = await spotify.get_playlist_tracks(params)
                 store.cache_tracks(playlist_tracks.tracks)
-                return ActionResult.ok(playlist_tracks.content)
+                return ActionResult.ok(
+                    playlist_tracks.content,
+                    items=_track_preview_items(playlist_tracks.tracks),
+                )
             except Exception as error:
                 return ActionResult.fail(error)
 

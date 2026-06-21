@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 from agent.deck import DeckDraft, DeckDraftUpdate
 
-from agent.tools.views import ActionType, OnboardingSelectionMode
+from agent.tools.views import ActionResultItem, ActionType, OnboardingSelectionMode
 
 
 class AgentEvent(BaseModel):
@@ -40,6 +40,7 @@ class ToolResultEvent(AgentEvent):
     tool_call_id: str
     name: str
     result: str
+    items: list[ActionResultItem] = Field(default_factory=list)
 
 
 class QuestionAskedEvent(AgentEvent):

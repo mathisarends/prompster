@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 
 import type { UserCurationEventResponse } from "@/api/generated/model";
 import { UserCurationEventChip } from "@/features/deck/components/user-curation/user-curation-event-chip";
+import { cn } from "@/shared/lib/utils";
 import {
   Dialog,
   DialogClose,
@@ -17,6 +18,7 @@ type UserChatMessageProps = {
   userCurationEvents?: UserCurationEventResponse[];
   activeTrackUri?: string | null;
   isPlaybackActive?: boolean;
+  className?: string;
   onToggleUserCurationTrackPlayback?: (
     event: UserCurationEventResponse,
   ) => void;
@@ -28,12 +30,18 @@ export const UserChatMessage = ({
   userCurationEvents = [],
   activeTrackUri,
   isPlaybackActive = false,
+  className,
   onToggleUserCurationTrackPlayback,
 }: UserChatMessageProps) => {
   const hasText = text.trim().length > 0;
 
   return (
-    <div className="ml-auto flex max-w-[82%] flex-col items-end gap-2">
+    <div
+      className={cn(
+        "ml-auto flex max-w-[82%] flex-col items-end gap-2",
+        className,
+      )}
+    >
       {imageAttachments.length > 0 && (
         <UserMessageImageGrid imageAttachments={imageAttachments} />
       )}

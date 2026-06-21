@@ -21,6 +21,7 @@ from backend.features.session.domain import Playlist
 from backend.features.session.presentation.mapper import (
     to_entry_response,
     to_playlist_track_response,
+    to_tool_call_result_item_response,
     to_tool_call_sequence_response,
 )
 from backend.features.session.presentation.schemas import (
@@ -102,6 +103,9 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
             sequence_id=event.sequence_id,
             tool_call_id=event.tool_call_id,
             result=event.result,
+            result_items=[
+                to_tool_call_result_item_response(item) for item in event.items
+            ],
         )
 
     if isinstance(event, SessionToolCallFailed):

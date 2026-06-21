@@ -398,7 +398,7 @@ body {
   font-family: "Inter Variable", "Inter", system-ui, sans-serif;
   font-size: 0.94rem;
   line-height: 1.7;
-  letter-spacing: -0.005em;
+  letter-spacing: 0;
   font-feature-settings: "ss01", "cv11", "calt", "kern";
   --tw-prose-invert-body: hsl(0 0% 92%);
   --tw-prose-invert-headings: hsl(0 0% 98%);

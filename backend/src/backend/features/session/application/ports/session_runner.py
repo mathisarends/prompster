@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from backend.features.session.domain import (
     OnboardingQuestionSelectionMode,
@@ -10,6 +10,7 @@ from backend.features.session.domain import (
     Playlist,
     PlaylistTrack,
     Session,
+    ToolResultItem,
 )
 
 
@@ -36,6 +37,7 @@ class SessionRunnerToolCallStarted(_RunnerEvent):
 class SessionRunnerToolCallCompleted(_RunnerEvent):
     tool_call_id: str
     result: str
+    items: list[ToolResultItem] = Field(default_factory=list)
 
 
 class SessionRunnerPlaylistUpdated(_RunnerEvent):

@@ -10,6 +10,7 @@ from backend.features.session.presentation.schemas import (
     AssistantMessageEntryResponse,
     PlaylistTrackResponse,
     SessionEntryResponse,
+    ToolCallResultItemResponse,
     ToolCallSequenceEntryResponse,
 )
 from backend.presentation.schema import Schema
@@ -112,6 +113,7 @@ class ToolCallResolvedEvent(_SessionEventSchema):
     sequence_id: UUID
     tool_call_id: str
     result: str
+    result_items: list[ToolCallResultItemResponse] = Field(default_factory=list)
 
 
 class ToolCallFailedEvent(_SessionEventSchema):

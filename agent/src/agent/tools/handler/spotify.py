@@ -37,6 +37,16 @@ class SpotifyTrackLookupResult(BaseModel):
     tracks: list[DeckDraftTrack]
 
 
+class SpotifyPlaylistPreview(BaseModel):
+    name: str
+    cover_url: str | None = None
+
+
+class SpotifyPlaylistLookupResult(BaseModel):
+    content: str
+    playlists: list[SpotifyPlaylistPreview]
+
+
 class Spotify:
     def __init__(self, client: Spotifyify | None = None) -> None:
         self._client = client or Spotifyify(scopes=[])
@@ -111,7 +121,9 @@ class Spotify:
             return "No albums found."
         return "\n".join(_format_album(album) for album in albums)
 
-    async def search_playlists(self, params: SearchParams) -> str:
+    async def search_playlists(
+        self, params: SearchParams
+    ) -> SpotifyPlaylistLookupResult:
         await self.open()
         query_limit = min(params.limit, 50)
         logger.info(
@@ -131,8 +143,13 @@ class Spotify:
             params.query,
         )
         if not playlists:
-            return "No playlists found."
-        return "\n".join(_format_playlist(playlist) for playlist in playlists)
+            return SpotifyPlaylistLookupResult(
+                content="No playlists found.", playlists=[]
+            )
+        return SpotifyPlaylistLookupResult(
+            content="\n".join(_format_playlist(playlist) for playlist in playlists),
+            playlists=[_playlist_preview(playlist) for playlist in playlists],
+        )
 
     async def get_artist_albums(self, params: ArtistAlbumsParams) -> str:
         artist_id = _normalize_spotify_id(params.artist_id, "artist")
@@ -381,4 +398,13 @@ def _format_playlist(playlist: Playlist | SimplifiedPlaylist) -> str:
         id=playlist.id,
         name=playlist.name,
         track_count=_playlist_track_count(playlist),
+    )
+
+
+def _playlist_preview(
+    playlist: Playlist | SimplifiedPlaylist,
+) -> SpotifyPlaylistPreview:
+    return SpotifyPlaylistPreview(
+        name=playlist.name or "Unknown playlist",
+        cover_url=_cover_url(playlist.images),
     )

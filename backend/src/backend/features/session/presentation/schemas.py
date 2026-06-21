@@ -102,12 +102,18 @@ class ToolFunctionResponse(Schema):
     action_type: str | None = None
 
 
+class ToolCallResultItemResponse(Schema):
+    title: str
+    cover_url: str | None = None
+
+
 class ToolCallResponse(Schema):
     id: str
     function: ToolFunctionResponse
     state: ToolCallState
     result: str | None = None
     error: str | None = None
+    result_items: list[ToolCallResultItemResponse] = Field(default_factory=list)
 
 
 class ToolCallSequenceEntryResponse(Schema):

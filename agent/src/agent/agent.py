@@ -191,6 +191,7 @@ class Agent:
                 tool_call_id=call.id,
                 name=call.function.name,
                 result=content,
+                items=list(result.items),
             )
         for update in self._deck_store.drain_deck_draft_updates():
             yield self._to_deck_updated_event(update)

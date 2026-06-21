@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from typing import Self
 from uuid import UUID
@@ -30,6 +31,7 @@ from backend.features.session.domain.entities import (
     PlaylistTrack,
     SessionEntry,
     ToolCallSequence,
+    ToolResultItem,
     UserCurationEvent,
     UserCurationEventType,
     UserMessage,
@@ -489,9 +491,14 @@ class Session(Aggregate):
         self._entries.append(sequence)
         return sequence
 
-    def resolve_tool_call(self, tool_call_id: str, result: str) -> CompletedCall:
+    def resolve_tool_call(
+        self,
+        tool_call_id: str,
+        result: str,
+        items: Sequence[ToolResultItem] = (),
+    ) -> CompletedCall:
         sequence = self._require_pending_tool_call_sequence()
-        return sequence.resolve(tool_call_id, result)
+        return sequence.resolve(tool_call_id, result, items)
 
     def fail_tool_call(self, tool_call_id: str, error: str) -> FailedCall:
         sequence = self._require_pending_tool_call_sequence()

@@ -10,6 +10,7 @@ type AssistantChatMessageProps = {
   isStreaming?: boolean;
   toolCalls?: ToolCallItem[];
   attachedAbove?: boolean;
+  className?: string;
 };
 
 export const AssistantChatMessage = ({
@@ -17,6 +18,7 @@ export const AssistantChatMessage = ({
   isStreaming = false,
   toolCalls,
   attachedAbove = false,
+  className,
 }: AssistantChatMessageProps) => {
   const displayedText = useSmoothStreamingText(text, { isStreaming });
   // Keep the streaming caret alive until the smooth reveal has caught up, even
@@ -28,6 +30,7 @@ export const AssistantChatMessage = ({
       className={cn(
         "chat-assistant-message flex max-w-[82%] flex-col gap-1.5 px-1 py-2",
         attachedAbove && "-mt-4 pt-0",
+        className,
       )}
     >
       {displayedText ? (

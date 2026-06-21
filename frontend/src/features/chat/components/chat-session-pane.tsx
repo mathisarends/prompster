@@ -71,6 +71,21 @@ const shouldShowThinkingPlaceholder = (
   return true;
 };
 
+const getTurnSpacingClassName = (
+  entry: ChatEntry,
+  previousEntry?: ChatEntry,
+) => {
+  if (!previousEntry) return undefined;
+
+  const isConversationTurn =
+    (previousEntry.kind === "user_message" &&
+      entry.kind === "assistant_message") ||
+    (previousEntry.kind === "assistant_message" &&
+      entry.kind === "user_message");
+
+  return isConversationTurn ? "mt-3 sm:mt-4" : undefined;
+};
+
 export const ChatSessionPane = ({
   sessionId,
   session,
@@ -121,6 +136,7 @@ export const ChatSessionPane = ({
             userCurationEvents={entry.userCurationEvents}
             activeTrackUri={userCurationPlaybackState.activeTrackUri}
             isPlaybackActive={userCurationPlaybackState.isPlaying}
+            className={getTurnSpacingClassName(entry, previousEntry)}
             onToggleUserCurationTrackPlayback={
               userCurationPlaybackState.canControlPlayback
                 ? onToggleUserCurationTrackPlayback
@@ -136,6 +152,7 @@ export const ChatSessionPane = ({
             text={entry.content}
             isStreaming={entry.isStreaming}
             attachedAbove={previousEntry?.kind === "tool_call_group"}
+            className={getTurnSpacingClassName(entry, previousEntry)}
           />
         );
 

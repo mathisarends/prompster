@@ -39,11 +39,25 @@ class InputRequest(BaseModel):
     is_last_question: bool = False
 
 
+class ActionResultItem(BaseModel):
+    """A single result the agent surfaces from a tool execution.
+
+    Bare preview metadata so a consumer can show the first results a tool
+    produced — e.g. the tracks a search returned or the playlists it found.
+    Intentionally minimal (a cover and a title); add fields only when a
+    consumer actually needs them.
+    """
+
+    title: str
+    cover_url: str | None = None
+
+
 class ActionResult(BaseModel):
     success: bool
     extracted_content: str = ""
     error: str | None = None
     input_request: InputRequest | None = None
+    items: list[ActionResultItem] = Field(default_factory=list)
 
     @classmethod
     def ok(
@@ -51,11 +65,13 @@ class ActionResult(BaseModel):
         extracted_content: str = "",
         *,
         input_request: InputRequest | None = None,
+        items: Iterable[ActionResultItem] | None = None,
     ) -> Self:
         return cls(
             success=True,
             extracted_content=extracted_content,
             input_request=input_request,
+            items=list(items or ()),
         )
 
     @classmethod

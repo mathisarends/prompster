@@ -1,11 +1,14 @@
 from datetime import datetime
 from uuid import UUID
 
+from collections.abc import Sequence
+
 from backend.features.session.domain.entities.tool_call import (
     CompletedCall,
     FailedCall,
     PendingCall,
     ToolCall,
+    ToolResultItem,
     is_pending,
     is_resolved,
 )
@@ -45,10 +48,18 @@ class ToolCallSequence(Entity):
                 return self.calls.pop(index)
         return None
 
-    def resolve(self, tool_call_id: str, result: str) -> CompletedCall:
+    def resolve(
+        self,
+        tool_call_id: str,
+        result: str,
+        items: Sequence[ToolResultItem] = (),
+    ) -> CompletedCall:
         index, pending = self._require_pending(tool_call_id)
         completed = CompletedCall(
-            id=pending.id, function=pending.function, result=result
+            id=pending.id,
+            function=pending.function,
+            result=result,
+            items=tuple(items),
         )
         self.calls[index] = completed
         return completed

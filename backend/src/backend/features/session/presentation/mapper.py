@@ -19,6 +19,7 @@ from backend.features.session.domain import (
     SessionEntry,
     ToolCall,
     ToolCallSequence,
+    ToolResultItem,
     UserMessage,
     UserMessageAttachment,
     UserCurationEvent,
@@ -36,6 +37,7 @@ from backend.features.session.presentation.schemas import (
     SpotifyPlaylistExportResponse,
     ToolCallSequenceEntryResponse,
     ToolCallResponse,
+    ToolCallResultItemResponse,
     ToolCallState,
     ToolFunctionResponse,
     SessionMessageAttachmentResponse,
@@ -127,8 +129,10 @@ def to_tool_call_sequence_response(
 
 
 def to_tool_call_response(call: ToolCall) -> ToolCallResponse:
+    result_items: tuple[ToolResultItem, ...] = ()
     if isinstance(call, CompletedCall):
         state, result, error = ToolCallState.COMPLETED, call.result, None
+        result_items = call.items
     elif isinstance(call, FailedCall):
         state, result, error = ToolCallState.FAILED, None, call.error
     elif isinstance(call, PendingCall):
@@ -150,7 +154,14 @@ def to_tool_call_response(call: ToolCall) -> ToolCallResponse:
         state=state,
         result=result,
         error=error,
+        result_items=[to_tool_call_result_item_response(item) for item in result_items],
     )
+
+
+def to_tool_call_result_item_response(
+    item: ToolResultItem,
+) -> ToolCallResultItemResponse:
+    return ToolCallResultItemResponse(title=item.title, cover_url=item.cover_url)
 
 
 def to_session_summary_response(session: SessionSummary) -> SessionSummaryResponse:
