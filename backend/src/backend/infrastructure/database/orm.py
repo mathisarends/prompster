@@ -115,6 +115,8 @@ class SessionModel(DatabaseEntity, table=True):
         max_length=32,
         sa_column_kwargs={"server_default": text("'onboarding'")},
     )
+    playlist_pdf_storage_key: str | None = None
+    playlist_pdf_fingerprint: str | None = Field(default=None, max_length=64)
     last_activity_at: datetime = Field(sa_type=DateTime(timezone=True))
 
     user_messages: list["SessionUserMessageModel"] = Relationship(

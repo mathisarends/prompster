@@ -91,6 +91,8 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm.owner_id = session.owner_id
         orm.is_starred = session.is_starred
         orm.phase = session.phase
+        orm.playlist_pdf_storage_key = session.playlist_pdf_storage_key
+        orm.playlist_pdf_fingerprint = session.playlist_pdf_fingerprint
         orm.created_at = session.created_at
         orm.last_activity_at = self._resolve_last_activity_at(session)
 
@@ -172,6 +174,8 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             is_starred=orm.is_starred,
             phase=Phase(orm.phase or Phase.ONBOARDING),
             playlist=self._to_domain_playlist(orm.playlist),
+            playlist_pdf_storage_key=orm.playlist_pdf_storage_key,
+            playlist_pdf_fingerprint=orm.playlist_pdf_fingerprint,
             user_curation_events=domain_user_curation_events,
             playlist_references=[
                 self._to_domain_playlist_reference(reference)
@@ -243,6 +247,8 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             owner_id=domain.owner_id,
             is_starred=domain.is_starred,
             phase=domain.phase,
+            playlist_pdf_storage_key=domain.playlist_pdf_storage_key,
+            playlist_pdf_fingerprint=domain.playlist_pdf_fingerprint,
             created_at=domain.created_at,
             last_activity_at=self._resolve_last_activity_at(domain),
         )

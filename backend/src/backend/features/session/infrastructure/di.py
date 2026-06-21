@@ -180,10 +180,12 @@ class SessionProvider(Provider):
         self,
         session_repository: SessionRepository,
         playlist_deck_generator: PlaylistDeckGenerator,
+        storage_backend: StorageBackend,
     ) -> SessionPlaylistExporter:
         return SessionPlaylistExporter(
             session_repository=session_repository,
             playlist_deck_generator=playlist_deck_generator,
+            storage_backend=storage_backend,
         )
 
     @provide(scope=Scope.APP)

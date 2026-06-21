@@ -1,5 +1,7 @@
 from collections.abc import Sequence
 from datetime import datetime, timezone
+import hashlib
+import json
 from typing import Self
 from uuid import UUID
 
@@ -41,6 +43,7 @@ from backend.features.session.domain.views import Phase
 from backend.shared.ddd import Aggregate
 
 MAX_PLAYLIST_TRACKS = 50
+PLAYLIST_FINGERPRINT_VERSION = 1
 DECIDE_FOR_ME_OPTION = "Entscheide für mich"
 
 
@@ -57,6 +60,8 @@ class Session(Aggregate):
         artist_references: list[ArtistReference] | None = None,
         phase: Phase = Phase.ONBOARDING,
         onboarding_questions: list[OnboardingQuestion] | None = None,
+        playlist_pdf_storage_key: str | None = None,
+        playlist_pdf_fingerprint: str | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> None:
@@ -73,6 +78,8 @@ class Session(Aggregate):
         self._onboarding_questions: list[OnboardingQuestion] = (
             onboarding_questions or []
         )
+        self._playlist_pdf_storage_key = playlist_pdf_storage_key
+        self._playlist_pdf_fingerprint = playlist_pdf_fingerprint
 
         if self._playlist is not None:
             self._assert_track_limit(total_tracks=len(self._playlist.tracks))
@@ -108,6 +115,42 @@ class Session(Aggregate):
     @property
     def playlist(self) -> Playlist | None:
         return self._playlist
+
+    @property
+    def playlist_pdf_storage_key(self) -> str | None:
+        return self._playlist_pdf_storage_key
+
+    @property
+    def playlist_pdf_fingerprint(self) -> str | None:
+        return self._playlist_pdf_fingerprint
+
+    @property
+    def playlist_fingerprint(self) -> str | None:
+        if self._playlist is None:
+            return None
+        payload = {
+            "version": PLAYLIST_FINGERPRINT_VERSION,
+            "tracks": [
+                {
+                    "title": track.title,
+                    "artist": track.artist,
+                    "year": track.year,
+                    "spotify_uri": track.spotify_uri,
+                }
+                for track in self._playlist.tracks
+            ],
+        }
+        serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+    def set_playlist_pdf_export(
+        self,
+        *,
+        storage_key: str,
+        fingerprint: str,
+    ) -> None:
+        self._playlist_pdf_storage_key = storage_key
+        self._playlist_pdf_fingerprint = fingerprint
 
     @property
     def user_curation_events(self) -> tuple[UserCurationEvent, ...]:
