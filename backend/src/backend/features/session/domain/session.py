@@ -482,12 +482,14 @@ class Session(Aggregate):
         self._entries.pop()
         return message
 
-    def add_tool_call(self, call: PendingCall) -> ToolCallSequence:
+    def add_tool_call(
+        self, call: PendingCall, sequence_label: str | None = None
+    ) -> ToolCallSequence:
         last = self._entries[-1] if self._entries else None
         if isinstance(last, ToolCallSequence):
             last.add(call)
             return last
-        sequence = ToolCallSequence(calls=[call])
+        sequence = ToolCallSequence(calls=[call], label=sequence_label)
         self._entries.append(sequence)
         return sequence
 

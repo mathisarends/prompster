@@ -124,6 +124,7 @@ def to_tool_call_sequence_response(
     return ToolCallSequenceEntryResponse(
         id=sequence.id,
         created_at=sequence.created_at,
+        label=sequence.label,
         calls=[to_tool_call_response(call) for call in sequence.calls],
     )
 

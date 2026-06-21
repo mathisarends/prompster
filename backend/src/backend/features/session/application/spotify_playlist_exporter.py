@@ -31,6 +31,23 @@ class ExportedSpotifyPlaylist:
     track_count: int
 
 
+@dataclass(frozen=True, slots=True)
+class SpotifyExportPlan:
+    """Everything needed to write the playlist to Spotify.
+
+    Produced by :meth:`SessionSpotifyPlaylistExporter.prepare` — which performs
+    all validation up front so domain errors surface as HTTP responses — and
+    consumed by :meth:`execute`, where the (retry-prone) Spotify writes happen.
+    """
+
+    session: Session
+    access_token: str
+    name: str
+    description: str
+    track_uris: list[str]
+    existing_playlist_id: str | None
+
+
 class SessionSpotifyPlaylistExporter:
     _NAME_PREFIX = "prompster · "
     _NAME_MAX_LENGTH = 100
@@ -54,6 +71,15 @@ class SessionSpotifyPlaylistExporter:
     async def export(
         self, *, session_id: UUID, user_id: UUID
     ) -> ExportedSpotifyPlaylist:
+        plan = await self.prepare(session_id=session_id, user_id=user_id)
+        return await self.execute(plan)
+
+    async def prepare(self, *, session_id: UUID, user_id: UUID) -> SpotifyExportPlan:
+        """Validate the request and build the export plan.
+
+        Runs before any Spotify write so its domain errors propagate as HTTP
+        responses rather than mid-stream error events.
+        """
         await self._require_spotify_connection(user_id=user_id)
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         playlist = session.playlist
@@ -75,33 +101,43 @@ class SessionSpotifyPlaylistExporter:
         metadata = await self._metadata_generator.generate(
             [self._to_metadata_track(track) for track in playlist.tracks]
         )
-        name = self._build_name(metadata.name)
-        description = metadata.description[: self._DESCRIPTION_MAX_LENGTH]
 
-        if playlist.spotify_playlist_id:
+        return SpotifyExportPlan(
+            session=session,
+            access_token=access_token,
+            name=self._build_name(metadata.name),
+            description=metadata.description[: self._DESCRIPTION_MAX_LENGTH],
+            track_uris=track_uris,
+            existing_playlist_id=playlist.spotify_playlist_id or None,
+        )
+
+    async def execute(self, plan: SpotifyExportPlan) -> ExportedSpotifyPlaylist:
+        """Write the prepared plan to Spotify. This is where retries happen."""
+        if plan.existing_playlist_id:
             playlist_id = await self._update_existing_playlist(
-                playlist_id=playlist.spotify_playlist_id,
-                access_token=access_token,
-                name=name,
-                description=description,
-                track_uris=track_uris,
+                playlist_id=plan.existing_playlist_id,
+                access_token=plan.access_token,
+                name=plan.name,
+                description=plan.description,
+                track_uris=plan.track_uris,
             )
         else:
             playlist_id = await self._create_new_playlist(
-                access_token=access_token,
-                name=name,
-                description=description,
-                track_uris=track_uris,
+                access_token=plan.access_token,
+                name=plan.name,
+                description=plan.description,
+                track_uris=plan.track_uris,
             )
-            playlist.spotify_playlist_id = playlist_id
-            await self._session_repository.save(session=session)
+            if plan.session.playlist is not None:
+                plan.session.playlist.spotify_playlist_id = playlist_id
+            await self._session_repository.save(session=plan.session)
 
         return ExportedSpotifyPlaylist(
             id=playlist_id,
-            name=name,
-            description=description,
+            name=plan.name,
+            description=plan.description,
             url=self._PLAYLIST_URL_TEMPLATE.format(playlist_id=playlist_id),
-            track_count=len(track_uris),
+            track_count=len(plan.track_uris),
         )
 
     async def _require_spotify_connection(self, *, user_id: UUID) -> None:

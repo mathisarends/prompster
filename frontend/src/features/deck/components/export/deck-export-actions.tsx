@@ -12,6 +12,7 @@ type DeckExportActionsProps = {
   isLoadingPdfPreview: boolean;
   isDownloadingPdf: boolean;
   isExportingSpotify: boolean;
+  spotifyExportRetry?: { attempt: number; maxAttempts: number } | null;
   onDownloadPdf: () => void;
   onExportSpotify: () => void;
 };
@@ -23,6 +24,7 @@ export const DeckExportActions = ({
   isLoadingPdfPreview,
   isDownloadingPdf,
   isExportingSpotify,
+  spotifyExportRetry,
   onDownloadPdf,
   onExportSpotify,
 }: DeckExportActionsProps) => {
@@ -151,7 +153,9 @@ export const DeckExportActions = ({
               ) : (
                 <Music2 className="size-4" />
               )}
-              Spotify exportieren
+              {isExportingSpotify && spotifyExportRetry
+                ? `Versuch ${spotifyExportRetry.attempt}/${spotifyExportRetry.maxAttempts}…`
+                : "Spotify exportieren"}
             </Button>
           </div>
         </div>

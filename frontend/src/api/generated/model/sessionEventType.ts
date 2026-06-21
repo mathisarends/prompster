@@ -19,6 +19,7 @@ export const SessionEventType = {
   tool_callsequence_added: "tool_call.sequence_added",
   tool_callresolved: "tool_call.resolved",
   tool_callfailed: "tool_call.failed",
+  tool_callretry: "tool_call.retry",
   tool_callsequence_completed: "tool_call.sequence_completed",
   playlistset: "playlist.set",
   playlisttrack_added: "playlist.track_added",

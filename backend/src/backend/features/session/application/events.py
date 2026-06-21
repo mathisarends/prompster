@@ -65,6 +65,23 @@ class SessionToolCallFailed:
 
 
 @dataclass(frozen=True)
+class SessionToolCallRetry:
+    """A transient retry of a still-pending tool call's upstream request.
+
+    Surfaced live for reassurance; never persisted and does not mutate the
+    session. ``sequence_id`` is best-effort — it is ``None`` if no pending
+    sequence is found (e.g. for skipped onboarding-question tool calls).
+    """
+
+    tool_call_id: str
+    name: str
+    attempt: int
+    max_attempts: int
+    retry_in_seconds: float | None = None
+    sequence_id: UUID | None = None
+
+
+@dataclass(frozen=True)
 class SessionToolCallSequenceCompleted:
     sequence_id: UUID
 
@@ -134,6 +151,7 @@ type SessionEvent = (
     | SessionToolCallSequenceAdded
     | SessionToolCallResolved
     | SessionToolCallFailed
+    | SessionToolCallRetry
     | SessionToolCallSequenceCompleted
     | SessionPlaylistSet
     | SessionPlaylistTrackAdded

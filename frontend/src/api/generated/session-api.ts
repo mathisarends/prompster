@@ -37,7 +37,6 @@ import type {
   SessionResponse,
   SessionSummaryListResponse,
   SessionUpdateRequest,
-  SpotifyPlaylistExportResponse,
   SubmitOnboardingAnswerRequest,
 } from "./model";
 
@@ -2976,7 +2975,7 @@ export const exportSessionPlaylistToSpotify = (
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  return customInstance<SpotifyPlaylistExportResponse>(
+  return customInstance<string>(
     {
       url: `/api/v1/sessions/${sessionId}/playlist/spotify`,
       method: "POST",

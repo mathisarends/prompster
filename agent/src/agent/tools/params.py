@@ -13,7 +13,19 @@ def _compact_status_value(value: str, max_length: int = 32) -> str:
     return normalized_value
 
 
-class ToolParams(BaseModel):
+class SequenceLabelParams(BaseModel):
+    sequence_label: str | None = Field(
+        default=None,
+        max_length=80,
+        description=(
+            "Optionales kurzes deutsches Label fuer den gesamten Tool-Block. "
+            "Nur im ersten Tool Call setzen, wenn mehrere Tool Calls zu einem "
+            "gemeinsamen Arbeitsschritt gehoeren."
+        ),
+    )
+
+
+class ToolParams(SequenceLabelParams):
     status: str = Field(
         description=(
             "Kurzes deutsches Status-Label im Präsens (max. ~50 Zeichen), das dem "
@@ -23,7 +35,7 @@ class ToolParams(BaseModel):
     )
 
 
-class SearchParams(BaseModel):
+class SearchParams(SequenceLabelParams):
     query: str
     limit: int = 10
 
@@ -58,7 +70,7 @@ class ReplaceDraftDeckTracksParams(ToolParams):
     replacements: list[TrackRefReplacement] = Field(min_length=1)
 
 
-class PlaylistIdParams(BaseModel):
+class PlaylistIdParams(SequenceLabelParams):
     playlist_id: str = Field(description="Spotify playlist URI or ID.")
     playlist_name: str = Field(
         description=(

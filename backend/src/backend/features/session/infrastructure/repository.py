@@ -695,6 +695,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         return ToolCallSequence(
             id=row.id,
             calls=[self._to_domain_tool_call(call) for call in calls],
+            label=row.label,
             created_time=row.created_at,
         )
 
@@ -728,6 +729,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         orm = existing_sequence or SessionToolCallSequenceModel(id=sequence.id)
         orm.session_id = session_id
         orm.position = position
+        orm.label = sequence.label
         orm.created_at = sequence.created_at
 
         existing_calls = {call.call_id: call for call in orm.calls}

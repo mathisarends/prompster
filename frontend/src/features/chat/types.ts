@@ -9,12 +9,18 @@ export type ToolCallActionType =
   | "get_spotify_playlist_tracks"
   | "self_review";
 
+export type ToolCallRetry = {
+  attempt: number;
+  maxAttempts: number;
+};
+
 export type ToolCallItem = {
   id: string;
   text: string;
   status?: ToolCallStatus;
   actionType?: ToolCallActionType | string | null;
   detail?: string;
+  retry?: ToolCallRetry | null;
   resultItems?: {
     title: string;
     coverUrl?: string | null;
@@ -22,3 +28,5 @@ export type ToolCallItem = {
     trackUri?: string | null;
   }[];
 };
+
+export type ToolCallSequenceLabel = string | null | undefined;

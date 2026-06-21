@@ -168,6 +168,8 @@ export const ChatSessionPane = ({
           <div key={entry.id} className="flex max-w-[82%] flex-col px-1 py-2">
             <ToolCallAccordion
               calls={toToolCallItems(entry)}
+              label={entry.label}
+              isActive={isStreaming && entries.at(-1)?.id === entry.id}
               defaultOpen
               activeTrackUri={userCurationPlaybackState.activeTrackUri}
               isPlaying={userCurationPlaybackState.isPlaying}

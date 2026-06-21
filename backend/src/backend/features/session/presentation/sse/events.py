@@ -28,6 +28,7 @@ class SessionEventType(StrEnum):
     TOOL_CALL_SEQUENCE_ADDED = "tool_call.sequence_added"
     TOOL_CALL_RESOLVED = "tool_call.resolved"
     TOOL_CALL_FAILED = "tool_call.failed"
+    TOOL_CALL_RETRY = "tool_call.retry"
     TOOL_CALL_SEQUENCE_COMPLETED = "tool_call.sequence_completed"
 
     PLAYLIST_SET = "playlist.set"
@@ -123,6 +124,16 @@ class ToolCallFailedEvent(_SessionEventSchema):
     error: str
 
 
+class ToolCallRetryEvent(_SessionEventSchema):
+    type: Literal[SessionEventType.TOOL_CALL_RETRY] = SessionEventType.TOOL_CALL_RETRY
+    tool_call_id: str
+    name: str
+    attempt: int
+    max_attempts: int
+    retry_in_seconds: float | None = None
+    sequence_id: UUID | None = None
+
+
 class ToolCallSequenceCompletedEvent(_SessionEventSchema):
     type: Literal[SessionEventType.TOOL_CALL_SEQUENCE_COMPLETED] = (
         SessionEventType.TOOL_CALL_SEQUENCE_COMPLETED
@@ -213,6 +224,7 @@ ServerEvent = Annotated[
         ToolCallSequenceAddedEvent,
         ToolCallResolvedEvent,
         ToolCallFailedEvent,
+        ToolCallRetryEvent,
         ToolCallSequenceCompletedEvent,
         PlaylistSetEvent,
         PlaylistTrackAddedEvent,

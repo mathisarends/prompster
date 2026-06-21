@@ -23,11 +23,13 @@ class ToolCallSequence(Entity):
     def __init__(
         self,
         calls: list[ToolCall],
+        label: str | None = None,
         id: UUID | None = None,
         created_time: datetime | None = None,
     ) -> None:
         super().__init__(id=id, created_time=created_time)
         self.calls = calls
+        self.label = label
 
     @property
     def is_complete(self) -> bool:

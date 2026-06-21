@@ -13,6 +13,7 @@ from backend.features.session.application import (
     SessionSuspendedForInput,
     SessionTitleGenerated,
     SessionToolCallFailed,
+    SessionToolCallRetry,
     SessionToolCallSequenceAdded,
     SessionToolCallSequenceCompleted,
     SessionToolCallResolved,
@@ -44,6 +45,7 @@ from backend.features.session.presentation.sse.events import (
     SuspendedForInputEvent,
     TitleGeneratedEvent,
     ToolCallFailedEvent,
+    ToolCallRetryEvent,
     ToolCallSequenceAddedEvent,
     ToolCallSequenceCompletedEvent,
     ToolCallResolvedEvent,
@@ -113,6 +115,16 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
             sequence_id=event.sequence_id,
             tool_call_id=event.tool_call_id,
             error=event.error,
+        )
+
+    if isinstance(event, SessionToolCallRetry):
+        return ToolCallRetryEvent(
+            tool_call_id=event.tool_call_id,
+            name=event.name,
+            attempt=event.attempt,
+            max_attempts=event.max_attempts,
+            retry_in_seconds=event.retry_in_seconds,
+            sequence_id=event.sequence_id,
         )
 
     if isinstance(event, SessionToolCallSequenceCompleted):

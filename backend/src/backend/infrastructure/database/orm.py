@@ -384,6 +384,7 @@ class SessionToolCallSequenceModel(DatabaseEntity, table=True):
 
     session_id: UUID = Field(foreign_key="sessions.id")
     position: int
+    label: str | None = None
 
     session: SessionModel = Relationship(back_populates="tool_call_sequences")
     calls: list["SessionToolCallModel"] = Relationship(

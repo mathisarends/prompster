@@ -122,6 +122,18 @@ class Tools:
             logger.error("Failed to parse tool args JSON: %s", error)
             return {}
 
+    def parse_params(
+        self, call: ToolCall, phase: Phase | None = None
+    ) -> BaseModel | None:
+        tool = self.get(call.function.name, phase=phase)
+        if tool is None or tool.param_model is None:
+            return None
+        try:
+            return tool.param_model.model_validate(self.parse_args(call))
+        except Exception as error:
+            logger.error("Failed to validate tool params: %s", error)
+            return None
+
     def _register_default_tools(self) -> None:
         @self.action(
             description=(

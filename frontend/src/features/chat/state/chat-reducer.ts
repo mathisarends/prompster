@@ -17,7 +17,11 @@ import {
 } from "@/api/generated/model";
 import type { SessionServerEvent } from "@/features/chat/api/session-stream";
 import type { ChatAttachment } from "@/features/chat/components/attachments";
-import type { ToolCallItem, ToolCallStatus } from "@/features/chat/types";
+import type {
+  ToolCallItem,
+  ToolCallRetry,
+  ToolCallStatus,
+} from "@/features/chat/types";
 
 type SessionLike =
   | Pick<
@@ -46,11 +50,17 @@ export type ChatAssistantEntry = Omit<AssistantMessageEntryResponse, "kind"> & {
   isStreaming?: boolean;
 };
 
+export type ChatToolCall = ToolCallResponse & {
+  // Client-only transient state: the in-flight retry of a still-pending call.
+  retry?: ToolCallRetry | null;
+};
+
 export type ChatToolCallGroupEntry = Omit<
   ToolCallSequenceEntryResponse,
-  "kind"
+  "kind" | "calls"
 > & {
   kind: "tool_call_group";
+  calls: ChatToolCall[];
 };
 
 export type ChatEntry =
@@ -113,6 +123,7 @@ const ChatEventType = {
   TOOL_CALL_SEQUENCE_ADDED: SessionEventType.tool_callsequence_added,
   TOOL_CALL_RESOLVED: SessionEventType.tool_callresolved,
   TOOL_CALL_FAILED: SessionEventType.tool_callfailed,
+  TOOL_CALL_RETRY: SessionEventType.tool_callretry,
   TOOL_CALL_SEQUENCE_COMPLETED: SessionEventType.tool_callsequence_completed,
   PLAYLIST_SET: SessionEventType.playlistset,
   PLAYLIST_TRACK_ADDED: SessionEventType.playlisttrack_added,
@@ -237,7 +248,7 @@ export const getScrollKey = (entry: ChatEntry): string => {
     case EntryKind.assistant_message:
       return `${entry.id}:${entry.content.length}:${entry.kind === EntryKind.assistant_message && entry.isStreaming ? "streaming" : "done"}`;
     case "tool_call_group":
-      return `${entry.id}:${entry.calls
+      return `${entry.id}:${entry.label ?? ""}:${entry.calls
         .map(
           (call) =>
             `${call.id}:${call.state}:${call.result?.length ?? 0}:${call.error?.length ?? 0}:${call.resultItems?.length ?? 0}`,
@@ -551,6 +562,7 @@ const reduceServerEvent = (
             result: event.result,
             resultItems: event.resultItems ?? [],
             error: null,
+            retry: null,
           },
         ),
       };
@@ -566,9 +578,26 @@ const reduceServerEvent = (
             state: ToolCallState.failed,
             result: null,
             error: event.error,
+            retry: null,
           },
         ),
       };
+
+    case ChatEventType.TOOL_CALL_RETRY: {
+      // sequenceId is best-effort on the backend; fall back to the entry that
+      // owns the tool call so a missing id still updates the right chip.
+      const sequenceId =
+        event.sequenceId ??
+        findToolCallSequenceId(state.entries, event.toolCallId);
+      if (!sequenceId) return state;
+
+      return {
+        ...state,
+        entries: updateToolCall(state.entries, sequenceId, event.toolCallId, {
+          retry: { attempt: event.attempt, maxAttempts: event.maxAttempts },
+        }),
+      };
+    }
 
     case ChatEventType.TOOL_CALL_SEQUENCE_COMPLETED:
       return {
@@ -752,8 +781,9 @@ const updateToolCall = (
   entries: ChatEntry[],
   groupId: string,
   toolCallId: string,
-  patch: Pick<ToolCallResponse, "state"> &
-    Partial<Pick<ToolCallResponse, "result" | "resultItems" | "error">>,
+  patch: Partial<
+    Pick<ToolCallResponse, "state" | "result" | "resultItems" | "error">
+  > & { retry?: ToolCallRetry | null },
 ) =>
   entries.map((entry) => {
     if (entry.kind !== "tool_call_group" || entry.id !== groupId) return entry;
@@ -766,6 +796,17 @@ const updateToolCall = (
     };
   });
 
+const findToolCallSequenceId = (
+  entries: ChatEntry[],
+  toolCallId: string,
+): string | undefined => {
+  for (const entry of entries) {
+    if (entry.kind !== "tool_call_group") continue;
+    if (entry.calls.some((call) => call.id === toolCallId)) return entry.id;
+  }
+  return undefined;
+};
+
 const completeToolCallGroup = (entries: ChatEntry[], groupId: string) =>
   entries.map((entry) => {
     if (entry.kind !== "tool_call_group" || entry.id !== groupId) return entry;
@@ -774,7 +815,7 @@ const completeToolCallGroup = (entries: ChatEntry[], groupId: string) =>
       ...entry,
       calls: entry.calls.map((call) =>
         call.state === ToolCallState.pending
-          ? { ...call, state: ToolCallState.completed }
+          ? { ...call, state: ToolCallState.completed, retry: null }
           : call,
       ),
     };
@@ -835,12 +876,13 @@ const upsertStreamErrorEntry = (
   ];
 };
 
-const toToolCallItem = (call: ToolCallResponse): ToolCallItem => ({
+const toToolCallItem = (call: ChatToolCall): ToolCallItem => ({
   id: call.id,
   text: formatToolCallName(call),
   status: toToolCallStatus(call),
   actionType: call.function.actionType,
   detail: getToolCallDetail(call),
+  retry: call.retry ?? null,
   resultItems: call.resultItems ?? [],
 });
 

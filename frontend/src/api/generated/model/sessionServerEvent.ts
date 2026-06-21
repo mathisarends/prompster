@@ -21,6 +21,7 @@ import type { SuspendedForInputEvent } from "./suspendedForInputEvent";
 import type { TitleGeneratedEvent } from "./titleGeneratedEvent";
 import type { ToolCallFailedEvent } from "./toolCallFailedEvent";
 import type { ToolCallResolvedEvent } from "./toolCallResolvedEvent";
+import type { ToolCallRetryEvent } from "./toolCallRetryEvent";
 import type { ToolCallSequenceAddedEvent } from "./toolCallSequenceAddedEvent";
 import type { ToolCallSequenceCompletedEvent } from "./toolCallSequenceCompletedEvent";
 
@@ -40,6 +41,7 @@ export type SessionServerEvent =
   | ToolCallSequenceAddedEvent
   | ToolCallResolvedEvent
   | ToolCallFailedEvent
+  | ToolCallRetryEvent
   | ToolCallSequenceCompletedEvent
   | PlaylistSetEvent
   | PlaylistTrackAddedEvent

@@ -1,8 +1,10 @@
-from collections.abc import AsyncGenerator, Callable, Sequence
+import asyncio
+from collections.abc import AsyncGenerator, Sequence
 from dataclasses import dataclass, field
 
 from llmify import ChatModel, Message, StreamEnd, StreamEventType
 from llmify.messages import ToolCall
+from spotifyify import RetryEvent
 
 from agent.events import (
     AgentEvent,
@@ -15,11 +17,15 @@ from agent.events import (
     SuspendedForUserInputEvent,
     StepStartedEvent,
     ToolCallEvent,
+    ToolCallSequenceStartedEvent,
     ToolResultEvent,
+    ToolRetryEvent,
 )
 from agent.guardrails import PostRunGuardrails
 from agent.messages import MessageManager
 from agent.tools import DeckCritic, Tools, Spotify
+from agent.tools.params import SequenceLabelParams, ToolParams
+from agent.tools.retry_reporting import retry_sink
 from agent.tools.views import Phase
 from agent.deck import DeckDraftUpdate, DeckStore
 from agent.tokens import TokenTracker
@@ -133,6 +139,9 @@ class Agent:
                 response.completion,
                 tool_calls=response.tool_calls,
             )
+            yield ToolCallSequenceStartedEvent(
+                label=self._tool_call_sequence_label(response.tool_calls)
+            )
 
             for call in response.tool_calls:
                 if self._stop_requested:
@@ -163,6 +172,36 @@ class Agent:
                     response.tool_calls = event.tool_calls
                 self._token_tracker.add(event.usage, self._llm_name)
 
+    def _tool_call_sequence_label(self, calls: list[ToolCall]) -> str | None:
+        params = [self._tools.parse_params(call, phase=self._phase) for call in calls]
+
+        for param in params:
+            if not isinstance(param, SequenceLabelParams):
+                continue
+            label = self._clean_sequence_label(param.sequence_label)
+            if label is not None:
+                return label
+
+        for param in params:
+            if not isinstance(param, ToolParams):
+                continue
+            label = self._clean_sequence_label(param.status)
+            if label is not None:
+                return label
+
+        return None
+
+    @staticmethod
+    def _clean_sequence_label(value: str | None) -> str | None:
+        if value is None:
+            return None
+        label = " ".join(value.split())
+        if not label:
+            return None
+        if len(label) > 80:
+            return f"{label[:77].rstrip()}..."
+        return label
+
     async def _handle_tool_call(
         self,
         call: ToolCall,
@@ -180,11 +219,29 @@ class Agent:
                 is_onboarding_question=False,
             )
 
-        result = await self._tools.execute(
-            call.function.name,
-            args,
-            phase=self._phase,
-        )
+        retries: asyncio.Queue[RetryEvent] = asyncio.Queue()
+        with retry_sink(retries.put_nowait):
+            exec_task = asyncio.create_task(
+                self._tools.execute(call.function.name, args, phase=self._phase)
+            )
+            while True:
+                getter = asyncio.create_task(retries.get())
+                done, _ = await asyncio.wait(
+                    {exec_task, getter},
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                if getter in done:
+                    retry = getter.result()
+                    if not is_onboarding_question:
+                        yield self._to_tool_retry_event(call, retry)
+                else:
+                    getter.cancel()
+                if exec_task in done:
+                    break
+            result = exec_task.result()
+            while not retries.empty():
+                if not is_onboarding_question:
+                    yield self._to_tool_retry_event(call, retries.get_nowait())
         content = result.to_content()
         if not is_onboarding_question:
             yield ToolResultEvent(
@@ -225,6 +282,16 @@ class Agent:
             self._to_deck_updated_event(update)
             for update in await self._guardrails.run()
         ]
+
+    def _to_tool_retry_event(self, call: ToolCall, retry: RetryEvent) -> ToolRetryEvent:
+        return ToolRetryEvent(
+            tool_call_id=call.id,
+            name=call.function.name,
+            attempt=retry.retry_number,
+            max_attempts=retry.max_retries,
+            retry_in_seconds=retry.retry_in_seconds,
+            status_code=retry.status_code,
+        )
 
     def _to_deck_updated_event(self, update: DeckDraftUpdate) -> DeckUpdatedEvent:
         return DeckUpdatedEvent(

@@ -34,10 +34,22 @@ class SessionRunnerToolCallStarted(_RunnerEvent):
     call: PendingCall
 
 
+class SessionRunnerToolCallSequenceStarted(_RunnerEvent):
+    label: str | None = None
+
+
 class SessionRunnerToolCallCompleted(_RunnerEvent):
     tool_call_id: str
     result: str
     items: list[ToolResultItem] = Field(default_factory=list)
+
+
+class SessionRunnerToolCallRetry(_RunnerEvent):
+    tool_call_id: str
+    name: str
+    attempt: int
+    max_attempts: int
+    retry_in_seconds: float | None = None
 
 
 class SessionRunnerPlaylistUpdated(_RunnerEvent):
@@ -92,8 +104,10 @@ class SessionRunnerSuspendedForInput(_RunnerEvent):
 type SessionRunnerEvent = (
     SessionRunnerAssistantMessage
     | SessionRunnerAssistantMessageChunk
+    | SessionRunnerToolCallSequenceStarted
     | SessionRunnerToolCallStarted
     | SessionRunnerToolCallCompleted
+    | SessionRunnerToolCallRetry
     | SessionRunnerPlaylistUpdated
     | SessionRunnerPlaylistTracksAdded
     | SessionRunnerPlaylistTracksRemoved

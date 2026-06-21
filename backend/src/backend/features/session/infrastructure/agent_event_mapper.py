@@ -5,7 +5,9 @@ from agent.agent import (
     QuestionAskedEvent,
     SuspendedForUserInputEvent,
     ToolCallEvent,
+    ToolCallSequenceStartedEvent,
     ToolResultEvent,
+    ToolRetryEvent,
 )
 from agent.deck import (
     DeckDraft,
@@ -24,8 +26,10 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerPlaylistTracksReplaced,
     SessionRunnerQuestionAsked,
     SessionRunnerSuspendedForInput,
+    SessionRunnerToolCallSequenceStarted,
     SessionRunnerPlaylistUpdated,
     SessionRunnerToolCallCompleted,
+    SessionRunnerToolCallRetry,
     SessionRunnerToolCallStarted,
 )
 from backend.features.session.domain import (
@@ -52,10 +56,14 @@ class AgentSessionEventMapper:
                 return [self._map_assistant_chunk(event)]
             case AssistantMessageEvent():
                 return [self._map_assistant_message(event)]
+            case ToolCallSequenceStartedEvent():
+                return [self._map_tool_call_sequence_started(event)]
             case ToolCallEvent():
                 return [self._map_tool_call_started(event)]
             case ToolResultEvent():
                 return [self._map_tool_call_completed(event)]
+            case ToolRetryEvent():
+                return [self._map_tool_call_retry(event)]
             case DeckUpdatedEvent():
                 return [self._map_deck_updated(event)]
             case QuestionAskedEvent():
@@ -89,6 +97,20 @@ class AgentSessionEventMapper:
                     is_onboarding_question=event.is_onboarding_question,
                 ),
             )
+        )
+
+    def _map_tool_call_sequence_started(
+        self, event: ToolCallSequenceStartedEvent
+    ) -> SessionRunnerToolCallSequenceStarted:
+        return SessionRunnerToolCallSequenceStarted(label=event.label)
+
+    def _map_tool_call_retry(self, event: ToolRetryEvent) -> SessionRunnerToolCallRetry:
+        return SessionRunnerToolCallRetry(
+            tool_call_id=event.tool_call_id,
+            name=event.name,
+            attempt=event.attempt,
+            max_attempts=event.max_attempts,
+            retry_in_seconds=event.retry_in_seconds,
         )
 
     def _map_tool_call_completed(

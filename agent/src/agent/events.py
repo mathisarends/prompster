@@ -36,11 +36,30 @@ class ToolCallEvent(AgentEvent):
     is_onboarding_question: bool = False
 
 
+class ToolCallSequenceStartedEvent(AgentEvent):
+    label: str | None = None
+
+
 class ToolResultEvent(AgentEvent):
     tool_call_id: str
     name: str
     result: str
     items: list[ActionResultItem] = Field(default_factory=list)
+
+
+class ToolRetryEvent(AgentEvent):
+    """A transient retry of the in-flight tool call's upstream request.
+
+    Surfaced live while the tool is still running so the UI can reassure the
+    user (e.g. "Spotify is busy, retrying…") — it does not resolve the call.
+    """
+
+    tool_call_id: str
+    name: str
+    attempt: int
+    max_attempts: int
+    retry_in_seconds: float | None = None
+    status_code: int | None = None
 
 
 class QuestionAskedEvent(AgentEvent):

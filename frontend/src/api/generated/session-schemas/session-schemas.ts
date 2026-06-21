@@ -27,6 +27,7 @@ import type {
   ErrorResponse,
   SessionEventType,
   SessionServerEvent,
+  SpotifyExportServerEventSchema,
 } from "../model";
 
 import { customInstance } from "../../http-client";
@@ -318,6 +319,309 @@ export function useGetSessionEventSchema<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetSessionEventSchemaQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get Spotify Export Event Schema
+ */
+export const getSpotifyExportEventSchema = (
+  options?: SecondParameter<typeof customInstance>,
+  signal?: AbortSignal,
+) => {
+  return customInstance<SpotifyExportServerEventSchema | null>(
+    {
+      url: `/api/v1/sessions/playlist/spotify/events/schema`,
+      method: "GET",
+      signal,
+    },
+    options,
+  );
+};
+
+export const getGetSpotifyExportEventSchemaInfiniteQueryKey = () => {
+  return [
+    "infinite",
+    `/api/v1/sessions/playlist/spotify/events/schema`,
+  ] as const;
+};
+
+export const getGetSpotifyExportEventSchemaQueryKey = () => {
+  return [`/api/v1/sessions/playlist/spotify/events/schema`] as const;
+};
+
+export const getGetSpotifyExportEventSchemaInfiniteQueryOptions = <
+  TData = InfiniteData<Awaited<ReturnType<typeof getSpotifyExportEventSchema>>>,
+  TError = ErrorResponse,
+>(options?: {
+  query?: Partial<
+    UseInfiniteQueryOptions<
+      Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSpotifyExportEventSchemaInfiniteQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSpotifyExportEventSchema>>
+  > = ({ signal }) => getSpotifyExportEventSchema(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseInfiniteQueryOptions<
+    Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetSpotifyExportEventSchemaInfiniteQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSpotifyExportEventSchema>>
+>;
+export type GetSpotifyExportEventSchemaInfiniteQueryError = ErrorResponse;
+
+export function useGetSpotifyExportEventSchemaInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getSpotifyExportEventSchema>>>,
+  TError = ErrorResponse,
+>(
+  options: {
+    query: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+          TError,
+          Awaited<ReturnType<typeof getSpotifyExportEventSchema>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSpotifyExportEventSchemaInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getSpotifyExportEventSchema>>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+          TError,
+          Awaited<ReturnType<typeof getSpotifyExportEventSchema>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSpotifyExportEventSchemaInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getSpotifyExportEventSchema>>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Spotify Export Event Schema
+ */
+
+export function useGetSpotifyExportEventSchemaInfinite<
+  TData = InfiniteData<Awaited<ReturnType<typeof getSpotifyExportEventSchema>>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseInfiniteQueryOptions<
+        Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseInfiniteQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions =
+    getGetSpotifyExportEventSchemaInfiniteQueryOptions(options);
+
+  const query = useInfiniteQuery(
+    queryOptions,
+    queryClient,
+  ) as UseInfiniteQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getGetSpotifyExportEventSchemaQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+  TError = ErrorResponse,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<
+      Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+      TError,
+      TData
+    >
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSpotifyExportEventSchemaQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSpotifyExportEventSchema>>
+  > = ({ signal }) => getSpotifyExportEventSchema(requestOptions, signal);
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetSpotifyExportEventSchemaQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSpotifyExportEventSchema>>
+>;
+export type GetSpotifyExportEventSchemaQueryError = ErrorResponse;
+
+export function useGetSpotifyExportEventSchema<
+  TData = Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+  TError = ErrorResponse,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+          TError,
+          Awaited<ReturnType<typeof getSpotifyExportEventSchema>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSpotifyExportEventSchema<
+  TData = Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+          TError,
+          Awaited<ReturnType<typeof getSpotifyExportEventSchema>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSpotifyExportEventSchema<
+  TData = Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Spotify Export Event Schema
+ */
+
+export function useGetSpotifyExportEventSchema<
+  TData = Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+  TError = ErrorResponse,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
+        TError,
+        TData
+      >
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetSpotifyExportEventSchemaQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

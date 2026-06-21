@@ -11,10 +11,10 @@ import type {
 import {
   addPlaylistTrack,
   exportSessionPlaylist,
-  exportSessionPlaylistToSpotify,
   getGetSessionQueryKey,
   getListSessionsQueryKey,
 } from "@/api/generated/session-api";
+import { streamSpotifyExport } from "@/features/deck/api/spotify-export-stream";
 import { ChatWorkspacePanel } from "@/shared/components/workspace-panel-shell";
 import { DeckPlaylist } from "@/features/deck/components/deck-playlist";
 import {
@@ -59,6 +59,10 @@ export const DeckWorkspaceView = ({
   >(null);
   const [exportedPlaylist, setExportedPlaylist] =
     useState<SpotifyPlaylistExportResponse | null>(null);
+  const [spotifyExportRetry, setSpotifyExportRetry] = useState<{
+    attempt: number;
+    maxAttempts: number;
+  } | null>(null);
   const [activeTab, setActiveTab] = useState("playlist");
 
   const tracks = useMemo(
@@ -151,12 +155,26 @@ export const DeckWorkspaceView = ({
   });
 
   const exportSpotifyMutation = useMutation({
-    mutationFn: () => exportSessionPlaylistToSpotify(sessionId),
+    mutationFn: () =>
+      streamSpotifyExport(sessionId, {
+        onRetry: (retry) => {
+          setSpotifyExportRetry({
+            attempt: retry.attempt,
+            maxAttempts: retry.maxAttempts,
+          });
+        },
+      }),
+    onMutate: () => {
+      setSpotifyExportRetry(null);
+    },
     onSuccess: (data) => {
       setExportedPlaylist(data);
     },
     onError: () => {
       toast.error("Spotify-Playlist konnte nicht erstellt werden.");
+    },
+    onSettled: () => {
+      setSpotifyExportRetry(null);
     },
   });
 
@@ -238,6 +256,7 @@ export const DeckWorkspaceView = ({
               isLoadingPdfPreview={isLoadingPdfPreview}
               isDownloadingPdf={downloadPdfMutation.isPending}
               isExportingSpotify={exportSpotifyMutation.isPending}
+              spotifyExportRetry={spotifyExportRetry}
               onDownloadPdf={() => downloadPdfMutation.mutate()}
               onExportSpotify={() => exportSpotifyMutation.mutate()}
             />

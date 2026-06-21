@@ -122,6 +122,7 @@ class ToolCallSequenceEntryResponse(Schema):
     kind: Literal[EntryKind.TOOL_CALL_SEQUENCE] = EntryKind.TOOL_CALL_SEQUENCE
     id: UUID
     created_at: datetime
+    label: str | None = None
     calls: list[ToolCallResponse]
 
 

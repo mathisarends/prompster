@@ -11,7 +11,10 @@ import type {
 } from "./tool-call-sequence.types";
 
 const SoundBars = () => (
-  <span aria-hidden className="flex h-3.5 w-3.5 items-end justify-center gap-[2px]">
+  <span
+    aria-hidden
+    className="flex h-3.5 w-3.5 items-end justify-center gap-[2px]"
+  >
     <span className="sound-bar h-[70%] w-[2px] rounded-full bg-current [--sound-bar-high:1] [--sound-bar-low:0.35] [animation-delay:-0.12s] [animation-duration:0.72s]" />
     <span className="sound-bar h-full w-[2px] rounded-full bg-current [--sound-bar-high:0.86] [--sound-bar-low:0.18] [animation-delay:-0.44s] [animation-duration:0.94s]" />
     <span className="sound-bar h-[58%] w-[2px] rounded-full bg-current [--sound-bar-high:1] [--sound-bar-low:0.28] [animation-delay:-0.28s] [animation-duration:0.82s]" />
@@ -25,12 +28,12 @@ const hasExpandableDetail = (call: ToolCallItem) =>
   Boolean(call.resultItems?.length);
 
 const getExpandableCallIds = (calls: ToolCallItem[]) =>
-  calls
-    .filter((call) => hasExpandableDetail(call))
-    .map((call) => call.id);
+  calls.filter((call) => hasExpandableDetail(call)).map((call) => call.id);
 
 export const ToolCallAccordion = ({
   calls,
+  label,
+  isActive = false,
   className,
   defaultOpen = false,
   activeTrackUri,
@@ -58,22 +61,28 @@ export const ToolCallAccordion = ({
 
   if (calls.length === 0) return null;
 
+  const lastCall = calls.at(-1);
   const runningCall = [...calls]
     .reverse()
     .find((call) => getStatus(call) === "running");
   const failedCall = [...calls]
     .reverse()
     .find((call) => getStatus(call) === "failed");
-  const isRunning = Boolean(runningCall);
   const hasFailed = Boolean(failedCall);
+  const activeCall = runningCall ?? (isActive && !hasFailed ? lastCall : null);
+  const isRunning = Boolean(activeCall);
+  const completedLabel =
+    label?.trim() ||
+    `${calls.length} ${
+      calls.length === 1 ? "Tool verwendet" : "Tools verwendet"
+    }`;
 
   const headerLabel = isRunning
-    ? runningCall!.text
+    ? activeCall!.text
     : hasFailed
       ? `${failedCall!.text} fehlgeschlagen`
-      : `${calls.length} ${
-          calls.length === 1 ? "Tool verwendet" : "Tools verwendet"
-        }`;
+      : completedLabel;
+  const runningRetry = runningCall?.retry ?? null;
 
   const toggleCall = (callId: string) => {
     setOpenCallIds((current) => {
@@ -110,6 +119,11 @@ export const ToolCallAccordion = ({
         >
           {headerLabel}
         </span>
+        {runningRetry && (
+          <span className="ml-2 shrink-0 text-xs font-medium tabular-nums text-muted-foreground/80">
+            Versuch {runningRetry.attempt}/{runningRetry.maxAttempts}
+          </span>
+        )}
       </button>
 
       {isOpen && (
@@ -117,8 +131,11 @@ export const ToolCallAccordion = ({
           {calls.map((call, index) => {
             const status = getStatus(call);
             const isLast = index === calls.length - 1;
+            const visualStatus =
+              isActive && isLast && !hasFailed ? "running" : status;
             const canExpand = hasExpandableDetail(call);
             const isCallOpen = openCallIds.has(call.id);
+            const hasConnector = !isLast || (canExpand && isCallOpen);
 
             return (
               <li
@@ -126,16 +143,16 @@ export const ToolCallAccordion = ({
                 className="chat-tool-item relative flex items-start gap-3 pb-3 last:pb-0"
                 style={{ animationDelay: `${Math.min(index * 60, 360)}ms` }}
               >
-                {!isLast && (
+                {hasConnector && (
                   <span
                     aria-hidden="true"
                     className={cn(
                       "absolute bottom-0 left-[10px] top-[26px] w-[2px] rounded-full chat-tool-connector",
-                      status === "running"
+                      visualStatus === "running"
                         ? "chat-tool-connector--running"
-                        : status === "completed"
+                        : visualStatus === "completed"
                           ? "chat-tool-connector--completed"
-                          : status === "failed"
+                          : visualStatus === "failed"
                             ? "chat-tool-connector--completed"
                             : undefined,
                     )}
@@ -145,16 +162,16 @@ export const ToolCallAccordion = ({
                   aria-hidden="true"
                   className={cn(
                     "chat-tool-node relative z-[1] mt-[1px] shrink-0",
-                    status === "running"
+                    visualStatus === "running"
                       ? "chat-tool-node--running"
-                      : status === "failed"
+                      : visualStatus === "failed"
                         ? "chat-tool-node--failed"
-                        : status === "completed"
+                        : visualStatus === "completed"
                           ? "chat-tool-node--completed"
                           : undefined,
                   )}
                 >
-                  <TimelineIcon call={call} status={status} />
+                  <TimelineIcon call={call} status={visualStatus} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <button
@@ -192,7 +209,7 @@ export const ToolCallAccordion = ({
                     )}
                   </button>
                   {canExpand && isCallOpen && (
-                    <div className="mt-2 pl-5">
+                    <div className="mt-2">
                       {call.resultItems && call.resultItems.length > 0 && (
                         <ul className="chat-tool-result-list grid max-h-[11.625rem] gap-1.5 overflow-y-auto pr-2">
                           {call.resultItems.map((item, itemIndex) => {
@@ -202,8 +219,8 @@ export const ToolCallAccordion = ({
                             );
                             const isActive = Boolean(
                               trackUri &&
-                                activeTrackUri &&
-                                trackUri === activeTrackUri,
+                              activeTrackUri &&
+                              trackUri === activeTrackUri,
                             );
                             const isItemPlaying = isActive && isPlaying;
                             const canAddSpotifyTrack = Boolean(

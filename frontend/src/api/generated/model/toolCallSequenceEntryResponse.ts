@@ -11,5 +11,6 @@ export interface ToolCallSequenceEntryResponse {
   kind?: "tool_call_sequence";
   id: string;
   createdAt: string;
+  label?: string | null;
   calls: ToolCallResponse[];
 }

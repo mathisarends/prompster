@@ -28,6 +28,7 @@ from agent.tools.params import (
     PlaylistIdParams,
     SearchParams,
 )
+from agent.tools.retry_reporting import report_retry
 
 logger = logging.getLogger(__name__)
 
@@ -292,6 +293,7 @@ def _log_retry(event: RetryEvent) -> None:
         event.retry_number,
         event.max_retries,
     )
+    report_retry(event)
 
 
 def _playlist_track_count(playlist: Playlist | SimplifiedPlaylist) -> int:

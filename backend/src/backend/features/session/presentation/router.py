@@ -20,7 +20,6 @@ from backend.features.session.presentation.mapper import (
     to_playlist_track_response,
     to_session_response,
     to_session_summary_response,
-    to_spotify_playlist_export_response,
 )
 from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
@@ -35,10 +34,10 @@ from backend.features.session.presentation.schemas import (
     SessionResponse,
     SessionSummaryListResponse,
     SessionUpdateRequest,
-    SpotifyPlaylistExportResponse,
 )
 from backend.features.session.presentation.sse import (
     stream_session_events,
+    stream_spotify_export,
 )
 from backend.features.spotify.application.ports import SpotifySearch
 
@@ -389,21 +388,26 @@ async def export_session_playlist(
 
 @router.post(
     "/{session_id}/playlist/spotify",
-    response_model=SpotifyPlaylistExportResponse,
-    status_code=status.HTTP_201_CREATED,
+    response_class=StreamingResponse,
+    status_code=status.HTTP_200_OK,
     operation_id="export_session_playlist_to_spotify",
-    responses=_auth_errors | _bad_request | _not_found | _conflict,
+    responses=(
+        _event_stream_response | _auth_errors | _bad_request | _not_found | _conflict
+    ),
 )
 async def export_session_playlist_to_spotify(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     exporter: FromDishka[SessionSpotifyPlaylistExporter],
-) -> SpotifyPlaylistExportResponse:
-    exported = await exporter.export(
+) -> StreamingResponse:
+    # Validate up front so domain errors (empty playlist, no Spotify connection,
+    # …) surface as HTTP responses; the stream then carries only the Spotify
+    # writes, whose retries are emitted live before the terminal result.
+    plan = await exporter.prepare(
         session_id=session_id,
         user_id=authenticated_user_id,
     )
-    return to_spotify_playlist_export_response(exported)
+    return stream_spotify_export(exporter, plan)
 
 
 @router.patch(

@@ -20,6 +20,7 @@ from backend.features.session.application.events import (
     SessionSnapshot,
     SessionSuspendedForInput,
     SessionTitleGenerated,
+    SessionToolCallRetry,
     SessionToolCallSequenceAdded,
     SessionToolCallSequenceCompleted,
     SessionToolCallResolved,
@@ -38,6 +39,8 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerQuestionAsked,
     SessionRunnerSuspendedForInput,
     SessionRunnerToolCallCompleted,
+    SessionRunnerToolCallRetry,
+    SessionRunnerToolCallSequenceStarted,
     SessionRunnerToolCallStarted,
 )
 from backend.features.session.application.ports.title_generator import (
@@ -89,6 +92,7 @@ class _ResolvedToolCall:
 @dataclass
 class _AgentRunState:
     current_assistant_message: AssistantMessage | None = None
+    pending_tool_call_sequence_label: str | None = None
     skipped_onboarding_tool_call_ids: set[str] = field(default_factory=set)
     cancelled: bool = False
     stopped: bool = False
@@ -486,6 +490,11 @@ class SessionConversationService:
                     session=session,
                     state=state,
                 )
+            case SessionRunnerToolCallSequenceStarted():
+                return self._handle_tool_call_sequence_started(
+                    event=event,
+                    state=state,
+                )
             case SessionRunnerToolCallStarted():
                 return await self._handle_tool_call_started(
                     event=event,
@@ -497,6 +506,11 @@ class SessionConversationService:
                     event=event,
                     session=session,
                     state=state,
+                )
+            case SessionRunnerToolCallRetry():
+                return self._handle_tool_call_retry(
+                    event=event,
+                    session=session,
                 )
             case SessionRunnerPlaylistUpdated():
                 return await self._handle_playlist_updated(
@@ -590,6 +604,15 @@ class SessionConversationService:
         state.current_assistant_message = None
         return await self._persisted_events(session=session, events=tuple(events))
 
+    def _handle_tool_call_sequence_started(
+        self,
+        *,
+        event: SessionRunnerToolCallSequenceStarted,
+        state: _AgentRunState,
+    ) -> tuple[SessionEvent, ...]:
+        state.pending_tool_call_sequence_label = event.label
+        return ()
+
     async def _handle_tool_call_started(
         self,
         *,
@@ -605,11 +628,36 @@ class SessionConversationService:
         )
         if event.call.function.is_onboarding_question:
             state.skipped_onboarding_tool_call_ids.add(event.call.id)
+            state.pending_tool_call_sequence_label = None
             return tuple(events)
 
-        sequence = session.add_tool_call(event.call)
+        sequence = session.add_tool_call(
+            event.call,
+            sequence_label=state.pending_tool_call_sequence_label,
+        )
+        state.pending_tool_call_sequence_label = None
         events.append(SessionToolCallSequenceAdded(sequence=sequence))
         return await self._persisted_events(session=session, events=tuple(events))
+
+    def _handle_tool_call_retry(
+        self,
+        *,
+        event: SessionRunnerToolCallRetry,
+        session: Session,
+    ) -> tuple[SessionEvent, ...]:
+        # Transient progress for the still-pending call: surface it live, but
+        # never persist or mutate the session — the call resolves separately.
+        pending_sequence = session.pending_tool_call_sequence
+        return (
+            SessionToolCallRetry(
+                tool_call_id=event.tool_call_id,
+                name=event.name,
+                attempt=event.attempt,
+                max_attempts=event.max_attempts,
+                retry_in_seconds=event.retry_in_seconds,
+                sequence_id=pending_sequence.id if pending_sequence else None,
+            ),
+        )
 
     async def _handle_tool_call_completed(
         self,

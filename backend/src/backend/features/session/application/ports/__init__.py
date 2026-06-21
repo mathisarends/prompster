@@ -20,6 +20,8 @@ from .session_runner import (
     SessionRunnerQuestionAsked,
     SessionRunnerSuspendedForInput,
     SessionRunnerToolCallCompleted,
+    SessionRunnerToolCallRetry,
+    SessionRunnerToolCallSequenceStarted,
     SessionRunnerToolCallStarted,
 )
 from .session_summary_query import SessionSummary, SessionSummaryQuery
@@ -46,6 +48,8 @@ __all__ = [
     "SessionRunnerQuestionAsked",
     "SessionRunnerSuspendedForInput",
     "SessionRunnerToolCallCompleted",
+    "SessionRunnerToolCallRetry",
+    "SessionRunnerToolCallSequenceStarted",
     "SessionRunnerToolCallStarted",
     "SessionSummary",
     "SessionSummaryQuery",
