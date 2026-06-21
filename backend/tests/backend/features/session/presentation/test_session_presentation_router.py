@@ -5,7 +5,7 @@ from typing import cast
 from uuid import UUID, uuid4
 
 from fastapi import UploadFile
-from llm import OpenAIModelName
+from llm import ModelId
 from starlette.datastructures import Headers
 
 from backend.features.session.application import (
@@ -419,7 +419,7 @@ class TestSendMessageRoute:
                     ],
                 ),
                 service=cast(SessionConversationService, service),
-                model_id=OpenAIModelName.GPT_5_4,
+                model_id=ModelId.GPT_5_4,
             )
         )
         body = asyncio.run(_collect_stream_body(response))
@@ -431,7 +431,7 @@ class TestSendMessageRoute:
         assert len(service.received_attachments) == 1
         assert service.received_attachments[0].external_id == "artist-1"
         assert service.received_image_attachments == []
-        assert service.received_model_id == OpenAIModelName.GPT_5_4
+        assert service.received_model_id == ModelId.GPT_5_4
         assert response.media_type == "text/event-stream"
         assert body == ['event: done\ndata: {"type":"done"}\n\n']
 
@@ -528,10 +528,10 @@ class TestCompleteOnboardingRoute:
                 session_id=session_id,
                 authenticated_user_id=user_id,
                 service=cast(SessionConversationService, service),
-                model_id=OpenAIModelName.GPT_5_4,
+                model_id=ModelId.GPT_5_4,
             )
         )
         body = asyncio.run(_collect_stream_body(response))
 
-        assert service.received_model_id == OpenAIModelName.GPT_5_4
+        assert service.received_model_id == ModelId.GPT_5_4
         assert body == ['event: done\ndata: {"type":"done"}\n\n']

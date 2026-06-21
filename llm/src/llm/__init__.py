@@ -5,12 +5,22 @@ from .factory import (
     create_openai_llm,
 )
 from .tracing import TraceStore, TracedChatModel, trace_llm
-from .registry import LLMProvider, OpenAIModelName, get_openai_model_input_token_limit
+from .registry import (
+    LLMModelInfo,
+    LLMProvider,
+    OPENAI_MODEL_REGISTRY,
+    ModelId,
+    get_model_info,
+    get_openai_model_input_token_limit,
+)
 from .credentials import LLMCredentials
 
 __all__ = [
+    "LLMModelInfo",
     "LLMProvider",
-    "OpenAIModelName",
+    "OPENAI_MODEL_REGISTRY",
+    "ModelId",
+    "get_model_info",
     "get_openai_model_input_token_limit",
     "LLMCredentials",
     "create_openai_llm",

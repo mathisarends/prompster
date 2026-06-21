@@ -2,7 +2,7 @@ from uuid import UUID
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, HTTPException, Query, Response, status
-from llm import OpenAIModelName
+from llm import ModelId
 from starlette.responses import StreamingResponse
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
@@ -162,7 +162,7 @@ async def send_message(
     authenticated_user_id: AuthenticatedUserId,
     body: SendMessageRequest,
     service: FromDishka[SessionConversationService],
-    model_id: OpenAIModelName | None = None,
+    model_id: ModelId | None = None,
 ) -> StreamingResponse:
     return stream_session_events(
         service.send_message(
@@ -216,7 +216,7 @@ async def complete_onboarding(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionConversationService],
-    model_id: OpenAIModelName | None = None,
+    model_id: ModelId | None = None,
 ) -> StreamingResponse:
     return stream_session_events(
         service.complete_onboarding(

@@ -2,7 +2,7 @@ from llmify import ChatOpenAI
 
 from llm.registry import (
     DEFAULT_OPENAI_MODEL,
-    OpenAIModelName,
+    ModelId,
     ensure_supported_openai_model,
 )
 from llm.credentials import LLMCredentials
@@ -19,7 +19,7 @@ def _resolve_openai_api_key(
 
 
 def create_openai_llm(
-    model: OpenAIModelName = DEFAULT_OPENAI_MODEL,
+    model: ModelId = DEFAULT_OPENAI_MODEL,
     *,
     api_key: str | None = None,
     credentials: LLMCredentials | None = None,
@@ -51,7 +51,7 @@ def create_gpt_5_4(
     **kwargs: object,
 ) -> ChatOpenAI:
     return create_openai_llm(
-        model=OpenAIModelName.GPT_5_4,
+        model=ModelId.GPT_5_4,
         api_key=api_key,
         credentials=credentials,
         temperature=temperature,
@@ -69,7 +69,7 @@ def create_gpt_5_4_mini(
     **kwargs: object,
 ) -> ChatOpenAI:
     return create_openai_llm(
-        model=OpenAIModelName.GPT_5_4_MINI,
+        model=ModelId.GPT_5_4_MINI,
         api_key=api_key,
         credentials=credentials,
         temperature=temperature,
@@ -87,7 +87,7 @@ def create_gpt_5_5(
     **kwargs: object,
 ) -> ChatOpenAI:
     return create_openai_llm(
-        model=OpenAIModelName.GPT_5_5,
+        model=ModelId.GPT_5_5,
         api_key=api_key,
         credentials=credentials,
         temperature=temperature,

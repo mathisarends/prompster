@@ -1,5 +1,5 @@
 from llm.factory import create_gpt_5_5, create_openai_llm
-from llm.registry import OpenAIModelName
+from llm.registry import ModelId
 
 
 class _FakeCredentials:
@@ -17,7 +17,7 @@ class TestFactory:
         monkeypatch.setattr("llm.factory.ChatOpenAI", _DummyChatOpenAI)
 
         llm = create_openai_llm(
-            model=OpenAIModelName.GPT_5_4_MINI,
+            model=ModelId.GPT_5_4_MINI,
             api_key="abc123",
             temperature=0.2,
             max_tokens=256,
@@ -26,7 +26,7 @@ class TestFactory:
 
         assert isinstance(llm, _DummyChatOpenAI)
         assert llm.kwargs == {
-            "model": OpenAIModelName.GPT_5_4_MINI,
+            "model": ModelId.GPT_5_4_MINI,
             "api_key": "abc123",
             "temperature": 0.2,
             "max_tokens": 256,
@@ -40,13 +40,13 @@ class TestFactory:
         credentials = _FakeCredentials("from-credentials")
 
         llm = create_openai_llm(
-            model=OpenAIModelName.GPT_5_4,
+            model=ModelId.GPT_5_4,
             credentials=credentials,
         )
 
         assert isinstance(llm, _DummyChatOpenAI)
         assert llm.kwargs == {
-            "model": OpenAIModelName.GPT_5_4,
+            "model": ModelId.GPT_5_4,
             "api_key": "from-credentials",
         }
 
@@ -57,14 +57,14 @@ class TestFactory:
         credentials = _FakeCredentials("from-credentials")
 
         llm = create_openai_llm(
-            model=OpenAIModelName.GPT_5_4,
+            model=ModelId.GPT_5_4,
             api_key="explicit-key",
             credentials=credentials,
         )
 
         assert isinstance(llm, _DummyChatOpenAI)
         assert llm.kwargs == {
-            "model": OpenAIModelName.GPT_5_4,
+            "model": ModelId.GPT_5_4,
             "api_key": "explicit-key",
         }
 
@@ -78,11 +78,11 @@ class TestFactory:
 
         monkeypatch.setattr("llm.factory.LLMCredentials", lambda: _AutoCredentials())
 
-        llm = create_openai_llm(model=OpenAIModelName.GPT_5_4)
+        llm = create_openai_llm(model=ModelId.GPT_5_4)
 
         assert isinstance(llm, _DummyChatOpenAI)
         assert llm.kwargs == {
-            "model": OpenAIModelName.GPT_5_4,
+            "model": ModelId.GPT_5_4,
             "api_key": "from-default-settings",
         }
 
@@ -94,6 +94,6 @@ class TestFactory:
 
         assert isinstance(llm, _DummyChatOpenAI)
         assert llm.kwargs == {
-            "model": OpenAIModelName.GPT_5_5,
+            "model": ModelId.GPT_5_5,
             "api_key": "factory-key",
         }

@@ -2,7 +2,7 @@ import asyncio
 from collections.abc import AsyncGenerator, Sequence
 from dataclasses import dataclass, field
 
-from llm.registry import DEFAULT_OPENAI_MODEL, get_openai_model_input_token_limit
+from llm.registry import DEFAULT_OPENAI_MODEL, get_model_info
 from llmify import (
     ChatModel,
     ContextLengthExceededError,
@@ -64,8 +64,8 @@ class Agent:
         self._tools = tools or Tools()
         self._phase = phase
 
-        input_token_limit = max_input_tokens or get_openai_model_input_token_limit(
-            DEFAULT_OPENAI_MODEL
+        input_token_limit = (
+            max_input_tokens or get_model_info(DEFAULT_OPENAI_MODEL).input_token_limit
         )
         self._compaction_budget = int(input_token_limit * compaction_threshold)
         self._last_prompt_tokens = 0
