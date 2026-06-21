@@ -67,6 +67,10 @@ class SpotifySearch(ABC):
     ) -> SpotifyUnifiedSearchResult:
         raise NotImplementedError
 
+    @abstractmethod
+    async def get_track(self, *, track_id: str) -> SpotifyTrack | None:
+        raise NotImplementedError
+
 
 class SpotifyPlaylistCreator(ABC):
     @abstractmethod

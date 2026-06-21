@@ -7,6 +7,7 @@
  */
 
 export * from "./addPlaylistTrackRequest";
+export * from "./addSpotifyPlaylistTrackRequest";
 export * from "./artistReferenceResponse";
 export * from "./assistantMessageCancelledEvent";
 export * from "./assistantMessageChunkEvent";

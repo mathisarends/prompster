@@ -60,7 +60,7 @@ class SessionService:
         session.unstar()
         return await self._session_repository.save(session=session)
 
-    async def add_playlist_track(
+    async def add_track(
         self,
         *,
         session_id: UUID,
@@ -82,7 +82,7 @@ class SessionService:
         await self._session_repository.save(session=session)
         return track
 
-    async def remove_playlist_track(
+    async def remove_track(
         self,
         *,
         session_id: UUID,

@@ -69,6 +69,8 @@ export const ChatPage = () => {
     persistOnboardingAnswer,
     submitOnboardingAnswers,
     stopMessage,
+    addSpotifyPlaylistTrack,
+    addingSpotifyTrackUri,
     removePlaylistTrack,
   } = useChatSession({
     sessionId,
@@ -216,6 +218,8 @@ export const ChatPage = () => {
                 toggleUserCurationEventTrackPlayback
               }
               onToggleToolResultTrackPlayback={toggleToolResultTrackPlayback}
+              addingSpotifyTrackUri={addingSpotifyTrackUri}
+              onAddToolResultSpotifyTrack={addSpotifyPlaylistTrack}
             />
           </ResizablePanel>
           <ResizableHandle withHandle className="bg-white/[0.06]" />
@@ -250,6 +254,8 @@ export const ChatPage = () => {
             onToggleUserCurationTrackPlayback={
               toggleUserCurationEventTrackPlayback
             }
+            addingSpotifyTrackUri={addingSpotifyTrackUri}
+            onAddToolResultSpotifyTrack={addSpotifyPlaylistTrack}
           />
           {isOnboardingPending && pendingInput ? (
             <div className="absolute inset-x-0 bottom-0 z-30 max-h-[78%] border-t border-white/[0.06] shadow-2xl shadow-black/40">

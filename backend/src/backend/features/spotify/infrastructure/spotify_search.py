@@ -3,6 +3,7 @@ import logging
 from collections.abc import Awaitable
 
 from spotifyify import Image, RetryEvent, Spotifyify, Track
+from spotifyify.exceptions import SpotifyAPIError
 from spotifyify.schemas import Artist, SimplifiedPlaylist
 
 from backend.features.spotify.application.ports import (
@@ -91,6 +92,23 @@ class SpotifySearch(SpotifySearchPort):
                 types=requested_types,
             ),
         )
+
+    async def get_track(self, *, track_id: str) -> SpotifyTrack | None:
+        normalized_track_id = track_id.strip()
+        if not normalized_track_id:
+            return None
+
+        try:
+            with self._spotify.retry_hook(_log_spotifyify_retry):
+                track = await self._spotify.tracks.get(normalized_track_id)
+        except SpotifyAPIError as error:
+            if error.status_code == 404:
+                return None
+            raise
+
+        if not track.id or not track.name:
+            return None
+        return _to_spotify_track(track)
 
     async def _execute_unified_search_with_retry_logging(
         self,

@@ -56,6 +56,8 @@ type ChatSessionPaneProps = {
     event: UserCurationEventResponse,
   ) => void;
   onToggleToolResultTrackPlayback?: (track: PlayableTrackInput) => void;
+  addingSpotifyTrackUri?: string | null;
+  onAddToolResultSpotifyTrack?: (spotifyUri: string) => Promise<void> | void;
 };
 
 const shouldShowThinkingPlaceholder = (
@@ -106,6 +108,8 @@ export const ChatSessionPane = ({
   userCurationPlaybackState,
   onToggleUserCurationTrackPlayback,
   onToggleToolResultTrackPlayback,
+  addingSpotifyTrackUri,
+  onAddToolResultSpotifyTrack,
 }: ChatSessionPaneProps) => {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState("");
@@ -172,6 +176,8 @@ export const ChatSessionPane = ({
                   ? onToggleToolResultTrackPlayback
                   : undefined
               }
+              addingSpotifyTrackUri={addingSpotifyTrackUri}
+              onAddSpotifyTrack={onAddToolResultSpotifyTrack}
             />
           </div>
         );

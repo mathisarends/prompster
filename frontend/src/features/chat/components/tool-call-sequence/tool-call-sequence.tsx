@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronRight, Play } from "lucide-react";
+import { ChevronRight, Loader2, Play, Plus } from "lucide-react";
 
 import { cn } from "@/shared/lib/utils";
 
@@ -36,6 +36,8 @@ export const ToolCallAccordion = ({
   activeTrackUri,
   isPlaying = false,
   onToggleTrackPlayback,
+  addingSpotifyTrackUri,
+  onAddSpotifyTrack,
 }: ToolCallAccordionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [openCallIds, setOpenCallIds] = useState<Set<string>>(() => new Set());
@@ -167,18 +169,9 @@ export const ToolCallAccordion = ({
                     aria-expanded={canExpand ? isCallOpen : undefined}
                     tabIndex={canExpand ? 0 : -1}
                   >
-                    {canExpand && (
-                      <ChevronRight
-                        aria-hidden="true"
-                        className={cn(
-                          "mt-[3px] size-3.5 shrink-0 text-muted-foreground/70 transition-transform",
-                          isCallOpen && "rotate-90",
-                        )}
-                      />
-                    )}
                     <span
                       className={cn(
-                        "block min-w-0 break-words",
+                        "block min-w-0 flex-1 break-words",
                         status === "running"
                           ? "chat-tool-running-text font-medium"
                           : status === "failed"
@@ -188,6 +181,15 @@ export const ToolCallAccordion = ({
                     >
                       {call.text}
                     </span>
+                    {canExpand && (
+                      <ChevronRight
+                        aria-hidden="true"
+                        className={cn(
+                          "mt-[3px] size-3.5 shrink-0 text-muted-foreground/70 transition-transform",
+                          isCallOpen && "rotate-90",
+                        )}
+                      />
+                    )}
                   </button>
                   {canExpand && isCallOpen && (
                     <div className="mt-2 pl-5">
@@ -204,6 +206,12 @@ export const ToolCallAccordion = ({
                                 trackUri === activeTrackUri,
                             );
                             const isItemPlaying = isActive && isPlaying;
+                            const canAddSpotifyTrack = Boolean(
+                              trackUri && onAddSpotifyTrack,
+                            );
+                            const isAddingSpotifyTrack = Boolean(
+                              trackUri && addingSpotifyTrackUri === trackUri,
+                            );
 
                             const cover = (
                               <span className="relative size-8 shrink-0 overflow-hidden rounded-sm bg-muted/60">
@@ -257,34 +265,58 @@ export const ToolCallAccordion = ({
                                 key={`${call.id}-${item.title}-${itemIndex}`}
                                 className="min-w-0 text-xs text-foreground/80"
                               >
-                                {isPlayable && trackUri ? (
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      onToggleTrackPlayback?.({
-                                        id: trackUri,
-                                        title: item.title,
-                                        artist: item.artist,
-                                        coverUrl: item.coverUrl,
-                                        spotifyUri: trackUri,
-                                      })
-                                    }
-                                    aria-label={
-                                      isItemPlaying
-                                        ? `${item.title} pausieren`
-                                        : `${item.title} abspielen`
-                                    }
-                                    className="group/result flex w-full min-w-0 items-center gap-2 rounded-sm py-0.5 text-left transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                                  >
-                                    {cover}
-                                    {label}
-                                  </button>
-                                ) : (
-                                  <span className="flex min-w-0 items-center gap-2 py-0.5">
-                                    {cover}
-                                    {label}
-                                  </span>
-                                )}
+                                <div className="group/result flex min-w-0 items-center gap-1 rounded-sm py-0.5 transition-colors hover:bg-white/[0.04] focus-within:bg-white/[0.04]">
+                                  {isPlayable && trackUri ? (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        onToggleTrackPlayback?.({
+                                          id: trackUri,
+                                          title: item.title,
+                                          artist: item.artist,
+                                          coverUrl: item.coverUrl,
+                                          spotifyUri: trackUri,
+                                        })
+                                      }
+                                      aria-label={
+                                        isItemPlaying
+                                          ? `${item.title} pausieren`
+                                          : `${item.title} abspielen`
+                                      }
+                                      className="flex min-w-0 flex-1 items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                                    >
+                                      {cover}
+                                      {label}
+                                    </button>
+                                  ) : (
+                                    <span className="flex min-w-0 flex-1 items-center gap-2">
+                                      {cover}
+                                      {label}
+                                    </span>
+                                  )}
+                                  {canAddSpotifyTrack && trackUri ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        void onAddSpotifyTrack?.(trackUri);
+                                      }}
+                                      disabled={Boolean(addingSpotifyTrackUri)}
+                                      aria-label={`${item.title} hinzufuegen`}
+                                      className={cn(
+                                        "grid size-7 shrink-0 place-items-center rounded-sm text-muted-foreground transition hover:bg-white/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                                        isAddingSpotifyTrack
+                                          ? "opacity-100"
+                                          : "opacity-0 group-hover/result:opacity-100 group-focus-within/result:opacity-100",
+                                      )}
+                                    >
+                                      {isAddingSpotifyTrack ? (
+                                        <Loader2 className="size-3.5 animate-spin" />
+                                      ) : (
+                                        <Plus className="size-3.5" />
+                                      )}
+                                    </button>
+                                  ) : null}
+                                </div>
                               </li>
                             );
                           })}

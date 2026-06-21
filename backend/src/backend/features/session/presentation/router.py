@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 from llm import OpenAIModelName
 from starlette.responses import StreamingResponse
 
@@ -24,6 +24,7 @@ from backend.features.session.presentation.mapper import (
 )
 from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
+    AddSpotifyPlaylistTrackRequest,
     ErrorResponse,
     ImageAttachmentReferenceRequest,
     PlaylistTrackResponse,
@@ -39,6 +40,7 @@ from backend.features.session.presentation.schemas import (
 from backend.features.session.presentation.sse import (
     stream_session_events,
 )
+from backend.features.spotify.application.ports import SpotifySearch
 
 router = APIRouter(route_class=DishkaRoute, prefix="/sessions", tags=["sessions"])
 
@@ -257,7 +259,7 @@ async def add_session_playlist_track(
     body: AddPlaylistTrackRequest,
     service: FromDishka[SessionService],
 ) -> PlaylistTrackResponse:
-    track = await service.add_playlist_track(
+    track = await service.add_track(
         session_id=session_id,
         user_id=authenticated_user_id,
         title=body.title,
@@ -265,6 +267,51 @@ async def add_session_playlist_track(
         year=body.year,
         spotify_uri=body.spotify_uri,
         cover_url=body.cover_url,
+    )
+    return to_playlist_track_response(track)
+
+
+@router.post(
+    "/{session_id}/tracks/spotify",
+    response_model=PlaylistTrackResponse,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="add_spotify_playlist_track",
+    responses=_auth_errors | _not_found | _bad_request,
+)
+async def add_session_spotify_playlist_track(
+    session_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    body: AddSpotifyPlaylistTrackRequest,
+    service: FromDishka[SessionService],
+    spotify_search: FromDishka[SpotifySearch],
+) -> PlaylistTrackResponse:
+    spotify_track_id = _spotify_track_id_from_uri(body.spotify_uri)
+    if spotify_track_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid Spotify track URI.",
+        )
+
+    spotify_track = await spotify_search.get_track(track_id=spotify_track_id)
+    if spotify_track is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Spotify track not found.",
+        )
+    if spotify_track.year is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Spotify track release year is missing.",
+        )
+
+    track = await service.add_track(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+        title=spotify_track.title,
+        artist=spotify_track.artist,
+        year=spotify_track.year,
+        spotify_uri=f"spotify:track:{spotify_track.id}",
+        cover_url=spotify_track.cover_url,
     )
     return to_playlist_track_response(track)
 
@@ -281,7 +328,7 @@ async def remove_session_playlist_track(
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
 ) -> Response:
-    await service.remove_playlist_track(
+    await service.remove_track(
         session_id=session_id,
         user_id=authenticated_user_id,
         track_id=track_id,
@@ -509,3 +556,24 @@ async def _build_image_urls_by_storage_key(
             expires_in_seconds=_SESSION_IMAGE_ATTACHMENT_URL_TTL_SECONDS,
         )
     return urls
+
+
+def _spotify_track_id_from_uri(value: str) -> str | None:
+    normalized = value.strip()
+    if not normalized:
+        return None
+
+    if normalized.startswith("spotify:track:"):
+        track_id = normalized.rsplit(":", maxsplit=1)[-1]
+        return track_id or None
+
+    marker = "/track/"
+    if marker in normalized:
+        track_id = normalized.split(marker, maxsplit=1)[1]
+        track_id = track_id.split("?", maxsplit=1)[0].split("/", maxsplit=1)[0]
+        return track_id or None
+
+    if "/" not in normalized and ":" not in normalized:
+        return normalized
+
+    return None

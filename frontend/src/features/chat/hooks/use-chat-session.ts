@@ -6,6 +6,7 @@ import type {
   UserCurationEventResponse,
 } from "@/api/generated/model";
 import {
+  addSpotifyPlaylistTrack,
   getSession,
   getGetSessionQueryKey,
   getListSessionsQueryKey,
@@ -70,6 +71,8 @@ export type UseChatSessionResult = {
   persistOnboardingAnswer: (answer: OnboardingAnswerPayload) => void;
   submitOnboardingAnswers: (answers: OnboardingAnswerPayload[]) => void;
   stopMessage: () => void;
+  addSpotifyPlaylistTrack: (spotifyUri: string) => Promise<void>;
+  addingSpotifyTrackUri: string | null;
   removePlaylistTrack: (trackId: string) => Promise<void>;
 };
 
@@ -123,6 +126,9 @@ export const useChatSession = ({
     createInitialChatState,
   );
   const [isStopping, setIsStopping] = useState(false);
+  const [addingSpotifyTrackUri, setAddingSpotifyTrackUri] = useState<
+    string | null
+  >(null);
   const [selectedModel, setSelectedModel] = useState<string | undefined>();
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -472,6 +478,32 @@ export const useChatSession = ({
     [refreshSessionQueries, sessionId],
   );
 
+  const addSpotifyPlaylistTrackToSession = useCallback(
+    async (spotifyUri: string) => {
+      if (!sessionId || addingSpotifyTrackUri) {
+        return;
+      }
+
+      setAddingSpotifyTrackUri(spotifyUri);
+      try {
+        await addSpotifyPlaylistTrack(sessionId, { spotifyUri });
+        const updatedSession = await refreshSessionQueries();
+        if (updatedSession) {
+          hasStreamedSinceLoadRef.current = false;
+          dispatch({ type: "session/loaded", session: updatedSession });
+        }
+      } catch {
+        dispatch({
+          type: "stream/failed",
+          message: "Song konnte nicht hinzugefuegt werden.",
+        });
+      } finally {
+        setAddingSpotifyTrackUri(null);
+      }
+    },
+    [addingSpotifyTrackUri, refreshSessionQueries, sessionId],
+  );
+
   const resolvedTitle = state.title ?? session?.title;
   const isTitlePending = !resolvedTitle?.trim();
 
@@ -493,6 +525,8 @@ export const useChatSession = ({
     persistOnboardingAnswer,
     submitOnboardingAnswers,
     stopMessage,
+    addSpotifyPlaylistTrack: addSpotifyPlaylistTrackToSession,
+    addingSpotifyTrackUri,
     removePlaylistTrack: removePlaylistTrackFromSession,
   };
 };

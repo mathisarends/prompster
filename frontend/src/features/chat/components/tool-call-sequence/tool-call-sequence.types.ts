@@ -14,4 +14,6 @@ export type ToolCallAccordionProps = {
   activeTrackUri?: string | null;
   isPlaying?: boolean;
   onToggleTrackPlayback?: (track: PlayableTrackInput) => void;
+  addingSpotifyTrackUri?: string | null;
+  onAddSpotifyTrack?: (spotifyUri: string) => Promise<void> | void;
 };
