@@ -240,7 +240,7 @@ export const getScrollKey = (entry: ChatEntry): string => {
       return `${entry.id}:${entry.calls
         .map(
           (call) =>
-            `${call.id}:${call.state}:${call.result?.length ?? 0}:${call.error?.length ?? 0}`,
+            `${call.id}:${call.state}:${call.result?.length ?? 0}:${call.error?.length ?? 0}:${call.resultItems?.length ?? 0}`,
         )
         .join(",")}`;
   }
@@ -549,6 +549,7 @@ const reduceServerEvent = (
           {
             state: ToolCallState.completed,
             result: event.result,
+            resultItems: event.resultItems ?? [],
             error: null,
           },
         ),
@@ -752,7 +753,7 @@ const updateToolCall = (
   groupId: string,
   toolCallId: string,
   patch: Pick<ToolCallResponse, "state"> &
-    Partial<Pick<ToolCallResponse, "result" | "error">>,
+    Partial<Pick<ToolCallResponse, "result" | "resultItems" | "error">>,
 ) =>
   entries.map((entry) => {
     if (entry.kind !== "tool_call_group" || entry.id !== groupId) return entry;
@@ -840,6 +841,7 @@ const toToolCallItem = (call: ToolCallResponse): ToolCallItem => ({
   status: toToolCallStatus(call),
   actionType: call.function.actionType,
   detail: getToolCallDetail(call),
+  resultItems: call.resultItems ?? [],
 });
 
 const toToolCallStatus = (call: ToolCallResponse): ToolCallStatus => {

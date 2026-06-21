@@ -545,8 +545,8 @@ body {
 }
 
 .chat-tool-node--completed {
-  border-color: hsl(141 60% 45% / 0.28);
-  background: hsl(141 60% 45% / 0.08);
+  border-color: hsl(0 0% 100% / 0.14);
+  background: hsl(0 0% 100% / 0.045);
 }
 
 .chat-tool-node--running {
@@ -565,7 +565,7 @@ body {
 }
 
 .chat-tool-connector--completed {
-  background: hsl(141 60% 50% / 0.45);
+  background: hsl(0 0% 100% / 0.18);
 }
 
 .chat-tool-connector--running {
@@ -577,6 +577,21 @@ body {
   );
   background-size: 100% 220%;
   animation: chat-tool-connector-flow 1.6s linear infinite;
+}
+
+.chat-tool-result-list {
+  scrollbar-width: none;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 0.75rem,
+    #000 calc(100% - 0.75rem),
+    transparent 100%
+  );
+}
+
+.chat-tool-result-list::-webkit-scrollbar {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { cn } from "@/shared/lib/utils";
 
@@ -12,12 +12,36 @@ import type {
 const getStatus = (call: ToolCallItem): ToolCallStatus =>
   call.status === "pending" ? "running" : (call.status ?? "completed");
 
+const hasExpandableDetail = (call: ToolCallItem) =>
+  Boolean(call.resultItems?.length);
+
+const getExpandableCallIds = (calls: ToolCallItem[]) =>
+  calls
+    .filter((call) => hasExpandableDetail(call))
+    .map((call) => call.id);
+
 export const ToolCallAccordion = ({
   calls,
   className,
   defaultOpen = false,
 }: ToolCallAccordionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [openCallIds, setOpenCallIds] = useState<Set<string>>(
+    () => new Set(getExpandableCallIds(calls)),
+  );
+
+  useEffect(() => {
+    setOpenCallIds((current) => {
+      const next = new Set(current);
+      let changed = false;
+      for (const callId of getExpandableCallIds(calls)) {
+        if (next.has(callId)) continue;
+        next.add(callId);
+        changed = true;
+      }
+      return changed ? next : current;
+    });
+  }, [calls]);
 
   if (calls.length === 0) return null;
 
@@ -37,6 +61,18 @@ export const ToolCallAccordion = ({
       : `${calls.length} ${
           calls.length === 1 ? "Tool verwendet" : "Tools verwendet"
         }`;
+
+  const toggleCall = (callId: string) => {
+    setOpenCallIds((current) => {
+      const next = new Set(current);
+      if (next.has(callId)) {
+        next.delete(callId);
+      } else {
+        next.add(callId);
+      }
+      return next;
+    });
+  };
 
   return (
     <section
@@ -68,6 +104,8 @@ export const ToolCallAccordion = ({
           {calls.map((call, index) => {
             const status = getStatus(call);
             const isLast = index === calls.length - 1;
+            const canExpand = hasExpandableDetail(call);
+            const isCallOpen = openCallIds.has(call.id);
 
             return (
               <li
@@ -105,17 +143,60 @@ export const ToolCallAccordion = ({
                 >
                   <TimelineIcon call={call} status={status} />
                 </span>
-                <span
-                  className={cn(
-                    "block min-w-0 break-words pt-[2px] text-[13px] leading-5",
-                    status === "running"
-                      ? "chat-tool-running-text font-medium"
-                      : status === "failed"
-                        ? "font-medium text-destructive"
-                        : "text-muted-foreground",
+                <span className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={canExpand ? () => toggleCall(call.id) : undefined}
+                    className={cn(
+                      "flex min-w-0 items-start pt-[2px] text-left text-[13px] leading-5",
+                      canExpand &&
+                        "w-full rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                      !canExpand && "pointer-events-none",
+                    )}
+                    aria-expanded={canExpand ? isCallOpen : undefined}
+                    tabIndex={canExpand ? 0 : -1}
+                  >
+                    <span
+                      className={cn(
+                        "block min-w-0 break-words",
+                        status === "running"
+                          ? "chat-tool-running-text font-medium"
+                          : status === "failed"
+                            ? "font-medium text-destructive"
+                            : "text-muted-foreground",
+                      )}
+                    >
+                      {call.text}
+                    </span>
+                  </button>
+                  {canExpand && isCallOpen && (
+                    <div className="mt-2 pl-5">
+                      {call.resultItems && call.resultItems.length > 0 && (
+                        <ul className="chat-tool-result-list grid max-h-[11.625rem] gap-1.5 overflow-y-auto pr-2">
+                          {call.resultItems.map((item, itemIndex) => (
+                            <li
+                              key={`${call.id}-${item.title}-${itemIndex}`}
+                              className="flex h-9 min-w-0 items-center gap-2 text-xs text-foreground/80"
+                            >
+                              {item.coverUrl ? (
+                                <img
+                                  src={item.coverUrl}
+                                  alt=""
+                                  className="size-7 shrink-0 rounded-sm object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <span className="size-7 shrink-0 rounded-sm bg-muted/60" />
+                              )}
+                              <span className="min-w-0 truncate">
+                                {item.title}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   )}
-                >
-                  {call.text}
                 </span>
               </li>
             );

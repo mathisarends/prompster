@@ -15,4 +15,8 @@ export type ToolCallItem = {
   status?: ToolCallStatus;
   actionType?: ToolCallActionType | string | null;
   detail?: string;
+  resultItems?: {
+    title: string;
+    coverUrl?: string | null;
+  }[];
 };

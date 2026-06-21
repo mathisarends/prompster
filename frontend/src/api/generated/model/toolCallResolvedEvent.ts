@@ -5,10 +5,12 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
+import type { ToolCallResultItemResponse } from "./toolCallResultItemResponse";
 
 export interface ToolCallResolvedEvent {
   type?: "tool_call.resolved";
   sequenceId: string;
   toolCallId: string;
   result: string;
+  resultItems?: ToolCallResultItemResponse[];
 }

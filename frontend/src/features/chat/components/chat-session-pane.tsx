@@ -161,7 +161,7 @@ export const ChatSessionPane = ({
           <div key={entry.id} className="flex max-w-[82%] flex-col px-1 py-2">
             <ToolCallAccordion
               calls={toToolCallItems(entry)}
-              defaultOpen={entry.calls.some((call) => call.state === "pending")}
+              defaultOpen
             />
           </div>
         );
