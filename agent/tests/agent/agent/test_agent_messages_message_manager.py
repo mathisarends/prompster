@@ -108,6 +108,46 @@ class TestMessageManagerConversationTurns:
         assert messages[2].tool_calls[0].id == "call-1"
         assert messages[3].tool_call_id == "call-1"
 
+    def test_compact_tool_results_elides_older_results_only(self) -> None:
+        manager = MessageManager(system_prompt="Prompt")
+        for index in range(6):
+            manager.add_tool_result(f"call-{index}", f"verbose result {index}")
+
+        compacted = manager.compact_tool_results(keep_last=2)
+
+        messages = manager.all()
+        tool_results = [
+            message for message in messages if isinstance(message, ToolResultMessage)
+        ]
+        assert compacted == 4
+        assert [message.tool_call_id for message in tool_results] == [
+            "call-0",
+            "call-1",
+            "call-2",
+            "call-3",
+            "call-4",
+            "call-5",
+        ]
+        assert all(
+            message.content.startswith("[context-compacted]")
+            for message in tool_results[:4]
+        )
+        assert [message.content for message in tool_results[4:]] == [
+            "verbose result 4",
+            "verbose result 5",
+        ]
+
+    def test_compact_tool_results_is_idempotent(self) -> None:
+        manager = MessageManager(system_prompt="Prompt")
+        for index in range(5):
+            manager.add_tool_result(f"call-{index}", f"verbose result {index}")
+
+        first = manager.compact_tool_results(keep_last=2)
+        second = manager.compact_tool_results(keep_last=2)
+
+        assert first == 3
+        assert second == 0
+
 
 class TestMessageManagerCurationEvents:
     """Curation events ride inside the same ``UserMessage`` they belong to.
@@ -172,7 +212,7 @@ class TestMessageManagerCurationEvents:
             at=datetime(2026, 1, 1, 10, 0, tzinfo=timezone.utc),
         )
         second = _event(
-            type=UserCurationEventType.TRACK_PINNED,
+            type=UserCurationEventType.TRACK_ADDED,
             title="Take On Me",
             artist="a-ha",
             at=datetime(2026, 1, 1, 11, 0, tzinfo=timezone.utc),
@@ -185,7 +225,7 @@ class TestMessageManagerCurationEvents:
             "<user_events>\n"
             '<event type="track_removed" at="2026-01-01T10:00:00+00:00">'
             "Rihanna - Umbrella</event>\n"
-            '<event type="track_pinned" at="2026-01-01T11:00:00+00:00">'
+            '<event type="track_added" at="2026-01-01T11:00:00+00:00">'
             "a-ha - Take On Me</event>\n"
             "</user_events>\n"
             "\n"
@@ -254,8 +294,7 @@ class TestMessageManagerDeckContext:
         assert (
             f'<created_deck id="{deck.id}" name="80er Party" '
             'track_count="1" max_tracks="75" remaining_tracks="74" '
-            'pinned_tracks="hard_constraints">'
-        ) in messages[1].content
+        ).rstrip() + ">" in messages[1].content
         assert (
             f'<track id="{deck.tracks[0].id}" label="a-ha - Take On Me (1985)" />'
         ) in messages[1].content

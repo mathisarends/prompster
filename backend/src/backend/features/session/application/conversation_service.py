@@ -11,6 +11,7 @@ from backend.features.session.application.events import (
     SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
+    SessionContextCompacted,
     SessionEvent,
     SessionOnboardingQuestionAsked,
     SessionPlaylistSet,
@@ -31,6 +32,7 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
     SessionRunnerCancelled,
+    SessionRunnerContextCompacted,
     SessionRunnerEvent,
     SessionRunnerPlaylistTracksAdded,
     SessionRunnerPlaylistTracksRemoved,
@@ -512,6 +514,8 @@ class SessionConversationService:
                     event=event,
                     session=session,
                 )
+            case SessionRunnerContextCompacted():
+                return self._handle_context_compacted(event=event)
             case SessionRunnerPlaylistUpdated():
                 return await self._handle_playlist_updated(
                     event=event,
@@ -656,6 +660,21 @@ class SessionConversationService:
                 max_attempts=event.max_attempts,
                 retry_in_seconds=event.retry_in_seconds,
                 sequence_id=pending_sequence.id if pending_sequence else None,
+            ),
+        )
+
+    def _handle_context_compacted(
+        self,
+        *,
+        event: SessionRunnerContextCompacted,
+    ) -> tuple[SessionEvent, ...]:
+        # Transient, informational: the agent trimmed older tool results to stay
+        # under the token budget. Surface it live but never persist or mutate.
+        return (
+            SessionContextCompacted(
+                reason=event.reason,
+                tokens_before=event.tokens_before,
+                compacted_tool_results=event.compacted_tool_results,
             ),
         )
 

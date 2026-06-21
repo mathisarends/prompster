@@ -111,6 +111,20 @@ class SessionPlaylistTrackReplaced:
 
 
 @dataclass(frozen=True)
+class SessionContextCompacted:
+    """Older tool results were elided to stay under the model's token budget.
+
+    Transient and informational: never persisted, never mutates the session.
+    Surfaced so the UI can reassure the user that a long run is being trimmed
+    rather than failing.
+    """
+
+    reason: str
+    tokens_before: int | None = None
+    compacted_tool_results: int = 0
+
+
+@dataclass(frozen=True)
 class SessionTitleGenerated:
     title: str
 
@@ -158,6 +172,7 @@ type SessionEvent = (
     | SessionPlaylistTrackRemoved
     | SessionPlaylistTrackReplaced
     | SessionTitleGenerated
+    | SessionContextCompacted
     | SessionOnboardingQuestionAsked
     | SessionSuspendedForInput
 )

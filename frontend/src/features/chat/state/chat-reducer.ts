@@ -125,6 +125,7 @@ const ChatEventType = {
   TOOL_CALL_FAILED: SessionEventType.tool_callfailed,
   TOOL_CALL_RETRY: SessionEventType.tool_callretry,
   TOOL_CALL_SEQUENCE_COMPLETED: SessionEventType.tool_callsequence_completed,
+  CONTEXT_COMPACTED: SessionEventType.sessioncontext_compacted,
   PLAYLIST_SET: SessionEventType.playlistset,
   PLAYLIST_TRACK_ADDED: SessionEventType.playlisttrack_added,
   PLAYLIST_TRACK_REMOVED: SessionEventType.playlisttrack_removed,

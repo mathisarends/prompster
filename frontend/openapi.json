@@ -2667,6 +2667,41 @@
         ],
         "title": "CheckoutSessionResponse"
       },
+      "ContextCompactedEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "session.context_compacted",
+            "title": "Type",
+            "default": "session.context_compacted"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "tokensBefore": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tokensbefore"
+          },
+          "compactedToolResults": {
+            "type": "integer",
+            "title": "Compactedtoolresults",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "ContextCompactedEvent"
+      },
       "CouponResponse": {
         "properties": {
           "couponId": {
@@ -3495,6 +3530,7 @@
           "tool_call.failed",
           "tool_call.retry",
           "tool_call.sequence_completed",
+          "session.context_compacted",
           "playlist.set",
           "playlist.track_added",
           "playlist.track_removed",
@@ -3773,6 +3809,9 @@
                 "$ref": "#/components/schemas/ToolCallSequenceCompletedEvent"
               },
               {
+                "$ref": "#/components/schemas/ContextCompactedEvent"
+              },
+              {
                 "$ref": "#/components/schemas/PlaylistSetEvent"
               },
               {
@@ -3810,6 +3849,7 @@
                 "playlist.track_added": "#/components/schemas/PlaylistTrackAddedEvent",
                 "playlist.track_removed": "#/components/schemas/PlaylistTrackRemovedEvent",
                 "playlist.track_replaced": "#/components/schemas/PlaylistTrackReplacedEvent",
+                "session.context_compacted": "#/components/schemas/ContextCompactedEvent",
                 "session.onboarding_question_asked": "#/components/schemas/OnboardingQuestionAskedEvent",
                 "session.snapshot": "#/components/schemas/SessionSnapshotEvent",
                 "session.suspended_for_input": "#/components/schemas/SuspendedForInputEvent",

@@ -76,6 +76,12 @@ class SessionRunnerPlaylistTracksReplaced(_RunnerEvent):
     replacements: list[SessionRunnerPlaylistTrackReplacement]
 
 
+class SessionRunnerContextCompacted(_RunnerEvent):
+    reason: str
+    tokens_before: int | None = None
+    compacted_tool_results: int = 0
+
+
 class SessionRunnerCancelled(_RunnerEvent):
     pass
 
@@ -112,6 +118,7 @@ type SessionRunnerEvent = (
     | SessionRunnerPlaylistTracksAdded
     | SessionRunnerPlaylistTracksRemoved
     | SessionRunnerPlaylistTracksReplaced
+    | SessionRunnerContextCompacted
     | SessionRunnerCancelled
     | SessionRunnerQuestionAsked
     | SessionRunnerSuspendedForInput

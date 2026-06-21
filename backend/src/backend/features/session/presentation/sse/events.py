@@ -31,6 +31,8 @@ class SessionEventType(StrEnum):
     TOOL_CALL_RETRY = "tool_call.retry"
     TOOL_CALL_SEQUENCE_COMPLETED = "tool_call.sequence_completed"
 
+    CONTEXT_COMPACTED = "session.context_compacted"
+
     PLAYLIST_SET = "playlist.set"
     PLAYLIST_TRACK_ADDED = "playlist.track_added"
     PLAYLIST_TRACK_REMOVED = "playlist.track_removed"
@@ -141,6 +143,15 @@ class ToolCallSequenceCompletedEvent(_SessionEventSchema):
     sequence_id: UUID
 
 
+class ContextCompactedEvent(_SessionEventSchema):
+    type: Literal[SessionEventType.CONTEXT_COMPACTED] = (
+        SessionEventType.CONTEXT_COMPACTED
+    )
+    reason: str
+    tokens_before: int | None = None
+    compacted_tool_results: int = 0
+
+
 class PlaylistSetEvent(_SessionEventSchema):
     type: Literal[SessionEventType.PLAYLIST_SET] = SessionEventType.PLAYLIST_SET
     playlist: PlaylistPayload
@@ -226,6 +237,7 @@ ServerEvent = Annotated[
         ToolCallFailedEvent,
         ToolCallRetryEvent,
         ToolCallSequenceCompletedEvent,
+        ContextCompactedEvent,
         PlaylistSetEvent,
         PlaylistTrackAddedEvent,
         PlaylistTrackRemovedEvent,

@@ -1,6 +1,7 @@
 from agent.agent import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
+    ContextCompactedEvent,
     DeckUpdatedEvent,
     QuestionAskedEvent,
     SuspendedForUserInputEvent,
@@ -19,6 +20,7 @@ from agent.deck import (
 from backend.features.session.application.ports.session_runner import (
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
+    SessionRunnerContextCompacted,
     SessionRunnerEvent,
     SessionRunnerPlaylistTrackReplacement,
     SessionRunnerPlaylistTracksAdded,
@@ -64,6 +66,8 @@ class AgentSessionEventMapper:
                 return [self._map_tool_call_completed(event)]
             case ToolRetryEvent():
                 return [self._map_tool_call_retry(event)]
+            case ContextCompactedEvent():
+                return [self._map_context_compacted(event)]
             case DeckUpdatedEvent():
                 return [self._map_deck_updated(event)]
             case QuestionAskedEvent():
@@ -128,6 +132,15 @@ class AgentSessionEventMapper:
                 )
                 for item in event.items
             ],
+        )
+
+    def _map_context_compacted(
+        self, event: ContextCompactedEvent
+    ) -> SessionRunnerContextCompacted:
+        return SessionRunnerContextCompacted(
+            reason=event.reason,
+            tokens_before=event.tokens_before,
+            compacted_tool_results=event.compacted_tool_results,
         )
 
     def _map_deck_updated(self, event: DeckUpdatedEvent) -> SessionRunnerEvent:

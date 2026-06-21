@@ -88,5 +88,18 @@ class DeckUpdatedEvent(AgentEvent):
     update: DeckDraftUpdate
 
 
+class ContextCompactedEvent(AgentEvent):
+    """Older tool results were elided to keep the run under the token budget.
+
+    Informational/transient: it never mutates the deck or persists. ``reason``
+    is ``"proactive"`` (budget threshold reached before a call) or ``"reactive"``
+    (recovered from a provider context-length error and retried).
+    """
+
+    reason: str
+    tokens_before: int | None = None
+    compacted_tool_results: int = 0
+
+
 class RunCompletedEvent(AgentEvent):
     output: str

@@ -78,6 +78,16 @@ class PlaylistIdParams(SequenceLabelParams):
             "Used only for the visible tool status. Do not put the playlist ID here."
         ),
     )
+    offset: int = Field(
+        default=0,
+        ge=0,
+        description=(
+            "Zero-based offset into the playlist for progressive discovery. "
+            "Tracks are returned one page at a time; start at 0 and only call "
+            "again with the next offset (shown in the result) if you actually "
+            "need more tracks. Do not try to load the whole playlist at once."
+        ),
+    )
 
     def status_label(self) -> str:
         return f"Hole Playlist-Tracks: {_compact_status_value(self.playlist_name)}"

@@ -716,7 +716,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "py-llmify", extras = ["openai"], specifier = ">=0.5.0" },
+    { name = "py-llmify", extras = ["openai"], specifier = ">=0.6.0" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
 ]
@@ -934,15 +934,15 @@ wheels = [
 
 [[package]]
 name = "py-llmify"
-version = "0.5.0"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/98/aa/df294793d53d7e1d6c518128a1355a1b11ad77e0a50c60a69b3cfcdad8c4/py_llmify-0.5.0.tar.gz", hash = "sha256:37653f161a608341b71d10aa0aa64bc661959ea7f3142f5ecb11ffa816510b9b", size = 19905, upload-time = "2026-05-30T11:35:36.015Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/78/24786dfef6de99edc01a0471e4ebe8a161206ab9c90db8611a764d3bcd76/py_llmify-0.6.0.tar.gz", hash = "sha256:aa7422e2521346afbab9207faa43d5efe2729093d60f599c5fad5d1cd02f0cfe", size = 21069, upload-time = "2026-06-21T17:11:32.918Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fb/50/3cac2c5a05795f46ca9c0fc850903d1a87924cf400f5d67d04caa6afc224/py_llmify-0.5.0-py3-none-any.whl", hash = "sha256:f085b096a0e8d99d33b5588bb96f3c48e08199c1c9d4b2efec128d57f4b1141f", size = 21959, upload-time = "2026-05-30T11:35:35.038Z" },
+    { url = "https://files.pythonhosted.org/packages/d8/07/c9099ebcdb68245de5931a635903e1eaeedfcaaa4b465e5fa225ac32dea1/py_llmify-0.6.0-py3-none-any.whl", hash = "sha256:230baa9394d4a92bfb9072ab585181510bb943d30eed01f16067942c3d59fbb7", size = 23782, upload-time = "2026-06-21T17:11:31.955Z" },
 ]
 
 [package.optional-dependencies]

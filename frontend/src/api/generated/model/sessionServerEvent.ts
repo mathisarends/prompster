@@ -9,6 +9,7 @@ import type { AssistantMessageCancelledEvent } from "./assistantMessageCancelled
 import type { AssistantMessageChunkEvent } from "./assistantMessageChunkEvent";
 import type { AssistantMessageCompletedEvent } from "./assistantMessageCompletedEvent";
 import type { AssistantMessageStartedEvent } from "./assistantMessageStartedEvent";
+import type { ContextCompactedEvent } from "./contextCompactedEvent";
 import type { DoneEvent } from "./doneEvent";
 import type { ErrorEvent } from "./errorEvent";
 import type { OnboardingQuestionAskedEvent } from "./onboardingQuestionAskedEvent";
@@ -43,6 +44,7 @@ export type SessionServerEvent =
   | ToolCallFailedEvent
   | ToolCallRetryEvent
   | ToolCallSequenceCompletedEvent
+  | ContextCompactedEvent
   | PlaylistSetEvent
   | PlaylistTrackAddedEvent
   | PlaylistTrackRemovedEvent

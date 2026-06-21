@@ -11,8 +11,8 @@ from agent.deck import (
     DeckStore,
 )
 from agent.tools.views import Phase as AgentPhase
-from llm import LLMCredentials, create_openai_llm
-from llm.registry import ensure_supported_openai_model
+from llm import LLMCredentials, create_openai_llm, get_openai_model_input_token_limit
+from llm.registry import DEFAULT_OPENAI_MODEL, ensure_supported_openai_model
 from llmify import ChatModel
 from spotifyify import Spotifyify
 
@@ -157,6 +157,7 @@ class AgentSessionRunner(SessionRunner):
         model_id: str | None = None,
     ) -> Agent:
         llm = self._llm
+        selected_model = DEFAULT_OPENAI_MODEL
         if model_id is not None:
             selected_model = ensure_supported_openai_model(model_id)
             llm = create_openai_llm(
@@ -171,6 +172,7 @@ class AgentSessionRunner(SessionRunner):
             spotify=Spotify(client=self._spotify),
             deck_store=_to_deck_store(session.playlist),
             max_deck_tracks=MAX_PLAYLIST_TRACKS,
+            max_input_tokens=get_openai_model_input_token_limit(selected_model),
             phase=_agent_phase_for(session),
         )
 

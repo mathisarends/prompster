@@ -3,6 +3,7 @@ from backend.features.session.application import (
     SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
+    SessionContextCompacted,
     SessionEvent,
     SessionOnboardingQuestionAsked,
     SessionPlaylistSet,
@@ -33,6 +34,7 @@ from backend.features.session.presentation.sse.events import (
     AssistantMessageCancelledEvent,
     AssistantMessageCompletedEvent,
     AssistantMessageStartedEvent,
+    ContextCompactedEvent,
     PlaylistPayload,
     PlaylistSetEvent,
     PlaylistTrackAddedEvent,
@@ -129,6 +131,13 @@ def to_server_event(event: SessionEvent) -> ServerEvent:
 
     if isinstance(event, SessionToolCallSequenceCompleted):
         return ToolCallSequenceCompletedEvent(sequence_id=event.sequence_id)
+
+    if isinstance(event, SessionContextCompacted):
+        return ContextCompactedEvent(
+            reason=event.reason,
+            tokens_before=event.tokens_before,
+            compacted_tool_results=event.compacted_tool_results,
+        )
 
     if isinstance(event, SessionPlaylistSet):
         return PlaylistSetEvent(playlist=_to_playlist_payload(event.playlist))

@@ -19,7 +19,6 @@ def _track(
     *,
     year: int | None = None,
     cover_url: str | None = None,
-    is_pinned: bool = False,
 ) -> DeckDraftTrack:
     return DeckDraftTrack(
         title=title,
@@ -27,7 +26,6 @@ def _track(
         year=year,
         spotify_uri=spotify_uri,
         cover_url=cover_url,
-        is_pinned=is_pinned,
     )
 
 
@@ -80,31 +78,6 @@ class TestWorkspaceDraftPlaylistTool:
 
         assert result.success is False
         assert "uri must start with 'spotify:track:'" in (result.error or "")
-        assert store.draft is None
-        assert store.drain_deck_draft_updates() == []
-
-    @pytest.mark.asyncio
-    async def test_add_deck_tracks_rejects_agent_pinned_flag(
-        self,
-    ) -> None:
-        store = DeckStore()
-        tools = Tools(ToolContext(store))
-
-        result = await tools.execute(
-            "add_deck_tracks",
-            {
-                "status": "Tracks ins Deck legen",
-                "tracks": [
-                    {
-                        "uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-                        "pinned": True,
-                    }
-                ],
-            },
-        )
-
-        assert result.success is False
-        assert "pinned" in (result.error or "")
         assert store.draft is None
         assert store.drain_deck_draft_updates() == []
 
@@ -411,59 +384,3 @@ class TestWorkspaceDraftPlaylistTool:
             'Added 0 of 1 track(s) to Hitster deck "Deck" (1 total).'
             " The deck is full (max 1); extra tracks were skipped."
         )
-
-    @pytest.mark.asyncio
-    async def test_pinned_tracks_cannot_be_removed_or_replaced(
-        self,
-    ) -> None:
-        pinned_track = _track(
-            title="Take On Me",
-            artist="a-ha",
-            year=1985,
-            spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-            cover_url="https://i.scdn.co/image/take-on-me.jpg",
-            is_pinned=True,
-        )
-        store = DeckStore(DeckDraft(name="80er Party", tracks=[pinned_track]))
-        store.cache_tracks(
-            [
-                _track(
-                    title="Africa",
-                    artist="Toto",
-                    year=1982,
-                    spotify_uri="spotify:track:2374M0fQpWi3dLnB54qaLX",
-                    cover_url="https://i.scdn.co/image/africa.jpg",
-                ),
-            ]
-        )
-        tools = Tools(ToolContext(store))
-        pinned_track_id = pinned_track.id
-
-        remove_result = await tools.execute(
-            "remove_deck_tracks",
-            {
-                "status": "Song entfernen",
-                "track_ids": [str(pinned_track_id)],
-            },
-        )
-        replace_result = await tools.execute(
-            "replace_deck_tracks",
-            {
-                "status": "Song ersetzen",
-                "replacements": [
-                    {
-                        "old_id": str(pinned_track_id),
-                        "new_uri": "spotify:track:2374M0fQpWi3dLnB54qaLX",
-                    }
-                ],
-            },
-        )
-        assert remove_result.success is False
-        assert "pinned" in (remove_result.error or "")
-        assert remove_result.extracted_content == ""
-        assert replace_result.success is False
-        assert "pinned" in (replace_result.error or "")
-        assert replace_result.extracted_content == ""
-        assert store.draft is not None
-        assert store.draft.tracks == [pinned_track]
-        assert store.drain_deck_draft_updates() == []

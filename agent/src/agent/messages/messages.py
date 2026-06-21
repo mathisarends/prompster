@@ -17,6 +17,13 @@ from .rendering import render_deck_context, render_user_message_content
 
 type _DeckDraftProvider = Callable[[], DeckDraft | None]
 
+_COMPACTED_MARKER = "[context-compacted]"
+_COMPACTED_PLACEHOLDER = (
+    f"{_COMPACTED_MARKER} Earlier results were elided to save context. "
+    "Any tracks they returned are still in the workspace cache and can be "
+    "added by URI; re-run the relevant search if you need the details again."
+)
+
 _PROMPTS_DIR = Path(__file__).parent / "prompts"
 _SHARED_PROMPT = (_PROMPTS_DIR / "shared_system_prompt.md").read_text(encoding="utf-8")
 _PHASE_PROMPTS: dict[Phase, str] = {
@@ -101,6 +108,40 @@ class MessageManager:
         self._messages.append(
             ToolResultMessage(tool_call_id=tool_call_id, content=content)
         )
+
+    def compact_tool_results(self, *, keep_last: int = 4) -> int:
+        """Elide the content of older tool-result messages to reclaim context.
+
+        Tool results (Spotify search / playlist track dumps) accumulate in the
+        history and are the dominant source of context growth in a long build
+        loop. They are safe to drop: the deck state is re-rendered fresh on
+        every :meth:`all` call and every track stays in the ``DeckStore`` cache
+        keyed by URI, so the model can still add cached tracks and re-search if
+        it needs detail again. The most recent ``keep_last`` results are left
+        intact so the model keeps its immediate working set.
+
+        Returns the number of tool results that were compacted this call.
+        """
+        tool_result_indices = [
+            index
+            for index, message in enumerate(self._messages)
+            if isinstance(message, ToolResultMessage)
+        ]
+        if len(tool_result_indices) <= keep_last:
+            return 0
+
+        compacted = 0
+        for index in tool_result_indices[:-keep_last]:
+            message = self._messages[index]
+            assert isinstance(message, ToolResultMessage)
+            if message.content.startswith(_COMPACTED_MARKER):
+                continue
+            self._messages[index] = ToolResultMessage(
+                tool_call_id=message.tool_call_id,
+                content=_COMPACTED_PLACEHOLDER,
+            )
+            compacted += 1
+        return compacted
 
     def reset(self) -> None:
         self._messages = []

@@ -2,7 +2,14 @@ import asyncio
 from collections.abc import AsyncGenerator, Sequence
 from dataclasses import dataclass, field
 
-from llmify import ChatModel, Message, StreamEnd, StreamEventType
+from llm.registry import DEFAULT_OPENAI_MODEL, get_openai_model_input_token_limit
+from llmify import (
+    ChatModel,
+    ContextLengthExceededError,
+    Message,
+    StreamEnd,
+    StreamEventType,
+)
 from llmify.messages import ToolCall
 from spotifyify import RetryEvent
 
@@ -10,6 +17,7 @@ from agent.events import (
     AgentEvent,
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
+    ContextCompactedEvent,
     DeckUpdatedEvent,
     QuestionAskedEvent,
     RunCompletedEvent,
@@ -49,10 +57,18 @@ class Agent:
         deck_store: DeckStore | None = None,
         max_deck_tracks: int = 50,
         phase: Phase = Phase.ONBOARDING,
+        max_input_tokens: int | None = None,
+        compaction_threshold: float = 0.8,
     ) -> None:
         self._llm = llm
         self._tools = tools or Tools()
         self._phase = phase
+
+        input_token_limit = max_input_tokens or get_openai_model_input_token_limit(
+            DEFAULT_OPENAI_MODEL
+        )
+        self._compaction_budget = int(input_token_limit * compaction_threshold)
+        self._last_prompt_tokens = 0
 
         self._spotify = spotify or Spotify()
         self._tools.provide(self._spotify)
@@ -118,8 +134,11 @@ class Agent:
                 return
             yield StepStartedEvent(step=iteration)
 
+            for event in self._compact_proactively():
+                yield event
+
             response = _LLMResponse()
-            async for event in self._stream_llm_response(response):
+            async for event in self._stream_llm_response_with_recovery(response):
                 yield event
             if self._stop_requested:
                 return
@@ -171,6 +190,50 @@ class Agent:
                 if event.tool_calls:
                     response.tool_calls = event.tool_calls
                 self._token_tracker.add(event.usage, self._llm_name)
+                if event.usage is not None:
+                    self._last_prompt_tokens = event.usage.prompt_tokens
+
+    def _compact_proactively(self) -> list[ContextCompactedEvent]:
+        # The last observed prompt size already exceeds our safety budget, so
+        # compact before issuing the next call instead of risking the provider's
+        # hard context-length error.
+        if self._last_prompt_tokens < self._compaction_budget:
+            return []
+        compacted = self._messages.compact_tool_results()
+        if compacted == 0:
+            return []
+        event = ContextCompactedEvent(
+            reason="proactive",
+            tokens_before=self._last_prompt_tokens,
+            compacted_tool_results=compacted,
+        )
+        # Reset so the estimate reflects the freshly compacted history and we do
+        # not keep compacting on every subsequent iteration.
+        self._last_prompt_tokens = 0
+        return [event]
+
+    async def _stream_llm_response_with_recovery(
+        self,
+        response: _LLMResponse,
+    ) -> AsyncGenerator[AgentEvent, None]:
+        try:
+            async for event in self._stream_llm_response(response):
+                yield event
+            return
+        except ContextLengthExceededError:
+            compacted = self._messages.compact_tool_results(keep_last=2)
+            yield ContextCompactedEvent(
+                reason="reactive",
+                tokens_before=self._last_prompt_tokens,
+                compacted_tool_results=compacted,
+            )
+            if compacted == 0:
+                raise
+
+        response.completion = ""
+        response.tool_calls = []
+        async for event in self._stream_llm_response(response):
+            yield event
 
     def _tool_call_sequence_label(self, calls: list[ToolCall]) -> str | None:
         params = [self._tools.parse_params(call, phase=self._phase) for call in calls]

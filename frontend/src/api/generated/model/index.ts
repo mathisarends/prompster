@@ -18,6 +18,7 @@ export * from "./bodyTranscribeAudio";
 export * from "./bodyUploadImageAttachment";
 export * from "./checkoutSessionResponse";
 export * from "./completeOnboardingParams";
+export * from "./contextCompactedEvent";
 export * from "./couponResponse";
 export * from "./createCheckoutSessionRequest";
 export * from "./createCheckoutSessionRequestMetadata";

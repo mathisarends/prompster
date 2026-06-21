@@ -2,14 +2,21 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from llmify import StreamEnd, StreamTextDelta, StreamToolCall
+from llmify import (
+    ContextLengthExceededError,
+    StreamEnd,
+    StreamTextDelta,
+    StreamToolCall,
+)
 from llmify.messages import ToolCall
+from llmify.views import ChatInvokeUsage
 import pytest
 
 from agent.agent import (
     Agent,
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
+    ContextCompactedEvent,
     QuestionAskedEvent,
     ToolCallEvent,
     ToolResultEvent,
@@ -27,16 +34,19 @@ class _ChatResponse:
     completion: str | None
     tool_calls: list[ToolCall]
     chunks: list[str] | None = None
+    usage: ChatInvokeUsage | None = None
 
 
 class _FakeLlm:
-    def __init__(self, responses: list[_ChatResponse]) -> None:
+    def __init__(self, responses: list[_ChatResponse | Exception]) -> None:
         self._responses = responses
         self.tool_schema_batches: list[list[Any]] = []
 
     async def stream(self, messages: list[Any], tools: list[Any]):
         self.tool_schema_batches.append(tools)
         response = self._responses.pop(0)
+        if isinstance(response, Exception):
+            raise response
         for chunk in response.chunks or []:
             yield StreamTextDelta(delta=chunk)
         for tool_call in response.tool_calls:
@@ -44,6 +54,7 @@ class _FakeLlm:
         yield StreamEnd(
             completion=response.completion or "",
             tool_calls=response.tool_calls,
+            usage=response.usage,
         )
 
 
@@ -74,6 +85,33 @@ class TestAgentWorkspaceUpdateEvents:
 
         assert chunks == ["Hallo", " Welt"]
         assert completed.content == "Hallo Welt"
+
+    @pytest.mark.asyncio
+    async def test_stream_compacts_context_and_retries_context_length_error(
+        self,
+    ) -> None:
+        llm = _FakeLlm(
+            [
+                ContextLengthExceededError(),
+                _ChatResponse(completion="Weiter gehts", tool_calls=[]),
+            ]
+        )
+        agent = Agent(llm=llm)
+        for index in range(5):
+            agent._messages.add_tool_result(f"call-{index}", "x")
+
+        events = [event async for event in agent.stream("Mach weiter")]
+
+        compacted = next(
+            event for event in events if isinstance(event, ContextCompactedEvent)
+        )
+        completed = next(
+            event for event in events if isinstance(event, AssistantMessageEvent)
+        )
+        assert compacted.reason == "reactive"
+        assert compacted.compacted_tool_results == 3
+        assert completed.content == "Weiter gehts"
+        assert len(llm.tool_schema_batches) == 2
 
     @pytest.mark.asyncio
     async def test_stream_emits_deck_update_after_tool_result(self) -> None:

@@ -11,7 +11,7 @@ from agent.deck import (
 )
 from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
-from agent.tools.handler import Spotify
+from agent.tools.handler import DeckCritic, Spotify
 from agent.tools.result_previews import (
     playlist_preview_items,
     track_preview_items,
@@ -22,6 +22,7 @@ from agent.tools.params import (
     PlaylistIdParams,
     RemoveDraftDeckTracksParams,
     ReplaceDraftDeckTracksParams,
+    ReviewDeckParams,
     SearchParams,
 )
 from agent.tools.schemas import ToolSchema
@@ -136,27 +137,7 @@ class Tools:
 
     def _register_default_tools(self) -> None:
         @self.action(
-            description=(
-                "Stelle dem User eine einzelne Onboarding-Klaerungsfrage. "
-                "Gib in der Regel 3 Optionen mit, hoechstens 4. "
-                "Optionen muessen extrem knapp sein: Tags, keine Saetze, "
-                "max. ~3 Woerter (z.B. 'Alle Jahrzehnte' statt 'So breit wie "
-                "moeglich ueber mehrere Jahrzehnte', 'Nur Superhits' statt "
-                "'Nur absolute Klassiker, die fast jeder kennt'). Der User "
-                "soll sie in Sekundenbruchteilen scannen koennen. "
-                "Setze immer genau eine Option als recommended_option (muss "
-                "exakt einem options-Eintrag entsprechen). "
-                "Nutze hint nur fuer kurze Warnungen, Tipps oder Kontext, "
-                "den der User vor der Antwort sehen sollte. "
-                "Wenn die Anfrage sehr spezifisch ist, nutze hint, um die "
-                "Deck-Breite natuerlich zu empfehlen und Erlaubnis fuer "
-                "angrenzende Tracks einzuholen. "
-                "Fragen zu Jahren sollen eher breite Zeitspannen mit wenigen "
-                "Optionen abdecken statt einzelne Jahre abzufragen. "
-                "Nutze selection_mode=multi_select nur, wenn mehrere Antworten "
-                "gleichzeitig sinnvoll sind. "
-                "Markiere nur die letzte Onboarding-Frage mit is_last_question."
-            ),
+            description=("Stelle dem User eine einzelne Onboarding-Klärungsfrage. "),
             params=AskOnboardingQuestionParams,
             status_label=lambda params: params.status,
             action_type=ActionType.ASK_ONBOARDING_QUESTION,
@@ -301,8 +282,12 @@ class Tools:
         @self.action(
             description=(
                 "Fetch tracks from an external Spotify playlist by playlist ID or URI "
-                "for research. The returned tracks are cached for later deck tools; "
-                "this does not read or mutate the current workspace Hitster deck."
+                "for research. Tracks are returned one page at a time (progressive "
+                "discovery): start at offset=0 and only call again with the next "
+                "offset (reported in the result) if you genuinely need more tracks. "
+                "Do not try to pull an entire large playlist. The returned tracks are "
+                "cached for later deck tools; this does not read or mutate the current "
+                "workspace Hitster deck."
             ),
             params=PlaylistIdParams,
             status_label=lambda params: params.status_label(),
@@ -324,8 +309,7 @@ class Tools:
             except Exception as error:
                 return ActionResult.fail(error)
 
-
-"""         @self.action(
+        @self.action(
             description=(
                 "Get critic feedback on the current Hitster deck near the end of a "
                 "build loop. Returns concrete, structured suggestions you can act on "
@@ -345,4 +329,3 @@ class Tools:
                 return ActionResult.ok(result.content)
             except Exception as error:
                 return ActionResult.fail(error)
- """

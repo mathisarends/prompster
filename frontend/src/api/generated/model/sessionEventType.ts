@@ -21,6 +21,7 @@ export const SessionEventType = {
   tool_callfailed: "tool_call.failed",
   tool_callretry: "tool_call.retry",
   tool_callsequence_completed: "tool_call.sequence_completed",
+  sessioncontext_compacted: "session.context_compacted",
   playlistset: "playlist.set",
   playlisttrack_added: "playlist.track_added",
   playlisttrack_removed: "playlist.track_removed",

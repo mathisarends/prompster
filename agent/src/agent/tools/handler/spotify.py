@@ -32,6 +32,11 @@ from agent.tools.retry_reporting import report_retry
 
 logger = logging.getLogger(__name__)
 
+# Playlists are discovered progressively one page at a time instead of expanding
+# the whole playlist into a single tool result, which used to bloat the LLM
+# context by tens of thousands of tokens for large playlists.
+_PLAYLIST_PAGE_SIZE = 50
+
 
 class SpotifyTrackLookupResult(BaseModel):
     content: str
@@ -236,45 +241,45 @@ class Spotify:
         params: PlaylistIdParams,
     ) -> SpotifyTrackLookupResult:
         playlist_id = _normalize_spotify_id(params.playlist_id, "playlist")
+        offset = max(0, params.offset)
         await self.open()
-        logger.info("Spotify get_playlist_tracks: playlist_id=%s", playlist_id)
-        with self._retry_logging():
-            tracks = await self._get_playlist_tracks(playlist_id)
         logger.info(
-            "Spotify get_playlist_tracks: found=%d playlist_id=%s",
+            "Spotify get_playlist_tracks: playlist_id=%s offset=%d",
+            playlist_id,
+            offset,
+        )
+        with self._retry_logging():
+            page = await self._client.playlists.tracks(
+                playlist_id,
+                limit=_PLAYLIST_PAGE_SIZE,
+                offset=offset,
+                additional_types=["track"],
+            )
+        tracks = _extract_playlist_tracks(page.items)
+        total = page.total
+        logger.info(
+            "Spotify get_playlist_tracks: found=%d offset=%d total=%s playlist_id=%s",
             len(tracks),
+            offset,
+            total,
             playlist_id,
         )
         if not tracks:
-            return SpotifyTrackLookupResult(content="Playlist is empty.", tracks=[])
-        return _track_lookup_result(
+            content = "Playlist is empty." if offset == 0 else "No more tracks."
+            return SpotifyTrackLookupResult(content=content, tracks=[])
+        result = _track_lookup_result(
             tracks,
             release_date_for=_track_release_date,
             cover_url_for=_track_cover_url,
         )
-
-    async def _get_playlist_tracks(self, playlist_id: str) -> list[Track]:
-        tracks: list[Track] = []
-        offset = 0
-        limit = 100
-
-        while True:
-            page = await self._client.playlists.tracks(
-                playlist_id,
-                limit=limit,
-                offset=offset,
-                additional_types=["track"],
-            )
-            for playlist_item in page.items or []:
-                item = playlist_item.item or playlist_item.track
-                if item is not None and getattr(item, "type", None) == "track":
-                    tracks.append(item)
-
-            if not page.next:
-                break
-            offset += limit
-
-        return tracks
+        footer = _playlist_page_footer(
+            offset=offset,
+            page_count=len(tracks),
+            total=total,
+            has_next=bool(page.next),
+        )
+        content = f"{result.content}\n{footer}" if footer else result.content
+        return SpotifyTrackLookupResult(content=content, tracks=result.tracks)
 
     @contextmanager
     def _retry_logging(self) -> Iterator[None]:
@@ -294,6 +299,37 @@ def _log_retry(event: RetryEvent) -> None:
         event.max_retries,
     )
     report_retry(event)
+
+
+def _extract_playlist_tracks(items: list | None) -> list[Track]:
+    tracks: list[Track] = []
+    for playlist_item in items or []:
+        item = playlist_item.item or playlist_item.track
+        if item is not None and getattr(item, "type", None) == "track":
+            tracks.append(item)
+    return tracks
+
+
+def _playlist_page_footer(
+    *,
+    offset: int,
+    page_count: int,
+    total: int | None,
+    has_next: bool,
+) -> str:
+    first = offset + 1
+    last = offset + page_count
+    if total is not None:
+        scope = f"Showing tracks {first}-{last} of {total}."
+    else:
+        scope = f"Showing tracks {first}-{last}."
+    if has_next:
+        next_offset = offset + page_count
+        return (
+            f"{scope} More tracks available - call get_spotify_playlist_tracks "
+            f"again with offset={next_offset} to load the next page."
+        )
+    return f"{scope} End of playlist."
 
 
 def _playlist_track_count(playlist: Playlist | SimplifiedPlaylist) -> int:

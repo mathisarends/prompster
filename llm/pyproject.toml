@@ -8,7 +8,7 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
-    "py-llmify[openai]>=0.5.0",
+    "py-llmify[openai]>=0.6.0",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.1",
 ]

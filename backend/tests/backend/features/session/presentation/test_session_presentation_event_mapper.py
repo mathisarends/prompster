@@ -6,6 +6,7 @@ from backend.features.session.application import (
     SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
+    SessionContextCompacted,
     SessionOnboardingQuestionAsked,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
@@ -29,6 +30,7 @@ from backend.features.session.presentation.sse.events import (
     AssistantMessageCancelledEvent,
     AssistantMessageCompletedEvent,
     AssistantMessageStartedEvent,
+    ContextCompactedEvent,
     PlaylistSetEvent,
     PlaylistTrackAddedEvent,
     PlaylistTrackRemovedEvent,
@@ -131,6 +133,21 @@ class TestSessionEventMapper:
         assert event.sequence_id == sequence_id
         assert event.tool_call_id == "call-1"
         assert event.result == "done"
+
+    def test_to_server_event_maps_context_compacted(self) -> None:
+        event = to_server_event(
+            SessionContextCompacted(
+                reason="reactive",
+                tokens_before=275000,
+                compacted_tool_results=3,
+            )
+        )
+
+        assert isinstance(event, ContextCompactedEvent)
+        assert event.type == SessionEventType.CONTEXT_COMPACTED
+        assert event.reason == "reactive"
+        assert event.tokens_before == 275000
+        assert event.compacted_tool_results == 3
 
     def test_to_server_event_maps_playlist_set(self) -> None:
         playlist = Playlist(
