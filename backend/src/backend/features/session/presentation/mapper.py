@@ -39,7 +39,6 @@ from backend.features.session.presentation.schemas import (
     ToolCallState,
     ToolFunctionResponse,
     SessionMessageAttachmentResponse,
-    ImageAttachmentResponse,
     UserCurationEventResponse,
     UserMessageEntryResponse,
 )
@@ -96,13 +95,10 @@ def to_entry_response(
                 to_user_message_attachment_response(attachment)
                 for attachment in entry.attachments
             ],
-            image_attachments=[
-                to_image_attachment_response(
-                    attachment,
-                    image_urls_by_storage_key=image_urls_by_storage_key,
-                )
-                for attachment in entry.image_attachments
-            ],
+            image_attachments=to_image_attachment_urls(
+                entry.image_attachments,
+                image_urls_by_storage_key=image_urls_by_storage_key,
+            ),
             user_curation_events=[
                 to_user_curation_event_response(event)
                 for event in entry.user_curation_events
@@ -238,18 +234,17 @@ def to_user_message_attachment_response(
     )
 
 
-def to_image_attachment_response(
-    attachment: ImageAttachment,
+def to_image_attachment_urls(
+    attachments: tuple[ImageAttachment, ...],
     *,
     image_urls_by_storage_key: Mapping[str, str] | None = None,
-) -> ImageAttachmentResponse:
-    return ImageAttachmentResponse(
-        id=attachment.id,
-        url=(image_urls_by_storage_key or {}).get(attachment.storage_key),
-        content_type=attachment.content_type,
-        file_name=attachment.file_name,
-        size_bytes=attachment.size_bytes,
-    )
+) -> list[str]:
+    urls_by_storage_key = image_urls_by_storage_key or {}
+    return [
+        url
+        for attachment in attachments
+        if (url := urls_by_storage_key.get(attachment.storage_key)) is not None
+    ]
 
 
 def to_user_curation_event_response(

@@ -23,6 +23,7 @@ from backend.features.session.application.ports import (
     StoredAttachment,
 )
 from backend.features.session.domain import (
+    ImageAttachment,
     Session,
     UserCurationEvent,
     UserCurationEventType,
@@ -146,6 +147,9 @@ class _SessionConversationServiceStub:
 
 
 class _MessageAttachmentStoreStub(MessageAttachmentStore):
+    def __init__(self) -> None:
+        self.signed_url_requests: list[tuple[str, int]] = []
+
     async def save_stashed_image_attachment(
         self,
         *,
@@ -184,6 +188,7 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
         storage_key: str,
         expires_in_seconds: int,
     ) -> str:
+        self.signed_url_requests.append((storage_key, expires_in_seconds))
         return f"https://example.com/{storage_key}"
 
     async def delete_session_attachments(self, *, user_id, session_id) -> None:
@@ -270,6 +275,44 @@ class TestGetSessionByIdRoute:
             response.unconsumed_user_curation_events[0].event_type
             == UserCurationEventTypeResponse.TRACK_REMOVED
         )
+
+    def test_returns_signed_image_attachment_urls(self) -> None:
+        session_id = uuid4()
+        user_id = uuid4()
+        storage_key = f"users/{user_id}/chat/{session_id}/image.png"
+        session = Session(
+            id=session_id,
+            title="Session",
+            entries=[],
+            owner_id=user_id,
+        )
+        session.add_user_message(
+            content="See image",
+            image_attachments=[
+                ImageAttachment(
+                    storage_key=storage_key,
+                    content_type="image/png",
+                    file_name="image.png",
+                    size_bytes=123,
+                )
+            ],
+        )
+        service = _SessionServiceStub(session=session)
+        attachment_store = _MessageAttachmentStoreStub()
+
+        response = asyncio.run(
+            get_session_by_id(
+                session_id=session_id,
+                authenticated_user_id=user_id,
+                service=cast(SessionService, service),
+                attachment_store=cast(MessageAttachmentStore, attachment_store),
+            )
+        )
+
+        first_entry = response.entries[0]
+        assert first_entry.kind == "user_message"
+        assert first_entry.image_attachments == [f"https://example.com/{storage_key}"]
+        assert attachment_store.signed_url_requests == [(storage_key, 86_400)]
 
 
 class TestCreateSessionRoute:

@@ -102,10 +102,14 @@ class S3StorageBackend(StorageBackend):
         self._bucket = bucket
 
     @asynccontextmanager
-    async def _get_client(self) -> AsyncIterator[S3Client]:
+    async def _get_client(
+        self,
+        *,
+        endpoint_url: str | None = None,
+    ) -> AsyncIterator[S3Client]:
         async with self._session.client(
             service_name="s3",
-            endpoint_url=self._endpoint_url,
+            endpoint_url=endpoint_url or self._endpoint_url,
             region_name="us-east-1",
             aws_access_key_id=self._access_key,
             aws_secret_access_key=self._secret_key,
@@ -186,17 +190,11 @@ class S3StorageBackend(StorageBackend):
     async def create_signed_url(self, path: str, ttl_seconds: int = 3600) -> str:
         params = _S3PresignedUrlParams(bucket=self._bucket, key=path)
 
-        async with self._get_client() as s3:
+        async with self._get_client(endpoint_url=self._public_endpoint_url) as s3:
             signed_url: str = await s3.generate_presigned_url(
                 ClientMethod="get_object",
                 Params=params.model_dump(by_alias=True),
                 ExpiresIn=ttl_seconds,
-            )
-
-        # Replace internal endpoint with public endpoint for client access
-        if self._endpoint_url != self._public_endpoint_url:
-            signed_url = signed_url.replace(
-                self._endpoint_url, self._public_endpoint_url
             )
 
         return signed_url

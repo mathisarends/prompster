@@ -15,6 +15,7 @@ import {
   ToolCallState,
 } from "@/api/generated/model";
 import type { SessionServerEvent } from "@/features/chat/api/session-stream";
+import type { ChatAttachment } from "@/features/chat/components/attachments";
 import type { ToolCallItem, ToolCallStatus } from "@/features/chat/types";
 
 type SessionLike =
@@ -128,6 +129,7 @@ export type ChatAction =
   | {
       type: typeof ChatActionType.STREAM_STARTED;
       userMessageText?: string;
+      attachments?: ChatAttachment[];
     }
   | { type: typeof ChatActionType.STREAM_FINISHED }
   | { type: typeof ChatActionType.STREAM_STOPPED }
@@ -166,7 +168,10 @@ export const chatReducer = (
         entries: action.userMessageText
           ? [
               ...state.entries,
-              createOptimisticUserEntry(action.userMessageText),
+              createOptimisticUserEntry(
+                action.userMessageText,
+                action.attachments,
+              ),
             ]
           : state.entries,
         isStreaming: true,
@@ -632,13 +637,26 @@ const reduceServerEvent = (
   }
 };
 
-const createOptimisticUserEntry = (text: string): ChatUserEntry => ({
+const createOptimisticUserEntry = (
+  text: string,
+  attachments: ChatAttachment[] = [],
+): ChatUserEntry => ({
   kind: EntryKind.user_message,
   id: `user-${crypto.randomUUID()}`,
   content: text,
+  imageAttachments: attachments
+    .map(toOptimisticImageAttachment)
+    .filter((attachment): attachment is string => attachment !== null),
   createdAt: new Date().toISOString(),
   isOptimistic: true,
 });
+
+const toOptimisticImageAttachment = (
+  attachment: ChatAttachment,
+): string | null => {
+  if (attachment.kind !== "image") return null;
+  return attachment.imageUrl ?? null;
+};
 
 const createAssistantEntry = (
   id: string,

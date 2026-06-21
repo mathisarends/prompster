@@ -63,7 +63,7 @@ def test_to_session_response_maps_image_attachments_with_signed_urls() -> None:
 
     first_entry = response.entries[0]
     assert first_entry.kind == "user_message"
-    assert first_entry.image_attachments[0].url == "https://signed.example/c.png"
+    assert first_entry.image_attachments == ["https://signed.example/c.png"]
 
 
 def test_to_session_response_maps_all_onboarding_questions_with_answers() -> None:

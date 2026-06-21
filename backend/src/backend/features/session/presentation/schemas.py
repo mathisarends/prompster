@@ -75,7 +75,7 @@ class UserMessageEntryResponse(Schema):
     id: UUID
     content: str
     attachments: list[SessionMessageAttachmentResponse] = Field(default_factory=list)
-    image_attachments: list[ImageAttachmentResponse] = Field(default_factory=list)
+    image_attachments: list[str] = Field(default_factory=list)
     user_curation_events: list["UserCurationEventResponse"] = Field(
         default_factory=list
     )

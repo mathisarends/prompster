@@ -245,6 +245,7 @@ export const useChatSession = ({
         {
           type: "stream/started",
           userMessageText: text,
+          attachments,
         },
         async (streamOptions) => {
           const imageAttachments = await Promise.all(

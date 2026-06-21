@@ -50,6 +50,7 @@ _not_found = {status.HTTP_404_NOT_FOUND: {"model": ErrorResponse}}
 _bad_request = {status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse}}
 _conflict = {status.HTTP_409_CONFLICT: {"model": ErrorResponse}}
 _too_many = {status.HTTP_429_TOO_MANY_REQUESTS: {"model": ErrorResponse}}
+_SESSION_IMAGE_ATTACHMENT_URL_TTL_SECONDS = 60 * 60 * 24
 _event_stream_response = {
     status.HTTP_200_OK: {
         "description": "Server-sent session events.",
@@ -505,6 +506,6 @@ async def _build_image_urls_by_storage_key(
     for storage_key in storage_keys:
         urls[storage_key] = await attachment_store.create_signed_url(
             storage_key=storage_key,
-            expires_in_seconds=900,
+            expires_in_seconds=_SESSION_IMAGE_ATTACHMENT_URL_TTL_SECONDS,
         )
     return urls

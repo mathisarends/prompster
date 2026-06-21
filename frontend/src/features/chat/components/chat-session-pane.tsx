@@ -109,7 +109,13 @@ export const ChatSessionPane = ({
   const renderEntry = (entry: ChatEntry, previousEntry?: ChatEntry) => {
     switch (entry.kind) {
       case "user_message":
-        return <UserChatMessage key={entry.id} text={entry.content} />;
+        return (
+          <UserChatMessage
+            key={entry.id}
+            text={entry.content}
+            imageAttachments={entry.imageAttachments}
+          />
+        );
 
       case "assistant_message":
         return (
