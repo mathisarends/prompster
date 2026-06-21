@@ -595,7 +595,6 @@ const ChatInputBoxComponent = ({
 
     onSubmit(trimmed, attachments);
     if (clearOnSubmit) {
-      attachments.forEach(revokeAttachmentPreview);
       replaceBufferedValue("");
       onChange("");
       setAttachments([]);

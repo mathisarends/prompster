@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 
 import {
@@ -53,6 +53,14 @@ type UserMessageImageProps = {
 
 const UserMessageImage = ({ url }: UserMessageImageProps) => {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!url.startsWith("blob:")) return;
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [url]);
 
   return (
     <>

@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import type { SessionResponse } from "@/api/generated/model";
 import {
+  getSession,
   getGetSessionQueryKey,
   getListSessionsQueryKey,
   removePlaylistTrack,
@@ -180,14 +181,15 @@ export const useChatSession = ({
     dispatch({ type: "session/loaded", session });
   }, [session, sessionId, state.isStreaming]);
 
-  const invalidateSessionQueries = useCallback(async () => {
-    if (!sessionId) return;
-    await Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: getGetSessionQueryKey(sessionId),
-      }),
+  const refreshSessionQueries = useCallback(async () => {
+    if (!sessionId) return undefined;
+
+    const [updatedSession] = await Promise.all([
+      getSession(sessionId),
       queryClient.invalidateQueries({ queryKey: getListSessionsQueryKey() }),
     ]);
+    queryClient.setQueryData(getGetSessionQueryKey(sessionId), updatedSession);
+    return updatedSession;
   }, [queryClient, sessionId]);
 
   const runEventStream = useCallback(
@@ -214,7 +216,11 @@ export const useChatSession = ({
           },
         });
 
-        await invalidateSessionQueries();
+        const updatedSession = await refreshSessionQueries();
+        if (updatedSession) {
+          hasStreamedSinceLoadRef.current = false;
+          dispatch({ type: "session/loaded", session: updatedSession });
+        }
       } catch (error) {
         if (!controller.signal.aborted && !streamErrorReceived) {
           dispatch({
@@ -236,7 +242,7 @@ export const useChatSession = ({
         dispatch({ type: "stream/finished" });
       }
     },
-    [invalidateSessionQueries, sessionId],
+    [refreshSessionQueries, sessionId],
   );
 
   const streamAssistantResponse = useCallback(
@@ -441,9 +447,13 @@ export const useChatSession = ({
       }
 
       await removePlaylistTrack(sessionId, trackId);
-      await invalidateSessionQueries();
+      const updatedSession = await refreshSessionQueries();
+      if (updatedSession) {
+        hasStreamedSinceLoadRef.current = false;
+        dispatch({ type: "session/loaded", session: updatedSession });
+      }
     },
-    [invalidateSessionQueries, sessionId],
+    [refreshSessionQueries, sessionId],
   );
 
   const resolvedTitle = state.title ?? session?.title;
