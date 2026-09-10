@@ -6,11 +6,11 @@ from backend.env import EnvSettings
 from backend.features.auth.application.schemas import AuthSession
 from backend.features.auth.infrastructure import AuthSettings
 
+_SECONDS_PER_MINUTE: Final = 60
+_SECONDS_PER_DAY: Final = 60 * 60 * 24
+
 
 class AuthCookies:
-    _SECONDS_PER_MINUTE: Final = 60
-    _SECONDS_PER_DAY: Final = 60 * 60 * 24
-
     def __init__(self, auth_settings: AuthSettings, env_config: EnvSettings):
         self._auth_settings = auth_settings
         self._env_config = env_config
@@ -21,14 +21,14 @@ class AuthCookies:
             key=self._auth_settings.access_token_cookie_name,
             value=auth_session.access_token,
             max_age=self._auth_settings.jwt_access_token_expire_minutes
-            * self._SECONDS_PER_MINUTE,
+            * _SECONDS_PER_MINUTE,
         )
         self._set_cookie(
             response=response,
             key=self._auth_settings.jwt_refresh_token_cookie_name,
             value=auth_session.refresh_token,
             max_age=self._auth_settings.jwt_refresh_token_expire_days
-            * self._SECONDS_PER_DAY,
+            * _SECONDS_PER_DAY,
         )
 
     def delete(self, response: Response) -> None:
