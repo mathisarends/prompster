@@ -1,15 +1,8 @@
-from dishka import Provider, Scope, provide
-from llm import LLMCredentials, create_gpt_5_4_mini
-from llmify import ChatModel
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from spotifyify import Spotifyify
-
 from backend.features.oauth_connections.application import SpotifyTokenService
-from backend.features.spotify.application.ports import SpotifyPlaylistCreator
 from backend.features.session.application import (
     ImageAttachmentService,
-    SessionPlaylistExporter,
     SessionConversationService,
+    SessionPlaylistExporter,
     SessionService,
     SessionSpotifyPlaylistExporter,
 )
@@ -34,14 +27,14 @@ from backend.features.session.infrastructure.agent_event_mapper import (
     AgentSessionEventMapper,
 )
 from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
+from backend.features.session.infrastructure.message_attachment_store import (
+    StorageMessageAttachmentStore,
+)
 from backend.features.session.infrastructure.pdf_generator import (
     TypstPlaylistDeckGenerator,
 )
 from backend.features.session.infrastructure.playlist_metadata_generator import (
     LLMPlaylistMetadataGenerator,
-)
-from backend.features.session.infrastructure.message_attachment_store import (
-    StorageMessageAttachmentStore,
 )
 from backend.features.session.infrastructure.repository import SqlSessionRepository
 from backend.features.session.infrastructure.session_runner import (
@@ -54,9 +47,15 @@ from backend.features.session.infrastructure.session_summary_query import (
 from backend.features.session.infrastructure.title_generator import (
     LLMSessionTitleGenerator,
 )
+from backend.features.spotify.application.ports import SpotifyPlaylistCreator
 from backend.features.user.application import UserMessageRateLimitService
 from backend.features.user.domain import UserRepository
-from backend.infrastructure.storage import StorageBackend
+from backend.infrastructure.storage import ObjectStorage
+from dishka import Provider, Scope, provide
+from llm import LLMCredentials, create_gpt_5_4_mini
+from llmify import ChatModel
+from spotifyify import Spotifyify
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
 class SessionProvider(Provider):
@@ -82,7 +81,7 @@ class SessionProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_message_attachment_store(
         self,
-        storage_backend: StorageBackend,
+        storage_backend: ObjectStorage,
     ) -> MessageAttachmentStore:
         return StorageMessageAttachmentStore(storage_backend=storage_backend)
 
@@ -180,7 +179,7 @@ class SessionProvider(Provider):
         self,
         session_repository: SessionRepository,
         playlist_deck_generator: PlaylistDeckGenerator,
-        storage_backend: StorageBackend,
+        storage_backend: ObjectStorage,
     ) -> SessionPlaylistExporter:
         return SessionPlaylistExporter(
             session_repository=session_repository,

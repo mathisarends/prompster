@@ -4,10 +4,10 @@ from uuid import uuid4
 from backend.features.session.infrastructure.message_attachment_store import (
     StorageMessageAttachmentStore,
 )
-from backend.infrastructure.storage import StorageBackend
+from backend.infrastructure.storage import ObjectStorage
 
 
-class _StorageBackendStub(StorageBackend):
+class _ObjectStorageStub(ObjectStorage):
     def __init__(self) -> None:
         self.uploaded: list[tuple[str, bytes, str | None]] = []
         self.deleted_prefixes: list[str] = []
@@ -52,7 +52,7 @@ class _StorageBackendStub(StorageBackend):
 
 
 def test_save_stashed_image_attachment_builds_expected_storage_key() -> None:
-    backend = _StorageBackendStub()
+    backend = _ObjectStorageStub()
     store = StorageMessageAttachmentStore(storage_backend=backend)
 
     user_id = uuid4()
@@ -77,7 +77,7 @@ def test_save_stashed_image_attachment_builds_expected_storage_key() -> None:
 
 
 def test_promote_stashed_image_attachment_moves_into_chat_folder() -> None:
-    backend = _StorageBackendStub()
+    backend = _ObjectStorageStub()
     store = StorageMessageAttachmentStore(storage_backend=backend)
 
     user_id = uuid4()
@@ -99,7 +99,7 @@ def test_promote_stashed_image_attachment_moves_into_chat_folder() -> None:
 
 
 def test_delete_session_attachments_deletes_chat_prefix() -> None:
-    backend = _StorageBackendStub()
+    backend = _ObjectStorageStub()
     store = StorageMessageAttachmentStore(storage_backend=backend)
     user_id = uuid4()
     session_id = uuid4()
@@ -112,7 +112,7 @@ def test_delete_session_attachments_deletes_chat_prefix() -> None:
 
 
 def test_delete_user_attachments_deletes_user_prefix() -> None:
-    backend = _StorageBackendStub()
+    backend = _ObjectStorageStub()
     store = StorageMessageAttachmentStore(storage_backend=backend)
     user_id = uuid4()
 

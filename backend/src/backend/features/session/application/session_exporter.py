@@ -11,7 +11,7 @@ from backend.features.session.domain import (
     SessionPlaylistEmptyError,
     SessionRepository,
 )
-from backend.infrastructure.storage import StorageBackend
+from backend.infrastructure.storage import ObjectStorage
 
 _CARDS_PER_DECK_PAGE = 15
 _PDF_PAGES_PER_CARD_BATCH = 2
@@ -22,7 +22,7 @@ class SessionPlaylistExporter:
         self,
         session_repository: SessionRepository,
         playlist_deck_generator: PlaylistDeckGenerator,
-        storage_backend: StorageBackend,
+        storage_backend: ObjectStorage,
     ) -> None:
         self._session_repository = session_repository
         self._playlist_deck_generator = playlist_deck_generator

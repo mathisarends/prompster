@@ -2,7 +2,6 @@ import asyncio
 from uuid import UUID, uuid4
 
 import pytest
-
 from backend.features.session.application.ports import (
     PlaylistDeckGenerator,
     PlaylistDeckTrack,
@@ -16,7 +15,7 @@ from backend.features.session.domain import (
     SessionPlaylistEmptyError,
     SessionRepository,
 )
-from backend.infrastructure.storage import StorageBackend
+from backend.infrastructure.storage import ObjectStorage
 from backend.infrastructure.storage.views import StorageFile, UploadResponse
 
 
@@ -60,7 +59,7 @@ class _DeckGeneratorStub(PlaylistDeckGenerator):
         return self._pdf_bytes
 
 
-class _StorageBackendStub(StorageBackend):
+class _ObjectStorageStub(ObjectStorage):
     def __init__(self) -> None:
         self.files: dict[str, bytes] = {}
         self.uploaded_path: str | None = None
@@ -114,7 +113,7 @@ class TestSessionPlaylistExporter:
         )
         repository = _SessionRepositoryStub(session=session)
         generator = _DeckGeneratorStub(pdf_bytes=b"PDF_BYTES")
-        storage = _StorageBackendStub()
+        storage = _ObjectStorageStub()
         exporter = SessionPlaylistExporter(
             session_repository=repository,
             playlist_deck_generator=generator,
@@ -152,7 +151,7 @@ class TestSessionPlaylistExporter:
         )
         repository = _SessionRepositoryStub(session=session)
         generator = _DeckGeneratorStub(pdf_bytes=b"PDF_BYTES")
-        storage = _StorageBackendStub()
+        storage = _ObjectStorageStub()
         exporter = SessionPlaylistExporter(
             session_repository=repository,
             playlist_deck_generator=generator,
@@ -178,7 +177,7 @@ class TestSessionPlaylistExporter:
             )
         repository = _SessionRepositoryStub(session=session)
         generator = _DeckGeneratorStub(pdf_bytes=b"PDF_BYTES")
-        storage = _StorageBackendStub()
+        storage = _ObjectStorageStub()
         exporter = SessionPlaylistExporter(
             session_repository=repository,
             playlist_deck_generator=generator,
@@ -212,7 +211,7 @@ class TestSessionPlaylistExporter:
         )
         repository = _SessionRepositoryStub(session=session)
         generator = _DeckGeneratorStub(pdf_bytes=b"NEW_PDF")
-        storage = _StorageBackendStub()
+        storage = _ObjectStorageStub()
         storage.files[storage_key] = b"CACHED_PDF"
         exporter = SessionPlaylistExporter(
             session_repository=repository,
@@ -231,7 +230,7 @@ class TestSessionPlaylistExporter:
         session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
         repository = _SessionRepositoryStub(session=session)
         generator = _DeckGeneratorStub()
-        storage = _StorageBackendStub()
+        storage = _ObjectStorageStub()
         exporter = SessionPlaylistExporter(
             session_repository=repository,
             playlist_deck_generator=generator,
@@ -245,7 +244,7 @@ class TestSessionPlaylistExporter:
         session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
         repository = _SessionRepositoryStub(session=session)
         generator = _DeckGeneratorStub()
-        storage = _StorageBackendStub()
+        storage = _ObjectStorageStub()
         exporter = SessionPlaylistExporter(
             session_repository=repository,
             playlist_deck_generator=generator,

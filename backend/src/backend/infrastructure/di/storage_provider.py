@@ -1,17 +1,18 @@
-from backend.infrastructure.storage import (
-    S3StorageBackend,
-    StorageSettings,
-    S3StorageCredentials,
-    StorageBackend,
-)
 from dishka import Provider, Scope, provide
 
+from backend.infrastructure.storage import (
+    ObjectStorage,
+    S3ObjectStorage,
+    S3StorageCredentials,
+    StorageSettings,
+)
 
-class StorageBackendProvider(Provider):
+
+class ObjectStorageProvider(Provider):
     @provide(scope=Scope.APP)
     def storage_config(self) -> StorageSettings:
         return StorageSettings()
 
     @provide(scope=Scope.APP)
-    def storage_backend(self, config: StorageSettings) -> StorageBackend:
-        return S3StorageBackend(S3StorageCredentials(), config.storage_bucket_name)
+    def object_storage(self, config: StorageSettings) -> ObjectStorage:
+        return S3ObjectStorage(S3StorageCredentials(), config.storage_bucket_name)

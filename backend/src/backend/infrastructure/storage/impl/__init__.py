@@ -1,6 +1,6 @@
-from .s3 import S3StorageCredentials, S3StorageBackend
+from .s3 import S3ObjectStorage, S3StorageCredentials
 
 __all__ = [
+    "S3ObjectStorage",
     "S3StorageCredentials",
-    "S3StorageBackend",
 ]

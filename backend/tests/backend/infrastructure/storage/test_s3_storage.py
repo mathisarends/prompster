@@ -2,13 +2,34 @@ import asyncio
 from urllib.parse import parse_qs, urlparse
 
 from backend.infrastructure.storage.impl.s3 import (
-    S3StorageBackend,
+    S3ObjectStorage,
     S3StorageCredentials,
 )
+from obstore.store import MemoryStore
+
+
+def test_object_operations() -> None:
+    async def run() -> None:
+        storage = S3ObjectStorage.__new__(S3ObjectStorage)
+        storage._store = MemoryStore()
+        storage._public_store = storage._store
+
+        await storage.upload_bytes("folder/file.txt", b"hello", "text/plain")
+        assert await storage.exists("folder/file.txt")
+        assert await storage.download_bytes("folder/file.txt") == b"hello"
+        files = await storage.list_files("folder/")
+        assert [file.name for file in files] == ["file.txt"]
+
+        await storage.move("folder/file.txt", "folder/moved.txt")
+        assert not await storage.exists("folder/file.txt")
+        await storage.delete_folder("folder/")
+        assert not await storage.exists("folder/moved.txt")
+
+    asyncio.run(run())
 
 
 def test_create_signed_url_signs_with_public_endpoint() -> None:
-    backend = S3StorageBackend(
+    backend = S3ObjectStorage(
         credentials=S3StorageCredentials(
             endpoint_url="http://minio:9000",
             public_endpoint_url="http://127.0.0.1:9000",

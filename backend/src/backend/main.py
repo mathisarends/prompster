@@ -20,7 +20,7 @@ from backend.features import (
 from backend.infrastructure.di import (
     DatabaseProvider,
     EmailProvider,
-    StorageBackendProvider,
+    ObjectStorageProvider,
 )
 from backend.lifespan import lifespan
 from backend.presentation import LoggingMiddleware, PascalCaseRouter, health_router
@@ -38,7 +38,7 @@ _FEATURES = [
     user.feature,
 ]
 
-_INFRASTRUCTURE_PROVIDERS = [DatabaseProvider, EmailProvider, StorageBackendProvider]
+_INFRASTRUCTURE_PROVIDERS = [DatabaseProvider, EmailProvider, ObjectStorageProvider]
 
 
 def _setup_middleware(app: FastAPI, env: EnvSettings) -> None:

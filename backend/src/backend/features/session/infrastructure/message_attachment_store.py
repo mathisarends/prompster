@@ -5,11 +5,11 @@ from backend.features.session.application.ports import (
     MessageAttachmentStore,
     StoredAttachment,
 )
-from backend.infrastructure.storage import StorageBackend
+from backend.infrastructure.storage import ObjectStorage
 
 
 class StorageMessageAttachmentStore(MessageAttachmentStore):
-    def __init__(self, storage_backend: StorageBackend) -> None:
+    def __init__(self, storage_backend: ObjectStorage) -> None:
         self._storage_backend = storage_backend
 
     async def save_stashed_image_attachment(

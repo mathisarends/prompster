@@ -6,7 +6,7 @@ from backend.infrastructure.storage.views import (
 )
 
 
-class StorageBackend(ABC):
+class ObjectStorage(ABC):
     @abstractmethod
     async def upload_bytes(
         self, path: str, data: bytes, content_type: str | None = None

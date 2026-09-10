@@ -1,14 +1,14 @@
-from .impl import S3StorageBackend, S3StorageCredentials
-from .port import StorageBackend
-from .views import ContentType, StorageFile, UploadResponse
+from .impl import S3ObjectStorage, S3StorageCredentials
+from .port import ObjectStorage
 from .settings import StorageSettings
+from .views import ContentType, StorageFile, UploadResponse
 
 __all__ = [
-    "S3StorageBackend",
-    "S3StorageCredentials",
-    "StorageBackend",
     "ContentType",
+    "ObjectStorage",
+    "S3ObjectStorage",
+    "S3StorageCredentials",
     "StorageFile",
-    "UploadResponse",
     "StorageSettings",
+    "UploadResponse",
 ]
