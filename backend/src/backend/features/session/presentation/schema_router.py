@@ -1,8 +1,8 @@
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exception_handlers import (
+from backend.features.auth.presentation.exceptions import (
     AUTHENTICATION_REQUIRED_ERROR,
 )
-from backend.features.session.presentation.exception_handlers import SESSION_ERRORS
+from backend.features.session.presentation.exceptions import SESSION_ERRORS
 from backend.features.session.presentation.schemas import EntryKindSchema
 from backend.features.session.presentation.sse import (
     SessionEventTypeSchema,

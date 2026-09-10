@@ -1,6 +1,6 @@
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exception_handlers import (
+from backend.features.auth.presentation.exceptions import (
     AUTHENTICATION_REQUIRED_ERROR,
 )
 from backend.features.auth.presentation.oauth_popup import OAuthPopupResponse
@@ -8,7 +8,7 @@ from backend.features.oauth_connections.application import (
     SpotifyOAuthConnectionService,
     SpotifyTokenService,
 )
-from backend.features.oauth_connections.presentation.exception_handlers import (
+from backend.features.oauth_connections.presentation.exceptions import (
     OAUTH_CONNECTION_ERRORS,
     SPOTIFY_CONNECTION_NOT_FOUND_ERROR,
     SPOTIFY_TOKEN_REVOKED_ERROR,

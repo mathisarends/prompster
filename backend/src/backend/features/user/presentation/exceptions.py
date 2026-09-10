@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from backend.features.auth.presentation.exception_handlers import AUTH_ERRORS
+from backend.features.auth.presentation.exceptions import AUTH_ERRORS
 from backend.features.user.domain import UserMessageQuotaExceededError
 from fastapi import status
 from fastapi_canon import Error, ErrorRegistry

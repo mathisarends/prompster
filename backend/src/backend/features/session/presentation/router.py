@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exception_handlers import (
+from backend.features.auth.presentation.exceptions import (
     AUTHENTICATION_REQUIRED_ERROR,
 )
 from backend.features.session.application import (
@@ -14,7 +14,7 @@ from backend.features.session.application import (
 )
 from backend.features.session.application.ports import MessageAttachmentStore
 from backend.features.session.domain import Session
-from backend.features.session.presentation.exception_handlers import (
+from backend.features.session.presentation.exceptions import (
     INVALID_SESSION_PHASE_TRANSITION_ERROR,
     INVALID_SPOTIFY_TRACK_URI_ERROR,
     PLAYLIST_TRACK_LIMIT_EXCEEDED_ERROR,

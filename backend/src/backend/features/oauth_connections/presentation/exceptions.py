@@ -1,4 +1,4 @@
-from backend.features.auth.presentation.exception_handlers import AUTH_ERRORS
+from backend.features.auth.presentation.exceptions import AUTH_ERRORS
 from backend.features.oauth_connections.application import (
     SpotifyConnectionNotFoundException,
     SpotifyTokenRevokedException,

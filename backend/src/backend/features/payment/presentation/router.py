@@ -1,12 +1,12 @@
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exception_handlers import (
+from backend.features.auth.presentation.exceptions import (
     AUTHENTICATION_REQUIRED_ERROR,
 )
 from backend.features.payment.application import (
     PaymentGateway,
     PaymentWebhookVerificationError,
 )
-from backend.features.payment.presentation.exception_handlers import (
+from backend.features.payment.presentation.exceptions import (
     PAYMENT_ERRORS,
     PAYMENT_GATEWAY_ERROR,
     PAYMENT_WEBHOOK_VERIFICATION_ERROR,

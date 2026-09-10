@@ -1,13 +1,11 @@
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exception_handlers import (
+from backend.features.auth.presentation.exceptions import (
     AUTHENTICATION_REQUIRED_ERROR,
 )
 from backend.features.spotify.application.ports import SpotifySearch, SpotifySearchType
 from backend.features.spotify.presentation.errors import SPOTIFY_ERRORS
 from backend.features.spotify.presentation.mapper import (
-    to_spotify_artist_response,
-    to_spotify_playlist_response,
-    to_spotify_track_response,
+    to_spotify_unified_search_response,
 )
 from backend.features.spotify.presentation.schemas import (
     SpotifyUnifiedSearchResponse,
@@ -46,13 +44,4 @@ async def search_spotify(
         requester_id=str(authenticated_user_id),
     )
 
-    return SpotifyUnifiedSearchResponse(
-        tracks=[to_spotify_track_response(track) for track in search_results.tracks],
-        playlists=[
-            to_spotify_playlist_response(playlist)
-            for playlist in search_results.playlists
-        ],
-        artists=[
-            to_spotify_artist_response(artist) for artist in search_results.artists
-        ],
-    )
+    return to_spotify_unified_search_response(search_results)

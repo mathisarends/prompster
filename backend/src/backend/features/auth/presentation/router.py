@@ -8,7 +8,7 @@ from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.dependencies import (
     RefreshAuthenticatedUserId,
 )
-from backend.features.auth.presentation.exception_handlers import (
+from backend.features.auth.presentation.exceptions import (
     AUTH_ERRORS,
     SESSION_EXPIRED_ERROR,
     SESSION_INVALID_ERROR,

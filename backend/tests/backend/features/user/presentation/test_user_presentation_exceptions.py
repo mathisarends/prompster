@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 from backend.features.user.domain import UserMessageQuotaExceededError
-from backend.features.user.presentation.exception_handlers import (
+from backend.features.user.presentation.exceptions import (
     USER_ERRORS,
     USER_MESSAGE_QUOTA_EXCEEDED_ERROR,
 )

@@ -1,9 +1,9 @@
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exception_handlers import (
+from backend.features.auth.presentation.exceptions import (
     AUTHENTICATION_REQUIRED_ERROR,
 )
 from backend.features.user.application import UserMessageRateLimitService, UserService
-from backend.features.user.presentation.exception_handlers import USER_ERRORS
+from backend.features.user.presentation.exceptions import USER_ERRORS
 from backend.features.user.presentation.mapper import to_user_me_response
 from backend.features.user.presentation.schemas import (
     UserDeleteInformationResponse,

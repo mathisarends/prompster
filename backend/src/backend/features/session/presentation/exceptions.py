@@ -1,4 +1,4 @@
-from backend.features.auth.presentation.exception_handlers import AUTH_ERRORS
+from backend.features.auth.presentation.exceptions import AUTH_ERRORS
 from backend.features.session.application import InvalidImageAttachmentError
 from backend.features.session.domain.exceptions import (
     ArtistReferenceNotFoundError,
@@ -20,7 +20,7 @@ from backend.features.session.domain.exceptions import (
     UserCurationEventMissingTrackYearError,
     UserCurationEventNotFoundError,
 )
-from backend.features.user.presentation.exception_handlers import (
+from backend.features.user.presentation.exceptions import (
     USER_MESSAGE_QUOTA_EXCEEDED_ERROR,
 )
 from fastapi import status
