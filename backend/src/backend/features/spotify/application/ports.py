@@ -55,7 +55,7 @@ class SpotifyUnifiedSearchResult:
     artists: list[SpotifyArtist]
 
 
-class SpotifySearch(ABC):
+class SpotifySearchGateway(ABC):
     @abstractmethod
     async def search(
         self,
@@ -68,7 +68,7 @@ class SpotifySearch(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_track(self, *, track_id: str) -> SpotifyTrack | None:
+    async def get_track_by_id(self, *, track_id: str) -> SpotifyTrack | None:
         raise NotImplementedError
 
 

@@ -2,15 +2,11 @@ import asyncio
 import logging
 from collections.abc import Awaitable
 
-from spotifyify import Image, RetryEvent, Spotifyify, Track
-from spotifyify.exceptions import SpotifyAPIError
-from spotifyify.schemas import Artist, SimplifiedPlaylist
-
 from backend.features.spotify.application.ports import (
     DEFAULT_SPOTIFY_SEARCH_TYPES,
     SpotifyArtist,
     SpotifyPlaylist,
-    SpotifySearch as SpotifySearchPort,
+    SpotifySearchGateway,
     SpotifySearchType,
     SpotifyTrack,
     SpotifyUnifiedSearchResult,
@@ -18,13 +14,16 @@ from backend.features.spotify.application.ports import (
 from backend.features.spotify.infrastructure.spotify_search_cache import (
     SpotifySearchCache,
 )
+from spotifyify import Image, RetryEvent, Spotifyify, Track
+from spotifyify.exceptions import SpotifyAPIError
+from spotifyify.schemas import Artist, SimplifiedPlaylist
 
 type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[SpotifyArtist]
 
 logger = logging.getLogger(__name__)
 
 
-class SpotifyifySearch(SpotifySearchPort):
+class SpotifyifySearch(SpotifySearchGateway):
     def __init__(
         self,
         spotify: Spotifyify,
@@ -93,7 +92,7 @@ class SpotifyifySearch(SpotifySearchPort):
             ),
         )
 
-    async def get_track(self, *, track_id: str) -> SpotifyTrack | None:
+    async def get_track_by_id(self, *, track_id: str) -> SpotifyTrack | None:
         normalized_track_id = track_id.strip()
         if not normalized_track_id:
             return None

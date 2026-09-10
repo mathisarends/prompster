@@ -130,27 +130,6 @@ def to_session_image_attachment_references(
     ]
 
 
-def spotify_track_id_from_uri(value: str) -> str | None:
-    normalized = value.strip()
-    if not normalized:
-        return None
-
-    if normalized.startswith("spotify:track:"):
-        track_id = normalized.rsplit(":", maxsplit=1)[-1]
-        return track_id or None
-
-    marker = "/track/"
-    if marker in normalized:
-        track_id = normalized.split(marker, maxsplit=1)[1]
-        track_id = track_id.split("?", maxsplit=1)[0].split("/", maxsplit=1)[0]
-        return track_id or None
-
-    if "/" not in normalized and ":" not in normalized:
-        return normalized
-
-    return None
-
-
 def to_entry_response(
     entry: SessionEntry,
     *,

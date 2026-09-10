@@ -5,17 +5,24 @@ from contextlib import asynccontextmanager, contextmanager
 from types import SimpleNamespace
 from typing import Any, cast
 
+import pytest
 from backend.features.spotify.application import (
+    InvalidSpotifyTrackUriError,
+    SpotifySearch,
+    SpotifySearchGateway,
     SpotifySearchType,
+    SpotifyTrack,
+    SpotifyTrackNotFoundError,
+    SpotifyTrackYearMissingError,
     SpotifyUnifiedSearchResult,
-)
-from backend.features.spotify.infrastructure.spotify_search_cache import (
-    SpotifySearchCache,
 )
 from backend.features.spotify.infrastructure.spotify_playlist_creator import (
     SpotifyPlaylistCreator,
 )
 from backend.features.spotify.infrastructure.spotify_search import SpotifyifySearch
+from backend.features.spotify.infrastructure.spotify_search_cache import (
+    SpotifySearchCache,
+)
 
 
 def _make_search(spotify: Any) -> SpotifyifySearch:
@@ -23,6 +30,26 @@ def _make_search(spotify: Any) -> SpotifyifySearch:
         spotify=spotify,
         search_cache=SpotifySearchCache(),
     )
+
+
+class _SpotifyTrackLookupStub(SpotifySearchGateway):
+    def __init__(self, track: SpotifyTrack | None) -> None:
+        self.track = track
+        self.received_track_id: str | None = None
+
+    async def search(
+        self,
+        *,
+        query: str,
+        limit: int = 20,
+        types: set[SpotifySearchType] | None = None,
+        requester_id: str | None = None,
+    ) -> SpotifyUnifiedSearchResult:
+        raise NotImplementedError
+
+    async def get_track_by_id(self, *, track_id: str) -> SpotifyTrack | None:
+        self.received_track_id = track_id
+        return self.track
 
 
 def _make_playlist_creator(spotify: Any | None = None) -> SpotifyPlaylistCreator:
@@ -92,7 +119,7 @@ class _SpotifyStub:
 
 
 class _PlaylistCreatorPlaylistsStub:
-    def __init__(self, spotify: "_PlaylistCreatorSpotifyStub") -> None:
+    def __init__(self, spotify: _PlaylistCreatorSpotifyStub) -> None:
         self._spotify = spotify
         self.created_playlist_id = "playlist-1"
         self.calls: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
@@ -224,6 +251,67 @@ def _make_playlist() -> SimpleNamespace:
         images=[SimpleNamespace(url="https://example.com/playlist.jpg")],
         owner=SimpleNamespace(display_name="Spotify"),
     )
+
+
+class TestSpotifyTrackLookup:
+    @pytest.mark.parametrize(
+        "spotify_uri",
+        [
+            "spotify:track:track-id",
+            "https://open.spotify.com/track/track-id?si=abc",
+            "track-id",
+        ],
+    )
+    def test_get_track_resolves_uri_and_returns_complete_track(
+        self,
+        spotify_uri: str,
+    ) -> None:
+        track = SpotifyTrack(
+            id="track-id",
+            title="Starlight",
+            artist="Muse",
+            year=2006,
+        )
+        gateway = _SpotifyTrackLookupStub(track)
+        search = SpotifySearch(gateway=gateway)
+
+        result = asyncio.run(search.get_track(spotify_uri=spotify_uri))
+
+        assert result == track
+        assert gateway.received_track_id == "track-id"
+
+    @pytest.mark.parametrize("spotify_uri", ["", "spotify:album:album-id"])
+    def test_get_track_rejects_invalid_uri(self, spotify_uri: str) -> None:
+        gateway = _SpotifyTrackLookupStub(None)
+        search = SpotifySearch(gateway=gateway)
+
+        with pytest.raises(InvalidSpotifyTrackUriError):
+            asyncio.run(search.get_track(spotify_uri=spotify_uri))
+
+        assert gateway.received_track_id is None
+
+    def test_get_track_raises_when_track_does_not_exist(self) -> None:
+        gateway = _SpotifyTrackLookupStub(None)
+        search = SpotifySearch(gateway=gateway)
+
+        with pytest.raises(SpotifyTrackNotFoundError):
+            asyncio.run(search.get_track(spotify_uri="spotify:track:missing"))
+
+        assert gateway.received_track_id == "missing"
+
+    def test_get_track_raises_when_release_year_is_missing(self) -> None:
+        gateway = _SpotifyTrackLookupStub(
+            SpotifyTrack(
+                id="track-id",
+                title="Starlight",
+                artist="Muse",
+                year=None,
+            )
+        )
+        search = SpotifySearch(gateway=gateway)
+
+        with pytest.raises(SpotifyTrackYearMissingError):
+            asyncio.run(search.get_track(spotify_uri="spotify:track:track-id"))
 
 
 class TestSpotifySearch:

@@ -20,21 +20,13 @@ from backend.features.session.domain.exceptions import (
     UserCurationEventMissingTrackYearError,
     UserCurationEventNotFoundError,
 )
+from backend.features.spotify.application import (
+    InvalidSpotifyTrackUriError,
+    SpotifyTrackNotFoundError,
+    SpotifyTrackYearMissingError,
+)
 from fastapi import status
 from fastapi_canon import Error, ErrorRegistry
-
-
-class InvalidSpotifyTrackUriError(Exception):
-    pass
-
-
-class SpotifyTrackNotFoundError(Exception):
-    pass
-
-
-class SpotifyTrackYearMissingError(Exception):
-    pass
-
 
 SESSION_NOT_FOUND_ERROR = Error(
     SessionNotFoundError,

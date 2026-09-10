@@ -1,13 +1,11 @@
 from uuid import uuid4
 
-import pytest
 from backend.features.session.domain import (
     DECIDE_FOR_ME_OPTION,
     ImageAttachment,
     Session,
 )
 from backend.features.session.presentation.mapper import (
-    spotify_track_id_from_uri,
     to_session_image_attachment_references,
     to_session_message_attachments,
     to_session_response,
@@ -154,17 +152,3 @@ def test_to_session_image_attachment_references_maps_request_models() -> None:
 
     assert attachments[0].id == attachment_id
     assert attachments[0].storage_key == "users/a/stash/image.png"
-
-
-@pytest.mark.parametrize(
-    ("value", "expected"),
-    [
-        ("spotify:track:track-id", "track-id"),
-        ("https://open.spotify.com/track/track-id?si=abc", "track-id"),
-        ("track-id", "track-id"),
-        ("spotify:album:album-id", None),
-        ("", None),
-    ],
-)
-def test_spotify_track_id_from_uri(value: str, expected: str | None) -> None:
-    assert spotify_track_id_from_uri(value) == expected

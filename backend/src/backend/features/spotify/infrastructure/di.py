@@ -1,18 +1,18 @@
 from collections.abc import AsyncGenerator
 
-from dishka import Provider, Scope, provide
-from spotifyify import SpotifyCredentials, Spotifyify
-from spotifyify.cache_handler import MemoryCacheHandler
-
 import backend.features.spotify.infrastructure.spotify_playlist_creator as playlist_infra
 import backend.features.spotify.infrastructure.spotify_search as spotify_search_infra
 from backend.features.spotify.application.ports import (
     SpotifyPlaylistCreator,
-    SpotifySearch,
+    SpotifySearchGateway,
 )
+from backend.features.spotify.application.spotify_search import SpotifySearch
 from backend.features.spotify.infrastructure.spotify_search_cache import (
     SpotifySearchCache,
 )
+from dishka import Provider, Scope, provide
+from spotifyify import SpotifyCredentials, Spotifyify
+from spotifyify.cache_handler import MemoryCacheHandler
 
 
 class SpotifyProvider(Provider):
@@ -24,7 +24,7 @@ class SpotifyProvider(Provider):
     async def spotify(
         self,
         credentials: SpotifyCredentials,
-    ) -> AsyncGenerator[Spotifyify, None]:
+    ) -> AsyncGenerator[Spotifyify]:
         spotify = Spotifyify(
             credentials=credentials,
             cache_handler=MemoryCacheHandler(),
@@ -39,15 +39,22 @@ class SpotifyProvider(Provider):
         return SpotifySearchCache()
 
     @provide(scope=Scope.APP)
-    def provide_spotify_search(
+    def provide_spotify_search_gateway(
         self,
         spotify: Spotifyify,
         search_cache: SpotifySearchCache,
-    ) -> SpotifySearch:
+    ) -> SpotifySearchGateway:
         return spotify_search_infra.SpotifyifySearch(
             spotify=spotify,
             search_cache=search_cache,
         )
+
+    @provide(scope=Scope.APP)
+    def provide_spotify_search(
+        self,
+        gateway: SpotifySearchGateway,
+    ) -> SpotifySearch:
+        return SpotifySearch(gateway=gateway)
 
     @provide(scope=Scope.APP)
     def provide_spotify_playlist_creator(

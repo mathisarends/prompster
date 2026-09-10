@@ -2,7 +2,7 @@ from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.exceptions import (
     AUTHENTICATION_REQUIRED_ERROR,
 )
-from backend.features.spotify.application.ports import SpotifySearch, SpotifySearchType
+from backend.features.spotify.application import SpotifySearch, SpotifySearchType
 from backend.features.spotify.presentation.errors import SPOTIFY_ERRORS
 from backend.features.spotify.presentation.mapper import (
     to_spotify_unified_search_response,

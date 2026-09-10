@@ -27,12 +27,8 @@ from backend.features.session.presentation.exceptions import (
     USER_CURATION_EVENT_ALREADY_CONSUMED_ERROR,
     USER_CURATION_EVENT_MISSING_TRACK_YEAR_ERROR,
     USER_CURATION_EVENT_NOT_FOUND_ERROR,
-    InvalidSpotifyTrackUriError,
-    SpotifyTrackNotFoundError,
-    SpotifyTrackYearMissingError,
 )
 from backend.features.session.presentation.mapper import (
-    spotify_track_id_from_uri,
     to_playlist_track_response,
     to_session_image_attachment_references,
     to_session_message_attachments,
@@ -53,7 +49,7 @@ from backend.features.session.presentation.sse import (
     stream_session_events,
     stream_spotify_export,
 )
-from backend.features.spotify.application.ports import SpotifySearch
+from backend.features.spotify.application import SpotifySearch
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Query, Response, status
 from fastapi_canon import Response as CanonResponse
@@ -300,15 +296,8 @@ async def add_session_spotify_playlist_track(
     service: FromDishka[SessionService],
     spotify_search: FromDishka[SpotifySearch],
 ) -> PlaylistTrackResponse:
-    spotify_track_id = spotify_track_id_from_uri(body.spotify_uri)
-    if spotify_track_id is None:
-        raise InvalidSpotifyTrackUriError
-
-    spotify_track = await spotify_search.get_track(track_id=spotify_track_id)
-    if spotify_track is None:
-        raise SpotifyTrackNotFoundError
-    if spotify_track.year is None:
-        raise SpotifyTrackYearMissingError
+    spotify_track = await spotify_search.get_track(spotify_uri=body.spotify_uri)
+    assert spotify_track.year is not None
 
     track = await service.add_track(
         session_id=session_id,
