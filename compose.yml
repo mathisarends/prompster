@@ -29,8 +29,8 @@ services:
       SPOTIFY_TOKEN_ENCRYPTION_KEY: ${SPOTIFY_TOKEN_ENCRYPTION_KEY:-}
     volumes:
       - ./backend/src:/app/backend/src
-      - ./llm/src:/app/llm/src
-      - ./agent/src:/app/agent/src
+      - ./libs/llm/src:/app/libs/llm/src
+      - ./libs/agent/src:/app/libs/agent/src
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:

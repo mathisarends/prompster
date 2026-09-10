@@ -14,7 +14,7 @@ members = [
 [[package]]
 name = "agent"
 version = "0.1.0"
-source = { editable = "agent" }
+source = { editable = "libs/agent" }
 dependencies = [
     { name = "llm" },
     { name = "pydantic" },
@@ -701,7 +701,7 @@ wheels = [
 [[package]]
 name = "llm"
 version = "0.1.0"
-source = { editable = "llm" }
+source = { editable = "libs/llm" }
 dependencies = [
     { name = "py-llmify", extra = ["openai"] },
     { name = "pydantic" },
@@ -1276,7 +1276,7 @@ wheels = [
 [[package]]
 name = "tokens"
 version = "0.1.0"
-source = { editable = "tokens" }
+source = { editable = "libs/tokens" }
 
 [[package]]
 name = "tqdm"

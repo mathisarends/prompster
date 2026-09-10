@@ -10,12 +10,14 @@ WORKDIR /app
 RUN pip install uv
 
 COPY pyproject.toml uv.lock* ./
-COPY agent/pyproject.toml agent/README.md* agent/
+COPY libs/agent/pyproject.toml libs/agent/README.md* libs/agent/
 COPY backend/pyproject.toml backend/README.md* backend/
-COPY llm/pyproject.toml llm/README.md* llm/
-COPY agent/src agent/src
+COPY libs/llm/pyproject.toml libs/llm/README.md* libs/llm/
+COPY libs/tokens/pyproject.toml libs/tokens/README.md* libs/tokens/
+COPY libs/agent/src libs/agent/src
 COPY backend/src backend/src
-COPY llm/src llm/src
+COPY libs/llm/src libs/llm/src
+COPY libs/tokens/src libs/tokens/src
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --package backend
@@ -30,9 +32,10 @@ WORKDIR /app
 
 COPY --from=builder /app/.venv /app/.venv
 
-COPY agent/src ./agent/src
+COPY libs/agent/src ./libs/agent/src
 COPY backend/src ./backend/src
-COPY llm/src ./llm/src
+COPY libs/llm/src ./libs/llm/src
+COPY libs/tokens/src ./libs/tokens/src
 COPY backend/alembic.ini ./backend/alembic.ini
 COPY backend/migrations ./backend/migrations
 
@@ -43,4 +46,4 @@ ENV PYTHONPATH=/app/backend/src \
 EXPOSE 8000
 
 CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port 8000 \
-    $([ \"$RELOAD\" = 'true' ] && echo '--reload --reload-dir /app/backend/src --reload-dir /app/llm/src --reload-dir /app/agent/src')"]
+    $([ \"$RELOAD\" = 'true' ] && echo '--reload --reload-dir /app/backend/src --reload-dir /app/libs/llm/src --reload-dir /app/libs/agent/src')"]

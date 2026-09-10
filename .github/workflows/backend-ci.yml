@@ -5,8 +5,7 @@ on:
     branches: [main]
     paths:
       - "backend/**"
-      - "tokens/**"
-      - "agent/**"
+      - "libs/**"
       - "pyproject.toml"
       - "uv.lock"
       - ".github/workflows/backend-ci.yml"
@@ -14,8 +13,7 @@ on:
     branches: [main]
     paths:
       - "backend/**"
-      - "tokens/**"
-      - "agent/**"
+      - "libs/**"
       - "pyproject.toml"
       - "uv.lock"
       - ".github/workflows/backend-ci.yml"
