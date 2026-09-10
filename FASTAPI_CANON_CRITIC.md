@@ -12,8 +12,9 @@ argument, and error contracts use composable `raises=` declarations. The full
 backend suite passes, and the generated OpenAPI retains the expected JSON,
 empty, redirect, SSE, PDF, domain-error, and validation contracts.
 
-No outstanding library defect was found during this migration. The two concrete
-issues remaining after the 0.2.0 integration are resolved in 0.3.0.
+The two concrete issues remaining after the 0.2.0 integration are resolved for
+Prompster's composed application. One success-only integration edge case and a
+few smaller DX opportunities remain below.
 
 ## Resolved in 0.3.0
 
@@ -46,9 +47,10 @@ The contract status now supplies FastAPI's route status, so duplicate
 ### Success-only routes no longer need an error registry
 
 `CanonResponse.responses()` and `CanonRouter(response=...)` make success
-contracts independent of the error subsystem. Prompster's health router no
-longer creates an empty `ErrorRegistry` merely to compile health and readiness
-responses.
+contracts independent of a router-local error registry. Prompster's health
+router no longer creates an empty `ErrorRegistry` merely to declare health and
+readiness responses. The application-level limitation described under remaining
+feedback still applies.
 
 ### Bodyless non-204 responses
 
@@ -93,3 +95,55 @@ validation, and router-level `raises=` applies only to operations declared on
 that router, not to separately included child routers. Both behaviors are
 documented; Prompster's hidden OAuth callbacks have no canon declarations, and
 each included feature router owns its own registry and shared errors.
+
+## Remaining feedback from Prompster's DX
+
+### A success-only application still needs the registry OpenAPI hook
+
+A standalone `CanonRouter` with only `response=CanonResponse.json(...)` or
+`CanonResponse.empty(status=307)` does not install the OpenAPI compiler. Without
+an `ErrorRegistry.install(...)` elsewhere in the application, generated OpenAPI
+still exposes `x-fastapi-canon-success`; a bodyless 307 also retains FastAPI's
+generated `application/json` content.
+
+Prompster's unversioned health router works because the feature composition
+installs a domain error registry for the rest of the application. It is therefore
+router-local success-only, but not application-level success-only. This coupling
+is easy to miss when extracting probes into a small app or test fixture.
+
+A public success-contract OpenAPI installer, automatic hook installation by
+composition even when no error registry exists, or success declarations that do
+not require a later cleanup hook would make the advertised success-only path
+self-contained.
+
+### Registry ownership is declared twice
+
+The same feature registry is passed to `CanonRouter(errors=...)` so `raises=` can
+be validated and to `Feature(errors=...)` so composition can install it. In
+Prompster this duplication appears for auth, session, OAuth connections, and
+Spotify. The user router also consumes the auth registry while the auth feature
+owns its application-level contribution, which makes the distinction between
+"used by this router" and "installed by this feature" important but implicit.
+
+Allowing a feature to collect registries from its canon routers, or offering a
+single feature-router declaration that establishes both relationships, would
+reduce wiring while retaining explicit ownership for shared registries.
+
+### Shared contracts repeat across sibling routers
+
+The session feature has three sibling routers with the same `SESSION_ERRORS`
+registry and authentication requirement. Because router-level `raises=` does not
+flow into included child routers, each sibling repeats `errors=SESSION_ERRORS`
+and `raises=(AUTHENTICATION_REQUIRED_ERROR,)`.
+
+An explicit router-group context or opt-in inheritance during `include_router`
+would improve larger feature modules without making the existing non-inheritance
+rule ambiguous.
+
+### OpenAPI validation has no intention-revealing entry point
+
+Prompster calls `app.openapi()` during app construction solely to run the
+application-level canon checks. A public `Composition.validate(app)` or
+`validate_openapi_contracts(app)` API would express that intent more clearly and
+could avoid making callers depend on schema generation and caching as the
+validation mechanism.

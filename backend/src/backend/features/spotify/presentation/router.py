@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.exceptions import (
     AUTHENTICATION_REQUIRED_ERROR,
@@ -37,12 +39,14 @@ _DEFAULT_SEARCH_TYPES = (
 async def search_spotify(
     authenticated_user_id: AuthenticatedUserId,
     spotify_search: FromDishka[SpotifySearch],
-    query: str = Query(min_length=1, max_length=200, description="Search query"),
-    limit: int = Query(default=20, ge=1, le=50),
-    types: set[SpotifySearchType] = Query(
-        default=_DEFAULT_SEARCH_TYPES,
-        description="Search resource types",
-    ),
+    query: Annotated[
+        str, Query(min_length=1, max_length=200, description="Search query")
+    ],
+    types: Annotated[
+        set[SpotifySearchType],
+        Query(description="Search resource types"),
+    ] = _DEFAULT_SEARCH_TYPES,
+    limit: Annotated[int, Query(ge=1, le=50)] = 20,
 ) -> SpotifyUnifiedSearchResponse:
     search_results = await spotify_search.search(
         query=query,
