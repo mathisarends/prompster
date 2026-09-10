@@ -2,28 +2,25 @@ from datetime import timedelta
 
 from obstore import sign_async
 from obstore.store import S3Store
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from backend.infrastructure.storage.port import ObjectStorage
 from backend.infrastructure.storage.views import StorageFile, UploadResponse
 
 
-class S3StorageCredentials(BaseSettings):
-    endpoint_url: str
-    access_key: str
-    secret_key: str
-    public_endpoint_url: str | None = None
-
-    model_config = SettingsConfigDict(env_prefix="MINIO_")
-
-
 class S3ObjectStorage(ObjectStorage):
-    def __init__(self, credentials: S3StorageCredentials, bucket: str):
+    def __init__(
+        self,
+        endpoint_url: str,
+        access_key: str,
+        secret_key: str,
+        bucket: str,
+        public_endpoint_url: str | None = None,
+    ) -> None:
         self._store = S3Store(
             bucket=bucket,
-            endpoint=credentials.endpoint_url,
-            access_key_id=credentials.access_key,
-            secret_access_key=credentials.secret_key,
+            endpoint=endpoint_url,
+            access_key_id=access_key,
+            secret_access_key=secret_key,
             region="us-east-1",
             virtual_hosted_style_request=False,
             client_options={"allow_http": True},
@@ -31,14 +28,14 @@ class S3ObjectStorage(ObjectStorage):
         self._public_store = (
             S3Store(
                 bucket=bucket,
-                endpoint=credentials.public_endpoint_url,
-                access_key_id=credentials.access_key,
-                secret_access_key=credentials.secret_key,
+                endpoint=public_endpoint_url,
+                access_key_id=access_key,
+                secret_access_key=secret_key,
                 region="us-east-1",
                 virtual_hosted_style_request=False,
                 client_options={"allow_http": True},
             )
-            if credentials.public_endpoint_url
+            if public_endpoint_url
             else self._store
         )
 

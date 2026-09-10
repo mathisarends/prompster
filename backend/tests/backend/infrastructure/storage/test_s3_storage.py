@@ -1,10 +1,7 @@
 import asyncio
 from urllib.parse import parse_qs, urlparse
 
-from backend.infrastructure.storage.impl.s3 import (
-    S3ObjectStorage,
-    S3StorageCredentials,
-)
+from backend.infrastructure.storage.s3 import S3ObjectStorage
 from obstore.store import MemoryStore
 
 
@@ -30,12 +27,10 @@ def test_object_operations() -> None:
 
 def test_create_signed_url_signs_with_public_endpoint() -> None:
     backend = S3ObjectStorage(
-        credentials=S3StorageCredentials(
-            endpoint_url="http://minio:9000",
-            public_endpoint_url="http://127.0.0.1:9000",
-            access_key="minioadmin",
-            secret_key="minioadmin",
-        ),
+        endpoint_url="http://minio:9000",
+        public_endpoint_url="http://127.0.0.1:9000",
+        access_key="minioadmin",
+        secret_key="minioadmin",
         bucket="prompster",
     )
 
