@@ -28,6 +28,7 @@ dependencies = [
     "qrcode[pil]>=8.2",
     "tokenary>=0.1.1",
     "python-multipart>=0.0.20",
+    "fastapi-canon>=0.1.0",
 ]
 
 [project.scripts]
