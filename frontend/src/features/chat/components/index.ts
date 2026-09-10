@@ -6,7 +6,5 @@ export * from "./chat-session-pane";
 export * from "./chat-thinking-indicator";
 export * from "./model-select";
 export * from "./send-button";
-export * from "./transcription-button";
-export * from "./transcription-waveform";
 export * from "./tool-call-sequence";
 export * from "./user-chat-message";

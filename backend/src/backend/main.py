@@ -14,7 +14,6 @@ from backend.features import (
     payment,
     session,
     spotify,
-    transcription,
     user,
 )
 from backend.infrastructure.di import (
@@ -33,7 +32,6 @@ _FEATURES = [
     oauth_connections.feature,
     payment.feature,
     spotify.feature,
-    transcription.feature,
     session.feature,
     user.feature,
 ]

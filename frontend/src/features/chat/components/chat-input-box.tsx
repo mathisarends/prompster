@@ -21,15 +21,8 @@ import { AttachmentPopover } from "@/features/chat/components/attachments/attach
 import type { ChatAttachment } from "@/features/chat/components/attachments/attachment-types";
 import { ModelSelect } from "@/features/chat/components/model-select";
 import { SendButton } from "@/features/chat/components/send-button";
-import { TranscriptionButton } from "@/features/chat/components/transcription-button";
-import { TranscriptionWaveform } from "@/features/chat/components/transcription-waveform";
 import { uploadImageFile } from "@/features/chat/api/image-attachments";
 import { useChatInputAttachments } from "@/features/chat/hooks/use-chat-input-attachments";
-import { useRealtimeTranscription } from "@/features/chat/hooks/useRealtimeTranscription";
-import {
-  playTranscriptionStartSound,
-  playTranscriptionStopSound,
-} from "@/features/chat/lib/transcription-sounds";
 import { Textarea } from "@/shared/ui/textarea";
 import { useBufferedControlledValue } from "@/shared/hooks/useBufferedControlledValue";
 import { cn } from "@/shared/lib/utils";
@@ -91,10 +84,6 @@ type ChatInputContextValue = {
   disabled: boolean;
   isSubmitting: boolean;
   isStopping: boolean;
-  isTranscribing: boolean;
-  isTranscriptionStarting: boolean;
-  transcriptionAnalyser: AnalyserNode | null;
-  toggleTranscription: () => void;
   selectedModel?: string;
   onModelChange?: (modelId: string) => void;
   placeholder?: string;
@@ -149,7 +138,6 @@ type ChatInputBoxCompound = typeof ChatInputBoxComponent & {
   PreviewList: typeof ChatInputPreviewList;
   Content: typeof ChatInputContent;
   TextArea: typeof ChatInputTextArea;
-  Waveform: typeof ChatInputWaveform;
   Toolbar: typeof ChatInputToolbar;
   ModelSelect: typeof ChatInputModelSelect;
   AddButton: typeof ChatInputAddButton;
@@ -256,7 +244,6 @@ const ChatInputContent = ({ children, className }: ChatInputContentProps) => {
       {children ?? (
         <>
           <ChatInputTextArea />
-          <ChatInputWaveform />
           <ChatInputToolbar className="-mx-1">
             <ChatInputAddButton />
             <div className="ml-auto flex items-center gap-2">
@@ -278,17 +265,12 @@ const ChatInputTextArea = ({ className, ...props }: ChatInputTextAreaProps) => {
     handleTextareaKeyDown,
     handleTextareaPaste,
     handleTextareaSelect,
-    isTranscriptionStarting,
     placeholder,
     rows,
     text,
     textareaClassName,
     textareaRef,
   } = useChatInput();
-
-  const effectivePlaceholder = isTranscriptionStarting
-    ? "Mikrofon wird verbunden …"
-    : placeholder;
 
   return (
     <Textarea
@@ -301,29 +283,13 @@ const ChatInputTextArea = ({ className, ...props }: ChatInputTextAreaProps) => {
       onBlur={() => flushText()}
       onKeyDown={handleTextareaKeyDown}
       onPaste={handleTextareaPaste}
-      placeholder={effectivePlaceholder}
+      placeholder={placeholder}
       className={cn(
         "max-h-72 min-h-10 flex-1 resize-none border-none bg-transparent p-0 pt-0.5 text-base shadow-none focus-visible:ring-0 md:text-base",
         textareaClassName,
         className,
       )}
       {...props}
-    />
-  );
-};
-
-const ChatInputWaveform = ({ className }: { className?: string }) => {
-  const { isTranscribing, isTranscriptionStarting, transcriptionAnalyser } =
-    useChatInput();
-
-  if (!isTranscribing && !isTranscriptionStarting) return null;
-
-  return (
-    <TranscriptionWaveform
-      analyser={transcriptionAnalyser}
-      active={isTranscribing}
-      connecting={isTranscriptionStarting}
-      className={className}
     />
   );
 };
@@ -423,26 +389,8 @@ const ChatInputSubmit = ({ className }: ChatInputSubmitProps) => {
     handleSendButtonClick,
     isStopping,
     isSubmitting,
-    isTranscribing,
-    isTranscriptionStarting,
     sendButtonAriaLabel,
-    toggleTranscription,
   } = useChatInput();
-
-  const showTranscription =
-    !canStop && (isTranscribing || isTranscriptionStarting || !canSend);
-
-  if (showTranscription) {
-    return (
-      <TranscriptionButton
-        isRecording={isTranscribing}
-        isStarting={isTranscriptionStarting}
-        disabled={disabled || isSubmitting}
-        onClick={toggleTranscription}
-        className={className}
-      />
-    );
-  }
 
   return (
     <SendButton
@@ -464,7 +412,6 @@ const ChatInputBoxDefault = () => (
     <ChatInputPreviewList />
     <ChatInputContent>
       <ChatInputTextArea />
-      <ChatInputWaveform />
       <ChatInputToolbar className="-mx-1">
         <ChatInputAddButton />
         <div className="ml-auto flex items-center gap-2">
@@ -732,34 +679,6 @@ const ChatInputBoxComponent = ({
     submit();
   }, [canStop, onStop, submit]);
 
-  const {
-    isRecording: isTranscribing,
-    isStarting: isTranscriptionStarting,
-    analyser: transcriptionAnalyser,
-    start: startTranscription,
-    stop: stopTranscription,
-  } = useRealtimeTranscription({
-    value: draftValue,
-    onTranscriptChange: setBufferedValue,
-    disabled,
-  });
-
-  const toggleTranscription = useCallback(() => {
-    if (isTranscribing || isTranscriptionStarting) {
-      playTranscriptionStopSound();
-      void stopTranscription();
-      return;
-    }
-
-    playTranscriptionStartSound();
-    void startTranscription();
-  }, [
-    isTranscribing,
-    isTranscriptionStarting,
-    startTranscription,
-    stopTranscription,
-  ]);
-
   const removeAttachmentMention = useCallback(() => {
     if (!attachmentMention) return;
 
@@ -983,10 +902,6 @@ const ChatInputBoxComponent = ({
     disabled,
     isSubmitting,
     isStopping,
-    isTranscribing,
-    isTranscriptionStarting,
-    transcriptionAnalyser,
-    toggleTranscription,
     selectedModel,
     onModelChange,
     placeholder,
@@ -1024,7 +939,6 @@ ChatInputBoxComponent.displayName = "ChatInputBox";
 ChatInputPreviewList.displayName = "ChatInputBox.PreviewList";
 ChatInputContent.displayName = "ChatInputBox.Content";
 ChatInputTextArea.displayName = "ChatInputBox.TextArea";
-ChatInputWaveform.displayName = "ChatInputBox.Waveform";
 ChatInputToolbar.displayName = "ChatInputBox.Toolbar";
 ChatInputModelSelect.displayName = "ChatInputBox.ModelSelect";
 ChatInputAddButton.displayName = "ChatInputBox.AddButton";
@@ -1038,7 +952,6 @@ export const ChatInputBox = memo(
 ChatInputBox.PreviewList = ChatInputPreviewList;
 ChatInputBox.Content = ChatInputContent;
 ChatInputBox.TextArea = ChatInputTextArea;
-ChatInputBox.Waveform = ChatInputWaveform;
 ChatInputBox.Toolbar = ChatInputToolbar;
 ChatInputBox.ModelSelect = ChatInputModelSelect;
 ChatInputBox.AddButton = ChatInputAddButton;

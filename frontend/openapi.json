@@ -531,77 +531,6 @@
         }
       }
     },
-    "/api/v1/transcription": {
-      "post": {
-        "tags": [
-          "transcription"
-        ],
-        "summary": "Transcribe Audio",
-        "operationId": "transcribe_audio",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_transcribe_audio"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TranscriptionResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "Unsupported Media Type",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/sessions": {
       "get": {
         "tags": [
@@ -2620,20 +2549,6 @@
           "createdAt"
         ],
         "title": "AssistantMessageStartedEvent"
-      },
-      "Body_transcribe_audio": {
-        "properties": {
-          "file": {
-            "type": "string",
-            "contentMediaType": "application/octet-stream",
-            "title": "File"
-          }
-        },
-        "type": "object",
-        "required": [
-          "file"
-        ],
-        "title": "Body_transcribe_audio"
       },
       "Body_upload_image_attachment": {
         "properties": {
@@ -4892,30 +4807,6 @@
           "arguments"
         ],
         "title": "ToolFunctionResponse"
-      },
-      "TranscriptionResponse": {
-        "properties": {
-          "text": {
-            "type": "string",
-            "title": "Text"
-          },
-          "language": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Language"
-          }
-        },
-        "type": "object",
-        "required": [
-          "text"
-        ],
-        "title": "TranscriptionResponse"
       },
       "UploadedImageAttachmentResponse": {
         "properties": {
