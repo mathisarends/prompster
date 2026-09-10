@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator
 
 import backend.features.spotify.infrastructure.spotify_playlist_creator as playlist_infra
-import backend.features.spotify.infrastructure.spotify_search as spotify_search_infra
+import backend.features.spotify.infrastructure.spotify_search as SpotifyifySearch
 from backend.features.spotify.application.ports import (
     SpotifyPlaylistCreator,
     SpotifySearchGateway,
@@ -44,7 +44,7 @@ class SpotifyProvider(Provider):
         spotify: Spotifyify,
         search_cache: SpotifySearchCache,
     ) -> SpotifySearchGateway:
-        return spotify_search_infra.SpotifyifySearch(
+        return SpotifyifySearch(
             spotify=spotify,
             search_cache=search_cache,
         )
