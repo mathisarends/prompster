@@ -1,7 +1,7 @@
 import logging
 from uuid import UUID, uuid4
 
-from .views import (
+from agent.deck.views import (
     DeckDraft,
     DeckDraftCreated,
     DeckDraftReplaced,
