@@ -9,6 +9,7 @@ from .presentation import (
 )
 
 feature = api_feature(
+    name="session",
     routers=[router, image_attachment_router, session_schema_router],
     providers=[SessionProvider],
     errors=SESSION_ERRORS,

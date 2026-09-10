@@ -19,7 +19,7 @@ from backend.infrastructure.di import (
     ObjectStorageProvider,
 )
 from backend.lifespan import lifespan
-from backend.presentation import LoggingMiddleware, health_router
+from backend.presentation import LoggingMiddleware, PascalCaseRouter, health_router
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +33,14 @@ _FEATURES = (
 )
 
 _INFRASTRUCTURE_FEATURE = Feature(
-    providers=(DatabaseProvider(), ObjectStorageProvider()),
+    name="infrastructure",
+    providers=(DatabaseProvider, ObjectStorageProvider),
 )
-_SYSTEM_FEATURE = Feature(routers=(health_router,))
 _COMPOSITION = Composition(
-    _SYSTEM_FEATURE,
     _INFRASTRUCTURE_FEATURE,
     *_FEATURES,
     errors=ErrorOptions(type_base="https://api.prompster.dev/problems"),
+    router_factory=lambda: PascalCaseRouter(prefix="/api/v1"),
 )
 
 
@@ -70,6 +70,7 @@ def _create_app() -> FastAPI:
     )
 
     _setup_middleware(app, env)
+    app.include_router(health_router)
     _COMPOSITION.apply(app)
 
     logger.info("Application ready!")

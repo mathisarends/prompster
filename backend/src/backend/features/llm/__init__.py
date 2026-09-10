@@ -4,6 +4,7 @@ from .infrastructure import LLMFeatureProvider
 from .presentation import router
 
 feature = api_feature(
+    name="llm",
     routers=[router],
     providers=[LLMFeatureProvider],
 )

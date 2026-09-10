@@ -1,113 +1,116 @@
 # fastapi-canon integration notes
 
 This file records concrete feedback discovered while integrating `fastapi-canon`
-into Prompster's backend. It intentionally focuses on observed integration friction
-rather than hypothetical API preferences.
+into Prompster's backend. It intentionally focuses on observed integration
+friction rather than hypothetical API preferences.
 
-## Feature composition
+## Review status
 
-### Missing composition-level router options
+Prompster was migrated to `fastapi-canon` 0.2.0 on 2026-09-10. The release
+addresses the issues found during the 0.1.0 integration. Backend tests pass,
+application composition succeeds, and the compiled OpenAPI correctly separates
+JSON, empty, SSE, PDF, domain-error, and validation responses. Two API ergonomics
+and OpenAPI edge cases remain below.
 
-Prompster mounts all feature routers below `/api/v1` and applies a custom
-`APIRouter` subclass for response serialization. `Composition` can only flatten
-and install the routers contributed by each `Feature`; it cannot apply a shared
-prefix, tags, dependencies, or router class to them.
+## Resolved in 0.2.0
 
-The integration therefore needs a small application-side adapter that creates one
-wrapper router per feature and includes the feature's actual routers in it. A
-composition-level `router`/`router_factory` option, or mount options on `Feature`,
-would make this common versioned-API setup considerably more direct.
+### Composition-level router options
 
-In this project the wrapper is a `PascalCaseRouter`. Its only customization sets
-`response_model_by_alias=True`, which is already FastAPI's default. That makes the
-class effectively redundant today, but the integration still has to preserve it
-until the project deliberately removes that abstraction. More generally,
-`Composition` should make it possible to retain a shared application router class
-without introducing one wrapper router for every feature.
+`Composition.router_factory` now supplies the shared `/api/v1` prefix and the
+application's `PascalCaseRouter`. Feature declarations contribute their original
+routers directly, so the previous wrapper-router-per-feature adapter is gone.
 
-### No feature identity for diagnostics
+Prompster intentionally mounts `/health` and `/readiness` before applying the
+composition because these process-level probes remain outside the versioned API.
+This is an application boundary choice rather than missing composition support.
 
-The library's `Feature` deliberately has no `name`. This keeps the declaration
-small, but validation errors can consequently only describe conflicting
-contributions, not the feature that contributed them. Named features would make
-composition failures easier to locate in a backend with several bounded contexts.
+### Feature identity for diagnostics
 
-### Provider classes versus instances
+Features now have required, unique names. Prompster names every bounded-context
+and infrastructure feature, and 0.2.0 uses those names in composition diagnostics.
 
-Prompster previously declared Dishka provider classes and instantiated them while
-building the application container. `fastapi-canon.Feature` accepts only provider
-instances. This is workable, but it makes otherwise static feature declarations
-perform eager construction and differs from Dishka's common `make_container(P())`
-composition style. Accepting provider factories/classes, or documenting why eager
-instances are required, would improve the ergonomics.
+### Lazy provider construction
 
-### Lifespan/container ownership is implicit
+Provider classes and zero-argument factories are accepted and materialized once
+during `Composition.apply()`. Prompster now contributes provider classes without
+eagerly instantiating them in static feature declarations.
 
-`Composition` correctly owns and closes the Dishka container it creates, which is
-useful. That ownership is not obvious at the call site, however, and an existing
-application lifespan can easily close `app.state.dishka_container` a second time.
-Clearer documentation around lifecycle ownership would help migrations from a
-manual Dishka setup.
+### Explicit container ownership
 
-## Error handling
+The installed documentation now states that `Composition` builds, exposes, and
+closes the shared Dishka container, composes existing application lifespans, and
+that applications must not close the container independently. This resolves the
+migration ambiguity noted for 0.1.0.
 
-### Global exception normalization is a strong default
+### Generic normalized HTTP contracts
 
-The consistent RFC 9457 response shape for domain errors, validation errors,
-`HTTPException`, response-validation failures, and unhandled exceptions is a clear
-improvement over Prompster's former collection of hand-written JSON handlers.
-Using one `Error` definition for both runtime rendering and OpenAPI also removes a
-real source of drift.
+`ErrorRegistry.responses(http_statuses=[...])` now provides reusable OpenAPI
+contracts for normalized `HTTPException` statuses. Prompster currently uses
+domain exceptions for its presentation checks, so no route needs this argument
+today, but the missing capability is present.
 
-### Generic HTTP errors are difficult to declare per route
+### Manual non-canon responses
 
-Authentication dependencies and a few presentation checks intentionally raise
-FastAPI/Starlette `HTTPException` with different status codes. The runtime handler
-normalizes these well, but `ErrorRegistry.responses()` is centered on domain
-exception definitions and offers no equivalent reusable contract for a generic
-401/403/404 HTTP problem. Applications must retain manual response declarations,
-invent domain exceptions for presentation concerns, or leave those responses less
-precisely documented.
+Manual FastAPI response declarations without `x-fastapi-canon-errors` are now
+accepted. The readiness route's non-problem JSON 503 response therefore no longer
+needs the empty-extension workaround.
 
-### Manual response definitions are incorrectly rejected
+### Success media contracts
 
-Version 0.1.0 rejects every manual FastAPI `responses={...}` entry that does not
-contain `x-fastapi-canon-errors`. In `contracts._errors_from_responses`, the
-missing extension defaults to a tuple, immediately followed by validation that
-requires a list. This affects unrelated success/media contracts such as SSE, PDF,
-and a readiness response.
+The immutable `Response` contract and its constructors cover the concrete
+integration cases that previously required handwritten response dictionaries:
 
-The absence of the extension should mean "this response declares no canon
-errors". Prompster currently has to add `"x-fastapi-canon-errors": []` to each
-manual response as a workaround. This is the most concrete integration bug found
-so far.
+- `Response.empty()` documents all 204 routes without generated content.
+- `Response.sse()` documents session event streams as only `text/event-stream`.
+- `Response.binary("application/pdf")` documents the playlist export and its
+  `Content-Disposition` header.
+- `Response.json()` gives the health and readiness probes exact success schemas.
+- `Response.empty(status=307)` removes spurious JSON content from redirect
+  responses and documents their `Location` header.
 
-### Broad base exceptions expose a useful safety check, but migration is subtle
+OpenAPI compilation removes FastAPI's generated success media type in each of
+these cases while retaining `application/problem+json` for declared failures.
 
-Prompster previously mapped every `ValueError` to HTTP 400. Registering such a
-broad built-in exception in an error registry is technically possible, but it can
-hide programming defects as client errors. The library could explicitly warn in
-documentation against registering broad built-in types such as `Exception`,
-`ValueError`, or `RuntimeError` as domain contracts.
+### Public error data and broad exception types
 
-### Exception-string detail renderers are an easy data-leak footgun
+The 0.2.0 documentation explicitly identifies `detail`, extensions, and headers
+as public response data, recommends specific domain exception types, and warns
+that broad built-ins such as `Exception`, `ValueError`, and `RuntimeError` can
+hide programming failures. This addresses both earlier safety concerns.
 
-The `detail` callback is useful, but the most obvious migration helper is
-effectively `lambda exception: str(exception)`. That can unintentionally expose
-internal identifiers, provider messages, or later implementation details. The
-library should prominently recommend stable `code` values as the client contract
-and advise that dynamic details must be explicitly classified as safe before they
-are rendered. A secure example that does not echo exception strings would set a
-better default.
+### Streaming boundary
 
-### Streaming errors need a separate contract story
+The documentation now explains that failures after response headers are sent
+cannot become Problem Details, recommends completing preflight checks before
+returning a stream, and distinguishes typed SSE failure events from incomplete
+binary downloads. This matches Prompster's session-stream design.
 
-Exceptions raised while an async response body is being streamed occur after the
-HTTP response has started. They cannot be converted into Problem Details by an
-exception handler. Prompster's session stream therefore reports those failures as
-typed SSE events, while only pre-stream failures can use `ErrorRegistry`.
+## Remaining feedback
 
-This is an HTTP limitation rather than a handler bug, but the route-contract API
-makes it easy to document a domain `Error` as an HTTP response even when it can
-only occur inside a stream. Guidance or an explicit streaming/preflight example
-would prevent misleading OpenAPI contracts.
+### Success-only routes still require an ErrorRegistry
+
+`Response` contracts can only be attached through
+`ErrorRegistry.responses(success=...)`. A route with no domain errors must
+therefore call an unrelated registry or create an empty one. Prompster's health
+router currently declares `_SYSTEM_RESPONSES = ErrorRegistry(errors=(),
+name="system")` solely to use `Response.json()`.
+
+A public response compiler such as `Response.responses()`, or accepting a
+`Response` directly through a small route helper, would make success-only and
+process-level endpoints feel independent of the error subsystem while preserving
+the same canon metadata and OpenAPI compilation behavior.
+
+### Empty non-204 contracts do not independently suppress generated JSON
+
+`Response.empty(status=307)` does not remove FastAPI's generated
+`application/json` response when the route decorator leaves its response class at
+the default. The success marker uses `None` to mean no media type, and that marker
+is absent from the intermediate OpenAPI document by the time canon compiles it.
+
+Prompster's redirect routes therefore also set
+`response_class=RedirectResponse`. That produces the intended content-free 307
+contract, but the extra setting should not be necessary for the documented rule
+that a declared `Response` replaces FastAPI's generated success media type. A
+non-null internal sentinel for the no-content case, or applying the success tuple
+collected from route contracts directly, would make `Response.empty(status=...)`
+self-sufficient for all supported 2xx and 3xx statuses.

@@ -21,6 +21,7 @@ from backend.features.auth.presentation.oauth_state_cookies import (
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi_canon import Response as CanonResponse
 
 auth_router = APIRouter(
     route_class=DishkaRoute,
@@ -32,8 +33,16 @@ auth_router = APIRouter(
 @auth_router.get(
     "/google/login",
     status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    response_class=RedirectResponse,
     response_model=None,
     operation_id="google_login",
+    responses=AUTH_ERRORS.responses(
+        success=CanonResponse.empty(
+            status=status.HTTP_307_TEMPORARY_REDIRECT,
+            description="Redirect to Google authorization.",
+            headers=("Location",),
+        )
+    ),
 )
 async def google_login(
     google_auth_flow: FromDishka[GoogleOAuthFlow],
@@ -93,8 +102,16 @@ async def google_callback(
 @auth_router.get(
     "/spotify/login",
     status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    response_class=RedirectResponse,
     response_model=None,
     operation_id="spotify_login",
+    responses=AUTH_ERRORS.responses(
+        success=CanonResponse.empty(
+            status=status.HTTP_307_TEMPORARY_REDIRECT,
+            description="Redirect to Spotify authorization.",
+            headers=("Location",),
+        )
+    ),
 )
 async def spotify_login(
     spotify_oauth_flow: FromDishka[SpotifyOAuthFlow],
@@ -159,6 +176,7 @@ async def spotify_login_callback(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="logout",
+    responses=AUTH_ERRORS.responses(success=CanonResponse.empty()),
 )
 async def logout(
     response: Response,
@@ -172,7 +190,11 @@ async def logout(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="refresh",
-    responses=AUTH_ERRORS.responses(SESSION_EXPIRED_ERROR, SESSION_INVALID_ERROR),
+    responses=AUTH_ERRORS.responses(
+        SESSION_EXPIRED_ERROR,
+        SESSION_INVALID_ERROR,
+        success=CanonResponse.empty(),
+    ),
 )
 async def refresh(
     authenticated_user_id: RefreshAuthenticatedUserId,

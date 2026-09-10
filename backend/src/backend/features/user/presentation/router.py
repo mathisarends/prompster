@@ -11,6 +11,7 @@ from backend.features.user.presentation.schemas import (
 )
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Response, status
+from fastapi_canon import Response as CanonResponse
 
 user_router = APIRouter(route_class=DishkaRoute, prefix="/users", tags=["users"])
 
@@ -54,7 +55,10 @@ async def get_delete_information(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="delete_me",
-    responses=AUTH_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
+    responses=AUTH_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        success=CanonResponse.empty(),
+    ),
 )
 async def delete_me(
     authenticated_user_id: AuthenticatedUserId,

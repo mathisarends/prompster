@@ -154,7 +154,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=45.0.7" },
     { name = "dishka", specifier = ">=1.10.1" },
     { name = "fastapi", specifier = ">=0.136.1" },
-    { name = "fastapi-canon", specifier = ">=0.1.0" },
+    { name = "fastapi-canon", specifier = ">=0.2.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "obstore", specifier = ">=0.11.1" },
     { name = "py-llmify", extras = ["openai"], specifier = ">=0.11.0" },
@@ -399,16 +399,16 @@ wheels = [
 
 [[package]]
 name = "fastapi-canon"
-version = "0.1.0"
+version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dishka" },
     { name = "fastapi" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/a9/417a9c2661125d1655ef934f9db6f721df1017c2fb7c6dd2bea12b69d73a/fastapi_canon-0.1.0.tar.gz", hash = "sha256:c05cb689ae8941be41dfcbd08fa22d78c52969dc2e1c6f1183af13edb97dfbef", size = 83666, upload-time = "2026-09-10T09:33:53.989Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dc/c4/1a8ffff6e32cec8426d1bea784b8f5acc6fa14bf8cd462940680861142b5/fastapi_canon-0.2.0.tar.gz", hash = "sha256:85559ed937636fb91dd265917fa10eb2ddedca9e8d12134df8be45ca37af1da9", size = 94511, upload-time = "2026-09-10T13:03:11.438Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fe/06/34b6b28fdf6582fbabebc03d07e0aa322377ba4675da8cdf3f8b571ab7a5/fastapi_canon-0.1.0-py3-none-any.whl", hash = "sha256:8531b421b3396b9bf578f0156c1cad22148dd477b17b4d4febaf915531f89957", size = 24792, upload-time = "2026-09-10T09:33:52.73Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/42/528d83be1309ab63e77ef405b31ed292adff22efe79087f712223f98cd52/fastapi_canon-0.2.0-py3-none-any.whl", hash = "sha256:5e63014bebe6a6e83444c5b8f58087ec1d1eb91cd3913bc4ddac3eabfb267296", size = 32101, upload-time = "2026-09-10T13:03:10.397Z" },
 ]
 
 [[package]]

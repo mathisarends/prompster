@@ -7,6 +7,7 @@ from .presentation import (
 )
 
 feature = api_feature(
+    name="oauth_connections",
     routers=[spotify_oauth_router],
     providers=[OAuthConnectionsProvider],
     errors=OAUTH_CONNECTION_ERRORS,

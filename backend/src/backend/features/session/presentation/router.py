@@ -56,26 +56,10 @@ from backend.features.session.presentation.sse import (
 from backend.features.spotify.application.ports import SpotifySearch
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Query, Response, status
+from fastapi_canon import Response as CanonResponse
 from starlette.responses import StreamingResponse
 
 router = APIRouter(route_class=DishkaRoute, prefix="/sessions", tags=["sessions"])
-
-_event_stream_response = {
-    status.HTTP_200_OK: {
-        "description": "Server-sent session events.",
-        "x-fastapi-canon-errors": [],
-        "content": {"text/event-stream": {"schema": {"type": "string"}}},
-    },
-}
-_pdf_response = {
-    status.HTTP_200_OK: {
-        "description": "Playlist deck PDF.",
-        "x-fastapi-canon-errors": [],
-        "content": {
-            "application/pdf": {"schema": {"type": "string", "format": "binary"}}
-        },
-    }
-}
 
 
 @router.get(
@@ -157,9 +141,9 @@ async def create_session(
     response_class=StreamingResponse,
     status_code=status.HTTP_200_OK,
     operation_id="send_message",
-    responses=_event_stream_response
-    | SESSION_ERRORS.responses(
+    responses=SESSION_ERRORS.responses(
         AUTHENTICATION_REQUIRED_ERROR,
+        success=CanonResponse.sse(description="Server-sent session events."),
     ),
 )
 async def send_message(
@@ -221,9 +205,9 @@ async def submit_onboarding_answer(
     response_class=StreamingResponse,
     status_code=status.HTTP_200_OK,
     operation_id="complete_onboarding",
-    responses=_event_stream_response
-    | SESSION_ERRORS.responses(
+    responses=SESSION_ERRORS.responses(
         AUTHENTICATION_REQUIRED_ERROR,
+        success=CanonResponse.sse(description="Server-sent session events."),
     ),
 )
 async def complete_onboarding(
@@ -249,6 +233,7 @@ async def complete_onboarding(
         AUTHENTICATION_REQUIRED_ERROR,
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
+        success=CanonResponse.empty(),
     ),
 )
 async def stop_message(
@@ -346,6 +331,7 @@ async def add_session_spotify_playlist_track(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
         PLAYLIST_TRACK_NOT_FOUND_ERROR,
+        success=CanonResponse.empty(),
     ),
 )
 async def remove_session_playlist_track(
@@ -399,12 +385,16 @@ async def restore_session_user_curation_event(
     "/{session_id}/playlist/pdf",
     status_code=status.HTTP_200_OK,
     operation_id="export_session_playlist",
-    responses=_pdf_response
-    | SESSION_ERRORS.responses(
+    responses=SESSION_ERRORS.responses(
         AUTHENTICATION_REQUIRED_ERROR,
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
         SESSION_PLAYLIST_EMPTY_ERROR,
+        success=CanonResponse.binary(
+            "application/pdf",
+            description="Playlist deck PDF.",
+            headers=("Content-Disposition",),
+        ),
     ),
 )
 async def export_session_playlist(
@@ -432,14 +422,14 @@ async def export_session_playlist(
     response_class=StreamingResponse,
     status_code=status.HTTP_200_OK,
     operation_id="export_session_playlist_to_spotify",
-    responses=_event_stream_response
-    | SESSION_ERRORS.responses(
+    responses=SESSION_ERRORS.responses(
         AUTHENTICATION_REQUIRED_ERROR,
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
         SESSION_PLAYLIST_EMPTY_ERROR,
         SESSION_PLAYLIST_MISSING_SPOTIFY_TRACKS_ERROR,
         SESSION_EXPORT_REQUIRES_SPOTIFY_CONNECTION_ERROR,
+        success=CanonResponse.sse(description="Server-sent session events."),
     ),
 )
 async def export_session_playlist_to_spotify(
@@ -551,6 +541,7 @@ async def unstar_session(
         AUTHENTICATION_REQUIRED_ERROR,
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
+        success=CanonResponse.empty(),
     ),
 )
 async def delete_session(

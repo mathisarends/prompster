@@ -22,6 +22,7 @@ from backend.features.oauth_connections.presentation.spotify_oauth_state_cookies
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi_canon import Response as CanonResponse
 
 spotify_oauth_router = APIRouter(
     route_class=DishkaRoute,
@@ -33,9 +34,17 @@ spotify_oauth_router = APIRouter(
 @spotify_oauth_router.get(
     "/connect",
     status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+    response_class=RedirectResponse,
     response_model=None,
     operation_id="spotify_connect",
-    responses=OAUTH_CONNECTION_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
+    responses=OAUTH_CONNECTION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        success=CanonResponse.empty(
+            status=status.HTTP_307_TEMPORARY_REDIRECT,
+            description="Redirect to Spotify authorization.",
+            headers=("Location",),
+        ),
+    ),
 )
 async def spotify_connect(
     authenticated_user_id: AuthenticatedUserId,
@@ -91,7 +100,10 @@ async def spotify_callback(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="spotify_disconnect",
-    responses=OAUTH_CONNECTION_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
+    responses=OAUTH_CONNECTION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        success=CanonResponse.empty(),
+    ),
 )
 async def spotify_disconnect(
     authenticated_user_id: AuthenticatedUserId,
