@@ -19,10 +19,6 @@ const LandingPage = lazy(() =>
 const ChatPage = lazy(() =>
   import("@/pages/chat-page").then((m) => ({ default: m.ChatPage })),
 );
-const CheckoutPage = lazy(() =>
-  import("@/pages/checkout-page").then((m) => ({ default: m.CheckoutPage })),
-);
-
 const RouteFallback = () => (
   <div className="fixed top-0 left-0 right-0 h-0.5 bg-muted overflow-hidden">
     <div className="h-full bg-foreground/30 animate-[progress_1s_ease-in-out_infinite]" />
@@ -60,7 +56,6 @@ export const AppRoutes = () => (
         <Route element={<AppLayout />}>
           <Route path="/new" element={<HomePageRoute />} />
           <Route path="/chat/:chatId" element={<ChatPageRoute />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
         </Route>
       </Route>
       <Route path="*" element={<FallbackRoute />} />
