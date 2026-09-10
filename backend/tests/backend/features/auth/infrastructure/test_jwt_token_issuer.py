@@ -1,0 +1,95 @@
+from datetime import UTC, datetime, timedelta
+from uuid import uuid4
+
+import jwt
+import pytest
+from backend.features.auth.application.exceptions import (
+    SessionExpiredException,
+    SessionInvalidException,
+)
+from backend.features.auth.application.schemas import TokenType
+from backend.features.auth.infrastructure.auth_settings import AuthSettings
+from backend.features.auth.infrastructure.jwt_token_issuer import JwtTokenIssuer
+
+
+class TestJwtTokenIssuer:
+    @staticmethod
+    def _issuer() -> JwtTokenIssuer:
+        return JwtTokenIssuer(
+            AuthSettings(
+                jwt_secret="test-signing-secret-with-at-least-32-bytes",
+                jwt_access_token_expire_minutes=15,
+                jwt_refresh_token_expire_days=14,
+                _env_file=None,
+            )
+        )
+
+    def test_creates_and_validates_access_and_refresh_tokens(self) -> None:
+        issuer = self._issuer()
+        user_id = uuid4()
+
+        session = issuer.create_session(user_id)
+
+        assert issuer.validate(session.access_token).user_id == user_id
+        assert (
+            issuer.validate(
+                session.refresh_token,
+                expected_type=TokenType.REFRESH,
+            ).user_id
+            == user_id
+        )
+
+    def test_rejects_token_with_unexpected_type(self) -> None:
+        issuer = self._issuer()
+
+        access_token = issuer.create_session(uuid4()).access_token
+
+        with pytest.raises(
+            SessionInvalidException, match="Expected token type 'refresh'"
+        ):
+            issuer.validate(access_token, expected_type=TokenType.REFRESH)
+
+    def test_translates_expired_and_malformed_jwt_errors(self) -> None:
+        issuer = self._issuer()
+        expired_token = jwt.encode(
+            {
+                "sub": str(uuid4()),
+                "iat": datetime.now(UTC),
+                "exp": datetime.now(UTC) - timedelta(seconds=1),
+                "type": TokenType.ACCESS.value,
+            },
+            "test-signing-secret-with-at-least-32-bytes",
+            algorithm="HS256",
+        )
+
+        with pytest.raises(SessionExpiredException, match="expired"):
+            issuer.validate(expired_token)
+
+        with pytest.raises(SessionInvalidException, match="Invalid token"):
+            issuer.validate("not-a-jwt")
+
+    @pytest.mark.parametrize(
+        ("payload", "message"),
+        [
+            ({"type": "access", "exp": 1}, "missing subject"),
+            (
+                {"type": "access", "sub": "not-a-uuid", "exp": 1},
+                "not a valid UUID",
+            ),
+            (
+                {"type": "access", "sub": str(uuid4()), "exp": "tomorrow"},
+                "expiration claim is invalid",
+            ),
+        ],
+    )
+    def test_rejects_invalid_claims(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        payload: dict[str, str | int],
+        message: str,
+    ) -> None:
+        issuer = self._issuer()
+        monkeypatch.setattr(issuer, "_jwt_decode", lambda _token: payload)
+
+        with pytest.raises(SessionInvalidException, match=message):
+            issuer.validate("decoded-by-stub")

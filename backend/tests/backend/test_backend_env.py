@@ -1,9 +1,26 @@
 import logging
 
 import pytest
+from backend.env import EnvSettings, LoggingLevelSettings
 from pydantic import ValidationError
 
-from backend.env import LoggingLevelSettings
+
+class TestEnvSettings:
+    def test_normalizes_frontend_url_and_exposes_allowed_origin(self) -> None:
+        settings = EnvSettings(
+            env="prod",
+            frontend_base_url="https://app.example.com/",
+            _env_file=None,
+        )
+
+        assert settings.is_dev is False
+        assert settings.is_prod is True
+        assert settings.frontend_base_url == "https://app.example.com"
+        assert settings.allowed_origins == ["https://app.example.com"]
+
+    def test_rejects_frontend_url_without_http_scheme(self) -> None:
+        with pytest.raises(ValidationError, match="Frontend URL"):
+            EnvSettings(frontend_base_url="app.example.com", _env_file=None)
 
 
 class TestLoggingLevelSettings:
@@ -30,3 +47,8 @@ class TestLoggingLevelSettings:
     def test_invalid_log_level_is_rejected(self) -> None:
         with pytest.raises(ValidationError):
             LoggingLevelSettings(log_level="verbose", _env_file=None)
+
+    def test_empty_log_level_uses_environment_default(self) -> None:
+        settings = LoggingLevelSettings(env="prod", log_level="   ", _env_file=None)
+
+        assert settings.effective_log_level == logging.INFO
