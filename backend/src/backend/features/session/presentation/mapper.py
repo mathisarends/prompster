@@ -1,6 +1,10 @@
 from collections.abc import Mapping
 
-from backend.features.session.application import ExportedSpotifyPlaylist
+from backend.features.session.application import (
+    ExportedSpotifyPlaylist,
+    SessionImageAttachmentReference,
+    SessionMessageAttachment,
+)
 from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
 )
@@ -20,27 +24,30 @@ from backend.features.session.domain import (
     ToolCall,
     ToolCallSequence,
     ToolResultItem,
+    UserCurationEvent,
     UserMessage,
     UserMessageAttachment,
-    UserCurationEvent,
 )
 from backend.features.session.presentation.schemas import (
     ArtistReferenceResponse,
     AssistantMessageEntryResponse,
+    ImageAttachmentReferenceRequest,
     OnboardingQuestionResponse,
-    PlaylistResponse,
     PlaylistReferenceResponse,
+    PlaylistResponse,
     PlaylistTrackResponse,
     SessionEntryResponse,
+    SessionMessageAttachmentRequest,
+    SessionMessageAttachmentResponse,
     SessionResponse,
+    SessionSummaryListResponse,
     SessionSummaryResponse,
     SpotifyPlaylistExportResponse,
-    ToolCallSequenceEntryResponse,
     ToolCallResponse,
     ToolCallResultItemResponse,
+    ToolCallSequenceEntryResponse,
     ToolCallState,
     ToolFunctionResponse,
-    SessionMessageAttachmentResponse,
     UserCurationEventResponse,
     UserMessageEntryResponse,
 )
@@ -82,6 +89,66 @@ def to_session_response(
             for question in session.onboarding_questions
         ],
     )
+
+
+def to_session_summary_list_response(
+    items: list[SessionSummary],
+) -> SessionSummaryListResponse:
+    return SessionSummaryListResponse(
+        items=[to_session_summary_response(item) for item in items],
+    )
+
+
+def to_session_message_attachments(
+    attachments: list[SessionMessageAttachmentRequest],
+) -> list[SessionMessageAttachment]:
+    return [
+        SessionMessageAttachment(
+            kind=attachment.kind,
+            external_id=attachment.external_id,
+            title=attachment.title,
+            subtitle=attachment.subtitle,
+            image_url=attachment.image_url,
+            spotify_id=attachment.spotify_id,
+        )
+        for attachment in attachments
+    ]
+
+
+def to_session_image_attachment_references(
+    attachments: list[ImageAttachmentReferenceRequest],
+) -> list[SessionImageAttachmentReference]:
+    return [
+        SessionImageAttachmentReference(
+            id=attachment.id,
+            storage_key=attachment.storage_key,
+            content_type=attachment.content_type,
+            file_name=attachment.file_name,
+            size_bytes=attachment.size_bytes,
+        )
+        for attachment in attachments
+    ]
+
+
+def spotify_track_id_from_uri(value: str) -> str | None:
+    normalized = value.strip()
+    if not normalized:
+        return None
+
+    if normalized.startswith("spotify:track:"):
+        track_id = normalized.rsplit(":", maxsplit=1)[-1]
+        return track_id or None
+
+    marker = "/track/"
+    if marker in normalized:
+        track_id = normalized.split(marker, maxsplit=1)[1]
+        track_id = track_id.split("?", maxsplit=1)[0].split("/", maxsplit=1)[0]
+        return track_id or None
+
+    if "/" not in normalized and ":" not in normalized:
+        return normalized
+
+    return None
 
 
 def to_entry_response(

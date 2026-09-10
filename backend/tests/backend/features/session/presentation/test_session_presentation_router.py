@@ -10,6 +10,7 @@ from backend.features.session.application import (
     SessionEvent,
     SessionImageAttachmentReference,
     SessionImageAttachmentUpload,
+    SessionImageUrlResolver,
     SessionMessageAttachment,
     SessionService,
     StashedImageAttachment,
@@ -38,7 +39,6 @@ from backend.features.session.presentation.router import (
 )
 from backend.features.session.presentation.schemas import (
     SendMessageRequest,
-    SessionCreateRequest,
     SessionMessageAttachmentKind,
     SessionMessageAttachmentRequest,
     SubmitOnboardingAnswerRequest,
@@ -259,8 +259,8 @@ class TestGetSessionByIdRoute:
                 session_id=session_id,
                 authenticated_user_id=user_id,
                 service=cast(SessionService, service),
-                attachment_store=cast(
-                    MessageAttachmentStore, _MessageAttachmentStoreStub()
+                image_url_resolver=SessionImageUrlResolver(
+                    _MessageAttachmentStoreStub()
                 ),
             )
         )
@@ -303,7 +303,7 @@ class TestGetSessionByIdRoute:
                 session_id=session_id,
                 authenticated_user_id=user_id,
                 service=cast(SessionService, service),
-                attachment_store=cast(MessageAttachmentStore, attachment_store),
+                image_url_resolver=SessionImageUrlResolver(attachment_store),
             )
         )
 
@@ -314,7 +314,7 @@ class TestGetSessionByIdRoute:
 
 
 class TestCreateSessionRoute:
-    def test_creates_session_without_forwarding_initial_prompt_to_service(self) -> None:
+    def test_creates_empty_session(self) -> None:
         user_id = uuid4()
         session = Session(
             title="",
@@ -326,10 +326,9 @@ class TestCreateSessionRoute:
         response = asyncio.run(
             create_session(
                 authenticated_user_id=user_id,
-                body=SessionCreateRequest(initial_prompt="Bau mir ein 90er Deck"),
                 service=cast(SessionService, service),
-                attachment_store=cast(
-                    MessageAttachmentStore, _MessageAttachmentStoreStub()
+                image_url_resolver=SessionImageUrlResolver(
+                    _MessageAttachmentStoreStub()
                 ),
             )
         )
@@ -363,8 +362,8 @@ class TestRestoreUserCurationEventRoute:
                 event_id=event.id,
                 authenticated_user_id=user_id,
                 service=cast(SessionService, service),
-                attachment_store=cast(
-                    MessageAttachmentStore, _MessageAttachmentStoreStub()
+                image_url_resolver=SessionImageUrlResolver(
+                    _MessageAttachmentStoreStub()
                 ),
             )
         )
@@ -481,8 +480,8 @@ class TestSubmitOnboardingAnswerRoute:
                     answer="Freunde",
                 ),
                 service=cast(SessionConversationService, service),
-                attachment_store=cast(
-                    MessageAttachmentStore, _MessageAttachmentStoreStub()
+                image_url_resolver=SessionImageUrlResolver(
+                    _MessageAttachmentStoreStub()
                 ),
             )
         )

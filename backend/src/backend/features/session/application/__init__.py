@@ -2,16 +2,9 @@ from .conversation_service import (
     SessionConversationService,
     SessionMessageAttachment,
 )
-from .image_attachment_service import (
-    ImageAttachmentService,
-    InvalidImageAttachmentError,
-    SessionImageAttachmentReference,
-    SessionImageAttachmentUpload,
-    StashedImageAttachment,
-)
 from .events import (
-    SessionAssistantMessageChunk,
     SessionAssistantMessageCancelled,
+    SessionAssistantMessageChunk,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionContextCompacted,
@@ -25,13 +18,21 @@ from .events import (
     SessionSuspendedForInput,
     SessionTitleGenerated,
     SessionToolCallFailed,
+    SessionToolCallResolved,
     SessionToolCallRetry,
     SessionToolCallSequenceAdded,
     SessionToolCallSequenceCompleted,
-    SessionToolCallResolved,
 )
-from .session_service import SessionService
+from .image_attachment_service import (
+    ImageAttachmentService,
+    InvalidImageAttachmentError,
+    SessionImageAttachmentReference,
+    SessionImageAttachmentUpload,
+    StashedImageAttachment,
+)
 from .session_exporter import SessionPlaylistExporter
+from .session_image_url_resolver import SessionImageUrlResolver
+from .session_service import SessionService
 from .spotify_playlist_exporter import (
     ExportedSpotifyPlaylist,
     SessionSpotifyPlaylistExporter,
@@ -39,33 +40,34 @@ from .spotify_playlist_exporter import (
 
 __all__ = [
     "ExportedSpotifyPlaylist",
-    "SessionAssistantMessageChunk",
+    "ImageAttachmentService",
+    "InvalidImageAttachmentError",
     "SessionAssistantMessageCancelled",
+    "SessionAssistantMessageChunk",
     "SessionAssistantMessageCompleted",
     "SessionAssistantMessageStarted",
     "SessionContextCompacted",
+    "SessionConversationService",
     "SessionEvent",
+    "SessionImageAttachmentReference",
+    "SessionImageAttachmentUpload",
+    "SessionImageUrlResolver",
+    "SessionMessageAttachment",
     "SessionOnboardingQuestionAsked",
     "SessionPlaylistExporter",
     "SessionPlaylistSet",
     "SessionPlaylistTrackAdded",
     "SessionPlaylistTrackRemoved",
     "SessionPlaylistTrackReplaced",
-    "SessionSpotifyPlaylistExporter",
+    "SessionService",
     "SessionSnapshot",
+    "SessionSpotifyPlaylistExporter",
     "SessionSuspendedForInput",
     "SessionTitleGenerated",
     "SessionToolCallFailed",
+    "SessionToolCallResolved",
     "SessionToolCallRetry",
     "SessionToolCallSequenceAdded",
     "SessionToolCallSequenceCompleted",
-    "SessionToolCallResolved",
-    "SessionConversationService",
-    "ImageAttachmentService",
-    "InvalidImageAttachmentError",
-    "SessionImageAttachmentReference",
-    "SessionImageAttachmentUpload",
     "StashedImageAttachment",
-    "SessionMessageAttachment",
-    "SessionService",
 ]

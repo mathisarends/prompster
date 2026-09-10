@@ -1,11 +1,22 @@
 from uuid import uuid4
 
+import pytest
 from backend.features.session.domain import (
     DECIDE_FOR_ME_OPTION,
     ImageAttachment,
     Session,
 )
-from backend.features.session.presentation.mapper import to_session_response
+from backend.features.session.presentation.mapper import (
+    spotify_track_id_from_uri,
+    to_session_image_attachment_references,
+    to_session_message_attachments,
+    to_session_response,
+)
+from backend.features.session.presentation.schemas import (
+    ImageAttachmentReferenceRequest,
+    SessionMessageAttachmentKind,
+    SessionMessageAttachmentRequest,
+)
 
 
 def test_to_session_response_maps_references() -> None:
@@ -106,3 +117,54 @@ def test_to_session_response_maps_all_onboarding_questions_with_answers() -> Non
     assert still_open.is_last_question is True
     assert still_open.is_answered is False
     assert still_open.answers == []
+
+
+def test_to_session_message_attachments_maps_request_models() -> None:
+    attachments = to_session_message_attachments(
+        [
+            SessionMessageAttachmentRequest(
+                kind=SessionMessageAttachmentKind.SPOTIFY_ARTIST,
+                external_id="artist-1",
+                title="Artist 1",
+                subtitle="Pop",
+                image_url="https://example.com/artist.png",
+                spotify_id="spotify-artist-1",
+            )
+        ]
+    )
+
+    assert attachments[0].external_id == "artist-1"
+    assert attachments[0].spotify_id == "spotify-artist-1"
+
+
+def test_to_session_image_attachment_references_maps_request_models() -> None:
+    attachment_id = uuid4()
+
+    attachments = to_session_image_attachment_references(
+        [
+            ImageAttachmentReferenceRequest(
+                id=attachment_id,
+                storage_key="users/a/stash/image.png",
+                content_type="image/png",
+                file_name="image.png",
+                size_bytes=123,
+            )
+        ]
+    )
+
+    assert attachments[0].id == attachment_id
+    assert attachments[0].storage_key == "users/a/stash/image.png"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("spotify:track:track-id", "track-id"),
+        ("https://open.spotify.com/track/track-id?si=abc", "track-id"),
+        ("track-id", "track-id"),
+        ("spotify:album:album-id", None),
+        ("", None),
+    ],
+)
+def test_spotify_track_id_from_uri(value: str, expected: str | None) -> None:
+    assert spotify_track_id_from_uri(value) == expected

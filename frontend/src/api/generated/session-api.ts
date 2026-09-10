@@ -38,7 +38,6 @@ import type {
   SendMessageParams,
   SendMessageRequest,
   SessionAccessDeniedProblem,
-  SessionCreateRequest,
   SessionExportRequiresSpotifyConnectionProblem,
   SessionNotFoundProblem,
   SessionPlaylistEmptyProblem,
@@ -357,48 +356,35 @@ export function useListSessions<
  * @summary Create Session
  */
 export const createSession = (
-  sessionCreateRequest: SessionCreateRequest,
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
   return customInstance<SessionResponse>(
-    {
-      url: `/api/v1/sessions`,
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      data: sessionCreateRequest,
-      signal,
-    },
+    { url: `/api/v1/sessions`, method: "POST", signal },
     options,
   );
 };
 
-export const getCreateSessionQueryKey = (
-  sessionCreateRequest?: SessionCreateRequest,
-) => {
-  return ["POST", `/api/v1/sessions`, sessionCreateRequest] as const;
+export const getCreateSessionQueryKey = () => {
+  return ["POST", `/api/v1/sessions`] as const;
 };
 
 export const getCreateSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = AuthenticationRequiredProblem | RequestValidationProblem,
->(
-  sessionCreateRequest: SessionCreateRequest,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
-    >;
-    request?: SecondParameter<typeof customInstance>;
-  },
-) => {
+  TError = AuthenticationRequiredProblem,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof customInstance>;
+}) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey =
-    queryOptions?.queryKey ?? getCreateSessionQueryKey(sessionCreateRequest);
+  const queryKey = queryOptions?.queryKey ?? getCreateSessionQueryKey();
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof createSession>>> = ({
     signal,
-  }) => createSession(sessionCreateRequest, requestOptions, signal);
+  }) => createSession(requestOptions, signal);
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof createSession>>,
@@ -410,15 +396,12 @@ export const getCreateSessionQueryOptions = <
 export type CreateSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof createSession>>
 >;
-export type CreateSessionQueryError =
-  | AuthenticationRequiredProblem
-  | RequestValidationProblem;
+export type CreateSessionQueryError = AuthenticationRequiredProblem;
 
 export function useCreateSession<
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = AuthenticationRequiredProblem | RequestValidationProblem,
+  TError = AuthenticationRequiredProblem,
 >(
-  sessionCreateRequest: SessionCreateRequest,
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
@@ -439,9 +422,8 @@ export function useCreateSession<
 };
 export function useCreateSession<
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = AuthenticationRequiredProblem | RequestValidationProblem,
+  TError = AuthenticationRequiredProblem,
 >(
-  sessionCreateRequest: SessionCreateRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
@@ -462,9 +444,8 @@ export function useCreateSession<
 };
 export function useCreateSession<
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = AuthenticationRequiredProblem | RequestValidationProblem,
+  TError = AuthenticationRequiredProblem,
 >(
-  sessionCreateRequest: SessionCreateRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
@@ -481,9 +462,8 @@ export function useCreateSession<
 
 export function useCreateSession<
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = AuthenticationRequiredProblem | RequestValidationProblem,
+  TError = AuthenticationRequiredProblem,
 >(
-  sessionCreateRequest: SessionCreateRequest,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof createSession>>, TError, TData>
@@ -494,10 +474,7 @@ export function useCreateSession<
 ): UseQueryResult<TData, TError> & {
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
-  const queryOptions = getCreateSessionQueryOptions(
-    sessionCreateRequest,
-    options,
-  );
+  const queryOptions = getCreateSessionQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,

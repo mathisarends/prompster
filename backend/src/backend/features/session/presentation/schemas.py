@@ -9,10 +9,6 @@ from backend.features.session.domain import OnboardingQuestionSelectionMode, Pha
 from backend.presentation.schema import Schema
 
 
-class SessionCreateRequest(Schema):
-    initial_prompt: str = Field(min_length=1, max_length=4000)
-
-
 class SessionUpdateRequest(Schema):
     title: str = Field(min_length=1, max_length=120)
 

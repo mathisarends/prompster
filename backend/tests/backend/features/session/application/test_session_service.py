@@ -60,10 +60,14 @@ from backend.features.session.application.image_attachment_service import (
 from backend.features.session.application.session_service import (
     SessionService,
 )
+from backend.features.session.application.session_image_url_resolver import (
+    SessionImageUrlResolver,
+)
 from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
     DECIDE_FOR_ME_OPTION,
+    ImageAttachment,
     InvalidSessionPhaseTransitionError,
     PendingCall,
     Phase,
@@ -157,6 +161,7 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
         self.saved_stashed_payloads: list[tuple[UUID, UUID, str, str, bytes]] = []
         self.promoted_calls: list[tuple[UUID, UUID, str]] = []
         self.existing_storage_keys: set[str] = set()
+        self.signed_url_requests: list[tuple[str, int]] = []
 
     async def save_stashed_image_attachment(
         self,
@@ -211,6 +216,7 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
         storage_key: str,
         expires_in_seconds: int,
     ) -> str:
+        self.signed_url_requests.append((storage_key, expires_in_seconds))
         return f"https://example.com/{storage_key}"
 
     async def delete_session_attachments(
@@ -468,6 +474,47 @@ class TestSessionServiceList:
         assert query.received_owner_id == owner_id
         assert query.received_limit == 10
         assert query.received_offset == 20
+
+    def test_searches_when_a_non_empty_query_is_provided(self) -> None:
+        owner_id = uuid4()
+        query = _SessionSummaryQueryStub(summaries=[])
+        service = _make_management_service(summary_query=query)
+
+        asyncio.run(
+            service.list(
+                owner_id=owner_id,
+                query="  techno  ",
+                limit=10,
+                offset=20,
+            )
+        )
+
+        assert query.received_owner_id == owner_id
+        assert query.received_query == "techno"
+        assert query.received_limit == 10
+        assert query.received_offset == 20
+
+
+class TestSessionImageUrlResolver:
+    def test_resolves_each_referenced_image_once(self) -> None:
+        owner_id = uuid4()
+        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        storage_key = f"users/{owner_id}/chat/{session.id}/image.png"
+        image = ImageAttachment(
+            storage_key=storage_key,
+            content_type="image/png",
+            file_name="image.png",
+            size_bytes=123,
+        )
+        session.add_user_message("first image", image_attachments=[image])
+        session.add_user_message("same image", image_attachments=[image])
+        attachment_store = _MessageAttachmentStoreStub()
+        resolver = SessionImageUrlResolver(attachment_store)
+
+        urls = asyncio.run(resolver.resolve(session=session))
+
+        assert urls == {storage_key: f"https://example.com/{storage_key}"}
+        assert attachment_store.signed_url_requests == [(storage_key, 86_400)]
 
 
 class TestSessionServiceSearch:

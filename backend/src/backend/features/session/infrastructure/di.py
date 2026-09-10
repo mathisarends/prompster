@@ -4,6 +4,7 @@ from backend.features.oauth_connections.application import SpotifyTokenService
 from backend.features.session.application import (
     ImageAttachmentService,
     SessionConversationService,
+    SessionImageUrlResolver,
     SessionPlaylistExporter,
     SessionService,
     SessionSpotifyPlaylistExporter,
@@ -148,6 +149,15 @@ class SessionProvider(Provider):
         message_attachment_store: MessageAttachmentStore,
     ) -> ImageAttachmentService:
         return ImageAttachmentService(
+            message_attachment_store=message_attachment_store,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_session_image_url_resolver(
+        self,
+        message_attachment_store: MessageAttachmentStore,
+    ) -> SessionImageUrlResolver:
+        return SessionImageUrlResolver(
             message_attachment_store=message_attachment_store,
         )
 

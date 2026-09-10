@@ -110,7 +110,16 @@ class SessionService:
         owner_id: UUID,
         limit: int,
         offset: int,
+        query: str | None = None,
     ) -> list[SessionSummary]:
+        normalized_query = query.strip() if query else ""
+        if normalized_query:
+            return await self.search(
+                owner_id=owner_id,
+                query=normalized_query,
+                limit=limit,
+                offset=offset,
+            )
         return await self._session_summary_query.list_for_owner(
             owner_id=owner_id,
             limit=limit,

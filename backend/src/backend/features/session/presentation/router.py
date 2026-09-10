@@ -6,14 +6,11 @@ from backend.features.auth.presentation.exceptions import (
 )
 from backend.features.session.application import (
     SessionConversationService,
-    SessionImageAttachmentReference,
-    SessionMessageAttachment,
+    SessionImageUrlResolver,
     SessionPlaylistExporter,
     SessionService,
     SessionSpotifyPlaylistExporter,
 )
-from backend.features.session.application.ports import MessageAttachmentStore
-from backend.features.session.domain import Session
 from backend.features.session.presentation.exceptions import (
     INVALID_SESSION_PHASE_TRANSITION_ERROR,
     INVALID_SPOTIFY_TRACK_URI_ERROR,
@@ -35,18 +32,18 @@ from backend.features.session.presentation.exceptions import (
     SpotifyTrackYearMissingError,
 )
 from backend.features.session.presentation.mapper import (
+    spotify_track_id_from_uri,
     to_playlist_track_response,
+    to_session_image_attachment_references,
+    to_session_message_attachments,
     to_session_response,
-    to_session_summary_response,
+    to_session_summary_list_response,
 )
 from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
     AddSpotifyPlaylistTrackRequest,
-    ImageAttachmentReferenceRequest,
     PlaylistTrackResponse,
     SendMessageRequest,
-    SessionCreateRequest,
-    SessionMessageAttachmentRequest,
     SessionResponse,
     SessionSummaryListResponse,
     SessionUpdateRequest,
@@ -63,7 +60,6 @@ from starlette.responses import StreamingResponse
 
 router = APIRouter(route_class=DishkaRoute, prefix="/sessions", tags=["sessions"])
 
-_SESSION_IMAGE_ATTACHMENT_URL_TTL_SECONDS = 60 * 60 * 24
 _event_stream_response = {
     status.HTTP_200_OK: {
         "description": "Server-sent session events.",
@@ -96,23 +92,14 @@ async def list_sessions(
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
 ) -> SessionSummaryListResponse:
-    if q and q.strip():
-        items = await service.search(
-            owner_id=authenticated_user_id,
-            query=q,
-            limit=limit,
-            offset=offset,
-        )
-    else:
-        items = await service.list(
-            owner_id=authenticated_user_id,
-            limit=limit,
-            offset=offset,
-        )
-
-    return SessionSummaryListResponse(
-        items=[to_session_summary_response(item) for item in items],
+    items = await service.list(
+        owner_id=authenticated_user_id,
+        query=q,
+        limit=limit,
+        offset=offset,
     )
+
+    return to_session_summary_list_response(items)
 
 
 @router.get(
@@ -130,15 +117,16 @@ async def get_session_by_id(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
-    attachment_store: FromDishka[MessageAttachmentStore],
+    image_url_resolver: FromDishka[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.get_by_id(
         session_id=session_id,
         user_id=authenticated_user_id,
     )
-    return await _to_session_response_with_signed_urls(
-        session=session,
-        attachment_store=attachment_store,
+    image_urls_by_storage_key = await image_url_resolver.resolve(session=session)
+    return to_session_response(
+        session,
+        image_urls_by_storage_key=image_urls_by_storage_key,
     )
 
 
@@ -151,16 +139,16 @@ async def get_session_by_id(
 )
 async def create_session(
     authenticated_user_id: AuthenticatedUserId,
-    body: SessionCreateRequest,
     service: FromDishka[SessionService],
-    attachment_store: FromDishka[MessageAttachmentStore],
+    image_url_resolver: FromDishka[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.create(
         owner_id=authenticated_user_id,
     )
-    return await _to_session_response_with_signed_urls(
-        session=session,
-        attachment_store=attachment_store,
+    image_urls_by_storage_key = await image_url_resolver.resolve(session=session)
+    return to_session_response(
+        session,
+        image_urls_by_storage_key=image_urls_by_storage_key,
     )
 
 
@@ -187,8 +175,8 @@ async def send_message(
             user_id=authenticated_user_id,
             content=body.content,
             model_id=model_id,
-            attachments=_to_session_message_attachments(body.attachments),
-            image_attachments=_to_session_image_attachment_references(
+            attachments=to_session_message_attachments(body.attachments),
+            image_attachments=to_session_image_attachment_references(
                 body.image_attachments,
             ),
         )
@@ -212,7 +200,7 @@ async def submit_onboarding_answer(
     authenticated_user_id: AuthenticatedUserId,
     body: SubmitOnboardingAnswerRequest,
     service: FromDishka[SessionConversationService],
-    attachment_store: FromDishka[MessageAttachmentStore],
+    image_url_resolver: FromDishka[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.submit_onboarding_answer(
         session_id=session_id,
@@ -221,9 +209,10 @@ async def submit_onboarding_answer(
         answer=body.answer,
         answers=body.answers,
     )
-    return await _to_session_response_with_signed_urls(
-        session=session,
-        attachment_store=attachment_store,
+    image_urls_by_storage_key = await image_url_resolver.resolve(session=session)
+    return to_session_response(
+        session,
+        image_urls_by_storage_key=image_urls_by_storage_key,
     )
 
 
@@ -326,7 +315,7 @@ async def add_session_spotify_playlist_track(
     service: FromDishka[SessionService],
     spotify_search: FromDishka[SpotifySearch],
 ) -> PlaylistTrackResponse:
-    spotify_track_id = _spotify_track_id_from_uri(body.spotify_uri)
+    spotify_track_id = spotify_track_id_from_uri(body.spotify_uri)
     if spotify_track_id is None:
         raise InvalidSpotifyTrackUriError
 
@@ -392,16 +381,17 @@ async def restore_session_user_curation_event(
     event_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
-    attachment_store: FromDishka[MessageAttachmentStore],
+    image_url_resolver: FromDishka[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.restore_user_curation_event(
         session_id=session_id,
         user_id=authenticated_user_id,
         event_id=event_id,
     )
-    return await _to_session_response_with_signed_urls(
-        session=session,
-        attachment_store=attachment_store,
+    image_urls_by_storage_key = await image_url_resolver.resolve(session=session)
+    return to_session_response(
+        session,
+        image_urls_by_storage_key=image_urls_by_storage_key,
     )
 
 
@@ -483,16 +473,17 @@ async def update_session(
     authenticated_user_id: AuthenticatedUserId,
     body: SessionUpdateRequest,
     service: FromDishka[SessionService],
-    attachment_store: FromDishka[MessageAttachmentStore],
+    image_url_resolver: FromDishka[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.update(
         session_id=session_id,
         user_id=authenticated_user_id,
         title=body.title,
     )
-    return await _to_session_response_with_signed_urls(
-        session=session,
-        attachment_store=attachment_store,
+    image_urls_by_storage_key = await image_url_resolver.resolve(session=session)
+    return to_session_response(
+        session,
+        image_urls_by_storage_key=image_urls_by_storage_key,
     )
 
 
@@ -511,15 +502,16 @@ async def star_session(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
-    attachment_store: FromDishka[MessageAttachmentStore],
+    image_url_resolver: FromDishka[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.star(
         session_id=session_id,
         user_id=authenticated_user_id,
     )
-    return await _to_session_response_with_signed_urls(
-        session=session,
-        attachment_store=attachment_store,
+    image_urls_by_storage_key = await image_url_resolver.resolve(session=session)
+    return to_session_response(
+        session,
+        image_urls_by_storage_key=image_urls_by_storage_key,
     )
 
 
@@ -538,15 +530,16 @@ async def unstar_session(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionService],
-    attachment_store: FromDishka[MessageAttachmentStore],
+    image_url_resolver: FromDishka[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.unstar(
         session_id=session_id,
         user_id=authenticated_user_id,
     )
-    return await _to_session_response_with_signed_urls(
-        session=session,
-        attachment_store=attachment_store,
+    image_urls_by_storage_key = await image_url_resolver.resolve(session=session)
+    return to_session_response(
+        session,
+        image_urls_by_storage_key=image_urls_by_storage_key,
     )
 
 
@@ -567,90 +560,3 @@ async def delete_session(
 ) -> Response:
     await service.delete(session_id=session_id, user_id=authenticated_user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-async def _to_session_response_with_signed_urls(
-    *,
-    session: Session,
-    attachment_store: MessageAttachmentStore,
-) -> SessionResponse:
-    image_urls_by_storage_key = await _build_image_urls_by_storage_key(
-        session=session,
-        attachment_store=attachment_store,
-    )
-    return to_session_response(
-        session,
-        image_urls_by_storage_key=image_urls_by_storage_key,
-    )
-
-
-def _to_session_message_attachments(
-    attachments: list[SessionMessageAttachmentRequest],
-) -> list[SessionMessageAttachment]:
-    return [
-        SessionMessageAttachment(
-            kind=attachment.kind,
-            external_id=attachment.external_id,
-            title=attachment.title,
-            subtitle=attachment.subtitle,
-            image_url=attachment.image_url,
-            spotify_id=attachment.spotify_id,
-        )
-        for attachment in attachments
-    ]
-
-
-def _to_session_image_attachment_references(
-    attachments: list[ImageAttachmentReferenceRequest],
-) -> list[SessionImageAttachmentReference]:
-    return [
-        SessionImageAttachmentReference(
-            id=attachment.id,
-            storage_key=attachment.storage_key,
-            content_type=attachment.content_type,
-            file_name=attachment.file_name,
-            size_bytes=attachment.size_bytes,
-        )
-        for attachment in attachments
-    ]
-
-
-async def _build_image_urls_by_storage_key(
-    *,
-    session: Session,
-    attachment_store: MessageAttachmentStore,
-) -> dict[str, str]:
-    storage_keys: set[str] = set()
-    for entry in session.entries:
-        image_attachments = getattr(entry, "image_attachments", ())
-        for attachment in image_attachments:
-            storage_keys.add(attachment.storage_key)
-
-    urls: dict[str, str] = {}
-    for storage_key in storage_keys:
-        urls[storage_key] = await attachment_store.create_signed_url(
-            storage_key=storage_key,
-            expires_in_seconds=_SESSION_IMAGE_ATTACHMENT_URL_TTL_SECONDS,
-        )
-    return urls
-
-
-def _spotify_track_id_from_uri(value: str) -> str | None:
-    normalized = value.strip()
-    if not normalized:
-        return None
-
-    if normalized.startswith("spotify:track:"):
-        track_id = normalized.rsplit(":", maxsplit=1)[-1]
-        return track_id or None
-
-    marker = "/track/"
-    if marker in normalized:
-        track_id = normalized.split(marker, maxsplit=1)[1]
-        track_id = track_id.split("?", maxsplit=1)[0].split("/", maxsplit=1)[0]
-        return track_id or None
-
-    if "/" not in normalized and ":" not in normalized:
-        return normalized
-
-    return None

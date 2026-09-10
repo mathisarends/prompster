@@ -64,7 +64,6 @@ export * from "./searchSpotifyParams";
 export * from "./sendMessageParams";
 export * from "./sendMessageRequest";
 export * from "./sessionAccessDeniedProblem";
-export * from "./sessionCreateRequest";
 export * from "./sessionEventType";
 export * from "./sessionEventTypeSchema";
 export * from "./sessionExpiredProblem";

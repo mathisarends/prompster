@@ -82,7 +82,7 @@ export const HomePage = () => {
     try {
       const initialAttachments =
         await uploadInitialImageAttachments(attachments);
-      const session = await createSession({ initialPrompt });
+      const session = await createSession();
       await queryClient.invalidateQueries({
         queryKey: getListSessionsQueryKey(),
       });
