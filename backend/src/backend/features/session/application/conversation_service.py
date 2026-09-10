@@ -67,7 +67,6 @@ from backend.features.session.domain import (
     UserMessageAttachment,
     UserMessageAttachmentKind,
 )
-from backend.features.user.application import UserMessageRateLimitService
 
 logger = logging.getLogger(__name__)
 
@@ -106,13 +105,11 @@ class SessionConversationService:
         session_repository: SessionRepository,
         runner: SessionRunner,
         message_attachment_store: MessageAttachmentStore,
-        user_message_rate_limit_service: UserMessageRateLimitService,
         title_generator: SessionTitleGenerator,
     ) -> None:
         self._session_repository = session_repository
         self._runner = runner
         self._message_attachment_store = message_attachment_store
-        self._user_message_rate_limit_service = user_message_rate_limit_service
         self._title_generator = title_generator
 
     async def send_message(
@@ -126,8 +123,6 @@ class SessionConversationService:
         model_id: str | None = None,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
-        await self._user_message_rate_limit_service.consume(user_id=user_id)
-
         message_id = uuid4()
         referenced_images = await self._promote_image_attachment_references(
             user_id=user_id,

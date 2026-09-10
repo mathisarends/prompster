@@ -4,8 +4,6 @@ from typing import cast
 from uuid import UUID, uuid4
 
 from backend.features.user.application import UserDeleteInformation
-from backend.features.user.application import UserMessageRateLimitService
-from backend.features.user.application import UserMessageRateLimitSnapshot
 from backend.features.user.application import UserService
 from backend.features.user.domain import SpotifyAccount, User
 from backend.features.user.presentation.router import (
@@ -40,34 +38,15 @@ class _UserServiceStub:
         return UserDeleteInformation(session_count=self.session_count)
 
 
-class _UserMessageRateLimitServiceStub:
-    def __init__(self) -> None:
-        self.received_user_id: UUID | None = None
-        self.snapshot = UserMessageRateLimitSnapshot(
-            limit=50,
-            remaining=49,
-            reset_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
-        )
-
-    async def inspect(self, *, user_id: UUID) -> UserMessageRateLimitSnapshot:
-        self.received_user_id = user_id
-        return self.snapshot
-
-
 class TestGetMeRoute:
-    def test_get_me_returns_user_with_message_rate_limit(self) -> None:
+    def test_get_me_returns_user(self) -> None:
         user_service = _UserServiceStub()
-        rate_limit_service = _UserMessageRateLimitServiceStub()
         authenticated_user_id = uuid4()
 
         response = asyncio.run(
             get_me(
                 authenticated_user_id=authenticated_user_id,
                 service=cast(UserService, user_service),
-                message_rate_limit_service=cast(
-                    UserMessageRateLimitService,
-                    rate_limit_service,
-                ),
             )
         )
 
@@ -75,13 +54,7 @@ class TestGetMeRoute:
         assert response.name == "Mathis"
         assert response.spotify_connected is True
         assert response.spotify_premium is True
-        assert response.message_rate_limit.limit == 50
-        assert response.message_rate_limit.remaining == 49
-        assert response.message_rate_limit.reset_at == datetime(
-            2026, 1, 2, tzinfo=timezone.utc
-        )
         assert user_service.received_get_me_user_id == authenticated_user_id
-        assert rate_limit_service.received_user_id == authenticated_user_id
 
 
 class TestDeleteMeRoute:

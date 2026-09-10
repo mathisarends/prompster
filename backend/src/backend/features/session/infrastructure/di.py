@@ -50,7 +50,6 @@ from backend.features.session.infrastructure.title_generator import (
     LLMSessionTitleGenerator,
 )
 from backend.features.spotify.application.ports import SpotifyPlaylistCreator
-from backend.features.user.application import UserMessageRateLimitService
 from backend.features.user.domain import UserRepository
 from backend.infrastructure.storage import ObjectStorage
 from dishka import Provider, Scope, provide
@@ -158,14 +157,12 @@ class SessionProvider(Provider):
         session_repository: SessionRepository,
         runner: SessionRunner,
         message_attachment_store: MessageAttachmentStore,
-        user_message_rate_limit_service: UserMessageRateLimitService,
         title_generator: SessionTitleGenerator,
     ) -> SessionConversationService:
         return SessionConversationService(
             session_repository=session_repository,
             runner=runner,
             message_attachment_store=message_attachment_store,
-            user_message_rate_limit_service=user_message_rate_limit_service,
             title_generator=title_generator,
         )
 

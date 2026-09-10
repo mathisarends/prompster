@@ -76,7 +76,6 @@ from backend.features.session.domain import (
     ToolFunction,
     UserMessage,
 )
-from backend.features.user.domain import UserMessageQuotaExceededError
 
 
 class _SessionRepositoryStub(SessionRepository):
@@ -280,17 +279,6 @@ class _SessionRunnerStub(SessionRunner):
         return True
 
 
-class _UserMessageQuotaServiceStub:
-    def __init__(self, *, error: Exception | None = None) -> None:
-        self._error = error
-        self.consumed_user_ids: list[UUID] = []
-
-    async def consume(self, *, user_id: UUID) -> None:
-        if self._error is not None:
-            raise self._error
-        self.consumed_user_ids.append(user_id)
-
-
 def _make_management_service(
     *,
     repository: _SessionRepositoryStub | None = None,
@@ -310,7 +298,6 @@ def _make_conversation_service(
     repository: _SessionRepositoryStub | None = None,
     runner: _SessionRunnerStub | None = None,
     message_attachment_store: _MessageAttachmentStoreStub | None = None,
-    quota_service: _UserMessageQuotaServiceStub | None = None,
     title_generator: _SessionTitleGeneratorStub | None = None,
 ) -> SessionConversationService:
     return SessionConversationService(
@@ -318,7 +305,6 @@ def _make_conversation_service(
         runner=runner or _SessionRunnerStub(),
         message_attachment_store=message_attachment_store
         or _MessageAttachmentStoreStub(),
-        user_message_rate_limit_service=quota_service or _UserMessageQuotaServiceStub(),
         title_generator=title_generator or _SessionTitleGeneratorStub(),
     )
 
@@ -517,11 +503,9 @@ class TestSessionServiceSendMessage:
         session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub(chunks=["Hi"])
-        quota_service = _UserMessageQuotaServiceStub()
         service = _make_conversation_service(
             repository=repository,
             runner=runner,
-            quota_service=quota_service,
         )
 
         events = asyncio.run(
@@ -543,7 +527,6 @@ class TestSessionServiceSendMessage:
             isinstance(event, SessionAssistantMessageStarted) for event in events
         )
         assert isinstance(events[-1], SessionAssistantMessageCompleted)
-        assert quota_service.consumed_user_ids == [owner_id]
 
     def test_forwards_model_id_to_runner_on_send_message(self) -> None:
         owner_id = uuid4()
@@ -737,36 +720,6 @@ class TestSessionServiceSendMessage:
         assert any(
             isinstance(event, SessionAssistantMessageCompleted) for event in events
         )
-
-    def test_does_not_persist_when_quota_is_exceeded(self) -> None:
-        owner_id = uuid4()
-        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
-        repository = _SessionRepositoryStub(session_by_id=session)
-        quota_error = UserMessageQuotaExceededError(
-            limit=50,
-            reset_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
-        )
-        service = _make_conversation_service(
-            repository=repository,
-            quota_service=_UserMessageQuotaServiceStub(error=quota_error),
-        )
-
-        with pytest.raises(UserMessageQuotaExceededError):
-            asyncio.run(
-                _collect_events(
-                    service.send_message(
-                        session_id=session.id,
-                        user_id=owner_id,
-                        content="spiele rihanna hits",
-                    )
-                )
-            )
-
-        user_messages = [
-            entry for entry in session.entries if isinstance(entry, UserMessage)
-        ]
-        assert user_messages == []
-        assert repository.saved_sessions == []
 
     def test_batches_consecutive_tool_calls_into_one_sequence(self) -> None:
         owner_id = uuid4()

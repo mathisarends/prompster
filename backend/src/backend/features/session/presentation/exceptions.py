@@ -20,9 +20,6 @@ from backend.features.session.domain.exceptions import (
     UserCurationEventMissingTrackYearError,
     UserCurationEventNotFoundError,
 )
-from backend.features.user.presentation.exceptions import (
-    USER_MESSAGE_QUOTA_EXCEEDED_ERROR,
-)
 from fastapi import status
 from fastapi_canon import Error, ErrorRegistry
 
@@ -196,7 +193,6 @@ SESSION_ERRORS = ErrorRegistry.merge(
             USER_CURATION_EVENT_NOT_FOUND_ERROR,
             USER_CURATION_EVENT_ALREADY_CONSUMED_ERROR,
             USER_CURATION_EVENT_MISSING_TRACK_YEAR_ERROR,
-            USER_MESSAGE_QUOTA_EXCEEDED_ERROR,
             INVALID_SPOTIFY_TRACK_URI_ERROR,
             SPOTIFY_TRACK_NOT_FOUND_ERROR,
             SPOTIFY_TRACK_YEAR_MISSING_ERROR,

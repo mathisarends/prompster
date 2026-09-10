@@ -78,14 +78,3 @@ class LoggingLevelSettings(BaseSettings):
         if not normalized:
             return None
         return normalized
-
-
-class RateLimitSettings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-        populate_by_name=True,
-    )
-
-    agent_message_daily_limit: int = 50

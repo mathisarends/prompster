@@ -34,32 +34,6 @@ class UserModel(DatabaseEntity, table=True):
     profile_image_url: str | None = None
 
 
-class UserMessageQuotaModel(DatabaseEntity, table=True):
-    __tablename__ = "user_message_quotas"
-
-    user_id: UUID = Field(
-        sa_column=Column(
-            ForeignKey("users.id", ondelete="CASCADE"),
-            nullable=False,
-            unique=True,
-            index=True,
-        )
-    )
-    window_started_at: datetime = Field(sa_type=DateTime(timezone=True))
-    messages_consumed: int = Field(
-        default=0,
-        sa_column_kwargs={"server_default": text("0")},
-    )
-    updated_at: datetime | None = Field(
-        default=None,
-        sa_type=DateTime(timezone=True),
-        sa_column_kwargs={
-            "server_default": text("now()"),
-            "onupdate": text("now()"),
-        },
-    )
-
-
 class AuthIdentityModel(DatabaseEntity, table=True):
     __tablename__ = "auth_identities"
     __table_args__ = (

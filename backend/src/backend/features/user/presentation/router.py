@@ -1,9 +1,9 @@
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.exceptions import (
+    AUTH_ERRORS,
     AUTHENTICATION_REQUIRED_ERROR,
 )
-from backend.features.user.application import UserMessageRateLimitService, UserService
-from backend.features.user.presentation.exceptions import USER_ERRORS
+from backend.features.user.application import UserService
 from backend.features.user.presentation.mapper import to_user_me_response
 from backend.features.user.presentation.schemas import (
     UserDeleteInformationResponse,
@@ -20,21 +20,14 @@ user_router = APIRouter(route_class=DishkaRoute, prefix="/users", tags=["users"]
     response_model=UserMeResponse,
     status_code=status.HTTP_200_OK,
     operation_id="get_me",
-    responses=USER_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
+    responses=AUTH_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def get_me(
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[UserService],
-    message_rate_limit_service: FromDishka[UserMessageRateLimitService],
 ) -> UserMeResponse:
     user = await service.get_me(user_id=authenticated_user_id)
-    message_rate_limit = await message_rate_limit_service.inspect(
-        user_id=authenticated_user_id
-    )
-    return to_user_me_response(
-        user=user,
-        message_rate_limit=message_rate_limit,
-    )
+    return to_user_me_response(user=user)
 
 
 @user_router.get(
@@ -42,7 +35,7 @@ async def get_me(
     response_model=UserDeleteInformationResponse,
     status_code=status.HTTP_200_OK,
     operation_id="get_delete_information",
-    responses=USER_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
+    responses=AUTH_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def get_delete_information(
     authenticated_user_id: AuthenticatedUserId,
@@ -61,7 +54,7 @@ async def get_delete_information(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="delete_me",
-    responses=USER_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
+    responses=AUTH_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def delete_me(
     authenticated_user_id: AuthenticatedUserId,

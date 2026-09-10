@@ -64,11 +64,6 @@ class _EmptyRunner(SessionRunner):
             yield
 
 
-class _NoOpQuotaService:
-    async def consume(self, *, user_id):
-        return None
-
-
 class _TitleGeneratorStub(SessionTitleGenerator):
     async def generate(self, initial_prompt: str) -> str:
         return "Deck"
@@ -357,7 +352,6 @@ class TestSendMessageConsumesCurationEvents:
             session_repository=repository,
             runner=_EmptyRunner(),
             message_attachment_store=_MessageAttachmentStoreStub(),
-            user_message_rate_limit_service=_NoOpQuotaService(),
             title_generator=_TitleGeneratorStub(),
         )
 
@@ -394,7 +388,6 @@ class TestSendMessageConsumesCurationEvents:
             session_repository=repository,
             runner=_CancelledRunner(),
             message_attachment_store=_MessageAttachmentStoreStub(),
-            user_message_rate_limit_service=_NoOpQuotaService(),
             title_generator=_TitleGeneratorStub(),
         )
 

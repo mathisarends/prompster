@@ -124,7 +124,5 @@ export * from "./userCurationEventTypeResponse";
 export * from "./userDeleteInformationResponse";
 export * from "./userMeResponse";
 export * from "./userMessageEntryResponse";
-export * from "./userMessageQuotaExceededProblem";
-export * from "./userMessageRateLimitResponse";
 export * from "./validationError";
 export * from "./validationErrorCtx";
