@@ -22,11 +22,11 @@ dependencies = [
     "alembic>=1.18.4",
     "PyJWT>=2.10.1",
     "cryptography>=45.0.7",
-    "spotifyify>=0.5.0",
+    "spotifyify>=0.8.0",
     "resend>=2.30.1",
     "typst>=0.14.9",
     "qrcode[pil]>=8.2",
-    "tokenary>=0.1.0",
+    "tokenary>=0.1.1",
     "python-multipart>=0.0.20",
 ]
 

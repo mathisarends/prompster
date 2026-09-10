@@ -34,8 +34,8 @@ requires-dist = [
     { name = "llm", editable = "libs/llm" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
-    { name = "spotifyify", specifier = ">=0.5.0" },
-    { name = "tokenary", specifier = ">=0.1.0" },
+    { name = "spotifyify", specifier = ">=0.8.0" },
+    { name = "tokenary", specifier = ">=0.1.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -161,9 +161,9 @@ requires-dist = [
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "qrcode", extras = ["pil"], specifier = ">=8.2" },
     { name = "resend", specifier = ">=2.30.1" },
-    { name = "spotifyify", specifier = ">=0.5.0" },
+    { name = "spotifyify", specifier = ">=0.8.0" },
     { name = "sqlmodel", specifier = ">=0.0.38" },
-    { name = "tokenary", specifier = ">=0.1.0" },
+    { name = "tokenary", specifier = ">=0.1.1" },
     { name = "typst", specifier = ">=0.14.9" },
     { name = "uvicorn", specifier = ">=0.35.0" },
 ]
@@ -497,7 +497,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "py-llmify", extras = ["openai"], specifier = ">=0.6.0" },
+    { name = "py-llmify", extras = ["openai"], specifier = ">=0.11.0" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
 ]
@@ -661,15 +661,15 @@ source = { virtual = "." }
 
 [[package]]
 name = "py-llmify"
-version = "0.6.0"
+version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f8/78/24786dfef6de99edc01a0471e4ebe8a161206ab9c90db8611a764d3bcd76/py_llmify-0.6.0.tar.gz", hash = "sha256:aa7422e2521346afbab9207faa43d5efe2729093d60f599c5fad5d1cd02f0cfe", size = 21069, upload-time = "2026-06-21T17:11:32.918Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/59/8e/eb0e14ea1ac729e65fe6d084d77baa232e04e0896a4e8e53fa7cdd7643e2/py_llmify-0.11.0.tar.gz", hash = "sha256:502b370eab1df37eb0f061a1c60883e5a0f378d6e28bc855f8a98d0bffac373b", size = 54225, upload-time = "2026-08-27T20:53:50.601Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d8/07/c9099ebcdb68245de5931a635903e1eaeedfcaaa4b465e5fa225ac32dea1/py_llmify-0.6.0-py3-none-any.whl", hash = "sha256:230baa9394d4a92bfb9072ab585181510bb943d30eed01f16067942c3d59fbb7", size = 23782, upload-time = "2026-06-21T17:11:31.955Z" },
+    { url = "https://files.pythonhosted.org/packages/27/46/9f40a98b48336e6f196eeb4caae8d299587d62f5add8c5cc04763e51e701/py_llmify-0.11.0-py3-none-any.whl", hash = "sha256:d8efaa351106dc27715fc6ea43ac3edba296cb1f2295384cb21efd7c1451c950", size = 56366, upload-time = "2026-08-27T20:53:49.395Z" },
 ]
 
 [package.optional-dependencies]
@@ -876,16 +876,16 @@ wheels = [
 
 [[package]]
 name = "spotifyify"
-version = "0.5.0"
+version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c6/69/2c778719dc7aaa88e1f80fb39c4ac335231abf750d93f23f6bb3c5e5d4aa/spotifyify-0.5.0.tar.gz", hash = "sha256:de1e3043328ddcc06ce5cf27f0bfab6d9570fc9fdf74550e698df0815535cdc5", size = 43491, upload-time = "2026-06-05T20:36:57.558Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/b4/d9dd51cb306fc408fe19294e139ce4a19ea2b8eb0d3170398bd521538fc5/spotifyify-0.8.0.tar.gz", hash = "sha256:22f8d22aef56cbbf760a00ecc943c7d51683e4188bd6bf363466c379d4668e90", size = 74156, upload-time = "2026-07-26T19:06:03.9Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/fa/e30442f1370f8e6b25ad70a9cb5df5390a7e06fc134862c4c2538574d91d/spotifyify-0.5.0-py3-none-any.whl", hash = "sha256:95ed8d58d3eb6d0b5aeed8808ab204e509d54c0659e1e8cf93dae43f35d5c2a8", size = 44283, upload-time = "2026-06-05T20:36:56.583Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/09/2ffef4e4e656e2e8ca1a54fe963f4042e39aaae49df8308bfe701c7e2491/spotifyify-0.8.0-py3-none-any.whl", hash = "sha256:092deb72bc19ee992f3ef72bc8f0b78782a17ac007893510607f3c29b5c86493", size = 65968, upload-time = "2026-07-26T19:06:02.707Z" },
 ]
 
 [[package]]
@@ -942,14 +942,14 @@ wheels = [
 
 [[package]]
 name = "tokenary"
-version = "0.1.0"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/53/bc/96ebbdc926e364956630cd0130bb19558039169a2f10fb2d48ec2ca4918a/tokenary-0.1.0.tar.gz", hash = "sha256:92d04543932b706380adfc4f3a5178dfb5070fe18a3525aafcfe86ee6aa375cf", size = 220047, upload-time = "2026-05-14T07:39:33.693Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/d9/c1d81e6056712f597f33cd2e425017c5999ff0fbbcaacc6555455e869d2c/tokenary-0.1.1.tar.gz", hash = "sha256:e151da2591e110e5acb824345b933d835d4ef2067b8aab86e46e59db00d4d68d", size = 257874, upload-time = "2026-07-23T16:00:38.306Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e9/40/10d0302113e6283922de672f8dbfee098cd04b27015b4732010e128d3eef/tokenary-0.1.0-py3-none-any.whl", hash = "sha256:b18039692202213e43477c5adde4789b5f477a1fe971373634747576b3765b23", size = 141408, upload-time = "2026-05-14T07:39:32.01Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/89/23820f0d6d2aac2854876f7e38439c87e5bc270f208ad98c9c5133d86ce5/tokenary-0.1.1-py3-none-any.whl", hash = "sha256:ff4dbb60583daead61f1588cccf66e1f0fad08ca8711bb74de140b8661d8e037", size = 164628, upload-time = "2026-07-23T16:00:36.861Z" },
 ]
 
 [[package]]

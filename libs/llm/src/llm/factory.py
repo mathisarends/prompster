@@ -1,11 +1,11 @@
-from llmify import ChatOpenAI
+from llmify import ChatOpenAIResponses
 
+from llm.credentials import LLMCredentials
 from llm.registry import (
     DEFAULT_OPENAI_MODEL,
     ModelId,
     ensure_supported_openai_model,
 )
-from llm.credentials import LLMCredentials
 
 
 def _resolve_openai_api_key(
@@ -26,7 +26,7 @@ def create_openai_llm(
     temperature: float | None = None,
     max_tokens: int | None = None,
     **kwargs: object,
-) -> ChatOpenAI:
+) -> ChatOpenAIResponses:
     selected_model = ensure_supported_openai_model(model)
     resolved_api_key = _resolve_openai_api_key(api_key, credentials)
     options: dict[str, object] = {
@@ -39,7 +39,7 @@ def create_openai_llm(
     if max_tokens is not None:
         options["max_tokens"] = max_tokens
 
-    return ChatOpenAI(**kwargs, **options)
+    return ChatOpenAIResponses(**kwargs, **options)
 
 
 def create_gpt_5_4(
@@ -49,7 +49,7 @@ def create_gpt_5_4(
     temperature: float | None = None,
     max_tokens: int | None = None,
     **kwargs: object,
-) -> ChatOpenAI:
+) -> ChatOpenAIResponses:
     return create_openai_llm(
         model=ModelId.GPT_5_4,
         api_key=api_key,
@@ -67,7 +67,7 @@ def create_gpt_5_4_mini(
     temperature: float | None = None,
     max_tokens: int | None = None,
     **kwargs: object,
-) -> ChatOpenAI:
+) -> ChatOpenAIResponses:
     return create_openai_llm(
         model=ModelId.GPT_5_4_MINI,
         api_key=api_key,
@@ -85,7 +85,7 @@ def create_gpt_5_5(
     temperature: float | None = None,
     max_tokens: int | None = None,
     **kwargs: object,
-) -> ChatOpenAI:
+) -> ChatOpenAIResponses:
     return create_openai_llm(
         model=ModelId.GPT_5_5,
         api_key=api_key,
