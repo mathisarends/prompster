@@ -51,11 +51,17 @@ from backend.features.session.presentation.sse import (
 )
 from backend.features.spotify.application import SpotifySearch
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Query, Response, status
-from fastapi_canon import Response as CanonResponse
+from fastapi import Query, Response, status
+from fastapi_canon import CanonResponse, CanonRouter
 from starlette.responses import StreamingResponse
 
-router = APIRouter(route_class=DishkaRoute, prefix="/sessions", tags=["sessions"])
+router = CanonRouter(
+    route_class=DishkaRoute,
+    prefix="/sessions",
+    tags=["sessions"],
+    errors=SESSION_ERRORS,
+    raises=(AUTHENTICATION_REQUIRED_ERROR,),
+)
 
 
 @router.get(
@@ -63,7 +69,6 @@ router = APIRouter(route_class=DishkaRoute, prefix="/sessions", tags=["sessions"
     response_model=SessionSummaryListResponse,
     status_code=status.HTTP_200_OK,
     operation_id="list_sessions",
-    responses=SESSION_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def list_sessions(
     authenticated_user_id: AuthenticatedUserId,
@@ -87,8 +92,7 @@ async def list_sessions(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="get_session",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
     ),
@@ -115,7 +119,6 @@ async def get_session_by_id(
     response_model=SessionResponse,
     status_code=status.HTTP_201_CREATED,
     operation_id="create_session",
-    responses=SESSION_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def create_session(
     authenticated_user_id: AuthenticatedUserId,
@@ -134,13 +137,8 @@ async def create_session(
 
 @router.post(
     "/{session_id}/messages",
-    response_class=StreamingResponse,
-    status_code=status.HTTP_200_OK,
     operation_id="send_message",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
-        success=CanonResponse.sse(description="Server-sent session events."),
-    ),
+    response=CanonResponse.sse(description="Server-sent session events."),
 )
 async def send_message(
     session_id: UUID,
@@ -168,8 +166,7 @@ async def send_message(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="submit_onboarding_answer",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
         INVALID_SESSION_PHASE_TRANSITION_ERROR,
@@ -198,13 +195,8 @@ async def submit_onboarding_answer(
 
 @router.post(
     "/{session_id}/onboarding/complete",
-    response_class=StreamingResponse,
-    status_code=status.HTTP_200_OK,
     operation_id="complete_onboarding",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
-        success=CanonResponse.sse(description="Server-sent session events."),
-    ),
+    response=CanonResponse.sse(description="Server-sent session events."),
 )
 async def complete_onboarding(
     session_id: UUID,
@@ -223,14 +215,12 @@ async def complete_onboarding(
 
 @router.post(
     "/{session_id}/messages/stop",
-    status_code=status.HTTP_204_NO_CONTENT,
     operation_id="stop_message",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
-        success=CanonResponse.empty(),
     ),
+    response=CanonResponse.empty(),
 )
 async def stop_message(
     session_id: UUID,
@@ -249,8 +239,7 @@ async def stop_message(
     response_model=PlaylistTrackResponse,
     status_code=status.HTTP_201_CREATED,
     operation_id="add_playlist_track",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
         PLAYLIST_TRACK_LIMIT_EXCEEDED_ERROR,
@@ -279,8 +268,7 @@ async def add_session_playlist_track(
     response_model=PlaylistTrackResponse,
     status_code=status.HTTP_201_CREATED,
     operation_id="add_spotify_playlist_track",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
         PLAYLIST_TRACK_LIMIT_EXCEEDED_ERROR,
@@ -313,15 +301,13 @@ async def add_session_spotify_playlist_track(
 
 @router.delete(
     "/{session_id}/tracks/{track_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     operation_id="remove_playlist_track",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
         PLAYLIST_TRACK_NOT_FOUND_ERROR,
-        success=CanonResponse.empty(),
     ),
+    response=CanonResponse.empty(),
 )
 async def remove_session_playlist_track(
     session_id: UUID,
@@ -342,8 +328,7 @@ async def remove_session_playlist_track(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="restore_user_curation_event",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
         USER_CURATION_EVENT_NOT_FOUND_ERROR,
@@ -372,18 +357,16 @@ async def restore_session_user_curation_event(
 
 @router.get(
     "/{session_id}/playlist/pdf",
-    status_code=status.HTTP_200_OK,
     operation_id="export_session_playlist",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
         SESSION_PLAYLIST_EMPTY_ERROR,
-        success=CanonResponse.binary(
-            "application/pdf",
-            description="Playlist deck PDF.",
-            headers=("Content-Disposition",),
-        ),
+    ),
+    response=CanonResponse.binary(
+        "application/pdf",
+        description="Playlist deck PDF.",
+        headers=("Content-Disposition",),
     ),
 )
 async def export_session_playlist(
@@ -408,18 +391,15 @@ async def export_session_playlist(
 
 @router.post(
     "/{session_id}/playlist/spotify",
-    response_class=StreamingResponse,
-    status_code=status.HTTP_200_OK,
     operation_id="export_session_playlist_to_spotify",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
         SESSION_PLAYLIST_EMPTY_ERROR,
         SESSION_PLAYLIST_MISSING_SPOTIFY_TRACKS_ERROR,
         SESSION_EXPORT_REQUIRES_SPOTIFY_CONNECTION_ERROR,
-        success=CanonResponse.sse(description="Server-sent session events."),
     ),
+    response=CanonResponse.sse(description="Server-sent session events."),
 )
 async def export_session_playlist_to_spotify(
     session_id: UUID,
@@ -441,8 +421,7 @@ async def export_session_playlist_to_spotify(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="update_session",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
     ),
@@ -471,8 +450,7 @@ async def update_session(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="star_session",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
     ),
@@ -499,8 +477,7 @@ async def star_session(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="unstar_session",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
     ),
@@ -524,14 +501,12 @@ async def unstar_session(
 
 @router.delete(
     "/{session_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
     operation_id="delete_session",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SESSION_NOT_FOUND_ERROR,
         SESSION_ACCESS_DENIED_ERROR,
-        success=CanonResponse.empty(),
     ),
+    response=CanonResponse.empty(),
 )
 async def delete_session(
     session_id: UUID,

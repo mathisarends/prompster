@@ -19,29 +19,26 @@ from backend.features.auth.presentation.oauth_state_cookies import (
     SpotifyLoginOAuthStateCookies,
 )
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Query, Request, Response, status
+from fastapi import Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi_canon import Response as CanonResponse
+from fastapi_canon import CanonResponse, CanonRouter
 
-auth_router = APIRouter(
+auth_router = CanonRouter(
     route_class=DishkaRoute,
     prefix="/auth",
     tags=["auth"],
+    errors=AUTH_ERRORS,
 )
 
 
 @auth_router.get(
     "/google/login",
-    status_code=status.HTTP_307_TEMPORARY_REDIRECT,
-    response_class=RedirectResponse,
     response_model=None,
     operation_id="google_login",
-    responses=AUTH_ERRORS.responses(
-        success=CanonResponse.empty(
-            status=status.HTTP_307_TEMPORARY_REDIRECT,
-            description="Redirect to Google authorization.",
-            headers=("Location",),
-        )
+    response=CanonResponse.empty(
+        status=status.HTTP_307_TEMPORARY_REDIRECT,
+        description="Redirect to Google authorization.",
+        headers=("Location",),
     ),
 )
 async def google_login(
@@ -101,16 +98,12 @@ async def google_callback(
 
 @auth_router.get(
     "/spotify/login",
-    status_code=status.HTTP_307_TEMPORARY_REDIRECT,
-    response_class=RedirectResponse,
     response_model=None,
     operation_id="spotify_login",
-    responses=AUTH_ERRORS.responses(
-        success=CanonResponse.empty(
-            status=status.HTTP_307_TEMPORARY_REDIRECT,
-            description="Redirect to Spotify authorization.",
-            headers=("Location",),
-        )
+    response=CanonResponse.empty(
+        status=status.HTTP_307_TEMPORARY_REDIRECT,
+        description="Redirect to Spotify authorization.",
+        headers=("Location",),
     ),
 )
 async def spotify_login(
@@ -173,10 +166,9 @@ async def spotify_login_callback(
 
 @auth_router.post(
     "/logout",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="logout",
-    responses=AUTH_ERRORS.responses(success=CanonResponse.empty()),
+    response=CanonResponse.empty(),
 )
 async def logout(
     response: Response,
@@ -187,14 +179,13 @@ async def logout(
 
 @auth_router.post(
     "/refresh",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="refresh",
-    responses=AUTH_ERRORS.responses(
+    raises=(
         SESSION_EXPIRED_ERROR,
         SESSION_INVALID_ERROR,
-        success=CanonResponse.empty(),
     ),
+    response=CanonResponse.empty(),
 )
 async def refresh(
     authenticated_user_id: RefreshAuthenticatedUserId,

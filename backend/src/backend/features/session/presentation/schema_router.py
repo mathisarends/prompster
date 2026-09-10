@@ -10,12 +10,15 @@ from backend.features.session.presentation.sse import (
     SpotifyExportServerEventSchema,
 )
 from dishka.integrations.fastapi import DishkaRoute
-from fastapi import APIRouter, status
+from fastapi import status
+from fastapi_canon import CanonRouter
 
-session_schema_router = APIRouter(
+session_schema_router = CanonRouter(
     route_class=DishkaRoute,
     prefix="/sessions",
     tags=["session_schemas"],
+    errors=SESSION_ERRORS,
+    raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 
 
@@ -24,7 +27,6 @@ session_schema_router = APIRouter(
     response_model=SessionServerEvent,
     status_code=status.HTTP_200_OK,
     operation_id="get_session_event_schema",
-    responses=SESSION_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def get_session_event_schema(
     _authenticated_user_id: AuthenticatedUserId,
@@ -37,7 +39,6 @@ async def get_session_event_schema(
     response_model=SpotifyExportServerEventSchema,
     status_code=status.HTTP_200_OK,
     operation_id="get_spotify_export_event_schema",
-    responses=SESSION_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def get_spotify_export_event_schema(
     _authenticated_user_id: AuthenticatedUserId,
@@ -50,7 +51,6 @@ async def get_spotify_export_event_schema(
     response_model=SessionEventTypeSchema,
     status_code=status.HTTP_200_OK,
     operation_id="get_session_event_type_schema",
-    responses=SESSION_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def get_session_event_type_schema(
     _authenticated_user_id: AuthenticatedUserId,
@@ -63,7 +63,6 @@ async def get_session_event_type_schema(
     response_model=EntryKindSchema,
     status_code=status.HTTP_200_OK,
     operation_id="get_session_entry_kind_schema",
-    responses=SESSION_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def get_session_entry_kind_schema(
     _authenticated_user_id: AuthenticatedUserId,

@@ -10,10 +10,16 @@ from backend.features.user.presentation.schemas import (
     UserMeResponse,
 )
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Response, status
-from fastapi_canon import Response as CanonResponse
+from fastapi import Response, status
+from fastapi_canon import CanonResponse, CanonRouter
 
-user_router = APIRouter(route_class=DishkaRoute, prefix="/users", tags=["users"])
+user_router = CanonRouter(
+    route_class=DishkaRoute,
+    prefix="/users",
+    tags=["users"],
+    errors=AUTH_ERRORS,
+    raises=(AUTHENTICATION_REQUIRED_ERROR,),
+)
 
 
 @user_router.get(
@@ -21,7 +27,6 @@ user_router = APIRouter(route_class=DishkaRoute, prefix="/users", tags=["users"]
     response_model=UserMeResponse,
     status_code=status.HTTP_200_OK,
     operation_id="get_me",
-    responses=AUTH_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def get_me(
     authenticated_user_id: AuthenticatedUserId,
@@ -36,7 +41,6 @@ async def get_me(
     response_model=UserDeleteInformationResponse,
     status_code=status.HTTP_200_OK,
     operation_id="get_delete_information",
-    responses=AUTH_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def get_delete_information(
     authenticated_user_id: AuthenticatedUserId,
@@ -52,13 +56,9 @@ async def get_delete_information(
 
 @user_router.delete(
     "/me",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="delete_me",
-    responses=AUTH_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
-        success=CanonResponse.empty(),
-    ),
+    response=CanonResponse.empty(),
 )
 async def delete_me(
     authenticated_user_id: AuthenticatedUserId,

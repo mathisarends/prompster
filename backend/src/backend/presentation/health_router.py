@@ -1,33 +1,28 @@
 import logging
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, status
+from fastapi import status
 from fastapi.responses import JSONResponse
-from fastapi_canon import ErrorRegistry
-from fastapi_canon import Response as CanonResponse
+from fastapi_canon import CanonResponse, CanonRouter
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 logger = logging.getLogger(__name__)
 
-health_router = APIRouter(route_class=DishkaRoute, tags=["system"])
-_SYSTEM_RESPONSES = ErrorRegistry(errors=(), name="system")
+health_router = CanonRouter(route_class=DishkaRoute, tags=["system"])
 
 
 @health_router.get(
     "/health",
-    status_code=status.HTTP_200_OK,
     operation_id="health_check",
-    responses=_SYSTEM_RESPONSES.responses(
-        success=CanonResponse.json(
-            schema={
-                "type": "object",
-                "properties": {"status": {"type": "string", "const": "ok"}},
-                "required": ["status"],
-                "additionalProperties": False,
-            },
-            description="The application process is healthy.",
-        )
+    response=CanonResponse.json(
+        schema={
+            "type": "object",
+            "properties": {"status": {"type": "string", "const": "ok"}},
+            "required": ["status"],
+            "additionalProperties": False,
+        },
+        description="The application process is healthy.",
     ),
 )
 async def health_check() -> dict[str, str]:
@@ -37,20 +32,17 @@ async def health_check() -> dict[str, str]:
 @health_router.get(
     "/readiness",
     response_model=None,
-    status_code=status.HTTP_200_OK,
     operation_id="readiness_check",
-    responses=_SYSTEM_RESPONSES.responses(
-        success=CanonResponse.json(
-            schema={
-                "type": "object",
-                "properties": {"status": {"type": "string", "const": "ready"}},
-                "required": ["status"],
-                "additionalProperties": False,
-            },
-            description="The application is ready to receive traffic.",
-        )
-    )
-    | {
+    response=CanonResponse.json(
+        schema={
+            "type": "object",
+            "properties": {"status": {"type": "string", "const": "ready"}},
+            "required": ["status"],
+            "additionalProperties": False,
+        },
+        description="The application is ready to receive traffic.",
+    ),
+    responses={
         status.HTTP_503_SERVICE_UNAVAILABLE: {
             "description": "The application is not ready to receive traffic.",
             "content": {

@@ -17,12 +17,15 @@ from backend.features.session.presentation.schemas import (
     UploadedImageAttachmentResponse,
 )
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, File, UploadFile, status
+from fastapi import File, UploadFile, status
+from fastapi_canon import CanonRouter
 
-image_attachment_router = APIRouter(
+image_attachment_router = CanonRouter(
     route_class=DishkaRoute,
     prefix="/image-attachments",
     tags=["image-attachments"],
+    errors=SESSION_ERRORS,
+    raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 
 
@@ -31,10 +34,7 @@ image_attachment_router = APIRouter(
     response_model=UploadedImageAttachmentResponse,
     status_code=status.HTTP_201_CREATED,
     operation_id="upload_image_attachment",
-    responses=SESSION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
-        INVALID_IMAGE_ATTACHMENT_ERROR,
-    ),
+    raises=(INVALID_IMAGE_ATTACHMENT_ERROR,),
 )
 async def upload_image_attachment(
     authenticated_user_id: AuthenticatedUserId,

@@ -1,7 +1,7 @@
-from fastapi import APIRouter
+from fastapi_canon import CanonRouter
 
 
-class PascalCaseRouter(APIRouter):
+class PascalCaseRouter(CanonRouter):
     """
     A custom APIRouter that ensures response models use alias names (typically PascalCase) in API responses.
 

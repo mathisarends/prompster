@@ -20,30 +20,27 @@ from backend.features.oauth_connections.presentation.spotify_oauth_state_cookies
     SpotifyOAuthStateCookies,
 )
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Query, Request, Response, status
+from fastapi import Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi_canon import Response as CanonResponse
+from fastapi_canon import CanonResponse, CanonRouter
 
-spotify_oauth_router = APIRouter(
+spotify_oauth_router = CanonRouter(
     route_class=DishkaRoute,
     prefix="/auth/spotify",
     tags=["spotify"],
+    errors=OAUTH_CONNECTION_ERRORS,
+    raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 
 
 @spotify_oauth_router.get(
     "/connect",
-    status_code=status.HTTP_307_TEMPORARY_REDIRECT,
-    response_class=RedirectResponse,
     response_model=None,
     operation_id="spotify_connect",
-    responses=OAUTH_CONNECTION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
-        success=CanonResponse.empty(
-            status=status.HTTP_307_TEMPORARY_REDIRECT,
-            description="Redirect to Spotify authorization.",
-            headers=("Location",),
-        ),
+    response=CanonResponse.empty(
+        status=status.HTTP_307_TEMPORARY_REDIRECT,
+        description="Redirect to Spotify authorization.",
+        headers=("Location",),
     ),
 )
 async def spotify_connect(
@@ -97,13 +94,9 @@ async def spotify_callback(
 
 @spotify_oauth_router.delete(
     "",
-    status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="spotify_disconnect",
-    responses=OAUTH_CONNECTION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
-        success=CanonResponse.empty(),
-    ),
+    response=CanonResponse.empty(),
 )
 async def spotify_disconnect(
     authenticated_user_id: AuthenticatedUserId,
@@ -117,8 +110,7 @@ async def spotify_disconnect(
     response_model=SpotifyAccessTokenResponse,
     status_code=status.HTTP_200_OK,
     operation_id="spotify_get_access_token",
-    responses=OAUTH_CONNECTION_ERRORS.responses(
-        AUTHENTICATION_REQUIRED_ERROR,
+    raises=(
         SPOTIFY_CONNECTION_NOT_FOUND_ERROR,
         SPOTIFY_TOKEN_REVOKED_ERROR,
     ),

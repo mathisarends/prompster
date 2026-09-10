@@ -6,9 +6,10 @@ from backend.features.llm.presentation.schemas import (
     LLMOptionsResponse,
 )
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, status
+from fastapi import status
+from fastapi_canon import CanonRouter
 
-router = APIRouter(
+router = CanonRouter(
     route_class=DishkaRoute,
     prefix="/llm-options",
     tags=["llm-options"],

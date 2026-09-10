@@ -11,9 +11,21 @@ from backend.features.spotify.presentation.schemas import (
     SpotifyUnifiedSearchResponse,
 )
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Query, status
+from fastapi import Query, status
+from fastapi_canon import CanonRouter
 
-spotify_router = APIRouter(route_class=DishkaRoute, prefix="/spotify", tags=["spotify"])
+spotify_router = CanonRouter(
+    route_class=DishkaRoute,
+    prefix="/spotify",
+    tags=["spotify"],
+    errors=SPOTIFY_ERRORS,
+    raises=(AUTHENTICATION_REQUIRED_ERROR,),
+)
+_DEFAULT_SEARCH_TYPES = (
+    SpotifySearchType.TRACK,
+    SpotifySearchType.PLAYLIST,
+    SpotifySearchType.ARTIST,
+)
 
 
 @spotify_router.get(
@@ -21,7 +33,6 @@ spotify_router = APIRouter(route_class=DishkaRoute, prefix="/spotify", tags=["sp
     response_model=SpotifyUnifiedSearchResponse,
     status_code=status.HTTP_200_OK,
     operation_id="search_spotify",
-    responses=SPOTIFY_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def search_spotify(
     authenticated_user_id: AuthenticatedUserId,
@@ -29,11 +40,7 @@ async def search_spotify(
     query: str = Query(min_length=1, max_length=200, description="Search query"),
     limit: int = Query(default=20, ge=1, le=50),
     types: set[SpotifySearchType] = Query(
-        default={
-            SpotifySearchType.TRACK,
-            SpotifySearchType.PLAYLIST,
-            SpotifySearchType.ARTIST,
-        },
+        default=_DEFAULT_SEARCH_TYPES,
         description="Search resource types",
     ),
 ) -> SpotifyUnifiedSearchResponse:
