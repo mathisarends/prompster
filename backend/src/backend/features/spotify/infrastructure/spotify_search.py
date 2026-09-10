@@ -24,7 +24,7 @@ type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[Spotif
 logger = logging.getLogger(__name__)
 
 
-class SpotifySearch(SpotifySearchPort):
+class SpotifyifySearch(SpotifySearchPort):
     def __init__(
         self,
         spotify: Spotifyify,

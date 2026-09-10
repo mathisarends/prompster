@@ -15,11 +15,11 @@ from backend.features.spotify.infrastructure.spotify_search_cache import (
 from backend.features.spotify.infrastructure.spotify_playlist_creator import (
     SpotifyPlaylistCreator,
 )
-from backend.features.spotify.infrastructure.spotify_search import SpotifySearch
+from backend.features.spotify.infrastructure.spotify_search import SpotifyifySearch
 
 
-def _make_search(spotify: Any) -> SpotifySearch:
-    return SpotifySearch(
+def _make_search(spotify: Any) -> SpotifyifySearch:
+    return SpotifyifySearch(
         spotify=spotify,
         search_cache=SpotifySearchCache(),
     )

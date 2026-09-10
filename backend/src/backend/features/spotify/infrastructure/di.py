@@ -44,7 +44,7 @@ class SpotifyProvider(Provider):
         spotify: Spotifyify,
         search_cache: SpotifySearchCache,
     ) -> SpotifySearch:
-        return spotify_search_infra.SpotifySearch(
+        return spotify_search_infra.SpotifyifySearch(
             spotify=spotify,
             search_cache=search_cache,
         )
