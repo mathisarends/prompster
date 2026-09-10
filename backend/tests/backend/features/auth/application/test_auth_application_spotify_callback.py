@@ -1,10 +1,10 @@
 import asyncio
 from uuid import UUID, uuid4
 
-from backend.features.auth.application.commands.auth_signup_notifier import (
+from backend.features.auth.application.auth_signup_notifier import (
     AuthSignupNotifier,
 )
-from backend.features.auth.application.commands.spotify_oauth_flow import (
+from backend.features.auth.application.spotify_oauth_flow import (
     SpotifyOAuthFlow,
 )
 from backend.features.auth.application.ports import TokenIssuer

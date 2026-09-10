@@ -1,10 +1,10 @@
 import asyncio
 from uuid import UUID, uuid4
 
-from backend.features.auth.application.commands.auth_signup_notifier import (
+from backend.features.auth.application.auth_signup_notifier import (
     AuthSignupNotifier,
 )
-from backend.features.auth.application.commands.google_oauth_flow import (
+from backend.features.auth.application.google_oauth_flow import (
     GoogleOAuthFlow,
 )
 from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer

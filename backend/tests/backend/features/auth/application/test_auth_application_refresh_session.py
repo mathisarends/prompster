@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from backend.features.auth.application.commands.refresh_session import (
+from backend.features.auth.application.refresh_session import (
     SessionRefresher,
 )
 from backend.features.auth.application.exceptions import SessionInvalidException

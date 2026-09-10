@@ -26,10 +26,10 @@ if TYPE_CHECKING:
 
 from .auth_signup_notifier import AuthSignupNotifier
 
+_STATE_TOKEN_BYTES = 32
+
 
 class SpotifyOAuthFlow:
-    _STATE_TOKEN_BYTES = 32
-
     def __init__(
         self,
         user_repository: UserRepository,
@@ -45,7 +45,7 @@ class SpotifyOAuthFlow:
         self._signup_notifier = signup_notifier
 
     def login(self) -> SpotifyLoginAuthorizationRequest:
-        oauth_state = secrets.token_urlsafe(self._STATE_TOKEN_BYTES)
+        oauth_state = secrets.token_urlsafe(_STATE_TOKEN_BYTES)
         authorization_url = self._spotify_oauth_client.build_authorization_url(
             state=oauth_state,
         )
