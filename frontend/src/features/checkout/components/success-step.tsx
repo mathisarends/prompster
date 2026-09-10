@@ -67,8 +67,8 @@ export const SuccessStep = ({
       <ol className="mt-7 space-y-5">
         {[
           [
-            "Check deine Mails.",
-            "Wir haben Download-Link & Rechnung an deine Adresse geschickt.",
+            "Download starten.",
+            "Dein Deck steht direkt hier zum Herunterladen bereit.",
           ],
           [
             "Drucken & ausschneiden.",

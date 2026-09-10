@@ -10,7 +10,6 @@ import type { UserMessageRateLimitResponse } from "./userMessageRateLimitRespons
 export interface UserMeResponse {
   id: string;
   name: string;
-  email: string;
   createdAt: string;
   spotifyConnected: boolean;
   spotifyPremium: boolean;

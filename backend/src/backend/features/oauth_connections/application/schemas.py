@@ -46,6 +46,5 @@ class SpotifyAccessToken(BaseModel):
 class SpotifyUserProfile(BaseModel):
     spotify_user_id: str
     is_premium: bool
-    email: str | None = None
     display_name: str | None = None
     profile_image_url: str | None = None

@@ -24,7 +24,6 @@ class _UserServiceStub:
         self.user = User(
             id=uuid4(),
             name="Mathis",
-            email="mathis@example.com",
             spotify=SpotifyAccount.connected_with(is_premium=True),
             created_time=datetime(2026, 1, 1, tzinfo=timezone.utc),
         )

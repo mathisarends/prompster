@@ -10,7 +10,6 @@ class User(Aggregate):
         self,
         *,
         name: str,
-        email: str,
         profile_image_url: str | None = None,
         spotify: SpotifyAccount | None = None,
         id: UUID | None = None,
@@ -18,6 +17,5 @@ class User(Aggregate):
     ) -> None:
         super().__init__(id=id, created_time=created_time)
         self.name = name
-        self.email = email
         self.profile_image_url = profile_image_url
         self.spotify = spotify or SpotifyAccount.disconnected()

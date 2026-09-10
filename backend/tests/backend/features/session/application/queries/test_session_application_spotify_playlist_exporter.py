@@ -63,9 +63,6 @@ class _UserRepositoryStub(UserRepository):
     async def count_sessions_for_user(self, *, user_id: UUID) -> int:
         raise AssertionError("Not used in this test")
 
-    async def get_by_email(self, *, email: str) -> User | None:
-        raise AssertionError("Not used in this test")
-
     async def get_by_auth_identity(self, *, provider, subject: str) -> User | None:
         raise AssertionError("Not used in this test")
 
@@ -165,7 +162,6 @@ class TestSessionSpotifyPlaylistExporter:
             user=User(
                 id=owner_id,
                 name="Mathis",
-                email="mathis@example.com",
                 spotify=SpotifyAccount.connected_with(is_premium=True),
             )
         )
@@ -219,7 +215,6 @@ class TestSessionSpotifyPlaylistExporter:
             user=User(
                 id=owner_id,
                 name="Mathis",
-                email="mathis@example.com",
                 spotify=SpotifyAccount.connected_with(is_premium=True),
             )
         )
@@ -266,7 +261,6 @@ class TestSessionSpotifyPlaylistExporter:
                 user=User(
                     id=owner_id,
                     name="Mathis",
-                    email="mathis@example.com",
                     spotify=SpotifyAccount.connected_with(is_premium=True),
                 )
             ),
@@ -289,7 +283,6 @@ class TestSessionSpotifyPlaylistExporter:
                 user=User(
                     id=owner_id,
                     name="Mathis",
-                    email="mathis@example.com",
                     spotify=SpotifyAccount.connected_with(is_premium=True),
                 )
             ),

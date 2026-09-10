@@ -60,11 +60,9 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
         ),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("email", sa.String(), nullable=False),
         sa.Column("google_subject", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_users_email"), "users", ["email"], unique=True)
     op.create_index(
         op.f("ix_users_google_subject"),
         "users",
@@ -75,7 +73,6 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_index(op.f("ix_users_google_subject"), table_name="users")
-    op.drop_index(op.f("ix_users_email"), table_name="users")
     op.drop_table("users")
 
     op.drop_index(op.f("ix_sessions_owner_id"), table_name="sessions")

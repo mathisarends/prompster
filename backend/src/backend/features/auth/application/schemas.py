@@ -27,7 +27,7 @@ class GoogleCallbackResult(BaseModel):
     error_reason: str | None = None
 
     @classmethod
-    def success(cls, *, session: AuthSession) -> "GoogleCallbackResult":
+    def success(cls, *, session: AuthSession) -> Self:
         return cls(succeeded=True, session=session)
 
     @classmethod
@@ -74,13 +74,11 @@ class SpotifyLoginCallbackResult(BaseModel):
 
 class GoogleIdentity(BaseModel):
     subject: str = Field(validation_alias=AliasChoices("subject", "sub"))
-    email: str
     name: str | None = None
     profile_image_url: str | None = Field(
         default=None,
         validation_alias=AliasChoices("profile_image_url", "picture"),
     )
-    email_verified: bool = False
 
     @field_validator("subject")
     @classmethod
@@ -88,14 +86,6 @@ class GoogleIdentity(BaseModel):
         normalized = value.strip()
         if not normalized:
             raise ValueError("subject must not be empty")
-        return normalized
-
-    @field_validator("email")
-    @classmethod
-    def normalize_email(cls, value: str) -> str:
-        normalized = value.strip().lower()
-        if not normalized:
-            raise ValueError("email must not be empty")
         return normalized
 
     @field_validator("name")
@@ -124,5 +114,4 @@ class TokenType(StrEnum):
 
 class TokenPayload(BaseModel):
     user_id: UUID
-    email: str | None = None
     expires_at: datetime

@@ -3725,7 +3725,6 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "name": { "type": "string", "title": "Name" },
-          "email": { "type": "string", "title": "Email" },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -3744,7 +3743,6 @@
         "required": [
           "id",
           "name",
-          "email",
           "createdAt",
           "spotifyConnected",
           "spotifyPremium",

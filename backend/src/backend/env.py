@@ -89,15 +89,3 @@ class RateLimitSettings(BaseSettings):
     )
 
     agent_message_daily_limit: int = 50
-
-
-class FeatureToggleSettings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        env_prefix="FEATURE_TOGGLE_",
-        extra="ignore",
-        populate_by_name=True,
-    )
-
-    send_welcome_email_on_auth_signup: bool = True

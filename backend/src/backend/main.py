@@ -17,7 +17,6 @@ from backend.features import (
 )
 from backend.infrastructure.di import (
     DatabaseProvider,
-    EmailProvider,
     ObjectStorageProvider,
 )
 from backend.lifespan import lifespan
@@ -36,7 +35,7 @@ _FEATURES = (
 )
 
 _INFRASTRUCTURE_FEATURE = Feature(
-    providers=(DatabaseProvider(), EmailProvider(), ObjectStorageProvider()),
+    providers=(DatabaseProvider(), ObjectStorageProvider()),
 )
 _SYSTEM_FEATURE = Feature(routers=(health_router,))
 _COMPOSITION = Composition(

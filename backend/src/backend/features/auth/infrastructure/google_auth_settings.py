@@ -33,7 +33,7 @@ class GoogleAuthSettings(BaseSettings):
         ),
     )
     scope: str = Field(
-        default="openid email profile",
+        default="openid profile",
         validation_alias=AliasChoices("GOOGLE_SCOPE", "google_scope"),
     )
     token_endpoint: str = Field(

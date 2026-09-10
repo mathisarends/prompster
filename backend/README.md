@@ -35,7 +35,6 @@ GET  /api/v1/sessions/{id}/export → streams a PDF deck
 
 - **Database** — async PostgreSQL via `asyncpg` + SQLModel ORM + Alembic migrations
 - **Storage** — S3-compatible object storage via `aioboto3`
-- **Email** — transactional mail via `resend`
 - **DI** — `dishka` async container with per-request scoping
 
 ### running
@@ -44,4 +43,4 @@ GET  /api/v1/sessions/{id}/export → streams a PDF deck
 uv run backend        # starts uvicorn on the configured port
 ```
 
-Requires environment variables defined in settings modules (database URL, JWT secret, OAuth credentials, S3 config, `RESEND_API_KEY`, etc.).
+Requires environment variables defined in settings modules (database URL, JWT secret, OAuth credentials, and S3 config).

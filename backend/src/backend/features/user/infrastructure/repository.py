@@ -38,7 +38,6 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
         return User(
             id=orm.id,
             name=orm.name,
-            email=orm.email,
             profile_image_url=orm.profile_image_url,
             spotify=spotify or SpotifyAccount.disconnected(),
             created_time=orm.created_at,
@@ -48,7 +47,6 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
         return UserModel(
             id=domain.id,
             name=domain.name,
-            email=domain.email,
             profile_image_url=domain.profile_image_url,
             created_at=domain.created_at,
         )
@@ -73,10 +71,6 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
         )
         count = await self.session.scalar(stmt)
         return int(count or 0)
-
-    async def get_by_email(self, *, email: str) -> User | None:
-        normalized_email = email.strip().lower()
-        return await self.find_by(email=normalized_email)
 
     async def get_by_auth_identity(
         self,

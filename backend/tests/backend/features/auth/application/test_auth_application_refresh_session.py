@@ -36,9 +36,6 @@ class _UserRepositoryStub(UserRepository):
     async def count_sessions_for_user(self, *, user_id: UUID) -> int:
         return 0
 
-    async def get_by_email(self, *, email: str) -> User | None:
-        return None
-
     async def get_by_auth_identity(
         self,
         *,
@@ -91,7 +88,6 @@ class TestSessionRefresher:
     def test_handle_returns_new_auth_session_for_existing_user(self) -> None:
         user = User(
             name="Mathis",
-            email="mathis@example.com",
             id=uuid4(),
         )
         expected_session = AuthSession(access_token="access", refresh_token="refresh")

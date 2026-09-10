@@ -35,9 +35,6 @@ class _UserRepositoryStub(UserRepository):
         self.received_count_user_id = user_id
         return self.session_count
 
-    async def get_by_email(self, *, email: str) -> User | None:
-        return None
-
     async def get_by_auth_identity(
         self,
         *,
@@ -72,7 +69,6 @@ class TestUserService:
     def test_get_me_returns_user_and_spotify_status_when_existing(self) -> None:
         user = User(
             name="Mathis",
-            email="mathis@example.com",
             spotify=SpotifyAccount.connected_with(is_premium=True),
             id=uuid4(),
         )
@@ -96,7 +92,6 @@ class TestUserService:
     def test_delete_me_deletes_existing_user(self) -> None:
         user = User(
             name="Mathis",
-            email="mathis@example.com",
             id=uuid4(),
         )
         repository = _UserRepositoryStub(user=user)
@@ -116,7 +111,6 @@ class TestUserService:
     def test_get_delete_information_returns_session_count(self) -> None:
         user = User(
             name="Mathis",
-            email="mathis@example.com",
             id=uuid4(),
         )
         repository = _UserRepositoryStub(user=user)

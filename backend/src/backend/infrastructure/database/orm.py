@@ -31,7 +31,6 @@ class UserModel(DatabaseEntity, table=True):
     __tablename__ = "users"
 
     name: str
-    email: str = Field(index=True, unique=True)
     profile_image_url: str | None = None
 
 

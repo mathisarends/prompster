@@ -115,9 +115,7 @@ export const LandingPage = () => {
           setOAuthError(
             event.data.reason === "access_denied"
               ? "Spotify-Anmeldung abgebrochen."
-              : event.data.reason === "email_taken"
-                ? "Diese E-Mail ist bereits mit einem anderen Konto verknuepft."
-                : "Spotify-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+              : "Spotify-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
           );
         }
       }

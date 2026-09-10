@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
-    { name = "mathisarends", email = "mathisarends27@gmail.com" }
+    { name = "mathisarends" }
 ]
 requires-python = ">=3.14"
 dependencies = [
@@ -22,7 +22,6 @@ dependencies = [
     "PyJWT>=2.10.1",
     "cryptography>=45.0.7",
     "spotifyify>=0.8.0",
-    "resend>=2.30.1",
     "typst>=0.14.9",
     "qrcode[pil]>=8.2",
     "tokenary>=0.1.1",

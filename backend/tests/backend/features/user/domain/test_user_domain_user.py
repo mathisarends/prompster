@@ -8,12 +8,10 @@ class TestUserDomainUser:
     def test_user_assigns_constructor_fields(self) -> None:
         user = User(
             name="Mathis",
-            email="mathis@example.com",
             profile_image_url="https://example.com/avatar.jpg",
         )
 
         assert user.name == "Mathis"
-        assert user.email == "mathis@example.com"
         assert user.profile_image_url == "https://example.com/avatar.jpg"
 
     def test_user_keeps_explicit_id_and_created_time(self) -> None:
@@ -22,7 +20,6 @@ class TestUserDomainUser:
 
         user = User(
             name="Mathis",
-            email="mathis@example.com",
             id=user_id,
             created_time=created_time,
         )
@@ -33,7 +30,6 @@ class TestUserDomainUser:
     def test_user_generates_aggregate_identity_by_default(self) -> None:
         user = User(
             name="Mathis",
-            email="mathis@example.com",
         )
 
         assert isinstance(user.id, UUID)

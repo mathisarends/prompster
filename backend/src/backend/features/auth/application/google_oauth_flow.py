@@ -14,8 +14,6 @@ from backend.features.user.domain import (
     UserRepository,
 )
 
-from .auth_signup_notifier import AuthSignupNotifier
-
 
 class GoogleOAuthFlow:
     _STATE_TOKEN_BYTES = 32
@@ -25,12 +23,10 @@ class GoogleOAuthFlow:
         user_repository: UserRepository,
         google_oauth_provider: GoogleOAuthProvider,
         token_issuer: TokenIssuer,
-        signup_notifier: AuthSignupNotifier,
     ) -> None:
         self._user_repository = user_repository
         self._google_oauth_provider = google_oauth_provider
         self._token_issuer = token_issuer
-        self._signup_notifier = signup_notifier
 
     def login(self) -> GoogleAuthorizationRequest:
         oauth_state = secrets.token_urlsafe(self._STATE_TOKEN_BYTES)
@@ -90,30 +86,16 @@ class GoogleOAuthFlow:
                 "Invalid Google authorization code"
             ) from exc
 
-        if not identity.email_verified:
-            raise InvalidCredentialsException("Google account email is not verified")
-
-        normalized_email = identity.email.strip().lower()
         existing_user = await self._user_repository.get_by_auth_identity(
             provider=AuthProvider.GOOGLE,
             subject=identity.subject,
         )
 
         if existing_user is None:
-            email_user = await self._user_repository.get_by_email(
-                email=normalized_email
-            )
-            if email_user is not None:
-                raise InvalidCredentialsException(
-                    "Email already belongs to another auth identity"
-                )
-
             raw_name = (identity.name or "").strip()
-            fallback_name = normalized_email.split("@", maxsplit=1)[0]
-            display_name = raw_name or fallback_name
+            display_name = raw_name or "Google-Nutzer"
             user = User(
                 name=display_name,
-                email=normalized_email,
                 profile_image_url=identity.profile_image_url,
             )
             existing_user = await self._user_repository.create_with_auth_identity(
@@ -124,7 +106,6 @@ class GoogleOAuthFlow:
                     subject=identity.subject,
                 ),
             )
-            await self._signup_notifier.notify_user_created(user=existing_user)
         else:
             existing_user = await self._sync_profile_image(
                 user=existing_user,

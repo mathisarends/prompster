@@ -1,4 +1,3 @@
-from .auth_signup_notifier import AuthSignupNotifier
 from .exceptions import (
     InvalidCredentialsException,
     SessionExpiredException,
@@ -9,7 +8,6 @@ from .refresh_session import SessionRefresher
 from .spotify_oauth_flow import SpotifyOAuthFlow
 
 __all__ = [
-    "AuthSignupNotifier",
     "GoogleOAuthFlow",
     "InvalidCredentialsException",
     "SessionRefresher",
