@@ -1,16 +1,15 @@
-from backend.presentation.feature import Feature
+from backend.presentation.feature import api_feature
 
 from .infrastructure.di import OAuthConnectionsProvider
 from .presentation import (
-    register_oauth_connections_exception_handlers,
+    OAUTH_CONNECTION_ERRORS,
     spotify_oauth_router,
 )
 
-feature = Feature(
-    name="oauth_connections",
+feature = api_feature(
     routers=[spotify_oauth_router],
     providers=[OAuthConnectionsProvider],
-    register_exception_handlers=register_oauth_connections_exception_handlers,
+    errors=OAUTH_CONNECTION_ERRORS,
 )
 
 __all__ = ["feature"]

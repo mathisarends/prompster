@@ -297,7 +297,3 @@ class SpotifyPlaylistExportResponse(Schema):
     description: str
     url: str
     track_count: int
-
-
-class ErrorResponse(Schema):
-    detail: str

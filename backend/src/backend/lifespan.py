@@ -13,8 +13,4 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    container = getattr(app.state, "dishka_container", None)
-    if container is not None:
-        await container.close()
-
     logger.info("Shutdown completed")

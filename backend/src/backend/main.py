@@ -1,9 +1,8 @@
 import logging
 
-from dishka import make_async_container
-from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_canon import Composition, ErrorOptions, Feature
 
 from backend._logging import setup_logging
 from backend.env import EnvSettings, LoggingLevelSettings
@@ -22,11 +21,11 @@ from backend.infrastructure.di import (
     ObjectStorageProvider,
 )
 from backend.lifespan import lifespan
-from backend.presentation import LoggingMiddleware, PascalCaseRouter, health_router
+from backend.presentation import LoggingMiddleware, health_router
 
 logger = logging.getLogger(__name__)
 
-_FEATURES = [
+_FEATURES = (
     auth.feature,
     llm_options.feature,
     oauth_connections.feature,
@@ -34,9 +33,18 @@ _FEATURES = [
     spotify.feature,
     session.feature,
     user.feature,
-]
+)
 
-_INFRASTRUCTURE_PROVIDERS = [DatabaseProvider, EmailProvider, ObjectStorageProvider]
+_INFRASTRUCTURE_FEATURE = Feature(
+    providers=(DatabaseProvider(), EmailProvider(), ObjectStorageProvider()),
+)
+_SYSTEM_FEATURE = Feature(routers=(health_router,))
+_COMPOSITION = Composition(
+    _SYSTEM_FEATURE,
+    _INFRASTRUCTURE_FEATURE,
+    *_FEATURES,
+    errors=ErrorOptions(type_base="https://api.prompster.dev/problems"),
+)
 
 
 def _setup_middleware(app: FastAPI, env: EnvSettings) -> None:
@@ -49,25 +57,6 @@ def _setup_middleware(app: FastAPI, env: EnvSettings) -> None:
     )
 
     app.add_middleware(LoggingMiddleware)
-
-
-def _register_features(app: FastAPI) -> None:
-    app.include_router(health_router)
-
-    api_v1_router = PascalCaseRouter(prefix="/api/v1")
-    for feature in _FEATURES:
-        if feature.register_exception_handlers is not None:
-            feature.register_exception_handlers(app)
-        for router in feature.routers:
-            api_v1_router.include_router(router)
-    app.include_router(api_v1_router)
-
-
-def _create_container():
-    providers = [provider() for provider in _INFRASTRUCTURE_PROVIDERS]
-    for feature in _FEATURES:
-        providers.extend(provider() for provider in feature.providers)
-    return make_async_container(*providers)
 
 
 def _create_app() -> FastAPI:
@@ -84,11 +73,7 @@ def _create_app() -> FastAPI:
     )
 
     _setup_middleware(app, env)
-    _register_features(app)
-
-    container = _create_container()
-    setup_dishka(container, app)
-    app.state.dishka_container = container
+    _COMPOSITION.apply(app)
 
     logger.info("Application ready!")
     return app

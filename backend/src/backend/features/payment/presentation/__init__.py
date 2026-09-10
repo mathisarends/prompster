@@ -1,4 +1,4 @@
-from .exception_handlers import register_payment_exception_handlers
+from .exception_handlers import PAYMENT_ERRORS
 from .router import payment_router
 
-__all__ = ["payment_router", "register_payment_exception_handlers"]
+__all__ = ["PAYMENT_ERRORS", "payment_router"]

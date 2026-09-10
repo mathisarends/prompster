@@ -1,41 +1,57 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
-
+from backend.features.auth.presentation.exception_handlers import AUTH_ERRORS
 from backend.features.user.domain import UserMessageQuotaExceededError
+from fastapi import status
+from fastapi_canon import Error, ErrorRegistry
+from pydantic import BaseModel
 
 
-def _exception_detail(exc: Exception, *, fallback: str) -> str:
-    detail = str(exc).strip()
-    return detail if detail else fallback
+class MessageQuotaExtensions(BaseModel):
+    limit: int
+    remaining: int
+    reset_at: datetime
 
 
-async def _user_message_quota_exceeded_handler(
-    _: Request,
-    exc: UserMessageQuotaExceededError,
-) -> JSONResponse:
+def _quota_extensions(
+    exception: UserMessageQuotaExceededError,
+) -> MessageQuotaExtensions:
+    return MessageQuotaExtensions(
+        limit=exception.limit,
+        remaining=0,
+        reset_at=exception.reset_at,
+    )
+
+
+def _quota_headers(exception: UserMessageQuotaExceededError) -> dict[str, str]:
     retry_after = max(
         1,
-        int((exc.reset_at - datetime.now(timezone.utc)).total_seconds()),
+        int((exception.reset_at - datetime.now(UTC)).total_seconds()),
     )
-    return JSONResponse(
-        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-        headers={"Retry-After": str(retry_after)},
-        content={
-            "detail": _exception_detail(
-                exc,
-                fallback="Daily agent message limit reached",
-            ),
-            "limit": exc.limit,
-            "remaining": 0,
-            "reset_at": exc.reset_at.isoformat(),
-        },
-    )
+    return {"Retry-After": str(retry_after)}
 
 
-def register_user_exception_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(
-        UserMessageQuotaExceededError,
-        _user_message_quota_exceeded_handler,
-    )
+USER_MESSAGE_QUOTA_EXCEEDED_ERROR = Error(
+    UserMessageQuotaExceededError,
+    status=status.HTTP_429_TOO_MANY_REQUESTS,
+    code="user_message_quota_exceeded",
+    title="User message quota exceeded",
+    extensions_model=MessageQuotaExtensions,
+    extensions=_quota_extensions,
+    headers=_quota_headers,
+    openapi_headers={
+        "Retry-After": {
+            "description": "Seconds until the message quota resets.",
+            "schema": {"type": "integer", "minimum": 1},
+        }
+    },
+)
+
+USER_ERRORS = ErrorRegistry.merge(
+    AUTH_ERRORS,
+    ErrorRegistry(
+        name="user_domain",
+        errors=(USER_MESSAGE_QUOTA_EXCEEDED_ERROR,),
+    ),
+    name="user",
+)

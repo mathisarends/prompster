@@ -1,16 +1,14 @@
 import asyncio
 from decimal import Decimal
 from typing import cast
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
-from fastapi import HTTPException
-from starlette.requests import Request
-
 from backend.features.payment.application import (
     CheckoutSession,
     PaymentGateway,
     PaymentIntent,
+    PaymentWebhookVerificationError,
 )
 from backend.features.payment.presentation.router import (
     create_checkout_session,
@@ -21,6 +19,7 @@ from backend.features.payment.presentation.schemas import (
     CreateCheckoutSessionRequest,
     CreateCouponRequest,
 )
+from starlette.requests import Request
 
 
 class _PaymentGatewayStub:
@@ -154,7 +153,7 @@ class TestVerifyWebhookRoute:
     def test_rejects_webhook_without_signature(self) -> None:
         gateway = _PaymentGatewayStub()
 
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(PaymentWebhookVerificationError):
             asyncio.run(
                 verify_webhook(
                     request=_request_with_body(b"{}"),
@@ -162,8 +161,6 @@ class TestVerifyWebhookRoute:
                     stripe_signature=None,
                 )
             )
-
-        assert exc_info.value.status_code == 400
 
 
 def _request_with_body(body: bytes) -> Request:

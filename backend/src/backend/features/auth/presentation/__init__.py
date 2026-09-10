@@ -1,4 +1,4 @@
-from .exception_handlers import register_auth_exception_handlers
+from .exception_handlers import AUTH_ERRORS
 from .router import auth_router
 
-__all__ = ["auth_router", "register_auth_exception_handlers"]
+__all__ = ["AUTH_ERRORS", "auth_router"]

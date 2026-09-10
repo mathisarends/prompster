@@ -1,4 +1,4 @@
-from .exception_handlers import register_oauth_connections_exception_handlers
+from .exception_handlers import OAUTH_CONNECTION_ERRORS
 from .spotify_router import spotify_oauth_router
 
-__all__ = ["register_oauth_connections_exception_handlers", "spotify_oauth_router"]
+__all__ = ["OAUTH_CONNECTION_ERRORS", "spotify_oauth_router"]

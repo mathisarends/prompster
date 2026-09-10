@@ -28,6 +28,7 @@ async def health_check() -> dict[str, str]:
     responses={
         status.HTTP_503_SERVICE_UNAVAILABLE: {
             "description": "The application is not ready to receive traffic.",
+            "x-fastapi-canon-errors": [],
             "content": {
                 "application/json": {
                     "example": {"status": "not_ready"},

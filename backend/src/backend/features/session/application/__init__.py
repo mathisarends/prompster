@@ -4,6 +4,7 @@ from .conversation_service import (
 )
 from .image_attachment_service import (
     ImageAttachmentService,
+    InvalidImageAttachmentError,
     SessionImageAttachmentReference,
     SessionImageAttachmentUpload,
     StashedImageAttachment,
@@ -46,11 +47,11 @@ __all__ = [
     "SessionEvent",
     "SessionOnboardingQuestionAsked",
     "SessionPlaylistExporter",
-    "SessionSpotifyPlaylistExporter",
     "SessionPlaylistSet",
     "SessionPlaylistTrackAdded",
     "SessionPlaylistTrackRemoved",
     "SessionPlaylistTrackReplaced",
+    "SessionSpotifyPlaylistExporter",
     "SessionSnapshot",
     "SessionSuspendedForInput",
     "SessionTitleGenerated",
@@ -61,6 +62,7 @@ __all__ = [
     "SessionToolCallResolved",
     "SessionConversationService",
     "ImageAttachmentService",
+    "InvalidImageAttachmentError",
     "SessionImageAttachmentReference",
     "SessionImageAttachmentUpload",
     "StashedImageAttachment",

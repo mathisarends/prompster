@@ -1,187 +1,206 @@
-import logging
-
-from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
-
+from backend.features.auth.presentation.exception_handlers import AUTH_ERRORS
+from backend.features.session.application import InvalidImageAttachmentError
 from backend.features.session.domain.exceptions import (
+    ArtistReferenceNotFoundError,
     InvalidSessionPhaseTransitionError,
+    NoCurrentAssistantMessageError,
+    NoPendingToolCallSequenceError,
+    PendingToolCallsError,
+    PlaylistReferenceNotFoundError,
+    PlaylistTrackLimitExceededError,
     PlaylistTrackNotFoundError,
     SessionAccessDeniedError,
     SessionExportRequiresSpotifyConnectionError,
+    SessionNotFoundError,
     SessionPlaylistEmptyError,
     SessionPlaylistMissingSpotifyTracksError,
-    SessionNotFoundError,
+    ToolCallAlreadyResolvedError,
+    ToolCallNotFoundError,
     UserCurationEventAlreadyConsumedError,
     UserCurationEventMissingTrackYearError,
     UserCurationEventNotFoundError,
 )
+from backend.features.user.presentation.exception_handlers import (
+    USER_MESSAGE_QUOTA_EXCEEDED_ERROR,
+)
+from fastapi import status
+from fastapi_canon import Error, ErrorRegistry
 
 
-logger = logging.getLogger(__name__)
+class InvalidSpotifyTrackUriError(Exception):
+    pass
 
 
-def _exception_detail(exc: Exception, *, fallback: str) -> str:
-    detail = str(exc).strip()
-    return detail if detail else fallback
+class SpotifyTrackNotFoundError(Exception):
+    pass
 
 
-async def _session_not_found_handler(
-    _: Request,
-    exc: SessionNotFoundError,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_404_NOT_FOUND,
-        content={"detail": _exception_detail(exc, fallback="Session not found")},
-    )
+class SpotifyTrackYearMissingError(Exception):
+    pass
 
 
-async def _session_access_denied_handler(
-    _: Request,
-    exc: SessionAccessDeniedError,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_403_FORBIDDEN,
-        content={"detail": _exception_detail(exc, fallback="Session access denied")},
-    )
+SESSION_NOT_FOUND_ERROR = Error(
+    SessionNotFoundError,
+    status=status.HTTP_404_NOT_FOUND,
+    code="session_not_found",
+    title="Session not found",
+)
+INVALID_IMAGE_ATTACHMENT_ERROR = Error(
+    InvalidImageAttachmentError,
+    status=status.HTTP_400_BAD_REQUEST,
+    code="invalid_image_attachment",
+    title="Invalid image attachment",
+)
+SESSION_ACCESS_DENIED_ERROR = Error(
+    SessionAccessDeniedError,
+    status=status.HTTP_403_FORBIDDEN,
+    code="session_access_denied",
+    title="Session access denied",
+)
+INVALID_SESSION_PHASE_TRANSITION_ERROR = Error(
+    InvalidSessionPhaseTransitionError,
+    status=status.HTTP_409_CONFLICT,
+    code="invalid_session_phase_transition",
+    title="Invalid session phase transition",
+)
+PLAYLIST_TRACK_NOT_FOUND_ERROR = Error(
+    PlaylistTrackNotFoundError,
+    status=status.HTTP_404_NOT_FOUND,
+    code="playlist_track_not_found",
+    title="Playlist track not found",
+)
+PLAYLIST_TRACK_LIMIT_EXCEEDED_ERROR = Error(
+    PlaylistTrackLimitExceededError,
+    status=status.HTTP_409_CONFLICT,
+    code="playlist_track_limit_exceeded",
+    title="Playlist track limit exceeded",
+)
+PLAYLIST_REFERENCE_NOT_FOUND_ERROR = Error(
+    PlaylistReferenceNotFoundError,
+    status=status.HTTP_404_NOT_FOUND,
+    code="playlist_reference_not_found",
+    title="Playlist reference not found",
+)
+ARTIST_REFERENCE_NOT_FOUND_ERROR = Error(
+    ArtistReferenceNotFoundError,
+    status=status.HTTP_404_NOT_FOUND,
+    code="artist_reference_not_found",
+    title="Artist reference not found",
+)
+SESSION_PLAYLIST_EMPTY_ERROR = Error(
+    SessionPlaylistEmptyError,
+    status=status.HTTP_400_BAD_REQUEST,
+    code="session_playlist_empty",
+    title="Session playlist is empty",
+)
+SESSION_PLAYLIST_MISSING_SPOTIFY_TRACKS_ERROR = Error(
+    SessionPlaylistMissingSpotifyTracksError,
+    status=status.HTTP_400_BAD_REQUEST,
+    code="session_playlist_missing_spotify_tracks",
+    title="Session playlist has no Spotify tracks",
+)
+SESSION_EXPORT_REQUIRES_SPOTIFY_CONNECTION_ERROR = Error(
+    SessionExportRequiresSpotifyConnectionError,
+    status=status.HTTP_409_CONFLICT,
+    code="session_export_requires_spotify_connection",
+    title="Spotify connection required",
+)
+TOOL_CALL_NOT_FOUND_ERROR = Error(
+    ToolCallNotFoundError,
+    status=status.HTTP_404_NOT_FOUND,
+    code="tool_call_not_found",
+    title="Tool call not found",
+)
+TOOL_CALL_ALREADY_RESOLVED_ERROR = Error(
+    ToolCallAlreadyResolvedError,
+    status=status.HTTP_409_CONFLICT,
+    code="tool_call_already_resolved",
+    title="Tool call already resolved",
+)
+NO_PENDING_TOOL_CALL_SEQUENCE_ERROR = Error(
+    NoPendingToolCallSequenceError,
+    status=status.HTTP_409_CONFLICT,
+    code="no_pending_tool_call_sequence",
+    title="No pending tool call sequence",
+)
+PENDING_TOOL_CALLS_ERROR = Error(
+    PendingToolCallsError,
+    status=status.HTTP_409_CONFLICT,
+    code="pending_tool_calls",
+    title="Pending tool calls exist",
+)
+NO_CURRENT_ASSISTANT_MESSAGE_ERROR = Error(
+    NoCurrentAssistantMessageError,
+    status=status.HTTP_409_CONFLICT,
+    code="no_current_assistant_message",
+    title="No current assistant message",
+)
+USER_CURATION_EVENT_NOT_FOUND_ERROR = Error(
+    UserCurationEventNotFoundError,
+    status=status.HTTP_404_NOT_FOUND,
+    code="user_curation_event_not_found",
+    title="Curation event not found",
+)
+USER_CURATION_EVENT_ALREADY_CONSUMED_ERROR = Error(
+    UserCurationEventAlreadyConsumedError,
+    status=status.HTTP_409_CONFLICT,
+    code="user_curation_event_already_consumed",
+    title="Curation event already consumed",
+)
+USER_CURATION_EVENT_MISSING_TRACK_YEAR_ERROR = Error(
+    UserCurationEventMissingTrackYearError,
+    status=status.HTTP_409_CONFLICT,
+    code="user_curation_event_missing_track_year",
+    title="Curation event track year missing",
+)
+INVALID_SPOTIFY_TRACK_URI_ERROR = Error(
+    InvalidSpotifyTrackUriError,
+    status=status.HTTP_400_BAD_REQUEST,
+    code="invalid_spotify_track_uri",
+    title="Invalid Spotify track URI",
+)
+SPOTIFY_TRACK_NOT_FOUND_ERROR = Error(
+    SpotifyTrackNotFoundError,
+    status=status.HTTP_404_NOT_FOUND,
+    code="spotify_track_not_found",
+    title="Spotify track not found",
+)
+SPOTIFY_TRACK_YEAR_MISSING_ERROR = Error(
+    SpotifyTrackYearMissingError,
+    status=status.HTTP_409_CONFLICT,
+    code="spotify_track_year_missing",
+    title="Spotify track release year missing",
+)
 
-
-async def _playlist_track_not_found_handler(
-    _: Request,
-    exc: PlaylistTrackNotFoundError,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_404_NOT_FOUND,
-        content={"detail": _exception_detail(exc, fallback="Playlist track not found")},
-    )
-
-
-async def _session_playlist_empty_handler(
-    _: Request,
-    exc: SessionPlaylistEmptyError,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={
-            "detail": _exception_detail(exc, fallback="Session playlist is empty")
-        },
-    )
-
-
-async def _session_playlist_missing_spotify_tracks_handler(
-    _: Request,
-    exc: SessionPlaylistMissingSpotifyTracksError,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={
-            "detail": _exception_detail(
-                exc,
-                fallback="Session playlist has no tracks linked to Spotify",
-            )
-        },
-    )
-
-
-async def _session_export_requires_spotify_connection_handler(
-    _: Request,
-    exc: SessionExportRequiresSpotifyConnectionError,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_409_CONFLICT,
-        content={
-            "detail": _exception_detail(
-                exc,
-                fallback="Spotify account is not connected",
-            )
-        },
-    )
-
-
-async def _user_curation_event_not_found_handler(
-    _: Request,
-    exc: UserCurationEventNotFoundError,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_404_NOT_FOUND,
-        content={
-            "detail": _exception_detail(exc, fallback="Curation event not found"),
-        },
-    )
-
-
-async def _user_curation_event_already_consumed_handler(
-    _: Request,
-    exc: UserCurationEventAlreadyConsumedError,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_409_CONFLICT,
-        content={
-            "detail": _exception_detail(
-                exc,
-                fallback="Curation event has already been consumed",
-            ),
-        },
-    )
-
-
-async def _user_curation_event_missing_track_year_handler(
-    _: Request,
-    exc: UserCurationEventMissingTrackYearError,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_409_CONFLICT,
-        content={
-            "detail": _exception_detail(
-                exc,
-                fallback="Curation event cannot be restored because track year is missing",
-            ),
-        },
-    )
-
-
-async def _bad_request_handler(request: Request, exc: Exception) -> JSONResponse:
-    detail = _exception_detail(exc, fallback="Bad request")
-    logger.warning(
-        "Bad request on %s %s: %s (%s)",
-        request.method,
-        request.url.path,
-        detail,
-        type(exc).__name__,
-    )
-    return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={"detail": detail},
-    )
-
-
-def register_session_exception_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(SessionNotFoundError, _session_not_found_handler)
-    app.add_exception_handler(SessionAccessDeniedError, _session_access_denied_handler)
-    app.add_exception_handler(
-        PlaylistTrackNotFoundError, _playlist_track_not_found_handler
-    )
-    app.add_exception_handler(
-        SessionPlaylistEmptyError, _session_playlist_empty_handler
-    )
-    app.add_exception_handler(
-        SessionPlaylistMissingSpotifyTracksError,
-        _session_playlist_missing_spotify_tracks_handler,
-    )
-    app.add_exception_handler(
-        SessionExportRequiresSpotifyConnectionError,
-        _session_export_requires_spotify_connection_handler,
-    )
-    app.add_exception_handler(
-        UserCurationEventNotFoundError,
-        _user_curation_event_not_found_handler,
-    )
-    app.add_exception_handler(
-        UserCurationEventAlreadyConsumedError,
-        _user_curation_event_already_consumed_handler,
-    )
-    app.add_exception_handler(
-        UserCurationEventMissingTrackYearError,
-        _user_curation_event_missing_track_year_handler,
-    )
-    app.add_exception_handler(InvalidSessionPhaseTransitionError, _bad_request_handler)
-    app.add_exception_handler(ValueError, _bad_request_handler)
+SESSION_ERRORS = ErrorRegistry.merge(
+    AUTH_ERRORS,
+    ErrorRegistry(
+        name="session_domain",
+        errors=(
+            SESSION_NOT_FOUND_ERROR,
+            INVALID_IMAGE_ATTACHMENT_ERROR,
+            SESSION_ACCESS_DENIED_ERROR,
+            INVALID_SESSION_PHASE_TRANSITION_ERROR,
+            PLAYLIST_TRACK_NOT_FOUND_ERROR,
+            PLAYLIST_TRACK_LIMIT_EXCEEDED_ERROR,
+            PLAYLIST_REFERENCE_NOT_FOUND_ERROR,
+            ARTIST_REFERENCE_NOT_FOUND_ERROR,
+            SESSION_PLAYLIST_EMPTY_ERROR,
+            SESSION_PLAYLIST_MISSING_SPOTIFY_TRACKS_ERROR,
+            SESSION_EXPORT_REQUIRES_SPOTIFY_CONNECTION_ERROR,
+            TOOL_CALL_NOT_FOUND_ERROR,
+            TOOL_CALL_ALREADY_RESOLVED_ERROR,
+            NO_PENDING_TOOL_CALL_SEQUENCE_ERROR,
+            PENDING_TOOL_CALLS_ERROR,
+            NO_CURRENT_ASSISTANT_MESSAGE_ERROR,
+            USER_CURATION_EVENT_NOT_FOUND_ERROR,
+            USER_CURATION_EVENT_ALREADY_CONSUMED_ERROR,
+            USER_CURATION_EVENT_MISSING_TRACK_YEAR_ERROR,
+            USER_MESSAGE_QUOTA_EXCEEDED_ERROR,
+            INVALID_SPOTIFY_TRACK_URI_ERROR,
+            SPOTIFY_TRACK_NOT_FOUND_ERROR,
+            SPOTIFY_TRACK_YEAR_MISSING_ERROR,
+        ),
+    ),
+    name="session",
+)

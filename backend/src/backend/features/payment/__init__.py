@@ -1,13 +1,12 @@
-from backend.presentation.feature import Feature
+from backend.presentation.feature import api_feature
 
 from .infrastructure.di import PaymentProvider
-from .presentation import payment_router, register_payment_exception_handlers
+from .presentation import PAYMENT_ERRORS, payment_router
 
-feature = Feature(
-    name="payment",
+feature = api_feature(
     routers=[payment_router],
     providers=[PaymentProvider],
-    register_exception_handlers=register_payment_exception_handlers,
+    errors=PAYMENT_ERRORS,
 )
 
 __all__ = ["feature"]

@@ -1,13 +1,17 @@
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Query, Request, Response, status
-from fastapi.responses import HTMLResponse, RedirectResponse
-
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
+from backend.features.auth.presentation.exception_handlers import (
+    AUTHENTICATION_REQUIRED_ERROR,
+)
 from backend.features.auth.presentation.oauth_popup import OAuthPopupResponse
 from backend.features.oauth_connections.application import (
     SpotifyOAuthConnectionService,
     SpotifyTokenService,
+)
+from backend.features.oauth_connections.presentation.exception_handlers import (
+    OAUTH_CONNECTION_ERRORS,
+    SPOTIFY_CONNECTION_NOT_FOUND_ERROR,
+    SPOTIFY_TOKEN_REVOKED_ERROR,
 )
 from backend.features.oauth_connections.presentation.schemas import (
     SpotifyAccessTokenResponse,
@@ -15,7 +19,9 @@ from backend.features.oauth_connections.presentation.schemas import (
 from backend.features.oauth_connections.presentation.spotify_oauth_state_cookies import (
     SpotifyOAuthStateCookies,
 )
-from backend.presentation.errors import ErrorDto
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
+from fastapi import APIRouter, Query, Request, Response, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 spotify_oauth_router = APIRouter(
     route_class=DishkaRoute,
@@ -23,23 +29,13 @@ spotify_oauth_router = APIRouter(
     tags=["spotify"],
 )
 
-_spotify_token_errors = {
-    status.HTTP_409_CONFLICT: {
-        "model": ErrorDto,
-        "description": "Spotify not connected",
-    },
-    status.HTTP_410_GONE: {
-        "model": ErrorDto,
-        "description": "Spotify access revoked, reconnect required",
-    },
-}
-
 
 @spotify_oauth_router.get(
     "/connect",
     status_code=status.HTTP_307_TEMPORARY_REDIRECT,
     response_model=None,
     operation_id="spotify_connect",
+    responses=OAUTH_CONNECTION_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def spotify_connect(
     authenticated_user_id: AuthenticatedUserId,
@@ -95,6 +91,7 @@ async def spotify_callback(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="spotify_disconnect",
+    responses=OAUTH_CONNECTION_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def spotify_disconnect(
     authenticated_user_id: AuthenticatedUserId,
@@ -108,7 +105,11 @@ async def spotify_disconnect(
     response_model=SpotifyAccessTokenResponse,
     status_code=status.HTTP_200_OK,
     operation_id="spotify_get_access_token",
-    responses=_spotify_token_errors,
+    responses=OAUTH_CONNECTION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SPOTIFY_CONNECTION_NOT_FOUND_ERROR,
+        SPOTIFY_TOKEN_REVOKED_ERROR,
+    ),
 )
 async def spotify_get_access_token(
     authenticated_user_id: AuthenticatedUserId,

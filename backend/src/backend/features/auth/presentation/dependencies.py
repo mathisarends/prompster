@@ -1,12 +1,16 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, WebSocket, WebSocketException, status
-from starlette.requests import HTTPConnection
-
+from backend.features.auth.application import (
+    SessionExpiredException,
+    SessionInvalidException,
+)
 from backend.features.auth.application.ports import TokenIssuer
 from backend.features.auth.application.schemas import TokenPayload, TokenType
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
+from backend.features.auth.presentation.exceptions import AuthenticationRequiredError
+from fastapi import Depends, WebSocket, WebSocketException, status
+from starlette.requests import HTTPConnection
 
 
 async def _get_auth_settings(conn: HTTPConnection) -> AuthSettings:
@@ -31,7 +35,7 @@ def _get_cookie_token_payload(
 
     try:
         return token_issuer.validate(token, expected_type=expected_type)
-    except Exception as exc:
+    except (SessionExpiredException, SessionInvalidException) as exc:
         _raise(conn, "Invalid or expired token", exc)
 
 
@@ -70,10 +74,7 @@ def _raise(conn: HTTPConnection, detail: str, exc: Exception | None = None) -> N
             reason=detail,
         ) from exc
 
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=detail,
-    ) from exc
+    raise AuthenticationRequiredError from exc
 
 
 def _get_authenticated_user_id(

@@ -1,18 +1,17 @@
-from backend.presentation.feature import Feature
+from backend.presentation.feature import api_feature
 
 from .infrastructure.di import SessionProvider
 from .presentation import (
+    SESSION_ERRORS,
     image_attachment_router,
-    register_session_exception_handlers,
     router,
     session_schema_router,
 )
 
-feature = Feature(
-    name="session",
+feature = api_feature(
     routers=[router, image_attachment_router, session_schema_router],
     providers=[SessionProvider],
-    register_exception_handlers=register_session_exception_handlers,
+    errors=SESSION_ERRORS,
 )
 
 __all__ = ["feature"]

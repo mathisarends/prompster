@@ -8,6 +8,10 @@ MAX_IMAGE_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024
 MAX_IMAGE_ATTACHMENTS_PER_MESSAGE = 5
 
 
+class InvalidImageAttachmentError(Exception):
+    pass
+
+
 @dataclass(frozen=True)
 class SessionImageAttachmentUpload:
     file_name: str
@@ -79,11 +83,8 @@ class ImageAttachmentService:
         image: SessionImageAttachmentUpload,
     ) -> None:
         if content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
-            raise ValueError(f"Unsupported image content type: {content_type}.")
+            raise InvalidImageAttachmentError
         if len(image.content) == 0:
-            raise ValueError(f"Image '{image.file_name}' is empty.")
+            raise InvalidImageAttachmentError
         if len(image.content) > MAX_IMAGE_ATTACHMENT_SIZE_BYTES:
-            raise ValueError(
-                f"Image '{image.file_name}' exceeds the maximum allowed size of "
-                f"{MAX_IMAGE_ATTACHMENT_SIZE_BYTES // (1024 * 1024)} MB."
-            )
+            raise InvalidImageAttachmentError

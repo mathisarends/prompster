@@ -1,18 +1,18 @@
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Response, status
-
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
+from backend.features.auth.presentation.exception_handlers import (
+    AUTHENTICATION_REQUIRED_ERROR,
+)
 from backend.features.user.application import UserMessageRateLimitService, UserService
+from backend.features.user.presentation.exception_handlers import USER_ERRORS
 from backend.features.user.presentation.mapper import to_user_me_response
 from backend.features.user.presentation.schemas import (
     UserDeleteInformationResponse,
     UserMeResponse,
 )
-from backend.presentation.errors import ErrorDto
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
+from fastapi import APIRouter, Response, status
 
 user_router = APIRouter(route_class=DishkaRoute, prefix="/users", tags=["users"])
-
-_unauthorized = {status.HTTP_401_UNAUTHORIZED: {"model": ErrorDto}}
 
 
 @user_router.get(
@@ -20,7 +20,7 @@ _unauthorized = {status.HTTP_401_UNAUTHORIZED: {"model": ErrorDto}}
     response_model=UserMeResponse,
     status_code=status.HTTP_200_OK,
     operation_id="get_me",
-    responses=_unauthorized,
+    responses=USER_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def get_me(
     authenticated_user_id: AuthenticatedUserId,
@@ -42,7 +42,7 @@ async def get_me(
     response_model=UserDeleteInformationResponse,
     status_code=status.HTTP_200_OK,
     operation_id="get_delete_information",
-    responses=_unauthorized,
+    responses=USER_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def get_delete_information(
     authenticated_user_id: AuthenticatedUserId,
@@ -61,7 +61,7 @@ async def get_delete_information(
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     operation_id="delete_me",
-    responses=_unauthorized,
+    responses=USER_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def delete_me(
     authenticated_user_id: AuthenticatedUserId,

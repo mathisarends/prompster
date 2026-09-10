@@ -1,12 +1,12 @@
-from backend.presentation.feature import Feature
+from backend.presentation.feature import api_feature
 
 from .infrastructure.di import SpotifyProvider
-from .presentation import spotify_router
+from .presentation import SPOTIFY_ERRORS, spotify_router
 
-feature = Feature(
-    name="spotify",
+feature = api_feature(
     routers=[spotify_router],
     providers=[SpotifyProvider],
+    errors=SPOTIFY_ERRORS,
 )
 
 __all__ = ["feature"]

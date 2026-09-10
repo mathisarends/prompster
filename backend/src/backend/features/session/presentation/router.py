@@ -1,21 +1,39 @@
 from uuid import UUID
 
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, HTTPException, Query, Response, status
-from llm import ModelId
-from starlette.responses import StreamingResponse
-
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
+from backend.features.auth.presentation.exception_handlers import (
+    AUTHENTICATION_REQUIRED_ERROR,
+)
 from backend.features.session.application import (
+    SessionConversationService,
     SessionImageAttachmentReference,
     SessionMessageAttachment,
-    SessionConversationService,
-    SessionService,
     SessionPlaylistExporter,
+    SessionService,
     SessionSpotifyPlaylistExporter,
 )
 from backend.features.session.application.ports import MessageAttachmentStore
 from backend.features.session.domain import Session
+from backend.features.session.presentation.exception_handlers import (
+    INVALID_SESSION_PHASE_TRANSITION_ERROR,
+    INVALID_SPOTIFY_TRACK_URI_ERROR,
+    PLAYLIST_TRACK_LIMIT_EXCEEDED_ERROR,
+    PLAYLIST_TRACK_NOT_FOUND_ERROR,
+    SESSION_ACCESS_DENIED_ERROR,
+    SESSION_ERRORS,
+    SESSION_EXPORT_REQUIRES_SPOTIFY_CONNECTION_ERROR,
+    SESSION_NOT_FOUND_ERROR,
+    SESSION_PLAYLIST_EMPTY_ERROR,
+    SESSION_PLAYLIST_MISSING_SPOTIFY_TRACKS_ERROR,
+    SPOTIFY_TRACK_NOT_FOUND_ERROR,
+    SPOTIFY_TRACK_YEAR_MISSING_ERROR,
+    USER_CURATION_EVENT_ALREADY_CONSUMED_ERROR,
+    USER_CURATION_EVENT_MISSING_TRACK_YEAR_ERROR,
+    USER_CURATION_EVENT_NOT_FOUND_ERROR,
+    InvalidSpotifyTrackUriError,
+    SpotifyTrackNotFoundError,
+    SpotifyTrackYearMissingError,
+)
 from backend.features.session.presentation.mapper import (
     to_playlist_track_response,
     to_session_response,
@@ -24,43 +42,40 @@ from backend.features.session.presentation.mapper import (
 from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
     AddSpotifyPlaylistTrackRequest,
-    ErrorResponse,
     ImageAttachmentReferenceRequest,
     PlaylistTrackResponse,
     SendMessageRequest,
-    SessionMessageAttachmentRequest,
-    SubmitOnboardingAnswerRequest,
     SessionCreateRequest,
+    SessionMessageAttachmentRequest,
     SessionResponse,
     SessionSummaryListResponse,
     SessionUpdateRequest,
+    SubmitOnboardingAnswerRequest,
 )
 from backend.features.session.presentation.sse import (
     stream_session_events,
     stream_spotify_export,
 )
 from backend.features.spotify.application.ports import SpotifySearch
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
+from fastapi import APIRouter, Query, Response, status
+from llm import ModelId
+from starlette.responses import StreamingResponse
 
 router = APIRouter(route_class=DishkaRoute, prefix="/sessions", tags=["sessions"])
 
-_auth_errors = {
-    status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
-    status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
-}
-_not_found = {status.HTTP_404_NOT_FOUND: {"model": ErrorResponse}}
-_bad_request = {status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse}}
-_conflict = {status.HTTP_409_CONFLICT: {"model": ErrorResponse}}
-_too_many = {status.HTTP_429_TOO_MANY_REQUESTS: {"model": ErrorResponse}}
 _SESSION_IMAGE_ATTACHMENT_URL_TTL_SECONDS = 60 * 60 * 24
 _event_stream_response = {
     status.HTTP_200_OK: {
         "description": "Server-sent session events.",
+        "x-fastapi-canon-errors": [],
         "content": {"text/event-stream": {"schema": {"type": "string"}}},
     },
 }
 _pdf_response = {
     status.HTTP_200_OK: {
         "description": "Playlist deck PDF.",
+        "x-fastapi-canon-errors": [],
         "content": {
             "application/pdf": {"schema": {"type": "string", "format": "binary"}}
         },
@@ -73,7 +88,7 @@ _pdf_response = {
     response_model=SessionSummaryListResponse,
     status_code=status.HTTP_200_OK,
     operation_id="list_sessions",
-    responses=_auth_errors,
+    responses=SESSION_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def list_sessions(
     authenticated_user_id: AuthenticatedUserId,
@@ -106,7 +121,11 @@ async def list_sessions(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="get_session",
-    responses=_auth_errors | _not_found,
+    responses=SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+    ),
 )
 async def get_session_by_id(
     session_id: UUID,
@@ -129,7 +148,7 @@ async def get_session_by_id(
     response_model=SessionResponse,
     status_code=status.HTTP_201_CREATED,
     operation_id="create_session",
-    responses=_auth_errors,
+    responses=SESSION_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def create_session(
     authenticated_user_id: AuthenticatedUserId,
@@ -152,10 +171,9 @@ async def create_session(
     status_code=status.HTTP_200_OK,
     operation_id="send_message",
     responses=_event_stream_response
-    | _auth_errors
-    | _bad_request
-    | _not_found
-    | _too_many,
+    | SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+    ),
 )
 async def send_message(
     session_id: UUID,
@@ -183,7 +201,12 @@ async def send_message(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="submit_onboarding_answer",
-    responses=_auth_errors | _bad_request | _not_found,
+    responses=SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+        INVALID_SESSION_PHASE_TRANSITION_ERROR,
+    ),
 )
 async def submit_onboarding_answer(
     session_id: UUID,
@@ -210,7 +233,10 @@ async def submit_onboarding_answer(
     response_class=StreamingResponse,
     status_code=status.HTTP_200_OK,
     operation_id="complete_onboarding",
-    responses=_event_stream_response | _auth_errors | _bad_request | _not_found,
+    responses=_event_stream_response
+    | SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+    ),
 )
 async def complete_onboarding(
     session_id: UUID,
@@ -231,7 +257,11 @@ async def complete_onboarding(
     "/{session_id}/messages/stop",
     status_code=status.HTTP_204_NO_CONTENT,
     operation_id="stop_message",
-    responses=_auth_errors | _not_found,
+    responses=SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+    ),
 )
 async def stop_message(
     session_id: UUID,
@@ -250,7 +280,12 @@ async def stop_message(
     response_model=PlaylistTrackResponse,
     status_code=status.HTTP_201_CREATED,
     operation_id="add_playlist_track",
-    responses=_auth_errors | _not_found,
+    responses=SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+        PLAYLIST_TRACK_LIMIT_EXCEEDED_ERROR,
+    ),
 )
 async def add_session_playlist_track(
     session_id: UUID,
@@ -275,7 +310,15 @@ async def add_session_playlist_track(
     response_model=PlaylistTrackResponse,
     status_code=status.HTTP_201_CREATED,
     operation_id="add_spotify_playlist_track",
-    responses=_auth_errors | _not_found | _bad_request,
+    responses=SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+        PLAYLIST_TRACK_LIMIT_EXCEEDED_ERROR,
+        INVALID_SPOTIFY_TRACK_URI_ERROR,
+        SPOTIFY_TRACK_NOT_FOUND_ERROR,
+        SPOTIFY_TRACK_YEAR_MISSING_ERROR,
+    ),
 )
 async def add_session_spotify_playlist_track(
     session_id: UUID,
@@ -286,22 +329,13 @@ async def add_session_spotify_playlist_track(
 ) -> PlaylistTrackResponse:
     spotify_track_id = _spotify_track_id_from_uri(body.spotify_uri)
     if spotify_track_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid Spotify track URI.",
-        )
+        raise InvalidSpotifyTrackUriError
 
     spotify_track = await spotify_search.get_track(track_id=spotify_track_id)
     if spotify_track is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Spotify track not found.",
-        )
+        raise SpotifyTrackNotFoundError
     if spotify_track.year is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Spotify track release year is missing.",
-        )
+        raise SpotifyTrackYearMissingError
 
     track = await service.add_track(
         session_id=session_id,
@@ -319,7 +353,12 @@ async def add_session_spotify_playlist_track(
     "/{session_id}/tracks/{track_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     operation_id="remove_playlist_track",
-    responses=_auth_errors | _not_found,
+    responses=SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+        PLAYLIST_TRACK_NOT_FOUND_ERROR,
+    ),
 )
 async def remove_session_playlist_track(
     session_id: UUID,
@@ -340,7 +379,14 @@ async def remove_session_playlist_track(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="restore_user_curation_event",
-    responses=_auth_errors | _not_found | _conflict,
+    responses=SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+        USER_CURATION_EVENT_NOT_FOUND_ERROR,
+        USER_CURATION_EVENT_ALREADY_CONSUMED_ERROR,
+        USER_CURATION_EVENT_MISSING_TRACK_YEAR_ERROR,
+    ),
 )
 async def restore_session_user_curation_event(
     session_id: UUID,
@@ -364,7 +410,13 @@ async def restore_session_user_curation_event(
     "/{session_id}/playlist/pdf",
     status_code=status.HTTP_200_OK,
     operation_id="export_session_playlist",
-    responses=_pdf_response | _auth_errors | _bad_request | _not_found,
+    responses=_pdf_response
+    | SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+        SESSION_PLAYLIST_EMPTY_ERROR,
+    ),
 )
 async def export_session_playlist(
     session_id: UUID,
@@ -391,8 +443,14 @@ async def export_session_playlist(
     response_class=StreamingResponse,
     status_code=status.HTTP_200_OK,
     operation_id="export_session_playlist_to_spotify",
-    responses=(
-        _event_stream_response | _auth_errors | _bad_request | _not_found | _conflict
+    responses=_event_stream_response
+    | SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+        SESSION_PLAYLIST_EMPTY_ERROR,
+        SESSION_PLAYLIST_MISSING_SPOTIFY_TRACKS_ERROR,
+        SESSION_EXPORT_REQUIRES_SPOTIFY_CONNECTION_ERROR,
     ),
 )
 async def export_session_playlist_to_spotify(
@@ -415,7 +473,11 @@ async def export_session_playlist_to_spotify(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="update_session",
-    responses=_auth_errors | _bad_request | _not_found,
+    responses=SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+    ),
 )
 async def update_session(
     session_id: UUID,
@@ -440,7 +502,11 @@ async def update_session(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="star_session",
-    responses=_auth_errors | _not_found,
+    responses=SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+    ),
 )
 async def star_session(
     session_id: UUID,
@@ -463,7 +529,11 @@ async def star_session(
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     operation_id="unstar_session",
-    responses=_auth_errors | _not_found,
+    responses=SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+    ),
 )
 async def unstar_session(
     session_id: UUID,
@@ -485,7 +555,11 @@ async def unstar_session(
     "/{session_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     operation_id="delete_session",
-    responses=_auth_errors | _not_found,
+    responses=SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+    ),
 )
 async def delete_session(
     session_id: UUID,

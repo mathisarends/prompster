@@ -1,13 +1,12 @@
-from backend.presentation.feature import Feature
+from backend.presentation.feature import api_feature
 
 from .infrastructure.di import AuthProvider
-from .presentation import auth_router, register_auth_exception_handlers
+from .presentation import AUTH_ERRORS, auth_router
 
-feature = Feature(
-    name="auth",
+feature = api_feature(
     routers=[auth_router],
     providers=[AuthProvider],
-    register_exception_handlers=register_auth_exception_handlers,
+    errors=AUTH_ERRORS,
 )
 
 __all__ = ["feature"]

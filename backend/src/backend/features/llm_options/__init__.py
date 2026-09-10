@@ -1,9 +1,8 @@
-from backend.presentation.feature import Feature
+from backend.presentation.feature import api_feature
 
 from .presentation import router
 
-feature = Feature(
-    name="llm_options",
+feature = api_feature(
     routers=[router],
 )
 

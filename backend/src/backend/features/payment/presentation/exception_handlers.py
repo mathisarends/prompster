@@ -1,45 +1,29 @@
-from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
-
+from backend.features.auth.presentation.exception_handlers import AUTH_ERRORS
 from backend.features.payment.application import (
     PaymentGatewayError,
     PaymentWebhookVerificationError,
 )
+from fastapi import status
+from fastapi_canon import Error, ErrorRegistry
 
+PAYMENT_GATEWAY_ERROR = Error(
+    PaymentGatewayError,
+    status=status.HTTP_400_BAD_REQUEST,
+    code="payment_gateway_error",
+    title="Payment request failed",
+)
+PAYMENT_WEBHOOK_VERIFICATION_ERROR = Error(
+    PaymentWebhookVerificationError,
+    status=status.HTTP_400_BAD_REQUEST,
+    code="payment_webhook_verification_error",
+    title="Payment webhook verification failed",
+)
 
-def _exception_detail(exc: Exception, *, fallback: str) -> str:
-    detail = str(exc).strip()
-    return detail if detail else fallback
-
-
-async def _payment_gateway_error_handler(
-    _: Request,
-    exc: PaymentGatewayError,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={"detail": _exception_detail(exc, fallback="Payment request failed")},
-    )
-
-
-async def _payment_webhook_verification_error_handler(
-    _: Request,
-    exc: PaymentWebhookVerificationError,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        content={
-            "detail": _exception_detail(
-                exc,
-                fallback="Payment webhook verification failed",
-            )
-        },
-    )
-
-
-def register_payment_exception_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(
-        PaymentWebhookVerificationError,
-        _payment_webhook_verification_error_handler,
-    )
-    app.add_exception_handler(PaymentGatewayError, _payment_gateway_error_handler)
+PAYMENT_ERRORS = ErrorRegistry.merge(
+    AUTH_ERRORS,
+    ErrorRegistry(
+        name="payment_domain",
+        errors=(PAYMENT_GATEWAY_ERROR, PAYMENT_WEBHOOK_VERIFICATION_ERROR),
+    ),
+    name="payment",
+)

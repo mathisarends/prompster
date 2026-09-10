@@ -1,18 +1,23 @@
 from typing import Annotated
 
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, File, UploadFile, status
-
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
+from backend.features.auth.presentation.exception_handlers import (
+    AUTHENTICATION_REQUIRED_ERROR,
+)
 from backend.features.session.application import (
     ImageAttachmentService,
     SessionImageAttachmentUpload,
 )
 from backend.features.session.application.ports import MessageAttachmentStore
+from backend.features.session.presentation.exception_handlers import (
+    INVALID_IMAGE_ATTACHMENT_ERROR,
+    SESSION_ERRORS,
+)
 from backend.features.session.presentation.schemas import (
-    ErrorResponse,
     UploadedImageAttachmentResponse,
 )
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
+from fastapi import APIRouter, File, UploadFile, status
 
 image_attachment_router = APIRouter(
     route_class=DishkaRoute,
@@ -20,19 +25,16 @@ image_attachment_router = APIRouter(
     tags=["image-attachments"],
 )
 
-_auth_errors = {
-    status.HTTP_401_UNAUTHORIZED: {"model": ErrorResponse},
-    status.HTTP_403_FORBIDDEN: {"model": ErrorResponse},
-}
-_bad_request = {status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse}}
-
 
 @image_attachment_router.post(
     "",
     response_model=UploadedImageAttachmentResponse,
     status_code=status.HTTP_201_CREATED,
     operation_id="upload_image_attachment",
-    responses=_auth_errors | _bad_request,
+    responses=SESSION_ERRORS.responses(
+        AUTHENTICATION_REQUIRED_ERROR,
+        INVALID_IMAGE_ATTACHMENT_ERROR,
+    ),
 )
 async def upload_image_attachment(
     authenticated_user_id: AuthenticatedUserId,

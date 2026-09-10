@@ -1,38 +1,29 @@
-from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
-
+from backend.features.auth.presentation.exception_handlers import AUTH_ERRORS
 from backend.features.oauth_connections.application import (
     SpotifyConnectionNotFoundException,
     SpotifyTokenRevokedException,
 )
+from fastapi import status
+from fastapi_canon import Error, ErrorRegistry
 
+SPOTIFY_CONNECTION_NOT_FOUND_ERROR = Error(
+    SpotifyConnectionNotFoundException,
+    status=status.HTTP_409_CONFLICT,
+    code="spotify_connection_not_found",
+    title="Spotify is not connected",
+)
+SPOTIFY_TOKEN_REVOKED_ERROR = Error(
+    SpotifyTokenRevokedException,
+    status=status.HTTP_410_GONE,
+    code="spotify_token_revoked",
+    title="Spotify access revoked",
+)
 
-async def _spotify_connection_not_found_handler(
-    _: Request,
-    __: SpotifyConnectionNotFoundException,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_409_CONFLICT,
-        content={"detail": "Spotify is not connected"},
-    )
-
-
-async def _spotify_token_revoked_handler(
-    _: Request,
-    __: SpotifyTokenRevokedException,
-) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_410_GONE,
-        content={"detail": "Spotify access revoked, please reconnect"},
-    )
-
-
-def register_oauth_connections_exception_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(
-        SpotifyConnectionNotFoundException,
-        _spotify_connection_not_found_handler,
-    )
-    app.add_exception_handler(
-        SpotifyTokenRevokedException,
-        _spotify_token_revoked_handler,
-    )
+OAUTH_CONNECTION_ERRORS = ErrorRegistry.merge(
+    AUTH_ERRORS,
+    ErrorRegistry(
+        name="oauth_connections_domain",
+        errors=(SPOTIFY_CONNECTION_NOT_FOUND_ERROR, SPOTIFY_TOKEN_REVOKED_ERROR),
+    ),
+    name="oauth_connections",
+)

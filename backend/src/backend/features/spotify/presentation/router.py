@@ -1,8 +1,9 @@
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Query, status
-
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
+from backend.features.auth.presentation.exception_handlers import (
+    AUTHENTICATION_REQUIRED_ERROR,
+)
 from backend.features.spotify.application.ports import SpotifySearch, SpotifySearchType
+from backend.features.spotify.presentation.errors import SPOTIFY_ERRORS
 from backend.features.spotify.presentation.mapper import (
     to_spotify_artist_response,
     to_spotify_playlist_response,
@@ -11,14 +12,10 @@ from backend.features.spotify.presentation.mapper import (
 from backend.features.spotify.presentation.schemas import (
     SpotifyUnifiedSearchResponse,
 )
-from backend.presentation.errors import ErrorDto
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
+from fastapi import APIRouter, Query, status
 
 spotify_router = APIRouter(route_class=DishkaRoute, prefix="/spotify", tags=["spotify"])
-
-_auth_errors = {
-    status.HTTP_401_UNAUTHORIZED: {"model": ErrorDto},
-    status.HTTP_403_FORBIDDEN: {"model": ErrorDto},
-}
 
 
 @spotify_router.get(
@@ -26,7 +23,7 @@ _auth_errors = {
     response_model=SpotifyUnifiedSearchResponse,
     status_code=status.HTTP_200_OK,
     operation_id="search_spotify",
-    responses=_auth_errors,
+    responses=SPOTIFY_ERRORS.responses(AUTHENTICATION_REQUIRED_ERROR),
 )
 async def search_spotify(
     authenticated_user_id: AuthenticatedUserId,
