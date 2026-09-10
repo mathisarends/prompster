@@ -20,7 +20,7 @@ spotify_router = CanonRouter(
     route_class=DishkaRoute,
     prefix="/spotify",
     tags=["spotify"],
-    errors=SPOTIFY_ERRORS,
+    error_registry=SPOTIFY_ERRORS,
     raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 _DEFAULT_SEARCH_TYPES = (

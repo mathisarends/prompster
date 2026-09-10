@@ -28,7 +28,7 @@ spotify_oauth_router = CanonRouter(
     route_class=DishkaRoute,
     prefix="/auth/spotify",
     tags=["spotify"],
-    errors=OAUTH_CONNECTION_ERRORS,
+    error_registry=OAUTH_CONNECTION_ERRORS,
     raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 

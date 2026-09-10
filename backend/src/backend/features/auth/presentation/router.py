@@ -27,7 +27,7 @@ auth_router = CanonRouter(
     route_class=DishkaRoute,
     prefix="/auth",
     tags=["auth"],
-    errors=AUTH_ERRORS,
+    error_registry=AUTH_ERRORS,
 )
 
 

@@ -59,7 +59,7 @@ router = CanonRouter(
     route_class=DishkaRoute,
     prefix="/sessions",
     tags=["sessions"],
-    errors=SESSION_ERRORS,
+    error_registry=SESSION_ERRORS,
     raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 

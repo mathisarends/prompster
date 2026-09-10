@@ -24,7 +24,7 @@ image_attachment_router = CanonRouter(
     route_class=DishkaRoute,
     prefix="/image-attachments",
     tags=["image-attachments"],
-    errors=SESSION_ERRORS,
+    error_registry=SESSION_ERRORS,
     raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 
