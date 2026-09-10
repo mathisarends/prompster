@@ -1,5 +1,6 @@
 import logging
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -10,12 +11,7 @@ class _EnvironmentMode(StrEnum):
     PROD = "prod"
 
 
-class _LogLevel(StrEnum):
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    CRITICAL = "CRITICAL"
+_LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
 class EnvSettings(BaseSettings):
@@ -69,14 +65,12 @@ class LoggingLevelSettings(BaseSettings):
 
     @property
     def effective_log_level(self) -> int:
-        log_level = self.log_level or (
-            _LogLevel.DEBUG if self.is_dev else _LogLevel.INFO
-        )
-        return logging.getLevelNamesMapping()[log_level.value]
+        log_level = self.log_level or ("DEBUG" if self.is_dev else "INFO")
+        return logging.getLevelNamesMapping()[log_level]
 
     @field_validator("log_level", mode="before")
     @classmethod
-    def validate_log_level(cls, value: str | _LogLevel | None) -> str | None:
+    def validate_log_level(cls, value: str | None) -> str | None:
         if value is None:
             return None
 
