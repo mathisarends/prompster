@@ -5,6 +5,10 @@ from time import monotonic
 
 from backend.features.spotify.application.ports import SpotifyUnifiedSearchResult
 
+_DEFAULT_DEBOUNCE_SECONDS = 0.12
+_DEFAULT_CACHE_TTL_SECONDS = 6.0
+_DEFAULT_MAX_ENTRIES = 256
+
 
 @dataclass(slots=True)
 class _SearchCacheEntry:
@@ -13,16 +17,12 @@ class _SearchCacheEntry:
 
 
 class SpotifySearchCache:
-    DEFAULT_DEBOUNCE_SECONDS = 0.12
-    DEFAULT_CACHE_TTL_SECONDS = 6.0
-    DEFAULT_MAX_ENTRIES = 256
-
     def __init__(
         self,
         *,
-        debounce_seconds: float = DEFAULT_DEBOUNCE_SECONDS,
-        cache_ttl_seconds: float = DEFAULT_CACHE_TTL_SECONDS,
-        max_entries: int = DEFAULT_MAX_ENTRIES,
+        debounce_seconds: float = _DEFAULT_DEBOUNCE_SECONDS,
+        cache_ttl_seconds: float = _DEFAULT_CACHE_TTL_SECONDS,
+        max_entries: int = _DEFAULT_MAX_ENTRIES,
         clock: Callable[[], float] = monotonic,
     ) -> None:
         self._debounce_seconds = debounce_seconds
