@@ -59,7 +59,6 @@ from backend.features.session.presentation.sse import (
 from backend.features.spotify.application.ports import SpotifySearch
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Query, Response, status
-from llm import ModelId
 from starlette.responses import StreamingResponse
 
 router = APIRouter(route_class=DishkaRoute, prefix="/sessions", tags=["sessions"])
@@ -180,7 +179,7 @@ async def send_message(
     authenticated_user_id: AuthenticatedUserId,
     body: SendMessageRequest,
     service: FromDishka[SessionConversationService],
-    model_id: ModelId | None = None,
+    model_id: str | None = None,
 ) -> StreamingResponse:
     return stream_session_events(
         service.send_message(
@@ -242,7 +241,7 @@ async def complete_onboarding(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SessionConversationService],
-    model_id: ModelId | None = None,
+    model_id: str | None = None,
 ) -> StreamingResponse:
     return stream_session_events(
         service.complete_onboarding(

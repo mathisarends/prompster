@@ -3,19 +3,16 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from uuid import UUID, uuid4
 
-from agent import Agent
-from agent import Spotify
+from agent import Agent, Spotify
 from agent.deck import (
     DeckDraft,
     DeckDraftTrack,
     DeckStore,
 )
 from agent.tools.views import Phase as AgentPhase
-from llm import LLMCredentials, create_openai_llm
-from llm.registry import DEFAULT_OPENAI_MODEL, get_model_info
-from llmify import ChatModel
-from spotifyify import Spotifyify
-
+from backend.features.llm.configuration import LLMRegistry
+from backend.features.llm.credentials import LLMCredentials
+from backend.features.llm.factory import create_openai_llm
 from backend.features.session.application.ports import ActiveSessionRunStore
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
@@ -31,6 +28,8 @@ from backend.features.session.infrastructure.agent_event_mapper import (
     AgentSessionEventMapper,
 )
 from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
+from llmify import ChatModel
+from spotifyify import Spotifyify
 
 
 @dataclass
@@ -80,6 +79,7 @@ class AgentSessionRunner(SessionRunner):
         history_builder: AgentHistoryBuilder,
         active_runs: ActiveSessionRunStore,
         runtime_registry: AgentRuntimeRegistry,
+        llm_registry: LLMRegistry,
         system_prompt: str | None = None,
     ) -> None:
         self._llm = llm
@@ -89,6 +89,7 @@ class AgentSessionRunner(SessionRunner):
         self._history_builder = history_builder
         self._active_runs = active_runs
         self._runtime_registry = runtime_registry
+        self._llm_registry = llm_registry
         self._system_prompt = system_prompt
 
     async def run(
@@ -157,11 +158,11 @@ class AgentSessionRunner(SessionRunner):
         model_id: str | None = None,
     ) -> Agent:
         llm = self._llm
-        model_info = get_model_info(DEFAULT_OPENAI_MODEL)
+        model_info = self._llm_registry.default_model
         if model_id is not None:
-            model_info = get_model_info(model_id)
+            model_info = self._llm_registry.get(model_id)
             llm = create_openai_llm(
-                model=model_info.id,
+                provider_model=model_info.provider_model,
                 credentials=self._llm_credentials,
             )
 

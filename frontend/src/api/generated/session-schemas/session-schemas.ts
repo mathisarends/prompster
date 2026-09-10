@@ -23,8 +23,8 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AuthenticationRequiredProblem,
   EntryKind,
-  ErrorResponse,
   SessionEventType,
   SessionServerEvent,
   SpotifyExportServerEventSchema,
@@ -57,7 +57,7 @@ export const getGetSessionEventSchemaQueryKey = () => {
 
 export const getGetSessionEventSchemaInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -87,11 +87,12 @@ export const getGetSessionEventSchemaInfiniteQueryOptions = <
 export type GetSessionEventSchemaInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSessionEventSchema>>
 >;
-export type GetSessionEventSchemaInfiniteQueryError = ErrorResponse;
+export type GetSessionEventSchemaInfiniteQueryError =
+  AuthenticationRequiredProblem;
 
 export function useGetSessionEventSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options: {
     query: Partial<
@@ -117,7 +118,7 @@ export function useGetSessionEventSchemaInfinite<
 };
 export function useGetSessionEventSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -143,7 +144,7 @@ export function useGetSessionEventSchemaInfinite<
 };
 export function useGetSessionEventSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -165,7 +166,7 @@ export function useGetSessionEventSchemaInfinite<
 
 export function useGetSessionEventSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -195,7 +196,7 @@ export function useGetSessionEventSchemaInfinite<
 
 export const getGetSessionEventSchemaQueryOptions = <
   TData = Awaited<ReturnType<typeof getSessionEventSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(options?: {
   query?: Partial<
     UseQueryOptions<
@@ -224,11 +225,11 @@ export const getGetSessionEventSchemaQueryOptions = <
 export type GetSessionEventSchemaQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSessionEventSchema>>
 >;
-export type GetSessionEventSchemaQueryError = ErrorResponse;
+export type GetSessionEventSchemaQueryError = AuthenticationRequiredProblem;
 
 export function useGetSessionEventSchema<
   TData = Awaited<ReturnType<typeof getSessionEventSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options: {
     query: Partial<
@@ -254,7 +255,7 @@ export function useGetSessionEventSchema<
 };
 export function useGetSessionEventSchema<
   TData = Awaited<ReturnType<typeof getSessionEventSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -280,7 +281,7 @@ export function useGetSessionEventSchema<
 };
 export function useGetSessionEventSchema<
   TData = Awaited<ReturnType<typeof getSessionEventSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -302,7 +303,7 @@ export function useGetSessionEventSchema<
 
 export function useGetSessionEventSchema<
   TData = Awaited<ReturnType<typeof getSessionEventSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -358,7 +359,7 @@ export const getGetSpotifyExportEventSchemaQueryKey = () => {
 
 export const getGetSpotifyExportEventSchemaInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof getSpotifyExportEventSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -388,11 +389,12 @@ export const getGetSpotifyExportEventSchemaInfiniteQueryOptions = <
 export type GetSpotifyExportEventSchemaInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSpotifyExportEventSchema>>
 >;
-export type GetSpotifyExportEventSchemaInfiniteQueryError = ErrorResponse;
+export type GetSpotifyExportEventSchemaInfiniteQueryError =
+  AuthenticationRequiredProblem;
 
 export function useGetSpotifyExportEventSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSpotifyExportEventSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options: {
     query: Partial<
@@ -418,7 +420,7 @@ export function useGetSpotifyExportEventSchemaInfinite<
 };
 export function useGetSpotifyExportEventSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSpotifyExportEventSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -444,7 +446,7 @@ export function useGetSpotifyExportEventSchemaInfinite<
 };
 export function useGetSpotifyExportEventSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSpotifyExportEventSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -466,7 +468,7 @@ export function useGetSpotifyExportEventSchemaInfinite<
 
 export function useGetSpotifyExportEventSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSpotifyExportEventSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -497,7 +499,7 @@ export function useGetSpotifyExportEventSchemaInfinite<
 
 export const getGetSpotifyExportEventSchemaQueryOptions = <
   TData = Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(options?: {
   query?: Partial<
     UseQueryOptions<
@@ -527,11 +529,12 @@ export const getGetSpotifyExportEventSchemaQueryOptions = <
 export type GetSpotifyExportEventSchemaQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSpotifyExportEventSchema>>
 >;
-export type GetSpotifyExportEventSchemaQueryError = ErrorResponse;
+export type GetSpotifyExportEventSchemaQueryError =
+  AuthenticationRequiredProblem;
 
 export function useGetSpotifyExportEventSchema<
   TData = Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options: {
     query: Partial<
@@ -557,7 +560,7 @@ export function useGetSpotifyExportEventSchema<
 };
 export function useGetSpotifyExportEventSchema<
   TData = Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -583,7 +586,7 @@ export function useGetSpotifyExportEventSchema<
 };
 export function useGetSpotifyExportEventSchema<
   TData = Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -605,7 +608,7 @@ export function useGetSpotifyExportEventSchema<
 
 export function useGetSpotifyExportEventSchema<
   TData = Awaited<ReturnType<typeof getSpotifyExportEventSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -654,7 +657,7 @@ export const getGetSessionEventTypeSchemaQueryKey = () => {
 
 export const getGetSessionEventTypeSchemaInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventTypeSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -684,11 +687,12 @@ export const getGetSessionEventTypeSchemaInfiniteQueryOptions = <
 export type GetSessionEventTypeSchemaInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSessionEventTypeSchema>>
 >;
-export type GetSessionEventTypeSchemaInfiniteQueryError = ErrorResponse;
+export type GetSessionEventTypeSchemaInfiniteQueryError =
+  AuthenticationRequiredProblem;
 
 export function useGetSessionEventTypeSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventTypeSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options: {
     query: Partial<
@@ -714,7 +718,7 @@ export function useGetSessionEventTypeSchemaInfinite<
 };
 export function useGetSessionEventTypeSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventTypeSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -740,7 +744,7 @@ export function useGetSessionEventTypeSchemaInfinite<
 };
 export function useGetSessionEventTypeSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventTypeSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -762,7 +766,7 @@ export function useGetSessionEventTypeSchemaInfinite<
 
 export function useGetSessionEventTypeSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEventTypeSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -793,7 +797,7 @@ export function useGetSessionEventTypeSchemaInfinite<
 
 export const getGetSessionEventTypeSchemaQueryOptions = <
   TData = Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(options?: {
   query?: Partial<
     UseQueryOptions<
@@ -823,11 +827,11 @@ export const getGetSessionEventTypeSchemaQueryOptions = <
 export type GetSessionEventTypeSchemaQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSessionEventTypeSchema>>
 >;
-export type GetSessionEventTypeSchemaQueryError = ErrorResponse;
+export type GetSessionEventTypeSchemaQueryError = AuthenticationRequiredProblem;
 
 export function useGetSessionEventTypeSchema<
   TData = Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options: {
     query: Partial<
@@ -853,7 +857,7 @@ export function useGetSessionEventTypeSchema<
 };
 export function useGetSessionEventTypeSchema<
   TData = Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -879,7 +883,7 @@ export function useGetSessionEventTypeSchema<
 };
 export function useGetSessionEventTypeSchema<
   TData = Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -901,7 +905,7 @@ export function useGetSessionEventTypeSchema<
 
 export function useGetSessionEventTypeSchema<
   TData = Awaited<ReturnType<typeof getSessionEventTypeSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -950,7 +954,7 @@ export const getGetSessionEntryKindSchemaQueryKey = () => {
 
 export const getGetSessionEntryKindSchemaInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEntryKindSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -980,11 +984,12 @@ export const getGetSessionEntryKindSchemaInfiniteQueryOptions = <
 export type GetSessionEntryKindSchemaInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSessionEntryKindSchema>>
 >;
-export type GetSessionEntryKindSchemaInfiniteQueryError = ErrorResponse;
+export type GetSessionEntryKindSchemaInfiniteQueryError =
+  AuthenticationRequiredProblem;
 
 export function useGetSessionEntryKindSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEntryKindSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options: {
     query: Partial<
@@ -1010,7 +1015,7 @@ export function useGetSessionEntryKindSchemaInfinite<
 };
 export function useGetSessionEntryKindSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEntryKindSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -1036,7 +1041,7 @@ export function useGetSessionEntryKindSchemaInfinite<
 };
 export function useGetSessionEntryKindSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEntryKindSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -1058,7 +1063,7 @@ export function useGetSessionEntryKindSchemaInfinite<
 
 export function useGetSessionEntryKindSchemaInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSessionEntryKindSchema>>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -1089,7 +1094,7 @@ export function useGetSessionEntryKindSchemaInfinite<
 
 export const getGetSessionEntryKindSchemaQueryOptions = <
   TData = Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(options?: {
   query?: Partial<
     UseQueryOptions<
@@ -1119,11 +1124,11 @@ export const getGetSessionEntryKindSchemaQueryOptions = <
 export type GetSessionEntryKindSchemaQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSessionEntryKindSchema>>
 >;
-export type GetSessionEntryKindSchemaQueryError = ErrorResponse;
+export type GetSessionEntryKindSchemaQueryError = AuthenticationRequiredProblem;
 
 export function useGetSessionEntryKindSchema<
   TData = Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options: {
     query: Partial<
@@ -1149,7 +1154,7 @@ export function useGetSessionEntryKindSchema<
 };
 export function useGetSessionEntryKindSchema<
   TData = Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -1175,7 +1180,7 @@ export function useGetSessionEntryKindSchema<
 };
 export function useGetSessionEntryKindSchema<
   TData = Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -1197,7 +1202,7 @@ export function useGetSessionEntryKindSchema<
 
 export function useGetSessionEntryKindSchema<
   TData = Awaited<ReturnType<typeof getSessionEntryKindSchema>>,
-  TError = ErrorResponse,
+  TError = AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<

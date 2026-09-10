@@ -5,8 +5,7 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
-import type { OpenAIModelName } from "./openAIModelName";
 
 export type CompleteOnboardingParams = {
-  model_id?: OpenAIModelName | null;
+  model_id?: string | null;
 };

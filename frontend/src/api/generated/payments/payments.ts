@@ -19,13 +19,15 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AuthenticationRequiredProblem,
   CheckoutSessionResponse,
   CouponResponse,
   CreateCheckoutSessionRequest,
   CreateCouponRequest,
-  ErrorDto,
-  HTTPValidationError,
+  PaymentGatewayErrorProblem,
   PaymentIntentResponse,
+  PaymentWebhookVerificationErrorProblem,
+  RequestValidationProblem,
 } from "../model";
 
 import { customInstance } from "../../http-client";
@@ -64,7 +66,10 @@ export const getCreatePaymentCheckoutSessionQueryKey = (
 
 export const getCreatePaymentCheckoutSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof createPaymentCheckoutSession>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError =
+    | PaymentGatewayErrorProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   createCheckoutSessionRequest: CreateCheckoutSessionRequest,
   options?: {
@@ -104,12 +109,16 @@ export type CreatePaymentCheckoutSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof createPaymentCheckoutSession>>
 >;
 export type CreatePaymentCheckoutSessionQueryError =
-  | ErrorDto
-  | HTTPValidationError;
+  | PaymentGatewayErrorProblem
+  | AuthenticationRequiredProblem
+  | RequestValidationProblem;
 
 export function useCreatePaymentCheckoutSession<
   TData = Awaited<ReturnType<typeof createPaymentCheckoutSession>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError =
+    | PaymentGatewayErrorProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   createCheckoutSessionRequest: CreateCheckoutSessionRequest,
   options: {
@@ -136,7 +145,10 @@ export function useCreatePaymentCheckoutSession<
 };
 export function useCreatePaymentCheckoutSession<
   TData = Awaited<ReturnType<typeof createPaymentCheckoutSession>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError =
+    | PaymentGatewayErrorProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   createCheckoutSessionRequest: CreateCheckoutSessionRequest,
   options?: {
@@ -163,7 +175,10 @@ export function useCreatePaymentCheckoutSession<
 };
 export function useCreatePaymentCheckoutSession<
   TData = Awaited<ReturnType<typeof createPaymentCheckoutSession>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError =
+    | PaymentGatewayErrorProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   createCheckoutSessionRequest: CreateCheckoutSessionRequest,
   options?: {
@@ -186,7 +201,10 @@ export function useCreatePaymentCheckoutSession<
 
 export function useCreatePaymentCheckoutSession<
   TData = Awaited<ReturnType<typeof createPaymentCheckoutSession>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError =
+    | PaymentGatewayErrorProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   createCheckoutSessionRequest: CreateCheckoutSessionRequest,
   options?: {
@@ -244,7 +262,10 @@ export const getCreatePaymentCouponQueryKey = (
 
 export const getCreatePaymentCouponQueryOptions = <
   TData = Awaited<ReturnType<typeof createPaymentCoupon>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError =
+    | PaymentGatewayErrorProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   createCouponRequest: CreateCouponRequest,
   options?: {
@@ -279,11 +300,17 @@ export const getCreatePaymentCouponQueryOptions = <
 export type CreatePaymentCouponQueryResult = NonNullable<
   Awaited<ReturnType<typeof createPaymentCoupon>>
 >;
-export type CreatePaymentCouponQueryError = ErrorDto | HTTPValidationError;
+export type CreatePaymentCouponQueryError =
+  | PaymentGatewayErrorProblem
+  | AuthenticationRequiredProblem
+  | RequestValidationProblem;
 
 export function useCreatePaymentCoupon<
   TData = Awaited<ReturnType<typeof createPaymentCoupon>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError =
+    | PaymentGatewayErrorProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   createCouponRequest: CreateCouponRequest,
   options: {
@@ -310,7 +337,10 @@ export function useCreatePaymentCoupon<
 };
 export function useCreatePaymentCoupon<
   TData = Awaited<ReturnType<typeof createPaymentCoupon>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError =
+    | PaymentGatewayErrorProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   createCouponRequest: CreateCouponRequest,
   options?: {
@@ -337,7 +367,10 @@ export function useCreatePaymentCoupon<
 };
 export function useCreatePaymentCoupon<
   TData = Awaited<ReturnType<typeof createPaymentCoupon>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError =
+    | PaymentGatewayErrorProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   createCouponRequest: CreateCouponRequest,
   options?: {
@@ -360,7 +393,10 @@ export function useCreatePaymentCoupon<
 
 export function useCreatePaymentCoupon<
   TData = Awaited<ReturnType<typeof createPaymentCoupon>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError =
+    | PaymentGatewayErrorProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   createCouponRequest: CreateCouponRequest,
   options?: {
@@ -409,7 +445,7 @@ export const getVerifyPaymentWebhookQueryKey = () => {
 
 export const getVerifyPaymentWebhookQueryOptions = <
   TData = Awaited<ReturnType<typeof verifyPaymentWebhook>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError = PaymentWebhookVerificationErrorProblem | RequestValidationProblem,
 >(options?: {
   query?: Partial<
     UseQueryOptions<
@@ -438,11 +474,13 @@ export const getVerifyPaymentWebhookQueryOptions = <
 export type VerifyPaymentWebhookQueryResult = NonNullable<
   Awaited<ReturnType<typeof verifyPaymentWebhook>>
 >;
-export type VerifyPaymentWebhookQueryError = ErrorDto | HTTPValidationError;
+export type VerifyPaymentWebhookQueryError =
+  | PaymentWebhookVerificationErrorProblem
+  | RequestValidationProblem;
 
 export function useVerifyPaymentWebhook<
   TData = Awaited<ReturnType<typeof verifyPaymentWebhook>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError = PaymentWebhookVerificationErrorProblem | RequestValidationProblem,
 >(
   options: {
     query: Partial<
@@ -468,7 +506,7 @@ export function useVerifyPaymentWebhook<
 };
 export function useVerifyPaymentWebhook<
   TData = Awaited<ReturnType<typeof verifyPaymentWebhook>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError = PaymentWebhookVerificationErrorProblem | RequestValidationProblem,
 >(
   options?: {
     query?: Partial<
@@ -494,7 +532,7 @@ export function useVerifyPaymentWebhook<
 };
 export function useVerifyPaymentWebhook<
   TData = Awaited<ReturnType<typeof verifyPaymentWebhook>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError = PaymentWebhookVerificationErrorProblem | RequestValidationProblem,
 >(
   options?: {
     query?: Partial<
@@ -516,7 +554,7 @@ export function useVerifyPaymentWebhook<
 
 export function useVerifyPaymentWebhook<
   TData = Awaited<ReturnType<typeof verifyPaymentWebhook>>,
-  TError = ErrorDto | HTTPValidationError,
+  TError = PaymentWebhookVerificationErrorProblem | RequestValidationProblem,
 >(
   options?: {
     query?: Partial<

@@ -19,9 +19,10 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AuthenticationRequiredProblem,
   BodyUploadImageAttachment,
-  ErrorResponse,
-  HTTPValidationError,
+  InvalidImageAttachmentProblem,
+  RequestValidationProblem,
   UploadedImageAttachmentResponse,
 } from "../model";
 
@@ -64,7 +65,10 @@ export const getUploadImageAttachmentQueryKey = (
 
 export const getUploadImageAttachmentQueryOptions = <
   TData = Awaited<ReturnType<typeof uploadImageAttachment>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | InvalidImageAttachmentProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   bodyUploadImageAttachment: BodyUploadImageAttachment,
   options?: {
@@ -100,12 +104,16 @@ export type UploadImageAttachmentQueryResult = NonNullable<
   Awaited<ReturnType<typeof uploadImageAttachment>>
 >;
 export type UploadImageAttachmentQueryError =
-  | ErrorResponse
-  | HTTPValidationError;
+  | InvalidImageAttachmentProblem
+  | AuthenticationRequiredProblem
+  | RequestValidationProblem;
 
 export function useUploadImageAttachment<
   TData = Awaited<ReturnType<typeof uploadImageAttachment>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | InvalidImageAttachmentProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   bodyUploadImageAttachment: BodyUploadImageAttachment,
   options: {
@@ -132,7 +140,10 @@ export function useUploadImageAttachment<
 };
 export function useUploadImageAttachment<
   TData = Awaited<ReturnType<typeof uploadImageAttachment>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | InvalidImageAttachmentProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   bodyUploadImageAttachment: BodyUploadImageAttachment,
   options?: {
@@ -159,7 +170,10 @@ export function useUploadImageAttachment<
 };
 export function useUploadImageAttachment<
   TData = Awaited<ReturnType<typeof uploadImageAttachment>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | InvalidImageAttachmentProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   bodyUploadImageAttachment: BodyUploadImageAttachment,
   options?: {
@@ -182,7 +196,10 @@ export function useUploadImageAttachment<
 
 export function useUploadImageAttachment<
   TData = Awaited<ReturnType<typeof uploadImageAttachment>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | InvalidImageAttachmentProblem
+    | AuthenticationRequiredProblem
+    | RequestValidationProblem,
 >(
   bodyUploadImageAttachment: BodyUploadImageAttachment,
   options?: {

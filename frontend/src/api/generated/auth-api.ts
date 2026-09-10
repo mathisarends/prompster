@@ -22,7 +22,7 @@ import type {
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { ErrorDto } from "./model";
+import type { SessionExpiredProblem, SessionInvalidProblem } from "./model";
 
 import { customInstance } from "../http-client";
 
@@ -723,7 +723,7 @@ export const getRefreshQueryKey = () => {
 
 export const getRefreshQueryOptions = <
   TData = Awaited<ReturnType<typeof refresh>>,
-  TError = ErrorDto,
+  TError = SessionExpiredProblem | SessionInvalidProblem,
 >(options?: {
   query?: Partial<
     UseQueryOptions<Awaited<ReturnType<typeof refresh>>, TError, TData>
@@ -748,11 +748,11 @@ export const getRefreshQueryOptions = <
 export type RefreshQueryResult = NonNullable<
   Awaited<ReturnType<typeof refresh>>
 >;
-export type RefreshQueryError = ErrorDto;
+export type RefreshQueryError = SessionExpiredProblem | SessionInvalidProblem;
 
 export function useRefresh<
   TData = Awaited<ReturnType<typeof refresh>>,
-  TError = ErrorDto,
+  TError = SessionExpiredProblem | SessionInvalidProblem,
 >(
   options: {
     query: Partial<
@@ -774,7 +774,7 @@ export function useRefresh<
 };
 export function useRefresh<
   TData = Awaited<ReturnType<typeof refresh>>,
-  TError = ErrorDto,
+  TError = SessionExpiredProblem | SessionInvalidProblem,
 >(
   options?: {
     query?: Partial<
@@ -796,7 +796,7 @@ export function useRefresh<
 };
 export function useRefresh<
   TData = Awaited<ReturnType<typeof refresh>>,
-  TError = ErrorDto,
+  TError = SessionExpiredProblem | SessionInvalidProblem,
 >(
   options?: {
     query?: Partial<
@@ -814,7 +814,7 @@ export function useRefresh<
 
 export function useRefresh<
   TData = Awaited<ReturnType<typeof refresh>>,
-  TError = ErrorDto,
+  TError = SessionExpiredProblem | SessionInvalidProblem,
 >(
   options?: {
     query?: Partial<

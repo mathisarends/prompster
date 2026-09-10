@@ -5,11 +5,16 @@
  * API for Prompster
  * OpenAPI spec version: 0.1.0
  */
+import type { LLMCapabilitiesResponse } from "./lLMCapabilitiesResponse";
+import type { LLMDefaultsResponse } from "./lLMDefaultsResponse";
 import type { LLMProvider } from "./lLMProvider";
 
 export interface LLMOptionResponse {
   id: string;
   provider: LLMProvider;
   label: string;
+  profile: string;
+  capabilities: LLMCapabilitiesResponse;
+  defaults: LLMDefaultsResponse;
   isDefault: boolean;
 }

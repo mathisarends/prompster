@@ -9,7 +9,6 @@ authors = [
 requires-python = ">=3.14"
 dependencies = [
     "agent",
-    "llm",
     "dishka>=1.10.1",
     "fastapi>=0.136.1",
     "httpx>=0.28.1",
@@ -29,6 +28,8 @@ dependencies = [
     "tokenary>=0.1.1",
     "python-multipart>=0.0.20",
     "fastapi-canon>=0.1.0",
+    "py-llmify[openai]>=0.11.0",
+    "pyyaml>=6.0.3",
 ]
 
 [project.scripts]
@@ -45,4 +46,3 @@ dev = [
 
 [tool.uv.sources]
 agent = { workspace = true }
-llm = { workspace = true }

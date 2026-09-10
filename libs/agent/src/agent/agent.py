@@ -2,7 +2,6 @@ import asyncio
 from collections.abc import AsyncGenerator, Sequence
 from dataclasses import dataclass, field
 
-from llm.registry import DEFAULT_OPENAI_MODEL, get_model_info
 from llmify import (
     ChatModel,
     ContextLengthExceededError,
@@ -13,6 +12,7 @@ from llmify import (
 from llmify.messages import ToolCall
 from spotifyify import RetryEvent
 
+from agent.deck import DeckDraftUpdate, DeckStore
 from agent.events import (
     AgentEvent,
     AssistantMessageChunkEvent,
@@ -22,8 +22,8 @@ from agent.events import (
     QuestionAskedEvent,
     RunCompletedEvent,
     RunStartedEvent,
-    SuspendedForUserInputEvent,
     StepStartedEvent,
+    SuspendedForUserInputEvent,
     ToolCallEvent,
     ToolCallSequenceStartedEvent,
     ToolResultEvent,
@@ -31,12 +31,11 @@ from agent.events import (
 )
 from agent.guardrails import PostRunGuardrails
 from agent.messages import MessageManager
-from agent.tools import DeckCritic, Tools, Spotify
+from agent.tokens import TokenTracker
+from agent.tools import DeckCritic, Spotify, Tools
 from agent.tools.params import SequenceLabelParams, ToolParams
 from agent.tools.retry_reporting import retry_sink
 from agent.tools.views import Phase
-from agent.deck import DeckDraftUpdate, DeckStore
-from agent.tokens import TokenTracker
 from agent.views import UserEvent
 
 
@@ -64,9 +63,7 @@ class Agent:
         self._tools = tools or Tools()
         self._phase = phase
 
-        input_token_limit = (
-            max_input_tokens or get_model_info(DEFAULT_OPENAI_MODEL).input_token_limit
-        )
+        input_token_limit = max_input_tokens or 272_000
         self._compaction_budget = int(input_token_limit * compaction_threshold)
         self._last_prompt_tokens = 0
 

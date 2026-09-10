@@ -8,7 +8,7 @@ from backend._logging import setup_logging
 from backend.env import EnvSettings, LoggingLevelSettings
 from backend.features import (
     auth,
-    llm_options,
+    llm,
     oauth_connections,
     payment,
     session,
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 _FEATURES = (
     auth.feature,
-    llm_options.feature,
+    llm.feature,
     oauth_connections.feature,
     payment.feature,
     spotify.feature,

@@ -25,19 +25,33 @@ import type {
 import type {
   AddPlaylistTrackRequest,
   AddSpotifyPlaylistTrackRequest,
+  AuthenticationRequiredProblem,
   CompleteOnboardingParams,
-  ErrorResponse,
   ExportSessionPlaylistParams,
-  HTTPValidationError,
+  InvalidSessionPhaseTransitionProblem,
+  InvalidSpotifyTrackUriProblem,
   ListSessionsParams,
+  PlaylistTrackLimitExceededProblem,
+  PlaylistTrackNotFoundProblem,
   PlaylistTrackResponse,
+  RequestValidationProblem,
   SendMessageParams,
   SendMessageRequest,
+  SessionAccessDeniedProblem,
   SessionCreateRequest,
+  SessionExportRequiresSpotifyConnectionProblem,
+  SessionNotFoundProblem,
+  SessionPlaylistEmptyProblem,
+  SessionPlaylistMissingSpotifyTracksProblem,
   SessionResponse,
   SessionSummaryListResponse,
   SessionUpdateRequest,
+  SpotifyTrackNotFoundProblem,
+  SpotifyTrackYearMissingProblem,
   SubmitOnboardingAnswerRequest,
+  UserCurationEventAlreadyConsumedProblem,
+  UserCurationEventMissingTrackYearProblem,
+  UserCurationEventNotFoundProblem,
 } from "./model";
 
 import { customInstance } from "../http-client";
@@ -70,7 +84,7 @@ export const getListSessionsQueryKey = (params?: ListSessionsParams) => {
 
 export const getListSessionsInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -104,12 +118,12 @@ export type ListSessionsInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof listSessions>>
 >;
 export type ListSessionsInfiniteQueryError =
-  | ErrorResponse
-  | HTTPValidationError;
+  | AuthenticationRequiredProblem
+  | RequestValidationProblem;
 
 export function useListSessionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   params: undefined | ListSessionsParams,
   options: {
@@ -136,7 +150,7 @@ export function useListSessionsInfinite<
 };
 export function useListSessionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -163,7 +177,7 @@ export function useListSessionsInfinite<
 };
 export function useListSessionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -186,7 +200,7 @@ export function useListSessionsInfinite<
 
 export function useListSessionsInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof listSessions>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -217,7 +231,7 @@ export function useListSessionsInfinite<
 
 export const getListSessionsQueryOptions = <
   TData = Awaited<ReturnType<typeof listSessions>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -245,11 +259,13 @@ export const getListSessionsQueryOptions = <
 export type ListSessionsQueryResult = NonNullable<
   Awaited<ReturnType<typeof listSessions>>
 >;
-export type ListSessionsQueryError = ErrorResponse | HTTPValidationError;
+export type ListSessionsQueryError =
+  | AuthenticationRequiredProblem
+  | RequestValidationProblem;
 
 export function useListSessions<
   TData = Awaited<ReturnType<typeof listSessions>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   params: undefined | ListSessionsParams,
   options: {
@@ -272,7 +288,7 @@ export function useListSessions<
 };
 export function useListSessions<
   TData = Awaited<ReturnType<typeof listSessions>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -295,7 +311,7 @@ export function useListSessions<
 };
 export function useListSessions<
   TData = Awaited<ReturnType<typeof listSessions>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -314,7 +330,7 @@ export function useListSessions<
 
 export function useListSessions<
   TData = Awaited<ReturnType<typeof listSessions>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   params?: ListSessionsParams,
   options?: {
@@ -365,7 +381,7 @@ export const getCreateSessionQueryKey = (
 
 export const getCreateSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionCreateRequest: SessionCreateRequest,
   options?: {
@@ -394,11 +410,13 @@ export const getCreateSessionQueryOptions = <
 export type CreateSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof createSession>>
 >;
-export type CreateSessionQueryError = ErrorResponse | HTTPValidationError;
+export type CreateSessionQueryError =
+  | AuthenticationRequiredProblem
+  | RequestValidationProblem;
 
 export function useCreateSession<
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionCreateRequest: SessionCreateRequest,
   options: {
@@ -421,7 +439,7 @@ export function useCreateSession<
 };
 export function useCreateSession<
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionCreateRequest: SessionCreateRequest,
   options?: {
@@ -444,7 +462,7 @@ export function useCreateSession<
 };
 export function useCreateSession<
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionCreateRequest: SessionCreateRequest,
   options?: {
@@ -463,7 +481,7 @@ export function useCreateSession<
 
 export function useCreateSession<
   TData = Awaited<ReturnType<typeof createSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionCreateRequest: SessionCreateRequest,
   options?: {
@@ -513,7 +531,11 @@ export const getGetSessionQueryKey = (sessionId: string) => {
 
 export const getGetSessionInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof getSession>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -551,11 +573,19 @@ export const getGetSessionInfiniteQueryOptions = <
 export type GetSessionInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSession>>
 >;
-export type GetSessionInfiniteQueryError = ErrorResponse | HTTPValidationError;
+export type GetSessionInfiniteQueryError =
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | RequestValidationProblem;
 
 export function useGetSessionInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSession>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options: {
@@ -582,7 +612,11 @@ export function useGetSessionInfinite<
 };
 export function useGetSessionInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSession>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -609,7 +643,11 @@ export function useGetSessionInfinite<
 };
 export function useGetSessionInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSession>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -632,7 +670,11 @@ export function useGetSessionInfinite<
 
 export function useGetSessionInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof getSession>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -663,7 +705,11 @@ export function useGetSessionInfinite<
 
 export const getGetSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof getSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -696,11 +742,19 @@ export const getGetSessionQueryOptions = <
 export type GetSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSession>>
 >;
-export type GetSessionQueryError = ErrorResponse | HTTPValidationError;
+export type GetSessionQueryError =
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | RequestValidationProblem;
 
 export function useGetSession<
   TData = Awaited<ReturnType<typeof getSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options: {
@@ -723,7 +777,11 @@ export function useGetSession<
 };
 export function useGetSession<
   TData = Awaited<ReturnType<typeof getSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -746,7 +804,11 @@ export function useGetSession<
 };
 export function useGetSession<
   TData = Awaited<ReturnType<typeof getSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -765,7 +827,11 @@ export function useGetSession<
 
 export function useGetSession<
   TData = Awaited<ReturnType<typeof getSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -822,7 +888,11 @@ export const getUpdateSessionQueryKey = (
 
 export const getUpdateSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof updateSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   sessionUpdateRequest: SessionUpdateRequest,
@@ -858,11 +928,19 @@ export const getUpdateSessionQueryOptions = <
 export type UpdateSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof updateSession>>
 >;
-export type UpdateSessionQueryError = ErrorResponse | HTTPValidationError;
+export type UpdateSessionQueryError =
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | RequestValidationProblem;
 
 export function useUpdateSession<
   TData = Awaited<ReturnType<typeof updateSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   sessionUpdateRequest: SessionUpdateRequest,
@@ -886,7 +964,11 @@ export function useUpdateSession<
 };
 export function useUpdateSession<
   TData = Awaited<ReturnType<typeof updateSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   sessionUpdateRequest: SessionUpdateRequest,
@@ -910,7 +992,11 @@ export function useUpdateSession<
 };
 export function useUpdateSession<
   TData = Awaited<ReturnType<typeof updateSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   sessionUpdateRequest: SessionUpdateRequest,
@@ -930,7 +1016,11 @@ export function useUpdateSession<
 
 export function useUpdateSession<
   TData = Awaited<ReturnType<typeof updateSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   sessionUpdateRequest: SessionUpdateRequest,
@@ -978,7 +1068,11 @@ export const getDeleteSessionQueryKey = (sessionId: string) => {
 
 export const getDeleteSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof deleteSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -1012,11 +1106,19 @@ export const getDeleteSessionQueryOptions = <
 export type DeleteSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof deleteSession>>
 >;
-export type DeleteSessionQueryError = ErrorResponse | HTTPValidationError;
+export type DeleteSessionQueryError =
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | RequestValidationProblem;
 
 export function useDeleteSession<
   TData = Awaited<ReturnType<typeof deleteSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options: {
@@ -1039,7 +1141,11 @@ export function useDeleteSession<
 };
 export function useDeleteSession<
   TData = Awaited<ReturnType<typeof deleteSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -1062,7 +1168,11 @@ export function useDeleteSession<
 };
 export function useDeleteSession<
   TData = Awaited<ReturnType<typeof deleteSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -1081,7 +1191,11 @@ export function useDeleteSession<
 
 export function useDeleteSession<
   TData = Awaited<ReturnType<typeof deleteSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -1142,7 +1256,7 @@ export const getSendMessageQueryKey = (
 
 export const getSendMessageQueryOptions = <
   TData = Awaited<ReturnType<typeof sendMessage>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionId: string,
   sendMessageRequest: SendMessageRequest,
@@ -1180,11 +1294,13 @@ export const getSendMessageQueryOptions = <
 export type SendMessageQueryResult = NonNullable<
   Awaited<ReturnType<typeof sendMessage>>
 >;
-export type SendMessageQueryError = ErrorResponse | HTTPValidationError;
+export type SendMessageQueryError =
+  | AuthenticationRequiredProblem
+  | RequestValidationProblem;
 
 export function useSendMessage<
   TData = Awaited<ReturnType<typeof sendMessage>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionId: string,
   sendMessageRequest: SendMessageRequest,
@@ -1209,7 +1325,7 @@ export function useSendMessage<
 };
 export function useSendMessage<
   TData = Awaited<ReturnType<typeof sendMessage>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionId: string,
   sendMessageRequest: SendMessageRequest,
@@ -1234,7 +1350,7 @@ export function useSendMessage<
 };
 export function useSendMessage<
   TData = Awaited<ReturnType<typeof sendMessage>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionId: string,
   sendMessageRequest: SendMessageRequest,
@@ -1255,7 +1371,7 @@ export function useSendMessage<
 
 export function useSendMessage<
   TData = Awaited<ReturnType<typeof sendMessage>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionId: string,
   sendMessageRequest: SendMessageRequest,
@@ -1319,7 +1435,12 @@ export const getSubmitOnboardingAnswerQueryKey = (
 
 export const getSubmitOnboardingAnswerQueryOptions = <
   TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | InvalidSessionPhaseTransitionProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   submitOnboardingAnswerRequest: SubmitOnboardingAnswerRequest,
@@ -1366,12 +1487,20 @@ export type SubmitOnboardingAnswerQueryResult = NonNullable<
   Awaited<ReturnType<typeof submitOnboardingAnswer>>
 >;
 export type SubmitOnboardingAnswerQueryError =
-  | ErrorResponse
-  | HTTPValidationError;
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | InvalidSessionPhaseTransitionProblem
+  | RequestValidationProblem;
 
 export function useSubmitOnboardingAnswer<
   TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | InvalidSessionPhaseTransitionProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   submitOnboardingAnswerRequest: SubmitOnboardingAnswerRequest,
@@ -1399,7 +1528,12 @@ export function useSubmitOnboardingAnswer<
 };
 export function useSubmitOnboardingAnswer<
   TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | InvalidSessionPhaseTransitionProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   submitOnboardingAnswerRequest: SubmitOnboardingAnswerRequest,
@@ -1427,7 +1561,12 @@ export function useSubmitOnboardingAnswer<
 };
 export function useSubmitOnboardingAnswer<
   TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | InvalidSessionPhaseTransitionProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   submitOnboardingAnswerRequest: SubmitOnboardingAnswerRequest,
@@ -1451,7 +1590,12 @@ export function useSubmitOnboardingAnswer<
 
 export function useSubmitOnboardingAnswer<
   TData = Awaited<ReturnType<typeof submitOnboardingAnswer>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | InvalidSessionPhaseTransitionProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   submitOnboardingAnswerRequest: SubmitOnboardingAnswerRequest,
@@ -1516,7 +1660,7 @@ export const getCompleteOnboardingQueryKey = (
 
 export const getCompleteOnboardingQueryOptions = <
   TData = Awaited<ReturnType<typeof completeOnboarding>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionId: string,
   params?: CompleteOnboardingParams,
@@ -1556,11 +1700,13 @@ export const getCompleteOnboardingQueryOptions = <
 export type CompleteOnboardingQueryResult = NonNullable<
   Awaited<ReturnType<typeof completeOnboarding>>
 >;
-export type CompleteOnboardingQueryError = ErrorResponse | HTTPValidationError;
+export type CompleteOnboardingQueryError =
+  | AuthenticationRequiredProblem
+  | RequestValidationProblem;
 
 export function useCompleteOnboarding<
   TData = Awaited<ReturnType<typeof completeOnboarding>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionId: string,
   params: undefined | CompleteOnboardingParams,
@@ -1588,7 +1734,7 @@ export function useCompleteOnboarding<
 };
 export function useCompleteOnboarding<
   TData = Awaited<ReturnType<typeof completeOnboarding>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionId: string,
   params?: CompleteOnboardingParams,
@@ -1616,7 +1762,7 @@ export function useCompleteOnboarding<
 };
 export function useCompleteOnboarding<
   TData = Awaited<ReturnType<typeof completeOnboarding>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionId: string,
   params?: CompleteOnboardingParams,
@@ -1640,7 +1786,7 @@ export function useCompleteOnboarding<
 
 export function useCompleteOnboarding<
   TData = Awaited<ReturnType<typeof completeOnboarding>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError = AuthenticationRequiredProblem | RequestValidationProblem,
 >(
   sessionId: string,
   params?: CompleteOnboardingParams,
@@ -1696,7 +1842,11 @@ export const getStopMessageQueryKey = (sessionId: string) => {
 
 export const getStopMessageQueryOptions = <
   TData = Awaited<ReturnType<typeof stopMessage>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -1729,11 +1879,19 @@ export const getStopMessageQueryOptions = <
 export type StopMessageQueryResult = NonNullable<
   Awaited<ReturnType<typeof stopMessage>>
 >;
-export type StopMessageQueryError = ErrorResponse | HTTPValidationError;
+export type StopMessageQueryError =
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | RequestValidationProblem;
 
 export function useStopMessage<
   TData = Awaited<ReturnType<typeof stopMessage>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options: {
@@ -1756,7 +1914,11 @@ export function useStopMessage<
 };
 export function useStopMessage<
   TData = Awaited<ReturnType<typeof stopMessage>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -1779,7 +1941,11 @@ export function useStopMessage<
 };
 export function useStopMessage<
   TData = Awaited<ReturnType<typeof stopMessage>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -1798,7 +1964,11 @@ export function useStopMessage<
 
 export function useStopMessage<
   TData = Awaited<ReturnType<typeof stopMessage>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -1855,7 +2025,12 @@ export const getAddPlaylistTrackQueryKey = (
 
 export const getAddPlaylistTrackQueryOptions = <
   TData = Awaited<ReturnType<typeof addPlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | PlaylistTrackLimitExceededProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   addPlaylistTrackRequest: AddPlaylistTrackRequest,
@@ -1901,11 +2076,21 @@ export const getAddPlaylistTrackQueryOptions = <
 export type AddPlaylistTrackQueryResult = NonNullable<
   Awaited<ReturnType<typeof addPlaylistTrack>>
 >;
-export type AddPlaylistTrackQueryError = ErrorResponse | HTTPValidationError;
+export type AddPlaylistTrackQueryError =
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | PlaylistTrackLimitExceededProblem
+  | RequestValidationProblem;
 
 export function useAddPlaylistTrack<
   TData = Awaited<ReturnType<typeof addPlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | PlaylistTrackLimitExceededProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   addPlaylistTrackRequest: AddPlaylistTrackRequest,
@@ -1933,7 +2118,12 @@ export function useAddPlaylistTrack<
 };
 export function useAddPlaylistTrack<
   TData = Awaited<ReturnType<typeof addPlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | PlaylistTrackLimitExceededProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   addPlaylistTrackRequest: AddPlaylistTrackRequest,
@@ -1961,7 +2151,12 @@ export function useAddPlaylistTrack<
 };
 export function useAddPlaylistTrack<
   TData = Awaited<ReturnType<typeof addPlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | PlaylistTrackLimitExceededProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   addPlaylistTrackRequest: AddPlaylistTrackRequest,
@@ -1985,7 +2180,12 @@ export function useAddPlaylistTrack<
 
 export function useAddPlaylistTrack<
   TData = Awaited<ReturnType<typeof addPlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | PlaylistTrackLimitExceededProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   addPlaylistTrackRequest: AddPlaylistTrackRequest,
@@ -2051,7 +2251,15 @@ export const getAddSpotifyPlaylistTrackQueryKey = (
 
 export const getAddSpotifyPlaylistTrackQueryOptions = <
   TData = Awaited<ReturnType<typeof addSpotifyPlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | InvalidSpotifyTrackUriProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | SpotifyTrackNotFoundProblem
+    | PlaylistTrackLimitExceededProblem
+    | SpotifyTrackYearMissingProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   addSpotifyPlaylistTrackRequest: AddSpotifyPlaylistTrackRequest,
@@ -2101,12 +2309,26 @@ export type AddSpotifyPlaylistTrackQueryResult = NonNullable<
   Awaited<ReturnType<typeof addSpotifyPlaylistTrack>>
 >;
 export type AddSpotifyPlaylistTrackQueryError =
-  | ErrorResponse
-  | HTTPValidationError;
+  | InvalidSpotifyTrackUriProblem
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | SpotifyTrackNotFoundProblem
+  | PlaylistTrackLimitExceededProblem
+  | SpotifyTrackYearMissingProblem
+  | RequestValidationProblem;
 
 export function useAddSpotifyPlaylistTrack<
   TData = Awaited<ReturnType<typeof addSpotifyPlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | InvalidSpotifyTrackUriProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | SpotifyTrackNotFoundProblem
+    | PlaylistTrackLimitExceededProblem
+    | SpotifyTrackYearMissingProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   addSpotifyPlaylistTrackRequest: AddSpotifyPlaylistTrackRequest,
@@ -2134,7 +2356,15 @@ export function useAddSpotifyPlaylistTrack<
 };
 export function useAddSpotifyPlaylistTrack<
   TData = Awaited<ReturnType<typeof addSpotifyPlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | InvalidSpotifyTrackUriProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | SpotifyTrackNotFoundProblem
+    | PlaylistTrackLimitExceededProblem
+    | SpotifyTrackYearMissingProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   addSpotifyPlaylistTrackRequest: AddSpotifyPlaylistTrackRequest,
@@ -2162,7 +2392,15 @@ export function useAddSpotifyPlaylistTrack<
 };
 export function useAddSpotifyPlaylistTrack<
   TData = Awaited<ReturnType<typeof addSpotifyPlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | InvalidSpotifyTrackUriProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | SpotifyTrackNotFoundProblem
+    | PlaylistTrackLimitExceededProblem
+    | SpotifyTrackYearMissingProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   addSpotifyPlaylistTrackRequest: AddSpotifyPlaylistTrackRequest,
@@ -2186,7 +2424,15 @@ export function useAddSpotifyPlaylistTrack<
 
 export function useAddSpotifyPlaylistTrack<
   TData = Awaited<ReturnType<typeof addSpotifyPlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | InvalidSpotifyTrackUriProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | SpotifyTrackNotFoundProblem
+    | PlaylistTrackLimitExceededProblem
+    | SpotifyTrackYearMissingProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   addSpotifyPlaylistTrackRequest: AddSpotifyPlaylistTrackRequest,
@@ -2246,7 +2492,12 @@ export const getRemovePlaylistTrackQueryKey = (
 
 export const getRemovePlaylistTrackQueryOptions = <
   TData = Awaited<ReturnType<typeof removePlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | PlaylistTrackNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   trackId: string,
@@ -2291,11 +2542,21 @@ export const getRemovePlaylistTrackQueryOptions = <
 export type RemovePlaylistTrackQueryResult = NonNullable<
   Awaited<ReturnType<typeof removePlaylistTrack>>
 >;
-export type RemovePlaylistTrackQueryError = ErrorResponse | HTTPValidationError;
+export type RemovePlaylistTrackQueryError =
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | PlaylistTrackNotFoundProblem
+  | RequestValidationProblem;
 
 export function useRemovePlaylistTrack<
   TData = Awaited<ReturnType<typeof removePlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | PlaylistTrackNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   trackId: string,
@@ -2323,7 +2584,12 @@ export function useRemovePlaylistTrack<
 };
 export function useRemovePlaylistTrack<
   TData = Awaited<ReturnType<typeof removePlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | PlaylistTrackNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   trackId: string,
@@ -2351,7 +2617,12 @@ export function useRemovePlaylistTrack<
 };
 export function useRemovePlaylistTrack<
   TData = Awaited<ReturnType<typeof removePlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | PlaylistTrackNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   trackId: string,
@@ -2375,7 +2646,12 @@ export function useRemovePlaylistTrack<
 
 export function useRemovePlaylistTrack<
   TData = Awaited<ReturnType<typeof removePlaylistTrack>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | PlaylistTrackNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   trackId: string,
@@ -2438,7 +2714,14 @@ export const getRestoreUserCurationEventQueryKey = (
 
 export const getRestoreUserCurationEventQueryOptions = <
   TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | UserCurationEventNotFoundProblem
+    | UserCurationEventAlreadyConsumedProblem
+    | UserCurationEventMissingTrackYearProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   eventId: string,
@@ -2484,12 +2767,24 @@ export type RestoreUserCurationEventQueryResult = NonNullable<
   Awaited<ReturnType<typeof restoreUserCurationEvent>>
 >;
 export type RestoreUserCurationEventQueryError =
-  | ErrorResponse
-  | HTTPValidationError;
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | UserCurationEventNotFoundProblem
+  | UserCurationEventAlreadyConsumedProblem
+  | UserCurationEventMissingTrackYearProblem
+  | RequestValidationProblem;
 
 export function useRestoreUserCurationEvent<
   TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | UserCurationEventNotFoundProblem
+    | UserCurationEventAlreadyConsumedProblem
+    | UserCurationEventMissingTrackYearProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   eventId: string,
@@ -2517,7 +2812,14 @@ export function useRestoreUserCurationEvent<
 };
 export function useRestoreUserCurationEvent<
   TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | UserCurationEventNotFoundProblem
+    | UserCurationEventAlreadyConsumedProblem
+    | UserCurationEventMissingTrackYearProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   eventId: string,
@@ -2545,7 +2847,14 @@ export function useRestoreUserCurationEvent<
 };
 export function useRestoreUserCurationEvent<
   TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | UserCurationEventNotFoundProblem
+    | UserCurationEventAlreadyConsumedProblem
+    | UserCurationEventMissingTrackYearProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   eventId: string,
@@ -2569,7 +2878,14 @@ export function useRestoreUserCurationEvent<
 
 export function useRestoreUserCurationEvent<
   TData = Awaited<ReturnType<typeof restoreUserCurationEvent>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | UserCurationEventNotFoundProblem
+    | UserCurationEventAlreadyConsumedProblem
+    | UserCurationEventMissingTrackYearProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   eventId: string,
@@ -2645,7 +2961,12 @@ export const getExportSessionPlaylistQueryKey = (
 
 export const getExportSessionPlaylistInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -2687,12 +3008,20 @@ export type ExportSessionPlaylistInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof exportSessionPlaylist>>
 >;
 export type ExportSessionPlaylistInfiniteQueryError =
-  | ErrorResponse
-  | HTTPValidationError;
+  | SessionPlaylistEmptyProblem
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | RequestValidationProblem;
 
 export function useExportSessionPlaylistInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   params: undefined | ExportSessionPlaylistParams,
@@ -2720,7 +3049,12 @@ export function useExportSessionPlaylistInfinite<
 };
 export function useExportSessionPlaylistInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -2748,7 +3082,12 @@ export function useExportSessionPlaylistInfinite<
 };
 export function useExportSessionPlaylistInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -2772,7 +3111,12 @@ export function useExportSessionPlaylistInfinite<
 
 export function useExportSessionPlaylistInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof exportSessionPlaylist>>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -2808,7 +3152,12 @@ export function useExportSessionPlaylistInfinite<
 
 export const getExportSessionPlaylistQueryOptions = <
   TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -2850,12 +3199,20 @@ export type ExportSessionPlaylistQueryResult = NonNullable<
   Awaited<ReturnType<typeof exportSessionPlaylist>>
 >;
 export type ExportSessionPlaylistQueryError =
-  | ErrorResponse
-  | HTTPValidationError;
+  | SessionPlaylistEmptyProblem
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | RequestValidationProblem;
 
 export function useExportSessionPlaylist<
   TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   params: undefined | ExportSessionPlaylistParams,
@@ -2883,7 +3240,12 @@ export function useExportSessionPlaylist<
 };
 export function useExportSessionPlaylist<
   TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -2911,7 +3273,12 @@ export function useExportSessionPlaylist<
 };
 export function useExportSessionPlaylist<
   TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -2935,7 +3302,12 @@ export function useExportSessionPlaylist<
 
 export function useExportSessionPlaylist<
   TData = Awaited<ReturnType<typeof exportSessionPlaylist>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   params?: ExportSessionPlaylistParams,
@@ -2993,7 +3365,14 @@ export const getExportSessionPlaylistToSpotifyQueryKey = (
 
 export const getExportSessionPlaylistToSpotifyQueryOptions = <
   TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | SessionPlaylistMissingSpotifyTracksProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | SessionExportRequiresSpotifyConnectionProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -3034,12 +3413,24 @@ export type ExportSessionPlaylistToSpotifyQueryResult = NonNullable<
   Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>
 >;
 export type ExportSessionPlaylistToSpotifyQueryError =
-  | ErrorResponse
-  | HTTPValidationError;
+  | SessionPlaylistEmptyProblem
+  | SessionPlaylistMissingSpotifyTracksProblem
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | SessionExportRequiresSpotifyConnectionProblem
+  | RequestValidationProblem;
 
 export function useExportSessionPlaylistToSpotify<
   TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | SessionPlaylistMissingSpotifyTracksProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | SessionExportRequiresSpotifyConnectionProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options: {
@@ -3066,7 +3457,14 @@ export function useExportSessionPlaylistToSpotify<
 };
 export function useExportSessionPlaylistToSpotify<
   TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | SessionPlaylistMissingSpotifyTracksProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | SessionExportRequiresSpotifyConnectionProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -3093,7 +3491,14 @@ export function useExportSessionPlaylistToSpotify<
 };
 export function useExportSessionPlaylistToSpotify<
   TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | SessionPlaylistMissingSpotifyTracksProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | SessionExportRequiresSpotifyConnectionProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -3116,7 +3521,14 @@ export function useExportSessionPlaylistToSpotify<
 
 export function useExportSessionPlaylistToSpotify<
   TData = Awaited<ReturnType<typeof exportSessionPlaylistToSpotify>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | SessionPlaylistEmptyProblem
+    | SessionPlaylistMissingSpotifyTracksProblem
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | SessionExportRequiresSpotifyConnectionProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -3166,7 +3578,11 @@ export const getStarSessionQueryKey = (sessionId: string) => {
 
 export const getStarSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof starSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -3199,11 +3615,19 @@ export const getStarSessionQueryOptions = <
 export type StarSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof starSession>>
 >;
-export type StarSessionQueryError = ErrorResponse | HTTPValidationError;
+export type StarSessionQueryError =
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | RequestValidationProblem;
 
 export function useStarSession<
   TData = Awaited<ReturnType<typeof starSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options: {
@@ -3226,7 +3650,11 @@ export function useStarSession<
 };
 export function useStarSession<
   TData = Awaited<ReturnType<typeof starSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -3249,7 +3677,11 @@ export function useStarSession<
 };
 export function useStarSession<
   TData = Awaited<ReturnType<typeof starSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -3268,7 +3700,11 @@ export function useStarSession<
 
 export function useStarSession<
   TData = Awaited<ReturnType<typeof starSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -3311,7 +3747,11 @@ export const getUnstarSessionQueryKey = (sessionId: string) => {
 
 export const getUnstarSessionQueryOptions = <
   TData = Awaited<ReturnType<typeof unstarSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -3345,11 +3785,19 @@ export const getUnstarSessionQueryOptions = <
 export type UnstarSessionQueryResult = NonNullable<
   Awaited<ReturnType<typeof unstarSession>>
 >;
-export type UnstarSessionQueryError = ErrorResponse | HTTPValidationError;
+export type UnstarSessionQueryError =
+  | AuthenticationRequiredProblem
+  | SessionAccessDeniedProblem
+  | SessionNotFoundProblem
+  | RequestValidationProblem;
 
 export function useUnstarSession<
   TData = Awaited<ReturnType<typeof unstarSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options: {
@@ -3372,7 +3820,11 @@ export function useUnstarSession<
 };
 export function useUnstarSession<
   TData = Awaited<ReturnType<typeof unstarSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -3395,7 +3847,11 @@ export function useUnstarSession<
 };
 export function useUnstarSession<
   TData = Awaited<ReturnType<typeof unstarSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {
@@ -3414,7 +3870,11 @@ export function useUnstarSession<
 
 export function useUnstarSession<
   TData = Awaited<ReturnType<typeof unstarSession>>,
-  TError = ErrorResponse | HTTPValidationError,
+  TError =
+    | AuthenticationRequiredProblem
+    | SessionAccessDeniedProblem
+    | SessionNotFoundProblem
+    | RequestValidationProblem,
 >(
   sessionId: string,
   options?: {

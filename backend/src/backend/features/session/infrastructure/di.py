@@ -1,3 +1,5 @@
+from backend.features.llm.configuration import LLMRegistry
+from backend.features.llm.credentials import LLMCredentials
 from backend.features.oauth_connections.application import SpotifyTokenService
 from backend.features.session.application import (
     ImageAttachmentService,
@@ -52,21 +54,12 @@ from backend.features.user.application import UserMessageRateLimitService
 from backend.features.user.domain import UserRepository
 from backend.infrastructure.storage import ObjectStorage
 from dishka import Provider, Scope, provide
-from llm import LLMCredentials, create_gpt_5_4_mini
 from llmify import ChatModel
 from spotifyify import Spotifyify
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
 class SessionProvider(Provider):
-    @provide(scope=Scope.APP)
-    def llm_credentials(self) -> LLMCredentials:
-        return LLMCredentials()
-
-    @provide(scope=Scope.APP)
-    def provide_llm(self, credentials: LLMCredentials) -> ChatModel:
-        return create_gpt_5_4_mini(credentials=credentials)
-
     @provide(scope=Scope.APP)
     def provide_session_title_generator(
         self,
@@ -113,6 +106,7 @@ class SessionProvider(Provider):
         history_builder: AgentHistoryBuilder,
         active_runs: ActiveSessionRunStore,
         runtime_registry: AgentRuntimeRegistry,
+        llm_registry: LLMRegistry,
     ) -> SessionRunner:
         return AgentSessionRunner(
             llm=llm,
@@ -122,6 +116,7 @@ class SessionProvider(Provider):
             history_builder=history_builder,
             active_runs=active_runs,
             runtime_registry=runtime_registry,
+            llm_registry=llm_registry,
         )
 
     @provide(scope=Scope.REQUEST)

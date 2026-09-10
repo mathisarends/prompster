@@ -8,9 +8,7 @@
   "paths": {
     "/health": {
       "get": {
-        "tags": [
-          "system"
-        ],
+        "tags": ["system"],
         "summary": "Health Check",
         "operationId": "health_check",
         "responses": {
@@ -19,9 +17,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
+                  "additionalProperties": { "type": "string" },
                   "type": "object",
                   "title": "Response Health Check"
                 }
@@ -33,28 +29,18 @@
     },
     "/readiness": {
       "get": {
-        "tags": [
-          "system"
-        ],
+        "tags": ["system"],
         "summary": "Readiness Check",
         "operationId": "readiness_check",
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "503": {
             "description": "The application is not ready to receive traffic.",
             "content": {
-              "application/json": {
-                "example": {
-                  "status": "not_ready"
-                }
-              }
+              "application/json": { "example": { "status": "not_ready" } }
             }
           }
         }
@@ -62,73 +48,61 @@
     },
     "/api/v1/auth/google/login": {
       "get": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Google Login",
         "operationId": "google_login",
         "responses": {
           "307": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           }
         }
       }
     },
     "/api/v1/auth/spotify/login": {
       "get": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Spotify Login",
         "operationId": "spotify_login",
         "responses": {
           "307": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           }
         }
       }
     },
     "/api/v1/auth/logout": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Logout",
         "operationId": "logout",
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          }
-        }
+        "responses": { "204": { "description": "Successful Response" } }
       }
     },
     "/api/v1/auth/refresh": {
       "post": {
-        "tags": [
-          "auth"
-        ],
+        "tags": ["auth"],
         "summary": "Refresh",
         "operationId": "refresh",
         "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
+          "204": { "description": "Successful Response" },
           "401": {
-            "description": "Invalid or expired refresh token",
+            "description": "Possible problems: Session expired, Invalid session",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/SessionExpiredProblem" },
+                    { "$ref": "#/components/schemas/SessionInvalidProblem" }
+                  ],
+                  "discriminator": {
+                    "propertyName": "code",
+                    "mapping": {
+                      "session_expired": "#/components/schemas/SessionExpiredProblem",
+                      "session_invalid": "#/components/schemas/SessionInvalidProblem"
+                    }
+                  }
                 }
               }
             }
@@ -138,9 +112,7 @@
     },
     "/api/v1/llm-options": {
       "get": {
-        "tags": [
-          "llm-options"
-        ],
+        "tags": ["llm-options"],
         "summary": "List Llm Options",
         "operationId": "list_llm_options",
         "responses": {
@@ -148,9 +120,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LLMOptionsResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/LLMOptionsResponse" }
               }
             }
           }
@@ -159,17 +129,21 @@
     },
     "/api/v1/auth/spotify/connect": {
       "get": {
-        "tags": [
-          "spotify"
-        ],
+        "tags": ["spotify"],
         "summary": "Spotify Connect",
         "operationId": "spotify_connect",
         "responses": {
           "307": {
             "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
-                "schema": {}
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
               }
             }
           }
@@ -178,23 +152,27 @@
     },
     "/api/v1/auth/spotify": {
       "delete": {
-        "tags": [
-          "spotify"
-        ],
+        "tags": ["spotify"],
         "summary": "Spotify Disconnect",
         "operationId": "spotify_disconnect",
         "responses": {
-          "204": {
-            "description": "Successful Response"
+          "204": { "description": "Successful Response" },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/v1/auth/spotify/token": {
       "get": {
-        "tags": [
-          "spotify"
-        ],
+        "tags": ["spotify"],
         "summary": "Spotify Get Access Token",
         "operationId": "spotify_get_access_token",
         "responses": {
@@ -208,22 +186,32 @@
               }
             }
           },
-          "409": {
-            "description": "Spotify not connected",
+          "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Spotify is not connected",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotifyConnectionNotFoundProblem"
                 }
               }
             }
           },
           "410": {
-            "description": "Spotify access revoked, reconnect required",
+            "description": "Spotify access revoked",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
+                  "$ref": "#/components/schemas/SpotifyTokenRevokedProblem"
                 }
               }
             }
@@ -233,9 +221,7 @@
     },
     "/api/v1/payments/checkout-sessions": {
       "post": {
-        "tags": [
-          "payments"
-        ],
+        "tags": ["payments"],
         "summary": "Create Checkout Session",
         "operationId": "create_payment_checkout_session",
         "requestBody": {
@@ -260,41 +246,31 @@
             }
           },
           "401": {
-            "description": "Unauthorized",
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
           },
           "400": {
-            "description": "Bad Request",
+            "description": "Payment request failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
+                  "$ref": "#/components/schemas/PaymentGatewayErrorProblem"
                 }
               }
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -304,17 +280,13 @@
     },
     "/api/v1/payments/coupons": {
       "post": {
-        "tags": [
-          "payments"
-        ],
+        "tags": ["payments"],
         "summary": "Create Coupon",
         "operationId": "create_payment_coupon",
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCouponRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/CreateCouponRequest" }
             }
           },
           "required": true
@@ -324,48 +296,36 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CouponResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/CouponResponse" }
               }
             }
           },
           "401": {
-            "description": "Unauthorized",
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
           },
           "400": {
-            "description": "Bad Request",
+            "description": "Payment request failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
+                  "$ref": "#/components/schemas/PaymentGatewayErrorProblem"
                 }
               }
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -375,9 +335,7 @@
     },
     "/api/v1/payments/webhook": {
       "post": {
-        "tags": [
-          "payments"
-        ],
+        "tags": ["payments"],
         "summary": "Verify Webhook",
         "operationId": "verify_payment_webhook",
         "parameters": [
@@ -387,13 +345,8 @@
             "required": false,
             "schema": {
               "anyOf": [
-                {
-                  "type": "string",
-                  "minLength": 1
-                },
-                {
-                  "type": "null"
-                }
+                { "type": "string", "minLength": 1 },
+                { "type": "null" }
               ],
               "title": "Stripe-Signature"
             }
@@ -411,21 +364,21 @@
             }
           },
           "400": {
+            "description": "Payment webhook verification failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
+                  "$ref": "#/components/schemas/PaymentWebhookVerificationErrorProblem"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -435,9 +388,7 @@
     },
     "/api/v1/spotify/search": {
       "get": {
-        "tags": [
-          "spotify"
-        ],
+        "tags": ["spotify"],
         "summary": "Search Spotify",
         "operationId": "search_spotify",
         "parameters": [
@@ -473,15 +424,9 @@
             "schema": {
               "type": "array",
               "uniqueItems": true,
-              "items": {
-                "$ref": "#/components/schemas/SpotifySearchType"
-              },
+              "items": { "$ref": "#/components/schemas/SpotifySearchType" },
               "description": "Search resource types",
-              "default": [
-                "artist",
-                "playlist",
-                "track"
-              ],
+              "default": ["artist", "playlist", "track"],
               "title": "Types"
             },
             "description": "Search resource types"
@@ -499,31 +444,21 @@
             }
           },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
-                }
-              }
-            },
-            "description": "Forbidden"
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -533,9 +468,7 @@
     },
     "/api/v1/sessions": {
       "get": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "List Sessions",
         "operationId": "list_sessions",
         "parameters": [
@@ -545,14 +478,8 @@
             "required": false,
             "schema": {
               "anyOf": [
-                {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 120
-                },
-                {
-                  "type": "null"
-                }
+                { "type": "string", "minLength": 1, "maxLength": 120 },
+                { "type": "null" }
               ],
               "title": "Q"
             }
@@ -593,31 +520,21 @@
             }
           },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -625,18 +542,14 @@
         }
       },
       "post": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Create Session",
         "operationId": "create_session",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SessionCreateRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/SessionCreateRequest" }
             }
           }
         },
@@ -645,38 +558,26 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SessionResponse" }
               }
             }
           },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -686,9 +587,7 @@
     },
     "/api/v1/sessions/{session_id}": {
       "get": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Get Session By Id",
         "operationId": "get_session",
         "parameters": [
@@ -708,48 +607,46 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SessionResponse" }
               }
             }
           },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Session not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
                 }
               }
-            },
-            "description": "Not Found"
+            }
+          },
+          "403": {
+            "description": "Session access denied",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -757,9 +654,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Update Session",
         "operationId": "update_session",
         "parameters": [
@@ -778,9 +673,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SessionUpdateRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/SessionUpdateRequest" }
             }
           }
         },
@@ -789,58 +682,46 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SessionResponse" }
               }
             }
           },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Bad Request"
+            }
           },
           "404": {
+            "description": "Session not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
                 }
               }
-            },
-            "description": "Not Found"
+            }
+          },
+          "403": {
+            "description": "Session access denied",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -848,9 +729,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Delete Session",
         "operationId": "delete_session",
         "parameters": [
@@ -866,45 +745,43 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
+          "204": { "description": "Successful Response" },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Session not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
                 }
               }
-            },
-            "description": "Not Found"
+            }
+          },
+          "403": {
+            "description": "Session access denied",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -914,9 +791,7 @@
     },
     "/api/v1/sessions/{session_id}/messages": {
       "post": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Send Message",
         "operationId": "send_message",
         "parameters": [
@@ -935,14 +810,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/OpenAIModelName"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
               "title": "Model Id"
             }
           }
@@ -951,9 +819,7 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SendMessageRequest"
-              }
+              "schema": { "$ref": "#/components/schemas/SendMessageRequest" }
             }
           }
         },
@@ -961,69 +827,25 @@
           "200": {
             "description": "Server-sent session events.",
             "content": {
-              "text/event-stream": {
+              "text/event-stream": { "schema": { "type": "string" } }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/problem+json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
           },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Bad Request"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Not Found"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Too Many Requests"
-          },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -1033,9 +855,7 @@
     },
     "/api/v1/sessions/{session_id}/onboarding-answer": {
       "post": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Submit Onboarding Answer",
         "operationId": "submit_onboarding_answer",
         "parameters": [
@@ -1065,58 +885,56 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SessionResponse" }
               }
             }
           },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Bad Request"
+            }
           },
           "404": {
+            "description": "Session not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
                 }
               }
-            },
-            "description": "Not Found"
+            }
+          },
+          "403": {
+            "description": "Session access denied",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Invalid session phase transition",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidSessionPhaseTransitionProblem"
+                }
+              }
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -1126,9 +944,7 @@
     },
     "/api/v1/sessions/{session_id}/onboarding/complete": {
       "post": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Complete Onboarding",
         "operationId": "complete_onboarding",
         "parameters": [
@@ -1147,14 +963,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/OpenAIModelName"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
               "title": "Model Id"
             }
           }
@@ -1163,59 +972,25 @@
           "200": {
             "description": "Server-sent session events.",
             "content": {
-              "text/event-stream": {
+              "text/event-stream": { "schema": { "type": "string" } }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/problem+json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
           },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Bad Request"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Not Found"
-          },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -1225,9 +1000,7 @@
     },
     "/api/v1/sessions/{session_id}/messages/stop": {
       "post": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Stop Message",
         "operationId": "stop_message",
         "parameters": [
@@ -1243,45 +1016,43 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
+          "204": { "description": "Successful Response" },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Session not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
                 }
               }
-            },
-            "description": "Not Found"
+            }
+          },
+          "403": {
+            "description": "Session access denied",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -1291,9 +1062,7 @@
     },
     "/api/v1/sessions/{session_id}/tracks": {
       "post": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Add Session Playlist Track",
         "operationId": "add_playlist_track",
         "parameters": [
@@ -1330,41 +1099,51 @@
             }
           },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Session not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
                 }
               }
-            },
-            "description": "Not Found"
+            }
+          },
+          "403": {
+            "description": "Session access denied",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Playlist track limit exceeded",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaylistTrackLimitExceededProblem"
+                }
+              }
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -1374,9 +1153,7 @@
     },
     "/api/v1/sessions/{session_id}/tracks/spotify": {
       "post": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Add Session Spotify Playlist Track",
         "operationId": "add_spotify_playlist_track",
         "parameters": [
@@ -1413,51 +1190,87 @@
             }
           },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Possible problems: Session not found, Spotify track not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/SessionNotFoundProblem" },
+                    {
+                      "$ref": "#/components/schemas/SpotifyTrackNotFoundProblem"
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "code",
+                    "mapping": {
+                      "session_not_found": "#/components/schemas/SessionNotFoundProblem",
+                      "spotify_track_not_found": "#/components/schemas/SpotifyTrackNotFoundProblem"
+                    }
+                  }
                 }
               }
-            },
-            "description": "Not Found"
+            }
+          },
+          "403": {
+            "description": "Session access denied",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Possible problems: Playlist track limit exceeded, Spotify track release year missing",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/PlaylistTrackLimitExceededProblem"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SpotifyTrackYearMissingProblem"
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "code",
+                    "mapping": {
+                      "playlist_track_limit_exceeded": "#/components/schemas/PlaylistTrackLimitExceededProblem",
+                      "spotify_track_year_missing": "#/components/schemas/SpotifyTrackYearMissingProblem"
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
+            "description": "Invalid Spotify track URI",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/InvalidSpotifyTrackUriProblem"
                 }
               }
-            },
-            "description": "Bad Request"
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -1467,9 +1280,7 @@
     },
     "/api/v1/sessions/{session_id}/tracks/{track_id}": {
       "delete": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Remove Session Playlist Track",
         "operationId": "remove_playlist_track",
         "parameters": [
@@ -1495,45 +1306,55 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
+          "204": { "description": "Successful Response" },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Possible problems: Session not found, Playlist track not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/SessionNotFoundProblem" },
+                    {
+                      "$ref": "#/components/schemas/PlaylistTrackNotFoundProblem"
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "code",
+                    "mapping": {
+                      "session_not_found": "#/components/schemas/SessionNotFoundProblem",
+                      "playlist_track_not_found": "#/components/schemas/PlaylistTrackNotFoundProblem"
+                    }
+                  }
                 }
               }
-            },
-            "description": "Not Found"
+            }
+          },
+          "403": {
+            "description": "Session access denied",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -1543,9 +1364,7 @@
     },
     "/api/v1/sessions/{session_id}/curation-events/{event_id}/restore": {
       "post": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Restore Session User Curation Event",
         "operationId": "restore_user_curation_event",
         "parameters": [
@@ -1575,58 +1394,82 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SessionResponse" }
               }
             }
           },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Possible problems: Session not found, Curation event not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/SessionNotFoundProblem" },
+                    {
+                      "$ref": "#/components/schemas/UserCurationEventNotFoundProblem"
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "code",
+                    "mapping": {
+                      "session_not_found": "#/components/schemas/SessionNotFoundProblem",
+                      "user_curation_event_not_found": "#/components/schemas/UserCurationEventNotFoundProblem"
+                    }
+                  }
                 }
               }
-            },
-            "description": "Not Found"
+            }
+          },
+          "403": {
+            "description": "Session access denied",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            }
           },
           "409": {
+            "description": "Possible problems: Curation event already consumed, Curation event track year missing",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/UserCurationEventAlreadyConsumedProblem"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UserCurationEventMissingTrackYearProblem"
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "code",
+                    "mapping": {
+                      "user_curation_event_already_consumed": "#/components/schemas/UserCurationEventAlreadyConsumedProblem",
+                      "user_curation_event_missing_track_year": "#/components/schemas/UserCurationEventMissingTrackYearProblem"
+                    }
+                  }
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -1636,9 +1479,7 @@
     },
     "/api/v1/sessions/{session_id}/playlist/pdf": {
       "get": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Export Session Playlist",
         "operationId": "export_session_playlist",
         "parameters": [
@@ -1658,14 +1499,8 @@
             "required": false,
             "schema": {
               "anyOf": [
-                {
-                  "type": "integer",
-                  "maximum": 100,
-                  "minimum": 1
-                },
-                {
-                  "type": "null"
-                }
+                { "type": "integer", "maximum": 100, "minimum": 1 },
+                { "type": "null" }
               ],
               "title": "Pages"
             }
@@ -1675,63 +1510,58 @@
           "200": {
             "description": "Playlist deck PDF.",
             "content": {
-              "application/json": {
-                "schema": {}
-              },
+              "application/json": { "schema": {} },
               "application/pdf": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
+                "schema": { "type": "string", "format": "binary" }
               }
             }
           },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Bad Request"
+            }
           },
           "404": {
+            "description": "Session not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
                 }
               }
-            },
-            "description": "Not Found"
+            }
+          },
+          "403": {
+            "description": "Session access denied",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Session playlist is empty",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionPlaylistEmptyProblem"
+                }
+              }
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -1741,9 +1571,7 @@
     },
     "/api/v1/sessions/{session_id}/playlist/spotify": {
       "post": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Export Session Playlist To Spotify",
         "operationId": "export_session_playlist_to_spotify",
         "parameters": [
@@ -1762,69 +1590,79 @@
           "200": {
             "description": "Server-sent session events.",
             "content": {
-              "text/event-stream": {
+              "text/event-stream": { "schema": { "type": "string" } }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/problem+json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
           },
-          "401": {
+          "404": {
+            "description": "Session not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
+            }
           },
           "403": {
+            "description": "Session access denied",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
                 }
               }
-            },
-            "description": "Forbidden"
+            }
           },
           "400": {
+            "description": "Possible problems: Session playlist is empty, Session playlist has no Spotify tracks",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/SessionPlaylistEmptyProblem"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SessionPlaylistMissingSpotifyTracksProblem"
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "code",
+                    "mapping": {
+                      "session_playlist_empty": "#/components/schemas/SessionPlaylistEmptyProblem",
+                      "session_playlist_missing_spotify_tracks": "#/components/schemas/SessionPlaylistMissingSpotifyTracksProblem"
+                    }
+                  }
                 }
               }
-            },
-            "description": "Bad Request"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Not Found"
+            }
           },
           "409": {
+            "description": "Spotify connection required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/SessionExportRequiresSpotifyConnectionProblem"
                 }
               }
-            },
-            "description": "Conflict"
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -1834,9 +1672,7 @@
     },
     "/api/v1/sessions/{session_id}/star": {
       "post": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Star Session",
         "operationId": "star_session",
         "parameters": [
@@ -1856,48 +1692,46 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SessionResponse" }
               }
             }
           },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Session not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
                 }
               }
-            },
-            "description": "Not Found"
+            }
+          },
+          "403": {
+            "description": "Session access denied",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -1907,9 +1741,7 @@
     },
     "/api/v1/sessions/{session_id}/unstar": {
       "post": {
-        "tags": [
-          "sessions"
-        ],
+        "tags": ["sessions"],
         "summary": "Unstar Session",
         "operationId": "unstar_session",
         "parameters": [
@@ -1929,48 +1761,46 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/SessionResponse" }
               }
             }
           },
           "401": {
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Forbidden"
+            }
           },
           "404": {
+            "description": "Session not found",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
                 }
               }
-            },
-            "description": "Not Found"
+            }
+          },
+          "403": {
+            "description": "Session access denied",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -1980,9 +1810,7 @@
     },
     "/api/v1/image-attachments": {
       "post": {
-        "tags": [
-          "image-attachments"
-        ],
+        "tags": ["image-attachments"],
         "summary": "Upload Image Attachment",
         "operationId": "upload_image_attachment",
         "requestBody": {
@@ -2007,41 +1835,31 @@
             }
           },
           "401": {
-            "description": "Unauthorized",
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
           },
           "400": {
-            "description": "Bad Request",
+            "description": "Invalid image attachment",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/InvalidImageAttachmentProblem"
                 }
               }
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Request validation failed",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/RequestValidationProblem"
                 }
               }
             }
@@ -2051,9 +1869,7 @@
     },
     "/api/v1/sessions/events/schema": {
       "get": {
-        "tags": [
-          "session_schemas"
-        ],
+        "tags": ["session_schemas"],
         "summary": "Get Session Event Schema",
         "operationId": "get_session_event_schema",
         "responses": {
@@ -2061,28 +1877,16 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionServerEvent"
-                }
+                "schema": { "$ref": "#/components/schemas/SessionServerEvent" }
               }
             }
           },
           "401": {
-            "description": "Unauthorized",
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
@@ -2092,9 +1896,7 @@
     },
     "/api/v1/sessions/playlist/spotify/events/schema": {
       "get": {
-        "tags": [
-          "session_schemas"
-        ],
+        "tags": ["session_schemas"],
         "summary": "Get Spotify Export Event Schema",
         "operationId": "get_spotify_export_event_schema",
         "responses": {
@@ -2109,21 +1911,11 @@
             }
           },
           "401": {
-            "description": "Unauthorized",
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
@@ -2133,9 +1925,7 @@
     },
     "/api/v1/sessions/events/type/schema": {
       "get": {
-        "tags": [
-          "session_schemas"
-        ],
+        "tags": ["session_schemas"],
         "summary": "Get Session Event Type Schema",
         "operationId": "get_session_event_type_schema",
         "responses": {
@@ -2150,21 +1940,11 @@
             }
           },
           "401": {
-            "description": "Unauthorized",
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
@@ -2174,9 +1954,7 @@
     },
     "/api/v1/sessions/entries/kind/schema": {
       "get": {
-        "tags": [
-          "session_schemas"
-        ],
+        "tags": ["session_schemas"],
         "summary": "Get Session Entry Kind Schema",
         "operationId": "get_session_entry_kind_schema",
         "responses": {
@@ -2184,28 +1962,16 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EntryKindSchema"
-                }
+                "schema": { "$ref": "#/components/schemas/EntryKindSchema" }
               }
             }
           },
           "401": {
-            "description": "Unauthorized",
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
@@ -2215,9 +1981,7 @@
     },
     "/api/v1/users/me": {
       "get": {
-        "tags": [
-          "users"
-        ],
+        "tags": ["users"],
         "summary": "Get Me",
         "operationId": "get_me",
         "responses": {
@@ -2225,18 +1989,16 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserMeResponse"
-                }
+                "schema": { "$ref": "#/components/schemas/UserMeResponse" }
               }
             }
           },
           "401": {
-            "description": "Unauthorized",
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
@@ -2244,21 +2006,17 @@
         }
       },
       "delete": {
-        "tags": [
-          "users"
-        ],
+        "tags": ["users"],
         "summary": "Delete Me",
         "operationId": "delete_me",
         "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
+          "204": { "description": "Successful Response" },
           "401": {
-            "description": "Unauthorized",
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
@@ -2268,9 +2026,7 @@
     },
     "/api/v1/users/me/delete-information": {
       "get": {
-        "tags": [
-          "users"
-        ],
+        "tags": ["users"],
         "summary": "Get Delete Information",
         "operationId": "get_delete_information",
         "responses": {
@@ -2285,11 +2041,11 @@
             }
           },
           "401": {
-            "description": "Unauthorized",
+            "description": "Authentication required",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorDto"
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
                 }
               }
             }
@@ -2321,34 +2077,16 @@
             "title": "Year"
           },
           "spotifyUri": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Spotifyuri"
           },
           "coverUrl": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Coverurl"
           }
         },
         "type": "object",
-        "required": [
-          "title",
-          "artist",
-          "year"
-        ],
+        "required": ["title", "artist", "year"],
         "title": "AddPlaylistTrackRequest"
       },
       "AddSpotifyPlaylistTrackRequest": {
@@ -2361,73 +2099,34 @@
           }
         },
         "type": "object",
-        "required": [
-          "spotifyUri"
-        ],
+        "required": ["spotifyUri"],
         "title": "AddSpotifyPlaylistTrackRequest"
       },
       "ArtistReferenceResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "spotifyArtistId": {
-            "type": "string",
-            "title": "Spotifyartistid"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "spotifyArtistId": { "type": "string", "title": "Spotifyartistid" },
+          "name": { "type": "string", "title": "Name" },
           "imageUrl": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Imageurl"
           },
           "genres": {
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "type": "array",
             "title": "Genres"
           },
           "followers": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Followers"
           },
           "popularity": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Popularity"
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "spotifyArtistId",
-          "name"
-        ],
+        "required": ["id", "spotifyArtistId", "name"],
         "title": "ArtistReferenceResponse"
       },
       "AssistantMessageCancelledEvent": {
@@ -2445,9 +2144,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "messageId"
-        ],
+        "required": ["messageId"],
         "title": "AssistantMessageCancelledEvent"
       },
       "AssistantMessageChunkEvent": {
@@ -2463,16 +2160,10 @@
             "format": "uuid",
             "title": "Messageid"
           },
-          "chunk": {
-            "type": "string",
-            "title": "Chunk"
-          }
+          "chunk": { "type": "string", "title": "Chunk" }
         },
         "type": "object",
-        "required": [
-          "messageId",
-          "chunk"
-        ],
+        "required": ["messageId", "chunk"],
         "title": "AssistantMessageChunkEvent"
       },
       "AssistantMessageCompletedEvent": {
@@ -2488,9 +2179,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "message"
-        ],
+        "required": ["message"],
         "title": "AssistantMessageCompletedEvent"
       },
       "AssistantMessageEntryResponse": {
@@ -2501,15 +2190,8 @@
             "title": "Kind",
             "default": "assistant_message"
           },
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "content": {
-            "type": "string",
-            "title": "Content"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "content": { "type": "string", "title": "Content" },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -2517,11 +2199,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "content",
-          "createdAt"
-        ],
+        "required": ["id", "content", "createdAt"],
         "title": "AssistantMessageEntryResponse"
       },
       "AssistantMessageStartedEvent": {
@@ -2544,10 +2222,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "messageId",
-          "createdAt"
-        ],
+        "required": ["messageId", "createdAt"],
         "title": "AssistantMessageStartedEvent"
       },
       "Body_upload_image_attachment": {
@@ -2559,27 +2234,16 @@
           }
         },
         "type": "object",
-        "required": [
-          "file"
-        ],
+        "required": ["file"],
         "title": "Body_upload_image_attachment"
       },
       "CheckoutSessionResponse": {
         "properties": {
-          "sessionId": {
-            "type": "string",
-            "title": "Sessionid"
-          },
-          "checkoutUrl": {
-            "type": "string",
-            "title": "Checkouturl"
-          }
+          "sessionId": { "type": "string", "title": "Sessionid" },
+          "checkoutUrl": { "type": "string", "title": "Checkouturl" }
         },
         "type": "object",
-        "required": [
-          "sessionId",
-          "checkoutUrl"
-        ],
+        "required": ["sessionId", "checkoutUrl"],
         "title": "CheckoutSessionResponse"
       },
       "ContextCompactedEvent": {
@@ -2590,19 +2254,9 @@
             "title": "Type",
             "default": "session.context_compacted"
           },
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          },
+          "reason": { "type": "string", "title": "Reason" },
           "tokensBefore": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Tokensbefore"
           },
           "compactedToolResults": {
@@ -2612,32 +2266,20 @@
           }
         },
         "type": "object",
-        "required": [
-          "reason"
-        ],
+        "required": ["reason"],
         "title": "ContextCompactedEvent"
       },
       "CouponResponse": {
-        "properties": {
-          "couponId": {
-            "type": "string",
-            "title": "Couponid"
-          }
-        },
+        "properties": { "couponId": { "type": "string", "title": "Couponid" } },
         "type": "object",
-        "required": [
-          "couponId"
-        ],
+        "required": ["couponId"],
         "title": "CouponResponse"
       },
       "CreateCheckoutSessionRequest": {
         "properties": {
           "amount": {
             "anyOf": [
-              {
-                "type": "number",
-                "exclusiveMinimum": 0.0
-              },
+              { "type": "number", "exclusiveMinimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)"
@@ -2664,34 +2306,21 @@
             "title": "Cancelurl"
           },
           "metadata": {
-            "additionalProperties": {
-              "type": "string"
-            },
+            "additionalProperties": { "type": "string" },
             "type": "object",
             "maxProperties": 50,
             "title": "Metadata"
           },
           "couponCode": {
             "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 128,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "maxLength": 128, "minLength": 1 },
+              { "type": "null" }
             ],
             "title": "Couponcode"
           }
         },
         "type": "object",
-        "required": [
-          "amount",
-          "currency",
-          "successUrl",
-          "cancelUrl"
-        ],
+        "required": ["amount", "currency", "successUrl", "cancelUrl"],
         "title": "CreateCheckoutSessionRequest"
       },
       "CreateCouponRequest": {
@@ -2716,10 +2345,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "code",
-          "percentOff"
-        ],
+        "required": ["code", "percentOff"],
         "title": "CreateCouponRequest"
       },
       "DoneEvent": {
@@ -2736,30 +2362,13 @@
       },
       "EntryKind": {
         "type": "string",
-        "enum": [
-          "user_message",
-          "assistant_message",
-          "tool_call_sequence"
-        ],
+        "enum": ["user_message", "assistant_message", "tool_call_sequence"],
         "title": "EntryKind"
       },
       "EntryKindSchema": {
         "$ref": "#/components/schemas/EntryKind",
         "title": "EntryKindSchema",
         "description": "Schema-only model to expose EntryKind in OpenAPI."
-      },
-      "ErrorDto": {
-        "properties": {
-          "detail": {
-            "type": "string",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "required": [
-          "detail"
-        ],
-        "title": "ErrorDto"
       },
       "ErrorEvent": {
         "properties": {
@@ -2769,52 +2378,21 @@
             "title": "Type",
             "default": "error"
           },
-          "code": {
-            "type": "string",
-            "title": "Code"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message"
-          },
+          "code": { "type": "string", "title": "Code" },
+          "message": { "type": "string", "title": "Message" },
           "correlationId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Correlationid"
           }
         },
         "type": "object",
-        "required": [
-          "code",
-          "message"
-        ],
+        "required": ["code", "message"],
         "title": "ErrorEvent"
-      },
-      "ErrorResponse": {
-        "properties": {
-          "detail": {
-            "type": "string",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "required": [
-          "detail"
-        ],
-        "title": "ErrorResponse"
       },
       "HTTPValidationError": {
         "properties": {
           "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
+            "items": { "$ref": "#/components/schemas/ValidationError" },
             "type": "array",
             "title": "Detail"
           }
@@ -2824,11 +2402,7 @@
       },
       "ImageAttachmentReferenceRequest": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
           "storageKey": {
             "type": "string",
             "maxLength": 1024,
@@ -2863,29 +2437,52 @@
         ],
         "title": "ImageAttachmentReferenceRequest"
       },
+      "LLMCapabilitiesResponse": {
+        "properties": {
+          "temperature": { "type": "boolean", "title": "Temperature" },
+          "reasoningEffort": {
+            "items": { "$ref": "#/components/schemas/ReasoningEffort" },
+            "type": "array",
+            "title": "Reasoningeffort"
+          }
+        },
+        "type": "object",
+        "required": ["temperature", "reasoningEffort"],
+        "title": "LLMCapabilitiesResponse"
+      },
+      "LLMDefaultsResponse": {
+        "properties": {
+          "reasoningEffort": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/ReasoningEffort" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": ["reasoningEffort"],
+        "title": "LLMDefaultsResponse"
+      },
       "LLMOptionResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
+          "id": { "type": "string", "title": "Id" },
+          "provider": { "$ref": "#/components/schemas/LLMProvider" },
+          "label": { "type": "string", "title": "Label" },
+          "profile": { "type": "string", "title": "Profile" },
+          "capabilities": {
+            "$ref": "#/components/schemas/LLMCapabilitiesResponse"
           },
-          "provider": {
-            "$ref": "#/components/schemas/LLMProvider"
-          },
-          "label": {
-            "type": "string",
-            "title": "Label"
-          },
-          "isDefault": {
-            "type": "boolean",
-            "title": "Isdefault"
-          }
+          "defaults": { "$ref": "#/components/schemas/LLMDefaultsResponse" },
+          "isDefault": { "type": "boolean", "title": "Isdefault" }
         },
         "type": "object",
         "required": [
           "id",
           "provider",
           "label",
+          "profile",
+          "capabilities",
+          "defaults",
           "isDefault"
         ],
         "title": "LLMOptionResponse"
@@ -2893,24 +2490,18 @@
       "LLMOptionsResponse": {
         "properties": {
           "items": {
-            "items": {
-              "$ref": "#/components/schemas/LLMOptionResponse"
-            },
+            "items": { "$ref": "#/components/schemas/LLMOptionResponse" },
             "type": "array",
             "title": "Items"
           }
         },
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "title": "LLMOptionsResponse"
       },
       "LLMProvider": {
         "type": "string",
-        "enum": [
-          "openai"
-        ],
+        "enum": ["openai"],
         "title": "LLMProvider"
       },
       "OnboardingQuestionAskedEvent": {
@@ -2921,37 +2512,18 @@
             "title": "Type",
             "default": "session.onboarding_question_asked"
           },
-          "question": {
-            "type": "string",
-            "title": "Question"
-          },
+          "question": { "type": "string", "title": "Question" },
           "hint": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Hint"
           },
           "options": {
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "type": "array",
             "title": "Options"
           },
           "recommendedOption": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Recommendedoption"
           },
           "selectionMode": {
@@ -2960,13 +2532,8 @@
           },
           "questionId": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
             ],
             "title": "Questionid"
           },
@@ -2977,67 +2544,34 @@
           }
         },
         "type": "object",
-        "required": [
-          "question"
-        ],
+        "required": ["question"],
         "title": "OnboardingQuestionAskedEvent"
       },
       "OnboardingQuestionResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "sequenceNumber": {
-            "type": "integer",
-            "title": "Sequencenumber"
-          },
-          "questionText": {
-            "type": "string",
-            "title": "Questiontext"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "sequenceNumber": { "type": "integer", "title": "Sequencenumber" },
+          "questionText": { "type": "string", "title": "Questiontext" },
           "hint": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Hint"
           },
           "options": {
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "type": "array",
             "title": "Options"
           },
           "recommendedOption": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Recommendedoption"
           },
           "selectionMode": {
             "$ref": "#/components/schemas/OnboardingQuestionSelectionMode",
             "default": "single_select"
           },
-          "isLastQuestion": {
-            "type": "boolean",
-            "title": "Islastquestion"
-          },
+          "isLastQuestion": { "type": "boolean", "title": "Islastquestion" },
           "answers": {
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "type": "array",
             "title": "Answers"
           },
@@ -3048,192 +2582,95 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "sequenceNumber",
-          "questionText",
-          "isLastQuestion"
-        ],
+        "required": ["id", "sequenceNumber", "questionText", "isLastQuestion"],
         "title": "OnboardingQuestionResponse"
       },
       "OnboardingQuestionSelectionMode": {
         "type": "string",
-        "enum": [
-          "single_select",
-          "multi_select"
-        ],
+        "enum": ["single_select", "multi_select"],
         "title": "OnboardingQuestionSelectionMode"
-      },
-      "OpenAIModelName": {
-        "type": "string",
-        "enum": [
-          "gpt-5.4",
-          "gpt-5.4-mini",
-          "gpt-5.5"
-        ],
-        "title": "OpenAIModelName"
       },
       "PaymentIntentResponse": {
         "properties": {
-          "paymentId": {
-            "type": "string",
-            "title": "Paymentid"
-          },
+          "paymentId": { "type": "string", "title": "Paymentid" },
           "amount": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Amount"
           },
-          "currency": {
-            "type": "string",
-            "title": "Currency"
-          },
+          "currency": { "type": "string", "title": "Currency" },
           "metadata": {
-            "additionalProperties": {
-              "type": "string"
-            },
+            "additionalProperties": { "type": "string" },
             "type": "object",
             "title": "Metadata"
           }
         },
         "type": "object",
-        "required": [
-          "paymentId",
-          "amount",
-          "currency",
-          "metadata"
-        ],
+        "required": ["paymentId", "amount", "currency", "metadata"],
         "title": "PaymentIntentResponse"
       },
       "Phase": {
         "type": "string",
-        "enum": [
-          "onboarding",
-          "build"
-        ],
+        "enum": ["onboarding", "build"],
         "title": "Phase"
       },
       "PlaylistPayload": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
           "name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Name"
           },
           "tracks": {
-            "items": {
-              "$ref": "#/components/schemas/PlaylistTrackResponse"
-            },
+            "items": { "$ref": "#/components/schemas/PlaylistTrackResponse" },
             "type": "array",
             "title": "Tracks"
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "tracks"
-        ],
+        "required": ["id", "tracks"],
         "title": "PlaylistPayload"
       },
       "PlaylistReferenceResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
           "spotifyPlaylistId": {
             "type": "string",
             "title": "Spotifyplaylistid"
           },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
+          "name": { "type": "string", "title": "Name" },
           "owner": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Owner"
           },
           "coverUrl": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Coverurl"
           },
           "totalTracks": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Totaltracks"
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "spotifyPlaylistId",
-          "name"
-        ],
+        "required": ["id", "spotifyPlaylistId", "name"],
         "title": "PlaylistReferenceResponse"
       },
       "PlaylistResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
           "name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Name"
           },
           "tracks": {
-            "items": {
-              "$ref": "#/components/schemas/PlaylistTrackResponse"
-            },
+            "items": { "$ref": "#/components/schemas/PlaylistTrackResponse" },
             "type": "array",
             "title": "Tracks"
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "tracks"
-        ],
+        "required": ["id", "tracks"],
         "title": "PlaylistResponse"
       },
       "PlaylistSetEvent": {
@@ -3244,14 +2681,10 @@
             "title": "Type",
             "default": "playlist.set"
           },
-          "playlist": {
-            "$ref": "#/components/schemas/PlaylistPayload"
-          }
+          "playlist": { "$ref": "#/components/schemas/PlaylistPayload" }
         },
         "type": "object",
-        "required": [
-          "playlist"
-        ],
+        "required": ["playlist"],
         "title": "PlaylistSetEvent"
       },
       "PlaylistTrackAddedEvent": {
@@ -3267,15 +2700,10 @@
             "format": "uuid",
             "title": "Playlistid"
           },
-          "track": {
-            "$ref": "#/components/schemas/PlaylistTrackResponse"
-          }
+          "track": { "$ref": "#/components/schemas/PlaylistTrackResponse" }
         },
         "type": "object",
-        "required": [
-          "playlistId",
-          "track"
-        ],
+        "required": ["playlistId", "track"],
         "title": "PlaylistTrackAddedEvent"
       },
       "PlaylistTrackRemovedEvent": {
@@ -3291,17 +2719,10 @@
             "format": "uuid",
             "title": "Playlistid"
           },
-          "trackId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Trackid"
-          }
+          "trackId": { "type": "string", "format": "uuid", "title": "Trackid" }
         },
         "type": "object",
-        "required": [
-          "playlistId",
-          "trackId"
-        ],
+        "required": ["playlistId", "trackId"],
         "title": "PlaylistTrackRemovedEvent"
       },
       "PlaylistTrackReplacedEvent": {
@@ -3317,73 +2738,36 @@
             "format": "uuid",
             "title": "Playlistid"
           },
-          "trackId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Trackid"
-          },
-          "track": {
-            "$ref": "#/components/schemas/PlaylistTrackResponse"
-          }
+          "trackId": { "type": "string", "format": "uuid", "title": "Trackid" },
+          "track": { "$ref": "#/components/schemas/PlaylistTrackResponse" }
         },
         "type": "object",
-        "required": [
-          "playlistId",
-          "trackId",
-          "track"
-        ],
+        "required": ["playlistId", "trackId", "track"],
         "title": "PlaylistTrackReplacedEvent"
       },
       "PlaylistTrackResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "artist": {
-            "type": "string",
-            "title": "Artist"
-          },
-          "year": {
-            "type": "integer",
-            "title": "Year"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "artist": { "type": "string", "title": "Artist" },
+          "year": { "type": "integer", "title": "Year" },
           "spotifyUri": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Spotifyuri"
           },
           "coverUrl": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Coverurl"
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "title",
-          "artist",
-          "year"
-        ],
+        "required": ["id", "title", "artist", "year"],
         "title": "PlaylistTrackResponse"
+      },
+      "ReasoningEffort": {
+        "type": "string",
+        "enum": ["low", "medium", "high"],
+        "title": "ReasoningEffort"
       },
       "SendMessageRequest": {
         "properties": {
@@ -3411,9 +2795,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "content"
-        ],
+        "required": ["content"],
         "title": "SendMessageRequest"
       },
       "SessionCreateRequest": {
@@ -3426,9 +2808,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "initialPrompt"
-        ],
+        "required": ["initialPrompt"],
         "title": "SessionCreateRequest"
       },
       "SessionEventType": {
@@ -3464,10 +2844,7 @@
       },
       "SessionMessageAttachmentKind": {
         "type": "string",
-        "enum": [
-          "spotify-playlist",
-          "spotify-artist"
-        ],
+        "enum": ["spotify-playlist", "spotify-artist"],
         "title": "SessionMessageAttachmentKind"
       },
       "SessionMessageAttachmentRequest": {
@@ -3489,48 +2866,28 @@
           },
           "subtitle": {
             "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 300
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "maxLength": 300 },
+              { "type": "null" }
             ],
             "title": "Subtitle"
           },
           "imageUrl": {
             "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 2048
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "maxLength": 2048 },
+              { "type": "null" }
             ],
             "title": "Imageurl"
           },
           "spotifyId": {
             "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 128,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "maxLength": 128, "minLength": 1 },
+              { "type": "null" }
             ],
             "title": "Spotifyid"
           }
         },
         "type": "object",
-        "required": [
-          "kind",
-          "externalId",
-          "title"
-        ],
+        "required": ["kind", "externalId", "title"],
         "title": "SessionMessageAttachmentRequest"
       },
       "SessionMessageAttachmentResponse": {
@@ -3538,74 +2895,31 @@
           "kind": {
             "$ref": "#/components/schemas/SessionMessageAttachmentKind"
           },
-          "externalId": {
-            "type": "string",
-            "title": "Externalid"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
+          "externalId": { "type": "string", "title": "Externalid" },
+          "title": { "type": "string", "title": "Title" },
           "subtitle": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Subtitle"
           },
           "imageUrl": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Imageurl"
           },
           "spotifyId": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Spotifyid"
           }
         },
         "type": "object",
-        "required": [
-          "kind",
-          "externalId",
-          "title"
-        ],
+        "required": ["kind", "externalId", "title"],
         "title": "SessionMessageAttachmentResponse"
       },
       "SessionResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "isStarred": {
-            "type": "boolean",
-            "title": "Isstarred"
-          },
-          "phase": {
-            "$ref": "#/components/schemas/Phase"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "isStarred": { "type": "boolean", "title": "Isstarred" },
+          "phase": { "$ref": "#/components/schemas/Phase" },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -3614,15 +2928,11 @@
           "entries": {
             "items": {
               "oneOf": [
-                {
-                  "$ref": "#/components/schemas/UserMessageEntryResponse"
-                },
+                { "$ref": "#/components/schemas/UserMessageEntryResponse" },
                 {
                   "$ref": "#/components/schemas/AssistantMessageEntryResponse"
                 },
-                {
-                  "$ref": "#/components/schemas/ToolCallSequenceEntryResponse"
-                }
+                { "$ref": "#/components/schemas/ToolCallSequenceEntryResponse" }
               ],
               "discriminator": {
                 "propertyName": "kind",
@@ -3638,12 +2948,8 @@
           },
           "playlist": {
             "anyOf": [
-              {
-                "$ref": "#/components/schemas/PlaylistResponse"
-              },
-              {
-                "type": "null"
-              }
+              { "$ref": "#/components/schemas/PlaylistResponse" },
+              { "type": "null" }
             ]
           },
           "playlistReferences": {
@@ -3654,9 +2960,7 @@
             "title": "Playlistreferences"
           },
           "artistReferences": {
-            "items": {
-              "$ref": "#/components/schemas/ArtistReferenceResponse"
-            },
+            "items": { "$ref": "#/components/schemas/ArtistReferenceResponse" },
             "type": "array",
             "title": "Artistreferences"
           },
@@ -3690,66 +2994,26 @@
         "anyOf": [
           {
             "oneOf": [
-              {
-                "$ref": "#/components/schemas/SessionSnapshotEvent"
-              },
-              {
-                "$ref": "#/components/schemas/TitleGeneratedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/AssistantMessageStartedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/AssistantMessageChunkEvent"
-              },
-              {
-                "$ref": "#/components/schemas/AssistantMessageCompletedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/AssistantMessageCancelledEvent"
-              },
-              {
-                "$ref": "#/components/schemas/ToolCallSequenceAddedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/ToolCallResolvedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/ToolCallFailedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/ToolCallRetryEvent"
-              },
-              {
-                "$ref": "#/components/schemas/ToolCallSequenceCompletedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/ContextCompactedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/PlaylistSetEvent"
-              },
-              {
-                "$ref": "#/components/schemas/PlaylistTrackAddedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/PlaylistTrackRemovedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/PlaylistTrackReplacedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/OnboardingQuestionAskedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/SuspendedForInputEvent"
-              },
-              {
-                "$ref": "#/components/schemas/DoneEvent"
-              },
-              {
-                "$ref": "#/components/schemas/ErrorEvent"
-              }
+              { "$ref": "#/components/schemas/SessionSnapshotEvent" },
+              { "$ref": "#/components/schemas/TitleGeneratedEvent" },
+              { "$ref": "#/components/schemas/AssistantMessageStartedEvent" },
+              { "$ref": "#/components/schemas/AssistantMessageChunkEvent" },
+              { "$ref": "#/components/schemas/AssistantMessageCompletedEvent" },
+              { "$ref": "#/components/schemas/AssistantMessageCancelledEvent" },
+              { "$ref": "#/components/schemas/ToolCallSequenceAddedEvent" },
+              { "$ref": "#/components/schemas/ToolCallResolvedEvent" },
+              { "$ref": "#/components/schemas/ToolCallFailedEvent" },
+              { "$ref": "#/components/schemas/ToolCallRetryEvent" },
+              { "$ref": "#/components/schemas/ToolCallSequenceCompletedEvent" },
+              { "$ref": "#/components/schemas/ContextCompactedEvent" },
+              { "$ref": "#/components/schemas/PlaylistSetEvent" },
+              { "$ref": "#/components/schemas/PlaylistTrackAddedEvent" },
+              { "$ref": "#/components/schemas/PlaylistTrackRemovedEvent" },
+              { "$ref": "#/components/schemas/PlaylistTrackReplacedEvent" },
+              { "$ref": "#/components/schemas/OnboardingQuestionAskedEvent" },
+              { "$ref": "#/components/schemas/SuspendedForInputEvent" },
+              { "$ref": "#/components/schemas/DoneEvent" },
+              { "$ref": "#/components/schemas/ErrorEvent" }
             ],
             "discriminator": {
               "propertyName": "type",
@@ -3777,9 +3041,7 @@
               }
             }
           },
-          {
-            "type": "null"
-          }
+          { "type": "null" }
         ],
         "title": "SessionServerEvent",
         "description": "Any event the backend may push over the SSE stream.\n\nExposed via a schema-only endpoint so the discriminated union of every\nevent shape lands in the OpenAPI document for frontend client generation."
@@ -3792,27 +3054,16 @@
             "title": "Type",
             "default": "session.snapshot"
           },
-          "session": {
-            "$ref": "#/components/schemas/SessionSnapshotPayload"
-          }
+          "session": { "$ref": "#/components/schemas/SessionSnapshotPayload" }
         },
         "type": "object",
-        "required": [
-          "session"
-        ],
+        "required": ["session"],
         "title": "SessionSnapshotEvent"
       },
       "SessionSnapshotPayload": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -3821,15 +3072,11 @@
           "entries": {
             "items": {
               "oneOf": [
-                {
-                  "$ref": "#/components/schemas/UserMessageEntryResponse"
-                },
+                { "$ref": "#/components/schemas/UserMessageEntryResponse" },
                 {
                   "$ref": "#/components/schemas/AssistantMessageEntryResponse"
                 },
-                {
-                  "$ref": "#/components/schemas/ToolCallSequenceEntryResponse"
-                }
+                { "$ref": "#/components/schemas/ToolCallSequenceEntryResponse" }
               ],
               "discriminator": {
                 "propertyName": "kind",
@@ -3845,55 +3092,32 @@
           },
           "playlist": {
             "anyOf": [
-              {
-                "$ref": "#/components/schemas/PlaylistPayload"
-              },
-              {
-                "type": "null"
-              }
+              { "$ref": "#/components/schemas/PlaylistPayload" },
+              { "type": "null" }
             ]
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "title",
-          "createdAt",
-          "entries"
-        ],
+        "required": ["id", "title", "createdAt", "entries"],
         "title": "SessionSnapshotPayload"
       },
       "SessionSummaryListResponse": {
         "properties": {
           "items": {
-            "items": {
-              "$ref": "#/components/schemas/SessionSummaryResponse"
-            },
+            "items": { "$ref": "#/components/schemas/SessionSummaryResponse" },
             "type": "array",
             "title": "Items"
           }
         },
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "title": "SessionSummaryListResponse"
       },
       "SessionSummaryResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "isStarred": {
-            "type": "boolean",
-            "title": "Isstarred"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "isStarred": { "type": "boolean", "title": "Isstarred" },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -3906,13 +3130,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "title",
-          "isStarred",
-          "createdAt",
-          "lastActivityAt"
-        ],
+        "required": ["id", "title", "isStarred", "createdAt", "lastActivityAt"],
         "title": "SessionSummaryResponse"
       },
       "SessionUpdateRequest": {
@@ -3925,91 +3143,43 @@
           }
         },
         "type": "object",
-        "required": [
-          "title"
-        ],
+        "required": ["title"],
         "title": "SessionUpdateRequest"
       },
       "SpotifyAccessTokenResponse": {
         "properties": {
-          "accessToken": {
-            "type": "string",
-            "title": "Accesstoken"
-          },
-          "expiresIn": {
-            "type": "integer",
-            "title": "Expiresin"
-          },
-          "scope": {
-            "type": "string",
-            "title": "Scope"
-          }
+          "accessToken": { "type": "string", "title": "Accesstoken" },
+          "expiresIn": { "type": "integer", "title": "Expiresin" },
+          "scope": { "type": "string", "title": "Scope" }
         },
         "type": "object",
-        "required": [
-          "accessToken",
-          "expiresIn",
-          "scope"
-        ],
+        "required": ["accessToken", "expiresIn", "scope"],
         "title": "SpotifyAccessTokenResponse"
       },
       "SpotifyArtistResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
+          "id": { "type": "string", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
           "genres": {
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "type": "array",
             "title": "Genres"
           },
           "followers": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Followers"
           },
           "popularity": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Popularity"
           },
           "imageUrl": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Imageurl"
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "genres"
-        ],
+        "required": ["id", "name", "genres"],
         "title": "SpotifyArtistResponse"
       },
       "SpotifyExportCompletedEvent": {
@@ -4025,9 +3195,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "playlist"
-        ],
+        "required": ["playlist"],
         "title": "SpotifyExportCompletedEvent"
       },
       "SpotifyExportDoneEvent": {
@@ -4050,20 +3218,11 @@
             "title": "Type",
             "default": "error"
           },
-          "code": {
-            "type": "string",
-            "title": "Code"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message"
-          }
+          "code": { "type": "string", "title": "Code" },
+          "message": { "type": "string", "title": "Message" }
         },
         "type": "object",
-        "required": [
-          "code",
-          "message"
-        ],
+        "required": ["code", "message"],
         "title": "SpotifyExportErrorEvent"
       },
       "SpotifyExportRetryEvent": {
@@ -4074,49 +3233,25 @@
             "title": "Type",
             "default": "spotify_export.retry"
           },
-          "attempt": {
-            "type": "integer",
-            "title": "Attempt"
-          },
-          "maxAttempts": {
-            "type": "integer",
-            "title": "Maxattempts"
-          },
+          "attempt": { "type": "integer", "title": "Attempt" },
+          "maxAttempts": { "type": "integer", "title": "Maxattempts" },
           "retryInSeconds": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
             "title": "Retryinseconds"
           }
         },
         "type": "object",
-        "required": [
-          "attempt",
-          "maxAttempts"
-        ],
+        "required": ["attempt", "maxAttempts"],
         "title": "SpotifyExportRetryEvent"
       },
       "SpotifyExportServerEventSchema": {
         "anyOf": [
           {
             "oneOf": [
-              {
-                "$ref": "#/components/schemas/SpotifyExportRetryEvent"
-              },
-              {
-                "$ref": "#/components/schemas/SpotifyExportCompletedEvent"
-              },
-              {
-                "$ref": "#/components/schemas/SpotifyExportDoneEvent"
-              },
-              {
-                "$ref": "#/components/schemas/SpotifyExportErrorEvent"
-              }
+              { "$ref": "#/components/schemas/SpotifyExportRetryEvent" },
+              { "$ref": "#/components/schemas/SpotifyExportCompletedEvent" },
+              { "$ref": "#/components/schemas/SpotifyExportDoneEvent" },
+              { "$ref": "#/components/schemas/SpotifyExportErrorEvent" }
             ],
             "discriminator": {
               "propertyName": "type",
@@ -4128,197 +3263,92 @@
               }
             }
           },
-          {
-            "type": "null"
-          }
+          { "type": "null" }
         ],
         "title": "SpotifyExportServerEventSchema",
         "description": "Schema-only model exposing the export event union for client generation."
       },
       "SpotifyPlaylistExportResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description"
-          },
-          "url": {
-            "type": "string",
-            "title": "Url"
-          },
-          "trackCount": {
-            "type": "integer",
-            "title": "Trackcount"
-          }
+          "id": { "type": "string", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "description": { "type": "string", "title": "Description" },
+          "url": { "type": "string", "title": "Url" },
+          "trackCount": { "type": "integer", "title": "Trackcount" }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "description",
-          "url",
-          "trackCount"
-        ],
+        "required": ["id", "name", "description", "url", "trackCount"],
         "title": "SpotifyPlaylistExportResponse"
       },
       "SpotifyPlaylistResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
+          "id": { "type": "string", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
           "owner": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Owner"
           },
           "coverUrl": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Coverurl"
           },
           "totalTracks": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Totaltracks"
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name"
-        ],
+        "required": ["id", "name"],
         "title": "SpotifyPlaylistResponse"
       },
       "SpotifySearchType": {
         "type": "string",
-        "enum": [
-          "track",
-          "playlist",
-          "artist"
-        ],
+        "enum": ["track", "playlist", "artist"],
         "title": "SpotifySearchType"
       },
       "SpotifyTrackResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "artist": {
-            "type": "string",
-            "title": "Artist"
-          },
+          "id": { "type": "string", "title": "Id" },
+          "title": { "type": "string", "title": "Title" },
+          "artist": { "type": "string", "title": "Artist" },
           "album": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Album"
           },
-          "year": {
-            "type": "integer",
-            "title": "Year"
-          },
+          "year": { "type": "integer", "title": "Year" },
           "coverUrl": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Coverurl"
           },
           "url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Url"
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "title",
-          "artist",
-          "year"
-        ],
+        "required": ["id", "title", "artist", "year"],
         "title": "SpotifyTrackResponse"
       },
       "SpotifyUnifiedSearchResponse": {
         "properties": {
           "tracks": {
-            "items": {
-              "$ref": "#/components/schemas/SpotifyTrackResponse"
-            },
+            "items": { "$ref": "#/components/schemas/SpotifyTrackResponse" },
             "type": "array",
             "title": "Tracks"
           },
           "playlists": {
-            "items": {
-              "$ref": "#/components/schemas/SpotifyPlaylistResponse"
-            },
+            "items": { "$ref": "#/components/schemas/SpotifyPlaylistResponse" },
             "type": "array",
             "title": "Playlists"
           },
           "artists": {
-            "items": {
-              "$ref": "#/components/schemas/SpotifyArtistResponse"
-            },
+            "items": { "$ref": "#/components/schemas/SpotifyArtistResponse" },
             "type": "array",
             "title": "Artists"
           }
         },
         "type": "object",
-        "required": [
-          "tracks",
-          "playlists",
-          "artists"
-        ],
+        "required": ["tracks", "playlists", "artists"],
         "title": "SpotifyUnifiedSearchResponse"
       },
       "SubmitOnboardingAnswerRequest": {
@@ -4330,30 +3360,20 @@
           },
           "answer": {
             "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 2000,
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "maxLength": 2000, "minLength": 1 },
+              { "type": "null" }
             ],
             "title": "Answer"
           },
           "answers": {
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "type": "array",
             "maxItems": 8,
             "title": "Answers"
           }
         },
         "type": "object",
-        "required": [
-          "questionId"
-        ],
+        "required": ["questionId"],
         "title": "SubmitOnboardingAnswerRequest"
       },
       "SuspendedForInputEvent": {
@@ -4364,48 +3384,22 @@
             "title": "Type",
             "default": "session.suspended_for_input"
           },
-          "kind": {
-            "type": "string",
-            "title": "Kind"
-          },
+          "kind": { "type": "string", "title": "Kind" },
           "question": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Question"
           },
           "hint": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Hint"
           },
           "options": {
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "type": "array",
             "title": "Options"
           },
           "recommendedOption": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Recommendedoption"
           },
           "selectionMode": {
@@ -4414,13 +3408,8 @@
           },
           "questionId": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
             ],
             "title": "Questionid"
           },
@@ -4431,9 +3420,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "kind"
-        ],
+        "required": ["kind"],
         "title": "SuspendedForInputEvent"
       },
       "TitleGeneratedEvent": {
@@ -4444,15 +3431,10 @@
             "title": "Type",
             "default": "session.title_generated"
           },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          }
+          "title": { "type": "string", "title": "Title" }
         },
         "type": "object",
-        "required": [
-          "title"
-        ],
+        "required": ["title"],
         "title": "TitleGeneratedEvent"
       },
       "ToolCallFailedEvent": {
@@ -4468,21 +3450,11 @@
             "format": "uuid",
             "title": "Sequenceid"
           },
-          "toolCallId": {
-            "type": "string",
-            "title": "Toolcallid"
-          },
-          "error": {
-            "type": "string",
-            "title": "Error"
-          }
+          "toolCallId": { "type": "string", "title": "Toolcallid" },
+          "error": { "type": "string", "title": "Error" }
         },
         "type": "object",
-        "required": [
-          "sequenceId",
-          "toolCallId",
-          "error"
-        ],
+        "required": ["sequenceId", "toolCallId", "error"],
         "title": "ToolCallFailedEvent"
       },
       "ToolCallResolvedEvent": {
@@ -4498,14 +3470,8 @@
             "format": "uuid",
             "title": "Sequenceid"
           },
-          "toolCallId": {
-            "type": "string",
-            "title": "Toolcallid"
-          },
-          "result": {
-            "type": "string",
-            "title": "Result"
-          },
+          "toolCallId": { "type": "string", "title": "Toolcallid" },
+          "result": { "type": "string", "title": "Result" },
           "resultItems": {
             "items": {
               "$ref": "#/components/schemas/ToolCallResultItemResponse"
@@ -4515,45 +3481,20 @@
           }
         },
         "type": "object",
-        "required": [
-          "sequenceId",
-          "toolCallId",
-          "result"
-        ],
+        "required": ["sequenceId", "toolCallId", "result"],
         "title": "ToolCallResolvedEvent"
       },
       "ToolCallResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "function": {
-            "$ref": "#/components/schemas/ToolFunctionResponse"
-          },
-          "state": {
-            "$ref": "#/components/schemas/ToolCallState"
-          },
+          "id": { "type": "string", "title": "Id" },
+          "function": { "$ref": "#/components/schemas/ToolFunctionResponse" },
+          "state": { "$ref": "#/components/schemas/ToolCallState" },
           "result": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Result"
           },
           "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Error"
           },
           "resultItems": {
@@ -4565,57 +3506,27 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "function",
-          "state"
-        ],
+        "required": ["id", "function", "state"],
         "title": "ToolCallResponse"
       },
       "ToolCallResultItemResponse": {
         "properties": {
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
+          "title": { "type": "string", "title": "Title" },
           "coverUrl": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Coverurl"
           },
           "artist": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Artist"
           },
           "trackUri": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Trackuri"
           }
         },
         "type": "object",
-        "required": [
-          "title"
-        ],
+        "required": ["title"],
         "title": "ToolCallResultItemResponse"
       },
       "ToolCallRetryEvent": {
@@ -4626,53 +3537,24 @@
             "title": "Type",
             "default": "tool_call.retry"
           },
-          "toolCallId": {
-            "type": "string",
-            "title": "Toolcallid"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "attempt": {
-            "type": "integer",
-            "title": "Attempt"
-          },
-          "maxAttempts": {
-            "type": "integer",
-            "title": "Maxattempts"
-          },
+          "toolCallId": { "type": "string", "title": "Toolcallid" },
+          "name": { "type": "string", "title": "Name" },
+          "attempt": { "type": "integer", "title": "Attempt" },
+          "maxAttempts": { "type": "integer", "title": "Maxattempts" },
           "retryInSeconds": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
             "title": "Retryinseconds"
           },
           "sequenceId": {
             "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
             ],
             "title": "Sequenceid"
           }
         },
         "type": "object",
-        "required": [
-          "toolCallId",
-          "name",
-          "attempt",
-          "maxAttempts"
-        ],
+        "required": ["toolCallId", "name", "attempt", "maxAttempts"],
         "title": "ToolCallRetryEvent"
       },
       "ToolCallSequenceAddedEvent": {
@@ -4688,9 +3570,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "sequence"
-        ],
+        "required": ["sequence"],
         "title": "ToolCallSequenceAddedEvent"
       },
       "ToolCallSequenceCompletedEvent": {
@@ -4708,9 +3588,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "sequenceId"
-        ],
+        "required": ["sequenceId"],
         "title": "ToolCallSequenceCompletedEvent"
       },
       "ToolCallSequenceEntryResponse": {
@@ -4721,127 +3599,63 @@
             "title": "Kind",
             "default": "tool_call_sequence"
           },
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
           "createdAt": {
             "type": "string",
             "format": "date-time",
             "title": "Createdat"
           },
           "label": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Label"
           },
           "calls": {
-            "items": {
-              "$ref": "#/components/schemas/ToolCallResponse"
-            },
+            "items": { "$ref": "#/components/schemas/ToolCallResponse" },
             "type": "array",
             "title": "Calls"
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "createdAt",
-          "calls"
-        ],
+        "required": ["id", "createdAt", "calls"],
         "title": "ToolCallSequenceEntryResponse"
       },
       "ToolCallState": {
         "type": "string",
-        "enum": [
-          "pending",
-          "completed",
-          "failed"
-        ],
+        "enum": ["pending", "completed", "failed"],
         "title": "ToolCallState"
       },
       "ToolFunctionResponse": {
         "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
+          "name": { "type": "string", "title": "Name" },
           "arguments": {
             "additionalProperties": true,
             "type": "object",
             "title": "Arguments"
           },
           "statusLabel": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Statuslabel"
           },
           "actionType": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Actiontype"
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "arguments"
-        ],
+        "required": ["name", "arguments"],
         "title": "ToolFunctionResponse"
       },
       "UploadedImageAttachmentResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
           "url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Url"
           },
-          "contentType": {
-            "type": "string",
-            "title": "Contenttype"
-          },
-          "fileName": {
-            "type": "string",
-            "title": "Filename"
-          },
-          "sizeBytes": {
-            "type": "integer",
-            "title": "Sizebytes"
-          },
-          "storageKey": {
-            "type": "string",
-            "title": "Storagekey"
-          }
+          "contentType": { "type": "string", "title": "Contenttype" },
+          "fileName": { "type": "string", "title": "Filename" },
+          "sizeBytes": { "type": "integer", "title": "Sizebytes" },
+          "storageKey": { "type": "string", "title": "Storagekey" }
         },
         "type": "object",
         "required": [
@@ -4855,60 +3669,26 @@
       },
       "UserCurationEventResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
           "eventType": {
             "$ref": "#/components/schemas/UserCurationEventTypeResponse"
           },
-          "trackId": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Trackid"
-          },
-          "trackTitle": {
-            "type": "string",
-            "title": "Tracktitle"
-          },
-          "trackArtist": {
-            "type": "string",
-            "title": "Trackartist"
-          },
+          "trackId": { "type": "string", "format": "uuid", "title": "Trackid" },
+          "trackTitle": { "type": "string", "title": "Tracktitle" },
+          "trackArtist": { "type": "string", "title": "Trackartist" },
           "trackYear": {
             "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 2100.0,
-                "minimum": 1900.0
-              },
-              {
-                "type": "null"
-              }
+              { "type": "integer", "maximum": 2100.0, "minimum": 1900.0 },
+              { "type": "null" }
             ],
             "title": "Trackyear"
           },
           "trackSpotifyUri": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Trackspotifyuri"
           },
           "trackCoverUrl": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Trackcoverurl"
           },
           "occurredAt": {
@@ -4930,40 +3710,22 @@
       },
       "UserCurationEventTypeResponse": {
         "type": "string",
-        "enum": [
-          "track_added",
-          "track_removed"
-        ],
+        "enum": ["track_added", "track_removed"],
         "title": "UserCurationEventTypeResponse"
       },
       "UserDeleteInformationResponse": {
         "properties": {
-          "sessionCount": {
-            "type": "integer",
-            "title": "Sessioncount"
-          }
+          "sessionCount": { "type": "integer", "title": "Sessioncount" }
         },
         "type": "object",
-        "required": [
-          "sessionCount"
-        ],
+        "required": ["sessionCount"],
         "title": "UserDeleteInformationResponse"
       },
       "UserMeResponse": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "email": {
-            "type": "string",
-            "title": "Email"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "email": { "type": "string", "title": "Email" },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -4973,10 +3735,7 @@
             "type": "boolean",
             "title": "Spotifyconnected"
           },
-          "spotifyPremium": {
-            "type": "boolean",
-            "title": "Spotifypremium"
-          },
+          "spotifyPremium": { "type": "boolean", "title": "Spotifypremium" },
           "messageRateLimit": {
             "$ref": "#/components/schemas/UserMessageRateLimitResponse"
           }
@@ -5001,15 +3760,8 @@
             "title": "Kind",
             "default": "user_message"
           },
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "content": {
-            "type": "string",
-            "title": "Content"
-          },
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "content": { "type": "string", "title": "Content" },
           "attachments": {
             "items": {
               "$ref": "#/components/schemas/SessionMessageAttachmentResponse"
@@ -5018,9 +3770,7 @@
             "title": "Attachments"
           },
           "imageAttachments": {
-            "items": {
-              "type": "string"
-            },
+            "items": { "type": "string" },
             "type": "array",
             "title": "Imageattachments"
           },
@@ -5038,23 +3788,13 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "content",
-          "createdAt"
-        ],
+        "required": ["id", "content", "createdAt"],
         "title": "UserMessageEntryResponse"
       },
       "UserMessageRateLimitResponse": {
         "properties": {
-          "limit": {
-            "type": "integer",
-            "title": "Limit"
-          },
-          "remaining": {
-            "type": "integer",
-            "title": "Remaining"
-          },
+          "limit": { "type": "integer", "title": "Limit" },
+          "remaining": { "type": "integer", "title": "Remaining" },
           "resetAt": {
             "type": "string",
             "format": "date-time",
@@ -5062,52 +3802,737 @@
           }
         },
         "type": "object",
-        "required": [
-          "limit",
-          "remaining",
-          "resetAt"
-        ],
+        "required": ["limit", "remaining", "resetAt"],
         "title": "UserMessageRateLimitResponse"
       },
       "ValidationError": {
         "properties": {
           "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
             "type": "array",
             "title": "Location"
           },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
-          }
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
+      },
+      "Problem": {
+        "type": "object",
+        "title": "Problem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": { "type": "string", "format": "uri-reference" },
+          "title": { "type": "string" },
+          "status": { "type": "integer", "minimum": 100, "maximum": 599 },
+          "code": { "type": "string", "pattern": "^[a-z][a-z0-9_]{2,}$" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "AuthenticationRequiredProblem": {
+        "type": "object",
+        "title": "AuthenticationRequiredProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/authentication_required"
+          },
+          "title": { "type": "string", "const": "Authentication required" },
+          "status": { "type": "integer", "const": 401 },
+          "code": { "type": "string", "const": "authentication_required" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "InvalidCredentialsProblem": {
+        "type": "object",
+        "title": "InvalidCredentialsProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/invalid_credentials"
+          },
+          "title": { "type": "string", "const": "Invalid credentials" },
+          "status": { "type": "integer", "const": 401 },
+          "code": { "type": "string", "const": "invalid_credentials" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "SessionExpiredProblem": {
+        "type": "object",
+        "title": "SessionExpiredProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/session_expired"
+          },
+          "title": { "type": "string", "const": "Session expired" },
+          "status": { "type": "integer", "const": 401 },
+          "code": { "type": "string", "const": "session_expired" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "SessionInvalidProblem": {
+        "type": "object",
+        "title": "SessionInvalidProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/session_invalid"
+          },
+          "title": { "type": "string", "const": "Invalid session" },
+          "status": { "type": "integer", "const": 401 },
+          "code": { "type": "string", "const": "session_invalid" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "SpotifyConnectionNotFoundProblem": {
+        "type": "object",
+        "title": "SpotifyConnectionNotFoundProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/spotify_connection_not_found"
+          },
+          "title": { "type": "string", "const": "Spotify is not connected" },
+          "status": { "type": "integer", "const": 409 },
+          "code": { "type": "string", "const": "spotify_connection_not_found" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "SpotifyTokenRevokedProblem": {
+        "type": "object",
+        "title": "SpotifyTokenRevokedProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/spotify_token_revoked"
+          },
+          "title": { "type": "string", "const": "Spotify access revoked" },
+          "status": { "type": "integer", "const": 410 },
+          "code": { "type": "string", "const": "spotify_token_revoked" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "PaymentGatewayErrorProblem": {
+        "type": "object",
+        "title": "PaymentGatewayErrorProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/payment_gateway_error"
+          },
+          "title": { "type": "string", "const": "Payment request failed" },
+          "status": { "type": "integer", "const": 400 },
+          "code": { "type": "string", "const": "payment_gateway_error" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "PaymentWebhookVerificationErrorProblem": {
+        "type": "object",
+        "title": "PaymentWebhookVerificationErrorProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/payment_webhook_verification_error"
+          },
+          "title": {
+            "type": "string",
+            "const": "Payment webhook verification failed"
+          },
+          "status": { "type": "integer", "const": 400 },
+          "code": {
+            "type": "string",
+            "const": "payment_webhook_verification_error"
+          },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "SessionNotFoundProblem": {
+        "type": "object",
+        "title": "SessionNotFoundProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/session_not_found"
+          },
+          "title": { "type": "string", "const": "Session not found" },
+          "status": { "type": "integer", "const": 404 },
+          "code": { "type": "string", "const": "session_not_found" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "InvalidImageAttachmentProblem": {
+        "type": "object",
+        "title": "InvalidImageAttachmentProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/invalid_image_attachment"
+          },
+          "title": { "type": "string", "const": "Invalid image attachment" },
+          "status": { "type": "integer", "const": 400 },
+          "code": { "type": "string", "const": "invalid_image_attachment" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "SessionAccessDeniedProblem": {
+        "type": "object",
+        "title": "SessionAccessDeniedProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/session_access_denied"
+          },
+          "title": { "type": "string", "const": "Session access denied" },
+          "status": { "type": "integer", "const": 403 },
+          "code": { "type": "string", "const": "session_access_denied" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "InvalidSessionPhaseTransitionProblem": {
+        "type": "object",
+        "title": "InvalidSessionPhaseTransitionProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/invalid_session_phase_transition"
+          },
+          "title": {
+            "type": "string",
+            "const": "Invalid session phase transition"
+          },
+          "status": { "type": "integer", "const": 409 },
+          "code": {
+            "type": "string",
+            "const": "invalid_session_phase_transition"
+          },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "PlaylistTrackNotFoundProblem": {
+        "type": "object",
+        "title": "PlaylistTrackNotFoundProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/playlist_track_not_found"
+          },
+          "title": { "type": "string", "const": "Playlist track not found" },
+          "status": { "type": "integer", "const": 404 },
+          "code": { "type": "string", "const": "playlist_track_not_found" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "PlaylistTrackLimitExceededProblem": {
+        "type": "object",
+        "title": "PlaylistTrackLimitExceededProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/playlist_track_limit_exceeded"
+          },
+          "title": {
+            "type": "string",
+            "const": "Playlist track limit exceeded"
+          },
+          "status": { "type": "integer", "const": 409 },
+          "code": {
+            "type": "string",
+            "const": "playlist_track_limit_exceeded"
+          },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "PlaylistReferenceNotFoundProblem": {
+        "type": "object",
+        "title": "PlaylistReferenceNotFoundProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/playlist_reference_not_found"
+          },
+          "title": {
+            "type": "string",
+            "const": "Playlist reference not found"
+          },
+          "status": { "type": "integer", "const": 404 },
+          "code": { "type": "string", "const": "playlist_reference_not_found" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "ArtistReferenceNotFoundProblem": {
+        "type": "object",
+        "title": "ArtistReferenceNotFoundProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/artist_reference_not_found"
+          },
+          "title": { "type": "string", "const": "Artist reference not found" },
+          "status": { "type": "integer", "const": 404 },
+          "code": { "type": "string", "const": "artist_reference_not_found" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "SessionPlaylistEmptyProblem": {
+        "type": "object",
+        "title": "SessionPlaylistEmptyProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/session_playlist_empty"
+          },
+          "title": { "type": "string", "const": "Session playlist is empty" },
+          "status": { "type": "integer", "const": 400 },
+          "code": { "type": "string", "const": "session_playlist_empty" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "SessionPlaylistMissingSpotifyTracksProblem": {
+        "type": "object",
+        "title": "SessionPlaylistMissingSpotifyTracksProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/session_playlist_missing_spotify_tracks"
+          },
+          "title": {
+            "type": "string",
+            "const": "Session playlist has no Spotify tracks"
+          },
+          "status": { "type": "integer", "const": 400 },
+          "code": {
+            "type": "string",
+            "const": "session_playlist_missing_spotify_tracks"
+          },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "SessionExportRequiresSpotifyConnectionProblem": {
+        "type": "object",
+        "title": "SessionExportRequiresSpotifyConnectionProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/session_export_requires_spotify_connection"
+          },
+          "title": { "type": "string", "const": "Spotify connection required" },
+          "status": { "type": "integer", "const": 409 },
+          "code": {
+            "type": "string",
+            "const": "session_export_requires_spotify_connection"
+          },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "ToolCallNotFoundProblem": {
+        "type": "object",
+        "title": "ToolCallNotFoundProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/tool_call_not_found"
+          },
+          "title": { "type": "string", "const": "Tool call not found" },
+          "status": { "type": "integer", "const": 404 },
+          "code": { "type": "string", "const": "tool_call_not_found" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "ToolCallAlreadyResolvedProblem": {
+        "type": "object",
+        "title": "ToolCallAlreadyResolvedProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/tool_call_already_resolved"
+          },
+          "title": { "type": "string", "const": "Tool call already resolved" },
+          "status": { "type": "integer", "const": 409 },
+          "code": { "type": "string", "const": "tool_call_already_resolved" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "NoPendingToolCallSequenceProblem": {
+        "type": "object",
+        "title": "NoPendingToolCallSequenceProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/no_pending_tool_call_sequence"
+          },
+          "title": {
+            "type": "string",
+            "const": "No pending tool call sequence"
+          },
+          "status": { "type": "integer", "const": 409 },
+          "code": {
+            "type": "string",
+            "const": "no_pending_tool_call_sequence"
+          },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "PendingToolCallsProblem": {
+        "type": "object",
+        "title": "PendingToolCallsProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/pending_tool_calls"
+          },
+          "title": { "type": "string", "const": "Pending tool calls exist" },
+          "status": { "type": "integer", "const": 409 },
+          "code": { "type": "string", "const": "pending_tool_calls" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "NoCurrentAssistantMessageProblem": {
+        "type": "object",
+        "title": "NoCurrentAssistantMessageProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/no_current_assistant_message"
+          },
+          "title": {
+            "type": "string",
+            "const": "No current assistant message"
+          },
+          "status": { "type": "integer", "const": 409 },
+          "code": { "type": "string", "const": "no_current_assistant_message" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "UserCurationEventNotFoundProblem": {
+        "type": "object",
+        "title": "UserCurationEventNotFoundProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/user_curation_event_not_found"
+          },
+          "title": { "type": "string", "const": "Curation event not found" },
+          "status": { "type": "integer", "const": 404 },
+          "code": {
+            "type": "string",
+            "const": "user_curation_event_not_found"
+          },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "UserCurationEventAlreadyConsumedProblem": {
+        "type": "object",
+        "title": "UserCurationEventAlreadyConsumedProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/user_curation_event_already_consumed"
+          },
+          "title": {
+            "type": "string",
+            "const": "Curation event already consumed"
+          },
+          "status": { "type": "integer", "const": 409 },
+          "code": {
+            "type": "string",
+            "const": "user_curation_event_already_consumed"
+          },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "UserCurationEventMissingTrackYearProblem": {
+        "type": "object",
+        "title": "UserCurationEventMissingTrackYearProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/user_curation_event_missing_track_year"
+          },
+          "title": {
+            "type": "string",
+            "const": "Curation event track year missing"
+          },
+          "status": { "type": "integer", "const": 409 },
+          "code": {
+            "type": "string",
+            "const": "user_curation_event_missing_track_year"
+          },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "UserMessageQuotaExceededProblem": {
+        "type": "object",
+        "title": "UserMessageQuotaExceededProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/user_message_quota_exceeded"
+          },
+          "title": { "type": "string", "const": "User message quota exceeded" },
+          "status": { "type": "integer", "const": 429 },
+          "code": { "type": "string", "const": "user_message_quota_exceeded" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" },
+          "limit": { "title": "Limit", "type": "integer" },
+          "remaining": { "title": "Remaining", "type": "integer" },
+          "reset_at": {
+            "format": "date-time",
+            "title": "Reset At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "limit",
+          "remaining",
+          "reset_at"
+        ],
+        "additionalProperties": true
+      },
+      "InvalidSpotifyTrackUriProblem": {
+        "type": "object",
+        "title": "InvalidSpotifyTrackUriProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/invalid_spotify_track_uri"
+          },
+          "title": { "type": "string", "const": "Invalid Spotify track URI" },
+          "status": { "type": "integer", "const": 400 },
+          "code": { "type": "string", "const": "invalid_spotify_track_uri" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "SpotifyTrackNotFoundProblem": {
+        "type": "object",
+        "title": "SpotifyTrackNotFoundProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/spotify_track_not_found"
+          },
+          "title": { "type": "string", "const": "Spotify track not found" },
+          "status": { "type": "integer", "const": 404 },
+          "code": { "type": "string", "const": "spotify_track_not_found" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "SpotifyTrackYearMissingProblem": {
+        "type": "object",
+        "title": "SpotifyTrackYearMissingProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/spotify_track_year_missing"
+          },
+          "title": {
+            "type": "string",
+            "const": "Spotify track release year missing"
+          },
+          "status": { "type": "integer", "const": 409 },
+          "code": { "type": "string", "const": "spotify_track_year_missing" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" }
+        },
+        "required": ["type", "title", "status", "code"],
+        "additionalProperties": true
+      },
+      "RequestValidationProblem": {
+        "type": "object",
+        "title": "RequestValidationProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/request_validation_error"
+          },
+          "title": { "type": "string", "const": "Request validation failed" },
+          "status": { "type": "integer", "const": 422 },
+          "code": { "type": "string", "const": "request_validation_error" },
+          "detail": { "type": ["string", "null"] },
+          "instance": { "type": ["string", "null"], "format": "uri-reference" },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": { "type": "string" },
+                "detail": { "type": "string" },
+                "pointer": { "type": "string" },
+                "parameter": { "type": "string" },
+                "in": {
+                  "type": "string",
+                  "enum": ["path", "query", "header", "cookie"]
+                }
+              },
+              "required": ["code", "detail"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["type", "title", "status", "code", "errors"],
+        "additionalProperties": true
       }
     }
   }
