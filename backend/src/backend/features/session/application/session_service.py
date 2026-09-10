@@ -10,7 +10,6 @@ from backend.features.session.domain import (
     Session,
     SessionRepository,
 )
-from backend.shared.decorators import timed
 
 
 class SessionService:
@@ -27,7 +26,6 @@ class SessionService:
     async def get_by_id(self, *, session_id: UUID, user_id: UUID) -> Session:
         return await self._get_authorized(session_id=session_id, user_id=user_id)
 
-    @timed()
     async def create(self, *, owner_id: UUID) -> Session:
         session = Session.create(owner_id=owner_id)
         session = await self._session_repository.create(session=session)
