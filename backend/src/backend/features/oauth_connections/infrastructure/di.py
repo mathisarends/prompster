@@ -34,10 +34,10 @@ class OAuthConnectionsProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_spotify_auth_settings(
         self,
-        auth_settings: AuthSettings,
+        env_config: EnvSettings,
     ) -> SpotifyAuthSettings:
         settings = SpotifyAuthSettings()
-        settings.validate_redirect_host(auth_settings.frontend_base_url)
+        settings.validate_redirect_host(env_config.frontend_base_url)
         return settings
 
     @provide(scope=Scope.APP)
@@ -98,6 +98,6 @@ class OAuthConnectionsProvider(Provider):
             cookie_name=spotify_auth_settings.state_cookie_name,
             ttl_seconds=oauth_state_settings.ttl_seconds,
             signing_secret=auth_settings.jwt_secret,
-            frontend_base_url=auth_settings.frontend_base_url,
+            frontend_base_url=env_config.frontend_base_url,
             env_config=env_config,
         )

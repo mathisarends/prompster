@@ -4,9 +4,9 @@ from typing import cast
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 
+from backend.env import EnvSettings
 from backend.features.auth.application import GoogleOAuthFlow
 from backend.features.auth.application.schemas import GoogleCallbackResult
-from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.oauth_state_cookies import (
     GoogleOAuthStateCookies,
@@ -79,7 +79,7 @@ class TestGoogleCallback:
                 google_auth_flow=cast(GoogleOAuthFlow, handler),
                 auth_cookies=cast(AuthCookies, auth_cookies),
                 google_oauth_state_cookies=cast(GoogleOAuthStateCookies, state_cookies),
-                auth_settings=AuthSettings(frontend_base_url="http://localhost:5173"),
+                env_config=EnvSettings(frontend_base_url="http://localhost:5173"),
                 code=None,
                 state="state-1",
                 error="access_denied",
@@ -108,7 +108,7 @@ class TestGoogleCallback:
                 google_auth_flow=cast(GoogleOAuthFlow, handler),
                 auth_cookies=cast(AuthCookies, auth_cookies),
                 google_oauth_state_cookies=cast(GoogleOAuthStateCookies, state_cookies),
-                auth_settings=AuthSettings(frontend_base_url="http://localhost:5173"),
+                env_config=EnvSettings(frontend_base_url="http://localhost:5173"),
                 code=None,
                 state="state-1",
                 error=None,

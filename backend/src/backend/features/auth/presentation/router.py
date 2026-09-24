@@ -3,7 +3,7 @@ from backend.features.auth.application import (
     SessionRefresher,
     SpotifyOAuthFlow,
 )
-from backend.features.auth.infrastructure.auth_settings import AuthSettings
+from backend.env import EnvSettings
 from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.dependencies import (
     RefreshAuthenticatedUserId,
@@ -69,7 +69,7 @@ async def google_callback(
     google_auth_flow: FromDishka[GoogleOAuthFlow],
     auth_cookies: FromDishka[AuthCookies],
     google_oauth_state_cookies: FromDishka[GoogleOAuthStateCookies],
-    auth_settings: FromDishka[AuthSettings],
+    env_config: FromDishka[EnvSettings],
     code: str | None = Query(default=None, min_length=1, max_length=4096),
     state: str = Query(min_length=1, max_length=4096),
     error: str | None = Query(default=None, min_length=1, max_length=256),
@@ -83,12 +83,12 @@ async def google_callback(
 
     if result.succeeded and result.session is not None:
         response = OAuthPopupResponse.success(
-            target_origin=auth_settings.frontend_base_url
+            target_origin=env_config.frontend_base_url
         )
         auth_cookies.set(response, result.session)
     else:
         response = OAuthPopupResponse.error(
-            target_origin=auth_settings.frontend_base_url,
+            target_origin=env_config.frontend_base_url,
             reason=result.error_reason or "invalid_credentials",
         )
 
@@ -134,7 +134,7 @@ async def spotify_login_callback(
     spotify_oauth_flow: FromDishka[SpotifyOAuthFlow],
     auth_cookies: FromDishka[AuthCookies],
     spotify_login_state_cookies: FromDishka[SpotifyLoginOAuthStateCookies],
-    auth_settings: FromDishka[AuthSettings],
+    env_config: FromDishka[EnvSettings],
     code: str | None = Query(default=None, min_length=1, max_length=4096),
     state: str = Query(min_length=1, max_length=4096),
     error: str | None = Query(default=None, min_length=1, max_length=256),
@@ -148,14 +148,14 @@ async def spotify_login_callback(
 
     if result.succeeded and result.session is not None:
         response = OAuthPopupResponse.for_spotify_login(
-            target_origin=auth_settings.frontend_base_url,
+            target_origin=env_config.frontend_base_url,
             succeeded=True,
             reason=None,
         )
         auth_cookies.set(response, result.session)
     else:
         response = OAuthPopupResponse.for_spotify_login(
-            target_origin=auth_settings.frontend_base_url,
+            target_origin=env_config.frontend_base_url,
             succeeded=False,
             reason=result.error_reason or "invalid_credentials",
         )

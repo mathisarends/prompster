@@ -106,7 +106,7 @@ class AuthProvider(Provider):
             cookie_name=spotify_auth_settings.login_state_cookie_name,
             ttl_seconds=oauth_state_settings.ttl_seconds,
             signing_secret=auth_settings.jwt_secret,
-            frontend_base_url=auth_settings.frontend_base_url,
+            frontend_base_url=env_config.frontend_base_url,
             env_config=env_config,
         )
 
@@ -141,6 +141,6 @@ class AuthProvider(Provider):
             cookie_name=google_auth_settings.state_cookie_name,
             ttl_seconds=oauth_state_settings.ttl_seconds,
             signing_secret=auth_settings.jwt_secret,
-            frontend_base_url=auth_settings.frontend_base_url,
+            frontend_base_url=env_config.frontend_base_url,
             env_config=env_config,
         )

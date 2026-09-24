@@ -1,4 +1,4 @@
-from backend.features.auth.infrastructure.auth_settings import AuthSettings
+from backend.env import EnvSettings
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.exceptions import (
     AUTHENTICATION_REQUIRED_ERROR,
@@ -71,7 +71,7 @@ async def spotify_callback(
     authenticated_user_id: AuthenticatedUserId,
     service: FromDishka[SpotifyOAuthConnectionService],
     spotify_oauth_state_cookies: FromDishka[SpotifyOAuthStateCookies],
-    auth_settings: FromDishka[AuthSettings],
+    env_config: FromDishka[EnvSettings],
     code: str | None = Query(default=None, min_length=1, max_length=4096),
     state: str = Query(min_length=1, max_length=4096),
     error: str | None = Query(default=None, min_length=1, max_length=256),
@@ -84,7 +84,7 @@ async def spotify_callback(
         expected_oauth_state=spotify_oauth_state_cookies.read(request=request),
     )
     response = OAuthPopupResponse.for_spotify(
-        target_origin=auth_settings.frontend_base_url,
+        target_origin=env_config.frontend_base_url,
         succeeded=result.succeeded,
         reason=result.error_reason,
     )

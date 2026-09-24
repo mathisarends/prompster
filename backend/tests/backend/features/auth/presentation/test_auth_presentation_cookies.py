@@ -19,7 +19,7 @@ class TestAuthCookies:
     def test_set_uses_host_only_cookies(self) -> None:
         response = Response()
         cookies = AuthCookies(
-            auth_settings=AuthSettings(frontend_base_url="http://127.0.0.1:5173"),
+            auth_settings=AuthSettings(),
             env_config=EnvSettings(frontend_base_url="http://127.0.0.1:5173"),
         )
 
