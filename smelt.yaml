@@ -44,6 +44,8 @@ architecture:
       - {from: session.application, to: oauth_connections.application}
       - {from: session.application, to: spotify.application}
       - {from: session.presentation, to: spotify.application}
+      # the user read model joins the Spotify connection
+      - {from: user.infrastructure, to: oauth_connections.domain}
   # Roles give concepts a canonical home (`smelt context` lists them).
   # roles:
   #   port:
