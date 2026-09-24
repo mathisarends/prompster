@@ -44,6 +44,9 @@ architecture:
       - {from: session.application, to: oauth_connections.application}
       - {from: session.application, to: spotify.application}
       - {from: session.presentation, to: spotify.application}
+      # session runs the agent on the model catalogue and chat models of llm
+      - {from: session.infrastructure, to: llm.domain}
+      - {from: session.infrastructure, to: llm.application}
       # the user read model joins the Spotify connection
       - {from: user.infrastructure, to: oauth_connections.domain}
   # Roles give concepts a canonical home (`smelt context` lists them).

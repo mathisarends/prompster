@@ -1,4 +1,4 @@
-from backend.features.llm.configuration import LLMRegistry
+from backend.features.llm.domain import LLMRegistry
 from backend.features.llm.presentation.schemas import (
     LLMCapabilitiesResponse,
     LLMDefaultsResponse,

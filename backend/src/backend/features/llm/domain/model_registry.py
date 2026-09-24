@@ -1,9 +1,7 @@
 from collections.abc import Sequence
 from enum import StrEnum
-from pathlib import Path
 from typing import Literal
 
-import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
@@ -91,7 +89,7 @@ class LLMConfig(BaseModel):
 
 
 class LLMRegistry:
-    """Runtime model catalogue supplied by Dishka's composition root."""
+    """Runtime catalogue of the models users can choose from."""
 
     def __init__(self, config: LLMConfig) -> None:
         self._config = config
@@ -119,9 +117,3 @@ class LLMRegistry:
             f"Unsupported LLM model '{model_id}'. Supported models: {supported_models}."
         )
         raise ValueError(msg)
-
-
-def load_llm_registry(path: Path) -> LLMRegistry:
-    with path.open(encoding="utf-8") as config_file:
-        raw_config = yaml.safe_load(config_file)
-    return LLMRegistry(LLMConfig.model_validate(raw_config))

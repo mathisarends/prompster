@@ -1,4 +1,4 @@
-from backend.features.llm.configuration import LLMProvider, ReasoningEffort
+from backend.features.llm.domain import LLMProvider, ReasoningEffort
 from backend.presentation.schema import Schema
 
 

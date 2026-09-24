@@ -10,9 +10,8 @@ from agent.deck import (
     DeckStore,
 )
 from agent.tools.views import Phase as AgentPhase
-from backend.features.llm.configuration import LLMRegistry
-from backend.features.llm.credentials import LLMCredentials
-from backend.features.llm.factory import create_openai_llm
+from backend.features.llm.application import ChatModelFactory
+from backend.features.llm.domain import LLMRegistry
 from backend.features.session.application.ports import ActiveSessionRunStore
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
@@ -73,7 +72,7 @@ class AgentSessionRunner(SessionRunner):
     def __init__(
         self,
         llm: ChatModel,
-        llm_credentials: LLMCredentials,
+        chat_models: ChatModelFactory,
         spotify: Spotifyify,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,
@@ -83,7 +82,7 @@ class AgentSessionRunner(SessionRunner):
         system_prompt: str | None = None,
     ) -> None:
         self._llm = llm
-        self._llm_credentials = llm_credentials
+        self._chat_models = chat_models
         self._spotify = spotify
         self._event_mapper = event_mapper
         self._history_builder = history_builder
@@ -161,10 +160,7 @@ class AgentSessionRunner(SessionRunner):
         model_info = self._llm_registry.default_model
         if model_id is not None:
             model_info = self._llm_registry.get(model_id)
-            llm = create_openai_llm(
-                provider_model=model_info.provider_model,
-                credentials=self._llm_credentials,
-            )
+            llm = self._chat_models.create(model_info)
 
         return Agent(
             llm=llm,

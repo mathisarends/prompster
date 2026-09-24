@@ -1,6 +1,8 @@
-from llmify import ChatOpenAIResponses
+from llmify import ChatModel, ChatOpenAIResponses
 
-from .credentials import LLMCredentials
+from backend.features.llm.application import ChatModelFactory
+from backend.features.llm.domain import LLMModelInfo
+from backend.features.llm.infrastructure.credentials import LLMCredentials
 
 
 def _resolve_openai_api_key(
@@ -32,3 +34,14 @@ def create_openai_llm(
     if max_tokens is not None:
         options["max_tokens"] = max_tokens
     return ChatOpenAIResponses(**kwargs, **options)
+
+
+class OpenAIChatModelFactory(ChatModelFactory):
+    def __init__(self, credentials: LLMCredentials) -> None:
+        self._credentials = credentials
+
+    def create(self, model: LLMModelInfo) -> ChatModel:
+        return create_openai_llm(
+            provider_model=model.provider_model,
+            credentials=self._credentials,
+        )

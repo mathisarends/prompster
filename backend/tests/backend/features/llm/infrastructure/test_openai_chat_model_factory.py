@@ -1,4 +1,6 @@
-from backend.features.llm.factory import create_openai_llm
+from backend.features.llm.infrastructure.openai_chat_model_factory import (
+    create_openai_llm,
+)
 
 
 class _FakeCredentials:
@@ -13,7 +15,7 @@ class _DummyChatOpenAIResponses:
 
 def test_factory_uses_provider_model_without_owning_model_ids(monkeypatch) -> None:
     monkeypatch.setattr(
-        "backend.features.llm.factory.ChatOpenAIResponses",
+        "backend.features.llm.infrastructure.openai_chat_model_factory.ChatOpenAIResponses",
         _DummyChatOpenAIResponses,
     )
 

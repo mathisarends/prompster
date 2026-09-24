@@ -1,7 +1,10 @@
 import asyncio
 from pathlib import Path
 
-from backend.features.llm.configuration import LLMProvider, load_llm_registry
+from backend.features.llm.domain import LLMProvider
+from backend.features.llm.infrastructure.model_registry_loader import (
+    load_llm_registry,
+)
 from backend.features.llm.presentation.router import list_llm_options
 
 _CONFIG_PATH = (

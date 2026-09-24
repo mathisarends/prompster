@@ -1,5 +1,5 @@
-from backend.features.llm.configuration import LLMRegistry
-from backend.features.llm.credentials import LLMCredentials
+from backend.features.llm.application import ChatModelFactory
+from backend.features.llm.domain import LLMRegistry
 from backend.features.oauth_connections.application import SpotifyTokenService
 from backend.features.session.application import (
     ImageAttachmentService,
@@ -100,7 +100,7 @@ class SessionProvider(Provider):
     def provide_session_runner(
         self,
         llm: ChatModel,
-        credentials: LLMCredentials,
+        chat_models: ChatModelFactory,
         spotify: Spotifyify,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,
@@ -110,7 +110,7 @@ class SessionProvider(Provider):
     ) -> SessionRunner:
         return AgentSessionRunner(
             llm=llm,
-            llm_credentials=credentials,
+            chat_models=chat_models,
             spotify=spotify,
             event_mapper=event_mapper,
             history_builder=history_builder,

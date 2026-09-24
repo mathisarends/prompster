@@ -1,8 +1,14 @@
 from pathlib import Path
 
-from backend.features.llm.configuration import LLMRegistry, load_llm_registry
-from backend.features.llm.credentials import LLMCredentials
-from backend.features.llm.factory import create_openai_llm
+from backend.features.llm.application import ChatModelFactory
+from backend.features.llm.domain import LLMRegistry
+from backend.features.llm.infrastructure.credentials import LLMCredentials
+from backend.features.llm.infrastructure.model_registry_loader import (
+    load_llm_registry,
+)
+from backend.features.llm.infrastructure.openai_chat_model_factory import (
+    OpenAIChatModelFactory,
+)
 from dishka import Provider, Scope, provide
 from llmify import ChatModel
 
@@ -19,12 +25,13 @@ class LLMFeatureProvider(Provider):
         return LLMCredentials()
 
     @provide(scope=Scope.APP)
+    def chat_model_factory(self, credentials: LLMCredentials) -> ChatModelFactory:
+        return OpenAIChatModelFactory(credentials=credentials)
+
+    @provide(scope=Scope.APP)
     def default_llm(
         self,
         registry: LLMRegistry,
-        credentials: LLMCredentials,
+        chat_models: ChatModelFactory,
     ) -> ChatModel:
-        return create_openai_llm(
-            provider_model=registry.default_model.provider_model,
-            credentials=credentials,
-        )
+        return chat_models.create(registry.default_model)

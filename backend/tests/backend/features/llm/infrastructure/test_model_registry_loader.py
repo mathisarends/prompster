@@ -1,7 +1,9 @@
 from pathlib import Path
 
 import pytest
-from backend.features.llm.configuration import load_llm_registry
+from backend.features.llm.infrastructure.model_registry_loader import (
+    load_llm_registry,
+)
 from pydantic import ValidationError
 
 
