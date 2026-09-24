@@ -24,7 +24,7 @@ from backend.features.session.presentation.mapper import (
     to_spotify_playlist_export_response,
 )
 from backend.features.session.presentation.schemas import SpotifyPlaylistExportResponse
-from backend.features.spotify.infrastructure.retry_reporting import retry_sink
+from backend.features.spotify.application.retry_reporting import retry_sink
 from backend.presentation.schema import Schema
 
 logger = logging.getLogger(__name__)
