@@ -72,6 +72,12 @@ class SpotifyLoginCallbackResult(BaseModel):
         return self
 
 
+class SpotifyIdentity(BaseModel):
+    subject: str
+    display_name: str | None = None
+    profile_image_url: str | None = None
+
+
 class GoogleIdentity(BaseModel):
     subject: str = Field(validation_alias=AliasChoices("subject", "sub"))
     name: str | None = None

@@ -38,7 +38,6 @@ architecture:
       - {from: user.presentation, to: auth.presentation}
       # use cases collaborating across features
       - {from: auth.application, to: user.domain}
-      - {from: auth.application, to: oauth_connections.application}
       - {from: user.application, to: auth.application}
       - {from: session.application, to: user.domain}
       - {from: session.application, to: oauth_connections.application}
@@ -47,6 +46,8 @@ architecture:
       # session runs the agent on the model catalogue and chat models of llm
       - {from: session.infrastructure, to: llm.domain}
       - {from: session.infrastructure, to: llm.application}
+      # oauth_connections implements auth's Spotify login port
+      - {from: oauth_connections.application, to: auth.application}
       # the user read model joins the Spotify connection
       - {from: user.infrastructure, to: oauth_connections.domain}
   # Roles give concepts a canonical home (`smelt context` lists them).

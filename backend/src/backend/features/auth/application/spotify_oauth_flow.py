@@ -1,11 +1,7 @@
-from __future__ import annotations
-
 import secrets
-from typing import TYPE_CHECKING
 
-from backend.features.auth.application.ports import TokenIssuer
+from backend.features.auth.application.ports import SpotifyLoginProvider, TokenIssuer
 from backend.features.auth.application.schemas import (
-    AuthSession,
     SpotifyLoginAuthorizationRequest,
     SpotifyLoginCallbackResult,
 )
@@ -16,14 +12,6 @@ from backend.features.user.domain import (
     UserRepository,
 )
 
-if TYPE_CHECKING:
-    from backend.features.oauth_connections.application.ports import (
-        SpotifyOAuthProvider,
-    )
-    from backend.features.oauth_connections.application.spotify_oauth_connection_service import (
-        SpotifyOAuthConnectionService,
-    )
-
 _STATE_TOKEN_BYTES = 32
 
 
@@ -31,18 +19,16 @@ class SpotifyOAuthFlow:
     def __init__(
         self,
         user_repository: UserRepository,
-        spotify_oauth_client: SpotifyOAuthProvider,
+        spotify_login_provider: SpotifyLoginProvider,
         token_issuer: TokenIssuer,
-        connection_service: SpotifyOAuthConnectionService,
     ) -> None:
         self._user_repository = user_repository
-        self._spotify_oauth_client = spotify_oauth_client
+        self._spotify_login_provider = spotify_login_provider
         self._token_issuer = token_issuer
-        self._connection_service = connection_service
 
     def login(self) -> SpotifyLoginAuthorizationRequest:
         oauth_state = secrets.token_urlsafe(_STATE_TOKEN_BYTES)
-        authorization_url = self._spotify_oauth_client.build_authorization_url(
+        authorization_url = self._spotify_login_provider.build_authorization_url(
             state=oauth_state,
         )
         return SpotifyLoginAuthorizationRequest(
@@ -71,47 +57,41 @@ class SpotifyOAuthFlow:
             return SpotifyLoginCallbackResult.error(reason="invalid_credentials")
 
         try:
-            tokens = await self._spotify_oauth_client.exchange_code_for_tokens(
+            login = await self._spotify_login_provider.authorize(
                 authorization_code=code,
-            )
-            profile = await self._spotify_oauth_client.fetch_spotify_user_profile(
-                access_token=tokens.access_token,
             )
         except ValueError:
             return SpotifyLoginCallbackResult.error(reason="invalid_credentials")
 
+        identity = login.identity
         existing_user = await self._user_repository.get_by_auth_identity(
             provider=AuthProvider.SPOTIFY,
-            subject=profile.spotify_user_id,
+            subject=identity.subject,
         )
 
         if existing_user is None:
-            raw_name = (profile.display_name or "").strip()
+            raw_name = (identity.display_name or "").strip()
             display_name = raw_name or "Spotify-Nutzer"
             user = User(
                 name=display_name,
-                profile_image_url=profile.profile_image_url,
+                profile_image_url=identity.profile_image_url,
             )
             existing_user = await self._user_repository.create_with_auth_identity(
                 user=user,
                 auth_identity=AuthIdentity(
                     user_id=user.id,
                     provider=AuthProvider.SPOTIFY,
-                    subject=profile.spotify_user_id,
+                    subject=identity.subject,
                 ),
             )
         else:
             existing_user = await self._sync_profile_image(
                 user=existing_user,
-                profile_image_url=profile.profile_image_url,
+                profile_image_url=identity.profile_image_url,
             )
 
         try:
-            await self._connection_service.upsert_from_tokens(
-                user_id=existing_user.id,
-                tokens=tokens,
-                profile=profile,
-            )
+            await login.connect(user_id=existing_user.id)
         except ValueError:
             return SpotifyLoginCallbackResult.error(reason="no_refresh_token")
 

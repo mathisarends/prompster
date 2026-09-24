@@ -4,7 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.env import EnvSettings
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.infrastructure.oauth_state_settings import OAuthStateSettings
+from backend.features.auth.application.ports import SpotifyLoginProvider
 from backend.features.oauth_connections.application import (
+    SpotifyAccountLoginProvider,
     SpotifyOAuthConnectionService,
     SpotifyOAuthProvider,
     SpotifyTokenService,
@@ -73,6 +75,17 @@ class OAuthConnectionsProvider(Provider):
         return SpotifyOAuthConnectionService(
             connection_repository=repo,
             spotify_oauth_provider=provider,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_spotify_login_provider(
+        self,
+        provider: SpotifyOAuthProvider,
+        connection_service: SpotifyOAuthConnectionService,
+    ) -> SpotifyLoginProvider:
+        return SpotifyAccountLoginProvider(
+            spotify_oauth_provider=provider,
+            connection_service=connection_service,
         )
 
     @provide(scope=Scope.REQUEST)

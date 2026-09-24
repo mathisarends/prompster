@@ -8,7 +8,11 @@ from backend.features.auth.application import (
     SessionRefresher,
     SpotifyOAuthFlow,
 )
-from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
+from backend.features.auth.application.ports import (
+    GoogleOAuthProvider,
+    SpotifyLoginProvider,
+    TokenIssuer,
+)
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.infrastructure.google_auth_settings import GoogleAuthSettings
 from backend.features.auth.infrastructure.google_oauth_client import GoogleOAuthClient
@@ -19,14 +23,8 @@ from backend.features.auth.presentation.oauth_state_cookies import (
     GoogleOAuthStateCookies,
     SpotifyLoginOAuthStateCookies,
 )
-from backend.features.oauth_connections.application.spotify_oauth_connection_service import (
-    SpotifyOAuthConnectionService,
-)
 from backend.features.oauth_connections.infrastructure.spotify_auth_settings import (
     SpotifyAuthSettings,
-)
-from backend.features.oauth_connections.application import (
-    SpotifyOAuthProvider,
 )
 from backend.features.user.domain import UserRepository
 
@@ -83,15 +81,13 @@ class AuthProvider(Provider):
     def provide_spotify_oauth_flow(
         self,
         user_repository: UserRepository,
-        spotify_oauth_provider: SpotifyOAuthProvider,
+        spotify_login_provider: SpotifyLoginProvider,
         token_issuer: TokenIssuer,
-        connection_service: SpotifyOAuthConnectionService,
     ) -> SpotifyOAuthFlow:
         return SpotifyOAuthFlow(
             user_repository=user_repository,
-            spotify_oauth_client=spotify_oauth_provider,
+            spotify_login_provider=spotify_login_provider,
             token_issuer=token_issuer,
-            connection_service=connection_service,
         )
 
     @provide(scope=Scope.REQUEST)
