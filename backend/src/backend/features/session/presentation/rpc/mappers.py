@@ -29,7 +29,7 @@ from backend.features.session.presentation.mapper import (
 from backend.features.session.presentation.schemas import (
     AssistantMessageEntryResponse,
 )
-from backend.features.session.presentation.sse.events import (
+from backend.features.session.presentation.rpc.events import (
     AssistantMessageChunkEvent,
     AssistantMessageCancelledEvent,
     AssistantMessageCompletedEvent,

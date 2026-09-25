@@ -9,7 +9,6 @@ from backend.features.session.application import (
     SessionImageUrlResolver,
     SessionPlaylistExporter,
     SessionService,
-    SessionSpotifyPlaylistExporter,
 )
 from backend.features.session.presentation.exceptions import (
     INVALID_SESSION_PHASE_TRANSITION_ERROR,
@@ -18,10 +17,8 @@ from backend.features.session.presentation.exceptions import (
     PLAYLIST_TRACK_NOT_FOUND_ERROR,
     SESSION_ACCESS_DENIED_ERROR,
     SESSION_ERRORS,
-    SESSION_EXPORT_REQUIRES_SPOTIFY_CONNECTION_ERROR,
     SESSION_NOT_FOUND_ERROR,
     SESSION_PLAYLIST_EMPTY_ERROR,
-    SESSION_PLAYLIST_MISSING_SPOTIFY_TRACKS_ERROR,
     SPOTIFY_TRACK_NOT_FOUND_ERROR,
     SPOTIFY_TRACK_YEAR_MISSING_ERROR,
     USER_CURATION_EVENT_ALREADY_CONSUMED_ERROR,
@@ -30,8 +27,6 @@ from backend.features.session.presentation.exceptions import (
 )
 from backend.features.session.presentation.mapper import (
     to_playlist_track_response,
-    to_session_image_attachment_references,
-    to_session_message_attachments,
     to_session_response,
     to_session_summary_list_response,
 )
@@ -39,21 +34,15 @@ from backend.features.session.presentation.schemas import (
     AddPlaylistTrackRequest,
     AddSpotifyPlaylistTrackRequest,
     PlaylistTrackResponse,
-    SendMessageRequest,
     SessionResponse,
     SessionSummaryListResponse,
     SessionUpdateRequest,
     SubmitOnboardingAnswerRequest,
 )
-from backend.features.session.presentation.sse import (
-    stream_session_events,
-    stream_spotify_export,
-)
 from backend.features.spotify.application import SpotifySearch
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import Query, Response, status
 from fastapi_canon import CanonResponse, CanonRouter
-from starlette.responses import StreamingResponse
 
 router = CanonRouter(
     route_class=DishkaRoute,
@@ -136,32 +125,6 @@ async def create_session(
 
 
 @router.post(
-    "/{session_id}/messages",
-    operation_id="send_message",
-    response=CanonResponse.sse(description="Server-sent session events."),
-)
-async def send_message(
-    session_id: UUID,
-    authenticated_user_id: AuthenticatedUserId,
-    body: SendMessageRequest,
-    service: FromDishka[SessionConversationService],
-    model_id: str | None = None,
-) -> StreamingResponse:
-    return stream_session_events(
-        service.send_message(
-            session_id=session_id,
-            user_id=authenticated_user_id,
-            content=body.content,
-            model_id=model_id,
-            attachments=to_session_message_attachments(body.attachments),
-            image_attachments=to_session_image_attachment_references(
-                body.image_attachments,
-            ),
-        )
-    )
-
-
-@router.post(
     "/{session_id}/onboarding-answer",
     response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
@@ -190,26 +153,6 @@ async def submit_onboarding_answer(
     return to_session_response(
         session,
         image_urls_by_storage_key=image_urls_by_storage_key,
-    )
-
-
-@router.post(
-    "/{session_id}/onboarding/complete",
-    operation_id="complete_onboarding",
-    response=CanonResponse.sse(description="Server-sent session events."),
-)
-async def complete_onboarding(
-    session_id: UUID,
-    authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionConversationService],
-    model_id: str | None = None,
-) -> StreamingResponse:
-    return stream_session_events(
-        service.complete_onboarding(
-            session_id=session_id,
-            user_id=authenticated_user_id,
-            model_id=model_id,
-        )
     )
 
 
@@ -387,33 +330,6 @@ async def export_session_playlist(
             "Content-Disposition": f'attachment; filename="session-{session_id}.pdf"'
         },
     )
-
-
-@router.post(
-    "/{session_id}/playlist/spotify",
-    operation_id="export_session_playlist_to_spotify",
-    raises=(
-        SESSION_NOT_FOUND_ERROR,
-        SESSION_ACCESS_DENIED_ERROR,
-        SESSION_PLAYLIST_EMPTY_ERROR,
-        SESSION_PLAYLIST_MISSING_SPOTIFY_TRACKS_ERROR,
-        SESSION_EXPORT_REQUIRES_SPOTIFY_CONNECTION_ERROR,
-    ),
-    response=CanonResponse.sse(description="Server-sent session events."),
-)
-async def export_session_playlist_to_spotify(
-    session_id: UUID,
-    authenticated_user_id: AuthenticatedUserId,
-    exporter: FromDishka[SessionSpotifyPlaylistExporter],
-) -> StreamingResponse:
-    # Validate up front so domain errors (empty playlist, no Spotify connection,
-    # …) surface as HTTP responses; the stream then carries only the Spotify
-    # writes, whose retries are emitted live before the terminal result.
-    plan = await exporter.prepare(
-        session_id=session_id,
-        user_id=authenticated_user_id,
-    )
-    return stream_spotify_export(exporter, plan)
 
 
 @router.patch(

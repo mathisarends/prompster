@@ -1,0 +1,11 @@
+version = 1
+
+[contract]
+source = "backend.features.session.presentation.rpc.router:contract"
+output = "schema/session-stream.openrpc.json"
+
+[[clients]]
+language = "typescript"
+output = "frontend/src/api/session-rpc"
+client_name = "SessionRpcClient"
+with_transport = "websocket"

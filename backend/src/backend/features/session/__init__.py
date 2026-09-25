@@ -4,6 +4,7 @@ from .infrastructure.di import SessionProvider
 from .presentation import (
     image_attachment_router,
     router,
+    rpc_router,
     session_schema_router,
 )
 
@@ -13,4 +14,4 @@ feature = api_feature(
     providers=[SessionProvider],
 )
 
-__all__ = ["feature"]
+__all__ = ["feature", "rpc_router"]

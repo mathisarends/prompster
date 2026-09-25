@@ -1,4 +1,5 @@
 from backend.main import app
+from backend.features.session.presentation.rpc.router import contract
 
 
 def test_compiles_canonical_success_response_contracts() -> None:
@@ -11,8 +12,13 @@ def test_compiles_canonical_success_response_contracts() -> None:
     health = document["components"]["schemas"]["HealthResponse"]
     assert health["properties"]["status"]["const"] == "ok"
 
-    stream = paths["/api/v1/sessions/{session_id}/messages"]["post"]["responses"]["200"]
-    assert set(stream["content"]) == {"text/event-stream"}
+    assert "/api/v1/sessions/{session_id}/messages" not in paths
+    assert any(
+        route.path == "/api/v1/sessions/{session_id}/stream" for route in app.routes
+    )
+    assert [server["name"] for server in contract.to_openrpc()["servers"]] == [
+        "session"
+    ]
 
     pdf = paths["/api/v1/sessions/{session_id}/playlist/pdf"]["get"]["responses"]["200"]
     assert set(pdf["content"]) == {"application/pdf"}

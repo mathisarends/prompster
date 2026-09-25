@@ -29,16 +29,20 @@ from backend.features.session.presentation.image_attachment_router import (
     upload_image_attachment,
 )
 from backend.features.session.presentation.router import (
-    complete_onboarding,
     create_session,
     get_session_by_id,
     restore_session_user_curation_event,
-    send_message,
     stop_message,
     submit_onboarding_answer,
 )
+from backend.features.session.presentation.rpc.router import (
+    CompleteOnboardingParams,
+    SendMessageParams,
+    SessionRpcContext,
+    complete_onboarding,
+    send_message,
+)
 from backend.features.session.presentation.schemas import (
-    SendMessageRequest,
     SessionMessageAttachmentKind,
     SessionMessageAttachmentRequest,
     SubmitOnboardingAnswerRequest,
@@ -218,10 +222,6 @@ class _ImageAttachmentServiceStub:
         )
 
 
-async def _collect_stream_body(response) -> list[str]:
-    return [chunk async for chunk in response.body_iterator]
-
-
 class TestGetSessionByIdRoute:
     def test_returns_unconsumed_user_curation_events_only(self) -> None:
         session_id = uuid4()
@@ -395,31 +395,33 @@ class TestStopMessageRoute:
         assert service.received_user_id == user_id
 
 
-class TestSendMessageRoute:
+class TestSendMessageSubscription:
     def test_routes_json_body_to_conversation_service(self) -> None:
         session_id = uuid4()
         user_id = uuid4()
         service = _SessionConversationServiceStub()
 
-        response = asyncio.run(
-            send_message(
-                session_id=session_id,
-                authenticated_user_id=user_id,
-                body=SendMessageRequest(
-                    content="Hallo",
-                    attachments=[
-                        SessionMessageAttachmentRequest(
-                            kind=SessionMessageAttachmentKind.SPOTIFY_ARTIST,
-                            external_id="artist-1",
-                            title="Artist 1",
-                        )
-                    ],
-                ),
-                service=cast(SessionConversationService, service),
-                model_id="gpt-5.6-terra-US",
-            )
-        )
-        body = asyncio.run(_collect_stream_body(response))
+        async def collect():
+            return [
+                event
+                async for event in send_message(
+                    params=SendMessageParams(
+                        content="Hallo",
+                        attachments=[
+                            SessionMessageAttachmentRequest(
+                                kind=SessionMessageAttachmentKind.SPOTIFY_ARTIST,
+                                external_id="artist-1",
+                                title="Artist 1",
+                            )
+                        ],
+                        model_id="gpt-6-terra-US",
+                    ),
+                    context=SessionRpcContext(session_id=session_id, user_id=user_id),
+                    service=cast(SessionConversationService, service),
+                )
+            ]
+
+        events = asyncio.run(collect())
 
         assert service.received_session_id == session_id
         assert service.received_user_id == user_id
@@ -428,9 +430,8 @@ class TestSendMessageRoute:
         assert len(service.received_attachments) == 1
         assert service.received_attachments[0].external_id == "artist-1"
         assert service.received_image_attachments == []
-        assert service.received_model_id == "gpt-5.6-terra-US"
-        assert response.media_type == "text/event-stream"
-        assert body == ['event: done\ndata: {"type":"done"}\n\n']
+        assert service.received_model_id == "gpt-6-terra-US"
+        assert [event.type for event in events] == ["done"]
 
 
 class TestUploadImageAttachmentRoute:
@@ -494,41 +495,45 @@ class TestSubmitOnboardingAnswerRoute:
         assert response.id == session_id
 
 
-class TestCompleteOnboardingRoute:
+class TestCompleteOnboardingSubscription:
     def test_routes_last_answer_to_explicit_complete_operation(self) -> None:
         session_id = uuid4()
         user_id = uuid4()
         service = _SessionConversationServiceStub()
 
-        response = asyncio.run(
-            complete_onboarding(
-                session_id=session_id,
-                authenticated_user_id=user_id,
-                service=cast(SessionConversationService, service),
-            )
-        )
-        body = asyncio.run(_collect_stream_body(response))
+        async def collect():
+            return [
+                event
+                async for event in complete_onboarding(
+                    params=CompleteOnboardingParams(),
+                    context=SessionRpcContext(session_id=session_id, user_id=user_id),
+                    service=cast(SessionConversationService, service),
+                )
+            ]
+
+        events = asyncio.run(collect())
 
         assert service.received_session_id == session_id
         assert service.received_user_id == user_id
         assert service.received_model_id is None
-        assert response.media_type == "text/event-stream"
-        assert body == ['event: done\ndata: {"type":"done"}\n\n']
+        assert [event.type for event in events] == ["done"]
 
     def test_passes_model_id_to_service(self) -> None:
         session_id = uuid4()
         user_id = uuid4()
         service = _SessionConversationServiceStub()
 
-        response = asyncio.run(
-            complete_onboarding(
-                session_id=session_id,
-                authenticated_user_id=user_id,
-                service=cast(SessionConversationService, service),
-                model_id="gpt-5.6-terra-US",
-            )
-        )
-        body = asyncio.run(_collect_stream_body(response))
+        async def collect():
+            return [
+                event
+                async for event in complete_onboarding(
+                    params=CompleteOnboardingParams(model_id="gpt-6-terra-US"),
+                    context=SessionRpcContext(session_id=session_id, user_id=user_id),
+                    service=cast(SessionConversationService, service),
+                )
+            ]
 
-        assert service.received_model_id == "gpt-5.6-terra-US"
-        assert body == ['event: done\ndata: {"type":"done"}\n\n']
+        events = asyncio.run(collect())
+
+        assert service.received_model_id == "gpt-6-terra-US"
+        assert [event.type for event in events] == ["done"]

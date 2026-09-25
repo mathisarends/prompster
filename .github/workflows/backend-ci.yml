@@ -8,6 +8,9 @@ on:
       - "libs/**"
       - "pyproject.toml"
       - "uv.lock"
+      - "rpcgen.toml"
+      - "schema/**"
+      - "frontend/src/api/session-rpc/**"
       - ".github/workflows/backend-ci.yml"
   pull_request:
     branches: [main]
@@ -16,6 +19,9 @@ on:
       - "libs/**"
       - "pyproject.toml"
       - "uv.lock"
+      - "rpcgen.toml"
+      - "schema/**"
+      - "frontend/src/api/session-rpc/**"
       - ".github/workflows/backend-ci.yml"
 
 jobs:
@@ -39,3 +45,6 @@ jobs:
 
       - name: Run tests
         run: uv run pytest backend/tests/ -v
+
+      - name: Check RPC contract and client
+        run: uv run --package backend rpckit generate --config rpcgen.toml --check

@@ -4,13 +4,13 @@ FastAPI application that exposes the Prompster API, wires all features together 
 
 Encapsulates:
 
-- HTTP & SSE API under `/api/v1` with `dishka` DI container
+- HTTP & WebSocket API under `/api/v1` with `dishka` DI container
 - Google OAuth 2.0 authentication + JWT session management
 - Persistent chat sessions with tool-call history (PostgreSQL via SQLModel / asyncpg)
 - File storage for generated assets (S3 via aioboto3)
 - Spotify integration (OAuth token management, playlist creation)
 - PDF playlist deck generation (Typst + QR codes)
-- Streaming agent runs over SSE
+- Streaming agent runs over rpckit subscriptions
 
 ### features
 
@@ -21,14 +21,18 @@ Encapsulates:
 | `spotify` | Spotify account connection, playlist write-back |
 | `user` | User profile read / update |
 
-### session SSE stream
+### session RPC stream
 
-Agent events emitted by the `agent` package are mapped to server-sent events and streamed to the client:
+`/api/v1/sessions/{session_id}/stream` is a cookie-authenticated WebSocket
+endpoint. The presentation layer exposes `send_message`, `complete_onboarding`,
+and `export_spotify` as typed rpckit subscriptions. Each subscription uses a
+Dishka request scope; application services and domain events remain unchanged.
 
-```
-POST /api/v1/sessions/{id}/run   → starts or resumes an agent run
-GET  /api/v1/sessions/{id}/run   → SSE stream of AgentEvent → ServerEvent
-GET  /api/v1/sessions/{id}/export → streams a PDF deck
+The OpenRPC contract and TypeScript client are generated from `rpcgen.toml`:
+
+```bash
+uv run --package backend rpckit generate --config rpcgen.toml
+uv run --package backend rpckit generate --config rpcgen.toml --check
 ```
 
 ### platform
