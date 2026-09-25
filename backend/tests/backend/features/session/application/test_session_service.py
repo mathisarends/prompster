@@ -1,6 +1,6 @@
 import asyncio
 from collections.abc import AsyncIterator
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
@@ -467,8 +467,8 @@ class TestSessionServiceList:
                 id=uuid4(),
                 title="Roadtrip",
                 is_starred=False,
-                created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
-                last_activity_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
+                created_at=datetime(2026, 1, 1, tzinfo=UTC),
+                last_activity_at=datetime(2026, 1, 2, tzinfo=UTC),
             )
         ]
         query = _SessionSummaryQueryStub(summaries=summaries)
@@ -531,8 +531,8 @@ class TestSessionServiceSearch:
                 id=uuid4(),
                 title="Techno Mix",
                 is_starred=True,
-                created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
-                last_activity_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
+                created_at=datetime(2026, 1, 1, tzinfo=UTC),
+                last_activity_at=datetime(2026, 1, 2, tzinfo=UTC),
             )
         ]
         query = _SessionSummaryQueryStub(summaries=summaries)

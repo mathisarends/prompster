@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from backend.features.oauth_connections.application.ports import (
@@ -161,7 +161,7 @@ class SpotifyOAuthConnectionService:
         scope: str,
         is_premium: bool,
     ) -> OAuthConnection:
-        connected_at = datetime.now(timezone.utc)
+        connected_at = datetime.now(UTC)
         if existing is None:
             return OAuthConnection.create(
                 user_id=user_id,

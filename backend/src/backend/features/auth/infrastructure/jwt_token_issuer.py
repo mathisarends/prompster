@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import TypedDict
 from uuid import UUID
 
@@ -29,7 +29,7 @@ class JwtTokenIssuer(TokenIssuer):
         self._config = auth_settings
 
     def create_session(self, user_id: UUID) -> AuthSession:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         access_token = self._encode(
             user_id,
             now,
@@ -104,5 +104,5 @@ class JwtTokenIssuer(TokenIssuer):
 
         return TokenPayload(
             user_id=user_id,
-            expires_at=datetime.fromtimestamp(exp_raw, tz=timezone.utc),
+            expires_at=datetime.fromtimestamp(exp_raw, tz=UTC),
         )

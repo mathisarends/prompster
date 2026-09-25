@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
@@ -87,13 +87,13 @@ class _SpotifyOAuthProviderStub(SpotifyOAuthProvider):
 def _make_connection(*, refresh_token: str) -> OAuthConnection:
     return OAuthConnection.restore(
         id=uuid4(),
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
         user_id=uuid4(),
         provider=OAuthProvider.SPOTIFY,
         provider_user_id="spotify-user-1",
         refresh_token=refresh_token,
         scope="scope-1",
-        connected_at=datetime.now(timezone.utc),
+        connected_at=datetime.now(UTC),
     )
 
 

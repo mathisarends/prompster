@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
@@ -74,7 +74,7 @@ class TestSessionDomainSession:
 
         assert isinstance(created.id, UUID)
         assert created.created_at.tzinfo is not None
-        assert created.created_at.utcoffset() == timezone.utc.utcoffset(None)
+        assert created.created_at.utcoffset() == UTC.utcoffset(None)
 
     def test_create_starts_empty(self, owner_id: UUID) -> None:
         created = Session.create(owner_id=owner_id)
@@ -86,7 +86,7 @@ class TestSessionDomainSession:
 
     def test_session_keeps_explicit_aggregate_identity(self, owner_id: UUID) -> None:
         session_id = uuid4()
-        created_time = datetime(2026, 7, 7, tzinfo=timezone.utc)
+        created_time = datetime(2026, 7, 7, tzinfo=UTC)
 
         created = Session.restore(
             title="Roadtrip",
@@ -495,7 +495,7 @@ class TestSessionDomainSession:
     def test_constructor_does_not_hydrate_user_message_curation_events(
         self, owner_id: UUID
     ) -> None:
-        message_time = datetime(2026, 7, 7, 12, 0, tzinfo=timezone.utc)
+        message_time = datetime(2026, 7, 7, 12, 0, tzinfo=UTC)
         message = UserMessage.restore(
             id=uuid4(), content="weiter", created_at=message_time
         )

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from backend.features.session.domain import (
@@ -15,7 +15,7 @@ from backend.features.session.domain import (
 class TestUserMessage:
     def test_keeps_explicit_identity(self) -> None:
         message_id = uuid4()
-        created_time = datetime(2026, 6, 6, tzinfo=timezone.utc)
+        created_time = datetime(2026, 6, 6, tzinfo=UTC)
 
         message = UserMessage.restore(
             content="hello",
@@ -83,7 +83,7 @@ class TestAssistantMessage:
 
     def test_keeps_explicit_identity(self) -> None:
         message_id = uuid4()
-        created_time = datetime(2026, 6, 6, tzinfo=timezone.utc)
+        created_time = datetime(2026, 6, 6, tzinfo=UTC)
 
         message = AssistantMessage.restore(
             content="hi",

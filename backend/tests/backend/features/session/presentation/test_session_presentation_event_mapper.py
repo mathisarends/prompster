@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from backend.features.session.application import (
@@ -48,7 +48,7 @@ def _make_assistant_message() -> AssistantMessage:
     return AssistantMessage.restore(
         content="",
         id=uuid4(),
-        created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        created_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
 
 

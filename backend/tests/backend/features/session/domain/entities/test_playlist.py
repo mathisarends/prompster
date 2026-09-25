@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
@@ -8,7 +8,7 @@ from backend.features.session.domain import Playlist, PlaylistTrack
 
 def assert_utc_datetime(value: datetime) -> None:
     assert value.tzinfo is not None
-    assert value.utcoffset() == timezone.utc.utcoffset(None)
+    assert value.utcoffset() == UTC.utcoffset(None)
 
 
 class TestSessionDomainPlaylistEntities:
@@ -20,7 +20,7 @@ class TestSessionDomainPlaylistEntities:
 
     def test_playlist_track_assigns_constructor_fields(self) -> None:
         track_id: UUID = uuid4()
-        created_time = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        created_time = datetime(2026, 1, 1, tzinfo=UTC)
 
         track = PlaylistTrack.restore(
             id=track_id,
@@ -50,7 +50,7 @@ class TestSessionDomainPlaylistEntities:
 
     def test_playlist_keeps_explicit_entity_identity(self) -> None:
         playlist_id = uuid4()
-        created_time = datetime(2026, 2, 2, tzinfo=timezone.utc)
+        created_time = datetime(2026, 2, 2, tzinfo=UTC)
 
         playlist = Playlist.restore(tracks=[], id=playlist_id, created_at=created_time)
 

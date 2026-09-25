@@ -2,7 +2,7 @@ import asyncio
 import logging
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from backend.features.session.application.events import (
@@ -329,7 +329,7 @@ class SessionConversationService:
             user_id=user_id,
             image_attachments=image_attachments,
         )
-        created_at = datetime.now(timezone.utc)
+        created_at = datetime.now(UTC)
         promoted: list[ImageAttachment] = []
         for image in image_attachments:
             storage_key = (
@@ -726,7 +726,7 @@ class SessionConversationService:
             playlist = session.set_playlist(
                 Playlist.restore(
                     id=event.playlist_id,
-                    created_at=datetime.now(timezone.utc),
+                    created_at=datetime.now(UTC),
                     tracks=list(event.tracks),
                 )
             )

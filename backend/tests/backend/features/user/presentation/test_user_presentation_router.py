@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import cast
 from uuid import UUID, uuid4
 
@@ -23,7 +23,7 @@ class _UserServiceStub:
             id=uuid4(),
             name="Mathis",
             spotify=SpotifyAccount.connected_with(is_premium=True),
-            created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            created_at=datetime(2026, 1, 1, tzinfo=UTC),
         )
 
     async def get_me(self, *, user_id: UUID):

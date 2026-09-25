@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import hashlib
 import json
 from typing import Self
@@ -89,7 +89,7 @@ class Session(Aggregate):
     def create(cls, *, owner_id: UUID, title: str = "") -> Self:
         return cls(
             id=uuid4(),
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             title=title,
             entries=[],
             owner_id=owner_id,
@@ -421,7 +421,7 @@ class Session(Aggregate):
             )
             question.answer_with(
                 normalized_answers,
-                answered_at=datetime.now(timezone.utc),
+                answered_at=datetime.now(UTC),
             )
             return question
 
@@ -634,7 +634,7 @@ class Session(Aggregate):
             )
         track = PlaylistTrack.restore(
             id=event.track_id,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             title=event.track_title,
             artist=event.track_artist,
             year=event.track_year,

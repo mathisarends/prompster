@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -459,7 +459,7 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
     owner_id = uuid4()
     session_id = uuid4()
     message_id = uuid4()
-    message_created_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    message_created_at = datetime(2026, 1, 1, tzinfo=UTC)
     event_created_at = message_created_at - timedelta(seconds=5)
 
     orm = SessionModel(

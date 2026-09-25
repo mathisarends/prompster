@@ -1,6 +1,6 @@
 import asyncio
 from collections.abc import AsyncIterator
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from llmify.messages import (
@@ -219,7 +219,7 @@ class TestSessionRunnerHistoryRendering:
             track_title="Umbrella",
             track_artist="Rihanna",
             track_year=2007,
-            created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            created_at=datetime(2026, 1, 1, tzinfo=UTC),
         )
         session = Session.restore(
             id=uuid4(),

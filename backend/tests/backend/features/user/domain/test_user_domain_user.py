@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from backend.features.user.domain import AuthIdentity, AuthProvider, User
@@ -16,7 +16,7 @@ class TestUserDomainUser:
 
     def test_user_keeps_explicit_id_and_created_time(self) -> None:
         user_id: UUID = uuid4()
-        created_time = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        created_time = datetime(2025, 1, 1, tzinfo=UTC)
 
         user = User.restore(
             name="Mathis",
@@ -34,7 +34,7 @@ class TestUserDomainUser:
 
         assert isinstance(user.id, UUID)
         assert user.created_at.tzinfo is not None
-        assert user.created_at.utcoffset() == timezone.utc.utcoffset(None)
+        assert user.created_at.utcoffset() == UTC.utcoffset(None)
 
     def test_auth_identity_assigns_constructor_fields(self) -> None:
         user_id = uuid4()
