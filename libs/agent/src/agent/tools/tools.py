@@ -3,7 +3,7 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from llmify.messages import ToolCall
+from llm import ModelTool, ToolCall
 from pydantic import BaseModel
 
 from agent.deck import (
@@ -25,7 +25,6 @@ from agent.tools.params import (
     ReviewDeckParams,
     SearchParams,
 )
-from agent.tools.schemas import ToolSchema
 from agent.tools.views import (
     ActionResult,
     ActionType,
@@ -107,14 +106,14 @@ class Tools:
             )
         return await self._executor.execute(name, args)
 
-    def to_schema(self, phase: Phase | None = None) -> list[ToolSchema]:
+    def to_model_tools(self, phase: Phase | None = None) -> list[ModelTool]:
         tools = self._tools.values()
         if phase is not None:
             tools = [tool for tool in tools if tool.is_included_in(phase)]
-        return [tool.to_schema() for tool in tools]
+        return [tool.to_model_tool() for tool in tools]
 
     def parse_args(self, call: ToolCall) -> dict[str, Any]:
-        raw = call.function.arguments
+        raw = call.arguments
         if not raw:
             return {}
         try:
@@ -126,7 +125,7 @@ class Tools:
     def parse_params(
         self, call: ToolCall, phase: Phase | None = None
     ) -> BaseModel | None:
-        tool = self.get(call.function.name, phase=phase)
+        tool = self.get(call.name, phase=phase)
         if tool is None or tool.param_model is None:
             return None
         try:

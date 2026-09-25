@@ -1,4 +1,4 @@
-from llmify import SystemMessage
+from llm import SystemMessage
 
 from agent.messages import MessageManager
 from agent.tools.views import Phase

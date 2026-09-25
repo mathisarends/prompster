@@ -5,6 +5,8 @@ from typing import Any, Self
 
 from pydantic import BaseModel, Field
 
+from llm import ModelTool
+
 from agent.tools.schema_builder import ToolSchemaBuilder
 from agent.tools.schemas import ToolSchema
 
@@ -147,6 +149,14 @@ class Tool:
             "type": "function",
             "function": function,
         }
+
+    def to_model_tool(self) -> ModelTool:
+        function = self.to_schema()["function"]
+        return ModelTool(
+            name=function["name"],
+            description=function.get("description", ""),
+            parameters=function["parameters"],
+        )
 
     def __eq__(self, other: object) -> bool:
         return self.name == other.name if isinstance(other, Tool) else NotImplemented

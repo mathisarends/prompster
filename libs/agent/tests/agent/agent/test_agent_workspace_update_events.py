@@ -2,14 +2,13 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from llmify import (
+from llm import (
     ContextLengthExceededError,
-    StreamEnd,
-    StreamTextDelta,
-    StreamToolCall,
+    ModelResponse,
+    TextDelta,
+    ToolCall,
+    Usage,
 )
-from llmify.messages import ToolCall
-from llmify.views import ChatInvokeUsage
 import pytest
 
 from agent.agent import (
@@ -34,7 +33,7 @@ class _ChatResponse:
     completion: str | None
     tool_calls: list[ToolCall]
     chunks: list[str] | None = None
-    usage: ChatInvokeUsage | None = None
+    usage: Usage = Usage()
 
 
 class _FakeLlm:
@@ -48,12 +47,10 @@ class _FakeLlm:
         if isinstance(response, Exception):
             raise response
         for chunk in response.chunks or []:
-            yield StreamTextDelta(delta=chunk)
-        for tool_call in response.tool_calls:
-            yield StreamToolCall(tool_call=tool_call)
-        yield StreamEnd(
+            yield TextDelta(delta=chunk)
+        yield ModelResponse(
             completion=response.completion or "",
-            tool_calls=response.tool_calls,
+            tool_calls=tuple(response.tool_calls),
             usage=response.usage,
         )
 
@@ -98,7 +95,7 @@ class TestAgentWorkspaceUpdateEvents:
         )
         agent = Agent(llm=llm)
         for index in range(5):
-            agent._messages.add_tool_result(f"call-{index}", "x")
+            agent._messages.add_tool_result(f"call-{index}", "search_tracks", "x")
 
         events = [event async for event in agent.stream("Mach weiter")]
 
@@ -139,10 +136,8 @@ class TestAgentWorkspaceUpdateEvents:
                     tool_calls=[
                         ToolCall(
                             id="call-1",
-                            function={
-                                "name": "add_deck_tracks",
-                                "arguments": json.dumps(tool_args),
-                            },
+                            name="add_deck_tracks",
+                            arguments=json.dumps(tool_args),
                         )
                     ],
                 ),
@@ -245,9 +240,7 @@ class TestAgentWorkspaceUpdateEvents:
 
         _ = [event async for event in agent.stream("Hallo")]
 
-        tool_names = {
-            schema["function"]["name"] for schema in llm.tool_schema_batches[0]
-        }
+        tool_names = {tool.name for tool in llm.tool_schema_batches[0]}
         assert agent.phase == Phase.ONBOARDING
         assert "ask_onboarding_question" in tool_names
 
@@ -258,9 +251,7 @@ class TestAgentWorkspaceUpdateEvents:
 
         _ = [event async for event in agent.stream("Bau mir ein Deck")]
 
-        tool_names = {
-            schema["function"]["name"] for schema in llm.tool_schema_batches[0]
-        }
+        tool_names = {tool.name for tool in llm.tool_schema_batches[0]}
         assert agent.phase == Phase.BUILD
         assert "search_tracks" in tool_names
         assert "add_deck_tracks" in tool_names
@@ -283,10 +274,8 @@ class TestAgentWorkspaceUpdateEvents:
                     tool_calls=[
                         ToolCall(
                             id="call-1",
-                            function={
-                                "name": "ask_onboarding_question",
-                                "arguments": json.dumps(tool_args),
-                            },
+                            name="ask_onboarding_question",
+                            arguments=json.dumps(tool_args),
                         )
                     ],
                 ),
@@ -327,10 +316,8 @@ class TestAgentWorkspaceUpdateEvents:
                     tool_calls=[
                         ToolCall(
                             id="call-1",
-                            function={
-                                "name": "ask_onboarding_question",
-                                "arguments": json.dumps(tool_args),
-                            },
+                            name="ask_onboarding_question",
+                            arguments=json.dumps(tool_args),
                         )
                     ],
                 ),

@@ -2,14 +2,14 @@ import asyncio
 from collections.abc import AsyncGenerator, Sequence
 from dataclasses import dataclass, field
 
-from llmify import (
+from llm import (
     ChatModel,
     ContextLengthExceededError,
     Message,
-    StreamEnd,
-    StreamEventType,
+    ModelResponse,
+    TextDelta,
+    ToolCall,
 )
-from llmify.messages import ToolCall
 from spotifyify import RetryEvent
 
 from agent.deck import DeckDraftUpdate, DeckStore
@@ -43,6 +43,7 @@ from agent.views import UserEvent
 class _LLMResponse:
     completion: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)
+    provider_state: object | None = None
 
 
 class Agent:
@@ -143,7 +144,10 @@ class Agent:
             if not response.tool_calls:
                 for event in await self._run_completion_guardrails():
                     yield event
-                self._messages.add_assistant(response.completion)
+                self._messages.add_assistant(
+                    response.completion,
+                    provider_state=response.provider_state,
+                )
                 yield AssistantMessageEvent(content=response.completion)
                 yield RunCompletedEvent(output=response.completion)
                 return
@@ -154,6 +158,7 @@ class Agent:
             self._messages.add_assistant(
                 response.completion,
                 tool_calls=response.tool_calls,
+                provider_state=response.provider_state,
             )
             yield ToolCallSequenceStartedEvent(
                 label=self._tool_call_sequence_label(response.tool_calls)
@@ -171,24 +176,20 @@ class Agent:
         self,
         response: _LLMResponse,
     ) -> AsyncGenerator[AgentEvent, None]:
-        schemas = self._tools.to_schema(phase=self._phase)
-        async for event in self._llm.stream(self._messages.all(), tools=schemas):
+        tools = self._tools.to_model_tools(phase=self._phase)
+        async for event in self._llm.stream(self._messages.all(), tools=tools):
             if self._stop_requested:
                 return
-            if event.type == StreamEventType.TEXT:
-                if event.delta:
-                    response.completion += event.delta
-                    yield AssistantMessageChunkEvent(chunk=event.delta)
-            elif event.type == StreamEventType.TOOL_CALL:
-                response.tool_calls.append(event.tool_call)
-            elif event.type == StreamEventType.END:
-                assert isinstance(event, StreamEnd)
-                response.completion = event.completion or response.completion
-                if event.tool_calls:
-                    response.tool_calls = event.tool_calls
-                self._token_tracker.add(event.usage, self._llm_name)
-                if event.usage is not None:
-                    self._last_prompt_tokens = event.usage.prompt_tokens
+            match event:
+                case TextDelta(delta=delta) if delta:
+                    response.completion += delta
+                    yield AssistantMessageChunkEvent(chunk=delta)
+                case ModelResponse():
+                    response.completion = event.completion or response.completion
+                    response.tool_calls = list(event.tool_calls)
+                    response.provider_state = event.provider_state
+                    self._token_tracker.add(event.usage, self._llm_name)
+                    self._last_prompt_tokens = event.usage.input_tokens
 
     def _compact_proactively(self) -> list[ContextCompactedEvent]:
         # The last observed prompt size already exceeds our safety budget, so
@@ -229,6 +230,7 @@ class Agent:
 
         response.completion = ""
         response.tool_calls = []
+        response.provider_state = None
         async for event in self._stream_llm_response(response):
             yield event
 
@@ -267,12 +269,12 @@ class Agent:
         call: ToolCall,
     ) -> AsyncGenerator[AgentEvent, None]:
         args = self._tools.parse_args(call)
-        tool = self._tools.get(call.function.name, phase=self._phase)
+        tool = self._tools.get(call.name, phase=self._phase)
         is_onboarding_question = tool.is_onboarding_question if tool else False
         if not is_onboarding_question:
             yield ToolCallEvent(
                 tool_call_id=call.id,
-                name=call.function.name,
+                name=call.name,
                 args=args,
                 status_label=tool.render_status(args) if tool else None,
                 action_type=tool.action_type if tool else None,
@@ -282,7 +284,7 @@ class Agent:
         retries: asyncio.Queue[RetryEvent] = asyncio.Queue()
         with retry_sink(retries.put_nowait):
             exec_task = asyncio.create_task(
-                self._tools.execute(call.function.name, args, phase=self._phase)
+                self._tools.execute(call.name, args, phase=self._phase)
             )
             while True:
                 getter = asyncio.create_task(retries.get())
@@ -306,7 +308,7 @@ class Agent:
         if not is_onboarding_question:
             yield ToolResultEvent(
                 tool_call_id=call.id,
-                name=call.function.name,
+                name=call.name,
                 result=content,
                 items=list(result.items),
             )
@@ -314,6 +316,7 @@ class Agent:
             yield self._to_deck_updated_event(update)
         self._messages.add_tool_result(
             tool_call_id=call.id,
+            tool_name=call.name,
             content=content,
         )
         request = result.input_request
@@ -346,7 +349,7 @@ class Agent:
     def _to_tool_retry_event(self, call: ToolCall, retry: RetryEvent) -> ToolRetryEvent:
         return ToolRetryEvent(
             tool_call_id=call.id,
-            name=call.function.name,
+            name=call.name,
             attempt=retry.retry_number,
             max_attempts=retry.max_retries,
             retry_in_seconds=retry.retry_in_seconds,

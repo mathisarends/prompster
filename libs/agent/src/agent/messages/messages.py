@@ -1,7 +1,7 @@
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
-from llmify import (
+from llm import (
     AssistantMessage,
     Message,
     SystemMessage,
@@ -98,15 +98,26 @@ class MessageManager:
         self._messages.append(UserMessage(content=rendered))
 
     def add_assistant(
-        self, content: str, tool_calls: list[ToolCall] | None = None
+        self,
+        content: str,
+        tool_calls: Sequence[ToolCall] = (),
+        provider_state: object | None = None,
     ) -> None:
         self._messages.append(
-            AssistantMessage(content=content, tool_calls=tool_calls or [])
+            AssistantMessage(
+                content=content,
+                tool_calls=tuple(tool_calls),
+                provider_state=provider_state,
+            )
         )
 
-    def add_tool_result(self, tool_call_id: str, content: str) -> None:
+    def add_tool_result(self, tool_call_id: str, tool_name: str, content: str) -> None:
         self._messages.append(
-            ToolResultMessage(tool_call_id=tool_call_id, content=content)
+            ToolResultMessage(
+                tool_call_id=tool_call_id,
+                tool_name=tool_name,
+                content=content,
+            )
         )
 
     def compact_tool_results(self, *, keep_last: int = 4) -> int:
@@ -136,9 +147,8 @@ class MessageManager:
             assert isinstance(message, ToolResultMessage)
             if message.content.startswith(_COMPACTED_MARKER):
                 continue
-            self._messages[index] = ToolResultMessage(
-                tool_call_id=message.tool_call_id,
-                content=_COMPACTED_PLACEHOLDER,
+            self._messages[index] = message.model_copy(
+                update={"content": _COMPACTED_PLACEHOLDER}
             )
             compacted += 1
         return compacted

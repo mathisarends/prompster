@@ -1,7 +1,7 @@
 import logging
 from collections import Counter
 
-from llmify import ChatModel, SystemMessage, UserMessage
+from llm import ChatModel, SystemMessage, UserMessage
 from pydantic import BaseModel, Field
 
 from agent.deck import DeckDraftTrack, DeckStore
@@ -236,16 +236,15 @@ class DeckCritic:
         concerns: list[str],
         brief: str | None,
     ) -> DeckCritique:
-        response = await self._llm.invoke(
+        return await self._llm.call(
             [
                 SystemMessage(content=_SYSTEM_PROMPT),
                 UserMessage(
                     content=self._render_prompt(tracks, metrics, concerns, brief)
                 ),
             ],
-            output_format=DeckCritique,
+            output_type=DeckCritique,
         )
-        return response.completion
 
     def _render_prompt(
         self,

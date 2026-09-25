@@ -8,6 +8,6 @@ requires-python = ">=3.14"
 [tool.uv.workspace]
 members = [
     "backend",
-    "libs/tokens",
     "libs/agent",
+    "libs/llm",
 ]

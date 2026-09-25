@@ -13,8 +13,13 @@ user's text for that turn — mirroring the backend domain where
 
 from datetime import datetime, timezone
 
-from llmify import AssistantMessage, SystemMessage, ToolResultMessage, UserMessage
-from llmify.messages import ToolCall
+from llm import (
+    AssistantMessage,
+    SystemMessage,
+    ToolCall,
+    ToolResultMessage,
+    UserMessage,
+)
 
 from agent.messages import MessageManager, render_user_message_content
 from agent.messages.rendering import (
@@ -91,12 +96,13 @@ class TestMessageManagerConversationTurns:
         manager = MessageManager(system_prompt="Prompt")
         tool_call = ToolCall(
             id="call-1",
-            function={"name": "search_tracks", "arguments": '{"query":"abba"}'},
+            name="search_tracks",
+            arguments='{"query":"abba"}',
         )
 
         manager.add_user("Find tracks")
         manager.add_assistant("Searching", tool_calls=[tool_call])
-        manager.add_tool_result("call-1", "[]")
+        manager.add_tool_result("call-1", "search_tracks", "[]")
 
         messages = manager.all()
         assert [type(m) for m in messages] == [
@@ -111,7 +117,9 @@ class TestMessageManagerConversationTurns:
     def test_compact_tool_results_elides_older_results_only(self) -> None:
         manager = MessageManager(system_prompt="Prompt")
         for index in range(6):
-            manager.add_tool_result(f"call-{index}", f"verbose result {index}")
+            manager.add_tool_result(
+                f"call-{index}", "search_tracks", f"verbose result {index}"
+            )
 
         compacted = manager.compact_tool_results(keep_last=2)
 
@@ -140,7 +148,9 @@ class TestMessageManagerConversationTurns:
     def test_compact_tool_results_is_idempotent(self) -> None:
         manager = MessageManager(system_prompt="Prompt")
         for index in range(5):
-            manager.add_tool_result(f"call-{index}", f"verbose result {index}")
+            manager.add_tool_result(
+                f"call-{index}", "search_tracks", f"verbose result {index}"
+            )
 
         first = manager.compact_tool_results(keep_last=2)
         second = manager.compact_tool_results(keep_last=2)

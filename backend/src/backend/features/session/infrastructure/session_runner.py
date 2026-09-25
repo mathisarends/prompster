@@ -27,7 +27,7 @@ from backend.features.session.infrastructure.agent_event_mapper import (
     AgentSessionEventMapper,
 )
 from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
-from llmify import ChatModel
+from llm import ChatModel
 from spotifyify import Spotifyify
 
 

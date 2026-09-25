@@ -1,7 +1,7 @@
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
-from llmify import ChatModel, SystemMessage, UserMessage
+from llm import ChatModel, SystemMessage, UserMessage
 
 
 class LLMSessionTitleGenerator(SessionTitleGenerator):
@@ -9,7 +9,7 @@ class LLMSessionTitleGenerator(SessionTitleGenerator):
         self._llm = llm
 
     async def generate(self, initial_prompt: str) -> str:
-        response = await self._llm.invoke(
+        response = await self._llm.call(
             [
                 SystemMessage(
                     content=(

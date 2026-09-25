@@ -43,7 +43,7 @@ class TestWorkspaceDraftPlaylistTool:
     ) -> None:
         tools = Tools(ToolContext(DeckStore()))
 
-        tool_names = [schema["function"]["name"] for schema in tools.to_schema()]
+        tool_names = [tool.name for tool in tools.to_model_tools()]
 
         assert "create_deck" not in tool_names
         assert "add_deck_tracks" in tool_names

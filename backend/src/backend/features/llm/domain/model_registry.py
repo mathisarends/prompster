@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 class LLMProvider(StrEnum):
     OPENAI = "openai"
+    CODEX = "codex"
 
 
 class ReasoningEffort(StrEnum):

@@ -54,7 +54,7 @@ from backend.features.spotify.application.ports import SpotifyPlaylistCreator
 from backend.features.user.domain import UserRepository
 from backend.platform.storage import ObjectStorage
 from dishka import Provider, Scope, provide
-from llmify import ChatModel
+from llm import ChatModel
 from spotifyify import Spotifyify
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 

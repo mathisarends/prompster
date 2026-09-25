@@ -1,4 +1,4 @@
-from llmify.messages import ToolCall
+from llm import ToolCall
 import pytest
 from pydantic import BaseModel
 
@@ -52,11 +52,10 @@ class TestToolsFacadeAbstraction:
         tools = Tools()
 
         onboarding_tool_names = {
-            schema["function"]["name"]
-            for schema in tools.to_schema(phase=Phase.ONBOARDING)
+            tool.name for tool in tools.to_model_tools(phase=Phase.ONBOARDING)
         }
         build_tool_names = {
-            schema["function"]["name"] for schema in tools.to_schema(phase=Phase.BUILD)
+            tool.name for tool in tools.to_model_tools(phase=Phase.BUILD)
         }
 
         assert {
@@ -80,14 +79,14 @@ class TestToolsFacadeAbstraction:
     def test_onboarding_question_schema_requires_two_to_four_options(self) -> None:
         tools = Tools()
 
-        schema = next(
-            schema
-            for schema in tools.to_schema(phase=Phase.ONBOARDING)
-            if schema["function"]["name"] == "ask_onboarding_question"
+        tool = next(
+            tool
+            for tool in tools.to_model_tools(phase=Phase.ONBOARDING)
+            if tool.name == "ask_onboarding_question"
         )
-        options = schema["function"]["parameters"]["properties"]["options"]
+        options = tool.parameters["properties"]["options"]
 
-        assert "options" in schema["function"]["parameters"]["required"]
+        assert "options" in tool.parameters["required"]
         assert options["minItems"] == 2
         assert options["maxItems"] == 4
 
@@ -95,8 +94,8 @@ class TestToolsFacadeAbstraction:
         tools = Tools()
 
         schemas = {
-            schema["function"]["name"]: schema["function"]["parameters"]
-            for schema in tools.to_schema(phase=Phase.BUILD)
+            tool.name: tool.parameters
+            for tool in tools.to_model_tools(phase=Phase.BUILD)
         }
 
         assert "status" not in schemas["search_tracks"]["properties"]
@@ -123,14 +122,14 @@ class TestToolsFacadeAbstraction:
     def test_onboarding_question_schema_exposes_optional_hint(self) -> None:
         tools = Tools()
 
-        schema = next(
-            schema
-            for schema in tools.to_schema(phase=Phase.ONBOARDING)
-            if schema["function"]["name"] == "ask_onboarding_question"
+        tool = next(
+            tool
+            for tool in tools.to_model_tools(phase=Phase.ONBOARDING)
+            if tool.name == "ask_onboarding_question"
         )
-        hint = schema["function"]["parameters"]["properties"]["hint"]
+        hint = tool.parameters["properties"]["hint"]
 
-        assert "hint" not in schema["function"]["parameters"]["required"]
+        assert "hint" not in tool.parameters["required"]
         assert "Optional short note" in hint["description"]
 
     def test_onboarding_question_schema_exposes_optional_recommended_option(
@@ -138,15 +137,15 @@ class TestToolsFacadeAbstraction:
     ) -> None:
         tools = Tools()
 
-        schema = next(
-            schema
-            for schema in tools.to_schema(phase=Phase.ONBOARDING)
-            if schema["function"]["name"] == "ask_onboarding_question"
+        tool = next(
+            tool
+            for tool in tools.to_model_tools(phase=Phase.ONBOARDING)
+            if tool.name == "ask_onboarding_question"
         )
-        properties = schema["function"]["parameters"]["properties"]
+        properties = tool.parameters["properties"]
 
         assert "recommended_option" in properties
-        assert "recommended_option" not in schema["function"]["parameters"]["required"]
+        assert "recommended_option" not in tool.parameters["required"]
 
     @pytest.mark.asyncio
     async def test_onboarding_question_threads_recommended_option(self) -> None:
@@ -169,14 +168,12 @@ class TestToolsFacadeAbstraction:
     def test_onboarding_question_schema_exposes_selection_mode_enum(self) -> None:
         tools = Tools()
 
-        schema = next(
-            schema
-            for schema in tools.to_schema(phase=Phase.ONBOARDING)
-            if schema["function"]["name"] == "ask_onboarding_question"
+        tool = next(
+            tool
+            for tool in tools.to_model_tools(phase=Phase.ONBOARDING)
+            if tool.name == "ask_onboarding_question"
         )
-        selection_mode = schema["function"]["parameters"]["properties"][
-            "selection_mode"
-        ]
+        selection_mode = tool.parameters["properties"]["selection_mode"]
 
         assert selection_mode["default"] == "single_select"
         assert selection_mode["enum"] == ["single_select", "multi_select"]
@@ -219,12 +216,9 @@ class TestToolsFacadeAbstraction:
             return ActionResult(success=True, extracted_content=params.value)
 
         onboarding_names = {
-            schema["function"]["name"]
-            for schema in tools.to_schema(phase=Phase.ONBOARDING)
+            tool.name for tool in tools.to_model_tools(phase=Phase.ONBOARDING)
         }
-        build_names = {
-            schema["function"]["name"] for schema in tools.to_schema(phase=Phase.BUILD)
-        }
+        build_names = {tool.name for tool in tools.to_model_tools(phase=Phase.BUILD)}
 
         assert "echo" not in onboarding_names
         assert "echo" in build_names
@@ -260,7 +254,8 @@ class TestToolsFacadeAbstraction:
         tools = Tools()
         tool_call = ToolCall(
             id="call-1",
-            function={"name": "search_tracks", "arguments": '{"query": "abba"}'},
+            name="search_tracks",
+            arguments='{"query": "abba"}',
         )
 
         parsed = tools.parse_args(tool_call)
@@ -271,7 +266,8 @@ class TestToolsFacadeAbstraction:
         tools = Tools()
         tool_call = ToolCall(
             id="call-1",
-            function={"name": "search_tracks", "arguments": "{not-json"},
+            name="search_tracks",
+            arguments="{not-json",
         )
 
         parsed = tools.parse_args(tool_call)

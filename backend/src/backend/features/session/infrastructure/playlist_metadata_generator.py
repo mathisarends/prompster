@@ -1,4 +1,4 @@
-from llmify import ChatModel, SystemMessage, UserMessage
+from llm import ChatModel, SystemMessage, UserMessage
 from pydantic import BaseModel, Field
 
 from backend.features.session.application.ports import (
@@ -25,16 +25,16 @@ class LLMPlaylistMetadataGenerator(PlaylistMetadataGenerator):
         self._llm = llm
 
     async def generate(self, tracks: list[PlaylistMetadataTrack]) -> PlaylistMetadata:
-        response = await self._llm.invoke(
+        output = await self._llm.call(
             [
                 SystemMessage(content=self._SYSTEM_PROMPT),
                 UserMessage(content=self._format_tracks(tracks)),
             ],
-            output_format=_PlaylistMetadataOutput,
+            output_type=_PlaylistMetadataOutput,
         )
         return PlaylistMetadata(
-            name=response.completion.name.strip(),
-            description=response.completion.description.strip(),
+            name=output.name.strip(),
+            description=output.description.strip(),
         )
 
     def _format_tracks(self, tracks: list[PlaylistMetadataTrack]) -> str:

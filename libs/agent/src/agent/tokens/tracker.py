@@ -1,4 +1,4 @@
-from llmify.views import ChatInvokeUsage
+from llm import Usage
 
 from agent.tokens.views import TokenUsageEntry, UsageSummary
 
@@ -7,17 +7,17 @@ class TokenTracker:
     def __init__(self) -> None:
         self._entries: list[TokenUsageEntry] = []
 
-    def add(self, usage: ChatInvokeUsage | None, model: str) -> None:
+    def add(self, usage: Usage | None, model: str) -> None:
         if usage is None:
             return
 
         self._entries.append(
             TokenUsageEntry(
                 model=model,
-                prompt_tokens=usage.prompt_tokens,
-                completion_tokens=usage.completion_tokens,
+                prompt_tokens=usage.input_tokens,
+                completion_tokens=usage.output_tokens,
                 total_tokens=usage.total_tokens,
-                prompt_cached_tokens=usage.prompt_cached_tokens,
+                prompt_cached_tokens=usage.cache_read_tokens,
             )
         )
 
