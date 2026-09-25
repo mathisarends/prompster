@@ -67,10 +67,9 @@ class TestUserService:
             asyncio.run(service.get_me(user_id=uuid4()))
 
     def test_get_me_returns_user_and_spotify_status_when_existing(self) -> None:
-        user = User(
+        user = User.create(
             name="Mathis",
             spotify=SpotifyAccount.connected_with(is_premium=True),
-            id=uuid4(),
         )
         repository = _UserRepositoryStub(user=user)
         service = UserService(user_repository=repository)
@@ -90,9 +89,8 @@ class TestUserService:
             asyncio.run(service.delete_me(user_id=uuid4()))
 
     def test_delete_me_deletes_existing_user(self) -> None:
-        user = User(
+        user = User.create(
             name="Mathis",
-            id=uuid4(),
         )
         repository = _UserRepositoryStub(user=user)
         service = UserService(user_repository=repository)
@@ -109,9 +107,8 @@ class TestUserService:
             asyncio.run(service.get_delete_information(user_id=uuid4()))
 
     def test_get_delete_information_returns_session_count(self) -> None:
-        user = User(
+        user = User.create(
             name="Mathis",
-            id=uuid4(),
         )
         repository = _UserRepositoryStub(user=user)
         repository.session_count = 7

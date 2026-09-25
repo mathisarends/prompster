@@ -1,4 +1,5 @@
 import asyncio
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
@@ -159,8 +160,9 @@ class TestSessionSpotifyPlaylistExporter:
 
         repository = _SessionRepositoryStub(session=session)
         user_repository = _UserRepositoryStub(
-            user=User(
+            user=User.restore(
                 id=owner_id,
+                created_at=datetime.now(UTC),
                 name="Mathis",
                 spotify=SpotifyAccount.connected_with(is_premium=True),
             )
@@ -212,8 +214,9 @@ class TestSessionSpotifyPlaylistExporter:
 
         repository = _SessionRepositoryStub(session=session)
         user_repository = _UserRepositoryStub(
-            user=User(
+            user=User.restore(
                 id=owner_id,
+                created_at=datetime.now(UTC),
                 name="Mathis",
                 spotify=SpotifyAccount.connected_with(is_premium=True),
             )
@@ -258,8 +261,9 @@ class TestSessionSpotifyPlaylistExporter:
         exporter = SessionSpotifyPlaylistExporter(
             session_repository=_SessionRepositoryStub(session=session),
             user_repository=_UserRepositoryStub(
-                user=User(
+                user=User.restore(
                     id=owner_id,
+                    created_at=datetime.now(UTC),
                     name="Mathis",
                     spotify=SpotifyAccount.connected_with(is_premium=True),
                 )
@@ -280,8 +284,9 @@ class TestSessionSpotifyPlaylistExporter:
         exporter_with_missing_connection = SessionSpotifyPlaylistExporter(
             session_repository=_SessionRepositoryStub(session=session),
             user_repository=_UserRepositoryStub(
-                user=User(
+                user=User.restore(
                     id=owner_id,
+                    created_at=datetime.now(UTC),
                     name="Mathis",
                     spotify=SpotifyAccount.connected_with(is_premium=True),
                 )

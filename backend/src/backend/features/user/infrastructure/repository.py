@@ -54,12 +54,12 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
         *,
         spotify: SpotifyAccount | None = None,
     ) -> User:
-        return User(
+        return User.restore(
             id=orm.id,
+            created_at=orm.created_at,
             name=orm.name,
             profile_image_url=orm.profile_image_url,
             spotify=spotify or SpotifyAccount.disconnected(),
-            created_time=orm.created_at,
         )
 
     def _to_orm(self, domain: User) -> UserModel:

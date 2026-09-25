@@ -72,13 +72,13 @@ class SpotifyOAuthFlow:
         if existing_user is None:
             raw_name = (identity.display_name or "").strip()
             display_name = raw_name or "Spotify-Nutzer"
-            user = User(
+            user = User.create(
                 name=display_name,
                 profile_image_url=identity.profile_image_url,
             )
             existing_user = await self._user_repository.create_with_auth_identity(
                 user=user,
-                auth_identity=AuthIdentity(
+                auth_identity=AuthIdentity.create(
                     user_id=user.id,
                     provider=AuthProvider.SPOTIFY,
                     subject=identity.subject,

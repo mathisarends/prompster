@@ -6,7 +6,7 @@ from backend.features.user.domain import AuthIdentity, AuthProvider, User
 
 class TestUserDomainUser:
     def test_user_assigns_constructor_fields(self) -> None:
-        user = User(
+        user = User.create(
             name="Mathis",
             profile_image_url="https://example.com/avatar.jpg",
         )
@@ -18,17 +18,17 @@ class TestUserDomainUser:
         user_id: UUID = uuid4()
         created_time = datetime(2025, 1, 1, tzinfo=timezone.utc)
 
-        user = User(
+        user = User.restore(
             name="Mathis",
             id=user_id,
-            created_time=created_time,
+            created_at=created_time,
         )
 
         assert user.id == user_id
         assert user.created_at == created_time
 
     def test_user_generates_aggregate_identity_by_default(self) -> None:
-        user = User(
+        user = User.create(
             name="Mathis",
         )
 
@@ -39,7 +39,7 @@ class TestUserDomainUser:
     def test_auth_identity_assigns_constructor_fields(self) -> None:
         user_id = uuid4()
 
-        auth_identity = AuthIdentity(
+        auth_identity = AuthIdentity.create(
             user_id=user_id,
             provider=AuthProvider.GOOGLE,
             subject="google-subject-1",

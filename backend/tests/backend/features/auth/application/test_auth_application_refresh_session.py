@@ -86,9 +86,8 @@ class TestSessionRefresher:
             asyncio.run(handler.refresh(user_id=uuid4()))
 
     def test_handle_returns_new_auth_session_for_existing_user(self) -> None:
-        user = User(
+        user = User.create(
             name="Mathis",
-            id=uuid4(),
         )
         expected_session = AuthSession(access_token="access", refresh_token="refresh")
         repository = _UserRepositoryStub(user=user)

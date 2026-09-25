@@ -19,11 +19,11 @@ class _UserServiceStub:
         self.received_delete_user_id: UUID | None = None
         self.received_delete_information_user_id: UUID | None = None
         self.session_count = 0
-        self.user = User(
+        self.user = User.restore(
             id=uuid4(),
             name="Mathis",
             spotify=SpotifyAccount.connected_with(is_premium=True),
-            created_time=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         )
 
     async def get_me(self, *, user_id: UUID):

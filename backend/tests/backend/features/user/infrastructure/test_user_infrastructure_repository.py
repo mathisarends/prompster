@@ -13,11 +13,11 @@ def test_create_with_auth_identity_flushes_user_before_identity_insert() -> None
     session.refresh = AsyncMock()
 
     repository = SqlUserRepository(session=session)  # type: ignore[arg-type]
-    user = User(
+    user = User.create(
         name="Mathis",
         profile_image_url="https://example.com/avatar.jpg",
     )
-    auth_identity = AuthIdentity(
+    auth_identity = AuthIdentity.create(
         user_id=user.id,
         provider=AuthProvider.GOOGLE,
         subject="google-subject-1",
