@@ -24,9 +24,9 @@ class SqlOAuthConnectionRepository(
         self._token_cipher = token_cipher
 
     def _to_domain(self, orm: OAuthConnectionModel) -> OAuthConnection:
-        return OAuthConnection(
+        return OAuthConnection.restore(
             id=orm.id,
-            created_time=orm.created_at,
+            created_at=orm.created_at,
             user_id=orm.user_id,
             provider=OAuthProvider(orm.provider),
             provider_user_id=orm.provider_user_id,

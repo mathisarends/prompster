@@ -83,16 +83,13 @@ class SpotifyOAuthConnectionService:
             user_id=authenticated_user_id,
             provider=OAuthProvider.SPOTIFY,
         )
-        connection = OAuthConnection(
+        connection = self._upserted_connection(
+            existing=existing,
             user_id=authenticated_user_id,
-            provider=OAuthProvider.SPOTIFY,
             provider_user_id=profile.spotify_user_id,
             refresh_token=tokens.refresh_token,
             scope=tokens.scope,
-            connected_at=datetime.now(timezone.utc),
             is_premium=profile.is_premium,
-            id=existing.id if existing is not None else None,
-            created_time=existing.created_at if existing is not None else None,
         )
         await self._connection_repository.save(connection=connection)
         return SpotifyCallbackResult.success()
@@ -116,16 +113,13 @@ class SpotifyOAuthConnectionService:
         else:
             raise ValueError("no_refresh_token")
 
-        connection = OAuthConnection(
+        connection = self._upserted_connection(
+            existing=existing,
             user_id=user_id,
-            provider=OAuthProvider.SPOTIFY,
             provider_user_id=profile.spotify_user_id,
             refresh_token=refresh_token,
             scope=tokens.scope,
-            connected_at=datetime.now(timezone.utc),
             is_premium=profile.is_premium,
-            id=existing.id if existing is not None else None,
-            created_time=existing.created_at if existing is not None else None,
         )
         await self._connection_repository.save(connection=connection)
 
@@ -155,4 +149,37 @@ class SpotifyOAuthConnectionService:
         await self._connection_repository.delete(
             user_id=user_id,
             provider=OAuthProvider.SPOTIFY,
+        )
+
+    def _upserted_connection(
+        self,
+        *,
+        existing: OAuthConnection | None,
+        user_id: UUID,
+        provider_user_id: str,
+        refresh_token: str,
+        scope: str,
+        is_premium: bool,
+    ) -> OAuthConnection:
+        connected_at = datetime.now(timezone.utc)
+        if existing is None:
+            return OAuthConnection.create(
+                user_id=user_id,
+                provider=OAuthProvider.SPOTIFY,
+                provider_user_id=provider_user_id,
+                refresh_token=refresh_token,
+                scope=scope,
+                connected_at=connected_at,
+                is_premium=is_premium,
+            )
+        return OAuthConnection.restore(
+            id=existing.id,
+            created_at=existing.created_at,
+            user_id=user_id,
+            provider=OAuthProvider.SPOTIFY,
+            provider_user_id=provider_user_id,
+            refresh_token=refresh_token,
+            scope=scope,
+            connected_at=connected_at,
+            is_premium=is_premium,
         )

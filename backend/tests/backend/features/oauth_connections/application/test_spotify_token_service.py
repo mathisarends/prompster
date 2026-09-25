@@ -85,9 +85,9 @@ class _SpotifyOAuthProviderStub(SpotifyOAuthProvider):
 
 
 def _make_connection(*, refresh_token: str) -> OAuthConnection:
-    return OAuthConnection(
+    return OAuthConnection.restore(
         id=uuid4(),
-        created_time=datetime.now(timezone.utc),
+        created_at=datetime.now(timezone.utc),
         user_id=uuid4(),
         provider=OAuthProvider.SPOTIFY,
         provider_user_id="spotify-user-1",
