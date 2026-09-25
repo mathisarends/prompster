@@ -1,4 +1,4 @@
-from backend.features.llm.application import ChatModelFactory
+from backend.features.llm.application import ChatModels
 from backend.features.llm.domain import LLMRegistry
 from backend.features.oauth_connections.application import SpotifyTokenService
 from backend.features.session.application import (
@@ -100,7 +100,7 @@ class SessionProvider(Provider):
     def provide_session_runner(
         self,
         llm: ChatModel,
-        chat_models: ChatModelFactory,
+        chat_models: ChatModels,
         spotify: Spotifyify,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,

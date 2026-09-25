@@ -1,17 +1,32 @@
+import asyncio
+
 from llm import ChatModel, ReasoningEffort, create_codex_model, create_openai_model
 
-from backend.features.llm.application import ChatModelFactory
+from backend.features.llm.application import ChatModels
 from backend.features.llm.domain import LLMModelInfo, LLMProvider
 from backend.features.llm.infrastructure.credentials import LLMCredentials
 
 
-class LLMChatModelFactory(ChatModelFactory):
-    """Create a client; available application models are owned by LLMRegistry."""
+class LLMChatModels(ChatModels):
+    """Available application models are owned by LLMRegistry."""
 
     def __init__(self, credentials: LLMCredentials) -> None:
         self._credentials = credentials
+        self._models: dict[str, ChatModel] = {}
 
-    def create(self, model: LLMModelInfo) -> ChatModel:
+    def get(self, model: LLMModelInfo) -> ChatModel:
+        chat_model = self._models.get(model.id)
+        if chat_model is None:
+            chat_model = self._create(model)
+            self._models[model.id] = chat_model
+        return chat_model
+
+    async def aclose(self) -> None:
+        models = list(self._models.values())
+        self._models.clear()
+        await asyncio.gather(*(model.aclose() for model in models))
+
+    def _create(self, model: LLMModelInfo) -> ChatModel:
         reasoning_effort = _reasoning_effort(model)
         match model.provider:
             case LLMProvider.OPENAI:

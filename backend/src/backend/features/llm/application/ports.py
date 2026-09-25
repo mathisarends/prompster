@@ -5,6 +5,11 @@ from llm import ChatModel
 from backend.features.llm.domain import LLMModelInfo
 
 
-class ChatModelFactory(ABC):
+class ChatModels(ABC):
+    """Owns one chat model client per configured model for the app's lifetime."""
+
     @abstractmethod
-    def create(self, model: LLMModelInfo) -> ChatModel: ...
+    def get(self, model: LLMModelInfo) -> ChatModel: ...
+
+    @abstractmethod
+    async def aclose(self) -> None: ...

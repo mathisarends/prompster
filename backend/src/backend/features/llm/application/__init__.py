@@ -1,3 +1,3 @@
-from .ports import ChatModelFactory
+from .ports import ChatModels
 
-__all__ = ["ChatModelFactory"]
+__all__ = ["ChatModels"]

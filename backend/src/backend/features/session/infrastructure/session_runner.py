@@ -10,7 +10,7 @@ from agent.deck import (
     DeckStore,
 )
 from agent.tools.views import Phase as AgentPhase
-from backend.features.llm.application import ChatModelFactory
+from backend.features.llm.application import ChatModels
 from backend.features.llm.domain import LLMRegistry
 from backend.features.session.application.ports import ActiveSessionRunStore
 from backend.features.session.application.ports.session_runner import (
@@ -72,7 +72,7 @@ class AgentSessionRunner(SessionRunner):
     def __init__(
         self,
         llm: ChatModel,
-        chat_models: ChatModelFactory,
+        chat_models: ChatModels,
         spotify: Spotifyify,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,
@@ -160,7 +160,7 @@ class AgentSessionRunner(SessionRunner):
         model_info = self._llm_registry.default_model
         if model_id is not None:
             model_info = self._llm_registry.get(model_id)
-            llm = self._chat_models.create(model_info)
+            llm = self._chat_models.get(model_info)
 
         return Agent(
             llm=llm,
