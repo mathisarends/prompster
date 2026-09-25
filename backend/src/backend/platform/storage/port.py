@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from backend.infrastructure.storage.views import (
+from backend.platform.storage.views import (
     StorageFile,
     UploadResponse,
 )

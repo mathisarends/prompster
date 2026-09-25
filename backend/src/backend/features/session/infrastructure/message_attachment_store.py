@@ -5,7 +5,7 @@ from backend.features.session.application.ports import (
     MessageAttachmentStore,
     StoredAttachment,
 )
-from backend.infrastructure.storage import ObjectStorage
+from backend.platform.storage import ObjectStorage
 
 
 class StorageMessageAttachmentStore(MessageAttachmentStore):

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from backend.infrastructure.database.settings import DatabaseSettings
+from backend.platform.database.settings import DatabaseSettings
 
 
 class DatabaseProvider(Provider):

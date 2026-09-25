@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.infrastructure.database.orm import DatabaseEntity
+from backend.platform.database.orm import DatabaseEntity
 
 
 class Repository[ORM: DatabaseEntity, Domain](ABC):

@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from backend.env import EnvSettings
-from backend.infrastructure.database.settings import DatabaseSettings
+from backend.platform.database.settings import DatabaseSettings
 
 logger = logging.getLogger(__name__)
 

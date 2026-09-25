@@ -11,7 +11,7 @@ from backend.features.session.domain import (
     SessionPlaylistEmptyError,
     SessionRepository,
 )
-from backend.infrastructure.storage import ObjectStorage
+from backend.platform.storage import ObjectStorage
 
 _CARDS_PER_DECK_PAGE = 15
 _PDF_PAGES_PER_CARD_BATCH = 2

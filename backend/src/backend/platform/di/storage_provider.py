@@ -1,6 +1,6 @@
 from dishka import Provider, Scope, provide
 
-from backend.infrastructure.storage import (
+from backend.platform.storage import (
     ObjectStorage,
     S3ObjectStorage,
     S3StorageCredentials,

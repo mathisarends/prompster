@@ -11,8 +11,8 @@ from backend.features.oauth_connections.domain import (
     OAuthConnectionRepository,
     OAuthProvider,
 )
-from backend.infrastructure.database.orm import OAuthConnectionModel
-from backend.infrastructure.database.repository import Repository
+from backend.platform.database.orm import OAuthConnectionModel
+from backend.platform.database.repository import Repository
 
 
 class SqlOAuthConnectionRepository(

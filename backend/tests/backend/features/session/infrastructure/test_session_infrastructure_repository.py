@@ -18,7 +18,7 @@ from backend.features.session.domain import (
     UserMessageAttachmentKind,
 )
 from backend.features.session.infrastructure.repository import SqlSessionRepository
-from backend.infrastructure.database.orm import (
+from backend.platform.database.orm import (
     PlaylistTrackModel,
     SessionArtistReferenceModel,
     SessionOnboardingQuestionModel,

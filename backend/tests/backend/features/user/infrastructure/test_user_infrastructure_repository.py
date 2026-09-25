@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock
 
 from backend.features.user.domain import AuthIdentity, AuthProvider, User
 from backend.features.user.infrastructure.repository import SqlUserRepository
-from backend.infrastructure.database.orm import AuthIdentityModel, UserModel
+from backend.platform.database.orm import AuthIdentityModel, UserModel
 
 
 def test_create_with_auth_identity_flushes_user_before_identity_insert() -> None:

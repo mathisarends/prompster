@@ -7,13 +7,13 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-from backend.infrastructure.database.orm import (
+from backend.platform.database.orm import (
     AuthIdentityModel,
     OAuthConnectionModel,
     SessionModel,
     UserModel,
 )
-from backend.infrastructure.database.settings import DatabaseSettings
+from backend.platform.database.settings import DatabaseSettings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -31,7 +31,7 @@ GET  /api/v1/sessions/{id}/run   → SSE stream of AgentEvent → ServerEvent
 GET  /api/v1/sessions/{id}/export → streams a PDF deck
 ```
 
-### infrastructure
+### platform
 
 - **Database** — async PostgreSQL via `asyncpg` + SQLModel ORM + Alembic migrations
 - **Storage** — S3-compatible object storage via `aioboto3`

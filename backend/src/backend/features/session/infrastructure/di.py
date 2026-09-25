@@ -52,7 +52,7 @@ from backend.features.session.infrastructure.title_generator import (
 )
 from backend.features.spotify.application.ports import SpotifyPlaylistCreator
 from backend.features.user.domain import UserRepository
-from backend.infrastructure.storage import ObjectStorage
+from backend.platform.storage import ObjectStorage
 from dishka import Provider, Scope, provide
 from llmify import ChatModel
 from spotifyify import Spotifyify

@@ -3,8 +3,8 @@ from datetime import timedelta
 from obstore import sign_async
 from obstore.store import S3Store
 
-from backend.infrastructure.storage.port import ObjectStorage
-from backend.infrastructure.storage.views import StorageFile, UploadResponse
+from backend.platform.storage.port import ObjectStorage
+from backend.platform.storage.views import StorageFile, UploadResponse
 
 
 class S3ObjectStorage(ObjectStorage):

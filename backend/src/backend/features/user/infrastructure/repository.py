@@ -12,13 +12,13 @@ from backend.features.user.domain import (
     User,
     UserRepository,
 )
-from backend.infrastructure.database.orm import (
+from backend.platform.database.orm import (
     AuthIdentityModel,
     OAuthConnectionModel,
     SessionModel,
     UserModel,
 )
-from backend.infrastructure.database.repository import Repository
+from backend.platform.database.repository import Repository
 
 
 def _select_user_with_spotify_connection():

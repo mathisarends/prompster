@@ -15,8 +15,8 @@ from backend.features.session.domain import (
     SessionPlaylistEmptyError,
     SessionRepository,
 )
-from backend.infrastructure.storage import ObjectStorage
-from backend.infrastructure.storage.views import StorageFile, UploadResponse
+from backend.platform.storage import ObjectStorage
+from backend.platform.storage.views import StorageFile, UploadResponse
 
 
 class _SessionRepositoryStub(SessionRepository):

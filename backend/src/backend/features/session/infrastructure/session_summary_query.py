@@ -7,7 +7,7 @@ from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
     SessionSummaryQuery,
 )
-from backend.infrastructure.database.orm import SessionModel
+from backend.platform.database.orm import SessionModel
 
 
 class SqlSessionSummaryQuery(SessionSummaryQuery):

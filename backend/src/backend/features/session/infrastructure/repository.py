@@ -32,7 +32,7 @@ from backend.features.session.domain import (
     UserMessageAttachmentKind,
     ImageAttachment,
 )
-from backend.infrastructure.database.orm import (
+from backend.platform.database.orm import (
     PlaylistTrackModel,
     SessionArtistReferenceModel,
     SessionAssistantMessageModel,
@@ -47,7 +47,7 @@ from backend.infrastructure.database.orm import (
     SessionUserMessageAttachmentModel,
     SessionUserMessageImageAttachmentModel,
 )
-from backend.infrastructure.database.repository import Repository
+from backend.platform.database.repository import Repository
 
 
 _PENDING_STATE = "pending"

@@ -14,7 +14,7 @@ from backend.features import (
     spotify,
     user,
 )
-from backend.infrastructure.di import (
+from backend.platform.di import (
     DatabaseProvider,
     ObjectStorageProvider,
 )
@@ -32,12 +32,12 @@ _FEATURES = (
     user.feature,
 )
 
-_INFRASTRUCTURE_FEATURE = Feature(
-    name="infrastructure",
+_PLATFORM_FEATURE = Feature(
+    name="platform",
     providers=(DatabaseProvider, ObjectStorageProvider),
 )
 _COMPOSITION = Composition(
-    _INFRASTRUCTURE_FEATURE,
+    _PLATFORM_FEATURE,
     *_FEATURES,
     errors=ErrorOptions(type_base="https://api.prompster.dev/problems"),
     router_factory=lambda: PascalCaseRouter(prefix="/api/v1"),
