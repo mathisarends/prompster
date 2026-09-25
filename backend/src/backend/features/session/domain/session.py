@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 from typing import Self
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from backend.features.session.domain.exceptions import (
     ArtistReferenceNotFoundError,
@@ -50,6 +50,9 @@ DECIDE_FOR_ME_OPTION = "Entscheide für mich"
 class Session(Aggregate):
     def __init__(
         self,
+        *,
+        id: UUID,
+        created_at: datetime,
         title: str,
         entries: list[SessionEntry],
         owner_id: UUID,
@@ -62,10 +65,8 @@ class Session(Aggregate):
         onboarding_questions: list[OnboardingQuestion] | None = None,
         playlist_pdf_storage_key: str | None = None,
         playlist_pdf_fingerprint: str | None = None,
-        id: UUID | None = None,
-        created_time: datetime | None = None,
     ) -> None:
-        super().__init__(id=id, created_time=created_time)
+        super().__init__(id=id, created_time=created_at)
         self._title = title
         self._entries = entries
         self._owner_id = owner_id
@@ -85,8 +86,50 @@ class Session(Aggregate):
             self._assert_track_limit(total_tracks=len(self._playlist.tracks))
 
     @classmethod
-    def create(cls, *, owner_id: UUID) -> Self:
-        return cls(title="", entries=[], owner_id=owner_id)
+    def create(cls, *, owner_id: UUID, title: str = "") -> Self:
+        return cls(
+            id=uuid4(),
+            created_at=datetime.now(timezone.utc),
+            title=title,
+            entries=[],
+            owner_id=owner_id,
+        )
+
+    @classmethod
+    def restore(
+        cls,
+        *,
+        id: UUID,
+        created_at: datetime,
+        title: str,
+        entries: list[SessionEntry],
+        owner_id: UUID,
+        is_starred: bool = False,
+        playlist: Playlist | None = None,
+        user_curation_events: list[UserCurationEvent] | None = None,
+        playlist_references: list[PlaylistReference] | None = None,
+        artist_references: list[ArtistReference] | None = None,
+        phase: Phase = Phase.ONBOARDING,
+        onboarding_questions: list[OnboardingQuestion] | None = None,
+        playlist_pdf_storage_key: str | None = None,
+        playlist_pdf_fingerprint: str | None = None,
+    ) -> Self:
+        return cls(
+            id=id,
+            created_at=created_at,
+            title=title,
+            entries=entries,
+            owner_id=owner_id,
+            is_starred=is_starred,
+            playlist=playlist,
+            user_curation_events=user_curation_events,
+            playlist_references=playlist_references,
+            artist_references=artist_references,
+            phase=phase,
+            onboarding_questions=onboarding_questions,
+            playlist_pdf_storage_key=playlist_pdf_storage_key,
+            playlist_pdf_fingerprint=playlist_pdf_fingerprint,
+        )
 
     @property
     def title(self) -> str:
@@ -180,25 +223,14 @@ class Session(Aggregate):
     def unconsumed_user_curation_events(self) -> list[UserCurationEvent]:
         return [event for event in self._user_curation_events if not event.consumed]
 
-    def set_playlist(
-        self,
-        tracks: list[PlaylistTrack],
-        name: str | None = None,
-        id: UUID | None = None,
-        created_time: datetime | None = None,
-    ) -> Playlist:
-        self._assert_track_limit(total_tracks=len(tracks))
-        self._playlist = Playlist(
-            id=id,
-            tracks=tracks,
-            name=name,
-            created_time=created_time,
-        )
+    def set_playlist(self, playlist: Playlist) -> Playlist:
+        self._assert_track_limit(total_tracks=len(playlist.tracks))
+        self._playlist = playlist
         return self._playlist
 
     def add_tracks(self, tracks: list[PlaylistTrack]) -> Playlist:
         if self._playlist is None:
-            self._playlist = Playlist(tracks=[])
+            self._playlist = Playlist.create(tracks=[])
         self._assert_track_limit(total_tracks=len(self._playlist.tracks) + len(tracks))
         self._playlist.tracks.extend(tracks)
         return self._playlist
@@ -213,9 +245,9 @@ class Session(Aggregate):
         record_user_curation_event: bool = True,
     ) -> PlaylistTrack:
         if self._playlist is None:
-            self._playlist = Playlist(tracks=[])
+            self._playlist = Playlist.create(tracks=[])
         self._assert_track_limit(total_tracks=len(self._playlist.tracks) + 1)
-        track = PlaylistTrack(
+        track = PlaylistTrack.create(
             title=title,
             artist=artist,
             year=year,
@@ -283,7 +315,7 @@ class Session(Aggregate):
             reference.total_tracks = total_tracks
             return reference
 
-        reference = PlaylistReference(
+        reference = PlaylistReference.create(
             spotify_playlist_id=spotify_playlist_id,
             name=name,
             owner=owner,
@@ -313,7 +345,7 @@ class Session(Aggregate):
             reference.popularity = popularity
             return reference
 
-        reference = ArtistReference(
+        reference = ArtistReference.create(
             spotify_artist_id=spotify_artist_id,
             name=name,
             image_url=image_url,
@@ -355,7 +387,7 @@ class Session(Aggregate):
         is_last_question: bool = False,
     ) -> OnboardingQuestion:
         sequence_number = len(self._onboarding_questions) + 1
-        question = OnboardingQuestion(
+        question = OnboardingQuestion.create(
             sequence_number=sequence_number,
             question_text=question_text,
             hint=hint,
@@ -472,7 +504,7 @@ class Session(Aggregate):
         lines = ["Beantwortete Onboarding-Fragen:"]
         for i, q in enumerate(answered, 1):
             lines.append(f"{i}. {q.question_text} -> {q.answer}")
-        self._entries.append(UserMessage(content="\n".join(lines)))
+        self._entries.append(UserMessage.create(content="\n".join(lines)))
 
     def _remove_onboarding_tool_call_sequences(self) -> None:
         self._entries = [
@@ -491,7 +523,6 @@ class Session(Aggregate):
     def add_user_message(
         self,
         content: str,
-        message_id: UUID | None = None,
         attachments: list[UserMessageAttachment] | None = None,
         image_attachments: list[ImageAttachment] | None = None,
     ) -> UserMessage:
@@ -500,9 +531,8 @@ class Session(Aggregate):
                 f"Cannot add user message to session {self.id} "
                 "while tool calls are pending."
             )
-        message = UserMessage(
+        message = UserMessage.create(
             content=content,
-            id=message_id,
             attachments=attachments,
             image_attachments=image_attachments,
             user_curation_events=self._unbound_unconsumed_user_curation_events(),
@@ -511,7 +541,7 @@ class Session(Aggregate):
         return message
 
     def add_assistant_message(self, content: str = "") -> AssistantMessage:
-        message = AssistantMessage(content=content)
+        message = AssistantMessage.create(content=content)
         self._entries.append(message)
         return message
 
@@ -532,7 +562,7 @@ class Session(Aggregate):
         if isinstance(last, ToolCallSequence):
             last.add(call)
             return last
-        sequence = ToolCallSequence(calls=[call], label=sequence_label)
+        sequence = ToolCallSequence.create(calls=[call], label=sequence_label)
         self._entries.append(sequence)
         return sequence
 
@@ -595,15 +625,16 @@ class Session(Aggregate):
 
     def _restore_removed_track(self, event: UserCurationEvent) -> PlaylistTrack:
         if self._playlist is None:
-            self._playlist = Playlist(tracks=[])
+            self._playlist = Playlist.create(tracks=[])
         self._assert_track_limit(total_tracks=len(self._playlist.tracks) + 1)
         if event.track_year is None:
             raise UserCurationEventMissingTrackYearError(
                 f"User curation event {event.id} cannot restore track "
                 f"{event.track_id} because track_year is missing."
             )
-        track = PlaylistTrack(
+        track = PlaylistTrack.restore(
             id=event.track_id,
+            created_at=datetime.now(timezone.utc),
             title=event.track_title,
             artist=event.track_artist,
             year=event.track_year,
@@ -623,7 +654,7 @@ class Session(Aggregate):
     def _record_user_curation_event(
         self, event_type: UserCurationEventType, track: PlaylistTrack
     ) -> UserCurationEvent:
-        event = UserCurationEvent(
+        event = UserCurationEvent.create(
             event_type=event_type,
             track_id=track.id,
             track_title=track.title,

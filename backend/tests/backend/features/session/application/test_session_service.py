@@ -1,6 +1,6 @@
 import asyncio
 from collections.abc import AsyncIterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from uuid import UUID, uuid4
 
 import pytest
@@ -322,7 +322,7 @@ async def _collect_events(iterator):
 class TestSessionServiceGetById:
     def test_loads_session_and_allows_owner(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
@@ -331,7 +331,7 @@ class TestSessionServiceGetById:
         assert result is session
 
     def test_raises_when_user_does_not_own_session(self) -> None:
-        session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
+        session = Session.create(title="Roadtrip", owner_id=uuid4())
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
@@ -357,8 +357,14 @@ class TestSessionServiceCreate:
 class TestSessionServiceUpdate:
     def test_delegates_to_repository_and_returns_updated_session(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Old", entries=[], owner_id=owner_id)
-        updated = Session(title="New", entries=[], owner_id=owner_id, id=session.id)
+        session = Session.create(title="Old", owner_id=owner_id)
+        updated = Session.restore(
+            title="New",
+            entries=[],
+            owner_id=owner_id,
+            id=session.id,
+            created_at=datetime.now(UTC),
+        )
         repository = _SessionRepositoryStub(
             session_by_id=session, updated_session=updated
         )
@@ -373,7 +379,7 @@ class TestSessionServiceUpdate:
         assert repository.received_update_title == "New"
 
     def test_raises_when_user_does_not_own_session(self) -> None:
-        session = Session(title="Old", entries=[], owner_id=uuid4())
+        session = Session.create(title="Old", owner_id=uuid4())
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
@@ -386,7 +392,7 @@ class TestSessionServiceUpdate:
 class TestSessionServiceDelete:
     def test_deletes_session_by_id(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         attachment_store = _MessageAttachmentStoreStub()
         service = _make_management_service(
@@ -400,7 +406,7 @@ class TestSessionServiceDelete:
         assert attachment_store.deleted_sessions == [(owner_id, session.id)]
 
     def test_raises_when_user_does_not_own_session(self) -> None:
-        session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
+        session = Session.create(title="Roadtrip", owner_id=uuid4())
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
@@ -411,7 +417,7 @@ class TestSessionServiceDelete:
 class TestSessionServiceStar:
     def test_marks_session_as_starred_and_persists(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
@@ -422,7 +428,7 @@ class TestSessionServiceStar:
         assert repository.saved_sessions == [session]
 
     def test_raises_when_user_does_not_own_session(self) -> None:
-        session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
+        session = Session.create(title="Roadtrip", owner_id=uuid4())
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
@@ -433,7 +439,7 @@ class TestSessionServiceStar:
 class TestSessionServiceUnstar:
     def test_marks_session_as_not_starred_and_persists(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         session.star()
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
@@ -445,7 +451,7 @@ class TestSessionServiceUnstar:
         assert repository.saved_sessions == [session]
 
     def test_raises_when_user_does_not_own_session(self) -> None:
-        session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
+        session = Session.create(title="Roadtrip", owner_id=uuid4())
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
@@ -498,9 +504,9 @@ class TestSessionServiceList:
 class TestSessionImageUrlResolver:
     def test_resolves_each_referenced_image_once(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         storage_key = f"users/{owner_id}/chat/{session.id}/image.png"
-        image = ImageAttachment(
+        image = ImageAttachment.create(
             storage_key=storage_key,
             content_type="image/png",
             file_name="image.png",
@@ -547,7 +553,7 @@ class TestSessionServiceSendMessage:
     def test_persists_user_message_and_streams_llm(self) -> None:
         owner_id = uuid4()
         prompt = "spiele rihanna hits"
-        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        session = Session.create(title="Rihanna Deck", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub(chunks=["Hi"])
         service = _make_conversation_service(
@@ -577,7 +583,7 @@ class TestSessionServiceSendMessage:
 
     def test_forwards_model_id_to_runner_on_send_message(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        session = Session.create(title="Rihanna Deck", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub(chunks=["Hi"])
         service = _make_conversation_service(repository=repository, runner=runner)
@@ -619,7 +625,7 @@ class TestSessionServiceSendMessage:
 
     def test_promotes_stashed_image_attachments_on_send_message(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        session = Session.create(title="Rihanna Deck", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         attachment_store = _MessageAttachmentStoreStub()
         service = _make_conversation_service(
@@ -660,7 +666,7 @@ class TestSessionServiceSendMessage:
 
     def test_rejects_invalid_image_content_type(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        session = Session.create(title="Rihanna Deck", owner_id=owner_id)
         attachment_id = uuid4()
         service = _make_conversation_service(
             repository=_SessionRepositoryStub(session_by_id=session),
@@ -691,7 +697,7 @@ class TestSessionServiceSendMessage:
     def test_generates_title_for_untitled_session_during_message_stream(self) -> None:
         owner_id = uuid4()
         prompt = "spiele was ruhiges"
-        session = Session(title="", entries=[], owner_id=owner_id)
+        session = Session.create(title="", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         generator = _SessionTitleGeneratorStub(generated_title=f"  {'A' * 130}  ")
         service = _make_conversation_service(
@@ -722,7 +728,7 @@ class TestSessionServiceSendMessage:
 
     def test_does_not_generate_title_for_already_titled_session(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Rihanna Deck", entries=[], owner_id=owner_id)
+        session = Session.create(title="Rihanna Deck", owner_id=owner_id)
         generator = _SessionTitleGeneratorStub(generated_title="New Title")
         service = _make_conversation_service(
             repository=_SessionRepositoryStub(session_by_id=session),
@@ -745,7 +751,7 @@ class TestSessionServiceSendMessage:
 
     def test_title_generator_error_falls_back_without_breaking_stream(self) -> None:
         owner_id = uuid4()
-        session = Session(title="", entries=[], owner_id=owner_id)
+        session = Session.create(title="", owner_id=owner_id)
         generator = _SessionTitleGeneratorStub(error=RuntimeError("title failed"))
         service = _make_conversation_service(
             repository=_SessionRepositoryStub(session_by_id=session),
@@ -770,7 +776,7 @@ class TestSessionServiceSendMessage:
 
     def test_batches_consecutive_tool_calls_into_one_sequence(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         first_call = PendingCall(
             id="call-1",
             function=ToolFunction(name="search_tracks", arguments={"query": "70s"}),
@@ -830,12 +836,17 @@ class TestSessionServiceSendMessage:
     def test_emits_playlist_set_for_initial_runner_playlist(self) -> None:
         owner_id = uuid4()
         playlist_id = uuid4()
-        track = PlaylistTrack(id=uuid4(), title="Take On Me", artist="a-ha", year=1985)
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        track = PlaylistTrack.create(title="Take On Me", artist="a-ha", year=1985)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         runner = _SessionRunnerStub(
             events=[
                 SessionRunnerPlaylistUpdated(
-                    playlist=Playlist(id=playlist_id, name="80er Party", tracks=[track])
+                    playlist=Playlist.restore(
+                        id=playlist_id,
+                        name="80er Party",
+                        tracks=[track],
+                        created_at=datetime.now(UTC),
+                    )
                 )
             ]
         )
@@ -864,8 +875,8 @@ class TestSessionServiceSendMessage:
     def test_emits_playlist_set_for_initial_runner_track_addition(self) -> None:
         owner_id = uuid4()
         playlist_id = uuid4()
-        track = PlaylistTrack(id=uuid4(), title="Take On Me", artist="a-ha", year=1985)
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        track = PlaylistTrack.create(title="Take On Me", artist="a-ha", year=1985)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         runner = _SessionRunnerStub(
             events=[
                 SessionRunnerPlaylistTracksAdded(
@@ -899,29 +910,30 @@ class TestSessionServiceSendMessage:
     def test_emits_playlist_track_diffs_for_runner_playlist_mutations(self) -> None:
         owner_id = uuid4()
         playlist_id = uuid4()
-        removed_track = PlaylistTrack(
-            id=uuid4(),
+        removed_track = PlaylistTrack.create(
             title="Take On Me",
             artist="a-ha",
             year=1985,
         )
-        added_track = PlaylistTrack(
-            id=uuid4(),
+        added_track = PlaylistTrack.create(
             title="Billie Jean",
             artist="Michael Jackson",
             year=1982,
         )
-        replacement_track = PlaylistTrack(
-            id=uuid4(),
+        replacement_track = PlaylistTrack.create(
             title="Africa",
             artist="Toto",
             year=1982,
         )
-        session = Session(
+        session = Session.restore(
+            id=uuid4(),
+            created_at=datetime.now(UTC),
             title="Roadtrip",
             entries=[],
             owner_id=owner_id,
-            playlist=Playlist(id=playlist_id, tracks=[removed_track]),
+            playlist=Playlist.restore(
+                id=playlist_id, tracks=[removed_track], created_at=datetime.now(UTC)
+            ),
         )
         runner = _SessionRunnerStub(
             events=[
@@ -977,7 +989,7 @@ class TestSessionServiceSendMessage:
 
     def test_persists_partial_assistant_message_when_runner_is_cancelled(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub(
             events=[
@@ -1009,7 +1021,7 @@ class TestSessionServiceSendMessage:
 
     def test_removes_pending_tool_call_when_runner_is_cancelled(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         pending_call = PendingCall(
             id="call-1",
             function=ToolFunction(name="search_tracks", arguments={"query": "ski"}),
@@ -1040,7 +1052,7 @@ class TestSessionServiceSendMessage:
 
     def test_stop_message_delegates_to_runner(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub()
         service = _make_conversation_service(repository=repository, runner=runner)
@@ -1054,7 +1066,7 @@ class TestSessionServiceSendMessage:
 
     def test_submit_onboarding_answer_persists_single_answer(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         question = session.add_onboarding_question(
             question_text="Fuer wen ist die Playlist?",
             options=("Freunde", "Familie"),
@@ -1087,7 +1099,7 @@ class TestSessionServiceSendMessage:
 
     def test_persists_intermediate_onboarding_question_without_suspending(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         runner = _SessionRunnerStub(
             events=[
                 SessionRunnerQuestionAsked(
@@ -1158,7 +1170,7 @@ class TestSessionServiceSendMessage:
 
     def test_onboarding_tool_call_events_are_not_persisted_or_emitted(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         onboarding_call = PendingCall(
             id="call-onboarding",
             function=ToolFunction(
@@ -1212,7 +1224,7 @@ class TestSessionServiceSendMessage:
         self,
     ) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         question = session.add_onboarding_question(
             question_text="Letzte Frage?",
             options=("Ja",),
@@ -1239,7 +1251,7 @@ class TestSessionServiceSendMessage:
         self,
     ) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         question = session.add_onboarding_question(
             question_text="Letzte Frage?",
             options=("Ja",),
@@ -1271,7 +1283,7 @@ class TestSessionServiceSendMessage:
 
     def test_complete_onboarding_forwards_model_id_to_runner(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         question = session.add_onboarding_question(
             question_text="Letzte Frage?",
             options=("Ja",),
@@ -1296,7 +1308,7 @@ class TestSessionServiceSendMessage:
 
     def test_complete_onboarding_rejects_unanswered_questions(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         session.add_onboarding_question(
             question_text="Fuer wen ist die Playlist?",
             options=("Freunde", "Familie"),

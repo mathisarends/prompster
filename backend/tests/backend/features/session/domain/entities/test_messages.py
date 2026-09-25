@@ -17,10 +17,10 @@ class TestUserMessage:
         message_id = uuid4()
         created_time = datetime(2026, 6, 6, tzinfo=timezone.utc)
 
-        message = UserMessage(
+        message = UserMessage.restore(
             content="hello",
             id=message_id,
-            created_time=created_time,
+            created_at=created_time,
         )
 
         assert message.id == message_id
@@ -38,34 +38,38 @@ class TestUserMessage:
             spotify_id="37i9dQZF1DX4dyzvuaRJ0n",
         )
 
-        message = UserMessage(content="nutze diese playlist", attachments=[attachment])
+        message = UserMessage.create(
+            content="nutze diese playlist", attachments=[attachment]
+        )
 
         assert len(message.attachments) == 1
         assert message.attachments[0].kind == UserMessageAttachmentKind.SPOTIFY_PLAYLIST
         assert message.attachments[0].external_id == "37i9dQZF1DX4dyzvuaRJ0n"
 
     def test_keeps_user_curation_event_references(self) -> None:
-        event = UserCurationEvent(
+        event = UserCurationEvent.create(
             event_type=UserCurationEventType.TRACK_ADDED,
             track_id=uuid4(),
             track_title="Starlight",
             track_artist="Muse",
         )
 
-        message = UserMessage(content="fix die playlist", user_curation_events=[event])
+        message = UserMessage.create(
+            content="fix die playlist", user_curation_events=[event]
+        )
 
         assert len(message.user_curation_events) == 1
         assert message.user_curation_events[0] is event
 
     def test_keeps_image_attachment_references(self) -> None:
-        image = ImageAttachment(
+        image = ImageAttachment.create(
             storage_key="sessions/abc/messages/def/attachments/ghi.png",
             content_type="image/png",
             file_name="screenshot.png",
             size_bytes=1024,
         )
 
-        message = UserMessage(content="check this", image_attachments=[image])
+        message = UserMessage.create(content="check this", image_attachments=[image])
 
         assert len(message.image_attachments) == 1
         assert message.image_attachments[0].storage_key.endswith("ghi.png")
@@ -73,7 +77,7 @@ class TestUserMessage:
 
 class TestAssistantMessage:
     def test_defaults_content_to_empty_string(self) -> None:
-        message = AssistantMessage()
+        message = AssistantMessage.create()
 
         assert message.content == ""
 
@@ -81,10 +85,10 @@ class TestAssistantMessage:
         message_id = uuid4()
         created_time = datetime(2026, 6, 6, tzinfo=timezone.utc)
 
-        message = AssistantMessage(
+        message = AssistantMessage.restore(
             content="hi",
             id=message_id,
-            created_time=created_time,
+            created_at=created_time,
         )
 
         assert message.id == message_id

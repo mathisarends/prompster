@@ -19,7 +19,7 @@ from backend.features.session.presentation.schemas import (
 
 def test_to_session_response_maps_references() -> None:
     owner_id = uuid4()
-    session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+    session = Session.create(title="Roadtrip", owner_id=owner_id)
     playlist_reference = session.add_playlist_reference(
         spotify_playlist_id="37i9dQZF1DX4dyzvuaRJ0n",
         name="Lo-Fi Beats",
@@ -51,11 +51,10 @@ def test_to_session_response_maps_references() -> None:
 
 def test_to_session_response_maps_image_attachments_with_signed_urls() -> None:
     owner_id = uuid4()
-    session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+    session = Session.create(title="Roadtrip", owner_id=owner_id)
     message = session.add_user_message("check this")
     message.image_attachments = (
-        ImageAttachment(
-            id=uuid4(),
+        ImageAttachment.create(
             storage_key="sessions/a/messages/b/attachments/c.png",
             content_type="image/png",
             file_name="screen.png",
@@ -76,7 +75,7 @@ def test_to_session_response_maps_image_attachments_with_signed_urls() -> None:
 
 
 def test_to_session_response_maps_all_onboarding_questions_with_answers() -> None:
-    session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
+    session = Session.create(title="Roadtrip", owner_id=uuid4())
     answered_question = session.add_onboarding_question(
         question_text="Who is joining?",
         options=("Friends", "Family"),

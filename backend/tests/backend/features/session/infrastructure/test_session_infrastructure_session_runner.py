@@ -1,6 +1,6 @@
 import asyncio
 from collections.abc import AsyncIterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from uuid import uuid4
 
 from llmify.messages import (
@@ -170,7 +170,9 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
 
 class TestAgentPhaseMapping:
     def test_agent_phase_uses_persisted_session_phase(self) -> None:
-        session = Session(
+        session = Session.restore(
+            id=uuid4(),
+            created_at=datetime.now(UTC),
             title="Deck",
             entries=[],
             owner_id=uuid4(),
@@ -188,7 +190,7 @@ class TestSessionRunnerHistoryRendering:
     """
 
     def test_bound_event_renders_inside_its_user_message(self) -> None:
-        session = Session(title="Deck", entries=[], owner_id=uuid4())
+        session = Session.create(title="Deck", owner_id=uuid4())
         session.add_user_message("start")
         session.add_assistant_message("ok")
         session.add_track(title="Umbrella", artist="Rihanna", year=2007)
@@ -210,16 +212,18 @@ class TestSessionRunnerHistoryRendering:
         # Curation event recorded without a following user message
         # gets a synthetic UserMessage
         # so the LLM still sees the manual change in turn order.
-        event = UserCurationEvent(
+        event = UserCurationEvent.restore(
             id=uuid4(),
             event_type=UserCurationEventType.TRACK_REMOVED,
             track_id=uuid4(),
             track_title="Umbrella",
             track_artist="Rihanna",
             track_year=2007,
-            created_time=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         )
-        session = Session(
+        session = Session.restore(
+            id=uuid4(),
+            created_at=datetime.now(UTC),
             title="Deck",
             entries=[],
             owner_id=uuid4(),
@@ -245,7 +249,7 @@ class TestSessionRunnerHistoryRendering:
         # (mirrors the domain coupling UserMessage <-> user_curation_events).
         # The ``consumed`` flag only gates user-facing restoration, not
         # history visibility.
-        session = Session(title="Deck", entries=[], owner_id=uuid4())
+        session = Session.create(title="Deck", owner_id=uuid4())
         session.add_user_message("start")
         session.add_track(title="Umbrella", artist="Rihanna", year=2007)
         session.add_user_message("weiter")
@@ -261,7 +265,7 @@ class TestSessionRunnerHistoryRendering:
         assert "track_added" in user_messages[1].content
 
     def test_session_without_curation_events_emits_plain_user_messages(self) -> None:
-        session = Session(title="Deck", entries=[], owner_id=uuid4())
+        session = Session.create(title="Deck", owner_id=uuid4())
         session.add_user_message("hi")
         session.add_assistant_message("hey")
 
@@ -281,7 +285,7 @@ class TestSessionRunnerHistoryRendering:
         ``expected`` list, so you can read this test as a spec of how the
         agent perceives a multi-turn conversation with manual user actions.
         """
-        session = Session(title="Deck", entries=[], owner_id=uuid4())
+        session = Session.create(title="Deck", owner_id=uuid4())
 
         # Turn 1 — user opens the deck, no manual changes yet.
         session.add_user_message("Bau mir ein 80er-Deck")
@@ -335,13 +339,15 @@ class TestSessionRunnerHistoryRendering:
 class TestSendMessageConsumesCurationEvents:
     def test_send_message_consumes_user_curation_events_after_runner(self) -> None:
         user_id = uuid4()
-        event = UserCurationEvent(
+        event = UserCurationEvent.create(
             event_type=UserCurationEventType.TRACK_ADDED,
             track_id=uuid4(),
             track_title="Umbrella",
             track_artist="Rihanna",
         )
-        session = Session(
+        session = Session.restore(
+            id=uuid4(),
+            created_at=datetime.now(UTC),
             title="Deck",
             entries=[],
             owner_id=user_id,
@@ -371,13 +377,15 @@ class TestSendMessageConsumesCurationEvents:
         self,
     ) -> None:
         user_id = uuid4()
-        event = UserCurationEvent(
+        event = UserCurationEvent.create(
             event_type=UserCurationEventType.TRACK_ADDED,
             track_id=uuid4(),
             track_title="Umbrella",
             track_artist="Rihanna",
         )
-        session = Session(
+        session = Session.restore(
+            id=uuid4(),
+            created_at=datetime.now(UTC),
             title="Deck",
             entries=[],
             owner_id=user_id,

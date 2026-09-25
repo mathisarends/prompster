@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from uuid import UUID, uuid4
 
 import pytest
@@ -25,6 +25,7 @@ from backend.features.session.domain import (
     OnboardingQuestionSelectionMode,
     PendingCall,
     Phase,
+    Playlist,
     PlaylistTrack,
     Session,
     ToolCallSequence,
@@ -44,7 +45,7 @@ def owner_id() -> UUID:
 
 @pytest.fixture
 def session(owner_id: UUID) -> Session:
-    return Session(title="Roadtrip", entries=[], owner_id=owner_id)
+    return Session.create(title="Roadtrip", owner_id=owner_id)
 
 
 def make_pending_call(call_id: str = "tc-1") -> PendingCall:
@@ -69,7 +70,7 @@ class TestSessionDomainSession:
     def test_session_generates_aggregate_identity_by_default(
         self, owner_id: UUID
     ) -> None:
-        created = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        created = Session.create(title="Roadtrip", owner_id=owner_id)
 
         assert isinstance(created.id, UUID)
         assert created.created_at.tzinfo is not None
@@ -87,31 +88,33 @@ class TestSessionDomainSession:
         session_id = uuid4()
         created_time = datetime(2026, 7, 7, tzinfo=timezone.utc)
 
-        created = Session(
+        created = Session.restore(
             title="Roadtrip",
             entries=[],
             owner_id=owner_id,
             id=session_id,
-            created_time=created_time,
+            created_at=created_time,
         )
 
         assert created.id == session_id
         assert created.created_at == created_time
 
     def test_session_is_not_starred_by_default(self, owner_id: UUID) -> None:
-        created = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        created = Session.create(title="Roadtrip", owner_id=owner_id)
 
         assert created.is_starred is False
 
     def test_session_starts_in_onboarding_phase(self, owner_id: UUID) -> None:
-        created = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        created = Session.create(title="Roadtrip", owner_id=owner_id)
 
         assert created.phase == Phase.ONBOARDING
 
     def test_advance_to_building_phase_marks_onboarding_session_as_build(
         self, owner_id: UUID
     ) -> None:
-        session = Session(
+        session = Session.restore(
+            id=uuid4(),
+            created_at=datetime.now(UTC),
             title="Roadtrip",
             entries=[],
             owner_id=owner_id,
@@ -125,7 +128,9 @@ class TestSessionDomainSession:
     def test_advance_to_building_phase_rejects_non_onboarding_source(
         self, owner_id: UUID
     ) -> None:
-        session = Session(
+        session = Session.restore(
+            id=uuid4(),
+            created_at=datetime.now(UTC),
             title="Roadtrip",
             entries=[],
             owner_id=owner_id,
@@ -430,7 +435,7 @@ class TestSessionDomainSession:
             session.cancel_current_assistant_message()
 
     def test_set_playlist_assigns_playlist(self, session: Session) -> None:
-        playlist = session.set_playlist(tracks=[], name="Favorites")
+        playlist = session.set_playlist(Playlist.create(tracks=[], name="Favorites"))
 
         assert session.playlist is playlist
         assert session.playlist is not None
@@ -491,17 +496,22 @@ class TestSessionDomainSession:
         self, owner_id: UUID
     ) -> None:
         message_time = datetime(2026, 7, 7, 12, 0, tzinfo=timezone.utc)
-        message = UserMessage(content="weiter", created_time=message_time)
-        event = UserCurationEvent(
+        message = UserMessage.restore(
+            id=uuid4(), content="weiter", created_at=message_time
+        )
+        event = UserCurationEvent.restore(
+            id=uuid4(),
             event_type=UserCurationEventType.TRACK_ADDED,
             track_id=uuid4(),
             track_title="Starlight",
             track_artist="Muse",
             track_year=2006,
-            created_time=message_time,
+            created_at=message_time,
         )
 
-        Session(
+        Session.restore(
+            id=uuid4(),
+            created_at=datetime.now(UTC),
             title="Roadtrip",
             entries=[message],
             owner_id=owner_id,
@@ -735,13 +745,15 @@ class TestSessionDomainSession:
     def test_restore_user_curation_event_for_track_removed_raises_when_year_missing(
         self, session: Session
     ) -> None:
-        event = UserCurationEvent(
+        event = UserCurationEvent.create(
             event_type=UserCurationEventType.TRACK_REMOVED,
             track_id=uuid4(),
             track_title="Starlight",
             track_artist="Muse",
         )
-        session = Session(
+        session = Session.restore(
+            id=uuid4(),
+            created_at=datetime.now(UTC),
             title="Roadtrip",
             entries=[],
             owner_id=session.owner_id,

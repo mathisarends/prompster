@@ -2,6 +2,7 @@ import asyncio
 from collections.abc import AsyncIterator
 from io import BytesIO
 from typing import cast
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from backend.features.session.application import (
@@ -132,7 +133,13 @@ class _SessionConversationServiceStub:
         self.received_question_id = question_id
         self.received_answer = answer
         self.received_answers = answers
-        return Session(title="Session", entries=[], owner_id=user_id, id=session_id)
+        return Session.restore(
+            title="Session",
+            entries=[],
+            owner_id=user_id,
+            id=session_id,
+            created_at=datetime.now(UTC),
+        )
 
     async def complete_onboarding(
         self,
@@ -229,14 +236,14 @@ class TestGetSessionByIdRoute:
         consumed_track_id = uuid4()
         unconsumed_track_id = uuid4()
 
-        consumed_event = UserCurationEvent(
+        consumed_event = UserCurationEvent.create(
             event_type=UserCurationEventType.TRACK_ADDED,
             track_id=consumed_track_id,
             track_title="Consumed",
             track_artist="Artist A",
             consumed=True,
         )
-        unconsumed_event = UserCurationEvent(
+        unconsumed_event = UserCurationEvent.create(
             event_type=UserCurationEventType.TRACK_REMOVED,
             track_id=unconsumed_track_id,
             track_title="Unconsumed",
@@ -245,8 +252,9 @@ class TestGetSessionByIdRoute:
             consumed=False,
         )
 
-        session = Session(
+        session = Session.restore(
             id=session_id,
+            created_at=datetime.now(UTC),
             title="Session",
             entries=[],
             owner_id=user_id,
@@ -278,8 +286,9 @@ class TestGetSessionByIdRoute:
         session_id = uuid4()
         user_id = uuid4()
         storage_key = f"users/{user_id}/chat/{session_id}/image.png"
-        session = Session(
+        session = Session.restore(
             id=session_id,
+            created_at=datetime.now(UTC),
             title="Session",
             entries=[],
             owner_id=user_id,
@@ -287,7 +296,7 @@ class TestGetSessionByIdRoute:
         session.add_user_message(
             content="See image",
             image_attachments=[
-                ImageAttachment(
+                ImageAttachment.create(
                     storage_key=storage_key,
                     content_type="image/png",
                     file_name="image.png",
@@ -316,9 +325,8 @@ class TestGetSessionByIdRoute:
 class TestCreateSessionRoute:
     def test_creates_empty_session(self) -> None:
         user_id = uuid4()
-        session = Session(
+        session = Session.create(
             title="",
-            entries=[],
             owner_id=user_id,
         )
         service = _SessionServiceStub(session=session)
@@ -342,8 +350,9 @@ class TestRestoreUserCurationEventRoute:
     def test_restores_event_and_returns_updated_session(self) -> None:
         session_id = uuid4()
         user_id = uuid4()
-        session = Session(
+        session = Session.restore(
             id=session_id,
+            created_at=datetime.now(UTC),
             title="Session",
             entries=[],
             owner_id=user_id,

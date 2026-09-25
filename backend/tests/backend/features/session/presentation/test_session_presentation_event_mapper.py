@@ -45,10 +45,10 @@ from backend.features.session.presentation.rpc.mappers import to_server_event
 
 
 def _make_assistant_message() -> AssistantMessage:
-    return AssistantMessage(
+    return AssistantMessage.restore(
         content="",
         id=uuid4(),
-        created_time=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
     )
 
 
@@ -96,7 +96,7 @@ class TestSessionEventMapper:
         assert event.message_id == message_id
 
     def test_to_server_event_maps_tool_call_sequence_added(self) -> None:
-        sequence = ToolCallSequence(
+        sequence = ToolCallSequence.create(
             calls=[
                 PendingCall(
                     id="call-1",
@@ -150,9 +150,9 @@ class TestSessionEventMapper:
         assert event.compacted_tool_results == 3
 
     def test_to_server_event_maps_playlist_set(self) -> None:
-        playlist = Playlist(
+        playlist = Playlist.create(
             name="80er Party",
-            tracks=[PlaylistTrack(title="Take On Me", artist="a-ha", year=1985)],
+            tracks=[PlaylistTrack.create(title="Take On Me", artist="a-ha", year=1985)],
         )
 
         event = to_server_event(SessionPlaylistSet(playlist=playlist))
@@ -165,7 +165,7 @@ class TestSessionEventMapper:
 
     def test_to_server_event_maps_playlist_track_added(self) -> None:
         playlist_id = uuid4()
-        track = PlaylistTrack(
+        track = PlaylistTrack.create(
             title="Billie Jean",
             artist="Michael Jackson",
             year=1982,
@@ -196,7 +196,7 @@ class TestSessionEventMapper:
     def test_to_server_event_maps_playlist_track_replaced(self) -> None:
         playlist_id = uuid4()
         track_id = uuid4()
-        track = PlaylistTrack(title="Africa", artist="Toto", year=1982)
+        track = PlaylistTrack.create(title="Africa", artist="Toto", year=1982)
 
         event = to_server_event(
             SessionPlaylistTrackReplaced(

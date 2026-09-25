@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -36,7 +36,13 @@ def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
     session_id = uuid4()
     message_id = uuid4()
 
-    session = Session(title="Roadtrip", entries=[], owner_id=owner_id, id=session_id)
+    session = Session.restore(
+        title="Roadtrip",
+        entries=[],
+        owner_id=owner_id,
+        id=session_id,
+        created_at=datetime.now(UTC),
+    )
     session.add_user_message("hello")
     message = session.entries[0]
     assert isinstance(message, UserMessage)
@@ -82,7 +88,13 @@ def test_user_message_attachment_mapping_roundtrip() -> None:
         spotify_id="37i9dQZF1DX4dyzvuaRJ0n",
     )
 
-    session = Session(title="Roadtrip", entries=[], owner_id=owner_id, id=session_id)
+    session = Session.restore(
+        title="Roadtrip",
+        entries=[],
+        owner_id=owner_id,
+        id=session_id,
+        created_at=datetime.now(UTC),
+    )
     session.add_user_message("nutze diese playlist", attachments=[attachment])
     message = session.entries[0]
     assert isinstance(message, UserMessage)
@@ -134,12 +146,19 @@ def test_user_message_image_attachment_mapping_roundtrip() -> None:
     message_id = uuid4()
     image_attachment_id = uuid4()
 
-    session = Session(title="Roadtrip", entries=[], owner_id=owner_id, id=session_id)
+    session = Session.restore(
+        title="Roadtrip",
+        entries=[],
+        owner_id=owner_id,
+        id=session_id,
+        created_at=datetime.now(UTC),
+    )
     session.add_user_message(
         "analysiere den screenshot",
         image_attachments=[
-            ImageAttachment(
+            ImageAttachment.restore(
                 id=image_attachment_id,
+                created_at=datetime.now(UTC),
                 storage_key=(
                     f"sessions/abc/messages/def/attachments/{image_attachment_id}.png"
                 ),
@@ -198,11 +217,12 @@ def test_session_phase_mapping_roundtrip() -> None:
     owner_id = uuid4()
     session_id = uuid4()
     repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
-    session = Session(
+    session = Session.restore(
         title="Roadtrip",
         entries=[],
         owner_id=owner_id,
         id=session_id,
+        created_at=datetime.now(UTC),
         phase=Phase.BUILD,
     )
 
@@ -224,7 +244,7 @@ def test_session_phase_mapping_roundtrip() -> None:
 def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:
     owner_id = uuid4()
     session_id = uuid4()
-    event = UserCurationEvent(
+    event = UserCurationEvent.create(
         event_type=UserCurationEventType.TRACK_ADDED,
         track_id=uuid4(),
         track_title="Starlight",
@@ -233,11 +253,12 @@ def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:
         track_spotify_uri="spotify:track:abc",
         track_cover_url="https://example.com/cover.jpg",
     )
-    session = Session(
+    session = Session.restore(
         title="Roadtrip",
         entries=[],
         owner_id=owner_id,
         id=session_id,
+        created_at=datetime.now(UTC),
         user_curation_events=[event],
     )
 
@@ -285,7 +306,13 @@ def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:
 def test_reference_mapping_roundtrip() -> None:
     owner_id = uuid4()
     session_id = uuid4()
-    session = Session(title="Roadtrip", entries=[], owner_id=owner_id, id=session_id)
+    session = Session.restore(
+        title="Roadtrip",
+        entries=[],
+        owner_id=owner_id,
+        id=session_id,
+        created_at=datetime.now(UTC),
+    )
     playlist_reference = session.add_playlist_reference(
         spotify_playlist_id="37i9dQZF1DX4dyzvuaRJ0n",
         name="Lo-Fi Beats",
@@ -365,7 +392,7 @@ def test_reference_mapping_roundtrip() -> None:
 
 def test_resolve_last_activity_at_includes_user_curation_events() -> None:
     owner_id = uuid4()
-    session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+    session = Session.create(title="Roadtrip", owner_id=owner_id)
     session.add_track(title="Starlight", artist="Muse", year=2006)
     session.user_curation_events[0].created_at = session.created_at + timedelta(
         minutes=5
@@ -379,7 +406,7 @@ def test_resolve_last_activity_at_includes_user_curation_events() -> None:
 
 def test_resolve_last_activity_at_includes_references() -> None:
     owner_id = uuid4()
-    session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+    session = Session.create(title="Roadtrip", owner_id=owner_id)
     reference = session.add_artist_reference(
         spotify_artist_id="1dfeR4HaWDbWqFHLkxsg1d",
         name="Queen",
@@ -394,7 +421,7 @@ def test_resolve_last_activity_at_includes_references() -> None:
 
 def test_user_curation_event_mapping_roundtrip() -> None:
     repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
-    event = UserCurationEvent(
+    event = UserCurationEvent.create(
         event_type=UserCurationEventType.TRACK_ADDED,
         track_id=uuid4(),
         track_title="Starlight",
@@ -552,7 +579,13 @@ def test_tool_call_action_type_mapping_roundtrip() -> None:
 def test_onboarding_question_mapping_roundtrip() -> None:
     owner_id = uuid4()
     session_id = uuid4()
-    session = Session(title="Roadtrip", entries=[], owner_id=owner_id, id=session_id)
+    session = Session.restore(
+        title="Roadtrip",
+        entries=[],
+        owner_id=owner_id,
+        id=session_id,
+        created_at=datetime.now(UTC),
+    )
     question = session.add_onboarding_question(
         question_text="Fuer wen ist die Playlist?",
         hint="Enge Zielgruppen machen das Deck spitzer.",

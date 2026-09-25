@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from agent.agent import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
@@ -204,15 +206,17 @@ class AgentSessionEventMapper:
             return None
 
     def _to_playlist(self, deck_draft: DeckDraft) -> Playlist:
-        return Playlist(
+        return Playlist.restore(
             id=deck_draft.id,
+            created_at=datetime.now(UTC),
             name=deck_draft.name,
             tracks=[self._to_playlist_track(track) for track in deck_draft.tracks],
         )
 
     def _to_playlist_track(self, track: DeckDraftTrack) -> PlaylistTrack:
-        return PlaylistTrack(
+        return PlaylistTrack.restore(
             id=track.id,
+            created_at=datetime.now(UTC),
             title=track.title,
             artist=track.artist,
             year=track.year,

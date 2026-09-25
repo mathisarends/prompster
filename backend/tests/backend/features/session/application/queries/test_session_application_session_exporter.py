@@ -103,7 +103,7 @@ class _ObjectStorageStub(ObjectStorage):
 class TestSessionPlaylistExporter:
     def test_export_generates_deck_from_playlist(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         session.add_track(
             title="Insomnia",
             artist="Faithless",
@@ -142,7 +142,7 @@ class TestSessionPlaylistExporter:
         self,
     ) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         session.add_track(
             title="Insomnia",
             artist="Faithless",
@@ -167,7 +167,7 @@ class TestSessionPlaylistExporter:
 
     def test_export_can_limit_generated_preview_pages(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         for index in range(39):
             session.add_track(
                 title=f"Track {index}",
@@ -197,7 +197,7 @@ class TestSessionPlaylistExporter:
 
     def test_export_reuses_cached_pdf_when_playlist_fingerprint_matches(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         session.add_track(
             title="Insomnia",
             artist="Faithless",
@@ -227,7 +227,7 @@ class TestSessionPlaylistExporter:
 
     def test_export_raises_when_playlist_empty(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         repository = _SessionRepositoryStub(session=session)
         generator = _DeckGeneratorStub()
         storage = _ObjectStorageStub()
@@ -241,7 +241,7 @@ class TestSessionPlaylistExporter:
             asyncio.run(exporter.export(session_id=session.id, user_id=owner_id))
 
     def test_export_raises_for_unauthorized_user(self) -> None:
-        session = Session(title="Roadtrip", entries=[], owner_id=uuid4())
+        session = Session.create(title="Roadtrip", owner_id=uuid4())
         repository = _SessionRepositoryStub(session=session)
         generator = _DeckGeneratorStub()
         storage = _ObjectStorageStub()

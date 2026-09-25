@@ -3,7 +3,6 @@ import logging
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from uuid import uuid4
 from uuid import UUID
 
 from backend.features.session.application.events import (
@@ -60,6 +59,7 @@ from backend.features.session.domain import (
     AssistantMessage,
     ImageAttachment,
     NoPendingToolCallSequenceError,
+    Playlist,
     Session,
     SessionRepository,
     ToolCallSequence,
@@ -123,7 +123,6 @@ class SessionConversationService:
         model_id: str | None = None,
     ) -> AsyncIterator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
-        message_id = uuid4()
         referenced_images = await self._promote_image_attachment_references(
             user_id=user_id,
             session_id=session.id,
@@ -131,7 +130,6 @@ class SessionConversationService:
         )
         session.add_user_message(
             content=content,
-            message_id=message_id,
             attachments=self._to_user_message_attachments(attachments or []),
             image_attachments=referenced_images,
         )
@@ -342,13 +340,13 @@ class SessionConversationService:
                 )
             )
             promoted.append(
-                ImageAttachment(
+                ImageAttachment.restore(
                     id=image.id,
+                    created_at=created_at,
                     storage_key=storage_key,
                     content_type=normalize_content_type(image.content_type),
                     file_name=image.file_name,
                     size_bytes=image.size_bytes,
-                    created_time=created_at,
                 )
             )
         return promoted
@@ -709,12 +707,7 @@ class SessionConversationService:
         event: SessionRunnerPlaylistUpdated,
         session: Session,
     ) -> tuple[SessionEvent, ...]:
-        playlist = session.set_playlist(
-            tracks=list(event.playlist.tracks),
-            name=event.playlist.name,
-            id=event.playlist.id,
-            created_time=event.playlist.created_at,
-        )
+        playlist = session.set_playlist(event.playlist)
         return await self._persisted_events(
             session=session,
             events=(SessionPlaylistSet(playlist=playlist),),
@@ -731,8 +724,11 @@ class SessionConversationService:
             playlist = session.add_tracks(list(event.tracks))
         else:
             playlist = session.set_playlist(
-                tracks=list(event.tracks),
-                id=event.playlist_id,
+                Playlist.restore(
+                    id=event.playlist_id,
+                    created_at=datetime.now(timezone.utc),
+                    tracks=list(event.tracks),
+                )
             )
 
         if not had_playlist:

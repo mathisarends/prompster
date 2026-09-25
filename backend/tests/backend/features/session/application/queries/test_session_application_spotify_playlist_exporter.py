@@ -150,7 +150,7 @@ class _TokenServiceStub:
 class TestSessionSpotifyPlaylistExporter:
     def test_export_creates_new_playlist_with_saved_token(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         session.add_track(
             title="Starlight",
             artist="Muse",
@@ -201,7 +201,7 @@ class TestSessionSpotifyPlaylistExporter:
 
     def test_export_updates_existing_playlist_without_resave(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         track = session.add_track(
             title="Starlight",
             artist="Muse",
@@ -250,7 +250,7 @@ class TestSessionSpotifyPlaylistExporter:
 
     def test_export_maps_token_failures_to_spotify_connection_error(self) -> None:
         owner_id = uuid4()
-        session = Session(title="Roadtrip", entries=[], owner_id=owner_id)
+        session = Session.create(title="Roadtrip", owner_id=owner_id)
         session.add_track(
             title="Starlight",
             artist="Muse",

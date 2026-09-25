@@ -166,8 +166,9 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             events=domain_user_curation_events,
         )
 
-        return Session(
+        return Session.restore(
             id=orm.id,
+            created_at=orm.created_at,
             title=orm.title,
             entries=ordered_entries,
             owner_id=orm.owner_id,
@@ -189,7 +190,6 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
                 self._to_domain_onboarding_question(question)
                 for question in onboarding_questions
             ],
-            created_time=orm.created_at,
         )
 
     def _hydrate_user_message_curation_events(
@@ -582,8 +582,9 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         except ValueError:
             return None
 
-        return UserCurationEvent(
+        return UserCurationEvent.restore(
             id=row.id,
+            created_at=row.created_at,
             event_type=event_type,
             track_id=row.track_id,
             track_title=row.track_title,
@@ -592,41 +593,41 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             track_spotify_uri=row.track_spotify_uri,
             track_cover_url=row.track_cover_url,
             consumed=row.consumed,
-            created_time=row.created_at,
         )
 
     def _to_domain_playlist_reference(
         self, row: SessionPlaylistReferenceModel
     ) -> PlaylistReference:
-        return PlaylistReference(
+        return PlaylistReference.restore(
             id=row.id,
+            created_at=row.created_at,
             spotify_playlist_id=row.spotify_playlist_id,
             name=row.name,
             owner=row.owner,
             cover_url=row.cover_url,
             total_tracks=row.total_tracks,
-            created_time=row.created_at,
         )
 
     def _to_domain_artist_reference(
         self, row: SessionArtistReferenceModel
     ) -> ArtistReference:
-        return ArtistReference(
+        return ArtistReference.restore(
             id=row.id,
+            created_at=row.created_at,
             spotify_artist_id=row.spotify_artist_id,
             name=row.name,
             image_url=row.image_url,
             genres=tuple(row.genres or ()),
             followers=row.followers,
             popularity=row.popularity,
-            created_time=row.created_at,
         )
 
     def _to_domain_onboarding_question(
         self, row: SessionOnboardingQuestionModel
     ) -> OnboardingQuestion:
-        return OnboardingQuestion(
+        return OnboardingQuestion.restore(
             id=row.id,
+            created_at=row.created_at,
             sequence_number=row.sequence_number,
             question_text=row.question_text,
             hint=row.hint,
@@ -638,7 +639,6 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             answers=tuple(row.answers or ()) or None,
             is_answered=row.is_answered,
             answered_at=row.answered_at,
-            created_time=row.created_at,
         )
 
     def _to_domain_user_message(self, row: SessionUserMessageModel) -> UserMessage:
@@ -647,8 +647,9 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             row.image_attachments,
             key=lambda item: item.created_at or row.created_at,
         )
-        return UserMessage(
+        return UserMessage.restore(
             id=row.id,
+            created_at=row.created_at,
             content=row.content,
             attachments=[
                 self._to_domain_user_message_attachment(attachment)
@@ -658,7 +659,6 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
                 self._to_domain_user_message_image_attachment(attachment)
                 for attachment in image_attachments
             ],
-            created_time=row.created_at,
         )
 
     def _to_domain_user_message_attachment(
@@ -678,31 +678,31 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         self,
         row: SessionUserMessageImageAttachmentModel,
     ) -> ImageAttachment:
-        return ImageAttachment(
+        return ImageAttachment.restore(
             id=row.id,
+            created_at=row.created_at,
             storage_key=row.storage_key,
             content_type=row.content_type,
             file_name=row.file_name,
             size_bytes=row.size_bytes,
-            created_time=row.created_at,
         )
 
     def _to_domain_assistant_message(
         self, row: SessionAssistantMessageModel
     ) -> AssistantMessage:
-        return AssistantMessage(
-            id=row.id, content=row.content, created_time=row.created_at
+        return AssistantMessage.restore(
+            id=row.id, created_at=row.created_at, content=row.content
         )
 
     def _to_domain_tool_call_sequence(
         self, row: SessionToolCallSequenceModel
     ) -> ToolCallSequence:
         calls = sorted(row.calls, key=lambda c: c.position)
-        return ToolCallSequence(
+        return ToolCallSequence.restore(
             id=row.id,
+            created_at=row.created_at,
             calls=[self._to_domain_tool_call(call) for call in calls],
             label=row.label,
-            created_time=row.created_at,
         )
 
     def _to_domain_tool_call(self, row: SessionToolCallModel) -> ToolCall:
@@ -864,12 +864,12 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             return None
 
         tracks = sorted(orm_playlist.tracks, key=lambda item: item.position)
-        return Playlist(
+        return Playlist.restore(
             id=orm_playlist.id,
+            created_at=orm_playlist.created_at,
             name=orm_playlist.name,
             spotify_playlist_id=orm_playlist.spotify_playlist_id,
             tracks=[self._to_domain_track(track) for track in tracks],
-            created_time=orm_playlist.created_at,
         )
 
     def _to_orm_track(
@@ -895,12 +895,12 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         if orm_track.year is None:
             raise ValueError(f"Playlist track {orm_track.id} is missing required year.")
 
-        return PlaylistTrack(
+        return PlaylistTrack.restore(
             id=orm_track.id,
+            created_at=orm_track.created_at,
             title=orm_track.title,
             artist=orm_track.artist,
             year=orm_track.year,
             spotify_uri=orm_track.spotify_uri,
             cover_url=orm_track.cover_url,
-            created_time=orm_track.created_at,
         )

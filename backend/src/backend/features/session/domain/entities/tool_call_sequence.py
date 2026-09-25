@@ -1,7 +1,7 @@
-from datetime import datetime
-from uuid import UUID
-
 from collections.abc import Sequence
+from datetime import UTC, datetime
+from typing import Self
+from uuid import UUID, uuid4
 
 from backend.features.session.domain.entities.tool_call import (
     CompletedCall,
@@ -22,14 +22,30 @@ from backend.shared.ddd import Entity
 class ToolCallSequence(Entity):
     def __init__(
         self,
+        *,
+        id: UUID,
+        created_at: datetime,
         calls: list[ToolCall],
         label: str | None = None,
-        id: UUID | None = None,
-        created_time: datetime | None = None,
     ) -> None:
-        super().__init__(id=id, created_time=created_time)
+        super().__init__(id=id, created_time=created_at)
         self.calls = calls
         self.label = label
+
+    @classmethod
+    def create(cls, *, calls: list[ToolCall], label: str | None = None) -> Self:
+        return cls(id=uuid4(), created_at=datetime.now(UTC), calls=calls, label=label)
+
+    @classmethod
+    def restore(
+        cls,
+        *,
+        id: UUID,
+        created_at: datetime,
+        calls: list[ToolCall],
+        label: str | None = None,
+    ) -> Self:
+        return cls(id=id, created_at=created_at, calls=calls, label=label)
 
     @property
     def is_complete(self) -> bool:

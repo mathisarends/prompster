@@ -13,7 +13,7 @@ def assert_utc_datetime(value: datetime) -> None:
 
 class TestSessionDomainPlaylistEntities:
     def test_playlist_track_generates_id_and_utc_created_at_by_default(self) -> None:
-        track = PlaylistTrack(title="Starlight", artist="Muse", year=2006)
+        track = PlaylistTrack.create(title="Starlight", artist="Muse", year=2006)
 
         assert isinstance(track.id, UUID)
         assert_utc_datetime(track.created_at)
@@ -22,13 +22,13 @@ class TestSessionDomainPlaylistEntities:
         track_id: UUID = uuid4()
         created_time = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
-        track = PlaylistTrack(
+        track = PlaylistTrack.restore(
             id=track_id,
             title="Starlight",
             artist="Muse",
             year=2006,
             cover_url="https://example.com/starlight.jpg",
-            created_time=created_time,
+            created_at=created_time,
         )
 
         assert track.id == track_id
@@ -39,9 +39,11 @@ class TestSessionDomainPlaylistEntities:
         assert track.cover_url == "https://example.com/starlight.jpg"
 
     def test_playlist_assigns_tracks_and_name(self) -> None:
-        track = PlaylistTrack(title="Teardrop", artist="Massive Attack", year=1998)
+        track = PlaylistTrack.create(
+            title="Teardrop", artist="Massive Attack", year=1998
+        )
 
-        playlist = Playlist(tracks=[track], name="Favorites")
+        playlist = Playlist.create(tracks=[track], name="Favorites")
 
         assert playlist.name == "Favorites"
         assert playlist.tracks == [track]
@@ -50,15 +52,15 @@ class TestSessionDomainPlaylistEntities:
         playlist_id = uuid4()
         created_time = datetime(2026, 2, 2, tzinfo=timezone.utc)
 
-        playlist = Playlist(tracks=[], id=playlist_id, created_time=created_time)
+        playlist = Playlist.restore(tracks=[], id=playlist_id, created_at=created_time)
 
         assert playlist.id == playlist_id
         assert playlist.created_at == created_time
 
     def test_playlist_track_rejects_year_below_supported_range(self) -> None:
         with pytest.raises(ValueError, match="year must be between"):
-            PlaylistTrack(title="Teardrop", artist="Massive Attack", year=1899)
+            PlaylistTrack.create(title="Teardrop", artist="Massive Attack", year=1899)
 
     def test_playlist_track_rejects_year_above_supported_range(self) -> None:
         with pytest.raises(ValueError, match="year must be between"):
-            PlaylistTrack(title="Teardrop", artist="Massive Attack", year=2101)
+            PlaylistTrack.create(title="Teardrop", artist="Massive Attack", year=2101)

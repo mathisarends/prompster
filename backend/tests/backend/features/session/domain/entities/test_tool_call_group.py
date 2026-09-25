@@ -22,17 +22,17 @@ class TestSessionDomainToolCallSequence:
         sequence_id = uuid4()
         created_time = datetime(2026, 5, 5, tzinfo=timezone.utc)
 
-        sequence = ToolCallSequence(
+        sequence = ToolCallSequence.restore(
             calls=[make_pending_call()],
             id=sequence_id,
-            created_time=created_time,
+            created_at=created_time,
         )
 
         assert sequence.id == sequence_id
         assert sequence.created_at == created_time
 
     def test_resolve_replaces_pending_with_completed(self) -> None:
-        sequence = ToolCallSequence(calls=[make_pending_call()])
+        sequence = ToolCallSequence.create(calls=[make_pending_call()])
 
         completed = sequence.resolve("tc-1", "done")
 
@@ -41,7 +41,7 @@ class TestSessionDomainToolCallSequence:
         assert isinstance(sequence.calls[0], CompletedCall)
 
     def test_fail_replaces_pending_with_failed(self) -> None:
-        sequence = ToolCallSequence(calls=[make_pending_call()])
+        sequence = ToolCallSequence.create(calls=[make_pending_call()])
 
         failed = sequence.fail("tc-1", "timeout")
 
@@ -52,7 +52,7 @@ class TestSessionDomainToolCallSequence:
     def test_is_complete_is_true_when_all_calls_are_resolved(self) -> None:
         first_call = make_pending_call(call_id="tc-1")
         second_call = make_pending_call(call_id="tc-2")
-        sequence = ToolCallSequence(calls=[first_call, second_call])
+        sequence = ToolCallSequence.create(calls=[first_call, second_call])
 
         sequence.resolve("tc-1", "ok")
         sequence.fail("tc-2", "timeout")
@@ -60,7 +60,7 @@ class TestSessionDomainToolCallSequence:
         assert sequence.is_complete is True
 
     def test_add_appends_pending_call(self) -> None:
-        sequence = ToolCallSequence(calls=[])
+        sequence = ToolCallSequence.create(calls=[])
 
         appended = sequence.add(make_pending_call("tc-1"))
 
@@ -68,7 +68,7 @@ class TestSessionDomainToolCallSequence:
         assert len(sequence.calls) == 1
 
     def test_remove_last_pending_removes_latest_unresolved_call(self) -> None:
-        sequence = ToolCallSequence(
+        sequence = ToolCallSequence.create(
             calls=[
                 make_pending_call("tc-1"),
                 make_pending_call("tc-2"),
