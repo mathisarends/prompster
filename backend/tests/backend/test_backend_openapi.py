@@ -8,11 +8,8 @@ def test_compiles_canonical_success_response_contracts() -> None:
     assert "/health" in paths
     assert "/api/v1/health" not in paths
 
-    health = paths["/health"]["get"]["responses"]["200"]
-    assert (
-        health["content"]["application/json"]["schema"]["properties"]["status"]["const"]
-        == "ok"
-    )
+    health = document["components"]["schemas"]["HealthResponse"]
+    assert health["properties"]["status"]["const"] == "ok"
 
     stream = paths["/api/v1/sessions/{session_id}/messages"]["post"]["responses"]["200"]
     assert set(stream["content"]) == {"text/event-stream"}

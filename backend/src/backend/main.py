@@ -8,6 +8,7 @@ from backend._logging import setup_logging
 from backend.env import EnvSettings, LoggingLevelSettings
 from backend.features import (
     auth,
+    health,
     llm,
     oauth_connections,
     session,
@@ -17,12 +18,13 @@ from backend.features import (
 from backend.lifespan import lifespan
 from backend.platform.database.di import DatabaseProvider
 from backend.platform.storage.di import ObjectStorageProvider
-from backend.presentation import LoggingMiddleware, PascalCaseRouter, health_router
+from backend.presentation import LoggingMiddleware, PascalCaseRouter
 
 logger = logging.getLogger(__name__)
 
 _FEATURES = (
     auth.feature,
+    health.feature,
     llm.feature,
     oauth_connections.feature,
     spotify.feature,
@@ -68,7 +70,7 @@ def _create_app() -> FastAPI:
     )
 
     _setup_middleware(app, env)
-    app.include_router(health_router)
+    app.include_router(health.health_router)
     _COMPOSITION.apply(app)
     _COMPOSITION.validate(app)
 
