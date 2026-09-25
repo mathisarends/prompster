@@ -1,10 +1,9 @@
-"""Bridge spotifyify's synchronous retry hook to a streaming response.
+"""Bridge spotifyify's synchronous retry hook to streamed progress.
 
 spotifyify fires ``on_retry`` callbacks synchronously from deep inside an
-awaited HTTP call. A streaming endpoint installs a sink (via :func:`retry_sink`)
-for the duration of the work; the playlist-creator adapter forwards every
-``RetryEvent`` to that sink with :func:`report_retry`, and the endpoint drains
-them into server-sent events.
+awaited HTTP call. The caller installs a sink (via :func:`retry_sink`) for the
+duration of the work; the playlist-creator adapter forwards every
+``RetryEvent`` to that sink with :func:`report_retry`.
 
 The sink lives in a :class:`~contextvars.ContextVar` so it propagates down the
 ``await`` chain (and into a worker ``Task`` whose context is copied at creation)
