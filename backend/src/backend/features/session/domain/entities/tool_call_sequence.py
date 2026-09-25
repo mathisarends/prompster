@@ -28,7 +28,7 @@ class ToolCallSequence(Entity):
         calls: list[ToolCall],
         label: str | None = None,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         self.calls = calls
         self.label = label
 

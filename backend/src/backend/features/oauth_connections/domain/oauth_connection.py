@@ -24,7 +24,7 @@ class OAuthConnection(Aggregate):
         connected_at: datetime,
         is_premium: bool = False,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         self.user_id = user_id
         self.provider = provider
         self.provider_user_id = provider_user_id

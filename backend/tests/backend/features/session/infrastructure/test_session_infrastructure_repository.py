@@ -34,7 +34,6 @@ from backend.platform.database.orm import (
 def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
     owner_id = uuid4()
     session_id = uuid4()
-    message_id = uuid4()
 
     session = Session.restore(
         title="Roadtrip",
@@ -46,7 +45,7 @@ def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
     session.add_user_message("hello")
     message = session.entries[0]
     assert isinstance(message, UserMessage)
-    message.id = message_id
+    message_id = message.id
 
     orm = SessionModel(
         id=session_id,
@@ -78,7 +77,6 @@ def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
 def test_user_message_attachment_mapping_roundtrip() -> None:
     owner_id = uuid4()
     session_id = uuid4()
-    message_id = uuid4()
     attachment = UserMessageAttachment(
         kind=UserMessageAttachmentKind.SPOTIFY_PLAYLIST,
         external_id="37i9dQZF1DX4dyzvuaRJ0n",
@@ -98,7 +96,7 @@ def test_user_message_attachment_mapping_roundtrip() -> None:
     session.add_user_message("nutze diese playlist", attachments=[attachment])
     message = session.entries[0]
     assert isinstance(message, UserMessage)
-    message.id = message_id
+    message_id = message.id
 
     repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
     orm_message = repository._to_orm_user_message(
@@ -143,7 +141,6 @@ def test_user_message_attachment_mapping_roundtrip() -> None:
 def test_user_message_image_attachment_mapping_roundtrip() -> None:
     owner_id = uuid4()
     session_id = uuid4()
-    message_id = uuid4()
     image_attachment_id = uuid4()
 
     session = Session.restore(
@@ -170,7 +167,7 @@ def test_user_message_image_attachment_mapping_roundtrip() -> None:
     )
     message = session.entries[0]
     assert isinstance(message, UserMessage)
-    message.id = message_id
+    message_id = message.id
 
     repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
     orm_message = repository._to_orm_user_message(

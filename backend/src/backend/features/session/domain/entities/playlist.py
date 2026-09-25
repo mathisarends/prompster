@@ -21,7 +21,7 @@ class PlaylistTrack(Entity):
         spotify_uri: str | None = None,
         cover_url: str | None = None,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         if year < _MIN_TRACK_YEAR or year > _MAX_TRACK_YEAR:
             raise ValueError(
                 f"year must be between {_MIN_TRACK_YEAR} and {_MAX_TRACK_YEAR}."
@@ -86,7 +86,7 @@ class Playlist(Entity):
         name: str | None = None,
         spotify_playlist_id: str | None = None,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         self.tracks = tracks
         self.name = name
         self.spotify_playlist_id = spotify_playlist_id

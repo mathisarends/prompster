@@ -31,7 +31,7 @@ class OnboardingQuestion(Entity):
         is_answered: bool = False,
         answered_at: datetime | None = None,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         self.sequence_number = sequence_number
         self.question_text = question_text
         self.hint = hint

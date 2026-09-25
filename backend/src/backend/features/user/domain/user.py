@@ -16,7 +16,7 @@ class User(Aggregate):
         profile_image_url: str | None = None,
         spotify: SpotifyAccount | None = None,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         self.name = name
         self.profile_image_url = profile_image_url
         self.spotify = spotify or SpotifyAccount.disconnected()

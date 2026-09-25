@@ -19,7 +19,7 @@ class PlaylistReference(Entity):
         cover_url: str | None = None,
         total_tracks: int | None = None,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         self.spotify_playlist_id = spotify_playlist_id
         self.name = name
         self.owner = owner
@@ -84,7 +84,7 @@ class ArtistReference(Entity):
         followers: int | None = None,
         popularity: int | None = None,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         self.spotify_artist_id = spotify_artist_id
         self.name = name
         self.image_url = image_url

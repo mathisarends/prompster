@@ -31,7 +31,7 @@ class UserCurationEvent(Entity):
         track_cover_url: str | None = None,
         consumed: bool = False,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         if track_year is not None and not 1900 <= track_year <= 2100:
             raise ValueError("track_year must be between 1900 and 2100.")
 
@@ -136,7 +136,7 @@ class ImageAttachment(Entity):
         file_name: str,
         size_bytes: int,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         self.storage_key = storage_key
         self.content_type = content_type
         self.file_name = file_name
@@ -192,7 +192,7 @@ class UserMessage(Entity):
         image_attachments: list[ImageAttachment] | None = None,
         user_curation_events: list[UserCurationEvent] | None = None,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         self.content = content
         self.attachments = tuple(attachments or [])
         self.image_attachments = tuple(image_attachments or [])
@@ -245,7 +245,7 @@ class AssistantMessage(Entity):
         created_at: datetime,
         content: str = "",
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         self.content = content
 
     @classmethod

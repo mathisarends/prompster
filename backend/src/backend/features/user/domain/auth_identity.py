@@ -21,7 +21,7 @@ class AuthIdentity(Entity):
         provider: AuthProvider,
         subject: str,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         self.user_id = user_id
         self.provider = provider
         self.subject = subject

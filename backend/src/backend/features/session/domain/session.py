@@ -66,7 +66,7 @@ class Session(Aggregate):
         playlist_pdf_storage_key: str | None = None,
         playlist_pdf_fingerprint: str | None = None,
     ) -> None:
-        super().__init__(id=id, created_time=created_at)
+        super().__init__(id=id, created_at=created_at)
         self._title = title
         self._entries = entries
         self._owner_id = owner_id
