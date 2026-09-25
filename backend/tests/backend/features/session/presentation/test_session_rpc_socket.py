@@ -1,9 +1,11 @@
 from collections.abc import AsyncIterator
 from uuid import uuid4
 
-from fastapi import FastAPI
+import pytest
+from fastapi import FastAPI, WebSocketException, status
 from fastapi.testclient import TestClient
 from rpckit.dishka import Dishka
+from starlette.websockets import WebSocketDisconnect
 
 from backend.features.auth.presentation.dependencies import _get_authenticated_user_id
 from backend.features.session.application import SessionConversationService
@@ -61,3 +63,19 @@ def test_session_subscription_uses_authenticated_socket_context(monkeypatch) -> 
             assert completed["params"]["complete"] is True
 
     assert service.received == (session_id, user_id, "Hallo")
+
+
+def test_session_socket_rejects_unauthenticated_connection() -> None:
+    def reject_user() -> None:
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
+
+    app = FastAPI()
+    app.include_router(rpc_router)
+    app.dependency_overrides[_get_authenticated_user_id] = reject_user
+
+    with TestClient(app) as client:
+        with pytest.raises(WebSocketDisconnect) as error:
+            with client.websocket_connect(f"/api/v1/sessions/{uuid4()}/stream"):
+                pass
+
+    assert error.value.code == status.WS_1008_POLICY_VIOLATION
