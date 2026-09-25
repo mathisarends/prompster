@@ -129,7 +129,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
-    { name = "pyrpckit" },
+    { name = "pyrpckit", extra = ["codegen", "fastapi"] },
     { name = "python-multipart" },
     { name = "pyyaml" },
     { name = "qrcode", extra = ["pil"] },
@@ -161,7 +161,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
     { name = "pyjwt", specifier = ">=2.10.1" },
-    { name = "pyrpckit", specifier = ">=0.3.0" },
+    { name = "pyrpckit", extras = ["codegen", "fastapi"], specifier = "==0.8.0" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "qrcode", extras = ["pil"], specifier = ">=8.2" },
@@ -494,6 +494,18 @@ wheels = [
 ]
 
 [[package]]
+name = "jinja2"
+version = "3.1.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markupsafe" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/df/bf/f7da0350254c0ed7c72f3e33cef02e048281fec7ecec5f032d4aac52226b/jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d", size = 245115, upload-time = "2025-03-05T20:05:02.478Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67", size = 134899, upload-time = "2025-03-05T20:05:00.369Z" },
+]
+
+[[package]]
 name = "jiter"
 version = "0.14.0"
 source = { registry = "https://pypi.org/simple" }
@@ -796,14 +808,22 @@ wheels = [
 
 [[package]]
 name = "pyrpckit"
-version = "0.3.0"
+version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b6/6b/e926f5bb175936da776caa7f7a4dafbc593f8afb27a6437d818548496d0e/pyrpckit-0.3.0.tar.gz", hash = "sha256:a14b8b541a466696ebc334cbc885cdf897c1c9949c1d2cca6d450d04c549cf69", size = 128885, upload-time = "2026-09-10T09:53:16.203Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ec/82/212b96e94e7bf5caa2f17aba351bba63d9f9f306ca1fcb079effecb21e40/pyrpckit-0.8.0.tar.gz", hash = "sha256:752b89981f86fd085b38478bef11c01e475481edf344d6d01834f8672b5a31db", size = 245288, upload-time = "2026-09-24T09:08:43.305Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/15/28/b322d71b5b1cce60958cacb95210fd2bdf1d0a903d21ca8da05983d9f984/pyrpckit-0.3.0-py3-none-any.whl", hash = "sha256:d922a9f822ac9d81f8f8c3691c69df64690b1fbb8ceb18eeab0cc82e17405ae2", size = 77651, upload-time = "2026-09-10T09:53:14.992Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/00/95004328b4288d27a46ba873b304d88e5ea96dbb0597d8930924cf4b6e6d/pyrpckit-0.8.0-py3-none-any.whl", hash = "sha256:6dc064ed07ebbc0c5134242689dd90c15f37847c3f318bd0eba7638a5b674709", size = 130626, upload-time = "2026-09-24T09:08:41.861Z" },
+]
+
+[package.optional-dependencies]
+codegen = [
+    { name = "jinja2" },
+]
+fastapi = [
+    { name = "fastapi" },
 ]
 
 [[package]]
