@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type SendMessageParams = {
-  model_id?: string | null;
-};
+export const ReadinessResponseValue = {
+  status: "ready",
+} as const;
+export type ReadinessResponse = typeof ReadinessResponseValue;

@@ -1,10 +1,8 @@
 import type {
   AssistantMessageEntryResponse,
   OnboardingQuestionResponse,
-  PlaylistPayload,
   PlaylistResponse,
   SessionResponse,
-  SessionSnapshotPayload,
   ToolCallSequenceEntryResponse,
   ToolCallResponse,
   UserCurationEventResponse,
@@ -12,9 +10,10 @@ import type {
 } from "@/api/generated/model";
 import {
   EntryKind,
-  SessionEventType,
   ToolCallState,
 } from "@/api/generated/model";
+import { ServerEventType } from "@/api/session-rpc/models";
+import type { PlaylistPayload, SessionSnapshotPayload } from "@/api/session-rpc";
 import type { SessionServerEvent } from "@/features/chat/api/session-stream";
 import type { ChatAttachment } from "@/features/chat/components/attachments";
 import type {
@@ -114,26 +113,26 @@ export const ChatActionType = {
 } as const;
 
 const ChatEventType = {
-  SESSION_SNAPSHOT: SessionEventType.sessionsnapshot,
-  TITLE_GENERATED: SessionEventType.sessiontitle_generated,
-  ASSISTANT_STARTED: SessionEventType.messageassistant_started,
-  ASSISTANT_CHUNK: SessionEventType.messageassistant_chunk,
-  ASSISTANT_COMPLETED: SessionEventType.messageassistant_completed,
-  ASSISTANT_CANCELLED: SessionEventType.messageassistant_cancelled,
-  TOOL_CALL_SEQUENCE_ADDED: SessionEventType.tool_callsequence_added,
-  TOOL_CALL_RESOLVED: SessionEventType.tool_callresolved,
-  TOOL_CALL_FAILED: SessionEventType.tool_callfailed,
-  TOOL_CALL_RETRY: SessionEventType.tool_callretry,
-  TOOL_CALL_SEQUENCE_COMPLETED: SessionEventType.tool_callsequence_completed,
-  CONTEXT_COMPACTED: SessionEventType.sessioncontext_compacted,
-  PLAYLIST_SET: SessionEventType.playlistset,
-  PLAYLIST_TRACK_ADDED: SessionEventType.playlisttrack_added,
-  PLAYLIST_TRACK_REMOVED: SessionEventType.playlisttrack_removed,
-  PLAYLIST_TRACK_REPLACED: SessionEventType.playlisttrack_replaced,
-  ONBOARDING_QUESTION_ASKED: SessionEventType.sessiononboarding_question_asked,
-  SUSPENDED_FOR_INPUT: SessionEventType.sessionsuspended_for_input,
-  DONE: SessionEventType.done,
-  ERROR: SessionEventType.error,
+  SESSION_SNAPSHOT: ServerEventType.SESSION_SNAPSHOT,
+  TITLE_GENERATED: ServerEventType.SESSION_TITLE_GENERATED,
+  ASSISTANT_STARTED: ServerEventType.MESSAGE_ASSISTANT_STARTED,
+  ASSISTANT_CHUNK: ServerEventType.MESSAGE_ASSISTANT_CHUNK,
+  ASSISTANT_COMPLETED: ServerEventType.MESSAGE_ASSISTANT_COMPLETED,
+  ASSISTANT_CANCELLED: ServerEventType.MESSAGE_ASSISTANT_CANCELLED,
+  TOOL_CALL_SEQUENCE_ADDED: ServerEventType.TOOL_CALL_SEQUENCE_ADDED,
+  TOOL_CALL_RESOLVED: ServerEventType.TOOL_CALL_RESOLVED,
+  TOOL_CALL_FAILED: ServerEventType.TOOL_CALL_FAILED,
+  TOOL_CALL_RETRY: ServerEventType.TOOL_CALL_RETRY,
+  TOOL_CALL_SEQUENCE_COMPLETED: ServerEventType.TOOL_CALL_SEQUENCE_COMPLETED,
+  CONTEXT_COMPACTED: ServerEventType.SESSION_CONTEXT_COMPACTED,
+  PLAYLIST_SET: ServerEventType.PLAYLIST_SET,
+  PLAYLIST_TRACK_ADDED: ServerEventType.PLAYLIST_TRACK_ADDED,
+  PLAYLIST_TRACK_REMOVED: ServerEventType.PLAYLIST_TRACK_REMOVED,
+  PLAYLIST_TRACK_REPLACED: ServerEventType.PLAYLIST_TRACK_REPLACED,
+  ONBOARDING_QUESTION_ASKED: ServerEventType.SESSION_ONBOARDING_QUESTION_ASKED,
+  SUSPENDED_FOR_INPUT: ServerEventType.SESSION_SUSPENDED_FOR_INPUT,
+  DONE: ServerEventType.DONE,
+  ERROR: ServerEventType.ERROR,
 } as const;
 
 export type ChatAction =

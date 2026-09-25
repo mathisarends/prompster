@@ -1,6 +1,6 @@
 import { Music2 } from "lucide-react";
 
-import type { SpotifyPlaylistExportResponse } from "@/api/generated/model";
+import type { SpotifyPlaylistExportResponse } from "@/api/session-rpc";
 import {
   Dialog,
   DialogContent,

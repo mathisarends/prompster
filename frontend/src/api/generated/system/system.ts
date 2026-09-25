@@ -22,7 +22,11 @@ import type {
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthCheck200 } from "../model";
+import type {
+  HealthResponse,
+  ReadinessResponse,
+  ServiceNotReadyProblem,
+} from "../model";
 
 import { customInstance } from "../../http-client";
 
@@ -35,7 +39,7 @@ export const healthCheck = (
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  return customInstance<HealthCheck200>(
+  return customInstance<HealthResponse>(
     { url: `/health`, method: "GET", signal },
     options,
   );
@@ -308,7 +312,7 @@ export const readinessCheck = (
   options?: SecondParameter<typeof customInstance>,
   signal?: AbortSignal,
 ) => {
-  return customInstance<unknown>(
+  return customInstance<ReadinessResponse>(
     { url: `/readiness`, method: "GET", signal },
     options,
   );
@@ -324,7 +328,7 @@ export const getReadinessCheckQueryKey = () => {
 
 export const getReadinessCheckInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof readinessCheck>>>,
-  TError = unknown,
+  TError = ServiceNotReadyProblem,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -354,11 +358,11 @@ export const getReadinessCheckInfiniteQueryOptions = <
 export type ReadinessCheckInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof readinessCheck>>
 >;
-export type ReadinessCheckInfiniteQueryError = unknown;
+export type ReadinessCheckInfiniteQueryError = ServiceNotReadyProblem;
 
 export function useReadinessCheckInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof readinessCheck>>>,
-  TError = unknown,
+  TError = ServiceNotReadyProblem,
 >(
   options: {
     query: Partial<
@@ -384,7 +388,7 @@ export function useReadinessCheckInfinite<
 };
 export function useReadinessCheckInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof readinessCheck>>>,
-  TError = unknown,
+  TError = ServiceNotReadyProblem,
 >(
   options?: {
     query?: Partial<
@@ -410,7 +414,7 @@ export function useReadinessCheckInfinite<
 };
 export function useReadinessCheckInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof readinessCheck>>>,
-  TError = unknown,
+  TError = ServiceNotReadyProblem,
 >(
   options?: {
     query?: Partial<
@@ -432,7 +436,7 @@ export function useReadinessCheckInfinite<
 
 export function useReadinessCheckInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof readinessCheck>>>,
-  TError = unknown,
+  TError = ServiceNotReadyProblem,
 >(
   options?: {
     query?: Partial<
@@ -462,7 +466,7 @@ export function useReadinessCheckInfinite<
 
 export const getReadinessCheckQueryOptions = <
   TData = Awaited<ReturnType<typeof readinessCheck>>,
-  TError = unknown,
+  TError = ServiceNotReadyProblem,
 >(options?: {
   query?: Partial<
     UseQueryOptions<Awaited<ReturnType<typeof readinessCheck>>, TError, TData>
@@ -487,11 +491,11 @@ export const getReadinessCheckQueryOptions = <
 export type ReadinessCheckQueryResult = NonNullable<
   Awaited<ReturnType<typeof readinessCheck>>
 >;
-export type ReadinessCheckQueryError = unknown;
+export type ReadinessCheckQueryError = ServiceNotReadyProblem;
 
 export function useReadinessCheck<
   TData = Awaited<ReturnType<typeof readinessCheck>>,
-  TError = unknown,
+  TError = ServiceNotReadyProblem,
 >(
   options: {
     query: Partial<
@@ -513,7 +517,7 @@ export function useReadinessCheck<
 };
 export function useReadinessCheck<
   TData = Awaited<ReturnType<typeof readinessCheck>>,
-  TError = unknown,
+  TError = ServiceNotReadyProblem,
 >(
   options?: {
     query?: Partial<
@@ -535,7 +539,7 @@ export function useReadinessCheck<
 };
 export function useReadinessCheck<
   TData = Awaited<ReturnType<typeof readinessCheck>>,
-  TError = unknown,
+  TError = ServiceNotReadyProblem,
 >(
   options?: {
     query?: Partial<
@@ -553,7 +557,7 @@ export function useReadinessCheck<
 
 export function useReadinessCheck<
   TData = Awaited<ReturnType<typeof readinessCheck>>,
-  TError = unknown,
+  TError = ServiceNotReadyProblem,
 >(
   options?: {
     query?: Partial<

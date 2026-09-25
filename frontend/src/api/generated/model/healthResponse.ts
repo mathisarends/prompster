@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export const DoneEventValue = {
-  type: "done",
+export const HealthResponseValue = {
+  status: "ok",
 } as const;
-export type DoneEvent = typeof DoneEventValue;
+export type HealthResponse = typeof HealthResponseValue;

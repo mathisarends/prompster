@@ -15,12 +15,12 @@ export type SearchSpotifyParams = {
    */
   query: string;
   /**
+   * Search resource types
+   */
+  types?: SpotifySearchType[];
+  /**
    * @minimum 1
    * @maximum 50
    */
   limit?: number;
-  /**
-   * Search resource types
-   */
-  types?: SpotifySearchType[];
 };

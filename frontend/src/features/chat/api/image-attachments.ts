@@ -1,6 +1,6 @@
 import { uploadImageAttachment } from "@/api/generated/image-attachments/image-attachments";
+import type { ImageAttachmentReferenceRequest } from "@/api/session-rpc";
 import type {
-  ImageAttachmentReferenceRequest,
   UploadedImageAttachmentResponse,
 } from "@/api/generated/model";
 

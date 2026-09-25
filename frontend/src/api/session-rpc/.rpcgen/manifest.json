@@ -1,0 +1,20 @@
+{
+  "generator": "rpckit",
+  "generatorVersion": "0.8.0",
+  "layoutVersion": 10,
+  "language": "typescript",
+  "contractSha256": "5e27af22ed3712a1775cb050fe58842f6ce12d8844dd299f2cff28cbf498b012",
+  "files": [
+    ".rpcgen/manifest.json",
+    "client.ts",
+    "core.ts",
+    "endpoints.ts",
+    "errors.ts",
+    "index.ts",
+    "models.ts",
+    "namespaces/index.ts",
+    "namespaces/session.ts",
+    "routes.ts",
+    "transport.ts"
+  ]
+}

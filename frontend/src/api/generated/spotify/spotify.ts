@@ -59,7 +59,7 @@ export const getSpotifyConnectQueryKey = () => {
 
 export const getSpotifyConnectInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyConnect>>>,
-  TError = unknown | AuthenticationRequiredProblem,
+  TError = void | AuthenticationRequiredProblem,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -90,12 +90,11 @@ export type SpotifyConnectInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof spotifyConnect>>
 >;
 export type SpotifyConnectInfiniteQueryError =
-  | unknown
-  | AuthenticationRequiredProblem;
+  void | AuthenticationRequiredProblem;
 
 export function useSpotifyConnectInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyConnect>>>,
-  TError = unknown | AuthenticationRequiredProblem,
+  TError = void | AuthenticationRequiredProblem,
 >(
   options: {
     query: Partial<
@@ -121,7 +120,7 @@ export function useSpotifyConnectInfinite<
 };
 export function useSpotifyConnectInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyConnect>>>,
-  TError = unknown | AuthenticationRequiredProblem,
+  TError = void | AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -147,7 +146,7 @@ export function useSpotifyConnectInfinite<
 };
 export function useSpotifyConnectInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyConnect>>>,
-  TError = unknown | AuthenticationRequiredProblem,
+  TError = void | AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -169,7 +168,7 @@ export function useSpotifyConnectInfinite<
 
 export function useSpotifyConnectInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyConnect>>>,
-  TError = unknown | AuthenticationRequiredProblem,
+  TError = void | AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -199,7 +198,7 @@ export function useSpotifyConnectInfinite<
 
 export const getSpotifyConnectQueryOptions = <
   TData = Awaited<ReturnType<typeof spotifyConnect>>,
-  TError = unknown | AuthenticationRequiredProblem,
+  TError = void | AuthenticationRequiredProblem,
 >(options?: {
   query?: Partial<
     UseQueryOptions<Awaited<ReturnType<typeof spotifyConnect>>, TError, TData>
@@ -224,11 +223,11 @@ export const getSpotifyConnectQueryOptions = <
 export type SpotifyConnectQueryResult = NonNullable<
   Awaited<ReturnType<typeof spotifyConnect>>
 >;
-export type SpotifyConnectQueryError = unknown | AuthenticationRequiredProblem;
+export type SpotifyConnectQueryError = void | AuthenticationRequiredProblem;
 
 export function useSpotifyConnect<
   TData = Awaited<ReturnType<typeof spotifyConnect>>,
-  TError = unknown | AuthenticationRequiredProblem,
+  TError = void | AuthenticationRequiredProblem,
 >(
   options: {
     query: Partial<
@@ -250,7 +249,7 @@ export function useSpotifyConnect<
 };
 export function useSpotifyConnect<
   TData = Awaited<ReturnType<typeof spotifyConnect>>,
-  TError = unknown | AuthenticationRequiredProblem,
+  TError = void | AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -272,7 +271,7 @@ export function useSpotifyConnect<
 };
 export function useSpotifyConnect<
   TData = Awaited<ReturnType<typeof spotifyConnect>>,
-  TError = unknown | AuthenticationRequiredProblem,
+  TError = void | AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<
@@ -290,7 +289,7 @@ export function useSpotifyConnect<
 
 export function useSpotifyConnect<
   TData = Awaited<ReturnType<typeof spotifyConnect>>,
-  TError = unknown | AuthenticationRequiredProblem,
+  TError = void | AuthenticationRequiredProblem,
 >(
   options?: {
     query?: Partial<

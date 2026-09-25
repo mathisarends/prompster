@@ -1,3 +1,4 @@
+import type { SpotifyPlaylistExportResponse } from "@/api/session-rpc";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Download, ListMusic } from "lucide-react";
@@ -5,7 +6,6 @@ import { toast } from "sonner";
 
 import type {
   PlaylistTrackResponse,
-  SpotifyPlaylistExportResponse,
   SpotifyTrackResponse,
 } from "@/api/generated/model";
 import {

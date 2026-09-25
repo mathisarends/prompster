@@ -51,7 +51,7 @@ export const getGoogleLoginQueryKey = () => {
 
 export const getGoogleLoginInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof googleLogin>>>,
-  TError = unknown,
+  TError = void,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -80,11 +80,11 @@ export const getGoogleLoginInfiniteQueryOptions = <
 export type GoogleLoginInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof googleLogin>>
 >;
-export type GoogleLoginInfiniteQueryError = unknown;
+export type GoogleLoginInfiniteQueryError = void;
 
 export function useGoogleLoginInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof googleLogin>>>,
-  TError = unknown,
+  TError = void,
 >(
   options: {
     query: Partial<
@@ -110,7 +110,7 @@ export function useGoogleLoginInfinite<
 };
 export function useGoogleLoginInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof googleLogin>>>,
-  TError = unknown,
+  TError = void,
 >(
   options?: {
     query?: Partial<
@@ -136,7 +136,7 @@ export function useGoogleLoginInfinite<
 };
 export function useGoogleLoginInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof googleLogin>>>,
-  TError = unknown,
+  TError = void,
 >(
   options?: {
     query?: Partial<
@@ -158,7 +158,7 @@ export function useGoogleLoginInfinite<
 
 export function useGoogleLoginInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof googleLogin>>>,
-  TError = unknown,
+  TError = void,
 >(
   options?: {
     query?: Partial<
@@ -188,7 +188,7 @@ export function useGoogleLoginInfinite<
 
 export const getGoogleLoginQueryOptions = <
   TData = Awaited<ReturnType<typeof googleLogin>>,
-  TError = unknown,
+  TError = void,
 >(options?: {
   query?: Partial<
     UseQueryOptions<Awaited<ReturnType<typeof googleLogin>>, TError, TData>
@@ -213,11 +213,11 @@ export const getGoogleLoginQueryOptions = <
 export type GoogleLoginQueryResult = NonNullable<
   Awaited<ReturnType<typeof googleLogin>>
 >;
-export type GoogleLoginQueryError = unknown;
+export type GoogleLoginQueryError = void;
 
 export function useGoogleLogin<
   TData = Awaited<ReturnType<typeof googleLogin>>,
-  TError = unknown,
+  TError = void,
 >(
   options: {
     query: Partial<
@@ -239,7 +239,7 @@ export function useGoogleLogin<
 };
 export function useGoogleLogin<
   TData = Awaited<ReturnType<typeof googleLogin>>,
-  TError = unknown,
+  TError = void,
 >(
   options?: {
     query?: Partial<
@@ -261,7 +261,7 @@ export function useGoogleLogin<
 };
 export function useGoogleLogin<
   TData = Awaited<ReturnType<typeof googleLogin>>,
-  TError = unknown,
+  TError = void,
 >(
   options?: {
     query?: Partial<
@@ -279,7 +279,7 @@ export function useGoogleLogin<
 
 export function useGoogleLogin<
   TData = Awaited<ReturnType<typeof googleLogin>>,
-  TError = unknown,
+  TError = void,
 >(
   options?: {
     query?: Partial<
@@ -324,7 +324,7 @@ export const getSpotifyLoginQueryKey = () => {
 
 export const getSpotifyLoginInfiniteQueryOptions = <
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyLogin>>>,
-  TError = unknown,
+  TError = void,
 >(options?: {
   query?: Partial<
     UseInfiniteQueryOptions<
@@ -353,11 +353,11 @@ export const getSpotifyLoginInfiniteQueryOptions = <
 export type SpotifyLoginInfiniteQueryResult = NonNullable<
   Awaited<ReturnType<typeof spotifyLogin>>
 >;
-export type SpotifyLoginInfiniteQueryError = unknown;
+export type SpotifyLoginInfiniteQueryError = void;
 
 export function useSpotifyLoginInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyLogin>>>,
-  TError = unknown,
+  TError = void,
 >(
   options: {
     query: Partial<
@@ -383,7 +383,7 @@ export function useSpotifyLoginInfinite<
 };
 export function useSpotifyLoginInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyLogin>>>,
-  TError = unknown,
+  TError = void,
 >(
   options?: {
     query?: Partial<
@@ -409,7 +409,7 @@ export function useSpotifyLoginInfinite<
 };
 export function useSpotifyLoginInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyLogin>>>,
-  TError = unknown,
+  TError = void,
 >(
   options?: {
     query?: Partial<
@@ -431,7 +431,7 @@ export function useSpotifyLoginInfinite<
 
 export function useSpotifyLoginInfinite<
   TData = InfiniteData<Awaited<ReturnType<typeof spotifyLogin>>>,
-  TError = unknown,
+  TError = void,
 >(
   options?: {
     query?: Partial<
@@ -461,7 +461,7 @@ export function useSpotifyLoginInfinite<
 
 export const getSpotifyLoginQueryOptions = <
   TData = Awaited<ReturnType<typeof spotifyLogin>>,
-  TError = unknown,
+  TError = void,
 >(options?: {
   query?: Partial<
     UseQueryOptions<Awaited<ReturnType<typeof spotifyLogin>>, TError, TData>
@@ -486,11 +486,11 @@ export const getSpotifyLoginQueryOptions = <
 export type SpotifyLoginQueryResult = NonNullable<
   Awaited<ReturnType<typeof spotifyLogin>>
 >;
-export type SpotifyLoginQueryError = unknown;
+export type SpotifyLoginQueryError = void;
 
 export function useSpotifyLogin<
   TData = Awaited<ReturnType<typeof spotifyLogin>>,
-  TError = unknown,
+  TError = void,
 >(
   options: {
     query: Partial<
@@ -512,7 +512,7 @@ export function useSpotifyLogin<
 };
 export function useSpotifyLogin<
   TData = Awaited<ReturnType<typeof spotifyLogin>>,
-  TError = unknown,
+  TError = void,
 >(
   options?: {
     query?: Partial<
@@ -534,7 +534,7 @@ export function useSpotifyLogin<
 };
 export function useSpotifyLogin<
   TData = Awaited<ReturnType<typeof spotifyLogin>>,
-  TError = unknown,
+  TError = void,
 >(
   options?: {
     query?: Partial<
@@ -552,7 +552,7 @@ export function useSpotifyLogin<
 
 export function useSpotifyLogin<
   TData = Awaited<ReturnType<typeof spotifyLogin>>,
-  TError = unknown,
+  TError = void,
 >(
   options?: {
     query?: Partial<
