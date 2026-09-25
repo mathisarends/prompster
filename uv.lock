@@ -161,7 +161,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
     { name = "pyjwt", specifier = ">=2.10.1" },
-    { name = "pyrpckit", extras = ["codegen", "fastapi"], specifier = "==0.8.0" },
+    { name = "pyrpckit", extras = ["codegen", "fastapi"], specifier = "==0.9.0" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "qrcode", extras = ["pil"], specifier = ">=8.2" },
@@ -808,14 +808,14 @@ wheels = [
 
 [[package]]
 name = "pyrpckit"
-version = "0.8.0"
+version = "0.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ec/82/212b96e94e7bf5caa2f17aba351bba63d9f9f306ca1fcb079effecb21e40/pyrpckit-0.8.0.tar.gz", hash = "sha256:752b89981f86fd085b38478bef11c01e475481edf344d6d01834f8672b5a31db", size = 245288, upload-time = "2026-09-24T09:08:43.305Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5b/35/aa0c9739d2a5d01093f7220a47de9a16a067f0c87641ea294d785f59050c/pyrpckit-0.9.0.tar.gz", hash = "sha256:5f79760bb911a4206020fbf5369118886c6f964f8844d86543bb5005588103d1", size = 253179, upload-time = "2026-09-25T19:13:55.533Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5b/00/95004328b4288d27a46ba873b304d88e5ea96dbb0597d8930924cf4b6e6d/pyrpckit-0.8.0-py3-none-any.whl", hash = "sha256:6dc064ed07ebbc0c5134242689dd90c15f37847c3f318bd0eba7638a5b674709", size = 130626, upload-time = "2026-09-24T09:08:41.861Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/90/e010d5c079b2dfea9acb8acffe7a53ad4d0be0fab4a7563185e76891b9c2/pyrpckit-0.9.0-py3-none-any.whl", hash = "sha256:589469f074fed7b6948240fae3c7f9d2f11c17b53b76fbe06b54716a77277fb2", size = 133420, upload-time = "2026-09-25T19:13:54.347Z" },
 ]
 
 [package.optional-dependencies]
