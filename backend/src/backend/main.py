@@ -14,11 +14,9 @@ from backend.features import (
     spotify,
     user,
 )
-from backend.platform.di import (
-    DatabaseProvider,
-    ObjectStorageProvider,
-)
 from backend.lifespan import lifespan
+from backend.platform.database.di import DatabaseProvider
+from backend.platform.storage.di import ObjectStorageProvider
 from backend.presentation import LoggingMiddleware, PascalCaseRouter, health_router
 
 logger = logging.getLogger(__name__)
