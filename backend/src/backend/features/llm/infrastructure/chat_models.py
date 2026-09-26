@@ -1,6 +1,6 @@
 import asyncio
 
-from llm import ChatModel, ReasoningEffort, create_codex_model, create_openai_model
+from callm import ChatCodex, ChatModel, ChatOpenAIResponses, ReasoningEffort
 
 from backend.features.llm.application import ChatModels
 from backend.features.llm.domain import LLMModelInfo, LLMProvider
@@ -30,13 +30,13 @@ class LLMChatModels(ChatModels):
         reasoning_effort = _reasoning_effort(model)
         match model.provider:
             case LLMProvider.OPENAI:
-                return create_openai_model(
+                return ChatOpenAIResponses(
                     model.provider_model,
                     api_key=self._openai_api_key(),
                     reasoning_effort=reasoning_effort,
                 )
             case LLMProvider.CODEX:
-                return create_codex_model(
+                return ChatCodex(
                     model.provider_model,
                     reasoning_effort=reasoning_effort,
                 )

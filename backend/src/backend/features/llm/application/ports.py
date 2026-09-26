@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from llm import ChatModel
+from callm import ChatModel
 
 from backend.features.llm.domain import LLMModelInfo
 

@@ -594,12 +594,12 @@ class TestSessionServiceSendMessage:
                     session_id=session.id,
                     user_id=owner_id,
                     content="spiele rihanna hits",
-                    model_id="gpt-5.6-terra-US",
+                    model_id="gpt-6-terra-US",
                 )
             )
         )
 
-        assert runner.ran_model_ids == ["gpt-5.6-terra-US"]
+        assert runner.ran_model_ids == ["gpt-6-terra-US"]
 
     def test_stashes_image_attachment(self) -> None:
         owner_id = uuid4()
@@ -1299,12 +1299,12 @@ class TestSessionServiceSendMessage:
                 service.complete_onboarding(
                     session_id=session.id,
                     user_id=owner_id,
-                    model_id="gpt-5.6-luna-US",
+                    model_id="gpt-6-luna-US",
                 )
             )
         )
 
-        assert runner.ran_model_ids == ["gpt-5.6-luna-US"]
+        assert runner.ran_model_ids == ["gpt-6-luna-US"]
 
     def test_complete_onboarding_rejects_unanswered_questions(self) -> None:
         owner_id = uuid4()

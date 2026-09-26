@@ -19,18 +19,37 @@ class TestListLlmOptionsRoute:
         response = asyncio.run(list_llm_options(registry))
 
         assert [item.id for item in response.items] == [
-            "gpt-5.6-luna-US",
-            "gpt-5.6-terra-US",
+            "gpt-6-luna-US",
+            "gpt-6-terra-US",
+            "gpt-6-sol-US",
+            "gpt-6-luna-codex",
+            "gpt-6-terra-codex",
+            "gpt-6-sol-codex",
         ]
         assert [item.provider for item in response.items] == [
             LLMProvider.OPENAI,
             LLMProvider.OPENAI,
+            LLMProvider.OPENAI,
+            LLMProvider.CODEX,
+            LLMProvider.CODEX,
+            LLMProvider.CODEX,
         ]
         assert [item.label for item in response.items] == [
-            "GPT 5.6 Luna",
-            "GPT 5.6 Terra",
+            "GPT 6 Luna",
+            "GPT 6 Terra",
+            "GPT 6 Sol",
+            "GPT 6 Luna (Codex)",
+            "GPT 6 Terra (Codex)",
+            "GPT 6 Sol (Codex)",
         ]
-        assert [item.profile for item in response.items] == ["Schnell", "Intelligent"]
+        assert [item.profile for item in response.items] == [
+            "Schnell",
+            "Intelligent",
+            "Maximal",
+            "Schnell",
+            "Intelligent",
+            "Maximal",
+        ]
         assert [item.id for item in response.items if item.is_default] == [
-            "gpt-5.6-luna-US"
+            "gpt-6-luna-US"
         ]

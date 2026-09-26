@@ -1,7 +1,7 @@
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
-from llm import ChatModel, SystemMessage, UserMessage
+from callm import ChatModel, SystemMessage, UserMessage
 
 
 class LLMSessionTitleGenerator(SessionTitleGenerator):

@@ -1,4 +1,4 @@
-from llm import ChatModel, SystemMessage, UserMessage
+from callm import ChatModel, SystemMessage, UserMessage
 from pydantic import BaseModel, Field
 
 from backend.features.session.application.ports import (
@@ -30,11 +30,12 @@ class LLMPlaylistMetadataGenerator(PlaylistMetadataGenerator):
                 SystemMessage(content=self._SYSTEM_PROMPT),
                 UserMessage(content=self._format_tracks(tracks)),
             ],
-            output_type=_PlaylistMetadataOutput,
+            output_format=_PlaylistMetadataOutput,
         )
+        metadata = output.completion
         return PlaylistMetadata(
-            name=output.name.strip(),
-            description=output.description.strip(),
+            name=metadata.name.strip(),
+            description=metadata.description.strip(),
         )
 
     def _format_tracks(self, tracks: list[PlaylistMetadataTrack]) -> str:

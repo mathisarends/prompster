@@ -9,7 +9,7 @@ from backend.features.llm.infrastructure.model_registry_loader import (
 )
 from backend.features.llm.infrastructure.chat_models import LLMChatModels
 from dishka import Provider, Scope, provide
-from llm import ChatModel
+from callm import ChatModel
 
 _LLM_CONFIG_PATH = Path(__file__).parents[1] / "models.yml"
 

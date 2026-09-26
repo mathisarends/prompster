@@ -1,7 +1,7 @@
 import asyncio
 
 import pytest
-from llm import ReasoningEffort
+from callm import ReasoningEffort
 
 from backend.features.llm.domain import (
     LLMModelInfo,
@@ -50,7 +50,7 @@ def _record_calls(monkeypatch: pytest.MonkeyPatch, name: str) -> list[dict]:
 def test_openai_provider_uses_the_configured_api_key(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    calls = _record_calls(monkeypatch, "create_openai_model")
+    calls = _record_calls(monkeypatch, "ChatOpenAIResponses")
     chat_models = LLMChatModels(LLMCredentials(openai_api_key="key"))
 
     chat_models.get(_model_info(LLMProvider.OPENAI))
@@ -65,7 +65,7 @@ def test_openai_provider_uses_the_configured_api_key(
 
 
 def test_codex_provider_needs_no_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls = _record_calls(monkeypatch, "create_codex_model")
+    calls = _record_calls(monkeypatch, "ChatCodex")
     chat_models = LLMChatModels(LLMCredentials(openai_api_key=None))
 
     chat_models.get(_model_info(LLMProvider.CODEX))
@@ -86,7 +86,7 @@ def test_openai_provider_without_api_key_fails() -> None:
 
 
 def test_get_reuses_one_client_per_model(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls = _record_calls(monkeypatch, "create_codex_model")
+    calls = _record_calls(monkeypatch, "ChatCodex")
     chat_models = LLMChatModels(LLMCredentials(openai_api_key=None))
 
     first = chat_models.get(_model_info(LLMProvider.CODEX, "luna"))
@@ -101,7 +101,7 @@ def test_get_reuses_one_client_per_model(monkeypatch: pytest.MonkeyPatch) -> Non
 def test_aclose_closes_every_created_client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _record_calls(monkeypatch, "create_codex_model")
+    _record_calls(monkeypatch, "ChatCodex")
     chat_models = LLMChatModels(LLMCredentials(openai_api_key=None))
     created = [
         chat_models.get(_model_info(LLMProvider.CODEX, model_id))

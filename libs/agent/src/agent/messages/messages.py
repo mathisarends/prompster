@@ -1,7 +1,7 @@
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
-from llm import (
+from callm import (
     AssistantMessage,
     Message,
     SystemMessage,
@@ -78,8 +78,8 @@ class MessageManager:
         lines: list[str] = []
         for message in self._messages:
             match message:
-                case UserMessage(content=str(content)) if content.strip():
-                    lines.append(f"User: {content.strip()}")
+                case UserMessage() if message.text.strip():
+                    lines.append(f"User: {message.text.strip()}")
                 case AssistantMessage(content=str(content)) if content.strip():
                     lines.append(f"Assistant: {content.strip()}")
                 case _:

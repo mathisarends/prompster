@@ -5,7 +5,7 @@ from typing import Any, Self
 
 from pydantic import BaseModel, Field
 
-from llm import ModelTool
+from callm import ModelTool
 
 from agent.tools.schema_builder import ToolSchemaBuilder
 from agent.tools.schemas import ToolSchema

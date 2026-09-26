@@ -28,7 +28,6 @@ services:
     volumes:
       - ./backend/src:/app/backend/src
       - ./libs/agent/src:/app/libs/agent/src
-      - ./libs/llm/src:/app/libs/llm/src
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:

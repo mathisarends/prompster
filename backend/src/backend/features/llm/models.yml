@@ -1,13 +1,28 @@
 version: 1
 
-default_model_id: gpt-5.6-luna-US
+default_model_id: gpt-6-luna-US
 
 models:
-  - id: gpt-5.6-terra-US
-    provider_model: gpt-5.6-terra
+  - id: gpt-6-sol-US
+    provider_model: gpt-6-sol
+    provider: openai
     enabled: true
     presentation:
-      label: GPT 5.6 Terra
+      label: GPT 6 Sol
+      profile: Maximal
+      order: 30
+    capabilities:
+      temperature: false
+      reasoning_effort: [low, medium, high]
+    defaults:
+      reasoning_effort: medium
+
+  - id: gpt-6-terra-US
+    provider_model: gpt-6-terra
+    provider: openai
+    enabled: true
+    presentation:
+      label: GPT 6 Terra
       profile: Intelligent
       order: 20
     capabilities:
@@ -16,13 +31,56 @@ models:
     defaults:
       reasoning_effort: medium
 
-  - id: gpt-5.6-luna-US
-    provider_model: gpt-5.6-luna
+  - id: gpt-6-luna-US
+    provider_model: gpt-6-luna
+    provider: openai
     enabled: true
     presentation:
-      label: GPT 5.6 Luna
+      label: GPT 6 Luna
       profile: Schnell
       order: 10
+    capabilities:
+      temperature: false
+      reasoning_effort: [low, medium, high]
+    defaults:
+      reasoning_effort: medium
+
+  - id: gpt-6-sol-codex
+    provider_model: gpt-6-sol
+    provider: codex
+    enabled: true
+    presentation:
+      label: GPT 6 Sol (Codex)
+      profile: Maximal
+      order: 60
+    capabilities:
+      temperature: false
+      reasoning_effort: [low, medium, high]
+    defaults:
+      reasoning_effort: medium
+
+  - id: gpt-6-terra-codex
+    provider_model: gpt-6-terra
+    provider: codex
+    enabled: true
+    presentation:
+      label: GPT 6 Terra (Codex)
+      profile: Intelligent
+      order: 50
+    capabilities:
+      temperature: false
+      reasoning_effort: [low, medium, high]
+    defaults:
+      reasoning_effort: medium
+
+  - id: gpt-6-luna-codex
+    provider_model: gpt-6-luna
+    provider: codex
+    enabled: true
+    presentation:
+      label: GPT 6 Luna (Codex)
+      profile: Schnell
+      order: 40
     capabilities:
       temperature: false
       reasoning_effort: [low, medium, high]

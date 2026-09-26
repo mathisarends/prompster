@@ -1,14 +1,17 @@
+import base64
 import json
 from uuid import UUID
 
 from agent import UserEvent
 from agent.messages import render_user_message_content
-from llm import AssistantMessage as LLMAssistantMessage
-from llm import Image
-from llm import Message as LLMMessage
-from llm import ToolCall as LLMToolCall
-from llm import ToolResultMessage as LLMToolResultMessage
-from llm import UserMessage as LLMUserMessage
+from callm import (
+    AssistantMessage as LLMAssistantMessage,
+    ImageUrl,
+    Message as LLMMessage,
+    ToolCall as LLMToolCall,
+    ToolResultMessage as LLMToolResultMessage,
+    UserMessage as LLMUserMessage,
+)
 
 from backend.features.session.application.ports import MessageAttachmentStore
 
@@ -69,16 +72,18 @@ class AgentHistoryBuilder:
         if not message.image_attachments:
             return LLMUserMessage(content=rendered_text)
 
-        images = [
-            Image(
-                data=await self._message_attachment_store.load_bytes(
-                    storage_key=attachment.storage_key
-                ),
-                media_type=attachment.content_type,
+        images = []
+        for attachment in message.image_attachments:
+            data = await self._message_attachment_store.load_bytes(
+                storage_key=attachment.storage_key
             )
-            for attachment in message.image_attachments
-        ]
-        return LLMUserMessage(content=rendered_text or " ", images=tuple(images))
+            encoded = base64.b64encode(data).decode("ascii")
+            images.append(
+                ImageUrl(
+                    url=f"data:{attachment.content_type};base64,{encoded}",
+                )
+            )
+        return LLMUserMessage(content=(rendered_text or " ", *images))
 
     def _to_tool_call_messages(self, sequence: ToolCallSequence) -> list[LLMMessage]:
         messages: list[LLMMessage] = []

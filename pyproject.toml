@@ -9,5 +9,4 @@ requires-python = ">=3.14"
 members = [
     "backend",
     "libs/agent",
-    "libs/llm",
 ]

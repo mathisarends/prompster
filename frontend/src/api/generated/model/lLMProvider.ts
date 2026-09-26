@@ -10,4 +10,5 @@ export type LLMProvider = (typeof LLMProvider)[keyof typeof LLMProvider];
 
 export const LLMProvider = {
   openai: "openai",
+  codex: "codex",
 } as const;
