@@ -1,0 +1,9 @@
+services:
+  backend:
+    volumes:
+      - type: bind
+        source: ${CODEX_AUTH_DIR:?Set CODEX_AUTH_DIR to your Codex CLI login directory}
+        target: /root/.codex
+        read_only: true
+        bind:
+          create_host_path: false

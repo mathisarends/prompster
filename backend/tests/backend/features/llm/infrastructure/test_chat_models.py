@@ -64,9 +64,12 @@ def test_openai_provider_uses_the_configured_api_key(
     ]
 
 
-def test_codex_provider_needs_no_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("api_key", [None, "openai-key"])
+def test_codex_provider_uses_subscription_credentials(
+    monkeypatch: pytest.MonkeyPatch, api_key: str | None
+) -> None:
     calls = _record_calls(monkeypatch, "ChatCodex")
-    chat_models = LLMChatModels(LLMCredentials(openai_api_key=None))
+    chat_models = LLMChatModels(LLMCredentials(openai_api_key=api_key))
 
     chat_models.get(_model_info(LLMProvider.CODEX))
 
