@@ -38,9 +38,9 @@ from backend.features.session.presentation.rpc.events import (
     PlaylistTrackAddedEvent,
     PlaylistTrackRemovedEvent,
     PlaylistTrackReplacedEvent,
-    ServerEvent,
     SessionSnapshotEvent,
     SessionSnapshotPayload,
+    SessionStreamEvent,
     SuspendedForInputEvent,
     TitleGeneratedEvent,
     ToolCallFailedEvent,
@@ -54,7 +54,7 @@ from backend.features.session.presentation.schemas import (
 )
 
 
-def to_server_event(event: SessionEvent) -> ServerEvent:
+def to_session_stream_event(event: SessionEvent) -> SessionStreamEvent:
     if isinstance(event, SessionSnapshot):
         return SessionSnapshotEvent(
             session=SessionSnapshotPayload(

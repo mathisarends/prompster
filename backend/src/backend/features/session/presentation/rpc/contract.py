@@ -1,7 +1,6 @@
+from backend.features.session.presentation.rpc.channel import session_channel
+from backend.features.session.presentation.rpc.context import SessionRpcContext
 from rpckit import RpcService
-
-from .channel import session_channel
-from .context import SessionRpcContext
 
 rpc_service = RpcService()
 session_endpoint = rpc_service.socket(

@@ -13,9 +13,9 @@ from backend.features.session.domain import (
 from backend.features.session.presentation.rpc.events import (
     DoneEvent,
     ErrorEvent,
-    ServerEvent,
+    SessionStreamEvent,
 )
-from backend.features.session.presentation.rpc.mappers import to_server_event
+from backend.features.session.presentation.rpc.mappers import to_session_stream_event
 
 logger = logging.getLogger(__name__)
 
@@ -31,11 +31,11 @@ _COMMAND_ERRORS = (
 
 async def session_events(
     events: AsyncGenerator[SessionEvent],
-) -> AsyncGenerator[ServerEvent]:
+) -> AsyncGenerator[SessionStreamEvent]:
     try:
         async with aclosing(events):
             async for event in events:
-                yield to_server_event(event)
+                yield to_session_stream_event(event)
     except _COMMAND_ERRORS as exc:
         yield ErrorEvent(
             code=type(exc).__name__, message=str(exc) or type(exc).__name__

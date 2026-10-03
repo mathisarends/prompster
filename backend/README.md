@@ -30,6 +30,10 @@ Dishka request scope for its entire lifetime. Unsubscribe and disconnect close
 the application stream and cancel pending export tasks before releasing that
 scope. The integration uses `pyrpckit[codegen,dishka,fastapi]==0.10.0`.
 
+Session subscriptions yield `SessionStreamEvent`; Spotify exports yield
+`SpotifyExportEvent`. Clients initiate these streams with RPC calls and typed
+parameters. The API does not define client event payloads.
+
 The RPC code lives in `src/backend/features/session/presentation/rpc/`:
 
 - `__init__.py` exports `rpc_router` and `contract` for application wiring and codegen.
@@ -39,6 +43,9 @@ The RPC code lives in `src/backend/features/session/presentation/rpc/`:
 - `stream.py`, `mappers.py`, and `spotify_export.py` adapt application events and export progress.
 - `contract.py` declares the service and socket, then derives its OpenRPC contract.
 - `router.py` mounts that socket through `RpcRoutes` and the Dishka adapter.
+
+Python modules use absolute imports. Relative imports are reserved for package
+exports in `__init__.py`.
 
 The OpenRPC contract and TypeScript client are generated from `rpcgen.toml`:
 

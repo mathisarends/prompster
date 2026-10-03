@@ -7,8 +7,8 @@ import { routes, notifications } from "../routes";
 import type {
   CompleteOnboardingParams,
   SendMessageParams,
-  ServerEvent,
-  SpotifyExportServerEvent,
+  SessionStreamEvent,
+  SpotifyExportEvent,
 } from "../models";
 
 export class Session {
@@ -20,17 +20,17 @@ export class Session {
   }
 
   /** Send a message and stream the resulting session updates. */
-  sendMessage(params: SendMessageParams): AsyncIterable<ServerEvent> {
+  sendMessage(params: SendMessageParams): AsyncIterable<SessionStreamEvent> {
     return this.rpc.subscribeRemote(notifications.sessionSendMessage, params);
   }
 
   /** Complete onboarding and stream the resulting session updates. */
-  completeOnboarding(params: CompleteOnboardingParams): AsyncIterable<ServerEvent> {
+  completeOnboarding(params: CompleteOnboardingParams): AsyncIterable<SessionStreamEvent> {
     return this.rpc.subscribeRemote(notifications.sessionCompleteOnboarding, params);
   }
 
   /** Export the session playlist with retry updates and the final playlist. */
-  exportSpotify(): AsyncIterable<SpotifyExportServerEvent> {
+  exportSpotify(): AsyncIterable<SpotifyExportEvent> {
     return this.rpc.subscribeRemote(notifications.sessionExportSpotify);
   }
 }

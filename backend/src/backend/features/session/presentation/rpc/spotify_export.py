@@ -66,7 +66,7 @@ class SpotifyExportErrorEvent(_SpotifyExportEventSchema):
     message: str
 
 
-type SpotifyExportServerEvent = Annotated[
+type SpotifyExportEvent = Annotated[
     SpotifyExportRetryEvent
     | SpotifyExportCompletedEvent
     | SpotifyExportDoneEvent
@@ -80,7 +80,7 @@ async def spotify_export_events(
     *,
     session_id: UUID,
     user_id: UUID,
-) -> AsyncGenerator[SpotifyExportServerEvent]:
+) -> AsyncGenerator[SpotifyExportEvent]:
     execution: asyncio.Task | None = None
     getter: asyncio.Task | None = None
     try:

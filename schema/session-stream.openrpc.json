@@ -643,95 +643,6 @@
         "title": "SendMessageParams",
         "type": "object"
       },
-      "ServerEvent": {
-        "discriminator": {
-          "mapping": {
-            "done": "#/components/schemas/DoneEvent",
-            "error": "#/components/schemas/ErrorEvent",
-            "message.assistant_cancelled": "#/components/schemas/AssistantMessageCancelledEvent",
-            "message.assistant_chunk": "#/components/schemas/AssistantMessageChunkEvent",
-            "message.assistant_completed": "#/components/schemas/AssistantMessageCompletedEvent",
-            "message.assistant_started": "#/components/schemas/AssistantMessageStartedEvent",
-            "playlist.set": "#/components/schemas/PlaylistSetEvent",
-            "playlist.track_added": "#/components/schemas/PlaylistTrackAddedEvent",
-            "playlist.track_removed": "#/components/schemas/PlaylistTrackRemovedEvent",
-            "playlist.track_replaced": "#/components/schemas/PlaylistTrackReplacedEvent",
-            "session.context_compacted": "#/components/schemas/ContextCompactedEvent",
-            "session.onboarding_question_asked": "#/components/schemas/OnboardingQuestionAskedEvent",
-            "session.snapshot": "#/components/schemas/SessionSnapshotEvent",
-            "session.suspended_for_input": "#/components/schemas/SuspendedForInputEvent",
-            "session.title_generated": "#/components/schemas/TitleGeneratedEvent",
-            "tool_call.failed": "#/components/schemas/ToolCallFailedEvent",
-            "tool_call.resolved": "#/components/schemas/ToolCallResolvedEvent",
-            "tool_call.retry": "#/components/schemas/ToolCallRetryEvent",
-            "tool_call.sequence_added": "#/components/schemas/ToolCallSequenceAddedEvent",
-            "tool_call.sequence_completed": "#/components/schemas/ToolCallSequenceCompletedEvent"
-          },
-          "propertyName": "type"
-        },
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/SessionSnapshotEvent"
-          },
-          {
-            "$ref": "#/components/schemas/TitleGeneratedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/AssistantMessageStartedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/AssistantMessageChunkEvent"
-          },
-          {
-            "$ref": "#/components/schemas/AssistantMessageCompletedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/AssistantMessageCancelledEvent"
-          },
-          {
-            "$ref": "#/components/schemas/ToolCallSequenceAddedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/ToolCallResolvedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/ToolCallFailedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/ToolCallRetryEvent"
-          },
-          {
-            "$ref": "#/components/schemas/ToolCallSequenceCompletedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/ContextCompactedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/PlaylistSetEvent"
-          },
-          {
-            "$ref": "#/components/schemas/PlaylistTrackAddedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/PlaylistTrackRemovedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/PlaylistTrackReplacedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/OnboardingQuestionAskedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/SuspendedForInputEvent"
-          },
-          {
-            "$ref": "#/components/schemas/DoneEvent"
-          },
-          {
-            "$ref": "#/components/schemas/ErrorEvent"
-          }
-        ]
-      },
       "SessionMessageAttachmentKind": {
         "enum": [
           "spotify-playlist",
@@ -946,6 +857,95 @@
         "title": "SessionSnapshotPayload",
         "type": "object"
       },
+      "SessionStreamEvent": {
+        "discriminator": {
+          "mapping": {
+            "done": "#/components/schemas/DoneEvent",
+            "error": "#/components/schemas/ErrorEvent",
+            "message.assistant_cancelled": "#/components/schemas/AssistantMessageCancelledEvent",
+            "message.assistant_chunk": "#/components/schemas/AssistantMessageChunkEvent",
+            "message.assistant_completed": "#/components/schemas/AssistantMessageCompletedEvent",
+            "message.assistant_started": "#/components/schemas/AssistantMessageStartedEvent",
+            "playlist.set": "#/components/schemas/PlaylistSetEvent",
+            "playlist.track_added": "#/components/schemas/PlaylistTrackAddedEvent",
+            "playlist.track_removed": "#/components/schemas/PlaylistTrackRemovedEvent",
+            "playlist.track_replaced": "#/components/schemas/PlaylistTrackReplacedEvent",
+            "session.context_compacted": "#/components/schemas/ContextCompactedEvent",
+            "session.onboarding_question_asked": "#/components/schemas/OnboardingQuestionAskedEvent",
+            "session.snapshot": "#/components/schemas/SessionSnapshotEvent",
+            "session.suspended_for_input": "#/components/schemas/SuspendedForInputEvent",
+            "session.title_generated": "#/components/schemas/TitleGeneratedEvent",
+            "tool_call.failed": "#/components/schemas/ToolCallFailedEvent",
+            "tool_call.resolved": "#/components/schemas/ToolCallResolvedEvent",
+            "tool_call.retry": "#/components/schemas/ToolCallRetryEvent",
+            "tool_call.sequence_added": "#/components/schemas/ToolCallSequenceAddedEvent",
+            "tool_call.sequence_completed": "#/components/schemas/ToolCallSequenceCompletedEvent"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SessionSnapshotEvent"
+          },
+          {
+            "$ref": "#/components/schemas/TitleGeneratedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AssistantMessageStartedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AssistantMessageChunkEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AssistantMessageCompletedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AssistantMessageCancelledEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ToolCallSequenceAddedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ToolCallResolvedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ToolCallFailedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ToolCallRetryEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ToolCallSequenceCompletedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ContextCompactedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/PlaylistSetEvent"
+          },
+          {
+            "$ref": "#/components/schemas/PlaylistTrackAddedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/PlaylistTrackRemovedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/PlaylistTrackReplacedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/OnboardingQuestionAskedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/SuspendedForInputEvent"
+          },
+          {
+            "$ref": "#/components/schemas/DoneEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ErrorEvent"
+          }
+        ]
+      },
       "SpotifyExportCompletedEvent": {
         "additionalProperties": false,
         "properties": {
@@ -1003,6 +1003,31 @@
         "title": "SpotifyExportErrorEvent",
         "type": "object"
       },
+      "SpotifyExportEvent": {
+        "discriminator": {
+          "mapping": {
+            "done": "#/components/schemas/SpotifyExportDoneEvent",
+            "error": "#/components/schemas/SpotifyExportErrorEvent",
+            "spotify_export.completed": "#/components/schemas/SpotifyExportCompletedEvent",
+            "spotify_export.retry": "#/components/schemas/SpotifyExportRetryEvent"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SpotifyExportRetryEvent"
+          },
+          {
+            "$ref": "#/components/schemas/SpotifyExportCompletedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/SpotifyExportDoneEvent"
+          },
+          {
+            "$ref": "#/components/schemas/SpotifyExportErrorEvent"
+          }
+        ]
+      },
       "SpotifyExportRetryEvent": {
         "additionalProperties": false,
         "properties": {
@@ -1039,31 +1064,6 @@
         ],
         "title": "SpotifyExportRetryEvent",
         "type": "object"
-      },
-      "SpotifyExportServerEvent": {
-        "discriminator": {
-          "mapping": {
-            "done": "#/components/schemas/SpotifyExportDoneEvent",
-            "error": "#/components/schemas/SpotifyExportErrorEvent",
-            "spotify_export.completed": "#/components/schemas/SpotifyExportCompletedEvent",
-            "spotify_export.retry": "#/components/schemas/SpotifyExportRetryEvent"
-          },
-          "propertyName": "type"
-        },
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/SpotifyExportRetryEvent"
-          },
-          {
-            "$ref": "#/components/schemas/SpotifyExportCompletedEvent"
-          },
-          {
-            "$ref": "#/components/schemas/SpotifyExportDoneEvent"
-          },
-          {
-            "$ref": "#/components/schemas/SpotifyExportErrorEvent"
-          }
-        ]
       },
       "SpotifyPlaylistExportResponse": {
         "properties": {
@@ -1760,7 +1760,7 @@
         "$ref": "#/components/schemas/SendMessageParams"
       },
       "payload": {
-        "$ref": "#/components/schemas/ServerEvent"
+        "$ref": "#/components/schemas/SessionStreamEvent"
       },
       "servers": [
         {
@@ -1788,7 +1788,7 @@
         "$ref": "#/components/schemas/CompleteOnboardingParams"
       },
       "payload": {
-        "$ref": "#/components/schemas/ServerEvent"
+        "$ref": "#/components/schemas/SessionStreamEvent"
       },
       "servers": [
         {
@@ -1814,7 +1814,7 @@
       "unsubscribe": "session.export_spotify.unsubscribe",
       "params": null,
       "payload": {
-        "$ref": "#/components/schemas/SpotifyExportServerEvent"
+        "$ref": "#/components/schemas/SpotifyExportEvent"
       },
       "servers": [
         {

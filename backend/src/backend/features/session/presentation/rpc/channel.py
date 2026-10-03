@@ -9,13 +9,18 @@ from backend.features.session.presentation.mapper import (
     to_session_image_attachment_references,
     to_session_message_attachments,
 )
+from backend.features.session.presentation.rpc.context import SessionRpcContext
+from backend.features.session.presentation.rpc.events import SessionStreamEvent
+from backend.features.session.presentation.rpc.params import (
+    CompleteOnboardingParams,
+    SendMessageParams,
+)
+from backend.features.session.presentation.rpc.spotify_export import (
+    SpotifyExportEvent,
+    spotify_export_events,
+)
+from backend.features.session.presentation.rpc.stream import session_events
 from rpckit import Inject, RpcChannel
-
-from .context import SessionRpcContext
-from .events import ServerEvent
-from .params import CompleteOnboardingParams, SendMessageParams
-from .spotify_export import SpotifyExportServerEvent, spotify_export_events
-from .stream import session_events
 
 session_channel = RpcChannel("session")
 
@@ -31,7 +36,7 @@ async def send_message(
     params: SendMessageParams,
     context: Inject[SessionRpcContext],
     service: Inject[SessionConversationService],
-) -> AsyncGenerator[ServerEvent]:
+) -> AsyncGenerator[SessionStreamEvent]:
     """Send a message and stream the resulting session updates."""
     async with aclosing(
         session_events(
@@ -56,7 +61,7 @@ async def complete_onboarding(
     params: CompleteOnboardingParams,
     context: Inject[SessionRpcContext],
     service: Inject[SessionConversationService],
-) -> AsyncGenerator[ServerEvent]:
+) -> AsyncGenerator[SessionStreamEvent]:
     """Complete onboarding and stream the resulting session updates."""
     async with aclosing(
         session_events(
@@ -75,7 +80,7 @@ async def complete_onboarding(
 async def export_spotify(
     context: Inject[SessionRpcContext],
     exporter: Inject[SessionSpotifyPlaylistExporter],
-) -> AsyncGenerator[SpotifyExportServerEvent]:
+) -> AsyncGenerator[SpotifyExportEvent]:
     """Export the session playlist with retry updates and the final playlist."""
     async with aclosing(
         spotify_export_events(

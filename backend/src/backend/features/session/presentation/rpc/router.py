@@ -1,12 +1,11 @@
 from uuid import UUID
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
+from backend.features.session.presentation.rpc.context import SessionRpcContext
+from backend.features.session.presentation.rpc.contract import session_endpoint
 from fastapi import APIRouter
 from rpckit.dishka import Dishka
 from rpckit.fastapi import RpcRoutes
-
-from .context import SessionRpcContext
-from .contract import session_endpoint
 
 rpc_router = APIRouter(prefix="/api/v1/sessions")
 
