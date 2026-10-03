@@ -3,7 +3,7 @@
 // Regenerate it from the OpenRPC document instead.
 
 import { defineNotification, defineRoute } from "./core";
-import type { ServerEvent, SpotifyExportServerEvent } from "./models";
+import type { SessionStreamEvent, SpotifyExportEvent } from "./models";
 
 export const routes = {
   sessionPing: defineRoute<undefined, string>({
@@ -13,15 +13,15 @@ export const routes = {
 } as const;
 
 export const notifications = {
-  sessionSendMessage: defineNotification<ServerEvent>({
+  sessionSendMessage: defineNotification<SessionStreamEvent>({
     method: "session.send_message",
     server: "session",
   }),
-  sessionCompleteOnboarding: defineNotification<ServerEvent>({
+  sessionCompleteOnboarding: defineNotification<SessionStreamEvent>({
     method: "session.complete_onboarding",
     server: "session",
   }),
-  sessionExportSpotify: defineNotification<SpotifyExportServerEvent>({
+  sessionExportSpotify: defineNotification<SpotifyExportEvent>({
     method: "session.export_spotify",
     server: "session",
   }),

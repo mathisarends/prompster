@@ -7,26 +7,30 @@ import { routes, notifications } from "../routes";
 import type {
   CompleteOnboardingParams,
   SendMessageParams,
-  ServerEvent,
-  SpotifyExportServerEvent,
+  SessionStreamEvent,
+  SpotifyExportEvent,
 } from "../models";
 
 export class Session {
   constructor(private readonly rpc: RpcClientCore) {}
 
+  /** Check that the session connection is available. */
   ping(): Promise<string> {
     return this.rpc.request(routes.sessionPing);
   }
 
-  sendMessage(params: SendMessageParams): AsyncIterable<ServerEvent> {
+  /** Send a message and stream the resulting session updates. */
+  sendMessage(params: SendMessageParams): AsyncIterable<SessionStreamEvent> {
     return this.rpc.subscribeRemote(notifications.sessionSendMessage, params);
   }
 
-  completeOnboarding(params: CompleteOnboardingParams): AsyncIterable<ServerEvent> {
+  /** Complete onboarding and stream the resulting session updates. */
+  completeOnboarding(params: CompleteOnboardingParams): AsyncIterable<SessionStreamEvent> {
     return this.rpc.subscribeRemote(notifications.sessionCompleteOnboarding, params);
   }
 
-  exportSpotify(): AsyncIterable<SpotifyExportServerEvent> {
+  /** Export the session playlist with retry updates and the final playlist. */
+  exportSpotify(): AsyncIterable<SpotifyExportEvent> {
     return this.rpc.subscribeRemote(notifications.sessionExportSpotify);
   }
 }

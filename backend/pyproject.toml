@@ -29,7 +29,7 @@ dependencies = [
     "fastapi-canon>=0.4.0",
     "callm @ git+https://github.com/mathisarends/callm.git@982472f056789d0cbd5a878a15f77e5fbde6f334",
     "pyyaml>=6.0.3",
-    "pyrpckit[codegen,fastapi]==0.9.0",
+    "pyrpckit[codegen,dishka,fastapi]==0.10.0",
 ]
 
 [project.scripts]

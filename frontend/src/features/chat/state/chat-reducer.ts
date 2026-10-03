@@ -10,9 +10,12 @@ import type {
 } from "@api/generated/sessions";
 import { ToolCallState } from "@api/generated/sessions";
 import { EntryKind } from "@api/generated/session-schemas";
-import { ServerEventType } from "@/api/session-rpc/models";
-import type { PlaylistPayload, SessionSnapshotPayload } from "@/api/session-rpc";
-import type { SessionServerEvent } from "@/features/chat/api/session-stream";
+import { SessionStreamEventType } from "@/api/session-rpc/models";
+import type {
+  PlaylistPayload,
+  SessionSnapshotPayload,
+  SessionStreamEvent,
+} from "@/api/session-rpc";
 import type { ChatAttachment } from "@/features/chat/components/attachments/attachment-types";
 import type { ToolCallItem, ToolCallRetry, ToolCallStatus } from "@/features/chat/types";
 
@@ -98,26 +101,26 @@ export const ChatActionType = {
 } as const;
 
 const ChatEventType = {
-  SESSION_SNAPSHOT: ServerEventType.SESSION_SNAPSHOT,
-  TITLE_GENERATED: ServerEventType.SESSION_TITLE_GENERATED,
-  ASSISTANT_STARTED: ServerEventType.MESSAGE_ASSISTANT_STARTED,
-  ASSISTANT_CHUNK: ServerEventType.MESSAGE_ASSISTANT_CHUNK,
-  ASSISTANT_COMPLETED: ServerEventType.MESSAGE_ASSISTANT_COMPLETED,
-  ASSISTANT_CANCELLED: ServerEventType.MESSAGE_ASSISTANT_CANCELLED,
-  TOOL_CALL_SEQUENCE_ADDED: ServerEventType.TOOL_CALL_SEQUENCE_ADDED,
-  TOOL_CALL_RESOLVED: ServerEventType.TOOL_CALL_RESOLVED,
-  TOOL_CALL_FAILED: ServerEventType.TOOL_CALL_FAILED,
-  TOOL_CALL_RETRY: ServerEventType.TOOL_CALL_RETRY,
-  TOOL_CALL_SEQUENCE_COMPLETED: ServerEventType.TOOL_CALL_SEQUENCE_COMPLETED,
-  CONTEXT_COMPACTED: ServerEventType.SESSION_CONTEXT_COMPACTED,
-  PLAYLIST_SET: ServerEventType.PLAYLIST_SET,
-  PLAYLIST_TRACK_ADDED: ServerEventType.PLAYLIST_TRACK_ADDED,
-  PLAYLIST_TRACK_REMOVED: ServerEventType.PLAYLIST_TRACK_REMOVED,
-  PLAYLIST_TRACK_REPLACED: ServerEventType.PLAYLIST_TRACK_REPLACED,
-  ONBOARDING_QUESTION_ASKED: ServerEventType.SESSION_ONBOARDING_QUESTION_ASKED,
-  SUSPENDED_FOR_INPUT: ServerEventType.SESSION_SUSPENDED_FOR_INPUT,
-  DONE: ServerEventType.DONE,
-  ERROR: ServerEventType.ERROR,
+  SESSION_SNAPSHOT: SessionStreamEventType.SESSION_SNAPSHOT,
+  TITLE_GENERATED: SessionStreamEventType.SESSION_TITLE_GENERATED,
+  ASSISTANT_STARTED: SessionStreamEventType.MESSAGE_ASSISTANT_STARTED,
+  ASSISTANT_CHUNK: SessionStreamEventType.MESSAGE_ASSISTANT_CHUNK,
+  ASSISTANT_COMPLETED: SessionStreamEventType.MESSAGE_ASSISTANT_COMPLETED,
+  ASSISTANT_CANCELLED: SessionStreamEventType.MESSAGE_ASSISTANT_CANCELLED,
+  TOOL_CALL_SEQUENCE_ADDED: SessionStreamEventType.TOOL_CALL_SEQUENCE_ADDED,
+  TOOL_CALL_RESOLVED: SessionStreamEventType.TOOL_CALL_RESOLVED,
+  TOOL_CALL_FAILED: SessionStreamEventType.TOOL_CALL_FAILED,
+  TOOL_CALL_RETRY: SessionStreamEventType.TOOL_CALL_RETRY,
+  TOOL_CALL_SEQUENCE_COMPLETED: SessionStreamEventType.TOOL_CALL_SEQUENCE_COMPLETED,
+  CONTEXT_COMPACTED: SessionStreamEventType.SESSION_CONTEXT_COMPACTED,
+  PLAYLIST_SET: SessionStreamEventType.PLAYLIST_SET,
+  PLAYLIST_TRACK_ADDED: SessionStreamEventType.PLAYLIST_TRACK_ADDED,
+  PLAYLIST_TRACK_REMOVED: SessionStreamEventType.PLAYLIST_TRACK_REMOVED,
+  PLAYLIST_TRACK_REPLACED: SessionStreamEventType.PLAYLIST_TRACK_REPLACED,
+  ONBOARDING_QUESTION_ASKED: SessionStreamEventType.SESSION_ONBOARDING_QUESTION_ASKED,
+  SUSPENDED_FOR_INPUT: SessionStreamEventType.SESSION_SUSPENDED_FOR_INPUT,
+  DONE: SessionStreamEventType.DONE,
+  ERROR: SessionStreamEventType.ERROR,
 } as const;
 
 export type ChatAction =
@@ -133,7 +136,7 @@ export type ChatAction =
   | { type: typeof ChatActionType.STREAM_STOPPED }
   | { type: typeof ChatActionType.STREAM_FAILED; message: string }
   | { type: typeof ChatActionType.PENDING_INPUT_CLEAR }
-  | { type: typeof ChatActionType.STREAM_EVENT; event: SessionServerEvent };
+  | { type: typeof ChatActionType.STREAM_EVENT; event: SessionStreamEvent };
 
 export const createInitialChatState = (): ChatState => ({
   entries: [],
@@ -203,7 +206,7 @@ export const chatReducer = (state: ChatState, action: ChatAction): ChatState => 
       };
 
     case ChatActionType.STREAM_EVENT:
-      return reduceServerEvent(state, action.event);
+      return reduceSessionStreamEvent(state, action.event);
   }
 };
 
@@ -404,7 +407,7 @@ const replacePlaylistTrack = (
   };
 };
 
-const reduceServerEvent = (state: ChatState, event: SessionServerEvent): ChatState => {
+const reduceSessionStreamEvent = (state: ChatState, event: SessionStreamEvent): ChatState => {
   if (!event) {
     return state;
   }

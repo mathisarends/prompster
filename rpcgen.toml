@@ -1,7 +1,7 @@
 version = 1
 
 [contract]
-source = "backend.features.session.presentation.rpc.router:contract"
+source = "backend.features.session.presentation.rpc:contract"
 output = "schema/session-stream.openrpc.json"
 
 [[clients]]

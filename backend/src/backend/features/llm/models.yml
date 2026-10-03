@@ -8,7 +8,7 @@ models:
     provider: openai
     enabled: true
     presentation:
-      label: GPT 6 Sol
+      label: GPT 6 Sol (OpenAI)
       profile: Maximal
       order: 30
     capabilities:
@@ -22,7 +22,7 @@ models:
     provider: openai
     enabled: true
     presentation:
-      label: GPT 6 Terra
+      label: GPT 6 Terra (OpenAI)
       profile: Intelligent
       order: 20
     capabilities:
@@ -36,7 +36,7 @@ models:
     provider: openai
     enabled: true
     presentation:
-      label: GPT 6 Luna
+      label: GPT 6 Luna (OpenAI)
       profile: Schnell
       order: 10
     capabilities:

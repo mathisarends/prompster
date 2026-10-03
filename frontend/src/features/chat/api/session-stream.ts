@@ -1,7 +1,6 @@
-import type { SendMessageParams, ServerEvent } from "@/api/session-rpc";
+import type { SendMessageParams, SessionStreamEvent } from "@/api/session-rpc";
 import { withSessionRpcClient } from "@/shared/api/session-rpc-client";
 
-export type SessionServerEvent = ServerEvent;
 export type SessionMessageAttachmentRequest = NonNullable<SendMessageParams["attachments"]>[number];
 export type ImageAttachmentReferenceRequest = NonNullable<
   SendMessageParams["imageAttachments"]
@@ -10,7 +9,7 @@ export type SendMessageRequest = Omit<SendMessageParams, "modelId">;
 
 type StreamSessionOptions = {
   signal?: AbortSignal;
-  onEvent?: (event: SessionServerEvent) => void;
+  onEvent?: (event: SessionStreamEvent) => void;
   modelId?: string;
 };
 

@@ -1,9 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal
 from uuid import UUID
-
-from pydantic import Field
 
 from backend.features.session.domain import OnboardingQuestionSelectionMode
 from backend.features.session.presentation.schemas import (
@@ -13,10 +11,11 @@ from backend.features.session.presentation.schemas import (
     ToolCallResultItemResponse,
     ToolCallSequenceEntryResponse,
 )
-from backend.presentation.schema import Schema
+from pydantic import Field
+from rpckit import RpcModel
 
 
-class SessionEventType(StrEnum):
+class SessionStreamEventType(StrEnum):
     SESSION_SNAPSHOT = "session.snapshot"
     TITLE_GENERATED = "session.title_generated"
 
@@ -44,17 +43,17 @@ class SessionEventType(StrEnum):
     ERROR = "error"
 
 
-class _SessionEventSchema(Schema):
-    type: SessionEventType
+class _SessionEventSchema(RpcModel):
+    type: SessionStreamEventType
 
 
-class PlaylistPayload(Schema):
+class PlaylistPayload(RpcModel):
     id: UUID
     name: str | None = None
     tracks: list[PlaylistTrackResponse]
 
 
-class SessionSnapshotPayload(Schema):
+class SessionSnapshotPayload(RpcModel):
     id: UUID
     title: str
     created_at: datetime
@@ -63,55 +62,59 @@ class SessionSnapshotPayload(Schema):
 
 
 class SessionSnapshotEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.SESSION_SNAPSHOT] = SessionEventType.SESSION_SNAPSHOT
+    type: Literal[SessionStreamEventType.SESSION_SNAPSHOT] = (
+        SessionStreamEventType.SESSION_SNAPSHOT
+    )
     session: SessionSnapshotPayload
 
 
 class TitleGeneratedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.TITLE_GENERATED] = SessionEventType.TITLE_GENERATED
+    type: Literal[SessionStreamEventType.TITLE_GENERATED] = (
+        SessionStreamEventType.TITLE_GENERATED
+    )
     title: str
 
 
 class AssistantMessageStartedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.ASSISTANT_MESSAGE_STARTED] = (
-        SessionEventType.ASSISTANT_MESSAGE_STARTED
+    type: Literal[SessionStreamEventType.ASSISTANT_MESSAGE_STARTED] = (
+        SessionStreamEventType.ASSISTANT_MESSAGE_STARTED
     )
     message_id: UUID
     created_at: datetime
 
 
 class AssistantMessageChunkEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.ASSISTANT_MESSAGE_CHUNK] = (
-        SessionEventType.ASSISTANT_MESSAGE_CHUNK
+    type: Literal[SessionStreamEventType.ASSISTANT_MESSAGE_CHUNK] = (
+        SessionStreamEventType.ASSISTANT_MESSAGE_CHUNK
     )
     message_id: UUID
     chunk: str
 
 
 class AssistantMessageCompletedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.ASSISTANT_MESSAGE_COMPLETED] = (
-        SessionEventType.ASSISTANT_MESSAGE_COMPLETED
+    type: Literal[SessionStreamEventType.ASSISTANT_MESSAGE_COMPLETED] = (
+        SessionStreamEventType.ASSISTANT_MESSAGE_COMPLETED
     )
     message: AssistantMessageEntryResponse
 
 
 class AssistantMessageCancelledEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.ASSISTANT_MESSAGE_CANCELLED] = (
-        SessionEventType.ASSISTANT_MESSAGE_CANCELLED
+    type: Literal[SessionStreamEventType.ASSISTANT_MESSAGE_CANCELLED] = (
+        SessionStreamEventType.ASSISTANT_MESSAGE_CANCELLED
     )
     message_id: UUID
 
 
 class ToolCallSequenceAddedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.TOOL_CALL_SEQUENCE_ADDED] = (
-        SessionEventType.TOOL_CALL_SEQUENCE_ADDED
+    type: Literal[SessionStreamEventType.TOOL_CALL_SEQUENCE_ADDED] = (
+        SessionStreamEventType.TOOL_CALL_SEQUENCE_ADDED
     )
     sequence: ToolCallSequenceEntryResponse
 
 
 class ToolCallResolvedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.TOOL_CALL_RESOLVED] = (
-        SessionEventType.TOOL_CALL_RESOLVED
+    type: Literal[SessionStreamEventType.TOOL_CALL_RESOLVED] = (
+        SessionStreamEventType.TOOL_CALL_RESOLVED
     )
     sequence_id: UUID
     tool_call_id: str
@@ -120,14 +123,18 @@ class ToolCallResolvedEvent(_SessionEventSchema):
 
 
 class ToolCallFailedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.TOOL_CALL_FAILED] = SessionEventType.TOOL_CALL_FAILED
+    type: Literal[SessionStreamEventType.TOOL_CALL_FAILED] = (
+        SessionStreamEventType.TOOL_CALL_FAILED
+    )
     sequence_id: UUID
     tool_call_id: str
     error: str
 
 
 class ToolCallRetryEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.TOOL_CALL_RETRY] = SessionEventType.TOOL_CALL_RETRY
+    type: Literal[SessionStreamEventType.TOOL_CALL_RETRY] = (
+        SessionStreamEventType.TOOL_CALL_RETRY
+    )
     tool_call_id: str
     name: str
     attempt: int
@@ -137,15 +144,15 @@ class ToolCallRetryEvent(_SessionEventSchema):
 
 
 class ToolCallSequenceCompletedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.TOOL_CALL_SEQUENCE_COMPLETED] = (
-        SessionEventType.TOOL_CALL_SEQUENCE_COMPLETED
+    type: Literal[SessionStreamEventType.TOOL_CALL_SEQUENCE_COMPLETED] = (
+        SessionStreamEventType.TOOL_CALL_SEQUENCE_COMPLETED
     )
     sequence_id: UUID
 
 
 class ContextCompactedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.CONTEXT_COMPACTED] = (
-        SessionEventType.CONTEXT_COMPACTED
+    type: Literal[SessionStreamEventType.CONTEXT_COMPACTED] = (
+        SessionStreamEventType.CONTEXT_COMPACTED
     )
     reason: str
     tokens_before: int | None = None
@@ -153,29 +160,31 @@ class ContextCompactedEvent(_SessionEventSchema):
 
 
 class PlaylistSetEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.PLAYLIST_SET] = SessionEventType.PLAYLIST_SET
+    type: Literal[SessionStreamEventType.PLAYLIST_SET] = (
+        SessionStreamEventType.PLAYLIST_SET
+    )
     playlist: PlaylistPayload
 
 
 class PlaylistTrackAddedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.PLAYLIST_TRACK_ADDED] = (
-        SessionEventType.PLAYLIST_TRACK_ADDED
+    type: Literal[SessionStreamEventType.PLAYLIST_TRACK_ADDED] = (
+        SessionStreamEventType.PLAYLIST_TRACK_ADDED
     )
     playlist_id: UUID
     track: PlaylistTrackResponse
 
 
 class PlaylistTrackRemovedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.PLAYLIST_TRACK_REMOVED] = (
-        SessionEventType.PLAYLIST_TRACK_REMOVED
+    type: Literal[SessionStreamEventType.PLAYLIST_TRACK_REMOVED] = (
+        SessionStreamEventType.PLAYLIST_TRACK_REMOVED
     )
     playlist_id: UUID
     track_id: UUID
 
 
 class PlaylistTrackReplacedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.PLAYLIST_TRACK_REPLACED] = (
-        SessionEventType.PLAYLIST_TRACK_REPLACED
+    type: Literal[SessionStreamEventType.PLAYLIST_TRACK_REPLACED] = (
+        SessionStreamEventType.PLAYLIST_TRACK_REPLACED
     )
     playlist_id: UUID
     track_id: UUID
@@ -183,8 +192,8 @@ class PlaylistTrackReplacedEvent(_SessionEventSchema):
 
 
 class SuspendedForInputEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.SUSPENDED_FOR_INPUT] = (
-        SessionEventType.SUSPENDED_FOR_INPUT
+    type: Literal[SessionStreamEventType.SUSPENDED_FOR_INPUT] = (
+        SessionStreamEventType.SUSPENDED_FOR_INPUT
     )
     kind: str
     question: str | None = None
@@ -199,8 +208,8 @@ class SuspendedForInputEvent(_SessionEventSchema):
 
 
 class OnboardingQuestionAskedEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.ONBOARDING_QUESTION_ASKED] = (
-        SessionEventType.ONBOARDING_QUESTION_ASKED
+    type: Literal[SessionStreamEventType.ONBOARDING_QUESTION_ASKED] = (
+        SessionStreamEventType.ONBOARDING_QUESTION_ASKED
     )
     question: str
     hint: str | None = None
@@ -214,38 +223,36 @@ class OnboardingQuestionAskedEvent(_SessionEventSchema):
 
 
 class DoneEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.DONE] = SessionEventType.DONE
+    type: Literal[SessionStreamEventType.DONE] = SessionStreamEventType.DONE
 
 
 class ErrorEvent(_SessionEventSchema):
-    type: Literal[SessionEventType.ERROR] = SessionEventType.ERROR
+    type: Literal[SessionStreamEventType.ERROR] = SessionStreamEventType.ERROR
     code: str
     message: str
     correlation_id: str | None = None
 
 
-type ServerEvent = Annotated[
-    Union[
-        SessionSnapshotEvent,
-        TitleGeneratedEvent,
-        AssistantMessageStartedEvent,
-        AssistantMessageChunkEvent,
-        AssistantMessageCompletedEvent,
-        AssistantMessageCancelledEvent,
-        ToolCallSequenceAddedEvent,
-        ToolCallResolvedEvent,
-        ToolCallFailedEvent,
-        ToolCallRetryEvent,
-        ToolCallSequenceCompletedEvent,
-        ContextCompactedEvent,
-        PlaylistSetEvent,
-        PlaylistTrackAddedEvent,
-        PlaylistTrackRemovedEvent,
-        PlaylistTrackReplacedEvent,
-        OnboardingQuestionAskedEvent,
-        SuspendedForInputEvent,
-        DoneEvent,
-        ErrorEvent,
-    ],
+type SessionStreamEvent = Annotated[
+    SessionSnapshotEvent
+    | TitleGeneratedEvent
+    | AssistantMessageStartedEvent
+    | AssistantMessageChunkEvent
+    | AssistantMessageCompletedEvent
+    | AssistantMessageCancelledEvent
+    | ToolCallSequenceAddedEvent
+    | ToolCallResolvedEvent
+    | ToolCallFailedEvent
+    | ToolCallRetryEvent
+    | ToolCallSequenceCompletedEvent
+    | ContextCompactedEvent
+    | PlaylistSetEvent
+    | PlaylistTrackAddedEvent
+    | PlaylistTrackRemovedEvent
+    | PlaylistTrackReplacedEvent
+    | OnboardingQuestionAskedEvent
+    | SuspendedForInputEvent
+    | DoneEvent
+    | ErrorEvent,
     Field(discriminator="type"),
 ]
