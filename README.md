@@ -35,17 +35,45 @@ The model selector identifies each provider explicitly:
 For a local backend, log in with `codex login` before selecting a Codex model.
 `callm` reads the login from `~/.codex/auth.json`, or from `CODEX_HOME` when set.
 
-For Docker, set `CODEX_AUTH_DIR` in `.env` to the absolute path of your logged-in
-Codex directory (for example `C:/Users/you/.codex` on Windows or
-`/home/you/.codex` on Linux), then enable the optional read-only mount:
+For Docker, start the stack with the optional read-only Codex mount:
+
+```bash
+bash scripts/start_codex.sh
+# Or run in the background:
+bash scripts/start_codex.sh -d
+```
+
+The script works from any working directory, uses the repository's `.env`, checks
+for a readable `auth.json`, and starts `docker compose up --build` with both
+Compose files. Additional arguments are passed to `up`. Use Bash on Linux/macOS
+or Git Bash on Windows; Docker Compose v2 is required.
+
+Set `CODEX_AUTH_DIR` in `.env` to the absolute path of your logged-in Codex
+directory (for example `C:/Users/you/.codex` on Windows or
+`/home/you/.codex` on Linux). An exported `CODEX_AUTH_DIR` takes precedence. If
+the value is empty or unset, the script uses `CODEX_HOME`, then `~/.codex`.
+
+If your Codex login is stored in the OS credential store, create a file-based
+login in the intended Codex home so the container can read `auth.json`:
+
+```bash
+codex -c 'cli_auth_credentials_store="file"' login
+```
+
+See the [Codex credential storage documentation](https://learn.chatgpt.com/docs/auth#credential-storage).
+Select a **Codex** model in the UI to use this login. Backend features that use
+the registry's default model still use OpenAI and require `OPENAI_API_KEY` with
+the current configuration.
+
+To manage the stack directly, set `CODEX_AUTH_DIR` explicitly and use both files:
 
 ```bash
 docker compose -f compose.yml -f compose.codex.yml up --build
 ```
 
-The login directory must already exist. The default Compose configuration only
-passes `OPENAI_API_KEY`; use the override to make Codex subscription credentials
-available inside the backend container.
+The login directory and `auth.json` must already exist. The default Compose
+configuration only passes `OPENAI_API_KEY`; use the override to make Codex
+subscription credentials available inside the backend container.
 
 ### workspace
 
