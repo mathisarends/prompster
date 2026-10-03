@@ -1,17 +1,19 @@
 # Lit frontend: review gallery
 
-Recorded on 2026-10-03 from application commit `ed24b9a` in Chrome. Desktop:
+Recorded on 2026-10-03 from application commit `f9cb0cf` in Chrome. Desktop:
 1440 × 960; mobile: 390 × 844. The screenshots and videos use controlled HTTP
-and WebSocket fixtures. They demonstrate layout, navigation and interactions;
-they do not demonstrate live AI, OAuth, Spotify playback or actual exports.
+and WebSocket fixtures plus a simulated browser speech-recognition service.
+They demonstrate layout, navigation, dictation controls and interactions;
+they do not demonstrate live AI, OAuth, Spotify playback, real microphone
+recognition or actual exports.
 The production application uses the real backend.
 
 ## Walkthroughs
 
-| View    | Video                                      | Covered interactions                                                                                |
-| ------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| Desktop | [MP4, 16 seconds](desktop-walkthrough.mp4) | Studio, prompt starter, chat, playlist, cards, hide/reveal years, export options, library, settings |
-| Mobile  | [MP4, 13 seconds](mobile-walkthrough.mp4)  | Studio, sidebar, existing session, chat, deck overlay, cards, hide years, return to chat            |
+| View    | Video                                      | Covered interactions                                                                                                                |
+| ------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Desktop | [MP4 walkthrough](desktop-walkthrough.mp4) | Studio, dictation preview/accept, prompt starter, chat, full-height workspace, cards, QR side, expansion, export, library, settings |
+| Mobile  | [MP4 walkthrough](mobile-walkthrough.mp4)  | Studio, dictation preview/discard, sidebar, existing session, chat, deck, cards, QR side, return to chat                            |
 
 ### Desktop preview
 
@@ -32,6 +34,18 @@ The production application uses the real backend.
 | [05 · Export options](05-export-desktop.png)           |                                     |
 | [06 · Library](06-library-desktop.png)                 |                                     |
 | [07 · Settings](07-settings-desktop.png)               |                                     |
+
+### Workspace and voice input
+
+- [11 · QR side of the cards](11-qr-desktop.png)
+- [12 · Expanded workspace](12-workspace-expanded.png)
+- [13 · Desktop dictation preview](13-dictation-desktop.png)
+- [14 · Mobile dictation preview](14-dictation-mobile.png)
+
+The 14 screenshots include the full-height workspace with keyboard-accessible
+tabs, compact composer and both card faces. Card colors and proportions follow
+the existing PDF template; its precise print font and crop marks remain in the
+generated PDF. The browser preview uses an available serif font.
 
 ![Desktop studio](02-studio-desktop.png)
 
