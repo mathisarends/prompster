@@ -20,7 +20,8 @@
     "format": "node scripts/curly.mjs --write && prettier --write .",
     "format:check": "node scripts/curly.mjs --check && prettier --check .",
     "test": "node --import tsx --test tests/*.test.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "review:capture": "tsx scripts/capture-review.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",

@@ -108,3 +108,11 @@ Provider, Spotify-Premium-Wiedergabe und Modellanbieter benötigen verbundene
 Konten und einen gesonderten Live-Test. CI prüft Formatierung, Typen, Build,
 HTTP-Codegenerierung, Unit- und Browser-Tests; Backend-CI prüft zusätzlich die
 Spec und den bestehenden RPC-Client.
+
+## Review-Aufnahmen
+
+Die [Review-Galerie](../docs/reviews/lit-frontend/README.md) enthält Desktop- und
+Mobil-Screenshots, MP4-Videos und animierte Vorschauen. `npm run review:capture`
+erstellt die Aufnahmen gegen den laufenden Vite-Server mit den kontrollierten
+Browser-Testdaten neu. Voraussetzungen und Video-Konvertierung stehen in der
+Galerie.
