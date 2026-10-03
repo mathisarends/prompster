@@ -157,7 +157,7 @@ export class StudioPage extends LitElement {
     return html`<div class="content">
       <section class="hero" aria-labelledby="welcome-title">
         <div class="cards" aria-label="Beispielkarten">
-          ${exampleCards.map((card, i) => html`<music-card .card=${card} tone=${(["lilac", "lime", "peach"] as const)[i]}></music-card>`)}
+          ${exampleCards.map((card, i) => html`<music-card .card=${card} .index=${i}></music-card>`)}
         </div>
         <p class="eyebrow">GUTE MUSIK. GUTE LEUTE. DEIN DECK.</p>
         <h1 id="welcome-title">Jeder Hit hat seine Zeit.<br />Welche ist deine?</h1>

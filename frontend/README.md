@@ -116,3 +116,30 @@ Mobil-Screenshots, MP4-Videos und animierte Vorschauen. `npm run review:capture`
 erstellt die Aufnahmen gegen den laufenden Vite-Server mit den kontrollierten
 Browser-Testdaten neu. Voraussetzungen und Video-Konvertierung stehen in der
 Galerie.
+
+## Workspace, Karten und Diktieren
+
+Der Deck-Arbeitsbereich reicht über die gesamte Fensterhöhe. Playlist, Karten
+und Export sind per Tabs erreichbar (auch mit Pfeiltasten, Pos1 und Ende);
+die Ansicht lässt sich vergrößern und wieder neben den Chat stellen. Auf Mobil
+ersetzt das geöffnete Deck den Chat bis zum Schließen.
+
+Die quadratischen Karten orientieren sich am bestehenden `deck.typ`: gleiche
+Farbfolge, Verläufe, Innenrahmen und Anordnung von Künstler, Jahr und Titel.
+Die verdeckte Seite enthält einen lokal erzeugten Spotify-QR-Code mit Vinylringen.
+Die Vorschau nutzt eine verfügbare Serifenschrift; die druckfertige Datei mit
+der exakten Druckschrift und Schnittmarken kommt weiterhin vom PDF-Generator.
+
+Das Mikrofon übernimmt den Ablauf aus der Referenz: Browser-Spracherkennung
+(`SpeechRecognition` / `webkitSpeechRecognition`), deutsche Live-Transkription,
+anschließend Übernehmen oder Verwerfen. In Chrome ist dies die
+[Web-Speech-Anbindung](https://developer.chrome.com/blog/voice-driven-web-apps-introduction-to-the-web-speech-api/),
+keine separate Google-Cloud-API. Erkanntes wird erst nach Bestätigung an den
+Entwurf angehängt und nie automatisch gesendet. Abbrechen, Session-Wechsel und
+Unmount beenden die Aufnahme und verwerfen verspätete Events. HTTPS bzw.
+localhost, Mikrofonfreigabe und ein unterstützender Browser sind erforderlich;
+die Erkennung kann den Dienst des Browsers über das Netzwerk verwenden.
+
+Tests und Review-Videos verwenden einen simulierten Spracherkennungsdienst,
+damit sie ohne echten Mikrofonzugriff reproduzierbar sind. Ein Live-Test der
+Spracherkennung mit dem eigenen Mikrofon bleibt erforderlich.

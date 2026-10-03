@@ -5,13 +5,19 @@ import type { UserCurationEventResponse } from "@api/generated/sessions";
 import type { SpotifyTrackResponse } from "@api/generated/spotify";
 import type { ChatPlaylist } from "@features/chat/state/chat-reducer";
 import { pageStyles } from "@shared/styles/page";
-import { icon } from "@shared/ui/icons";
+import { icon, type IconName } from "@shared/ui/icons";
 import { emit } from "@shared/events";
 import { DeckController } from "./deck-controller";
 import { PlaybackController } from "@features/spotify/playback-controller";
 import { OAuthController } from "@features/auth/oauth-controller";
 import "@features/spotify/spotify-search";
 import "./components/music-card";
+
+const views = [
+  { id: "playlist", label: "Playlist", icon: "playlist" },
+  { id: "cards", label: "Karten", icon: "cards" },
+  { id: "export", label: "Export", icon: "download" },
+] as const satisfies readonly { id: string; label: string; icon: IconName }[];
 
 @customElement("deck-panel")
 export class DeckPanel extends LitElement {
@@ -20,6 +26,7 @@ export class DeckPanel extends LitElement {
   @property({ attribute: false }) user!: UserMeResponse;
   @property({ attribute: false }) curationEvents: UserCurationEventResponse[] = [];
   @property({ type: Boolean }) busy = false;
+  @property({ type: Boolean }) expanded = false;
   @state() private tab = "playlist";
   @state() private search = false;
   @state() private concealed = false;
@@ -33,6 +40,23 @@ export class DeckPanel extends LitElement {
       this.deck.reset();
     }
   }
+  private selectTab(event: KeyboardEvent): void {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+      return;
+    }
+    event.preventDefault();
+    const current = views.findIndex((view) => view.id === this.tab);
+    const index =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? views.length - 1
+          : (current + (event.key === "ArrowRight" ? 1 : -1) + views.length) % views.length;
+    this.tab = views[index].id;
+    void this.updateComplete.then(() =>
+      this.renderRoot.querySelector<HTMLButtonElement>(`#tab-${this.tab}`)?.focus(),
+    );
+  }
   static styles = css`
     ${pageStyles}
     :host {
@@ -44,29 +68,43 @@ export class DeckPanel extends LitElement {
     header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 18px 22px 12px;
-    }
-    header strong {
-      flex: 1;
-      font-size: 13px;
+      gap: 4px;
+      height: 58px;
+      flex: 0 0 58px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--color-border);
     }
     .tabs {
       display: flex;
-      gap: 20px;
-      margin: 0 22px;
-      border-bottom: 1px solid var(--color-border);
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      gap: 3px;
     }
     .tabs button {
-      padding: 10px 0;
-      border: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 33px;
+      padding: 6px 9px;
+      border: 1px solid transparent;
+      border-radius: 7px;
       background: transparent;
       color: var(--color-muted);
       font-size: 12px;
     }
     .tabs button[aria-selected="true"] {
       color: var(--color-text);
-      border-bottom: 2px solid var(--color-accent);
+      border-color: var(--color-border);
+      background: var(--color-panel);
+    }
+    .tabs button:hover {
+      color: var(--color-text);
+    }
+    header .icon-button {
+      width: 28px;
+      height: 32px;
     }
     .body {
       flex: 1;
@@ -156,6 +194,47 @@ export class DeckPanel extends LitElement {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 16px;
     }
+    music-card {
+      max-width: 300px;
+    }
+    :host(.expanded) .cards {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+    .card-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 22px 0 18px;
+    }
+    .card-options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      font-size: 12px;
+    }
+    .card-options span {
+      font-size: 11px;
+      color: var(--color-muted);
+    }
+    @media (max-width: 380px) {
+      .tabs button {
+        padding-inline: 6px;
+        gap: 4px;
+      }
+      .tabs svg {
+        display: none;
+      }
+      .cards {
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .body {
+        padding: 16px;
+      }
+    }
     .export {
       border: 1px solid var(--color-border);
       border-radius: 14px;
@@ -209,10 +288,32 @@ export class DeckPanel extends LitElement {
     const disabled = this.busy || !!this.deck.pending || !this.sessionId;
     const years = tracks.map((track) => track.year);
     const active = tracks.find((track) => track.spotifyUri === this.playback.uri);
-    return html`<header>
-        ${icon("layers", 17)}<strong>Dein Kartendeck</strong
-        ><span class="tag">${tracks.length} / 50</span
-        ><button
+    return html`<header aria-label="Deck-Arbeitsbereich">
+        <div class="tabs" role="tablist" aria-label="Deckansicht">
+          ${views.map(
+            ({ id, label, icon: symbol }) =>
+              html`<button
+                id=${`tab-${id}`}
+                role="tab"
+                aria-selected=${this.tab === id}
+                tabindex=${this.tab === id ? "0" : "-1"}
+                aria-controls="deck-content"
+                @keydown=${this.selectTab}
+                @click=${() => (this.tab = id)}
+              >
+                ${icon(symbol, 14)}${label}
+              </button>`,
+          )}
+        </div>
+        <button
+          class="icon-button"
+          aria-label=${this.expanded ? "Geteilte Ansicht" : "Deck vergrößern"}
+          title=${this.expanded ? "Geteilte Ansicht" : "Deck vergrößern"}
+          @click=${() => emit(this, "toggle-expand")}
+        >
+          ${icon(this.expanded ? "minimize" : "maximize", 15)}
+        </button>
+        <button
           class="icon-button"
           aria-label="Deck schließen"
           @click=${() => emit(this, "close-panel")}
@@ -220,25 +321,13 @@ export class DeckPanel extends LitElement {
           ${icon("close", 17)}
         </button>
       </header>
-      <div class="tabs" role="tablist" aria-label="Deckansicht">
-        ${[
-          ["playlist", "Playlist"],
-          ["cards", "Karten"],
-          ["export", "Export"],
-        ].map(
-          ([key, label]) =>
-            html`<button
-              id=${`tab-${key}`}
-              role="tab"
-              aria-selected=${this.tab === key}
-              aria-controls="deck-content"
-              @click=${() => (this.tab = key)}
-            >
-              ${label}
-            </button>`,
-        )}
-      </div>
-      <section id="deck-content" class="body" role="tabpanel" aria-labelledby=${`tab-${this.tab}`}>
+      <section
+        id="deck-content"
+        class="body"
+        role="tabpanel"
+        tabindex="0"
+        aria-labelledby=${`tab-${this.tab}`}
+      >
         ${this.deck.error || this.playback.error || this.oauth.error ? html`<p class="error" role="alert">${this.deck.error || this.playback.error || this.oauth.error}</p>` : nothing}
         <div class="subhead">
           <div>
@@ -284,8 +373,8 @@ export class DeckPanel extends LitElement {
         }
         ${
           this.tab === "cards"
-            ? html`<p>
-                  <label class="subtitle"
+            ? html`<div class="card-options">
+                  <label
                     ><input
                       type="checkbox"
                       .checked=${this.concealed}
@@ -293,9 +382,10 @@ export class DeckPanel extends LitElement {
                     />
                     Auflösung verbergen</label
                   >
-                </p>
+                  <span>5 × 5 cm · ${this.concealed ? "QR-Seite" : "Auflösung"}</span>
+                </div>
                 <div class="cards">
-                  ${tracks.map((track, i) => html`<music-card .card=${track} tone=${(["lime", "lilac", "peach"] as const)[i % 3]} ?concealed=${this.concealed}></music-card>`)}
+                  ${tracks.map((track, i) => html`<music-card .card=${track} .index=${i} ?concealed=${this.concealed}></music-card>`)}
                 </div>`
             : nothing
         }

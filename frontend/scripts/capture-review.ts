@@ -2,6 +2,7 @@ import { chromium, expect, type Page } from "@playwright/test";
 import { mkdir, rename, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { mockApi, session } from "../tests/browser/fixtures";
+import { mockSpeech, type SpeechTestWindow } from "../tests/browser/speech-fixture";
 
 const output = fileURLToPath(new URL("../../docs/reviews/lit-frontend/", import.meta.url));
 const raw = fileURLToPath(new URL("../test-results/review-raw/", import.meta.url));
@@ -77,10 +78,21 @@ try {
   const desktop = await desktopContext.newPage();
   watch(desktop);
   await mockApi(desktop, true, false, demo);
+  await mockSpeech(desktop);
   await desktop.goto(`${baseURL}/new`);
   await expect(desktop.locator("studio-page")).toBeVisible();
   await shot(desktop, "02-studio-desktop");
   await pause(1800);
+  await desktop.getByRole("button", { name: "Diktieren", exact: true }).click();
+  await desktop.evaluate(() =>
+    (window as SpeechTestWindow).speechInstances
+      .at(-1)!
+      .result("Ein Kartendeck mit Musik aus den Neunzigern für unseren Spieleabend."),
+  );
+  await shot(desktop, "13-dictation-desktop");
+  await pause(2100);
+  await desktop.getByRole("button", { name: "Text übernehmen" }).click();
+  await pause(1000);
   await desktop.getByRole("button", { name: /Zurück in die 90er/ }).click();
   await pause(1500);
   await desktop.getByRole("button", { name: "Nachricht senden", exact: true }).click();
@@ -93,8 +105,13 @@ try {
   await shot(desktop, "04-cards-desktop");
   await pause(2100);
   await desktop.getByRole("checkbox", { name: "Auflösung verbergen" }).check();
+  await shot(desktop, "11-qr-desktop");
   await pause(1800);
   await desktop.getByRole("checkbox", { name: "Auflösung verbergen" }).uncheck();
+  await desktop.getByRole("button", { name: "Deck vergrößern" }).click();
+  await shot(desktop, "12-workspace-expanded");
+  await pause(1700);
+  await desktop.getByRole("button", { name: "Geteilte Ansicht" }).click();
   await pause(700);
   await desktop.getByRole("tab", { name: "Export", exact: true }).click();
   await shot(desktop, "05-export-desktop");
@@ -122,10 +139,20 @@ try {
   const mobile = await mobileContext.newPage();
   watch(mobile);
   await mockApi(mobile, true, false, demo);
+  await mockSpeech(mobile);
   await mobile.goto(`${baseURL}/new`);
   await expect(mobile.locator("studio-page")).toBeVisible();
   await shot(mobile, "08-studio-mobile");
   await pause(1800);
+  await mobile.getByRole("button", { name: "Diktieren", exact: true }).click();
+  await mobile.evaluate(() =>
+    (window as SpeechTestWindow).speechInstances
+      .at(-1)!
+      .result("Ein Mix aus Disco und Neunziger-Hits."),
+  );
+  await shot(mobile, "14-dictation-mobile");
+  await pause(2000);
+  await mobile.getByRole("button", { name: "Diktat verwerfen" }).click();
   await mobile.getByRole("button", { name: "Seitenleiste öffnen" }).click();
   await pause(1300);
   await mobile.getByRole("button", { name: "Unser Spieleabend", exact: true }).click();
@@ -158,16 +185,17 @@ try {
       {
         desktop: "1440×960",
         mobile: "390×844",
-        screenshots: 10,
+        screenshots: 14,
         browserErrors: failures,
-        fixture: "Local HTTP and WebSocket mocks; no external account actions",
+        fixture:
+          "Local HTTP, WebSocket and SpeechRecognition mocks; no external account actions or microphone capture",
       },
       null,
       2,
     ),
   );
   process.stdout.write(
-    `Captured 10 screenshots and 2 recordings in ${output}\nRaw recordings: ${raw}\n`,
+    `Captured 14 screenshots and 2 recordings in ${output}\nRaw recordings: ${raw}\n`,
   );
 } finally {
   await browser.close();

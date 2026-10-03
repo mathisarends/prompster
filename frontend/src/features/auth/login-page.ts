@@ -132,7 +132,7 @@ export class LoginPage extends LitElement {
         </section>
         <section class="visual" aria-label="Beispielkarten">
           <div class="art">
-            ${exampleCards.map((card, i) => html`<music-card .card=${card} tone=${(["lilac", "lime", "peach"] as const)[i]}></music-card>`)}
+            ${exampleCards.map((card, i) => html`<music-card .card=${card} .index=${i}></music-card>`)}
           </div>
           <p class="caption">JEDER HIT HAT SEINE ZEIT.</p>
         </section>

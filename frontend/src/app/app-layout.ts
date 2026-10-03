@@ -29,7 +29,7 @@ export class AppLayout extends LitElement {
     window.removeEventListener("keydown", this.keydown);
     super.disconnectedCallback();
   }
-  protected updated(changed: PropertyValues): void {
+  protected willUpdate(changed: PropertyValues): void {
     if (changed.has("path")) {
       document.title = `${this.path === "/decks" ? "Meine Decks" : this.path === "/settings" ? "Einstellungen" : "Deckstudio"} · Prompster`;
       if (window.innerWidth <= 800) {
@@ -183,6 +183,7 @@ export class AppLayout extends LitElement {
     const list = this.sessions.list();
     const sessions = list.data?.items ?? [];
     const id = sessionIdFromPath(this.path) ?? "";
+    const isChat = this.path === "/new" || !!id;
     const selected = sessions.find((session) => session.id === this.selectedId);
     const listError = list.isError ? "Deine Sammlung konnte nicht geladen werden." : "";
     return html`<div
@@ -193,13 +194,17 @@ export class AppLayout extends LitElement {
       >
         ${this.sidebarOpen ? html`<button class="scrim" aria-label="Navigation schließen" @click=${() => (this.sidebarOpen = false)}></button><side-bar .entries=${sessions.map((session) => ({ id: session.id, title: session.title, starred: session.isStarred }))} .activeId=${id} .path=${this.path} .userName=${this.user.name} ?loading=${list.isPending} .error=${listError} @sidebar-toggle=${() => (this.sidebarOpen = false)} @show-rules=${() => this.renderRoot.querySelector<HTMLDialogElement>("#rules")?.showModal()}></side-bar>` : nothing}
         <main>
-          <div class="topbar">
-            ${!this.sidebarOpen ? html`<button class="icon-button" aria-label="Seitenleiste öffnen" @click=${() => (this.sidebarOpen = true)}>${icon("panelLeft", 18)}</button>` : nothing}<app-breadcrumb
-              label="Seitennavigation"
-              .items=${[{ label: "Dein Deckstudio" }, { label: this.path === "/settings" ? "Einstellungen" : this.path === "/decks" ? "Meine Decks" : "Musik & Erinnerungen" }]}
-            ></app-breadcrumb
-            ><span class="studio-status"><span class="dot"></span> Made for game night</span>
-          </div>
+          ${
+            !isChat
+              ? html`<div class="topbar">
+                  ${!this.sidebarOpen ? html`<button class="icon-button" aria-label="Seitenleiste öffnen" @click=${() => (this.sidebarOpen = true)}>${icon("panelLeft", 18)}</button>` : nothing}<app-breadcrumb
+                    label="Seitennavigation"
+                    .items=${[{ label: "Dein Deckstudio" }, { label: this.path === "/settings" ? "Einstellungen" : this.path === "/decks" ? "Meine Decks" : "Musik & Erinnerungen" }]}
+                  ></app-breadcrumb
+                  ><span class="studio-status"><span class="dot"></span> Made for game night</span>
+                </div>`
+              : nothing
+          }
           ${
             this.path === "/settings"
               ? html`<settings-page .user=${this.user}></settings-page>`
@@ -213,6 +218,8 @@ export class AppLayout extends LitElement {
                   ? html`<chat-page
                       .sessionId=${id}
                       .user=${this.user}
+                      .sidebarOpen=${this.sidebarOpen}
+                      @open-sidebar=${() => (this.sidebarOpen = true)}
                       @session-created=${(event: CustomEvent<string>) => emit(this, "navigate", chatPath(event.detail))}
                       @session-changed=${() => this.sessions.refresh()}
                     ></chat-page>`

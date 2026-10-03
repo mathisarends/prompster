@@ -5,6 +5,7 @@ import { listLlmOptionsQuery } from "@api/generated/llm-options";
 import type { UserMeResponse } from "@api/generated/users";
 import { pageStyles } from "@shared/styles/page";
 import { icon } from "@shared/ui/icons";
+import { emit } from "@shared/events";
 import { ChatController } from "./chat-controller";
 import type { ChatAttachment } from "./components/attachments/attachment-types";
 import type { SubmitOnboardingAnswerRequest } from "@api/generated/sessions";
@@ -15,14 +16,17 @@ import "./components/chat-attachments";
 import "@features/spotify/spotify-search";
 import "@features/deck/deck-panel";
 import "@chat";
+import "@shared/ui/breadcrumb";
 
 @customElement("chat-page")
 export class ChatPage extends LitElement {
   @property() sessionId = "";
   @property({ attribute: false }) user!: UserMeResponse;
+  @property({ type: Boolean }) sidebarOpen = true;
   @state() private draft = "";
   @state() private attachments: ChatAttachment[] = [];
   @state() private workspaceOpen = window.innerWidth > 1000;
+  @state() private workspaceExpanded = false;
   private drafts = new Map<string, { text: string; attachments: ChatAttachment[] }>();
   private chat = new ChatController(this);
   private models = createQueryController(this, listLlmOptionsQuery());
@@ -66,6 +70,7 @@ export class ChatPage extends LitElement {
     const options = this.models().data?.items ?? [];
     return html`<chat-composer
       .value=${this.draft}
+      .context=${this.sessionId}
       ?hasAttachments=${this.attachments.length > 0}
       ?pending=${this.chat.busy}
       ?stopping=${this.chat.stopping}
@@ -87,9 +92,16 @@ export class ChatPage extends LitElement {
           ?disabled=${this.chat.busy || this.attachments.length >= 8}
           @click=${() => this.renderRoot.querySelector<HTMLInputElement>("#images")?.click()}
         >
-          ${icon("plus", 17)}</button
-        ><button class="reference-button" ?disabled=${this.chat.busy} @click=${this.showReferences}>
-          ${icon("music", 14)} Referenz
+          ${icon("plus", 20)}</button
+        ><button
+          class="reference-button"
+          type="button"
+          aria-label="Musikalische Referenz hinzufügen"
+          title="Musikalische Referenz hinzufügen"
+          ?disabled=${this.chat.busy}
+          @click=${this.showReferences}
+        >
+          ${icon("music", 16)} <span>Referenz</span>
         </button>
         <select
           aria-label="KI-Modell"
@@ -120,17 +132,21 @@ export class ChatPage extends LitElement {
       flex-direction: column;
       flex: 1;
       min-width: 0;
+      min-height: 0;
+    }
+    .chat.expanded {
+      display: none;
     }
     .toolbar {
       display: flex;
       align-items: center;
-      padding: 0 24px;
+      padding: 0 20px;
       height: 58px;
       border-bottom: 1px solid var(--color-border);
       flex-shrink: 0;
       gap: 10px;
     }
-    .toolbar span {
+    .toolbar app-breadcrumb {
       flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -148,16 +164,17 @@ export class ChatPage extends LitElement {
     .composer-tools {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
       min-width: 0;
     }
     select {
       max-width: 175px;
-      padding: 5px;
+      min-height: 34px;
+      padding: 5px 7px;
       border: 0;
       background: transparent;
       color: var(--color-muted);
-      font-size: 11px;
+      font-size: 12px;
     }
     option {
       color: var(--color-text);
@@ -167,19 +184,29 @@ export class ChatPage extends LitElement {
       display: flex;
       align-items: center;
       gap: 5px;
-      padding: 0;
+      min-height: 34px;
+      padding: 5px 7px;
+      border-radius: 8px;
       border: 0;
       color: var(--color-muted);
       background: transparent;
-      font-size: 11px;
+      font-size: 12px;
+    }
+    .reference-button:hover {
+      background: var(--color-panel-hover);
+      color: var(--color-text);
     }
     .inline-error {
       margin: 10px 24px;
     }
     deck-panel {
-      width: min(43%, 550px);
+      width: min(46%, 600px);
       min-width: 340px;
       border-left: 1px solid var(--color-border);
+    }
+    deck-panel.expanded {
+      flex: 1;
+      width: auto;
     }
     onboarding-panel {
       margin: 10px 0 20px;
@@ -201,19 +228,46 @@ export class ChatPage extends LitElement {
         padding-inline: 14px;
       }
       select {
-        max-width: 115px;
+        max-width: 100px;
+      }
+      .reference-button span {
+        display: none;
+      }
+      .reference-button {
+        width: 34px;
+        justify-content: center;
       }
     }
   `;
   render() {
     const state = this.chat.state;
     const hasConversation = !!this.chat.id || this.chat.busy;
-    return html`<div class="toolbar">
-        <span>${state.title || "Neues Karten-Deck"}</span
-        >${hasConversation ? html`<button class="button" aria-expanded=${this.workspaceOpen} @click=${() => (this.workspaceOpen = !this.workspaceOpen)}>${icon("layers", 15)} ${this.workspaceOpen ? "Deck schließen" : "Dein Deck"}${state.playlist ? ` · ${state.playlist.tracks.length}` : ""}</button>` : nothing}
-      </div>
-      <div class="layout">
-        <section class="chat ${this.workspaceOpen && hasConversation ? "panel-open" : ""}">
+    return html`<div class="layout">
+        <section
+          class="chat ${this.workspaceOpen && hasConversation ? `panel-open ${this.workspaceExpanded ? "expanded" : ""}` : ""}"
+        >
+          <header class="toolbar">
+            ${!this.sidebarOpen ? html`<button class="icon-button" aria-label="Seitenleiste öffnen" @click=${() => emit(this, "open-sidebar")}>${icon("panelLeft", 18)}</button>` : nothing}
+            <app-breadcrumb
+              label="Seitennavigation"
+              .items=${[{ label: "Deckstudio" }, { label: state.title || "Neues Deck" }]}
+            ></app-breadcrumb>
+            ${
+              hasConversation
+                ? html`<button
+                    class="button deck-toggle"
+                    aria-expanded=${this.workspaceOpen}
+                    @click=${() => {
+                      this.workspaceOpen = !this.workspaceOpen;
+                      this.workspaceExpanded = false;
+                    }}
+                  >
+                    ${icon("layers", 15)}
+                    ${this.workspaceOpen ? "Deck schließen" : "Dein Deck"}${state.playlist ? ` · ${state.playlist.tracks.length}` : ""}
+                  </button>`
+                : nothing
+            }
+          </header>
           ${this.chat.loading ? html`<div class="status" role="status">Deck wird geladen …</div>` : !hasConversation ? html`<studio-page ?pending=${this.chat.busy} @draft-change=${(event: CustomEvent<string>) => (this.draft = event.detail)}>${this.composer()}</studio-page>` : html`<chat-message-list .entries=${state.entries} ?pending=${this.chat.busy}>${state.pendingInput ? html`<onboarding-panel .input=${state.pendingInput} ?pending=${this.chat.busy} @onboarding-submit=${(event: CustomEvent<{ answers: SubmitOnboardingAnswerRequest[]; complete: boolean }>) => this.chat.answer(event.detail.answers, event.detail.complete)}></onboarding-panel>` : nothing}</chat-message-list>`}
           ${
             this.chat.error
@@ -236,7 +290,27 @@ export class ChatPage extends LitElement {
           }
           ${hasConversation && !this.chat.loading ? html`<div class="composer-area">${this.composer()}</div>` : nothing}
         </section>
-        ${this.workspaceOpen && hasConversation ? html`<deck-panel .sessionId=${this.chat.id} .playlist=${state.playlist} .user=${this.user} .curationEvents=${this.chat.session?.unconsumedUserCurationEvents ?? []} ?busy=${this.chat.busy} @deck-changed=${() => this.chat.refresh()} @close-panel=${() => (this.workspaceOpen = false)}></deck-panel>` : nothing}
+        ${
+          this.workspaceOpen && hasConversation
+            ? html`<deck-panel
+                class=${this.workspaceExpanded ? "expanded" : ""}
+                .expanded=${this.workspaceExpanded}
+                .sessionId=${this.chat.id}
+                .playlist=${state.playlist}
+                .user=${this.user}
+                .curationEvents=${this.chat.session?.unconsumedUserCurationEvents ?? []}
+                ?busy=${this.chat.busy}
+                @deck-changed=${() => this.chat.refresh()}
+                @toggle-expand=${() => (this.workspaceExpanded = !this.workspaceExpanded)}
+                @close-panel=${async () => {
+                  this.workspaceOpen = false;
+                  this.workspaceExpanded = false;
+                  await this.updateComplete;
+                  this.renderRoot.querySelector<HTMLButtonElement>(".deck-toggle")?.focus();
+                }}
+              ></deck-panel>`
+            : nothing
+        }
       </div>
       <input
         id="images"
