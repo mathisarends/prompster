@@ -128,7 +128,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
-    { name = "pyrpckit", extra = ["codegen", "fastapi"] },
+    { name = "pyrpckit", extra = ["codegen", "dishka", "fastapi"] },
     { name = "python-multipart" },
     { name = "pyyaml" },
     { name = "qrcode", extra = ["pil"] },
@@ -160,7 +160,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
     { name = "pyjwt", specifier = ">=2.10.1" },
-    { name = "pyrpckit", extras = ["codegen", "fastapi"], specifier = "==0.9.0" },
+    { name = "pyrpckit", extras = ["codegen", "dishka", "fastapi"], specifier = "==0.10.0" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "qrcode", extras = ["pil"], specifier = ">=8.2" },
@@ -1052,19 +1052,22 @@ wheels = [
 
 [[package]]
 name = "pyrpckit"
-version = "0.9.0"
+version = "0.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5b/35/aa0c9739d2a5d01093f7220a47de9a16a067f0c87641ea294d785f59050c/pyrpckit-0.9.0.tar.gz", hash = "sha256:5f79760bb911a4206020fbf5369118886c6f964f8844d86543bb5005588103d1", size = 253179, upload-time = "2026-09-25T19:13:55.533Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f3/57/fd2a64e49fe93b23c477c7c2f94213ad92ad59e636e9ce338ba59eda721d/pyrpckit-0.10.0.tar.gz", hash = "sha256:3b2d2ce7291422d27e990a09907b03fff0d6943f99f612a40a993bac7dfa4689", size = 269865, upload-time = "2026-09-30T14:16:49.623Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0f/90/e010d5c079b2dfea9acb8acffe7a53ad4d0be0fab4a7563185e76891b9c2/pyrpckit-0.9.0-py3-none-any.whl", hash = "sha256:589469f074fed7b6948240fae3c7f9d2f11c17b53b76fbe06b54716a77277fb2", size = 133420, upload-time = "2026-09-25T19:13:54.347Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/59/3ff62189779bcc287a9c49342d5d0c03afb4c5ec8a8147ddda7136f2ae08/pyrpckit-0.10.0-py3-none-any.whl", hash = "sha256:1661ffc019ca1ab84a14b6892a0b94b457938866e9da36a1b4ab6dd0bbe9ca1c", size = 138173, upload-time = "2026-09-30T14:16:48.514Z" },
 ]
 
 [package.optional-dependencies]
 codegen = [
     { name = "jinja2" },
+]
+dishka = [
+    { name = "dishka" },
 ]
 fastapi = [
     { name = "fastapi" },

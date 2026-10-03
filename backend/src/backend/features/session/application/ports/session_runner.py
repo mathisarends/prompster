@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from uuid import UUID
-
-from pydantic import BaseModel, ConfigDict, Field
 
 from backend.features.session.domain import (
     OnboardingQuestionSelectionMode,
@@ -12,6 +10,7 @@ from backend.features.session.domain import (
     Session,
     ToolResultItem,
 )
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class _RunnerEvent(BaseModel):
@@ -132,7 +131,7 @@ class SessionRunner(ABC):
         *,
         session: Session,
         model_id: str | None = None,
-    ) -> AsyncIterator[SessionRunnerEvent]:
+    ) -> AsyncGenerator[SessionRunnerEvent]:
         """Runs the agent with the session context and yields runner events."""
 
     async def stop(self, *, session_id: UUID) -> bool:

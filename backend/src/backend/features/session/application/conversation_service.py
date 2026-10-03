@@ -1,13 +1,14 @@
 import asyncio
 import logging
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncGenerator, Callable
+from contextlib import aclosing
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from uuid import UUID
 
 from backend.features.session.application.events import (
-    SessionAssistantMessageChunk,
     SessionAssistantMessageCancelled,
+    SessionAssistantMessageChunk,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionContextCompacted,
@@ -20,12 +21,20 @@ from backend.features.session.application.events import (
     SessionSnapshot,
     SessionSuspendedForInput,
     SessionTitleGenerated,
+    SessionToolCallResolved,
     SessionToolCallRetry,
     SessionToolCallSequenceAdded,
     SessionToolCallSequenceCompleted,
-    SessionToolCallResolved,
     SuspensionKind,
 )
+from backend.features.session.application.image_attachment_service import (
+    ALLOWED_IMAGE_CONTENT_TYPES,
+    MAX_IMAGE_ATTACHMENT_SIZE_BYTES,
+    MAX_IMAGE_ATTACHMENTS_PER_MESSAGE,
+    SessionImageAttachmentReference,
+    normalize_content_type,
+)
+from backend.features.session.application.ports import MessageAttachmentStore
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
     SessionRunnerAssistantMessage,
@@ -46,14 +55,6 @@ from backend.features.session.application.ports.session_runner import (
 )
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
-)
-from backend.features.session.application.ports import MessageAttachmentStore
-from backend.features.session.application.image_attachment_service import (
-    MAX_IMAGE_ATTACHMENTS_PER_MESSAGE,
-    ALLOWED_IMAGE_CONTENT_TYPES,
-    MAX_IMAGE_ATTACHMENT_SIZE_BYTES,
-    SessionImageAttachmentReference,
-    normalize_content_type,
 )
 from backend.features.session.domain import (
     AssistantMessage,
@@ -121,7 +122,7 @@ class SessionConversationService:
         attachments: list[SessionMessageAttachment] | None = None,
         image_attachments: list[SessionImageAttachmentReference] | None = None,
         model_id: str | None = None,
-    ) -> AsyncIterator[SessionEvent]:
+    ) -> AsyncGenerator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         referenced_images = await self._promote_image_attachment_references(
             user_id=user_id,
@@ -137,12 +138,15 @@ class SessionConversationService:
             session=session,
             prompt=content,
         )
-        async for event in self._persist_and_resume_agent(
-            session=session,
-            title_task=title_task,
-            model_id=model_id,
-        ):
-            yield event
+        async with aclosing(
+            self._persist_and_resume_agent(
+                session=session,
+                title_task=title_task,
+                model_id=model_id,
+            )
+        ) as events:
+            async for event in events:
+                yield event
 
     async def submit_onboarding_answer(
         self,
@@ -167,17 +171,20 @@ class SessionConversationService:
         session_id: UUID,
         user_id: UUID,
         model_id: str | None = None,
-    ) -> AsyncIterator[SessionEvent]:
+    ) -> AsyncGenerator[SessionEvent]:
         session = await self._get_authorized(session_id=session_id, user_id=user_id)
         session.advance_to_building_phase()
         await self._persist_session(session=session)
         yield SessionSnapshot(session=session)
 
-        async for event in self._run_agent_and_consume_user_curation_events(
-            session=session,
-            model_id=model_id,
-        ):
-            yield event
+        async with aclosing(
+            self._run_agent_and_consume_user_curation_events(
+                session=session,
+                model_id=model_id,
+            )
+        ) as events:
+            async for event in events:
+                yield event
 
     def _maybe_start_title_generation(
         self,
@@ -198,19 +205,22 @@ class SessionConversationService:
         session: Session,
         title_task: asyncio.Task[str] | None = None,
         model_id: str | None = None,
-    ) -> AsyncIterator[SessionEvent]:
+    ) -> AsyncGenerator[SessionEvent]:
         try:
             await self._persist_session(session=session)
-            async for event in self._run_agent_and_consume_user_curation_events(
-                session=session,
-                model_id=model_id,
-            ):
-                yield event
-                for title_event in await self._emit_title_if_ready(
+            async with aclosing(
+                self._run_agent_and_consume_user_curation_events(
                     session=session,
-                    title_task=title_task,
-                ):
-                    yield title_event
+                    model_id=model_id,
+                )
+            ) as events:
+                async for event in events:
+                    yield event
+                    for title_event in await self._emit_title_if_ready(
+                        session=session,
+                        title_task=title_task,
+                    ):
+                        yield title_event
             for title_event in await self._flush_title(
                 session=session,
                 title_task=title_task,
@@ -219,6 +229,7 @@ class SessionConversationService:
         finally:
             if title_task is not None and not title_task.done():
                 title_task.cancel()
+                await asyncio.gather(title_task, return_exceptions=True)
             elif title_task is not None and title_task.done():
                 self._consume_title_task_exception(title_task)
 
@@ -434,36 +445,39 @@ class SessionConversationService:
         session: Session,
         model_id: str | None = None,
         on_cancelled: Callable[[], None] | None = None,
-    ) -> AsyncIterator[SessionEvent]:
+    ) -> AsyncGenerator[SessionEvent]:
         state = _AgentRunState()
 
-        async for event in self._runner.run(session=session, model_id=model_id):
-            if not isinstance(event, SessionRunnerAssistantMessageChunk):
-                logger.debug(
-                    "Runner event received for session %s: %s",
-                    session.id,
-                    type(event).__name__,
-                )
-            session_events = await self._handle_runner_event(
-                event=event,
-                session=session,
-                state=state,
-            )
-
-            if state.cancelled and on_cancelled is not None:
-                on_cancelled()
-
-            for session_event in session_events:
-                if not isinstance(session_event, SessionAssistantMessageChunk):
+        async with aclosing(
+            self._runner.run(session=session, model_id=model_id)
+        ) as events:
+            async for event in events:
+                if not isinstance(event, SessionRunnerAssistantMessageChunk):
                     logger.debug(
-                        "Session event emitted for session %s: %s",
+                        "Runner event received for session %s: %s",
                         session.id,
-                        type(session_event).__name__,
+                        type(event).__name__,
                     )
-                yield session_event
+                session_events = await self._handle_runner_event(
+                    event=event,
+                    session=session,
+                    state=state,
+                )
 
-            if state.stopped:
-                return
+                if state.cancelled and on_cancelled is not None:
+                    on_cancelled()
+
+                for session_event in session_events:
+                    if not isinstance(session_event, SessionAssistantMessageChunk):
+                        logger.debug(
+                            "Session event emitted for session %s: %s",
+                            session.id,
+                            type(session_event).__name__,
+                        )
+                    yield session_event
+
+                if state.stopped:
+                    return
 
     async def _handle_runner_event(
         self,
@@ -944,19 +958,22 @@ class SessionConversationService:
         *,
         session: Session,
         model_id: str | None = None,
-    ) -> AsyncIterator[SessionEvent]:
+    ) -> AsyncGenerator[SessionEvent]:
         cancelled = False
 
         def _mark_cancelled() -> None:
             nonlocal cancelled
             cancelled = True
 
-        async for event in self._run_agent(
-            session=session,
-            model_id=model_id,
-            on_cancelled=_mark_cancelled,
-        ):
-            yield event
+        async with aclosing(
+            self._run_agent(
+                session=session,
+                model_id=model_id,
+                on_cancelled=_mark_cancelled,
+            )
+        ) as events:
+            async for event in events:
+                yield event
 
         if cancelled:
             return
