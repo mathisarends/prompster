@@ -1,3 +1,4 @@
+import { msg } from "@lit/localize";
 let loadPromise: Promise<typeof Spotify> | null = null;
 
 export const loadSpotifySdk = (): Promise<typeof Spotify> => {
@@ -27,7 +28,7 @@ export const loadSpotifySdk = (): Promise<typeof Spotify> => {
     script.async = true;
     script.onerror = () => {
       loadPromise = null;
-      reject(new Error("Spotify SDK failed to load."));
+      reject(new Error(msg("Der Spotify-Player konnte nicht geladen werden.")));
     };
 
     document.body.appendChild(script);

@@ -1,3 +1,4 @@
+import { msg, localized } from "@lit/localize";
 import { createQueryController } from "@tanstack/lit-query";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -18,6 +19,7 @@ import "@chat";
 import "@shared/ui/breadcrumb";
 
 @customElement("chat-page")
+@localized()
 export class ChatPage extends LitElement {
   @property() sessionId = "";
   @property({ attribute: false }) user!: UserMeResponse;
@@ -83,15 +85,15 @@ export class ChatPage extends LitElement {
       <div slot="tools" class="composer-tools">
         <button
           class="icon-button"
-          title="Bilder hinzufügen"
-          aria-label="Bilder hinzufügen"
+          title=${msg("Bilder hinzufügen")}
+          aria-label=${msg("Bilder hinzufügen")}
           ?disabled=${this.chat.busy || this.attachments.length >= 8}
           @click=${() => this.renderRoot.querySelector<HTMLInputElement>("#images")?.click()}
         >
           ${icon("plus", 20)}
         </button>
         <select
-          aria-label="KI-Modell"
+          aria-label=${msg("KI-Modell")}
           ?disabled=${this.chat.busy || !options.length}
           .value=${this.chat.modelId ?? options.find((model) => model.isDefault)?.id ?? options[0]?.id ?? ""}
           @change=${(event: Event) => (this.chat.modelId = (event.target as HTMLSelectElement).value)}
@@ -210,10 +212,10 @@ export class ChatPage extends LitElement {
           class="chat ${this.workspaceOpen && hasConversation ? `panel-open ${this.workspaceExpanded ? "expanded" : ""}` : ""}"
         >
           <header class="toolbar">
-            ${!this.sidebarOpen ? html`<button class="icon-button" aria-label="Seitenleiste öffnen" @click=${() => emit(this, "open-sidebar")}>${icon("panelLeft", 18)}</button>` : nothing}
+            ${!this.sidebarOpen ? html`<button class="icon-button" aria-label=${msg("Seitenleiste öffnen")} @click=${() => emit(this, "open-sidebar")}>${icon("panelLeft", 18)}</button>` : nothing}
             <app-breadcrumb
-              label="Seitennavigation"
-              .items=${[{ label: "Deckstudio" }, { label: state.title || "Neues Deck" }]}
+              label=${msg("Seitennavigation")}
+              .items=${[{ label: msg("Deckstudio") }, { label: state.title || msg("Neues Deck") }]}
             ></app-breadcrumb>
             ${
               hasConversation
@@ -226,12 +228,12 @@ export class ChatPage extends LitElement {
                     }}
                   >
                     ${icon("layers", 15)}
-                    ${this.workspaceOpen ? "Deck schließen" : "Dein Deck"}${state.playlist ? ` · ${state.playlist.tracks.length}` : ""}
+                    ${this.workspaceOpen ? msg("Deck schließen") : msg("Dein Deck")}${state.playlist ? ` · ${state.playlist.tracks.length}` : ""}
                   </button>`
                 : nothing
             }
           </header>
-          ${this.chat.loading ? html`<div class="status" role="status">Deck wird geladen …</div>` : !hasConversation ? html`<studio-page ?pending=${this.chat.busy} @draft-change=${(event: CustomEvent<string>) => (this.draft = event.detail)}>${this.composer()}</studio-page>` : html`<chat-message-list .entries=${state.entries} ?pending=${this.chat.busy}>${state.pendingInput ? html`<onboarding-panel .input=${state.pendingInput} ?pending=${this.chat.busy} @onboarding-submit=${(event: CustomEvent<{ answers: SubmitOnboardingAnswerRequest[]; complete: boolean }>) => this.chat.answer(event.detail.answers, event.detail.complete)}></onboarding-panel>` : nothing}</chat-message-list>`}
+          ${this.chat.loading ? html`<div class="status" role="status">${msg("Deck wird geladen …")}</div>` : !hasConversation ? html`<studio-page ?pending=${this.chat.busy} @draft-change=${(event: CustomEvent<string>) => (this.draft = event.detail)}>${this.composer()}</studio-page>` : html`<chat-message-list .entries=${state.entries} ?pending=${this.chat.busy}>${state.pendingInput ? html`<onboarding-panel .input=${state.pendingInput} ?pending=${this.chat.busy} @onboarding-submit=${(event: CustomEvent<{ answers: SubmitOnboardingAnswerRequest[]; complete: boolean }>) => this.chat.answer(event.detail.answers, event.detail.complete)}></onboarding-panel>` : nothing}</chat-message-list>`}
           ${
             this.chat.error
               ? html`<p class="error inline-error" role="alert">
@@ -245,7 +247,7 @@ export class ChatPage extends LitElement {
                             void this.chat.open(this.sessionId);
                           }}
                         >
-                          Erneut laden
+                          ${msg("Erneut laden")}
                         </button>`
                   }
                 </p>`

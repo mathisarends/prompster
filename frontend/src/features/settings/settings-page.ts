@@ -1,3 +1,5 @@
+import { msg, localized } from "@lit/localize";
+import { deleteAccountDescription } from "@shared/i18n/messages";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { spotifyDisconnect } from "@api/generated/spotify";
@@ -8,11 +10,12 @@ import { OAuthController } from "@features/auth/oauth-controller";
 import "@shared/ui/language-select";
 
 @customElement("settings-page")
+@localized()
 export class SettingsPage extends LitElement {
   @property({ attribute: false }) user!: UserMeResponse;
   @state() private error = "";
   @state() private pending = false;
-  @state() private deleteInfo = "";
+  @state() private deleteCount = 0;
   private oauth = new OAuthController(this, async () => {
     emit(this, "user-refresh");
   });
@@ -31,7 +34,7 @@ export class SettingsPage extends LitElement {
     this.pending = true;
     try {
       const info = await getDeleteInformation();
-      this.deleteInfo = `${info.sessionCount} Decks mit ihren Unterhaltungen werden zusammen mit deinem Konto gelöscht.`;
+      this.deleteCount = info.sessionCount;
       this.renderRoot.querySelector("dialog")?.showModal();
     } catch (error) {
       this.error = errorMessage(error);
@@ -97,28 +100,28 @@ export class SettingsPage extends LitElement {
     }
   `;
   render() {
-    return html`<h1>Einstellungen</h1>
+    return html`<h1>${msg("Einstellungen")}</h1>
       ${this.error || this.oauth.error ? html`<p class="error" role="alert">${this.error || this.oauth.error}</p>` : nothing}
       <section>
         <div class="row"><language-select></language-select></div>
       </section>
       <section>
-        <h2>Dein Konto</h2>
+        <h2>${msg("Dein Konto")}</h2>
         <div class="row">
           <div>
             <strong>${this.user.name}</strong>
-            <p>Deine Decks werden in deinem Konto gespeichert.</p>
+            <p>${msg("Deine Decks werden in deinem Konto gespeichert.")}</p>
           </div>
-          <button class="button" @click=${() => emit(this, "sign-out")}>Abmelden</button>
+          <button class="button" @click=${() => emit(this, "sign-out")}>${msg("Abmelden")}</button>
         </div>
       </section>
       <section>
-        <h2>Musik & Wiedergabe</h2>
+        <h2>${msg("Musik & Wiedergabe")}</h2>
         <div class="row">
           <div>
             <strong>Spotify</strong>
             <p>
-              ${this.user.spotifyConnected ? (this.user.spotifyPremium ? "Verbunden · Premium" : "Verbunden · Standard") : "Verbinde dein Konto für Playlist-Exporte."}
+              ${this.user.spotifyConnected ? (this.user.spotifyPremium ? msg("Verbunden · Premium") : msg("Verbunden · Standard")) : msg("Verbinde dein Konto für Playlist-Exporte.")}
             </p>
           </div>
           <button
@@ -126,35 +129,35 @@ export class SettingsPage extends LitElement {
             ?disabled=${this.pending || !!this.oauth.pending}
             @click=${() => (this.user.spotifyConnected ? this.disconnect() : this.oauth.start("spotify-connect"))}
           >
-            ${this.user.spotifyConnected ? "Trennen" : "Verbinden"}
+            ${this.user.spotifyConnected ? msg("Trennen") : msg("Verbinden")}
           </button>
         </div>
       </section>
       <section>
-        <h2>Kontoverwaltung</h2>
+        <h2>${msg("Kontoverwaltung")}</h2>
         <div class="row">
           <div>
-            <strong>Konto löschen</strong>
-            <p>Entfernt dein Konto und die zugehörigen Daten dauerhaft.</p>
+            <strong>${msg("Konto löschen")}</strong>
+            <p>${msg("Entfernt dein Konto und die zugehörigen Daten dauerhaft.")}</p>
           </div>
           <button class="button danger" ?disabled=${this.pending} @click=${this.prepareDelete}>
-            Konto löschen
+            ${msg("Konto löschen")}
           </button>
         </div>
       </section>
-      <dialog aria-label="Konto endgültig löschen">
-        <h2>Konto endgültig löschen?</h2>
-        <p>Diese Aktion kann nicht rückgängig gemacht werden.</p>
-        <p>${this.deleteInfo}</p>
+      <dialog aria-label=${msg("Konto endgültig löschen")}>
+        <h2>${msg("Konto endgültig löschen?")}</h2>
+        <p>${msg("Diese Aktion kann nicht rückgängig gemacht werden.")}</p>
+        <p>${deleteAccountDescription(this.deleteCount)}</p>
         <div class="actions">
           <button
             class="button"
             ?disabled=${this.pending}
             @click=${() => this.renderRoot.querySelector("dialog")?.close()}
           >
-            Abbrechen</button
+            ${msg("Abbrechen")}</button
           ><button class="button danger" ?disabled=${this.pending} @click=${this.removeAccount}>
-            Endgültig löschen
+            ${msg("Endgültig löschen")}
           </button>
         </div>
       </dialog>`;

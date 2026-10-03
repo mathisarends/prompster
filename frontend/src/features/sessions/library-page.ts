@@ -1,3 +1,5 @@
+import { msg, localized } from "@lit/localize";
+import { formatDate, getLocale } from "@shared/i18n";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { SessionSummaryResponse } from "@api/generated/sessions";
@@ -6,6 +8,7 @@ import { icon } from "@shared/ui/icons";
 import { emit } from "@shared/events";
 
 @customElement("library-page")
+@localized()
 export class LibraryPage extends LitElement {
   @property({ attribute: false }) sessions: SessionSummaryResponse[] = [];
   @property({ type: Boolean }) loading = false;
@@ -89,29 +92,31 @@ export class LibraryPage extends LitElement {
   `;
   render() {
     const sessions = this.sessions.filter((item) =>
-      item.title.toLowerCase().includes(this.filter.toLowerCase()),
+      item.title
+        .toLocaleLowerCase(getLocale())
+        .includes(this.filter.toLocaleLowerCase(getLocale())),
     );
     return html`<header>
         <div>
-          <p class="eyebrow">DEINE MUSIK. DEINE ERINNERUNGEN.</p>
-          <h1>Meine Decks</h1>
-          <p>Für die nächste Runde ist immer Platz.</p>
+          <p class="eyebrow">${msg("DEINE MUSIK. DEINE ERINNERUNGEN.")}</p>
+          <h1>${msg("Meine Decks")}</h1>
+          <p>${msg("Für die nächste Runde ist immer Platz.")}</p>
         </div>
         <button class="button primary" @click=${() => emit(this, "navigate", "/new")}>
-          ${icon("plus", 16)} Neues Deck
+          ${icon("plus", 16)} ${msg("Neues Deck")}
         </button>
       </header>
       <input
         class="input"
         type="search"
-        aria-label="Sammlung filtern"
-        placeholder="Dein nächster Lieblingsmix …"
+        aria-label=${msg("Sammlung filtern")}
+        placeholder=${msg("Dein nächster Lieblingsmix …")}
         .value=${this.filter}
         @input=${(event: Event) => (this.filter = (event.target as HTMLInputElement).value)}
-      />${this.loading ? html`<p class="status" role="status">Decks werden geladen …</p>` : nothing}${this.error ? html`<p class="error" role="alert">${this.error}<button class="text-button" @click=${() => emit(this, "sessions-retry")}>Erneut versuchen</button></p>` : nothing}
+      />${this.loading ? html`<p class="status" role="status">${msg("Decks werden geladen …")}</p>` : nothing}${this.error ? html`<p class="error" role="alert">${this.error}<button class="text-button" @click=${() => emit(this, "sessions-retry")}>${msg("Erneut versuchen")}</button></p>` : nothing}
       <div class="grid">
-        ${sessions.map((session) => html`<button class="tile" @click=${() => emit(this, "session-select", session.id)}><span class="art">${icon("music", 28)}</span>${session.isStarred ? html`<span class="star">${icon("sparkles", 16)}</span>` : nothing}<strong class="title">${session.title || "Neues Deck"}</strong><small>${new Intl.DateTimeFormat("de", { day: "numeric", month: "long", year: "numeric" }).format(new Date(session.lastActivityAt))}</small></button>`)}
+        ${sessions.map((session) => html`<button class="tile" @click=${() => emit(this, "session-select", session.id)}><span class="art">${icon("music", 28)}</span>${session.isStarred ? html`<span class="star">${icon("sparkles", 16)}</span>` : nothing}<strong class="title">${session.title || msg("Neues Deck")}</strong><small>${formatDate(session.lastActivityAt)}</small></button>`)}
       </div>
-      ${!sessions.length && !this.loading && !this.error ? html`<div class="status"><p>${this.filter ? "Kein Deck passt zu deiner Suche." : "Deine Sammlung beginnt mit einer Idee."}</p></div>` : nothing}`;
+      ${!sessions.length && !this.loading && !this.error ? html`<div class="status"><p>${this.filter ? msg("Kein Deck passt zu deiner Suche.") : msg("Deine Sammlung beginnt mit einer Idee.")}</p></div>` : nothing}`;
   }
 }

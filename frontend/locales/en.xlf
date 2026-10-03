@@ -10,6 +10,790 @@
   <source>Die Sprache konnte nicht geladen werden. Bitte erneut versuchen.</source>
   <target>The language could not be loaded. Please try again.</target>
 </trans-unit>
+<trans-unit id="sa97a7c4918fd4796">
+  <source>Deine Sammlung konnte nicht geladen werden.</source>
+  <target>Your collection could not be loaded.</target>
+</trans-unit>
+<trans-unit id="s192e141b72585539">
+  <source>Navigation schließen</source>
+  <target>Close navigation</target>
+</trans-unit>
+<trans-unit id="scd8bb7263024bac2">
+  <source>Musik &amp; Erinnerungen</source>
+  <target>Music &amp; memories</target>
+</trans-unit>
+<trans-unit id="s8ee520c374990751">
+  <source>Made for game night</source>
+  <target>Made for game night</target>
+</trans-unit>
+<trans-unit id="s216510f36fe0c4e1">
+  <source>Diese Seite gibt es nicht.</source>
+  <target>This page does not exist.</target>
+</trans-unit>
+<trans-unit id="s8cefa28f0ef6c706">
+  <source>Zum Deckstudio</source>
+  <target>Go to the deck studio</target>
+</trans-unit>
+<trans-unit id="s4da25cb4461ef1aa">
+  <source>Deck verwalten</source>
+  <target>Manage deck</target>
+</trans-unit>
+<trans-unit id="sef49aec68fd1dc66">
+  <source>Name</source>
+  <target>Name</target>
+</trans-unit>
+<trans-unit id="s03eb33a7d9b6de4b">
+  <source>Deckname</source>
+  <target>Deck name</target>
+</trans-unit>
+<trans-unit id="s9caa55ebf88e5e99">
+  <source>Aus Favoriten entfernen</source>
+  <target>Remove from favorites</target>
+</trans-unit>
+<trans-unit id="scad8cf1c43a9431d">
+  <source>Als Favorit speichern</source>
+  <target>Save as favorite</target>
+</trans-unit>
+<trans-unit id="s2c6925463081748a">
+  <source>Speichern</source>
+  <target>Save</target>
+</trans-unit>
+<trans-unit id="s75cc1f6fb342d9af">
+  <source>Deck löschen</source>
+  <target>Delete deck</target>
+</trans-unit>
+<trans-unit id="s1dea781615a0fa01">
+  <source>Das Deck und seine Unterhaltung werden dauerhaft gelöscht.</source>
+  <target>This deck and its conversation will be permanently deleted.</target>
+</trans-unit>
+<trans-unit id="sb2246a8686ca9805">
+  <source>Schließen</source>
+  <target>Close</target>
+</trans-unit>
+<trans-unit id="s50d15317d2f93005">
+  <source>Die Verbindung zum Server ist gerade nicht verfügbar.</source>
+  <target>The server is currently unavailable.</target>
+</trans-unit>
+<trans-unit id="saeffe10c174416d5">
+  <source>Abmelden fehlgeschlagen. Bitte erneut versuchen.</source>
+  <target>Sign-out failed. Please try again.</target>
+</trans-unit>
+<trans-unit id="sbb09ec8f1f0ce1fa">
+  <source>Dein Deckstudio wird geladen …</source>
+  <target>Loading your deck studio …</target>
+</trans-unit>
+<trans-unit id="s5c89b6fcc423e418">
+  <source>Dein Deckstudio</source>
+  <target>Your deck studio</target>
+</trans-unit>
+<trans-unit id="s30c611b886c3a6f6">
+  <source>DEIN SOUNDTRACK. DEIN SPIEL.</source>
+  <target>YOUR SOUNDTRACK. YOUR GAME.</target>
+</trans-unit>
+<trans-unit id="h5e63b18244971ac4">
+  <source>Aus Lieblingssongs<x id="0" equiv-text="&lt;br&gt;"/>werden Spieleabende.</source>
+  <target>Turn favorite songs<x id="0" equiv-text="&lt;br&gt;"/>into game nights.</target>
+</trans-unit>
+<trans-unit id="s98567ec28c0d9511">
+  <source>Beschreibe deine Musikidee. Prompster findet die passenden Songs und macht daraus dein persönliches Musik-Kartendeck.</source>
+  <target>Describe your music idea. Prompster finds the right songs and turns them into your personal music card deck.</target>
+</trans-unit>
+<trans-unit id="sb0c317f442b06974">
+  <source>Spotify-Anmeldung läuft …</source>
+  <target>Signing in with Spotify …</target>
+</trans-unit>
+<trans-unit id="s5d4a55b78ee0e118">
+  <source>Mit Spotify fortfahren</source>
+  <target>Continue with Spotify</target>
+</trans-unit>
+<trans-unit id="s46bdf7eb447ddeaf">
+  <source>Google-Anmeldung läuft …</source>
+  <target>Signing in with Google …</target>
+</trans-unit>
+<trans-unit id="s32c5441bc3033459">
+  <source>Mit Google fortfahren</source>
+  <target>Continue with Google</target>
+</trans-unit>
+<trans-unit id="sf4340589ac27ee35">
+  <source>Verbindung erneut prüfen</source>
+  <target>Check connection again</target>
+</trans-unit>
+<trans-unit id="s4ef365dfb6167847">
+  <source>Musik entdecken · Karten gestalten · Gemeinsam spielen</source>
+  <target>Discover music · Create cards · Play together</target>
+</trans-unit>
+<trans-unit id="s7ebb955954e23e3b">
+  <source>Beispielkarten</source>
+  <target>Example cards</target>
+</trans-unit>
+<trans-unit id="s3313beeba49003f7">
+  <source>JEDER HIT HAT SEINE ZEIT.</source>
+  <target>EVERY HIT HAS ITS MOMENT.</target>
+</trans-unit>
+<trans-unit id="s0b3faa45798445f2">
+  <source>Bitte erlaube Pop-ups, um dich anzumelden.</source>
+  <target>Please allow pop-ups to sign in.</target>
+</trans-unit>
+<trans-unit id="s37a3df2856417e0d">
+  <source>Die Anmeldung wurde geschlossen oder ist abgelaufen. Bitte erneut versuchen.</source>
+  <target>Sign-in was closed or timed out. Please try again.</target>
+</trans-unit>
+<trans-unit id="s468aa9b266edb33b">
+  <source>Die Sitzung konnte nach der Anmeldung nicht geladen werden.</source>
+  <target>Your session could not be loaded after sign-in.</target>
+</trans-unit>
+<trans-unit id="s532fa882eb313953">
+  <source>Die Anmeldung wurde abgebrochen oder ist fehlgeschlagen.</source>
+  <target>Sign-in was canceled or failed.</target>
+</trans-unit>
+<trans-unit id="s6661f0b02378b675">
+  <source>Die Bilddatei ist nicht mehr verfügbar. Bitte erneut hinzufügen.</source>
+  <target>The image is no longer available. Please attach it again.</target>
+</trans-unit>
+<trans-unit id="s391966933ff92195">
+  <source>Analysiere die angehängten Bilder.</source>
+  <target>Analyze the attached images.</target>
+</trans-unit>
+<trans-unit id="sbff826b8bac92447">
+  <source>Bilder hinzufügen</source>
+  <target>Add images</target>
+</trans-unit>
+<trans-unit id="s7094a4620277e71f">
+  <source>KI-Modell</source>
+  <target>AI model</target>
+</trans-unit>
+<trans-unit id="se24d9fd4a27fcf8e">
+  <source>Seitenleiste öffnen</source>
+  <target>Open sidebar</target>
+</trans-unit>
+<trans-unit id="sb713cee2bbdcfdce">
+  <source>Deckstudio</source>
+  <target>Deck studio</target>
+</trans-unit>
+<trans-unit id="sec8c8fd9b4d28bca">
+  <source>Dein Deck</source>
+  <target>Your deck</target>
+</trans-unit>
+<trans-unit id="sa94ee80cacd4ae2a">
+  <source>Deck wird geladen …</source>
+  <target>Loading deck …</target>
+</trans-unit>
+<trans-unit id="s3dbd99cce1347ad0">
+  <source>Erneut laden</source>
+  <target>Reload</target>
+</trans-unit>
+<trans-unit id="sbe192d25b2524afe">
+  <source>GUTE MUSIK. GUTE LEUTE. DEIN DECK.</source>
+  <target>GOOD MUSIC. GOOD COMPANY. YOUR DECK.</target>
+</trans-unit>
+<trans-unit id="s093a3e69b0a5eb97">
+  <source>Jeder Hit hat seine Zeit.</source>
+  <target>Every hit has its moment.</target>
+</trans-unit>
+<trans-unit id="sdd0fbb770431a395">
+  <source>Welche ist deine?</source>
+  <target>What's yours?</target>
+</trans-unit>
+<trans-unit id="se3664f659abc7e43">
+  <source>Mach aus deinen Lieblingssongs ein eigenes Kartenspiel.</source>
+  <target>Turn your favorite songs into your own card game.</target>
+</trans-unit>
+<trans-unit id="s399d54ffe3f6b97e">
+  <source>Du bringst die Idee. Hier entsteht dein Deck.</source>
+  <target>Bring your idea. Build your deck here.</target>
+</trans-unit>
+<trans-unit id="sd4be4fb5b0791afe">
+  <source>Ein bisschen Inspiration für den Anfang</source>
+  <target>A little inspiration to get started</target>
+</trans-unit>
+<trans-unit id="sa86ce8620578f4ce">
+  <source>Für deinen nächsten Spieleabend. Mit Musik, die euch verbindet.</source>
+  <target>For your next game night. With music that brings you together.</target>
+</trans-unit>
+<trans-unit id="sb2399d357a01a506">
+  <source><x id="0" equiv-text="${item.title}"/> entfernen</source>
+  <target>Remove <x id="0" equiv-text="${item.title}"/></target>
+</trans-unit>
+<trans-unit id="s2d5d845e6a69a382">
+  <source>Unterhaltung</source>
+  <target>Conversation</target>
+</trans-unit>
+<trans-unit id="s33233842012b51b8">
+  <source>Angehängtes Bild</source>
+  <target>Attached image</target>
+</trans-unit>
+<trans-unit id="se26a2cab6160f469">
+  <source>Fehlgeschlagen</source>
+  <target>Failed</target>
+</trans-unit>
+<trans-unit id="scf22864b74304b94">
+  <source>Abgeschlossen</source>
+  <target>Completed</target>
+</trans-unit>
+<trans-unit id="s3fc9d8a0011655c1">
+  <source>In Arbeit</source>
+  <target>In progress</target>
+</trans-unit>
+<trans-unit id="s7552eabd002ef0a1">
+  <source>Prompster arbeitet an deinem Deck …</source>
+  <target>Prompster is working on your deck …</target>
+</trans-unit>
+<trans-unit id="sb44c8fc2956d500f">
+  <source>Eigene Antwort</source>
+  <target>Your own answer</target>
+</trans-unit>
+<trans-unit id="s06d0eaebb90ce216">
+  <source>Oder deine eigene Antwort …</source>
+  <target>Or write your own answer …</target>
+</trans-unit>
+<trans-unit id="sd40f26d66a46eb28">
+  <source>Wird übernommen …</source>
+  <target>Saving …</target>
+</trans-unit>
+<trans-unit id="se9e28e558153553d">
+  <source>Deck zusammenstellen</source>
+  <target>Build deck</target>
+</trans-unit>
+<trans-unit id="s2b8cea86346ef79a">
+  <source>Antwort übernehmen</source>
+  <target>Use answer</target>
+</trans-unit>
+<trans-unit id="s90b9e59e94a0ec31">
+  <source>Zurück in die 90er</source>
+  <target>Back to the 90s</target>
+</trans-unit>
+<trans-unit id="se6501cd0909f8e38">
+  <source>Boybands, Britpop &amp; große Gefühle</source>
+  <target>Boy bands, Britpop &amp; big emotions</target>
+</trans-unit>
+<trans-unit id="se7ec9bdd7d9e22a6">
+  <source>Ein Deck mit den großen Hits der 90er: von Boybands bis Britpop, für einen nostalgischen Spieleabend.</source>
+  <target>A deck of the biggest 90s hits, from boy bands to Britpop, for a nostalgic game night.</target>
+</trans-unit>
+<trans-unit id="s4f61704ab31d942e">
+  <source>Einmal quer durch die Zeit</source>
+  <target>A journey through time</target>
+</trans-unit>
+<trans-unit id="s82c4b1ce0b3793f3">
+  <source>Von Disco bis zu deinen Lieblingshits</source>
+  <target>From disco to your favorite hits</target>
+</trans-unit>
+<trans-unit id="s409271b1bd7e7103">
+  <source>Ein bunt gemischtes Musikdeck von den 70ern bis heute. Bekannte Songs und ein paar überraschende Entdeckungen.</source>
+  <target>A mix of music from the 70s to today. Familiar songs and a few surprising discoveries.</target>
+</trans-unit>
+<trans-unit id="s8a7d6e660115c22b">
+  <source>Die Mitsing-Edition</source>
+  <target>The sing-along edition</target>
+</trans-unit>
+<trans-unit id="s12a8b0cb3a46b625">
+  <source>Songs, bei denen niemand still bleibt</source>
+  <target>Songs that get everyone singing</target>
+</trans-unit>
+<trans-unit id="s5833936c702d95bf">
+  <source>Ein Musikdeck voller Partyklassiker und Mitsing-Hits für einen Spieleabend mit Freunden.</source>
+  <target>A deck full of party classics and sing-along hits for a game night with friends.</target>
+</trans-unit>
+<trans-unit id="s37fc7032c45b72be">
+  <source>Der Spotify-Export wurde ohne Ergebnis beendet.</source>
+  <target>The Spotify export ended without a result.</target>
+</trans-unit>
+<trans-unit id="sc98b6f782e90c037">
+  <source>Verdeckte Musik-Karte</source>
+  <target>Face-down music card</target>
+</trans-unit>
+<trans-unit id="sf31309f66d7f6edf">
+  <source>Spotify-QR-Code</source>
+  <target>Spotify QR code</target>
+</trans-unit>
+<trans-unit id="sed3dde3a7a7ae59f">
+  <source>Kein Spotify-Link</source>
+  <target>No Spotify link</target>
+</trans-unit>
+<trans-unit id="scb095b50b9db00e8">
+  <source>Karten</source>
+  <target>Cards</target>
+</trans-unit>
+<trans-unit id="s293aa6a6446fb153">
+  <source>Export</source>
+  <target>Export</target>
+</trans-unit>
+<trans-unit id="sf955f61360a99a03">
+  <source>Deck-Arbeitsbereich</source>
+  <target>Deck workspace</target>
+</trans-unit>
+<trans-unit id="s6847a802c5d1d318">
+  <source>Deckansicht</source>
+  <target>Deck view</target>
+</trans-unit>
+<trans-unit id="s0757e3e9d813b270">
+  <source>Geteilte Ansicht</source>
+  <target>Split view</target>
+</trans-unit>
+<trans-unit id="sce20259a082b2042">
+  <source>Deck vergrößern</source>
+  <target>Expand deck</target>
+</trans-unit>
+<trans-unit id="s2034766a6541c24e">
+  <source>Deck schließen</source>
+  <target>Close deck</target>
+</trans-unit>
+<trans-unit id="s2d4422b75fa8d0fd">
+  <source>Dein Soundtrack</source>
+  <target>Your soundtrack</target>
+</trans-unit>
+<trans-unit id="sc95327a090710738">
+  <source>Deine Songs erscheinen hier live.</source>
+  <target>Your songs will appear here as they arrive.</target>
+</trans-unit>
+<trans-unit id="s19e0e60da9991911">
+  <source>Songs hinzufügen</source>
+  <target>Add songs</target>
+</trans-unit>
+<trans-unit id="s8a9a5834f7df8e7c">
+  <source>Verbinde Spotify für die Wiedergabe und den Playlist-Export.</source>
+  <target>Connect Spotify to play music and export playlists.</target>
+</trans-unit>
+<trans-unit id="s0ecec092f6849530">
+  <source>Spotify verbinden</source>
+  <target>Connect Spotify</target>
+</trans-unit>
+<trans-unit id="s89ba69cac8b2457b">
+  <source>Wiedergabe im Browser benötigt Spotify Premium. Suche und Export bleiben verfügbar.</source>
+  <target>Browser playback requires Spotify Premium. Search and export are still available.</target>
+</trans-unit>
+<trans-unit id="s3a6c7c829e0c9607">
+  <source><x id="0" equiv-text="${track.title}"/> pausieren</source>
+  <target>Pause <x id="0" equiv-text="${track.title}"/></target>
+</trans-unit>
+<trans-unit id="s66ebb34d96196404">
+  <source><x id="0" equiv-text="${track.title}"/> abspielen</source>
+  <target>Play <x id="0" equiv-text="${track.title}"/></target>
+</trans-unit>
+<trans-unit id="s785740f4fd96b91b">
+  <source>Song entfernen</source>
+  <target>Remove song</target>
+</trans-unit>
+<trans-unit id="s6414d0426cd2f111">
+  <source>„<x id="0" equiv-text="${event.trackTitle}"/>“ entfernt.</source>
+  <target>Removed “<x id="0" equiv-text="${event.trackTitle}"/>”.</target>
+</trans-unit>
+<trans-unit id="s062a673dafbdd5dd">
+  <source>Rückgängig</source>
+  <target>Undo</target>
+</trans-unit>
+<trans-unit id="s58b38a8979df0f4e">
+  <source>Auflösung verbergen</source>
+  <target>Hide answers</target>
+</trans-unit>
+<trans-unit id="s8910ed001b6c596f">
+  <source>QR-Seite</source>
+  <target>QR side</target>
+</trans-unit>
+<trans-unit id="s0c0fd4aed60ab7f2">
+  <source>Auflösung</source>
+  <target>Answer side</target>
+</trans-unit>
+<trans-unit id="saf81a7de224c991e">
+  <source>Vom Bildschirm an den Spieltisch.</source>
+  <target>From your screen to the game table.</target>
+</trans-unit>
+<trans-unit id="s127195f19be06af6">
+  <source>Lade dein Deck als druckfertige PDF mit Musik-QR-Codes herunter.</source>
+  <target>Download your deck as a print-ready PDF with music QR codes.</target>
+</trans-unit>
+<trans-unit id="se0098c49c481dbd0">
+  <source>PDF wird erstellt …</source>
+  <target>Creating PDF …</target>
+</trans-unit>
+<trans-unit id="sd591229da964d376">
+  <source>PDF herunterladen</source>
+  <target>Download PDF</target>
+</trans-unit>
+<trans-unit id="sa546762a1154dfc4">
+  <source>Vorschau</source>
+  <target>Preview</target>
+</trans-unit>
+<trans-unit id="s03b2de6bbc64f4ac">
+  <source>PDF-Kartenvorschau</source>
+  <target>PDF card preview</target>
+</trans-unit>
+<trans-unit id="sf88dcaf22026c334">
+  <source>Deine Songs auf Spotify</source>
+  <target>Your songs on Spotify</target>
+</trans-unit>
+<trans-unit id="s40934d576180f42f">
+  <source>Erstelle eine Playlist in deinem verbundenen Spotify-Konto.</source>
+  <target>Create a playlist in your connected Spotify account.</target>
+</trans-unit>
+<trans-unit id="sd13c281645631775">
+  <source>Wird exportiert …</source>
+  <target>Exporting …</target>
+</trans-unit>
+<trans-unit id="s199edc3260686e20">
+  <source>Nach Spotify exportieren</source>
+  <target>Export to Spotify</target>
+</trans-unit>
+<trans-unit id="s7a6a5187ffcbcbd6">
+  <source>Playlist erstellt.</source>
+  <target>Playlist created.</target>
+</trans-unit>
+<trans-unit id="s927fa4d7963bf627">
+  <source>In Spotify öffnen</source>
+  <target>Open in Spotify</target>
+</trans-unit>
+<trans-unit id="sd8fd8ed57177ff6e">
+  <source>Noch ist die Bühne leer.</source>
+  <target>The stage is still empty.</target>
+</trans-unit>
+<trans-unit id="s1625b6fef4602a6f">
+  <source>Beschreibe dein Wunschdeck im Chat oder füge einen Song über die Suche hinzu.</source>
+  <target>Describe your dream deck in the chat or add a song using search.</target>
+</trans-unit>
+<trans-unit id="s21bb472d31933c0a">
+  <source>Wiedergabe fortsetzen</source>
+  <target>Resume playback</target>
+</trans-unit>
+<trans-unit id="s6da5e16d740aafd0">
+  <source>Wiedergabe pausieren</source>
+  <target>Pause playback</target>
+</trans-unit>
+<trans-unit id="sdc698a202ae76839">
+  <source>Wiedergabeposition</source>
+  <target>Playback position</target>
+</trans-unit>
+<trans-unit id="sc7182fbb9b312082">
+  <source>Lautstärke</source>
+  <target>Volume</target>
+</trans-unit>
+<trans-unit id="s6f8994b3828a7136">
+  <source>DEINE MUSIK. DEINE ERINNERUNGEN.</source>
+  <target>YOUR MUSIC. YOUR MEMORIES.</target>
+</trans-unit>
+<trans-unit id="s11d9d4af7c38b511">
+  <source>Für die nächste Runde ist immer Platz.</source>
+  <target>There's always room for another round.</target>
+</trans-unit>
+<trans-unit id="sd1922143a1c1e143">
+  <source>Sammlung filtern</source>
+  <target>Filter collection</target>
+</trans-unit>
+<trans-unit id="sd49e44c2598dbe45">
+  <source>Dein nächster Lieblingsmix …</source>
+  <target>Your next favorite mix …</target>
+</trans-unit>
+<trans-unit id="s517d00ca2dd778e2">
+  <source>Decks werden geladen …</source>
+  <target>Loading decks …</target>
+</trans-unit>
+<trans-unit id="s1b09fd2efdad25cc">
+  <source>Kein Deck passt zu deiner Suche.</source>
+  <target>No decks match your search.</target>
+</trans-unit>
+<trans-unit id="s1e2300cd0c593553">
+  <source>Deine Sammlung beginnt mit einer Idee.</source>
+  <target>Your collection starts with an idea.</target>
+</trans-unit>
+<trans-unit id="s784d82bd15c49b4a">
+  <source>Einstellungen</source>
+  <target>Settings</target>
+</trans-unit>
+<trans-unit id="s6a217dbbc859376c">
+  <source>Dein Konto</source>
+  <target>Your account</target>
+</trans-unit>
+<trans-unit id="s372a1dfde1d219c8">
+  <source>Deine Decks werden in deinem Konto gespeichert.</source>
+  <target>Your decks are saved to your account.</target>
+</trans-unit>
+<trans-unit id="sf7421fc8f5906183">
+  <source>Abmelden</source>
+  <target>Sign out</target>
+</trans-unit>
+<trans-unit id="sfe97180a41533d5d">
+  <source>Musik &amp; Wiedergabe</source>
+  <target>Music &amp; playback</target>
+</trans-unit>
+<trans-unit id="s0445435e2a16c422">
+  <source>Verbunden · Premium</source>
+  <target>Connected · Premium</target>
+</trans-unit>
+<trans-unit id="s82ef666db06fce24">
+  <source>Verbunden · Standard</source>
+  <target>Connected · Standard</target>
+</trans-unit>
+<trans-unit id="s2151050ef9749c95">
+  <source>Verbinde dein Konto für Playlist-Exporte.</source>
+  <target>Connect your account to export playlists.</target>
+</trans-unit>
+<trans-unit id="sf18ae3bc9328c82d">
+  <source>Trennen</source>
+  <target>Disconnect</target>
+</trans-unit>
+<trans-unit id="s110693e98e3e4dc6">
+  <source>Verbinden</source>
+  <target>Connect</target>
+</trans-unit>
+<trans-unit id="sbf0d0d3b24398e09">
+  <source>Kontoverwaltung</source>
+  <target>Account management</target>
+</trans-unit>
+<trans-unit id="sd3087ac938874ef5">
+  <source>Konto löschen</source>
+  <target>Delete account</target>
+</trans-unit>
+<trans-unit id="s5d0d603a658aadef">
+  <source>Entfernt dein Konto und die zugehörigen Daten dauerhaft.</source>
+  <target>Permanently removes your account and its data.</target>
+</trans-unit>
+<trans-unit id="s4aa7d28a7f8d22a7">
+  <source>Konto endgültig löschen</source>
+  <target>Permanently delete account</target>
+</trans-unit>
+<trans-unit id="s684d5956bcd1c848">
+  <source>Konto endgültig löschen?</source>
+  <target>Permanently delete your account?</target>
+</trans-unit>
+<trans-unit id="s68737faff4342089">
+  <source>Diese Aktion kann nicht rückgängig gemacht werden.</source>
+  <target>This action cannot be undone.</target>
+</trans-unit>
+<trans-unit id="s8f411426731b6d29">
+  <source>Abbrechen</source>
+  <target>Cancel</target>
+</trans-unit>
+<trans-unit id="s21bfb10b2f8f1dfe">
+  <source>Endgültig löschen</source>
+  <target>Delete permanently</target>
+</trans-unit>
+<trans-unit id="sddde15c4a518d9da">
+  <source>Player geschlossen</source>
+  <target>Player closed</target>
+</trans-unit>
+<trans-unit id="sb6a13300839144ac">
+  <source>Spotify ist noch nicht bereit. Bitte erneut versuchen.</source>
+  <target>Spotify is not ready yet. Please try again.</target>
+</trans-unit>
+<trans-unit id="sc687d6b04032d59c">
+  <source>Spotify konnte nicht verbunden werden.</source>
+  <target>Spotify could not be connected.</target>
+</trans-unit>
+<trans-unit id="s543c462419b80de0">
+  <source>Für die Wiedergabe im Browser ist Spotify Premium erforderlich.</source>
+  <target>Spotify Premium is required for browser playback.</target>
+</trans-unit>
+<trans-unit id="s306c7cec807c7eb2">
+  <source>Spotify-Wiedergabe fehlgeschlagen (<x id="0" equiv-text="${response.status}"/>).</source>
+  <target>Spotify playback failed (<x id="0" equiv-text="${response.status}"/>).</target>
+</trans-unit>
+<trans-unit id="sf0711866d490183c">
+  <source>Der Spotify-Player konnte nicht geladen werden.</source>
+  <target>The Spotify player could not be loaded.</target>
+</trans-unit>
+<trans-unit id="sd0f3497a91ddb0ab">
+  <source>Playlist</source>
+  <target>Playlist</target>
+</trans-unit>
+<trans-unit id="s9119f651b6421ac3">
+  <source>Künstler:in</source>
+  <target>Artist</target>
+</trans-unit>
+<trans-unit id="s043243011ab286c0">
+  <source>Playlists und Künstler suchen</source>
+  <target>Search playlists and artists</target>
+</trans-unit>
+<trans-unit id="s030114f89e03040b">
+  <source>Songs suchen</source>
+  <target>Search songs</target>
+</trans-unit>
+<trans-unit id="s2af446323a0a0dd7">
+  <source>Playlist oder Künstler:in …</source>
+  <target>Playlist or artist …</target>
+</trans-unit>
+<trans-unit id="se3d289d3d6b5a688">
+  <source>Song oder Interpret:in …</source>
+  <target>Song or artist …</target>
+</trans-unit>
+<trans-unit id="sddb1c7dc16136698">
+  <source>Spotify wird durchsucht …</source>
+  <target>Searching Spotify …</target>
+</trans-unit>
+<trans-unit id="s1a1cbf9d56fc80c5">
+  <source>Keine Treffer. Probiere einen anderen Suchbegriff.</source>
+  <target>No results. Try a different search term.</target>
+</trans-unit>
+<trans-unit id="s103cf7f0768b0bb4">
+  <source>Etwas ist schiefgelaufen. Bitte versuche es erneut.</source>
+  <target>Something went wrong. Please try again.</target>
+</trans-unit>
+<trans-unit id="s329635de4d4dcfba">
+  <source><x id="0" equiv-text="${value}"/> Erinnerung auf einer Karte</source>
+  <target><x id="0" equiv-text="${value}"/> memory on a card</target>
+</trans-unit>
+<trans-unit id="s29f7dcb972983930">
+  <source><x id="0" equiv-text="${value}"/> Erinnerungen auf Karten</source>
+  <target><x id="0" equiv-text="${value}"/> memories on cards</target>
+</trans-unit>
+<trans-unit id="sd16fd26111986006">
+  <source><x id="0" equiv-text="${value}"/> Recherche-Schritt</source>
+  <target><x id="0" equiv-text="${value}"/> research step</target>
+</trans-unit>
+<trans-unit id="s7962ddf0e5ebc839">
+  <source><x id="0" equiv-text="${value}"/> Recherche-Schritte</source>
+  <target><x id="0" equiv-text="${value}"/> research steps</target>
+</trans-unit>
+<trans-unit id="sdfaf881f85c22420">
+  <source><x id="0" equiv-text="${value}"/> Deck mit seiner Unterhaltung wird zusammen mit deinem Konto gelöscht.</source>
+  <target><x id="0" equiv-text="${value}"/> deck and its conversation will be deleted along with your account.</target>
+</trans-unit>
+<trans-unit id="s8f9bf7db84e14a39">
+  <source><x id="0" equiv-text="${value}"/> Decks mit ihren Unterhaltungen werden zusammen mit deinem Konto gelöscht.</source>
+  <target><x id="0" equiv-text="${value}"/> decks and their conversations will be deleted along with your account.</target>
+</trans-unit>
+<trans-unit id="sce165b8198046ce2">
+  <source>Versuch <x id="0" equiv-text="${formatNumber(attempt)}"/>/<x id="1" equiv-text="${formatNumber(maxAttempts)}"/></source>
+  <target>Attempt <x id="0" equiv-text="${formatNumber(attempt)}"/>/<x id="1" equiv-text="${formatNumber(maxAttempts)}"/></target>
+</trans-unit>
+<trans-unit id="s7072ec356efa33f5">
+  <source>Seitennavigation</source>
+  <target>Page navigation</target>
+</trans-unit>
+<trans-unit id="s0830a1e0d2456d9b">
+  <source>Nachricht</source>
+  <target>Message</target>
+</trans-unit>
+<trans-unit id="s35178456d23fb3d8">
+  <source>Ein Deck voller 90er-Hits, zu denen alle mitsingen …</source>
+  <target>A deck of 90s hits everyone can sing along to …</target>
+</trans-unit>
+<trans-unit id="s94fa2901fefedd6b">
+  <source>Musik-Kartendeck</source>
+  <target>Music card deck</target>
+</trans-unit>
+<trans-unit id="sbf41850ffcf55fc9">
+  <source>Antwort stoppen</source>
+  <target>Stop response</target>
+</trans-unit>
+<trans-unit id="sed052d09e8043504">
+  <source>Nachricht senden</source>
+  <target>Send message</target>
+</trans-unit>
+<trans-unit id="s8b9298173e0ec43f">
+  <source>Dein Briefing</source>
+  <target>Your brief</target>
+</trans-unit>
+<trans-unit id="s941cddb2e7986674">
+  <source>Neues Deck</source>
+  <target>New deck</target>
+</trans-unit>
+<trans-unit id="s0436c9fc89a54bda">
+  <source>Aktionen für <x id="0" equiv-text="${entry.title || msg(&quot;Neues Deck&quot;)}"/></source>
+  <target>Actions for <x id="0" equiv-text="${entry.title || msg(&quot;Neues Deck&quot;)}"/></target>
+</trans-unit>
+<trans-unit id="sbd4575edfbf5c84f">
+  <source>Hauptnavigation</source>
+  <target>Main navigation</target>
+</trans-unit>
+<trans-unit id="s10e1c82f0362dcb1">
+  <source>Seitenleiste schließen</source>
+  <target>Close sidebar</target>
+</trans-unit>
+<trans-unit id="sa59067285ee78055">
+  <source>Meine Decks</source>
+  <target>My decks</target>
+</trans-unit>
+<trans-unit id="s8fe38b66a5ac76bd">
+  <source>Decks durchsuchen</source>
+  <target>Search decks</target>
+</trans-unit>
+<trans-unit id="s02144bb1633cc253">
+  <source>Decks durchsuchen …</source>
+  <target>Search decks …</target>
+</trans-unit>
+<trans-unit id="sfa56c2e13275733b">
+  <source>Sammlung wird geladen …</source>
+  <target>Loading collection …</target>
+</trans-unit>
+<trans-unit id="s924535ebf58b9d7f">
+  <source>Erneut versuchen</source>
+  <target>Try again</target>
+</trans-unit>
+<trans-unit id="s7c6a5ccadd31b579">
+  <source>FAVORITEN</source>
+  <target>FAVORITES</target>
+</trans-unit>
+<trans-unit id="sbb79d8d7a8c6caa6">
+  <source>DEINE SAMMLUNG</source>
+  <target>YOUR COLLECTION</target>
+</trans-unit>
+<trans-unit id="sec4820b3eafc13dc">
+  <source>Keine passenden Decks.</source>
+  <target>No matching decks.</target>
+</trans-unit>
+<trans-unit id="s82ca4297115e7ae9">
+  <source>Hier ist Platz für deine nächsten Lieblingsdecks.</source>
+  <target>A place for your next favorite decks.</target>
+</trans-unit>
+<trans-unit id="s45009850ff64d0da">
+  <source>Bitte den Mikrofonzugriff im Browser erlauben.</source>
+  <target>Please allow microphone access in your browser.</target>
+</trans-unit>
+<trans-unit id="s590af9131dabaee0">
+  <source>Die Spracherkennung ist in diesem Browser nicht freigegeben.</source>
+  <target>Speech recognition is not enabled in this browser.</target>
+</trans-unit>
+<trans-unit id="s7d5cf2d1577c6bb4">
+  <source>Kein verfügbares Mikrofon gefunden.</source>
+  <target>No available microphone found.</target>
+</trans-unit>
+<trans-unit id="s143fd12930983732">
+  <source>Keine Sprache erkannt. Bitte erneut versuchen.</source>
+  <target>No speech detected. Please try again.</target>
+</trans-unit>
+<trans-unit id="sbbe37a41d5708258">
+  <source>Keine Verbindung zur Spracherkennung. Bitte erneut versuchen.</source>
+  <target>Could not connect to speech recognition. Please try again.</target>
+</trans-unit>
+<trans-unit id="sfe2d8996e0020212">
+  <source>Diktieren ist gerade nicht möglich. Bitte erneut versuchen.</source>
+  <target>Dictation is currently unavailable. Please try again.</target>
+</trans-unit>
+<trans-unit id="s3aef7e385bd4798b">
+  <source>Mikrofon wird gestartet …</source>
+  <target>Starting microphone …</target>
+</trans-unit>
+<trans-unit id="s38b57033006423e9">
+  <source>Wird transkribiert …</source>
+  <target>Transcribing …</target>
+</trans-unit>
+<trans-unit id="s7f6bc7b652652deb">
+  <source>Text übernehmen?</source>
+  <target>Use this text?</target>
+</trans-unit>
+<trans-unit id="s779f8110b889aa6d">
+  <source>Ich höre zu …</source>
+  <target>Listening …</target>
+</trans-unit>
+<trans-unit id="s28b00b749d8ff0a0">
+  <source>Diktieren</source>
+  <target>Dictate</target>
+</trans-unit>
+<trans-unit id="se5144483a0edc8b7">
+  <source>Diktieren wird von diesem Browser nicht unterstützt</source>
+  <target>Dictation is not supported by this browser</target>
+</trans-unit>
+<trans-unit id="sa4426d5c0735ad3e">
+  <source>Diktat verwerfen</source>
+  <target>Discard dictation</target>
+</trans-unit>
+<trans-unit id="s1ffa75093f28d6d6">
+  <source>Text übernehmen</source>
+  <target>Use text</target>
+</trans-unit>
+<trans-unit id="s2cc2b2acad4973d7">
+  <source>Deine Musik. Deine Erinnerungen. Dein Kartendeck. Gestalte deinen nächsten Spieleabend mit Prompster.</source>
+  <target>Your music. Your memories. Your card deck. Create your next game night with Prompster.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

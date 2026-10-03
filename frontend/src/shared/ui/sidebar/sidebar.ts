@@ -1,3 +1,6 @@
+import { msg, localized, str } from "@lit/localize";
+import { getLocale } from "@shared/i18n";
+import "@shared/ui/language-select";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { pageStyles } from "@shared/styles/page";
@@ -7,6 +10,7 @@ import "@shared/ui/brand-mark";
 import type { SidebarEntry } from "./types";
 
 @customElement("side-bar")
+@localized()
 export class Sidebar extends LitElement {
   @property({ attribute: false }) entries: SidebarEntry[] = [];
   @property() activeId = "";
@@ -169,11 +173,11 @@ export class Sidebar extends LitElement {
         @click=${() => emit(this, "session-select", entry.id)}
       >
         ${icon(entry.starred ? "sparkles" : "disc", 15)}<span
-          >${entry.title || "Neues Deck"}</span
+          >${entry.title || msg("Neues Deck")}</span
         ></button
       ><button
         class="icon-button"
-        aria-label=${`Aktionen für ${entry.title || "Neues Deck"}`}
+        aria-label=${msg(str`Aktionen für ${entry.title || msg("Neues Deck")}`)}
         @click=${() => emit(this, "session-menu", entry.id)}
       >
         ${icon("more", 17)}
@@ -182,14 +186,16 @@ export class Sidebar extends LitElement {
   }
   render() {
     const entries = this.entries.filter((entry) =>
-      entry.title.toLocaleLowerCase("de").includes(this.search.toLocaleLowerCase("de")),
+      entry.title
+        .toLocaleLowerCase(getLocale())
+        .includes(this.search.toLocaleLowerCase(getLocale())),
     );
-    return html`<aside aria-label="Hauptnavigation">
+    return html`<aside aria-label=${msg("Hauptnavigation")}>
       <header>
         <brand-mark></brand-mark
         ><button
           class="icon-button"
-          aria-label="Seitenleiste schließen"
+          aria-label=${msg("Seitenleiste schließen")}
           @click=${() => emit(this, "sidebar-toggle")}
         >
           ${icon("panelLeft", 17)}
@@ -200,37 +206,38 @@ export class Sidebar extends LitElement {
           class="nav new ${this.path === "/new" ? "active" : ""}"
           @click=${() => emit(this, "navigate", "/new")}
         >
-          ${icon("plus", 17)} Neues Deck <kbd>Alt N</kbd></button
+          ${icon("plus", 17)} ${msg("Neues Deck")} <kbd>Alt N</kbd></button
         ><button
           class="nav ${this.path === "/decks" ? "active" : ""}"
           @click=${() => emit(this, "navigate", "/decks")}
         >
-          ${icon("layers", 17)} Meine Decks
+          ${icon("layers", 17)} ${msg("Meine Decks")}
         </button>
       </nav>
       <label class="search"
         >${icon("search", 15)}<input
           type="search"
-          aria-label="Decks durchsuchen"
-          placeholder="Decks durchsuchen …"
+          aria-label=${msg("Decks durchsuchen")}
+          placeholder=${msg("Decks durchsuchen …")}
           .value=${this.search}
           @input=${(event: Event) => (this.search = (event.target as HTMLInputElement).value)}
       /></label>
       <div class="decks">
-        ${this.loading ? html`<p class="empty" role="status">Sammlung wird geladen …</p>` : nothing}${this.error ? html`<p class="empty" role="alert">${this.error}<button class="text-button" @click=${() => emit(this, "sessions-retry")}>Erneut versuchen</button></p>` : nothing}
+        ${this.loading ? html`<p class="empty" role="status">${msg("Sammlung wird geladen …")}</p>` : nothing}${this.error ? html`<p class="empty" role="alert">${this.error}<button class="text-button" @click=${() => emit(this, "sessions-retry")}>${msg("Erneut versuchen")}</button></p>` : nothing}
         ${
           entries.some((entry) => entry.starred)
-            ? html`<p class="group">FAVORITEN</p>
+            ? html`<p class="group">${msg("FAVORITEN")}</p>
                 ${entries.filter((entry) => entry.starred).map((entry) => this.row(entry))}`
             : nothing
         }
-        <p class="group">DEINE SAMMLUNG</p>
-        ${entries.filter((entry) => !entry.starred).map((entry) => this.row(entry))}${!entries.length && !this.loading && !this.error ? html`<p class="empty">${this.search ? "Keine passenden Decks." : "Hier ist Platz für deine nächsten Lieblingsdecks."}</p>` : nothing}
+        <p class="group">${msg("DEINE SAMMLUNG")}</p>
+        ${entries.filter((entry) => !entry.starred).map((entry) => this.row(entry))}${!entries.length && !this.loading && !this.error ? html`<p class="empty">${this.search ? msg("Keine passenden Decks.") : msg("Hier ist Platz für deine nächsten Lieblingsdecks.")}</p>` : nothing}
       </div>
       <footer>
+        <language-select></language-select>
         <button class="nav profile" @click=${() => emit(this, "navigate", "/settings")}>
-          <span class="avatar">${this.userName.slice(0, 1).toLocaleUpperCase("de")}</span
-          ><span><strong>${this.userName}</strong><small>Dein Deckstudio</small></span>
+          <span class="avatar">${this.userName.slice(0, 1).toLocaleUpperCase(getLocale())}</span
+          ><span><strong>${this.userName}</strong><small>${msg("Dein Deckstudio")}</small></span>
         </button>
       </footer>
     </aside>`;

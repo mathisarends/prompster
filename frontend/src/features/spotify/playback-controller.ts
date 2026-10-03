@@ -1,3 +1,4 @@
+import { msg, str } from "@lit/localize";
 import type { ReactiveController, ReactiveControllerHost } from "lit";
 import { spotifyGetAccessToken } from "@api/generated/spotify";
 import { loadSpotifySdk } from "./services/spotify-sdk";
@@ -38,7 +39,7 @@ export class PlaybackController implements ReactiveController {
     this.connecting = (async () => {
       const sdk = await loadSpotifySdk();
       if (this.disposed) {
-        throw new Error("Player geschlossen");
+        throw new Error(msg("Player geschlossen"));
       }
       const player = new sdk.Player({
         name: "Prompster Web Player",
@@ -69,7 +70,7 @@ export class PlaybackController implements ReactiveController {
       });
       await new Promise<void>((resolve, reject) => {
         const timer = window.setTimeout(
-          () => reject(new Error("Spotify ist noch nicht bereit. Bitte erneut versuchen.")),
+          () => reject(new Error(msg("Spotify ist noch nicht bereit. Bitte erneut versuchen."))),
           15_000,
         );
         player.addListener("ready", ({ device_id }) => {
@@ -95,7 +96,7 @@ export class PlaybackController implements ReactiveController {
           .then((connected) => {
             if (!connected) {
               window.clearTimeout(timer);
-              reject(new Error("Spotify konnte nicht verbunden werden."));
+              reject(new Error(msg("Spotify konnte nicht verbunden werden.")));
             }
           })
           .catch(reject);
@@ -147,8 +148,8 @@ export class PlaybackController implements ReactiveController {
       if (!response.ok) {
         throw new Error(
           response.status === 403
-            ? "Für die Wiedergabe im Browser ist Spotify Premium erforderlich."
-            : `Spotify-Wiedergabe fehlgeschlagen (${response.status}).`,
+            ? msg("Für die Wiedergabe im Browser ist Spotify Premium erforderlich.")
+            : msg(str`Spotify-Wiedergabe fehlgeschlagen (${response.status}).`),
         );
       }
       this.uri = uri;

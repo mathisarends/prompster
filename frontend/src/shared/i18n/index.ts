@@ -18,7 +18,13 @@ const localization = configureLocalization({
 export const getLocale = localization.getLocale;
 
 export async function setLocale(locale: string): Promise<void> {
-  await localization.setLocale(locale);
+  try {
+    await localization.setLocale(locale);
+  } catch (error) {
+    // Reset Lit Localize's failed loading state so a later attempt can retry.
+    await localization.setLocale(getLocale());
+    throw error;
+  }
   // Only persist the active locale, including when requests finish out of order.
   document.documentElement.lang = getLocale();
   try {
@@ -39,6 +45,7 @@ export async function initializeLocale(): Promise<void> {
     await localization.setLocale(preferredLocale(saved, navigator.languages));
   } catch {
     // A failed locale download must not prevent the app from starting.
+    await localization.setLocale(sourceLocale);
   }
   document.documentElement.lang = getLocale();
 }

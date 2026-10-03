@@ -1,8 +1,10 @@
+import { msg, localized } from "@lit/localize";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { workspaceStyles } from "@shared/styles/workspace";
 
 @customElement("human-message")
+@localized()
 export class HumanMessage extends LitElement {
   @property() text = "";
   static styles = css`
@@ -21,6 +23,6 @@ export class HumanMessage extends LitElement {
     }
   `;
   render() {
-    return html`<p aria-label="Dein Briefing">${this.text}</p>`;
+    return html`<p aria-label=${msg("Dein Briefing")}>${this.text}</p>`;
   }
 }

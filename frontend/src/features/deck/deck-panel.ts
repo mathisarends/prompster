@@ -1,3 +1,5 @@
+import { msg, localized, str } from "@lit/localize";
+import { cardCount, retryLabel } from "@shared/i18n/messages";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { UserMeResponse } from "@api/generated/users";
@@ -14,12 +16,13 @@ import "@features/spotify/spotify-search";
 import "./components/music-card";
 
 const views = [
-  { id: "playlist", label: "Playlist", icon: "playlist" },
-  { id: "cards", label: "Karten", icon: "cards" },
-  { id: "export", label: "Export", icon: "download" },
-] as const satisfies readonly { id: string; label: string; icon: IconName }[];
+  { id: "playlist", label: () => msg("Playlist"), icon: "playlist" },
+  { id: "cards", label: () => msg("Karten"), icon: "cards" },
+  { id: "export", label: () => msg("Export"), icon: "download" },
+] as const satisfies readonly { id: string; label: () => string; icon: IconName }[];
 
 @customElement("deck-panel")
+@localized()
 export class DeckPanel extends LitElement {
   @property() sessionId = "";
   @property({ attribute: false }) playlist: ChatPlaylist | null = null;
@@ -287,8 +290,8 @@ export class DeckPanel extends LitElement {
     const disabled = this.busy || !!this.deck.pending || !this.sessionId;
     const years = tracks.map((track) => track.year);
     const active = tracks.find((track) => track.spotifyUri === this.playback.uri);
-    return html`<header aria-label="Deck-Arbeitsbereich">
-        <div class="tabs" role="tablist" aria-label="Deckansicht">
+    return html`<header aria-label=${msg("Deck-Arbeitsbereich")}>
+        <div class="tabs" role="tablist" aria-label=${msg("Deckansicht")}>
           ${views.map(
             ({ id, label, icon: symbol }) =>
               html`<button
@@ -300,21 +303,21 @@ export class DeckPanel extends LitElement {
                 @keydown=${this.selectTab}
                 @click=${() => (this.tab = id)}
               >
-                ${icon(symbol, 14)}${label}
+                ${icon(symbol, 14)}${label()}
               </button>`,
           )}
         </div>
         <button
           class="icon-button"
-          aria-label=${this.expanded ? "Geteilte Ansicht" : "Deck vergrößern"}
-          title=${this.expanded ? "Geteilte Ansicht" : "Deck vergrößern"}
+          aria-label=${this.expanded ? msg("Geteilte Ansicht") : msg("Deck vergrößern")}
+          title=${this.expanded ? msg("Geteilte Ansicht") : msg("Deck vergrößern")}
           @click=${() => emit(this, "toggle-expand")}
         >
           ${icon(this.expanded ? "minimize" : "maximize", 15)}
         </button>
         <button
           class="icon-button"
-          aria-label="Deck schließen"
+          aria-label=${msg("Deck schließen")}
           @click=${() => emit(this, "close-panel")}
         >
           ${icon("close", 17)}
@@ -330,23 +333,23 @@ export class DeckPanel extends LitElement {
         ${this.deck.error || this.playback.error || this.oauth.error ? html`<p class="error" role="alert">${this.deck.error || this.playback.error || this.oauth.error}</p>` : nothing}
         <div class="subhead">
           <div>
-            <h2>${this.playlist?.name || "Dein Soundtrack"}</h2>
+            <h2>${this.playlist?.name || msg("Dein Soundtrack")}</h2>
             <p class="subtitle">
-              ${tracks.length ? `${Math.min(...years)} – ${Math.max(...years)} · ${tracks.length} Erinnerungen auf Karten` : "Deine Songs erscheinen hier live."}
+              ${tracks.length ? `${Math.min(...years)} – ${Math.max(...years)} · ${cardCount(tracks.length)}` : msg("Deine Songs erscheinen hier live.")}
             </p>
           </div>
-          ${this.tab === "playlist" ? html`<button class="icon-button" aria-label="Songs hinzufügen" aria-expanded=${this.search} ?disabled=${disabled} @click=${() => (this.search = !this.search)}>${icon("plus", 19)}</button>` : nothing}
+          ${this.tab === "playlist" ? html`<button class="icon-button" aria-label=${msg("Songs hinzufügen")} aria-expanded=${this.search} ?disabled=${disabled} @click=${() => (this.search = !this.search)}>${icon("plus", 19)}</button>` : nothing}
         </div>
         ${
           this.tab === "playlist"
             ? html`${this.search ? html`<spotify-search ?disabled=${disabled} @track-select=${(event: CustomEvent<SpotifyTrackResponse>) => this.deck.add(this.sessionId, event.detail)}></spotify-search>` : nothing}
-              ${!this.user.spotifyConnected ? html`<div class="connect">Verbinde Spotify für die Wiedergabe und den Playlist-Export. <button class="text-button" ?disabled=${!!this.oauth.pending} @click=${() => this.oauth.start("spotify-connect")}>Spotify verbinden</button></div>` : !this.user.spotifyPremium ? html`<p class="connect">Wiedergabe im Browser benötigt Spotify Premium. Suche und Export bleiben verfügbar.</p>` : nothing}
+              ${!this.user.spotifyConnected ? html`<div class="connect">${msg("Verbinde Spotify für die Wiedergabe und den Playlist-Export.")} <button class="text-button" ?disabled=${!!this.oauth.pending} @click=${() => this.oauth.start("spotify-connect")}>${msg("Spotify verbinden")}</button></div>` : !this.user.spotifyPremium ? html`<p class="connect">${msg("Wiedergabe im Browser benötigt Spotify Premium. Suche und Export bleiben verfügbar.")}</p>` : nothing}
               ${tracks.map(
                 (track) =>
                   html`<div class="track">
                     <button
                       class="cover"
-                      aria-label=${`${track.title} ${active?.id === track.id && !this.playback.paused ? "pausieren" : "abspielen"}`}
+                      aria-label=${active?.id === track.id && !this.playback.paused ? msg(str`${track.title} pausieren`) : msg(str`${track.title} abspielen`)}
                       ?disabled=${!this.user.spotifyPremium || !track.spotifyUri || this.playback.busy}
                       @click=${() => this.playback.toggle(track.spotifyUri!)}
                     >
@@ -358,8 +361,8 @@ export class DeckPanel extends LitElement {
                     <span class="year">${track.year}</span
                     ><button
                       class="icon-button"
-                      title="Song entfernen"
-                      aria-label=${`${track.title} entfernen`}
+                      title=${msg("Song entfernen")}
+                      aria-label=${msg(str`${track.title} entfernen`)}
                       ?disabled=${disabled}
                       @click=${() => this.deck.remove(this.sessionId, track.id)}
                     >
@@ -367,7 +370,7 @@ export class DeckPanel extends LitElement {
                     </button>
                   </div>`,
               )}
-              ${this.curationEvents.filter((event) => event.eventType === "track_removed").map((event) => html`<p class="undo">„${event.trackTitle}“ entfernt. <button class="text-button" ?disabled=${disabled} @click=${() => this.deck.restore(this.sessionId, event.id)}>Rückgängig</button></p>`)}`
+              ${this.curationEvents.filter((event) => event.eventType === "track_removed").map((event) => html`<p class="undo">${msg(str`„${event.trackTitle}“ entfernt.`)} <button class="text-button" ?disabled=${disabled} @click=${() => this.deck.restore(this.sessionId, event.id)}>${msg("Rückgängig")}</button></p>`)}`
             : nothing
         }
         ${
@@ -379,9 +382,9 @@ export class DeckPanel extends LitElement {
                       .checked=${this.concealed}
                       @change=${(event: Event) => (this.concealed = (event.target as HTMLInputElement).checked)}
                     />
-                    Auflösung verbergen</label
+                    ${msg("Auflösung verbergen")}</label
                   >
-                  <span>5 × 5 cm · ${this.concealed ? "QR-Seite" : "Auflösung"}</span>
+                  <span>5 × 5 cm · ${this.concealed ? msg("QR-Seite") : msg("Auflösung")}</span>
                 </div>
                 <div class="cards">
                   ${tracks.map((track, i) => html`<music-card .card=${track} .index=${i} ?concealed=${this.concealed}></music-card>`)}
@@ -392,34 +395,34 @@ export class DeckPanel extends LitElement {
           this.tab === "export"
             ? html`<div class="export">
                   ${icon("layers", 22)}
-                  <h3>Vom Bildschirm an den Spieltisch.</h3>
-                  <p>Lade dein Deck als druckfertige PDF mit Musik-QR-Codes herunter.</p>
+                  <h3>${msg("Vom Bildschirm an den Spieltisch.")}</h3>
+                  <p>${msg("Lade dein Deck als druckfertige PDF mit Musik-QR-Codes herunter.")}</p>
                   <button
                     class="button primary"
                     ?disabled=${disabled || !tracks.length}
                     @click=${() => this.deck.pdf(this.sessionId, false)}
                   >
                     ${icon("download", 15)}
-                    ${this.deck.pending === "pdf" ? "PDF wird erstellt …" : "PDF herunterladen"}</button
+                    ${this.deck.pending === "pdf" ? msg("PDF wird erstellt …") : msg("PDF herunterladen")}</button
                   ><button
                     class="button"
                     ?disabled=${disabled || !tracks.length}
                     @click=${() => this.deck.pdf(this.sessionId, true)}
                   >
-                    Vorschau</button
-                  >${this.deck.pdfUrl ? html`<iframe title="PDF-Kartenvorschau" src=${this.deck.pdfUrl}></iframe>` : nothing}
+                    ${msg("Vorschau")}</button
+                  >${this.deck.pdfUrl ? html`<iframe title=${msg("PDF-Kartenvorschau")} src=${this.deck.pdfUrl}></iframe>` : nothing}
                 </div>
                 <div class="export">
                   ${icon("music", 22)}
-                  <h3>Deine Songs auf Spotify</h3>
-                  <p>Erstelle eine Playlist in deinem verbundenen Spotify-Konto.</p>
+                  <h3>${msg("Deine Songs auf Spotify")}</h3>
+                  <p>${msg("Erstelle eine Playlist in deinem verbundenen Spotify-Konto.")}</p>
                   <button
                     class="button"
                     ?disabled=${disabled || !tracks.length || !this.user.spotifyConnected}
                     @click=${() => this.deck.spotify(this.sessionId)}
                   >
-                    ${this.deck.pending === "spotify" ? `Wird exportiert … ${this.deck.retry}` : "Nach Spotify exportieren"}</button
-                  >${this.deck.exported ? html`<p role="status">Playlist erstellt. <a href=${this.deck.exported.url} target="_blank" rel="noopener noreferrer">In Spotify öffnen</a></p>` : nothing}
+                    ${this.deck.pending === "spotify" ? html`${msg("Wird exportiert …")} ${this.deck.retry ? retryLabel(this.deck.retry.attempt, this.deck.retry.maxAttempts) : nothing}` : msg("Nach Spotify exportieren")}</button
+                  >${this.deck.exported ? html`<p role="status">${msg("Playlist erstellt.")} <a href=${this.deck.exported.url} target="_blank" rel="noopener noreferrer">${msg("In Spotify öffnen")}</a></p>` : nothing}
                 </div>`
             : nothing
         }
@@ -427,9 +430,9 @@ export class DeckPanel extends LitElement {
           !tracks.length && this.tab !== "export"
             ? html`<div class="status">
                 ${icon("disc", 36)}
-                <p>Noch ist die Bühne leer.</p>
+                <p>${msg("Noch ist die Bühne leer.")}</p>
                 <p class="subtitle">
-                  Beschreibe dein Wunschdeck im Chat oder füge einen Song über die Suche hinzu.
+                  ${msg("Beschreibe dein Wunschdeck im Chat oder füge einen Song über die Suche hinzu.")}
                 </p>
               </div>`
             : nothing
@@ -441,7 +444,7 @@ export class DeckPanel extends LitElement {
               <div class="line">
                 <button
                   class="icon-button"
-                  aria-label=${this.playback.paused ? "Wiedergabe fortsetzen" : "Wiedergabe pausieren"}
+                  aria-label=${this.playback.paused ? msg("Wiedergabe fortsetzen") : msg("Wiedergabe pausieren")}
                   @click=${() => this.playback.toggle(active.spotifyUri!)}
                 >
                   ${this.playback.paused ? "▶" : "Ⅱ"}</button
@@ -449,15 +452,15 @@ export class DeckPanel extends LitElement {
               </div>
               <input
                 type="range"
-                aria-label="Wiedergabeposition"
+                aria-label=${msg("Wiedergabeposition")}
                 min="0"
                 max=${this.playback.duration || 1}
                 .value=${String(this.playback.position)}
                 @change=${(event: Event) => this.playback.seek(Number((event.target as HTMLInputElement).value))}
               /><label class="line"
-                >Lautstärke<input
+                >${msg("Lautstärke")}<input
                   type="range"
-                  aria-label="Lautstärke"
+                  aria-label=${msg("Lautstärke")}
                   min="0"
                   max="1"
                   step="0.01"

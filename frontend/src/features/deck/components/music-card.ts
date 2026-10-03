@@ -1,3 +1,4 @@
+import { msg, localized } from "@lit/localize";
 import { css, html, LitElement, svg, type PropertyValues } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { styleMap } from "lit/directives/style-map.js";
@@ -27,6 +28,7 @@ const gradients = [
 const angles = [135, 45, 160, 20, 110, 70, 150, 30, 140, 50];
 
 @customElement("music-card")
+@localized()
 export class MusicCard extends LitElement {
   @property({ attribute: false }) card?: SongCard;
   @property({ type: Number }) index = 0;
@@ -166,12 +168,12 @@ export class MusicCard extends LitElement {
     const [start, end] = gradients[(index * 7 + 3) % gradients.length];
     const angle = 90 + angles[(index * 3 + 1) % angles.length];
     return this.concealed
-      ? html`<article class="front" aria-label="Verdeckte Musik-Karte">
+      ? html`<article class="front" aria-label=${msg("Verdeckte Musik-Karte")}>
           <svg class="record" viewBox="0 0 100 100" aria-hidden="true">
             ${Array.from({ length: 12 }, (_, i) => svg`<circle cx="50" cy="50" r=${((i + 1) * 50) / 12} fill="none" stroke="#e040fb" stroke-opacity=${(i + 1) % 2 === 0 ? 0.15 : 0.08} stroke-width="0.85" />`)}
             <circle cx="50" cy="50" r="49.8" fill="none" stroke="#c724b180" stroke-width="0.42" />
           </svg>
-          ${this.qr ? svg`<svg class="qr" viewBox=${`0 0 ${this.qr.size} ${this.qr.size}`} role="img" aria-label="Spotify-QR-Code" shape-rendering="crispEdges"><path d=${this.qr.path} fill="black" /></svg>` : html`<span class="missing">Kein Spotify-Link</span>`}
+          ${this.qr ? svg`<svg class="qr" viewBox=${`0 0 ${this.qr.size} ${this.qr.size}`} role="img" aria-label=${msg("Spotify-QR-Code")} shape-rendering="crispEdges"><path d=${this.qr.path} fill="black" /></svg>` : html`<span class="missing">${msg("Kein Spotify-Link")}</span>`}
           <i class="dot tl"></i><i class="dot tr"></i><i class="dot bl"></i><i class="dot br"></i>
         </article>`
       : html`<article

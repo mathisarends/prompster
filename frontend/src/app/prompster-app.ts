@@ -1,3 +1,4 @@
+import { msg, localized } from "@lit/localize";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { queryClient } from "@api/query-client";
@@ -10,12 +11,26 @@ import "./app-layout";
 import { routes } from "./routes";
 
 @customElement("prompster-app")
+@localized()
 export class PrompsterApp extends LitElement {
   @state() private user: UserMeResponse | null = null;
   @state() private loading = true;
-  @state() private error = "";
+  @state() private errorText: (() => string) | null = null;
+  private get error(): string {
+    return this.errorText?.() ?? "";
+  }
   @state() private path = window.location.pathname;
   private authRevision = 0;
+  protected willUpdate(): void {
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute(
+        "content",
+        msg(
+          "Deine Musik. Deine Erinnerungen. Dein Kartendeck. Gestalte deinen nächsten Spieleabend mit Prompster.",
+        ),
+      );
+  }
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener("popstate", this.pop);
@@ -37,7 +52,7 @@ export class PrompsterApp extends LitElement {
   }
   private resolveSession = async (): Promise<void> => {
     const revision = ++this.authRevision;
-    this.error = "";
+    this.errorText = null;
     try {
       const user = await queryClient.fetchQuery({ ...getMeQuery(), staleTime: 0, retry: false });
       if (revision !== this.authRevision) {
@@ -53,7 +68,7 @@ export class PrompsterApp extends LitElement {
       }
       this.user = null;
       if (!(error instanceof ApiError && error.status === 401)) {
-        this.error = "Die Verbindung zum Server ist gerade nicht verfügbar.";
+        this.errorText = () => msg("Die Verbindung zum Server ist gerade nicht verfügbar.");
       }
     } finally {
       if (revision === this.authRevision) {
@@ -76,7 +91,7 @@ export class PrompsterApp extends LitElement {
       this.user = null;
       this.navigate(routes.landing);
     } catch {
-      this.error = "Abmelden fehlgeschlagen. Bitte erneut versuchen.";
+      this.errorText = () => msg("Abmelden fehlgeschlagen. Bitte erneut versuchen.");
     }
   };
   static styles = css`
@@ -98,7 +113,9 @@ export class PrompsterApp extends LitElement {
   `;
   render() {
     if (this.loading) {
-      return html`<div class="loading" role="status">Dein Deckstudio wird geladen …</div>`;
+      return html`<div class="loading" role="status">
+        ${msg("Dein Deckstudio wird geladen …")}
+      </div>`;
     }
     if (!this.user) {
       return html`<login-page
@@ -114,6 +131,6 @@ export class PrompsterApp extends LitElement {
         @sign-out=${this.signOut}
         @user-refresh=${this.resolveSession}
       ></app-layout
-      >${this.error ? html`<div class="error global-error" role="alert">${this.error}<button class="text-button" @click=${() => (this.error = "")}>Schließen</button></div>` : nothing}`;
+      >${this.error ? html`<div class="error global-error" role="alert">${this.error}<button class="text-button" @click=${() => (this.errorText = null)}>${msg("Schließen")}</button></div>` : nothing}`;
   }
 }

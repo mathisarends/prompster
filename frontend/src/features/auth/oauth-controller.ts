@@ -1,3 +1,4 @@
+import { msg } from "@lit/localize";
 import type { ReactiveController, ReactiveControllerHost } from "lit";
 import { resolveApiBaseUrl } from "@api/request";
 
@@ -21,7 +22,10 @@ function oauthOrigin(): string {
 /** Owns popup listeners and timers; the caller verifies the resulting server session. */
 export class OAuthController implements ReactiveController {
   pending: OAuthProvider | null = null;
-  error = "";
+  private errorText: (() => string) | null = null;
+  get error(): string {
+    return this.errorText?.() ?? "";
+  }
   private popup: Window | null = null;
   private timer?: number;
   private startedAt = 0;
@@ -38,7 +42,7 @@ export class OAuthController implements ReactiveController {
     if (this.pending) {
       return;
     }
-    this.error = "";
+    this.errorText = null;
     const flow = flows[provider];
     this.popup = window.open(
       new URL(flow.path, oauthOrigin()),
@@ -46,7 +50,7 @@ export class OAuthController implements ReactiveController {
       "popup,width=520,height=720",
     );
     if (!this.popup) {
-      this.error = "Bitte erlaube Pop-ups, um dich anzumelden.";
+      this.errorText = () => msg("Bitte erlaube Pop-ups, um dich anzumelden.");
       this.host.requestUpdate();
       return;
     }
@@ -55,7 +59,8 @@ export class OAuthController implements ReactiveController {
     window.addEventListener("message", this.onMessage);
     this.timer = window.setInterval(() => {
       if (this.popup?.closed || Date.now() - this.startedAt > 180_000) {
-        this.error = "Die Anmeldung wurde geschlossen oder ist abgelaufen. Bitte erneut versuchen.";
+        this.errorText = () =>
+          msg("Die Anmeldung wurde geschlossen oder ist abgelaufen. Bitte erneut versuchen.");
         this.dispose();
         this.host.requestUpdate();
       }
@@ -78,10 +83,10 @@ export class OAuthController implements ReactiveController {
       try {
         await this.complete();
       } catch {
-        this.error = "Die Sitzung konnte nach der Anmeldung nicht geladen werden.";
+        this.errorText = () => msg("Die Sitzung konnte nach der Anmeldung nicht geladen werden.");
       }
     } else {
-      this.error = "Die Anmeldung wurde abgebrochen oder ist fehlgeschlagen.";
+      this.errorText = () => msg("Die Anmeldung wurde abgebrochen oder ist fehlgeschlagen.");
     }
     this.host.requestUpdate();
   };

@@ -1,3 +1,4 @@
+import { msg, localized } from "@lit/localize";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import {
@@ -10,6 +11,7 @@ import { emit, errorMessage } from "@shared/events";
 import { icon } from "@shared/ui/icons";
 
 @customElement("spotify-search")
+@localized()
 export class SpotifySearch extends LitElement {
   @property({ type: Boolean }) references = false;
   @property({ type: Boolean }) disabled = false;
@@ -121,14 +123,14 @@ export class SpotifySearch extends LitElement {
           ...(results?.playlists ?? []).map((item) => ({
             id: item.id,
             title: item.name,
-            subtitle: item.owner ?? "Playlist",
+            subtitle: item.owner ?? msg("Playlist"),
             imageUrl: item.coverUrl,
             kind: "spotify-playlist" as const,
           })),
           ...(results?.artists ?? []).map((item) => ({
             id: item.id,
             title: item.name,
-            subtitle: "Künstler:in",
+            subtitle: msg("Künstler:in"),
             imageUrl: item.imageUrl,
             kind: "spotify-artist" as const,
           })),
@@ -144,8 +146,8 @@ export class SpotifySearch extends LitElement {
         ${icon("search", 16)}<input
           class="input"
           type="search"
-          aria-label=${this.references ? "Playlists und Künstler suchen" : "Songs suchen"}
-          placeholder=${this.references ? "Playlist oder Künstler:in …" : "Song oder Interpret:in …"}
+          aria-label=${this.references ? msg("Playlists und Künstler suchen") : msg("Songs suchen")}
+          placeholder=${this.references ? msg("Playlist oder Künstler:in …") : msg("Song oder Interpret:in …")}
           maxlength="200"
           .value=${this.query}
           @input=${(event: Event) => {
@@ -157,7 +159,7 @@ export class SpotifySearch extends LitElement {
           }}
         />
       </form>
-      ${this.pending ? html`<p class="hint" role="status">Spotify wird durchsucht …</p>` : nothing}${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
+      ${this.pending ? html`<p class="hint" role="status">${msg("Spotify wird durchsucht …")}</p>` : nothing}${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
       <div class="results">
         ${items.map(
           (item) =>
@@ -190,6 +192,6 @@ export class SpotifySearch extends LitElement {
             : nothing
         }
       </div>
-      ${results && !this.pending && (this.references ? !items.length : !results.tracks.length) ? html`<p class="hint">Keine Treffer. Probiere einen anderen Suchbegriff.</p>` : nothing}`;
+      ${results && !this.pending && (this.references ? !items.length : !results.tracks.length) ? html`<p class="hint">${msg("Keine Treffer. Probiere einen anderen Suchbegriff.")}</p>` : nothing}`;
   }
 }

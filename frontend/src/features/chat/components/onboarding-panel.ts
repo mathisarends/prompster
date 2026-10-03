@@ -1,3 +1,4 @@
+import { msg, localized } from "@lit/localize";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { pageStyles } from "@shared/styles/page";
@@ -5,6 +6,7 @@ import { emit } from "@shared/events";
 import type { PendingInput } from "../state/chat-reducer";
 
 @customElement("onboarding-panel")
+@localized()
 export class OnboardingPanel extends LitElement {
   @property({ attribute: false }) input: PendingInput | null = null;
   @property({ type: Boolean }) pending = false;
@@ -115,8 +117,8 @@ export class OnboardingPanel extends LitElement {
             )}<input
               class="input"
               type="text"
-              aria-label="Eigene Antwort"
-              placeholder="Oder deine eigene Antwort …"
+              aria-label=${msg("Eigene Antwort")}
+              placeholder=${msg("Oder deine eigene Antwort …")}
               maxlength="1000"
               .value=${this.freeText[question.id] ?? ""}
               @input=${(event: Event) => {
@@ -131,7 +133,7 @@ export class OnboardingPanel extends LitElement {
             />
           </fieldset>`,
       )}<button class="button primary" ?disabled=${this.pending || !ready}>
-        ${this.pending ? "Wird übernommen …" : questions.some((question) => question.isLastQuestion) ? "Deck zusammenstellen" : "Antwort übernehmen"}
+        ${this.pending ? msg("Wird übernommen …") : questions.some((question) => question.isLastQuestion) ? msg("Deck zusammenstellen") : msg("Antwort übernehmen")}
       </button>
     </form>`;
   }

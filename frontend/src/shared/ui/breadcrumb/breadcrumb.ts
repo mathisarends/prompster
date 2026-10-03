@@ -1,3 +1,4 @@
+import { msg, localized } from "@lit/localize";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { workspaceStyles } from "@shared/styles/workspace";
@@ -5,9 +6,10 @@ import { workspaceStyles } from "@shared/styles/workspace";
 export type BreadcrumbItem = { label: string; href?: string };
 
 @customElement("app-breadcrumb")
+@localized()
 export class AppBreadcrumb extends LitElement {
   @property({ attribute: false }) items: BreadcrumbItem[] = [];
-  @property() label = "Breadcrumb";
+  @property() label = "";
   @property({ type: Boolean }) compact = true;
 
   static styles = css`
@@ -61,7 +63,7 @@ export class AppBreadcrumb extends LitElement {
   `;
 
   render() {
-    return html`<nav aria-label=${this.label}>
+    return html`<nav aria-label=${this.label || msg("Seitennavigation")}>
       <ol class=${this.compact ? "compact" : ""}>
         ${this.items.map((item, index) => {
           const current = index === this.items.length - 1;

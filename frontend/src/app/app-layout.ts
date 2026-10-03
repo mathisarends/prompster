@@ -1,3 +1,4 @@
+import { msg, localized } from "@lit/localize";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { UserMeResponse } from "@api/generated/users";
@@ -13,6 +14,7 @@ import "@features/sessions/library-page";
 import "@features/settings/settings-page";
 
 @customElement("app-layout")
+@localized()
 export class AppLayout extends LitElement {
   @property() path = "/new";
   @property({ attribute: false }) user!: UserMeResponse;
@@ -30,8 +32,8 @@ export class AppLayout extends LitElement {
     super.disconnectedCallback();
   }
   protected willUpdate(changed: PropertyValues): void {
+    document.title = `${this.path === "/decks" ? msg("Meine Decks") : this.path === "/settings" ? msg("Einstellungen") : msg("Deckstudio")} · Prompster`;
     if (changed.has("path")) {
-      document.title = `${this.path === "/decks" ? "Meine Decks" : this.path === "/settings" ? "Einstellungen" : "Deckstudio"} · Prompster`;
       if (window.innerWidth <= 800) {
         this.sidebarOpen = false;
       }
@@ -178,23 +180,25 @@ export class AppLayout extends LitElement {
     const id = sessionIdFromPath(this.path) ?? "";
     const isChat = this.path === "/new" || !!id;
     const selected = sessions.find((session) => session.id === this.selectedId);
-    const listError = list.isError ? "Deine Sammlung konnte nicht geladen werden." : "";
+    const listError = list.isError ? msg("Deine Sammlung konnte nicht geladen werden.") : "";
     return html`<div
         class="shell"
         @session-select=${(event: CustomEvent<string>) => emit(this, "navigate", chatPath(event.detail))}
         @session-menu=${(event: CustomEvent<string>) => this.menu(event.detail)}
         @sessions-retry=${() => this.sessions.refresh()}
       >
-        ${this.sidebarOpen ? html`<button class="scrim" aria-label="Navigation schließen" @click=${() => (this.sidebarOpen = false)}></button><side-bar .entries=${sessions.map((session) => ({ id: session.id, title: session.title, starred: session.isStarred }))} .activeId=${id} .path=${this.path} .userName=${this.user.name} ?loading=${list.isPending} .error=${listError} @sidebar-toggle=${() => (this.sidebarOpen = false)}></side-bar>` : nothing}
+        ${this.sidebarOpen ? html`<button class="scrim" aria-label=${msg("Navigation schließen")} @click=${() => (this.sidebarOpen = false)}></button><side-bar .entries=${sessions.map((session) => ({ id: session.id, title: session.title, starred: session.isStarred }))} .activeId=${id} .path=${this.path} .userName=${this.user.name} ?loading=${list.isPending} .error=${listError} @sidebar-toggle=${() => (this.sidebarOpen = false)}></side-bar>` : nothing}
         <main>
           ${
             !isChat
               ? html`<div class="topbar">
-                  ${!this.sidebarOpen ? html`<button class="icon-button" aria-label="Seitenleiste öffnen" @click=${() => (this.sidebarOpen = true)}>${icon("panelLeft", 18)}</button>` : nothing}<app-breadcrumb
-                    label="Seitennavigation"
-                    .items=${[{ label: "Dein Deckstudio" }, { label: this.path === "/settings" ? "Einstellungen" : this.path === "/decks" ? "Meine Decks" : "Musik & Erinnerungen" }]}
+                  ${!this.sidebarOpen ? html`<button class="icon-button" aria-label=${msg("Seitenleiste öffnen")} @click=${() => (this.sidebarOpen = true)}>${icon("panelLeft", 18)}</button>` : nothing}<app-breadcrumb
+                    label=${msg("Seitennavigation")}
+                    .items=${[{ label: msg("Dein Deckstudio") }, { label: this.path === "/settings" ? msg("Einstellungen") : this.path === "/decks" ? msg("Meine Decks") : msg("Musik & Erinnerungen") }]}
                   ></app-breadcrumb
-                  ><span class="studio-status"><span class="dot"></span> Made for game night</span>
+                  ><span class="studio-status"
+                    ><span class="dot"></span> ${msg("Made for game night")}</span
+                  >
                 </div>`
               : nothing
           }
@@ -217,16 +221,16 @@ export class AppLayout extends LitElement {
                       @session-changed=${() => this.sessions.refresh()}
                     ></chat-page>`
                   : html`<div class="status">
-                      <h1>Diese Seite gibt es nicht.</h1>
+                      <h1>${msg("Diese Seite gibt es nicht.")}</h1>
                       <button class="button" @click=${() => emit(this, "navigate", "/new")}>
-                        Zum Deckstudio
+                        ${msg("Zum Deckstudio")}
                       </button>
                     </div>`
           }
         </main>
       </div>
-      <dialog id="session-actions" aria-label="Deck verwalten">
-        <h2>Dein Deck</h2>
+      <dialog id="session-actions" aria-label=${msg("Deck verwalten")}>
+        <h2>${msg("Dein Deck")}</h2>
         <form
           @submit=${(event: Event) => {
             event.preventDefault();
@@ -234,9 +238,9 @@ export class AppLayout extends LitElement {
           }}
         >
           <label class="field"
-            >Name<input
+            >${msg("Name")}<input
               class="input"
-              aria-label="Deckname"
+              aria-label=${msg("Deckname")}
               maxlength="120"
               required
               .value=${this.deckTitle}
@@ -249,24 +253,24 @@ export class AppLayout extends LitElement {
               ?disabled=${this.sessions.busy}
               @click=${() => this.action("star")}
             >
-              ${selected?.isStarred ? "Aus Favoriten entfernen" : "Als Favorit speichern"}</button
+              ${selected?.isStarred ? msg("Aus Favoriten entfernen") : msg("Als Favorit speichern")}</button
             ><button
               class="button primary"
               ?disabled=${this.sessions.busy || !this.deckTitle.trim()}
             >
-              Speichern
+              ${msg("Speichern")}
             </button>
           </div>
         </form>
         <details style="margin-top: 24px">
-          <summary class="danger">Deck löschen</summary>
-          <p>Das Deck und seine Unterhaltung werden dauerhaft gelöscht.</p>
+          <summary class="danger">${msg("Deck löschen")}</summary>
+          <p>${msg("Das Deck und seine Unterhaltung werden dauerhaft gelöscht.")}</p>
           <button
             class="button danger"
             ?disabled=${this.sessions.busy}
             @click=${() => this.action("delete")}
           >
-            Endgültig löschen
+            ${msg("Endgültig löschen")}
           </button>
         </details>
         <div class="actions">
@@ -274,7 +278,7 @@ export class AppLayout extends LitElement {
             class="text-button"
             @click=${() => this.renderRoot.querySelector<HTMLDialogElement>("#session-actions")?.close()}
           >
-            Schließen
+            ${msg("Schließen")}
           </button>
         </div>
       </dialog>`;

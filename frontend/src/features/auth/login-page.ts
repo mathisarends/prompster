@@ -1,3 +1,4 @@
+import { msg, localized } from "@lit/localize";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { pageStyles } from "@shared/styles/page";
@@ -9,6 +10,7 @@ import { exampleCards } from "@features/chat/examples";
 import { OAuthController } from "./oauth-controller";
 
 @customElement("login-page")
+@localized()
 export class LoginPage extends LitElement {
   @property({ attribute: false }) onAuthenticated: () => Promise<void> = async () => {};
   @property() connectionError = "";
@@ -98,45 +100,45 @@ export class LoginPage extends LitElement {
     }
   `;
   render() {
+    document.title = `${msg("Dein Deckstudio")} · Prompster`;
     return html`<header><brand-mark></brand-mark><language-select></language-select></header>
       <main>
         <section>
-          <p class="eyebrow">DEIN SOUNDTRACK. DEIN SPIEL.</p>
-          <h1>Aus Lieblingssongs<br />werden Spieleabende.</h1>
+          <p class="eyebrow">${msg("DEIN SOUNDTRACK. DEIN SPIEL.")}</p>
+          <h1>${msg(html`Aus Lieblingssongs<br />werden Spieleabende.`)}</h1>
           <p class="intro">
-            Beschreibe deine Musikidee. Prompster findet die passenden Songs und macht daraus dein
-            persönliches Musik-Kartendeck.
+            ${msg("Beschreibe deine Musikidee. Prompster findet die passenden Songs und macht daraus dein persönliches Musik-Kartendeck.")}
           </p>
           <button
             class="button primary"
             ?disabled=${!!this.oauth.pending}
             @click=${() => this.oauth.start("spotify")}
           >
-            ${this.oauth.pending === "spotify" ? "Spotify-Anmeldung läuft …" : "Mit Spotify fortfahren"}
+            ${this.oauth.pending === "spotify" ? msg("Spotify-Anmeldung läuft …") : msg("Mit Spotify fortfahren")}
           </button>
           <button
             class="button"
             ?disabled=${!!this.oauth.pending}
             @click=${() => this.oauth.start("google")}
           >
-            ${this.oauth.pending === "google" ? "Google-Anmeldung läuft …" : "Mit Google fortfahren"}
+            ${this.oauth.pending === "google" ? msg("Google-Anmeldung läuft …") : msg("Mit Google fortfahren")}
           </button>
           ${this.oauth.error ? html`<p class="error" role="alert">${this.oauth.error}</p>` : nothing}
           ${
             this.connectionError
               ? html`<p class="error" role="alert">${this.connectionError}</p>
                   <button class="text-button" @click=${() => emit(this, "retry-auth")}>
-                    Verbindung erneut prüfen
+                    ${msg("Verbindung erneut prüfen")}
                   </button>`
               : nothing
           }
-          <p class="small">Musik entdecken · Karten gestalten · Gemeinsam spielen</p>
+          <p class="small">${msg("Musik entdecken · Karten gestalten · Gemeinsam spielen")}</p>
         </section>
-        <section class="visual" aria-label="Beispielkarten">
+        <section class="visual" aria-label=${msg("Beispielkarten")}>
           <div class="art">
             ${exampleCards.map((card, i) => html`<music-card .card=${card} .index=${i}></music-card>`)}
           </div>
-          <p class="caption">JEDER HIT HAT SEINE ZEIT.</p>
+          <p class="caption">${msg("JEDER HIT HAT SEINE ZEIT.")}</p>
         </section>
       </main>`;
   }

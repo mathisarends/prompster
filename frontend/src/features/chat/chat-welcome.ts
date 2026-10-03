@@ -1,3 +1,4 @@
+import { msg, localized } from "@lit/localize";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { workspaceStyles } from "@shared/styles/workspace";
@@ -7,6 +8,7 @@ import "@features/deck/components/music-card";
 import { starters, exampleCards } from "./examples";
 
 @customElement("studio-page")
+@localized()
 export class StudioPage extends LitElement {
   @property() draft = "";
   @property({ type: Boolean }) pending = false;
@@ -156,22 +158,23 @@ export class StudioPage extends LitElement {
   render() {
     return html`<div class="content">
       <section class="hero" aria-labelledby="welcome-title">
-        <div class="cards" aria-label="Beispielkarten">
+        <div class="cards" aria-label=${msg("Beispielkarten")}>
           ${exampleCards.map((card, i) => html`<music-card .card=${card} .index=${i}></music-card>`)}
         </div>
-        <p class="eyebrow">GUTE MUSIK. GUTE LEUTE. DEIN DECK.</p>
-        <h1 id="welcome-title">Jeder Hit hat seine Zeit.<br />Welche ist deine?</h1>
+        <p class="eyebrow">${msg("GUTE MUSIK. GUTE LEUTE. DEIN DECK.")}</p>
+        <h1 id="welcome-title">
+          ${msg("Jeder Hit hat seine Zeit.")}<br />${msg("Welche ist deine?")}
+        </h1>
         <p class="intro">
-          Mach aus deinen Lieblingssongs ein eigenes Kartenspiel.<br />Du bringst die Idee. Hier
-          entsteht dein Deck.
+          ${msg("Mach aus deinen Lieblingssongs ein eigenes Kartenspiel.")}<br />${msg("Du bringst die Idee. Hier entsteht dein Deck.")}
         </p>
       </section>
       <slot></slot>
-      <p class="suggestion-label">Ein bisschen Inspiration für den Anfang</p>
+      <p class="suggestion-label">${msg("Ein bisschen Inspiration für den Anfang")}</p>
       <div class="starters">
-        ${starters.map((starter) => html`<button class="starter" ?disabled=${this.pending} @click=${() => this.select(starter.prompt)}>${icon(starter.icon, 18)}<strong>${starter.title}</strong><span>${starter.description}</span></button>`)}
+        ${starters().map((starter) => html`<button class="starter" ?disabled=${this.pending} @click=${() => this.select(starter.prompt)}>${icon(starter.icon, 18)}<strong>${starter.title}</strong><span>${starter.description}</span></button>`)}
       </div>
-      <p class="hint">Für deinen nächsten Spieleabend. Mit Musik, die euch verbindet.</p>
+      <p class="hint">${msg("Für deinen nächsten Spieleabend. Mit Musik, die euch verbindet.")}</p>
     </div>`;
   }
 }

@@ -1,19 +1,14 @@
+import { msg, localized } from "@lit/localize";
 import { html, LitElement, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { icon } from "@shared/ui/icons";
 import { emit } from "@shared/events";
+import { speechLocale } from "@shared/i18n";
 import { SpeechSession, speechConstructor, type SpeechState } from "./speech-session";
 import { voiceInputStyles } from "./voice-input.styles";
 
-const errors: Record<string, string> = {
-  "not-allowed": "Bitte den Mikrofonzugriff im Browser erlauben.",
-  "service-not-allowed": "Die Spracherkennung ist in diesem Browser nicht freigegeben.",
-  "audio-capture": "Kein verfügbares Mikrofon gefunden.",
-  "no-speech": "Keine Sprache erkannt. Bitte erneut versuchen.",
-  network: "Keine Verbindung zur Spracherkennung. Bitte erneut versuchen.",
-};
-
 @customElement("voice-input")
+@localized()
 export class VoiceInput extends LitElement {
   @property({ type: Boolean }) disabled = false;
   @property() context = "";
@@ -23,13 +18,7 @@ export class VoiceInput extends LitElement {
       this.speech = state;
       emit(this, "dictation-preview", state.transcript);
       emit(this, "dictation-active", state.phase !== "idle");
-      emit(
-        this,
-        "dictation-error",
-        state.error
-          ? (errors[state.error] ?? "Diktieren ist gerade nicht möglich. Bitte erneut versuchen.")
-          : "",
-      );
+      emit(this, "dictation-error", state.error ?? "");
     },
     (text) => emit(this, "transcript", text),
   );
@@ -50,7 +39,7 @@ export class VoiceInput extends LitElement {
   private start(): void {
     const Recognition = speechConstructor();
     if (Recognition && !this.disabled) {
-      this.session.start(Recognition, "de-DE");
+      this.session.start(Recognition, speechLocale());
     }
   }
   render() {
@@ -58,15 +47,15 @@ export class VoiceInput extends LitElement {
     const supported = Boolean(speechConstructor());
     const label =
       this.speech.phase === "starting"
-        ? "Mikrofon wird gestartet …"
+        ? msg("Mikrofon wird gestartet …")
         : this.speech.phase === "stopping"
-          ? "Wird transkribiert …"
+          ? msg("Wird transkribiert …")
           : this.speech.phase === "review"
-            ? "Text übernehmen?"
-            : "Ich höre zu …";
+            ? msg("Text übernehmen?")
+            : msg("Ich höre zu …");
     const startLabel = supported
-      ? "Diktieren"
-      : "Diktieren wird von diesem Browser nicht unterstützt";
+      ? msg("Diktieren")
+      : msg("Diktieren wird von diesem Browser nicht unterstützt");
     return html`<div class="controls ${active ? "capture" : ""}">
       ${
         active
@@ -81,8 +70,8 @@ export class VoiceInput extends LitElement {
               <button
                 class="icon-button"
                 type="button"
-                aria-label="Diktat verwerfen"
-                title="Diktat verwerfen"
+                aria-label=${msg("Diktat verwerfen")}
+                title=${msg("Diktat verwerfen")}
                 @click=${this.cancel}
               >
                 ${icon("close", 18)}
@@ -90,8 +79,8 @@ export class VoiceInput extends LitElement {
               <button
                 class="icon-button accept"
                 type="button"
-                aria-label="Text übernehmen"
-                title="Text übernehmen"
+                aria-label=${msg("Text übernehmen")}
+                title=${msg("Text übernehmen")}
                 ?disabled=${this.speech.phase === "starting" || this.speech.phase === "stopping"}
                 @click=${() => this.session.accept()}
               >

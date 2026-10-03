@@ -1,3 +1,4 @@
+import { msg } from "@lit/localize";
 import type { SpotifyExportRetryEvent, SpotifyPlaylistExportResponse } from "@/api/session-rpc";
 import { withSessionRpcClient } from "@/shared/api/session-rpc-client";
 
@@ -25,7 +26,7 @@ export const streamSpotifyExport = (
       }
     }
     if (!result) {
-      throw new Error("Spotify export ended without a result.");
+      throw new Error(msg("Der Spotify-Export wurde ohne Ergebnis beendet."));
     }
     return result;
   });

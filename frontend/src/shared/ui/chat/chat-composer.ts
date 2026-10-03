@@ -1,3 +1,4 @@
+import { msg, localized } from "@lit/localize";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { live } from "lit/directives/live.js";
@@ -6,8 +7,10 @@ import { icon } from "@shared/ui/icons";
 import { emit } from "@shared/events";
 import type { VoiceInput } from "@shared/ui/voice-input/voice-input";
 import "@shared/ui/voice-input/voice-input";
+import { speechErrorMessage } from "@shared/ui/voice-input/speech-errors";
 
 @customElement("chat-composer")
+@localized()
 export class ChatComposer extends LitElement {
   @property() value = "";
   @property() context = "";
@@ -143,8 +146,8 @@ export class ChatComposer extends LitElement {
     >
       <slot name="attachments"></slot>
       <textarea
-        aria-label="Nachricht"
-        placeholder="Ein Deck voller 90er-Hits, zu denen alle mitsingen …"
+        aria-label=${msg("Nachricht")}
+        placeholder=${msg("Ein Deck voller 90er-Hits, zu denen alle mitsingen …")}
         maxlength="10000"
         rows="2"
         .value=${live(this.dictating && this.interim ? [this.value.trimEnd(), this.interim].filter(Boolean).join(" ") : this.value)}
@@ -161,10 +164,12 @@ export class ChatComposer extends LitElement {
           }
         }}
       ></textarea>
-      ${this.voiceError ? html`<p class="voice-error" role="alert">${this.voiceError}</p>` : nothing}
+      ${this.voiceError ? html`<p class="voice-error" role="alert">${speechErrorMessage(this.voiceError)}</p>` : nothing}
       <footer>
         <div class="tools">
-          <slot name="tools"><span class="type">${icon("music", 15)} Musik-Kartendeck</span></slot>
+          <slot name="tools"
+            ><span class="type">${icon("music", 15)} ${msg("Musik-Kartendeck")}</span></slot
+          >
         </div>
         <div class="actions">
           <voice-input
@@ -175,7 +180,7 @@ export class ChatComposer extends LitElement {
             @dictation-error=${(event: CustomEvent<string>) => (this.voiceError = event.detail)}
             @transcript=${this.acceptTranscript}
           ></voice-input>
-          ${this.dictating ? nothing : this.pending ? html`<button class="send" type="button" aria-label="Antwort stoppen" ?disabled=${this.stopping} @click=${() => this.dispatchEvent(new CustomEvent("stop-request", { bubbles: true, composed: true }))}>${icon("close", 18)}</button>` : html`<button class="send" type="submit" title="Nachricht senden" aria-label="Nachricht senden" ?disabled=${!this.value.trim() && !this.hasAttachments}>${icon("arrowUp", 19)}</button>`}
+          ${this.dictating ? nothing : this.pending ? html`<button class="send" type="button" aria-label=${msg("Antwort stoppen")} ?disabled=${this.stopping} @click=${() => this.dispatchEvent(new CustomEvent("stop-request", { bubbles: true, composed: true }))}>${icon("close", 18)}</button>` : html`<button class="send" type="submit" title=${msg("Nachricht senden")} aria-label=${msg("Nachricht senden")} ?disabled=${!this.value.trim() && !this.hasAttachments}>${icon("arrowUp", 19)}</button>`}
         </div>
       </footer>
     </form>`;

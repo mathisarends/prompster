@@ -11,15 +11,16 @@ export class LanguageSelect extends LitElement {
   @state() private failed = false;
 
   private async change(event: Event): Promise<void> {
+    const select = event.currentTarget as HTMLSelectElement;
     this.pending = true;
     this.failed = false;
     try {
-      await setLocale((event.target as HTMLSelectElement).value);
+      await setLocale(select.value);
     } catch {
       this.failed = true;
     } finally {
       this.pending = false;
-      (event.target as HTMLSelectElement).value = getLocale();
+      select.value = getLocale();
     }
   }
 

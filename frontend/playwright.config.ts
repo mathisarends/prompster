@@ -5,6 +5,7 @@ export default defineConfig({
   fullyParallel: true,
   use: {
     baseURL: "http://127.0.0.1:5175",
+    locale: "de-DE",
     channel: process.platform === "win32" ? "chrome" : undefined,
     screenshot: "only-on-failure",
     trace: "retain-on-failure",

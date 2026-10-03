@@ -6,6 +6,7 @@ import { emit } from "@shared/events";
 import type { ChatAttachment } from "./attachments/attachment-types";
 
 @customElement("chat-attachments")
+@localized()
 export class ChatAttachments extends LitElement {
   @property({ attribute: false }) items: ChatAttachment[] = [];
   @property({ type: Boolean }) disabled = false;
@@ -38,6 +39,7 @@ export class ChatAttachments extends LitElement {
     }
   `;
   render() {
-    return html`${this.items.map((item) => html`<span class="chip">${icon(item.kind === "image" ? "layers" : "music", 14)}<span class="name">${item.title}</span><button class="icon-button" aria-label=${`${item.title} entfernen`} ?disabled=${this.disabled} @click=${() => emit(this, "attachment-remove", item.id)}>${icon("close", 13)}</button></span>`)}`;
+    return html`${this.items.map((item) => html`<span class="chip">${icon(item.kind === "image" ? "layers" : "music", 14)}<span class="name">${item.title}</span><button class="icon-button" aria-label=${msg(str`${item.title} entfernen`)} ?disabled=${this.disabled} @click=${() => emit(this, "attachment-remove", item.id)}>${icon("close", 13)}</button></span>`)}`;
   }
 }
+import { msg, str, localized } from "@lit/localize";

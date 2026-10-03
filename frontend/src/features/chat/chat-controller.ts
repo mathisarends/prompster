@@ -1,3 +1,4 @@
+import { msg } from "@lit/localize";
 import type { ReactiveController, ReactiveControllerHost } from "lit";
 import { queryClient } from "@api/query-client";
 import {
@@ -120,7 +121,9 @@ export class ChatController implements ReactiveController {
               };
             }
             if (!item.file) {
-              throw new Error("Die Bilddatei ist nicht mehr verfügbar. Bitte erneut hinzufügen.");
+              throw new Error(
+                msg("Die Bilddatei ist nicht mehr verfügbar. Bitte erneut hinzufügen."),
+              );
             }
             const image = await uploadImageAttachment({ file: item.file }, { signal });
             return {
@@ -143,7 +146,7 @@ export class ChatController implements ReactiveController {
           subtitle: item.subtitle,
           imageUrl: item.imageUrl,
         }));
-      const content = text.trim() || "Analysiere die angehängten Bilder.";
+      const content = text.trim() || msg("Analysiere die angehängten Bilder.");
       this.dispatch({
         type: "stream/started",
         userMessageText: content,

@@ -13,7 +13,7 @@ import { emit, errorMessage } from "@shared/events";
 export class DeckController implements ReactiveController {
   pending = "";
   error = "";
-  retry = "";
+  retry: { attempt: number; maxAttempts: number } | null = null;
   pdfUrl = "";
   exported?: SpotifyPlaylistExportResponse;
   private abort = new AbortController();
@@ -35,6 +35,7 @@ export class DeckController implements ReactiveController {
     this.exported = undefined;
     this.pending = "";
     this.error = "";
+    this.retry = null;
   }
   private async run(name: string, action: (signal: AbortSignal) => Promise<void>): Promise<void> {
     if (this.pending) {
@@ -113,11 +114,11 @@ export class DeckController implements ReactiveController {
   }
   spotify(sessionId: string): Promise<void> {
     return this.run("spotify", async (signal) => {
-      this.retry = "";
+      this.retry = null;
       const playlist = await streamSpotifyExport(sessionId, {
         signal,
         onRetry: (event) => {
-          this.retry = `Versuch ${event.attempt}/${event.maxAttempts}`;
+          this.retry = { attempt: event.attempt, maxAttempts: event.maxAttempts };
           this.host.requestUpdate();
         },
       });
