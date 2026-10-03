@@ -164,7 +164,7 @@
 'sc98b6f782e90c037': `Face-down music card`,
 'scad8cf1c43a9431d': `Save as favorite`,
 'scb095b50b9db00e8': `Cards`,
-'scd8bb7263024bac2': `Music &amp; memories`,
+'scd8bb7263024bac2': `Music and memories`,
 'sce165b8198046ce2': str`Attempt ${0}/${1}`,
 'sce20259a082b2042': `Expand deck`,
 'scf22864b74304b94': `Completed`,
@@ -189,7 +189,7 @@
 'se3664f659abc7e43': `Turn your favorite songs into your own card game.`,
 'se3d289d3d6b5a688': `Song or artist …`,
 'se5144483a0edc8b7': `Dictation is not supported by this browser`,
-'se6501cd0909f8e38': `Boy bands, Britpop &amp; big emotions`,
+'se6501cd0909f8e38': `Boy bands, Britpop and big emotions`,
 'se7ec9bdd7d9e22a6': `A deck of the biggest 90s hits, from boy bands to Britpop, for a nostalgic game night.`,
 'se9e28e558153553d': `Build deck`,
 'sec4820b3eafc13dc': `No matching decks.`,
@@ -206,6 +206,6 @@
 'sf955f61360a99a03': `Deck workspace`,
 'sfa56c2e13275733b': `Loading collection …`,
 'sfe2d8996e0020212': `Dictation is currently unavailable. Please try again.`,
-'sfe97180a41533d5d': `Music &amp; playback`,
+'sfe97180a41533d5d': `Music and playback`,
     };
   

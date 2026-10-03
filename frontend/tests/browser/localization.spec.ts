@@ -57,6 +57,9 @@ test("English browser preference localizes login, starters, plurals and export a
   await mockApi(page, true, false, deck);
   await page.goto("/new");
   await page.getByRole("button", { name: /Back to the 90s/ }).click();
+  await expect(page.getByRole("button", { name: /Back to the 90s/ })).toContainText(
+    "Boy bands, Britpop and big emotions",
+  );
   await expect(page.getByRole("textbox", { name: "Message", exact: true })).toHaveValue(
     /A deck of the biggest 90s hits/,
   );
