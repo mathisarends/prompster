@@ -228,9 +228,7 @@ export class Sidebar extends LitElement {
         ${entries.filter((entry) => !entry.starred).map((entry) => this.row(entry))}${!entries.length && !this.loading && !this.error ? html`<p class="empty">${this.search ? "Keine passenden Decks." : "Hier ist Platz für deine nächsten Lieblingsdecks."}</p>` : nothing}
       </div>
       <footer>
-        <button class="nav" @click=${() => emit(this, "show-rules")}>
-          ${icon("help", 17)} So wird gespielt</button
-        ><button class="nav profile" @click=${() => emit(this, "navigate", "/settings")}>
+        <button class="nav profile" @click=${() => emit(this, "navigate", "/settings")}>
           <span class="avatar">${this.userName.slice(0, 1).toLocaleUpperCase("de")}</span
           ><span><strong>${this.userName}</strong><small>Dein Deckstudio</small></span>
         </button>

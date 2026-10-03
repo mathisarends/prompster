@@ -1,6 +1,5 @@
 import { css, html, LitElement } from "lit";
 import { customElement } from "lit/decorators.js";
-import { icon } from "./icons";
 
 @customElement("brand-mark")
 export class BrandMark extends LitElement {
@@ -13,21 +12,13 @@ export class BrandMark extends LitElement {
       letter-spacing: -0.6px;
     }
     .mark {
-      display: grid;
-      place-items: center;
-      width: 30px;
-      height: 34px;
-      border-radius: 8px;
-      color: var(--color-on-accent);
-      background: var(--color-accent);
-      transform: rotate(-8deg);
-    }
-    svg {
-      transform: rotate(8deg);
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
     }
   `;
   render() {
-    return html`<span class="mark">${icon("music", 19)}</span
-      ><span>prompster<span aria-hidden="true">.</span></span>`;
+    return html`<img class="mark" src="/prompster-mark.svg" alt="" width="36" height="36" />
+      <span>prompster<span aria-hidden="true">.</span></span>`;
   }
 }

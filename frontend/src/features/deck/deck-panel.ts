@@ -72,7 +72,6 @@ export class DeckPanel extends LitElement {
       height: 58px;
       flex: 0 0 58px;
       padding: 0 10px;
-      border-bottom: 1px solid var(--color-border);
     }
     .tabs {
       display: flex;

@@ -120,7 +120,6 @@ export class AppLayout extends LitElement {
       flex-shrink: 0;
       gap: 12px;
       padding: 0 24px;
-      border-bottom: 1px solid var(--color-border);
     }
     .topbar app-breadcrumb {
       flex: 1;
@@ -152,12 +151,6 @@ export class AppLayout extends LitElement {
     }
     .danger {
       color: var(--color-error);
-    }
-    ol {
-      padding-left: 20px;
-      color: var(--color-muted);
-      font-size: 13px;
-      line-height: 1.9;
     }
     @media (max-width: 800px) {
       side-bar {
@@ -192,7 +185,7 @@ export class AppLayout extends LitElement {
         @session-menu=${(event: CustomEvent<string>) => this.menu(event.detail)}
         @sessions-retry=${() => this.sessions.refresh()}
       >
-        ${this.sidebarOpen ? html`<button class="scrim" aria-label="Navigation schließen" @click=${() => (this.sidebarOpen = false)}></button><side-bar .entries=${sessions.map((session) => ({ id: session.id, title: session.title, starred: session.isStarred }))} .activeId=${id} .path=${this.path} .userName=${this.user.name} ?loading=${list.isPending} .error=${listError} @sidebar-toggle=${() => (this.sidebarOpen = false)} @show-rules=${() => this.renderRoot.querySelector<HTMLDialogElement>("#rules")?.showModal()}></side-bar>` : nothing}
+        ${this.sidebarOpen ? html`<button class="scrim" aria-label="Navigation schließen" @click=${() => (this.sidebarOpen = false)}></button><side-bar .entries=${sessions.map((session) => ({ id: session.id, title: session.title, starred: session.isStarred }))} .activeId=${id} .path=${this.path} .userName=${this.user.name} ?loading=${list.isPending} .error=${listError} @sidebar-toggle=${() => (this.sidebarOpen = false)}></side-bar>` : nothing}
         <main>
           ${
             !isChat
@@ -282,25 +275,6 @@ export class AppLayout extends LitElement {
             @click=${() => this.renderRoot.querySelector<HTMLDialogElement>("#session-actions")?.close()}
           >
             Schließen
-          </button>
-        </div>
-      </dialog>
-      <dialog id="rules" aria-label="Spielidee">
-        <h2>Ein Song. Ein Jahr. Dein Moment.</h2>
-        <p>So wird aus deinem Deck ein Musikquiz:</p>
-        <ol>
-          <li>Erstelle dein Deck und lade die Karten als PDF herunter.</li>
-          <li>Drucke die Karten aus und schneide sie entlang der Markierungen aus.</li>
-          <li>Scanne den Musik-QR-Code einer verdeckten Karte und höre den Song.</li>
-          <li>Ordne ihn auf deiner Zeitleiste ein. Erst dann wird das Jahr aufgedeckt.</li>
-          <li>Legt gemeinsam fest, wie viele richtig eingeordnete Karten zum Sieg führen.</li>
-        </ol>
-        <div class="actions">
-          <button
-            class="button primary"
-            @click=${() => this.renderRoot.querySelector<HTMLDialogElement>("#rules")?.close()}
-          >
-            Ab an den Spieltisch
           </button>
         </div>
       </dialog>`;

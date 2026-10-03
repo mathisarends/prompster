@@ -13,7 +13,6 @@ import "./chat-welcome";
 import "./components/chat-message-list";
 import "./components/onboarding-panel";
 import "./components/chat-attachments";
-import "@features/spotify/spotify-search";
 import "@features/deck/deck-panel";
 import "@chat";
 import "@shared/ui/breadcrumb";
@@ -63,9 +62,6 @@ export class ChatPage extends LitElement {
     ].slice(0, 8);
     input.value = "";
   }
-  private showReferences(): void {
-    this.renderRoot.querySelector<HTMLDialogElement>("dialog")?.showModal();
-  }
   private composer() {
     const options = this.models().data?.items ?? [];
     return html`<chat-composer
@@ -92,16 +88,7 @@ export class ChatPage extends LitElement {
           ?disabled=${this.chat.busy || this.attachments.length >= 8}
           @click=${() => this.renderRoot.querySelector<HTMLInputElement>("#images")?.click()}
         >
-          ${icon("plus", 20)}</button
-        ><button
-          class="reference-button"
-          type="button"
-          aria-label="Musikalische Referenz hinzufügen"
-          title="Musikalische Referenz hinzufügen"
-          ?disabled=${this.chat.busy}
-          @click=${this.showReferences}
-        >
-          ${icon("music", 16)} <span>Referenz</span>
+          ${icon("plus", 20)}
         </button>
         <select
           aria-label="KI-Modell"
@@ -142,7 +129,6 @@ export class ChatPage extends LitElement {
       align-items: center;
       padding: 0 20px;
       height: 58px;
-      border-bottom: 1px solid var(--color-border);
       flex-shrink: 0;
       gap: 10px;
     }
@@ -180,22 +166,6 @@ export class ChatPage extends LitElement {
       color: var(--color-text);
       background: var(--color-panel);
     }
-    .reference-button {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      min-height: 34px;
-      padding: 5px 7px;
-      border-radius: 8px;
-      border: 0;
-      color: var(--color-muted);
-      background: transparent;
-      font-size: 12px;
-    }
-    .reference-button:hover {
-      background: var(--color-panel-hover);
-      color: var(--color-text);
-    }
     .inline-error {
       margin: 10px 24px;
     }
@@ -229,13 +199,6 @@ export class ChatPage extends LitElement {
       }
       select {
         max-width: 100px;
-      }
-      .reference-button span {
-        display: none;
-      }
-      .reference-button {
-        width: 34px;
-        justify-content: center;
       }
     }
   `;
@@ -319,24 +282,6 @@ export class ChatPage extends LitElement {
         multiple
         hidden
         @change=${this.addFiles}
-      />
-      <dialog aria-label="Musikalische Referenz hinzufügen">
-        <h2>Deine Inspiration</h2>
-        <p>Gib Prompster eine Playlist oder Künstler:in als Referenz mit.</p>
-        <spotify-search
-          references
-          @reference-select=${(event: CustomEvent<ChatAttachment>) => {
-            if (!this.attachments.some((item) => item.id === event.detail.id)) {
-              this.attachments = [...this.attachments, event.detail].slice(0, 8);
-            }
-            this.renderRoot.querySelector("dialog")?.close();
-          }}
-        ></spotify-search>
-        <div class="actions">
-          <button class="button" @click=${() => this.renderRoot.querySelector("dialog")?.close()}>
-            Schließen
-          </button>
-        </div>
-      </dialog>`;
+      />`;
   }
 }
