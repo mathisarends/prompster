@@ -1,6 +1,6 @@
 # Lit frontend: review gallery
 
-Recorded on 2026-10-03 from application commit `f9cb0cf` in Chrome. Desktop:
+Recorded on 2026-10-03 from application commit `2251f8a` in Chrome. Desktop:
 1440 × 960; mobile: 390 × 844. The screenshots and videos use controlled HTTP
 and WebSocket fixtures plus a simulated browser speech-recognition service.
 They demonstrate layout, navigation, dictation controls and interactions;
@@ -12,8 +12,8 @@ The production application uses the real backend.
 
 | View    | Video                                      | Covered interactions                                                                                                                |
 | ------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Desktop | [MP4 walkthrough](desktop-walkthrough.mp4) | Studio, dictation preview/accept, prompt starter, chat, full-height workspace, cards, QR side, expansion, export, library, settings |
-| Mobile  | [MP4 walkthrough](mobile-walkthrough.mp4)  | Studio, dictation preview/discard, sidebar, existing session, chat, deck, cards, QR side, return to chat                            |
+| Desktop | [MP4 walkthrough](desktop-walkthrough.mp4) | Studio, dictation preview/accept, prompt starter, chat, workspace, cards, QR side, expansion, export, library, settings, DE/EN language switch |
+| Mobile  | [MP4 walkthrough](mobile-walkthrough.mp4)  | Studio, dictation preview/discard, sidebar, existing session, chat, deck, cards, QR side, return to chat, DE/EN language switch |
 
 ### Desktop preview
 
@@ -42,14 +42,25 @@ The production application uses the real backend.
 - [13 · Desktop dictation preview](13-dictation-desktop.png)
 - [14 · Mobile dictation preview](14-dictation-mobile.png)
 
-The 14 screenshots include the full-height workspace with keyboard-accessible
-tabs, compact composer and both card faces. Card colors and proportions follow
+### English and refreshed branding
+
+- [15 · English studio](15-studio-desktop-en.png)
+- [16 · English card workspace](16-cards-desktop-en.png)
+- [17 · English mobile chat](17-chat-mobile-en.png)
+
+The 17 screenshots include the full-height workspace with keyboard-accessible
+tabs, compact composer, card monogram and both card faces. Header divider lines,
+the composer reference button and the game-rules entry have been removed.
+The language switch updates the interface while preserving the fixture's
+original German conversation and deck name. Card colors and proportions follow
 the existing PDF template; its precise print font and crop marks remain in the
 generated PDF. The browser preview uses an available serif font.
 
 ![Desktop studio](02-studio-desktop.png)
 
 ![Desktop cards](04-cards-desktop.png)
+
+![English studio](15-studio-desktop-en.png)
 
 ## Reproduce
 
