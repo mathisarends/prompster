@@ -1,9 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal
 from uuid import UUID
-
-from pydantic import Field
 
 from backend.features.session.domain import OnboardingQuestionSelectionMode
 from backend.features.session.presentation.schemas import (
@@ -13,7 +11,8 @@ from backend.features.session.presentation.schemas import (
     ToolCallResultItemResponse,
     ToolCallSequenceEntryResponse,
 )
-from backend.presentation.schema import Schema
+from pydantic import Field
+from rpckit import RpcModel
 
 
 class SessionEventType(StrEnum):
@@ -44,17 +43,17 @@ class SessionEventType(StrEnum):
     ERROR = "error"
 
 
-class _SessionEventSchema(Schema):
+class _SessionEventSchema(RpcModel):
     type: SessionEventType
 
 
-class PlaylistPayload(Schema):
+class PlaylistPayload(RpcModel):
     id: UUID
     name: str | None = None
     tracks: list[PlaylistTrackResponse]
 
 
-class SessionSnapshotPayload(Schema):
+class SessionSnapshotPayload(RpcModel):
     id: UUID
     title: str
     created_at: datetime
@@ -225,27 +224,25 @@ class ErrorEvent(_SessionEventSchema):
 
 
 type ServerEvent = Annotated[
-    Union[
-        SessionSnapshotEvent,
-        TitleGeneratedEvent,
-        AssistantMessageStartedEvent,
-        AssistantMessageChunkEvent,
-        AssistantMessageCompletedEvent,
-        AssistantMessageCancelledEvent,
-        ToolCallSequenceAddedEvent,
-        ToolCallResolvedEvent,
-        ToolCallFailedEvent,
-        ToolCallRetryEvent,
-        ToolCallSequenceCompletedEvent,
-        ContextCompactedEvent,
-        PlaylistSetEvent,
-        PlaylistTrackAddedEvent,
-        PlaylistTrackRemovedEvent,
-        PlaylistTrackReplacedEvent,
-        OnboardingQuestionAskedEvent,
-        SuspendedForInputEvent,
-        DoneEvent,
-        ErrorEvent,
-    ],
+    SessionSnapshotEvent
+    | TitleGeneratedEvent
+    | AssistantMessageStartedEvent
+    | AssistantMessageChunkEvent
+    | AssistantMessageCompletedEvent
+    | AssistantMessageCancelledEvent
+    | ToolCallSequenceAddedEvent
+    | ToolCallResolvedEvent
+    | ToolCallFailedEvent
+    | ToolCallRetryEvent
+    | ToolCallSequenceCompletedEvent
+    | ContextCompactedEvent
+    | PlaylistSetEvent
+    | PlaylistTrackAddedEvent
+    | PlaylistTrackRemovedEvent
+    | PlaylistTrackReplacedEvent
+    | OnboardingQuestionAskedEvent
+    | SuspendedForInputEvent
+    | DoneEvent
+    | ErrorEvent,
     Field(discriminator="type"),
 ]

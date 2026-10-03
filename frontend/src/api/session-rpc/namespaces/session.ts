@@ -14,18 +14,22 @@ import type {
 export class Session {
   constructor(private readonly rpc: RpcClientCore) {}
 
+  /** Check that the session connection is available. */
   ping(): Promise<string> {
     return this.rpc.request(routes.sessionPing);
   }
 
+  /** Send a message and stream the resulting session updates. */
   sendMessage(params: SendMessageParams): AsyncIterable<ServerEvent> {
     return this.rpc.subscribeRemote(notifications.sessionSendMessage, params);
   }
 
+  /** Complete onboarding and stream the resulting session updates. */
   completeOnboarding(params: CompleteOnboardingParams): AsyncIterable<ServerEvent> {
     return this.rpc.subscribeRemote(notifications.sessionCompleteOnboarding, params);
   }
 
+  /** Export the session playlist with retry updates and the final playlist. */
   exportSpotify(): AsyncIterable<SpotifyExportServerEvent> {
     return this.rpc.subscribeRemote(notifications.sessionExportSpotify);
   }

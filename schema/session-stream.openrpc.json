@@ -24,6 +24,7 @@
   "methods": [
     {
       "name": "session.ping",
+      "summary": "Check that the session connection is available.",
       "paramStructure": "by-name",
       "params": [],
       "result": {
@@ -56,6 +57,7 @@
   "components": {
     "schemas": {
       "AssistantMessageCancelledEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "message.assistant_cancelled",
@@ -76,6 +78,7 @@
         "type": "object"
       },
       "AssistantMessageChunkEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "message.assistant_chunk",
@@ -101,6 +104,7 @@
         "type": "object"
       },
       "AssistantMessageCompletedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "message.assistant_completed",
@@ -150,6 +154,7 @@
         "type": "object"
       },
       "AssistantMessageStartedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "message.assistant_started",
@@ -195,6 +200,7 @@
         "type": "object"
       },
       "ContextCompactedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "session.context_compacted",
@@ -231,6 +237,7 @@
         "type": "object"
       },
       "DoneEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "done",
@@ -243,6 +250,7 @@
         "type": "object"
       },
       "ErrorEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "error",
@@ -279,7 +287,6 @@
         "type": "object"
       },
       "ImageAttachmentReferenceRequest": {
-        "additionalProperties": false,
         "properties": {
           "id": {
             "format": "uuid",
@@ -321,6 +328,7 @@
         "type": "object"
       },
       "OnboardingQuestionAskedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "session.onboarding_question_asked",
@@ -401,6 +409,7 @@
         "type": "string"
       },
       "PlaylistPayload": {
+        "additionalProperties": false,
         "properties": {
           "id": {
             "format": "uuid",
@@ -435,6 +444,7 @@
         "type": "object"
       },
       "PlaylistSetEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "playlist.set",
@@ -453,6 +463,7 @@
         "type": "object"
       },
       "PlaylistTrackAddedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "playlist.track_added",
@@ -477,6 +488,7 @@
         "type": "object"
       },
       "PlaylistTrackRemovedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "playlist.track_removed",
@@ -503,6 +515,7 @@
         "type": "object"
       },
       "PlaylistTrackReplacedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "playlist.track_replaced",
@@ -587,6 +600,7 @@
       },
       "SendMessageParams": {
         "additionalProperties": false,
+        "description": "Reuse attachment validation with the canonical RPC wire format.",
         "properties": {
           "content": {
             "maxLength": 4000,
@@ -727,7 +741,6 @@
         "type": "string"
       },
       "SessionMessageAttachmentRequest": {
-        "additionalProperties": false,
         "properties": {
           "kind": {
             "$ref": "#/components/schemas/SessionMessageAttachmentKind"
@@ -852,6 +865,7 @@
         "type": "object"
       },
       "SessionSnapshotEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "session.snapshot",
@@ -870,6 +884,7 @@
         "type": "object"
       },
       "SessionSnapshotPayload": {
+        "additionalProperties": false,
         "properties": {
           "id": {
             "format": "uuid",
@@ -932,6 +947,7 @@
         "type": "object"
       },
       "SpotifyExportCompletedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "spotify_export.completed",
@@ -950,6 +966,7 @@
         "type": "object"
       },
       "SpotifyExportDoneEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "done",
@@ -962,6 +979,7 @@
         "type": "object"
       },
       "SpotifyExportErrorEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "error",
@@ -986,6 +1004,7 @@
         "type": "object"
       },
       "SpotifyExportRetryEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "spotify_export.retry",
@@ -1080,6 +1099,7 @@
         "type": "object"
       },
       "SuspendedForInputEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "session.suspended_for_input",
@@ -1164,6 +1184,7 @@
         "type": "object"
       },
       "TitleGeneratedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "session.title_generated",
@@ -1183,6 +1204,7 @@
         "type": "object"
       },
       "ToolCallFailedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "tool_call.failed",
@@ -1213,6 +1235,7 @@
         "type": "object"
       },
       "ToolCallResolvedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "tool_call.resolved",
@@ -1351,6 +1374,7 @@
         "type": "object"
       },
       "ToolCallRetryEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "tool_call.retry",
@@ -1410,6 +1434,7 @@
         "type": "object"
       },
       "ToolCallSequenceAddedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "tool_call.sequence_added",
@@ -1428,6 +1453,7 @@
         "type": "object"
       },
       "ToolCallSequenceCompletedEvent": {
+        "additionalProperties": false,
         "properties": {
           "type": {
             "const": "tool_call.sequence_completed",
@@ -1718,7 +1744,8 @@
         "required": [
           "jsonrpc",
           "method"
-        ]
+        ],
+        "description": "Check that the session connection is available."
       }
     }
   },
@@ -1750,7 +1777,8 @@
             }
           }
         }
-      ]
+      ],
+      "summary": "Send a message and stream the resulting session updates."
     },
     {
       "name": "session.complete_onboarding",
@@ -1777,7 +1805,8 @@
             }
           }
         }
-      ]
+      ],
+      "summary": "Complete onboarding and stream the resulting session updates."
     },
     {
       "name": "session.export_spotify",
@@ -1802,7 +1831,8 @@
             }
           }
         }
-      ]
+      ],
+      "summary": "Export the session playlist with retry updates and the final playlist."
     }
   ],
   "x-rpc-notification-types": []

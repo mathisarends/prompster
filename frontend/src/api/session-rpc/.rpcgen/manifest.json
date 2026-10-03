@@ -1,9 +1,9 @@
 {
   "generator": "rpckit",
-  "generatorVersion": "0.8.0",
+  "generatorVersion": "0.10.0",
   "layoutVersion": 10,
   "language": "typescript",
-  "contractSha256": "5e27af22ed3712a1775cb050fe58842f6ce12d8844dd299f2cff28cbf498b012",
+  "contractSha256": "e003506983ebc7f4c2211f91fc14a927587bd55385e70b27b7647af29c2e7853",
   "files": [
     ".rpcgen/manifest.json",
     "client.ts",

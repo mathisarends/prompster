@@ -1,5 +1,6 @@
 import asyncio
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
+from contextlib import aclosing
 from dataclasses import dataclass
 from uuid import UUID, uuid4
 
@@ -96,7 +97,7 @@ class AgentSessionRunner(SessionRunner):
         *,
         session: Session,
         model_id: str | None = None,
-    ) -> AsyncIterator[SessionRunnerEvent]:
+    ) -> AsyncGenerator[SessionRunnerEvent]:
         agent = await self._create_agent(session=session, model_id=model_id)
         active_run = _ActiveRun(
             run_id=uuid4(),
@@ -109,21 +110,22 @@ class AgentSessionRunner(SessionRunner):
                 run_id=active_run.run_id,
             )
             await self._runtime_registry.register(session_id=session.id, run=active_run)
-            async for event in agent.stream():
-                if await self._is_cancelled(
-                    session_id=session.id,
-                    active_run=active_run,
-                ):
-                    yield SessionRunnerCancelled()
-                    return
-                for session_event in self._event_mapper.map(event):
-                    yield session_event
+            async with aclosing(agent.stream()) as events:
+                async for event in events:
                     if await self._is_cancelled(
                         session_id=session.id,
                         active_run=active_run,
                     ):
                         yield SessionRunnerCancelled()
                         return
+                    for session_event in self._event_mapper.map(event):
+                        yield session_event
+                        if await self._is_cancelled(
+                            session_id=session.id,
+                            active_run=active_run,
+                        ):
+                            yield SessionRunnerCancelled()
+                            return
         finally:
             await self._runtime_registry.complete(session_id=session.id, run=active_run)
             await self._active_runs.complete(

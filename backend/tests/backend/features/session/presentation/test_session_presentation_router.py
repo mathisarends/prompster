@@ -36,12 +36,14 @@ from backend.features.session.presentation.router import (
     stop_message,
     submit_onboarding_answer,
 )
-from backend.features.session.presentation.rpc.router import (
-    CompleteOnboardingParams,
-    SendMessageParams,
-    SessionRpcContext,
+from backend.features.session.presentation.rpc.channel import (
     complete_onboarding,
     send_message,
+)
+from backend.features.session.presentation.rpc.context import SessionRpcContext
+from backend.features.session.presentation.rpc.params import (
+    CompleteOnboardingParams,
+    SendMessageParams,
 )
 from backend.features.session.presentation.schemas import (
     SessionMessageAttachmentKind,

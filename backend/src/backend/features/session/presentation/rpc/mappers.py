@@ -1,6 +1,6 @@
 from backend.features.session.application import (
-    SessionAssistantMessageChunk,
     SessionAssistantMessageCancelled,
+    SessionAssistantMessageChunk,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionContextCompacted,
@@ -14,10 +14,10 @@ from backend.features.session.application import (
     SessionSuspendedForInput,
     SessionTitleGenerated,
     SessionToolCallFailed,
+    SessionToolCallResolved,
     SessionToolCallRetry,
     SessionToolCallSequenceAdded,
     SessionToolCallSequenceCompleted,
-    SessionToolCallResolved,
 )
 from backend.features.session.domain import Playlist
 from backend.features.session.presentation.mapper import (
@@ -26,31 +26,31 @@ from backend.features.session.presentation.mapper import (
     to_tool_call_result_item_response,
     to_tool_call_sequence_response,
 )
-from backend.features.session.presentation.schemas import (
-    AssistantMessageEntryResponse,
-)
 from backend.features.session.presentation.rpc.events import (
-    AssistantMessageChunkEvent,
     AssistantMessageCancelledEvent,
+    AssistantMessageChunkEvent,
     AssistantMessageCompletedEvent,
     AssistantMessageStartedEvent,
     ContextCompactedEvent,
+    OnboardingQuestionAskedEvent,
     PlaylistPayload,
     PlaylistSetEvent,
     PlaylistTrackAddedEvent,
     PlaylistTrackRemovedEvent,
     PlaylistTrackReplacedEvent,
-    OnboardingQuestionAskedEvent,
     ServerEvent,
     SessionSnapshotEvent,
     SessionSnapshotPayload,
     SuspendedForInputEvent,
     TitleGeneratedEvent,
     ToolCallFailedEvent,
+    ToolCallResolvedEvent,
     ToolCallRetryEvent,
     ToolCallSequenceAddedEvent,
     ToolCallSequenceCompletedEvent,
-    ToolCallResolvedEvent,
+)
+from backend.features.session.presentation.schemas import (
+    AssistantMessageEntryResponse,
 )
 
 
