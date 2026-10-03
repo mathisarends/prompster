@@ -9,3 +9,5 @@ src/api/session-rpc/
 src/shared/api/session-rpc-client.ts
 .codegen-check-*/
 .claude/
+src/shared/i18n/generated/
+src/shared/i18n/locale-codes.ts

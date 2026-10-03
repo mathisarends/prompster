@@ -5,6 +5,7 @@ import { deleteMe, getDeleteInformation, type UserMeResponse } from "@api/genera
 import { pageStyles } from "@shared/styles/page";
 import { emit, errorMessage } from "@shared/events";
 import { OAuthController } from "@features/auth/oauth-controller";
+import "@shared/ui/language-select";
 
 @customElement("settings-page")
 export class SettingsPage extends LitElement {
@@ -98,6 +99,9 @@ export class SettingsPage extends LitElement {
   render() {
     return html`<h1>Einstellungen</h1>
       ${this.error || this.oauth.error ? html`<p class="error" role="alert">${this.error || this.oauth.error}</p>` : nothing}
+      <section>
+        <div class="row"><language-select></language-select></div>
+      </section>
       <section>
         <h2>Dein Konto</h2>
         <div class="row">

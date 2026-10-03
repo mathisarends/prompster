@@ -3,6 +3,7 @@ import { customElement, property } from "lit/decorators.js";
 import { pageStyles } from "@shared/styles/page";
 import { emit } from "@shared/events";
 import "@shared/ui/brand-mark";
+import "@shared/ui/language-select";
 import "@features/deck/components/music-card";
 import { exampleCards } from "@features/chat/examples";
 import { OAuthController } from "./oauth-controller";
@@ -23,6 +24,7 @@ export class LoginPage extends LitElement {
       display: flex;
       align-items: center;
       padding: 0 5vw;
+      justify-content: space-between;
     }
     main {
       min-height: calc(100dvh - 150px);
@@ -96,7 +98,7 @@ export class LoginPage extends LitElement {
     }
   `;
   render() {
-    return html`<header><brand-mark></brand-mark></header>
+    return html`<header><brand-mark></brand-mark><language-select></language-select></header>
       <main>
         <section>
           <p class="eyebrow">DEIN SOUNDTRACK. DEIN SPIEL.</p>

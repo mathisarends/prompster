@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+<file target-language="en" source-language="de" original="lit-localize-inputs" datatype="plaintext">
+<body>
+<trans-unit id="sb3803e9cc79575bb">
+  <source>Sprache</source>
+  <target>Language</target>
+</trans-unit>
+<trans-unit id="s64abee7085037fdb">
+  <source>Die Sprache konnte nicht geladen werden. Bitte erneut versuchen.</source>
+  <target>The language could not be loaded. Please try again.</target>
+</trans-unit>
+</body>
+</file>
+</xliff>
