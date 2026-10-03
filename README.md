@@ -9,7 +9,7 @@ AI-powered Hitster playlist builder. Users describe a playlist in natural langua
 | `callm`    | External chat model package for OpenAI and Codex providers               |
 | `agent`    | Tool-calling agent loop, Spotify tools, workspace state, streaming events |
 | `backend`  | FastAPI HTTP/WebSocket API, auth, sessions, PDF export, DB + S3                 |
-| `frontend` | React SPA — chat UI, live RPC event rendering, Spotify deck player        |
+| `frontend` | Lit SPA — chat UI, live RPC event rendering, Spotify deck player         |
 | `tokens`   | Standalone token utilities                                                |
 
 ### how the pieces fit together

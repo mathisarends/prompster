@@ -36,5 +36,17 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Check generated HTTP client
+        run: npm run api:check
+
+      - name: Test HTTP client and streaming state
+        run: npm test
+
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Test Lit application
+        run: npm run test:e2e
+
       - name: Build
         run: npm run build

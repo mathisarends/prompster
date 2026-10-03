@@ -1,0 +1,11 @@
+package-lock.json
+node_modules/
+dist/
+.codegen-check/
+test-results/
+playwright-report/
+legacy/
+src/api/session-rpc/
+src/shared/api/session-rpc-client.ts
+.codegen-check-*/
+.claude/

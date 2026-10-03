@@ -1,16 +1,16 @@
-import path from "path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  server: {
-    host: "127.0.0.1",
-  },
-  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@app": fileURLToPath(new URL("./src/app", import.meta.url)),
+      "@api": fileURLToPath(new URL("./src/api", import.meta.url)),
+      "@features": fileURLToPath(new URL("./src/features", import.meta.url)),
+      "@shared": fileURLToPath(new URL("./src/shared", import.meta.url)),
+      "@chat": fileURLToPath(new URL("./src/shared/ui/chat/index.ts", import.meta.url)),
     },
   },
+  server: { host: "127.0.0.1", proxy: { "/api": { target: "http://127.0.0.1:8000", ws: true } } },
 });

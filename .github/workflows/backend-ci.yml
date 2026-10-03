@@ -11,6 +11,8 @@ on:
       - "rpcgen.toml"
       - "schema/**"
       - "frontend/src/api/session-rpc/**"
+      - "frontend/openapi.json"
+      - "frontend/scripts/export-openapi.py"
       - ".github/workflows/backend-ci.yml"
   pull_request:
     branches: [main]
@@ -22,6 +24,8 @@ on:
       - "rpcgen.toml"
       - "schema/**"
       - "frontend/src/api/session-rpc/**"
+      - "frontend/openapi.json"
+      - "frontend/scripts/export-openapi.py"
       - ".github/workflows/backend-ci.yml"
 
 jobs:
@@ -48,3 +52,6 @@ jobs:
 
       - name: Check RPC contract and client
         run: uv run --package backend rpckit generate --config rpcgen.toml --check
+
+      - name: Check OpenAPI document
+        run: uv run --package backend python frontend/scripts/export-openapi.py --check
