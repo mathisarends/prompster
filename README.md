@@ -27,7 +27,25 @@ frontend  ──JSON-RPC──►  backend  ──────►  agent  ──
 4. **callm** provides the `ChatModel` used by both `agent` (tool calls) and `backend` (simple session chat). The backend model registry selects OpenAI API key or Codex subscription authentication.
 5. Once the draft is finalised the user can export a PDF deck or write the playlist back to their Spotify account — both handled by `backend`.
 
-The Codex entries in the model selector use the local Codex CLI login (`codex login`). When running the backend in Docker, make that login available inside the container at `/root/.codex` or set `CODEX_HOME` to the mounted directory.
+The model selector identifies each provider explicitly:
+
+- **OpenAI** models use `callm.ChatOpenAIResponses` and `OPENAI_API_KEY` from `.env`.
+- **Codex** models use `callm.ChatCodex` with your ChatGPT subscription login from `codex login`. They do not use `OPENAI_API_KEY`.
+
+For a local backend, log in with `codex login` before selecting a Codex model.
+`callm` reads the login from `~/.codex/auth.json`, or from `CODEX_HOME` when set.
+
+For Docker, set `CODEX_AUTH_DIR` in `.env` to the absolute path of your logged-in
+Codex directory (for example `C:/Users/you/.codex` on Windows or
+`/home/you/.codex` on Linux), then enable the optional read-only mount:
+
+```bash
+docker compose -f compose.yml -f compose.codex.yml up --build
+```
+
+The login directory must already exist. The default Compose configuration only
+passes `OPENAI_API_KEY`; use the override to make Codex subscription credentials
+available inside the backend container.
 
 ### workspace
 

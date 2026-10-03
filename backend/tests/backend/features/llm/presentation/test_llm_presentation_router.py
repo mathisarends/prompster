@@ -35,9 +35,9 @@ class TestListLlmOptionsRoute:
             LLMProvider.CODEX,
         ]
         assert [item.label for item in response.items] == [
-            "GPT 6 Luna",
-            "GPT 6 Terra",
-            "GPT 6 Sol",
+            "GPT 6 Luna (OpenAI)",
+            "GPT 6 Terra (OpenAI)",
+            "GPT 6 Sol (OpenAI)",
             "GPT 6 Luna (Codex)",
             "GPT 6 Terra (Codex)",
             "GPT 6 Sol (Codex)",
