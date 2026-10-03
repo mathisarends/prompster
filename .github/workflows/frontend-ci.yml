@@ -39,6 +39,9 @@ jobs:
       - name: Check generated HTTP client
         run: npm run api:check
 
+      - name: Check translations and generated locale modules
+        run: npm run i18n:check
+
       - name: Test HTTP client and streaming state
         run: npm test
 

@@ -44,6 +44,7 @@ src/
     settings/              # Konto und Spotify-Verbindung
     spotify/               # Suche, PlaybackController, SDK-Service
   shared/
+    i18n/                  # Locale-Auswahl, Intl-Formatierung und generierte Übersetzungen
     ui/                    # wiederverwendbare UI: Sidebar, Chat, Breadcrumb, Logo
     styles/                # native Controls, Workspace- und Seitenstile
     api/                   # Integration des generierten RPC-Clients
@@ -90,7 +91,7 @@ Fachliche Cache-Invalidierung gehört in die Feature-Controller.
 
 Google-/Spotify-Anmeldung, Session-Liste, Favoriten, Umbenennen und Löschen,
 Modellauswahl, Live-Chat mit Recherche-Schritten, Onboarding-Rückfragen,
-Bild- und Spotify-Referenzen, Songsuche, Entfernen und Wiederherstellen von
+Bildanhänge, Songsuche, Entfernen und Wiederherstellen von
 Tracks, Spotify-Premium-Wiedergabe, PDF-Vorschau/-Download und Spotify-Export
 mit Retry-Anzeige sind an die bestehenden Schnittstellen angeschlossen.
 
@@ -99,6 +100,7 @@ npm run build
 npm run lint
 npm test
 npm run test:e2e
+npm run i18n:check
 ```
 
 Die Browser-Tests verwenden kontrollierte HTTP- und WebSocket-Antworten und
@@ -106,8 +108,47 @@ prüfen Desktop sowie Mobil. Unter Windows nutzen sie installiertes Chrome;
 andernfalls einmal `npx playwright install chromium` ausführen. Echte OAuth-
 Provider, Spotify-Premium-Wiedergabe und Modellanbieter benötigen verbundene
 Konten und einen gesonderten Live-Test. CI prüft Formatierung, Typen, Build,
-HTTP-Codegenerierung, Unit- und Browser-Tests; Backend-CI prüft zusätzlich die
+HTTP-Codegenerierung, vollständige Übersetzungen, Unit- und Browser-Tests; Backend-CI prüft zusätzlich die
 Spec und den bestehenden RPC-Client.
+
+## Mehrsprachigkeit
+
+Deutsch und Englisch verwenden [Lit Localize im Runtime-Modus](https://lit.dev/docs/localization/runtime-mode/).
+Die Auswahl auf der Anmeldung, in der Seitenleiste und in den Einstellungen
+wechselt die Sprache ohne Neuladen. Offene Tabs, Entwürfe und Deckdaten bleiben
+erhalten. Die Reihenfolge beim Start ist: gespeicherte Auswahl unter
+`prompster.locale`, erste unterstützte Browsersprache (auch `en-GB`/`de-AT`),
+sonst Deutsch. Die Auswahl gilt für diesen Browser. Ohne Local Storage bleibt
+das Umschalten möglich; ein fehlgeschlagenes Sprachmodul blockiert den Start nicht.
+Englisch wird als separates Modul geladen. `html.lang`, Seitentitel, Beschreibung,
+Zahlen, Datumsangaben, Singular/Plural und zugängliche Beschriftungen wechseln mit.
+
+Deutsche Quelltexte stehen in `msg(...)` direkt bei der jeweiligen Ansicht.
+`@localized()` aktualisiert die Lit-Komponente bei einem Sprachwechsel. Dynamische
+Texte verwenden `msg(str\`… ${value} …\`)`, damit Übersetzungen Platzhalter
+umstellen können. Ganze Sätze übersetzen; Textteile nicht zusammenkleben.
+`msg()`beim Rendern oder in einer Funktion aufrufen, nicht einmalig auf Modulebene.
+Mehrzahlformen und wiederverwendbare dynamische Texte liegen in`src/shared/i18n/messages.ts`. Nutzertexte, Songtitel, Künstler und Antworten oder
+Statusbeschreibungen des Backends bleiben Inhalt und werden nicht umgeschrieben.
+Die UI-Sprache ändert weder den API-Vertrag noch die Sprache bestehender Chats
+oder des serverseitigen PDF-Generators.
+
+```sh
+npm run i18n:extract   # msg-Aufrufe -> locales/en.xlf; bestehende Übersetzungen bleiben erhalten
+# Alle neuen <target>-Texte in locales/en.xlf übersetzen; <x>-Platzhalter beibehalten.
+npm run i18n:build     # XLIFF -> src/shared/i18n/generated/en.ts + locale-codes.ts
+npm run i18n:check     # Vollständigkeit, Platzhalter und Abweichungen der generierten Dateien
+```
+
+XLIFF und generierte Module werden gemeinsam eingecheckt. Generierte Dateien
+nicht manuell bearbeiten. CI lehnt fehlende, leere, veraltete oder ungültige
+Übersetzungen ab. Für eine weitere Sprache `targetLocales` in `lit-localize.json`
+ergänzen, die Sprachauswahl und `speechLocale()` erweitern, das neue XLIFF
+übersetzen und bei Bedarf weitere `Intl.PluralRules`-Kategorien ergänzen.
+
+Browser-Tests prüfen DE/EN auf Desktop und Mobil, gespeicherte Auswahl,
+Browserpräferenzen, Datum und Plural, erhaltene Entwürfe und Tabs, Diktier­sprache,
+gesperrten Speicher sowie fehlgeschlagene Sprachdownloads.
 
 ## Review-Aufnahmen
 
@@ -131,7 +172,8 @@ Die Vorschau nutzt eine verfügbare Serifenschrift; die druckfertige Datei mit
 der exakten Druckschrift und Schnittmarken kommt weiterhin vom PDF-Generator.
 
 Das Mikrofon übernimmt den Ablauf aus der Referenz: Browser-Spracherkennung
-(`SpeechRecognition` / `webkitSpeechRecognition`), deutsche Live-Transkription,
+(`SpeechRecognition` / `webkitSpeechRecognition`), Live-Transkription in der
+ausgewählten Sprache (`de-DE` oder `en-US`),
 anschließend Übernehmen oder Verwerfen. In Chrome ist dies die
 [Web-Speech-Anbindung](https://developer.chrome.com/blog/voice-driven-web-apps-introduction-to-the-web-speech-api/),
 keine separate Google-Cloud-API. Erkanntes wird erst nach Bestätigung an den
@@ -139,6 +181,8 @@ Entwurf angehängt und nie automatisch gesendet. Abbrechen, Session-Wechsel und
 Unmount beenden die Aufnahme und verwerfen verspätete Events. HTTPS bzw.
 localhost, Mikrofonfreigabe und ein unterstützender Browser sind erforderlich;
 die Erkennung kann den Dienst des Browsers über das Netzwerk verwenden.
+Eine laufende Aufnahme behält ihre Sprache bis zum Ende; die nächste Aufnahme
+verwendet die aktuelle Auswahl.
 
 Tests und Review-Videos verwenden einen simulierten Spracherkennungsdienst,
 damit sie ohne echten Mikrofonzugriff reproduzierbar sind. Ein Live-Test der

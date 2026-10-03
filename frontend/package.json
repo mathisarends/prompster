@@ -23,7 +23,8 @@
     "test:e2e": "playwright test",
     "review:capture": "tsx scripts/capture-review.ts",
     "i18n:extract": "lit-localize extract",
-    "i18n:build": "lit-localize build"
+    "i18n:build": "lit-localize build",
+    "i18n:check": "node scripts/check-i18n.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",

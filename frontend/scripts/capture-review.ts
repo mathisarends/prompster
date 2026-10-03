@@ -124,6 +124,15 @@ try {
   await expect(desktop.getByRole("heading", { name: "Einstellungen", exact: true })).toBeVisible();
   await shot(desktop, "07-settings-desktop");
   await pause(1800);
+  await desktop.locator("side-bar").getByRole("combobox", { name: "Sprache" }).selectOption("en");
+  await desktop.getByRole("button", { name: /New deck/ }).click();
+  await expect(desktop.getByRole("button", { name: /Back to the 90s/ })).toBeVisible();
+  await shot(desktop, "15-studio-desktop-en");
+  await pause(1800);
+  await desktop.getByRole("button", { name: "Unser Spieleabend", exact: true }).click();
+  await desktop.getByRole("tab", { name: "Cards", exact: true }).click();
+  await shot(desktop, "16-cards-desktop-en");
+  await pause(2000);
   const desktopVideo = desktop.video()!;
   await desktopContext.close();
   await rename(await desktopVideo.path(), `${raw}desktop.webm`);
@@ -170,6 +179,13 @@ try {
   await mobile.getByRole("button", { name: "Deck schließen", exact: true }).click();
   await expect(mobile.getByRole("textbox", { name: "Nachricht", exact: true })).toBeVisible();
   await pause(1200);
+  await mobile.getByRole("button", { name: "Seitenleiste öffnen" }).click();
+  await mobile.getByRole("combobox", { name: "Sprache" }).selectOption("en");
+  await pause(1000);
+  await mobile.getByRole("button", { name: "Close sidebar" }).click();
+  await expect(mobile.getByRole("textbox", { name: "Message", exact: true })).toBeVisible();
+  await shot(mobile, "17-chat-mobile-en");
+  await pause(1700);
   if (await mobile.evaluate(() => document.documentElement.scrollWidth > innerWidth)) {
     throw new Error("Mobile view overflows horizontally");
   }
@@ -185,7 +201,8 @@ try {
       {
         desktop: "1440×960",
         mobile: "390×844",
-        screenshots: 14,
+        screenshots: 17,
+        languages: ["de", "en"],
         browserErrors: failures,
         fixture:
           "Local HTTP, WebSocket and SpeechRecognition mocks; no external account actions or microphone capture",
@@ -195,7 +212,7 @@ try {
     ),
   );
   process.stdout.write(
-    `Captured 14 screenshots and 2 recordings in ${output}\nRaw recordings: ${raw}\n`,
+    `Captured 17 screenshots and 2 recordings in ${output}\nRaw recordings: ${raw}\n`,
   );
 } finally {
   await browser.close();
