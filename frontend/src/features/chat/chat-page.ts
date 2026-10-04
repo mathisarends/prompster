@@ -7,6 +7,7 @@ import type { UserMeResponse } from "@api/generated/users";
 import { pageStyles } from "@shared/styles/page";
 import { icon } from "@shared/ui/icons";
 import { emit } from "@shared/events";
+import { matchesShortcut, shortcutKeys, shortcutTitle } from "@shared/shortcuts";
 import { ChatController } from "./chat-controller";
 import type { ChatAttachment } from "./components/attachments/attachment-types";
 import type { SubmitOnboardingAnswerRequest } from "@api/generated/sessions";
@@ -24,6 +25,7 @@ export class ChatPage extends LitElement {
   @property() sessionId = "";
   @property({ attribute: false }) user!: UserMeResponse;
   @property({ type: Boolean }) sidebarOpen = true;
+  @property({ type: Boolean }) active = true;
   @state() private draft = "";
   @state() private attachments: ChatAttachment[] = [];
   @state() private workspaceOpen = window.innerWidth > 1000;
@@ -31,6 +33,46 @@ export class ChatPage extends LitElement {
   private drafts = new Map<string, { text: string; attachments: ChatAttachment[] }>();
   private chat = new ChatController(this);
   private models = createQueryController(this, listLlmOptionsQuery());
+  connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener("keydown", this.keydown);
+  }
+  disconnectedCallback(): void {
+    window.removeEventListener("keydown", this.keydown);
+    super.disconnectedCallback();
+  }
+  private keydown = (event: KeyboardEvent): void => {
+    if (!this.active || (!this.chat.id && !this.chat.busy)) {
+      return;
+    }
+    if (matchesShortcut(event, "deck")) {
+      event.preventDefault();
+      if (this.workspaceOpen) {
+        void this.closeWorkspace();
+      } else {
+        void this.openWorkspace();
+      }
+    }
+    if (this.workspaceOpen && matchesShortcut(event, "expandDeck")) {
+      event.preventDefault();
+      this.workspaceExpanded = !this.workspaceExpanded;
+    }
+  };
+  private openWorkspace = async (): Promise<void> => {
+    this.workspaceOpen = true;
+    await this.updateComplete;
+    const panel = this.renderRoot.querySelector<LitElement>("deck-panel");
+    await panel?.updateComplete;
+    panel?.shadowRoot
+      ?.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]')
+      ?.focus();
+  };
+  private closeWorkspace = async (): Promise<void> => {
+    this.workspaceOpen = false;
+    this.workspaceExpanded = false;
+    await this.updateComplete;
+    this.renderRoot.querySelector<HTMLButtonElement>(".deck-toggle")?.focus();
+  };
   protected willUpdate(changed: PropertyValues): void {
     if (changed.has("sessionId") && this.sessionId !== this.chat.id) {
       this.drafts.set(this.chat.id, { text: this.draft, attachments: this.attachments });
@@ -69,6 +111,7 @@ export class ChatPage extends LitElement {
     return html`<chat-composer
       .value=${this.draft}
       .context=${this.sessionId}
+      .inactive=${!this.active}
       ?hasAttachments=${this.attachments.length > 0}
       ?pending=${this.chat.busy}
       ?stopping=${this.chat.stopping}
@@ -141,9 +184,6 @@ export class ChatPage extends LitElement {
       white-space: nowrap;
       font-size: 12px;
     }
-    .toolbar .button {
-      font-size: 11px;
-    }
     .composer-area {
       width: min(100%, 780px);
       margin: 0 auto;
@@ -212,23 +252,22 @@ export class ChatPage extends LitElement {
           class="chat ${this.workspaceOpen && hasConversation ? `panel-open ${this.workspaceExpanded ? "expanded" : ""}` : ""}"
         >
           <header class="toolbar">
-            ${!this.sidebarOpen ? html`<button class="icon-button" aria-label=${msg("Seitenleiste öffnen")} @click=${() => emit(this, "open-sidebar")}>${icon("panelLeft", 18)}</button>` : nothing}
+            ${!this.sidebarOpen ? html`<button class="icon-button" aria-label=${msg("Seitenleiste öffnen")} title=${shortcutTitle(msg("Seitenleiste öffnen"), "sidebar")} aria-keyshortcuts=${shortcutKeys("sidebar")} @click=${() => emit(this, "open-sidebar")}>${icon("panelLeft", 18)}</button>` : nothing}
             <app-breadcrumb
               label=${msg("Seitennavigation")}
               .items=${[{ label: msg("Deckstudio") }, { label: state.title || msg("Neues Deck") }]}
             ></app-breadcrumb>
             ${
-              hasConversation
+              hasConversation && !this.workspaceOpen
                 ? html`<button
-                    class="button deck-toggle"
-                    aria-expanded=${this.workspaceOpen}
-                    @click=${() => {
-                      this.workspaceOpen = !this.workspaceOpen;
-                      this.workspaceExpanded = false;
-                    }}
+                    class="icon-button deck-toggle"
+                    aria-label=${msg("Deck öffnen")}
+                    title=${shortcutTitle(msg("Deck öffnen"), "deck")}
+                    aria-keyshortcuts=${shortcutKeys("deck")}
+                    aria-expanded="false"
+                    @click=${this.openWorkspace}
                   >
-                    ${icon("layers", 15)}
-                    ${this.workspaceOpen ? msg("Deck schließen") : msg("Dein Deck")}${state.playlist ? ` · ${state.playlist.tracks.length}` : ""}
+                    ${icon("layers", 18)}
                   </button>`
                 : nothing
             }
@@ -267,12 +306,7 @@ export class ChatPage extends LitElement {
                 ?busy=${this.chat.busy}
                 @deck-changed=${() => this.chat.refresh()}
                 @toggle-expand=${() => (this.workspaceExpanded = !this.workspaceExpanded)}
-                @close-panel=${async () => {
-                  this.workspaceOpen = false;
-                  this.workspaceExpanded = false;
-                  await this.updateComplete;
-                  this.renderRoot.querySelector<HTMLButtonElement>(".deck-toggle")?.focus();
-                }}
+                @close-panel=${this.closeWorkspace}
               ></deck-panel>`
             : nothing
         }

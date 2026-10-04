@@ -71,7 +71,8 @@ export class VoiceInput extends LitElement {
                 class="icon-button"
                 type="button"
                 aria-label=${msg("Diktat verwerfen")}
-                title=${msg("Diktat verwerfen")}
+                title=${`${msg("Diktat verwerfen")} · Esc`}
+                aria-keyshortcuts="Escape"
                 @click=${this.cancel}
               >
                 ${icon("close", 18)}

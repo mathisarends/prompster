@@ -1,13 +1,6 @@
 import { msg, str } from "@lit/localize";
 import { formatNumber, getLocale } from "./index";
 
-export function cardCount(count: number): string {
-  const value = formatNumber(count);
-  return new Intl.PluralRules(getLocale()).select(count) === "one"
-    ? msg(str`${value} Erinnerung auf einer Karte`)
-    : msg(str`${value} Erinnerungen auf Karten`);
-}
-
 export function researchStepCount(count: number): string {
   const value = formatNumber(count);
   return new Intl.PluralRules(getLocale()).select(count) === "one"

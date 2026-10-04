@@ -15,6 +15,7 @@ export class ChatComposer extends LitElement {
   @property() value = "";
   @property() context = "";
   @property({ type: Boolean }) pending = false;
+  @property({ type: Boolean }) inactive = false;
   @property({ type: Boolean }) stopping = false;
   @property({ type: Boolean }) hasAttachments = false;
   @state() private dictating = false;
@@ -22,7 +23,12 @@ export class ChatComposer extends LitElement {
   @state() private voiceError = "";
   private submit(event?: Event): void {
     event?.preventDefault();
-    if ((!this.value.trim() && !this.hasAttachments) || this.pending || this.dictating) {
+    if (
+      (!this.value.trim() && !this.hasAttachments) ||
+      this.pending ||
+      this.dictating ||
+      this.inactive
+    ) {
       return;
     }
     this.dispatchEvent(
@@ -142,6 +148,13 @@ export class ChatComposer extends LitElement {
     return html`<form
       class=${this.dictating ? "dictating" : ""}
       @submit=${this.submit}
+      @keydown=${(event: KeyboardEvent) => {
+        if (event.key === "Escape" && this.dictating) {
+          event.preventDefault();
+          event.stopPropagation();
+          this.renderRoot.querySelector<VoiceInput>("voice-input")?.cancel();
+        }
+      }}
       aria-busy=${this.pending}
     >
       <slot name="attachments"></slot>
@@ -155,10 +168,6 @@ export class ChatComposer extends LitElement {
         ?readonly=${this.dictating}
         @input=${this.input}
         @keydown=${(event: KeyboardEvent) => {
-          if (event.key === "Escape" && this.dictating) {
-            event.preventDefault();
-            this.renderRoot.querySelector<VoiceInput>("voice-input")?.cancel();
-          }
           if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
             this.submit(event);
           }
@@ -173,14 +182,14 @@ export class ChatComposer extends LitElement {
         </div>
         <div class="actions">
           <voice-input
-            .disabled=${this.pending}
+            .disabled=${this.pending || this.inactive}
             .context=${this.context}
             @dictation-preview=${(event: CustomEvent<string>) => (this.interim = event.detail)}
             @dictation-active=${(event: CustomEvent<boolean>) => (this.dictating = event.detail)}
             @dictation-error=${(event: CustomEvent<string>) => (this.voiceError = event.detail)}
             @transcript=${this.acceptTranscript}
           ></voice-input>
-          ${this.dictating ? nothing : this.pending ? html`<button class="send" type="button" aria-label=${msg("Antwort stoppen")} ?disabled=${this.stopping} @click=${() => this.dispatchEvent(new CustomEvent("stop-request", { bubbles: true, composed: true }))}>${icon("close", 18)}</button>` : html`<button class="send" type="submit" title=${msg("Nachricht senden")} aria-label=${msg("Nachricht senden")} ?disabled=${!this.value.trim() && !this.hasAttachments}>${icon("arrowUp", 19)}</button>`}
+          ${this.dictating ? nothing : this.pending ? html`<button class="send" type="button" title=${msg("Antwort stoppen")} aria-label=${msg("Antwort stoppen")} ?disabled=${this.stopping} @click=${() => this.dispatchEvent(new CustomEvent("stop-request", { bubbles: true, composed: true }))}>${icon("close", 18)}</button>` : html`<button class="send" type="submit" title=${`${msg("Nachricht senden")} · Enter`} aria-keyshortcuts="Enter" aria-label=${msg("Nachricht senden")} ?disabled=${!this.value.trim() && !this.hasAttachments}>${icon("arrowUp", 19)}</button>`}
         </div>
       </footer>
     </form>`;

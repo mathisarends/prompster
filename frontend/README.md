@@ -41,7 +41,7 @@ src/
       api/                 # typisierte OpenRPC-Streams
     deck/                  # Deck-Panel, DeckController, Musik-Karten, Exporte
     sessions/              # Sammlung und Query-/Mutation-Verwaltung
-    settings/              # Konto und Spotify-Verbindung
+    settings/              # Sprache, Konto und Spotify-Verbindung
     spotify/               # Suche, PlaybackController, SDK-Service
   shared/
     i18n/                  # Locale-Auswahl, Intl-Formatierung und generierte Übersetzungen
@@ -114,8 +114,9 @@ Spec und den bestehenden RPC-Client.
 ## Mehrsprachigkeit
 
 Deutsch und Englisch verwenden [Lit Localize im Runtime-Modus](https://lit.dev/docs/localization/runtime-mode/).
-Die Auswahl auf der Anmeldung, in der Seitenleiste und in den Einstellungen
-wechselt die Sprache ohne Neuladen. Offene Tabs, Entwürfe und Deckdaten bleiben
+Die Sprachauswahl befindet sich ausschließlich in den Einstellungen und
+wechselt die Sprache ohne Neuladen. Beim Besuch der Einstellungen bleiben das
+Studio und seine Komponenten verbunden; offene Tabs, Entwürfe und Deckdaten bleiben
 erhalten. Die Reihenfolge beim Start ist: gespeicherte Auswahl unter
 `prompster.locale`, erste unterstützte Browsersprache (auch `en-GB`/`de-AT`),
 sonst Deutsch. Die Auswahl gilt für diesen Browser. Ohne Local Storage bleibt
@@ -147,7 +148,7 @@ ergänzen, die Sprachauswahl und `speechLocale()` erweitern, das neue XLIFF
 übersetzen und bei Bedarf weitere `Intl.PluralRules`-Kategorien ergänzen.
 
 Browser-Tests prüfen DE/EN auf Desktop und Mobil, gespeicherte Auswahl,
-Browserpräferenzen, Datum und Plural, erhaltene Entwürfe und Tabs, Diktier­sprache,
+Browserpräferenzen, Datumsformatierung, erhaltene Entwürfe und Tabs, Diktiersprache,
 gesperrten Speicher sowie fehlgeschlagene Sprachdownloads.
 
 ## Review-Aufnahmen
@@ -165,6 +166,21 @@ und Export sind per Tabs erreichbar (auch mit Pfeiltasten, Pos1 und Ende);
 die Ansicht lässt sich vergrößern und wieder neben den Chat stellen. Auf Mobil
 ersetzt das geöffnete Deck den Chat bis zum Schließen.
 
+Die Icon-Aktionen zeigen beim Hover ihren Namen und vorhandene Tastenkürzel.
+Dieselben Kürzel sind über `aria-keyshortcuts` für assistive Technik verfügbar.
+`src/shared/shortcuts.ts` hält Anzeige und Tastaturbehandlung zusammen; modale
+Dialoge, wiederholte Tastenereignisse, AltGr und laufende IME-Eingaben werden berücksichtigt.
+
+| Aktion                           | Tastenkürzel                                                |
+| -------------------------------- | ----------------------------------------------------------- |
+| Seitenleiste umschalten          | Strg/⌘ + B                                                  |
+| Neues Deck                       | Alt + N                                                     |
+| Deck öffnen/schließen            | Alt + Umschalt + D                                          |
+| Deck vergrößern/geteilte Ansicht | Alt + Umschalt + F                                          |
+| Einstellungen                    | Strg/⌘ + ,                                                  |
+| Nachricht senden                 | Enter im Textfeld; Umschalt + Enter für einen Zeilenumbruch |
+| Diktat verwerfen                 | Esc im Composer                                             |
+
 Die quadratischen Karten orientieren sich am bestehenden `deck.typ`: gleiche
 Farbfolge, Verläufe, Innenrahmen und Anordnung von Künstler, Jahr und Titel.
 Die verdeckte Seite enthält einen lokal erzeugten Spotify-QR-Code mit Vinylringen.
@@ -177,8 +193,8 @@ ausgewählten Sprache (`de-DE` oder `en-US`),
 anschließend Übernehmen oder Verwerfen. In Chrome ist dies die
 [Web-Speech-Anbindung](https://developer.chrome.com/blog/voice-driven-web-apps-introduction-to-the-web-speech-api/),
 keine separate Google-Cloud-API. Erkanntes wird erst nach Bestätigung an den
-Entwurf angehängt und nie automatisch gesendet. Abbrechen, Session-Wechsel und
-Unmount beenden die Aufnahme und verwerfen verspätete Events. HTTPS bzw.
+Entwurf angehängt und nie automatisch gesendet. Abbrechen, Session-Wechsel, der
+Besuch der Einstellungen und Unmount beenden die Aufnahme und verwerfen verspätete Events. HTTPS bzw.
 localhost, Mikrofonfreigabe und ein unterstützender Browser sind erforderlich;
 die Erkennung kann den Dienst des Browsers über das Netzwerk verwenden.
 Eine laufende Aufnahme behält ihre Sprache bis zum Ende; die nächste Aufnahme

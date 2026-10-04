@@ -5,6 +5,7 @@ import type { UserMeResponse } from "@api/generated/users";
 import { pageStyles } from "@shared/styles/page";
 import { icon } from "@shared/ui/icons";
 import { emit, errorMessage } from "@shared/events";
+import { matchesShortcut, shortcutKeys, shortcutTitle } from "@shared/shortcuts";
 import { SessionsController } from "@features/sessions/sessions-controller";
 import { chatPath, sessionIdFromPath } from "./routes";
 import "@shared/ui/sidebar";
@@ -23,6 +24,9 @@ export class AppLayout extends LitElement {
   @state() private deckTitle = "";
   @state() private error = "";
   private sessions = new SessionsController(this);
+  // Keep the connected studio while visiting settings so locale updates reach
+  // its components and drafts, attachments, streams and deck tabs stay intact.
+  private retainedSessionId: string | null = null;
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener("keydown", this.keydown);
@@ -34,6 +38,12 @@ export class AppLayout extends LitElement {
   protected willUpdate(changed: PropertyValues): void {
     document.title = `${this.path === "/decks" ? msg("Meine Decks") : this.path === "/settings" ? msg("Einstellungen") : msg("Deckstudio")} · Prompster`;
     if (changed.has("path")) {
+      const id = sessionIdFromPath(this.path);
+      if (this.path === "/new" || id) {
+        this.retainedSessionId = id ?? "";
+      } else if (this.path !== "/settings") {
+        this.retainedSessionId = null;
+      }
       if (window.innerWidth <= 800) {
         this.sidebarOpen = false;
       }
@@ -46,13 +56,17 @@ export class AppLayout extends LitElement {
       }
       return;
     }
-    if (event.altKey && event.key.toLowerCase() === "n") {
+    if (matchesShortcut(event, "newDeck")) {
       event.preventDefault();
       emit(this, "navigate", "/new");
     }
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "b") {
+    if (matchesShortcut(event, "sidebar")) {
       event.preventDefault();
       this.sidebarOpen = !this.sidebarOpen;
+    }
+    if (matchesShortcut(event, "settings")) {
+      event.preventDefault();
+      emit(this, "navigate", "/settings");
     }
   };
   private menu(id: string): void {
@@ -143,6 +157,9 @@ export class AppLayout extends LitElement {
       flex: 1;
       min-height: 0;
     }
+    chat-page[hidden] {
+      display: none;
+    }
     library-page,
     settings-page {
       flex: 1;
@@ -192,7 +209,7 @@ export class AppLayout extends LitElement {
           ${
             !isChat
               ? html`<div class="topbar">
-                  ${!this.sidebarOpen ? html`<button class="icon-button" aria-label=${msg("Seitenleiste öffnen")} @click=${() => (this.sidebarOpen = true)}>${icon("panelLeft", 18)}</button>` : nothing}<app-breadcrumb
+                  ${!this.sidebarOpen ? html`<button class="icon-button" aria-label=${msg("Seitenleiste öffnen")} title=${shortcutTitle(msg("Seitenleiste öffnen"), "sidebar")} aria-keyshortcuts=${shortcutKeys("sidebar")} @click=${() => (this.sidebarOpen = true)}>${icon("panelLeft", 18)}</button>` : nothing}<app-breadcrumb
                     label=${msg("Seitennavigation")}
                     .items=${[{ label: msg("Dein Deckstudio") }, { label: this.path === "/settings" ? msg("Einstellungen") : this.path === "/decks" ? msg("Meine Decks") : msg("Musik & Erinnerungen") }]}
                   ></app-breadcrumb
@@ -200,6 +217,25 @@ export class AppLayout extends LitElement {
                     ><span class="dot"></span> ${msg("Made for game night")}</span
                   >
                 </div>`
+              : nothing
+          }
+          ${
+            this.retainedSessionId !== null
+              ? html`<chat-page
+                  .sessionId=${this.retainedSessionId}
+                  .user=${this.user}
+                  .active=${isChat}
+                  ?hidden=${!isChat}
+                  .sidebarOpen=${this.sidebarOpen}
+                  @open-sidebar=${() => (this.sidebarOpen = true)}
+                  @session-created=${(event: CustomEvent<string>) => {
+                    this.retainedSessionId = event.detail;
+                    if (isChat) {
+                      emit(this, "navigate", chatPath(event.detail));
+                    }
+                  }}
+                  @session-changed=${() => this.sessions.refresh()}
+                ></chat-page>`
               : nothing
           }
           ${
@@ -211,15 +247,8 @@ export class AppLayout extends LitElement {
                     ?loading=${list.isPending}
                     .error=${listError}
                   ></library-page>`
-                : this.path === "/new" || id
-                  ? html`<chat-page
-                      .sessionId=${id}
-                      .user=${this.user}
-                      .sidebarOpen=${this.sidebarOpen}
-                      @open-sidebar=${() => (this.sidebarOpen = true)}
-                      @session-created=${(event: CustomEvent<string>) => emit(this, "navigate", chatPath(event.detail))}
-                      @session-changed=${() => this.sessions.refresh()}
-                    ></chat-page>`
+                : isChat
+                  ? nothing
                   : html`<div class="status">
                       <h1>${msg("Diese Seite gibt es nicht.")}</h1>
                       <button class="button" @click=${() => emit(this, "navigate", "/new")}>

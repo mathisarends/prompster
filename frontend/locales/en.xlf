@@ -338,14 +338,6 @@
   <source>Deck schließen</source>
   <target>Close deck</target>
 </trans-unit>
-<trans-unit id="s2d4422b75fa8d0fd">
-  <source>Dein Soundtrack</source>
-  <target>Your soundtrack</target>
-</trans-unit>
-<trans-unit id="sc95327a090710738">
-  <source>Deine Songs erscheinen hier live.</source>
-  <target>Your songs will appear here as they arrive.</target>
-</trans-unit>
 <trans-unit id="s19e0e60da9991911">
   <source>Songs hinzufügen</source>
   <target>Add songs</target>
@@ -385,14 +377,6 @@
 <trans-unit id="s58b38a8979df0f4e">
   <source>Auflösung verbergen</source>
   <target>Hide answers</target>
-</trans-unit>
-<trans-unit id="s8910ed001b6c596f">
-  <source>QR-Seite</source>
-  <target>QR side</target>
-</trans-unit>
-<trans-unit id="s0c0fd4aed60ab7f2">
-  <source>Auflösung</source>
-  <target>Answer side</target>
 </trans-unit>
 <trans-unit id="saf81a7de224c991e">
   <source>Vom Bildschirm an den Spieltisch.</source>
@@ -626,14 +610,6 @@
   <source>Etwas ist schiefgelaufen. Bitte versuche es erneut.</source>
   <target>Something went wrong. Please try again.</target>
 </trans-unit>
-<trans-unit id="s329635de4d4dcfba">
-  <source><x id="0" equiv-text="${value}"/> Erinnerung auf einer Karte</source>
-  <target><x id="0" equiv-text="${value}"/> memory on a card</target>
-</trans-unit>
-<trans-unit id="s29f7dcb972983930">
-  <source><x id="0" equiv-text="${value}"/> Erinnerungen auf Karten</source>
-  <target><x id="0" equiv-text="${value}"/> memories on cards</target>
-</trans-unit>
 <trans-unit id="sd16fd26111986006">
   <source><x id="0" equiv-text="${value}"/> Recherche-Schritt</source>
   <target><x id="0" equiv-text="${value}"/> research step</target>
@@ -793,6 +769,10 @@
 <trans-unit id="s2cc2b2acad4973d7">
   <source>Deine Musik. Deine Erinnerungen. Dein Kartendeck. Gestalte deinen nächsten Spieleabend mit Prompster.</source>
   <target>Your music. Your memories. Your card deck. Create your next game night with Prompster.</target>
+</trans-unit>
+<trans-unit id="s10129aa23a2d7f8b">
+  <source>Deck öffnen</source>
+  <target>Open deck</target>
 </trans-unit>
 </body>
 </file>

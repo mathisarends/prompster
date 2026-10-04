@@ -68,7 +68,7 @@ test("mobile sidebar, composer and workspace stay usable", async ({ page }) => {
   await page.screenshot({ path: "test-results/studio-mobile.png", fullPage: true });
   await page.getByRole("button", { name: "Seitenleiste öffnen" }).click();
   await page.getByRole("button", { name: "Unser Spieleabend", exact: true }).click();
-  await page.getByRole("button", { name: /Dein Deck/ }).click();
+  await page.getByRole("button", { name: "Deck öffnen" }).click();
   await expect(page.locator("deck-panel")).toBeVisible();
   await page.getByRole("button", { name: "Deck schließen", exact: true }).click();
   await expect(page.getByRole("textbox", { name: "Nachricht", exact: true })).toBeVisible();

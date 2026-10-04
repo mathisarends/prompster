@@ -1,6 +1,6 @@
 import { msg, localized, str } from "@lit/localize";
 import { getLocale } from "@shared/i18n";
-import "@shared/ui/language-select";
+import { shortcutKeys, shortcutTitle } from "@shared/shortcuts";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { pageStyles } from "@shared/styles/page";
@@ -178,6 +178,7 @@ export class Sidebar extends LitElement {
       ><button
         class="icon-button"
         aria-label=${msg(str`Aktionen für ${entry.title || msg("Neues Deck")}`)}
+        title=${msg(str`Aktionen für ${entry.title || msg("Neues Deck")}`)}
         @click=${() => emit(this, "session-menu", entry.id)}
       >
         ${icon("more", 17)}
@@ -196,6 +197,8 @@ export class Sidebar extends LitElement {
         ><button
           class="icon-button"
           aria-label=${msg("Seitenleiste schließen")}
+          title=${shortcutTitle(msg("Seitenleiste schließen"), "sidebar")}
+          aria-keyshortcuts=${shortcutKeys("sidebar")}
           @click=${() => emit(this, "sidebar-toggle")}
         >
           ${icon("panelLeft", 17)}
@@ -204,6 +207,8 @@ export class Sidebar extends LitElement {
       <nav>
         <button
           class="nav new ${this.path === "/new" ? "active" : ""}"
+          title=${shortcutTitle(msg("Neues Deck"), "newDeck")}
+          aria-keyshortcuts=${shortcutKeys("newDeck")}
           @click=${() => emit(this, "navigate", "/new")}
         >
           ${icon("plus", 17)} ${msg("Neues Deck")} <kbd>Alt N</kbd></button
@@ -234,8 +239,12 @@ export class Sidebar extends LitElement {
         ${entries.filter((entry) => !entry.starred).map((entry) => this.row(entry))}${!entries.length && !this.loading && !this.error ? html`<p class="empty">${this.search ? msg("Keine passenden Decks.") : msg("Hier ist Platz für deine nächsten Lieblingsdecks.")}</p>` : nothing}
       </div>
       <footer>
-        <language-select></language-select>
-        <button class="nav profile" @click=${() => emit(this, "navigate", "/settings")}>
+        <button
+          class="nav profile"
+          title=${shortcutTitle(msg("Einstellungen"), "settings")}
+          aria-keyshortcuts=${shortcutKeys("settings")}
+          @click=${() => emit(this, "navigate", "/settings")}
+        >
           <span class="avatar">${this.userName.slice(0, 1).toLocaleUpperCase(getLocale())}</span
           ><span><strong>${this.userName}</strong><small>${msg("Dein Deckstudio")}</small></span>
         </button>

@@ -28,6 +28,59 @@ test("workspace spans the viewport and supports keyboard tabs and expansion", as
   await expect(page.getByRole("textbox", { name: "Nachricht", exact: true })).toBeVisible();
 });
 
+test("icon shortcut hints match actions, restore focus and respect settings and dialogs", async ({
+  page,
+}) => {
+  await mockApi(page);
+  await page.goto("/chat/deck-1");
+  const panel = page.locator("deck-panel");
+  const close = page.getByRole("button", { name: "Deck schließen", exact: true });
+  await expect(close).toHaveAttribute("title", "Deck schließen · Alt+Shift+D");
+  await expect(close).toHaveAttribute("aria-keyshortcuts", "Alt+Shift+D");
+  await expect(page.locator("chat-page .toolbar")).not.toContainText("Deck schließen");
+  await page.keyboard.press("Alt+Shift+d");
+  const open = page.getByRole("button", { name: "Deck öffnen", exact: true });
+  await expect(open).toBeFocused();
+  await expect(panel).toHaveCount(0);
+  await page.keyboard.press("Alt+Shift+d");
+  await expect(page.getByRole("tab", { name: "Playlist", exact: true })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Deck vergrößern" })).toHaveAttribute(
+    "title",
+    "Deck vergrößern · Alt+Shift+F",
+  );
+  await page.keyboard.press("Alt+Shift+f");
+  await expect(page.getByRole("textbox", { name: "Nachricht", exact: true })).toBeHidden();
+  await page.keyboard.press("Alt+Shift+f");
+  await expect(page.getByRole("textbox", { name: "Nachricht", exact: true })).toBeVisible();
+  await page.keyboard.press("ControlOrMeta+b");
+  await expect(page.locator("side-bar")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Seitenleiste öffnen" })).toHaveAttribute(
+    "title",
+    /(?:Ctrl|⌘)\+B/,
+  );
+  await page.keyboard.press("ControlOrMeta+b");
+  await page.keyboard.press("ControlOrMeta+,");
+  await expect(page).toHaveURL(/\/settings$/);
+  await expect(panel).toBeHidden();
+  await page.keyboard.press("Alt+Shift+d");
+  await page.getByRole("button", { name: "Unser Spieleabend", exact: true }).click();
+  await expect(panel).toBeVisible();
+  await page.getByRole("button", { name: "Aktionen für Unser Spieleabend" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Alt+n");
+  await page.keyboard.press("ControlOrMeta+,");
+  await page.keyboard.press("Alt+Shift+d");
+  await expect(page).toHaveURL(/\/chat\/deck-1$/);
+  await expect(panel).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Alt+n");
+  await expect(page).toHaveURL(/\/new$/);
+  await expect(page.getByRole("button", { name: "Nachricht senden", exact: true })).toHaveAttribute(
+    "title",
+    "Nachricht senden · Enter",
+  );
+});
+
 test("dictation previews, cancels and appends text without submitting it", async ({ page }) => {
   const api = await mockApi(page);
   await mockSpeech(page);
@@ -38,7 +91,12 @@ test("dictation previews, cancels and appends text without submitting it", async
   await page.evaluate(() => (window as SpeechTestWindow).speechInstances.at(-1)!.result("Disco"));
   await expect(composer).toHaveValue("Ein Deck mit Disco");
   await expect(composer).toHaveAttribute("readonly", "");
-  await page.getByRole("button", { name: "Diktat verwerfen" }).click();
+  await expect(page.getByRole("button", { name: "Diktat verwerfen" })).toHaveAttribute(
+    "title",
+    "Diktat verwerfen · Esc",
+  );
+  await page.getByRole("button", { name: "Diktat verwerfen" }).focus();
+  await page.keyboard.press("Escape");
   await expect(composer).toHaveValue("Ein Deck mit");
   await page.getByRole("button", { name: "Diktieren", exact: true }).click();
   await page.evaluate(() =>
