@@ -1,4 +1,36 @@
 import type { Page } from "@playwright/test";
+import type { LLMOptionResponse } from "../../src/api/generated/llm-options";
+
+// Representative entries from the backend registry, including its actual default.
+export const modelOptions = (
+  [
+    {
+      id: "gpt-6-sol-US",
+      provider: "openai",
+      label: "GPT 6 Sol (OpenAI)",
+      profile: "Maximal",
+      isDefault: false,
+    },
+    {
+      id: "gpt-6-luna-US",
+      provider: "openai",
+      label: "GPT 6 Luna (OpenAI)",
+      profile: "Schnell",
+      isDefault: true,
+    },
+    {
+      id: "gpt-6-sol-codex",
+      provider: "codex",
+      label: "GPT 6 Sol (Codex)",
+      profile: "Maximal",
+      isDefault: false,
+    },
+  ] as const
+).map<LLMOptionResponse>((model) => ({
+  ...model,
+  capabilities: { temperature: false, reasoningEffort: ["low", "medium", "high"] },
+  defaults: { reasoningEffort: "medium" },
+}));
 
 export const song = {
   id: "track-1",
@@ -51,6 +83,7 @@ export async function mockApi(
   let current = structuredClone(initialSession);
   let removed = false;
   const messages: string[] = [];
+  const modelIds: (string | undefined)[] = [];
   await page.route("**/api/v1/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     const method = route.request().method();
@@ -64,7 +97,7 @@ export async function mockApi(
       return json({}, 401);
     }
     if (path === "/api/v1/llm-options") {
-      return json({ items: [{ id: "default", label: "Standard", isDefault: true }] });
+      return json({ items: modelOptions });
     }
     if (path === "/api/v1/sessions") {
       if (method === "POST") {
@@ -172,6 +205,7 @@ export async function mockApi(
         });
       } else {
         messages.push(request.params.content);
+        modelIds.push(request.params.modelId);
         current = { ...structuredClone(initialSession), id: current.id };
         send({ type: "session.title_generated", title: current.title });
         send({
@@ -196,5 +230,5 @@ export async function mockApi(
       );
     });
   });
-  return { messages };
+  return { messages, modelIds };
 }

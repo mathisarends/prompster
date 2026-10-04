@@ -14,6 +14,12 @@ test("welcome, new session and generated RPC streaming", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Jeder Hit hat seine Zeit. Welche ist deine?" }),
   ).toBeVisible();
+  const model = page.getByRole("combobox", { name: "KI-Modell" });
+  await expect(model).toHaveValue("gpt-6-luna-US");
+  await expect(model).toHaveAttribute("title", "GPT 6 Luna (OpenAI)");
+  await expect(page.getByRole("img", { name: "OpenAI", exact: true })).toBeVisible();
+  await model.selectOption("gpt-6-sol-US");
+  await expect(model).toHaveAttribute("title", "GPT 6 Sol (OpenAI)");
   await page.screenshot({ path: "test-results/studio-desktop.png", fullPage: true });
   await page.getByRole("button", { name: /Zurück in die 90er/ }).click();
   await expect(page.getByRole("textbox", { name: "Nachricht", exact: true })).toHaveValue(/90er/);
@@ -23,6 +29,41 @@ test("welcome, new session and generated RPC streaming", async ({ page }) => {
   await expect(page.locator("deck-panel")).toContainText("Dancing Queen");
   await expect(page.getByRole("textbox", { name: "Nachricht", exact: true })).toHaveValue("");
   expect(fixture.messages).toHaveLength(1);
+  expect(fixture.modelIds).toEqual(["gpt-6-sol-US"]);
+  await expect(model).toHaveValue("gpt-6-sol-US");
+});
+
+test("model selection stays distinct for Codex and survives mobile settings and locale changes", async ({
+  page,
+}) => {
+  const fixture = await mockApi(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/new");
+  const model = page.getByRole("combobox", { name: "KI-Modell" });
+  await model.selectOption("gpt-6-sol-codex");
+  await expect(model).toHaveAttribute("title", "GPT 6 Sol (Codex)");
+  await expect(page.getByRole("img", { name: "OpenAI", exact: true })).toHaveAttribute(
+    "title",
+    "Codex",
+  );
+  const send = await page
+    .getByRole("button", { name: "Nachricht senden", exact: true })
+    .boundingBox();
+  const selector = await model.boundingBox();
+  expect(selector!.x + selector!.width).toBeLessThan(send!.x);
+  await page.getByRole("button", { name: "Seitenleiste öffnen" }).click();
+  await page.getByRole("button", { name: /Mathi Dein Deckstudio/ }).click();
+  await page.getByRole("combobox", { name: "Sprache" }).selectOption("en");
+  await page.getByRole("button", { name: "Open sidebar" }).click();
+  await page.getByRole("button", { name: /New deck/ }).click();
+  const englishModel = page.getByRole("combobox", { name: "AI model" });
+  await expect(englishModel).toHaveValue("gpt-6-sol-codex");
+  await expect(englishModel).toHaveAttribute("title", "GPT 6 Sol (Codex)");
+  await page.getByRole("textbox", { name: "Message", exact: true }).fill("Disco for game night");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(page).toHaveURL(/\/chat\/new-deck/);
+  await expect(page.getByRole("textbox", { name: "Message", exact: true })).toHaveValue("");
+  expect(fixture.modelIds).toEqual(["gpt-6-sol-codex"]);
 });
 test("session, cards, binary PDF and Spotify export", async ({ page }) => {
   await mockApi(page);

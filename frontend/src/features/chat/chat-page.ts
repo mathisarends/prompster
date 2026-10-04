@@ -15,6 +15,7 @@ import "./chat-welcome";
 import "./components/chat-message-list";
 import "./components/onboarding-panel";
 import "./components/chat-attachments";
+import "./components/model-select";
 import "@features/deck/deck-panel";
 import "@chat";
 import "@shared/ui/breadcrumb";
@@ -135,14 +136,15 @@ export class ChatPage extends LitElement {
         >
           ${icon("plus", 20)}
         </button>
-        <select
-          aria-label=${msg("KI-Modell")}
+        <model-select
+          .options=${options}
+          .value=${this.chat.modelId ?? ""}
           ?disabled=${this.chat.busy || !options.length}
-          .value=${this.chat.modelId ?? options.find((model) => model.isDefault)?.id ?? options[0]?.id ?? ""}
-          @change=${(event: Event) => (this.chat.modelId = (event.target as HTMLSelectElement).value)}
-        >
-          ${options.map((model) => html`<option value=${model.id}>${model.label}</option>`)}
-        </select>
+          @model-change=${(event: CustomEvent<string>) => {
+            this.chat.modelId = event.detail;
+            this.requestUpdate();
+          }}
+        ></model-select>
       </div>
     </chat-composer>`;
   }
@@ -195,19 +197,6 @@ export class ChatPage extends LitElement {
       gap: 4px;
       min-width: 0;
     }
-    select {
-      max-width: 175px;
-      min-height: 34px;
-      padding: 5px 7px;
-      border: 0;
-      background: transparent;
-      color: var(--color-muted);
-      font-size: 12px;
-    }
-    option {
-      color: var(--color-text);
-      background: var(--color-panel);
-    }
     .inline-error {
       margin: 10px 24px;
     }
@@ -238,9 +227,6 @@ export class ChatPage extends LitElement {
     @media (max-width: 480px) {
       .composer-area {
         padding-inline: 14px;
-      }
-      select {
-        max-width: 100px;
       }
     }
   `;
