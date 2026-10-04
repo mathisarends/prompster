@@ -1,12 +1,7 @@
-import type {
-  SendMessageParams,
-  SessionStreamEvent,
-} from "@/api/session-rpc";
+import type { SendMessageParams, SessionStreamEvent } from "@/api/session-rpc";
 import { withSessionRpcClient } from "@/shared/api/session-rpc-client";
 
-export type SessionMessageAttachmentRequest = NonNullable<
-  SendMessageParams["attachments"]
->[number];
+export type SessionMessageAttachmentRequest = NonNullable<SendMessageParams["attachments"]>[number];
 export type ImageAttachmentReferenceRequest = NonNullable<
   SendMessageParams["imageAttachments"]
 >[number];

@@ -1,13 +1,18 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prompster</title>
+    <meta name="theme-color" content="#0b0b0b" />
+    <meta
+      name="description"
+      content="Deine Musik. Deine Erinnerungen. Dein Kartendeck. Gestalte deinen nächsten Spieleabend mit Prompster."
+    />
+    <title>Prompster · Dein Deckstudio</title>
+    <link rel="icon" href="/prompster-mark.svg" type="image/svg+xml" />
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <app-query-provider><prompster-app></prompster-app></app-query-provider>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

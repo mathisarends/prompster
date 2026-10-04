@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/@lit/localize-tools/config.schema.json",
+  "sourceLocale": "de",
+  "targetLocales": ["en"],
+  "tsConfig": "./tsconfig.json",
+  "interchange": { "format": "xliff", "xliffDir": "./locales" },
+  "output": {
+    "mode": "runtime",
+    "outputDir": "./src/shared/i18n/generated",
+    "localeCodesModule": "./src/shared/i18n/locale-codes.ts"
+  }
+}

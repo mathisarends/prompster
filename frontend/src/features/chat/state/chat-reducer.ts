@@ -7,29 +7,20 @@ import type {
   ToolCallResponse,
   UserCurationEventResponse,
   UserMessageEntryResponse,
-} from "@/api/generated/model";
-import {
-  EntryKind,
-  ToolCallState,
-} from "@/api/generated/model";
+} from "@api/generated/sessions";
+import { ToolCallState } from "@api/generated/sessions";
+import { EntryKind } from "@api/generated/session-schemas";
 import { SessionStreamEventType } from "@/api/session-rpc/models";
 import type {
   PlaylistPayload,
   SessionSnapshotPayload,
   SessionStreamEvent,
 } from "@/api/session-rpc";
-import type { ChatAttachment } from "@/features/chat/components/attachments";
-import type {
-  ToolCallItem,
-  ToolCallRetry,
-  ToolCallStatus,
-} from "@/features/chat/types";
+import type { ChatAttachment } from "@/features/chat/components/attachments/attachment-types";
+import type { ToolCallItem, ToolCallRetry, ToolCallStatus } from "@/features/chat/types";
 
 type SessionLike =
-  | Pick<
-      SessionResponse,
-      "id" | "title" | "entries" | "playlist" | "onboardingQuestions" | "phase"
-    >
+  | Pick<SessionResponse, "id" | "title" | "entries" | "playlist" | "onboardingQuestions" | "phase">
   | SessionSnapshotPayload;
 type SessionEntryResponse = SessionResponse["entries"][number];
 type PlaylistLike = PlaylistPayload | PlaylistResponse | null | undefined;
@@ -57,18 +48,12 @@ export type ChatToolCall = ToolCallResponse & {
   retry?: ToolCallRetry | null;
 };
 
-export type ChatToolCallGroupEntry = Omit<
-  ToolCallSequenceEntryResponse,
-  "kind" | "calls"
-> & {
+export type ChatToolCallGroupEntry = Omit<ToolCallSequenceEntryResponse, "kind" | "calls"> & {
   kind: "tool_call_group";
   calls: ChatToolCall[];
 };
 
-export type ChatEntry =
-  | ChatUserEntry
-  | ChatAssistantEntry
-  | ChatToolCallGroupEntry;
+export type ChatEntry = ChatUserEntry | ChatAssistantEntry | ChatToolCallGroupEntry;
 
 export type ChatState = {
   title?: string;
@@ -160,10 +145,7 @@ export const createInitialChatState = (): ChatState => ({
   pendingInput: null,
 });
 
-export const chatReducer = (
-  state: ChatState,
-  action: ChatAction,
-): ChatState => {
+export const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
   switch (action.type) {
     case ChatActionType.SESSION_LOADED:
       return {
@@ -228,22 +210,23 @@ export const chatReducer = (
   }
 };
 
-export const getLatestUserMessageContent = (
-  session: SessionLike | undefined,
-) => {
-  if (!session) return undefined;
+export const getLatestUserMessageContent = (session: SessionLike | undefined) => {
+  if (!session) {
+    return undefined;
+  }
 
   for (let index = session.entries.length - 1; index >= 0; index -= 1) {
     const entry = session.entries[index];
-    if (entry.kind === EntryKind.user_message) return entry.content;
+    if (entry.kind === EntryKind.user_message) {
+      return entry.content;
+    }
   }
 
   return undefined;
 };
 
-export const toToolCallItems = (
-  group: ChatToolCallGroupEntry,
-): ToolCallItem[] => group.calls.map(toToolCallItem);
+export const toToolCallItems = (group: ChatToolCallGroupEntry): ToolCallItem[] =>
+  group.calls.map(toToolCallItem);
 
 export const getScrollKey = (entry: ChatEntry): string => {
   switch (entry.kind) {
@@ -260,9 +243,8 @@ export const getScrollKey = (entry: ChatEntry): string => {
   }
 };
 
-const normalizeSessionEntries = (
-  entries: SessionLike["entries"],
-): ChatEntry[] => entries.map((entry) => normalizeSessionEntry(entry));
+const normalizeSessionEntries = (entries: SessionLike["entries"]): ChatEntry[] =>
+  entries.map((entry) => normalizeSessionEntry(entry));
 
 const normalizeSessionEntry = (entry: SessionEntryResponse): ChatEntry => {
   switch (entry.kind) {
@@ -274,20 +256,18 @@ const normalizeSessionEntry = (entry: SessionEntryResponse): ChatEntry => {
       return normalizeToolCallGroupEntry(entry);
   }
 
-  if ("calls" in entry) return normalizeToolCallGroupEntry(entry);
+  if ("calls" in entry) {
+    return normalizeToolCallGroupEntry(entry);
+  }
   return normalizeAssistantEntry(entry as AssistantMessageEntryResponse);
 };
 
-const normalizeUserEntry = (
-  entry: UserMessageEntryResponse,
-): ChatUserEntry => ({
+const normalizeUserEntry = (entry: UserMessageEntryResponse): ChatUserEntry => ({
   ...entry,
   kind: EntryKind.user_message,
 });
 
-const normalizeAssistantEntry = (
-  entry: AssistantMessageEntryResponse,
-): ChatAssistantEntry => ({
+const normalizeAssistantEntry = (entry: AssistantMessageEntryResponse): ChatAssistantEntry => ({
   ...entry,
   kind: EntryKind.assistant_message,
   isStreaming: false,
@@ -301,7 +281,9 @@ const normalizeToolCallGroupEntry = (
 });
 
 const normalizePlaylist = (playlist: PlaylistLike): ChatPlaylist | null => {
-  if (!playlist) return null;
+  if (!playlist) {
+    return null;
+  }
   return {
     id: playlist.id,
     name: playlist.name,
@@ -311,20 +293,23 @@ const normalizePlaylist = (playlist: PlaylistLike): ChatPlaylist | null => {
 };
 
 const getPendingInput = (session: SessionLike): PendingInput | null => {
-  if (!("onboardingQuestions" in session)) return null;
+  if (!("onboardingQuestions" in session)) {
+    return null;
+  }
   // Once onboarding is complete the questions stay on the session for history,
   // but the panel must not reappear.
-  if ("phase" in session && session.phase !== "onboarding") return null;
+  if ("phase" in session && session.phase !== "onboarding") {
+    return null;
+  }
 
-  const questions = (session.onboardingQuestions ?? []).map(
-    toPendingOnboardingQuestion,
-  );
-  if (questions.length === 0) return null;
+  const questions = (session.onboardingQuestions ?? []).map(toPendingOnboardingQuestion);
+  if (questions.length === 0) {
+    return null;
+  }
 
   // Resume on the first unanswered question, falling back to the first one so a
   // fully answered (but not yet completed) onboarding still renders.
-  const activeQuestion =
-    questions.find((question) => !question.isAnswered) ?? questions[0];
+  const activeQuestion = questions.find((question) => !question.isAnswered) ?? questions[0];
 
   return {
     kind: "onboarding_question",
@@ -354,8 +339,7 @@ const toPendingOnboardingQuestion = (
   isAnswered: question.isAnswered ?? false,
 });
 
-const nextPlaylistRevision = (playlist: ChatPlaylist | null) =>
-  (playlist?.uiRevision ?? 0) + 1;
+const nextPlaylistRevision = (playlist: ChatPlaylist | null) => (playlist?.uiRevision ?? 0) + 1;
 
 const addPlaylistTrack = (
   playlist: ChatPlaylist | null,
@@ -376,9 +360,7 @@ const addPlaylistTrack = (
     uiRevision: nextPlaylistRevision(playlist),
     uiEvent: "track_added",
     tracks: playlist.tracks.some((candidate) => candidate.id === track.id)
-      ? playlist.tracks.map((candidate) =>
-          candidate.id === track.id ? track : candidate,
-        )
+      ? playlist.tracks.map((candidate) => (candidate.id === track.id ? track : candidate))
       : [...playlist.tracks, track],
   };
 };
@@ -388,7 +370,9 @@ const removePlaylistTrack = (
   playlistId: string,
   trackId: string,
 ): ChatPlaylist | null => {
-  if (!playlist || playlist.id !== playlistId) return playlist;
+  if (!playlist || playlist.id !== playlistId) {
+    return playlist;
+  }
   return {
     ...playlist,
     uiRevision: nextPlaylistRevision(playlist),
@@ -412,26 +396,21 @@ const replacePlaylistTrack = (
     };
   }
 
-  const replaced = playlist.tracks.some(
-    (candidate) => candidate.id === trackId,
-  );
+  const replaced = playlist.tracks.some((candidate) => candidate.id === trackId);
   return {
     ...playlist,
     uiRevision: nextPlaylistRevision(playlist),
     uiEvent: "track_replaced",
     tracks: replaced
-      ? playlist.tracks.map((candidate) =>
-          candidate.id === trackId ? track : candidate,
-        )
+      ? playlist.tracks.map((candidate) => (candidate.id === trackId ? track : candidate))
       : [...playlist.tracks, track],
   };
 };
 
-const reduceSessionStreamEvent = (
-  state: ChatState,
-  event: SessionStreamEvent,
-): ChatState => {
-  if (!event) return state;
+const reduceSessionStreamEvent = (state: ChatState, event: SessionStreamEvent): ChatState => {
+  if (!event) {
+    return state;
+  }
 
   if (
     event.type === ChatEventType.SUSPENDED_FOR_INPUT ||
@@ -463,9 +442,7 @@ const reduceSessionStreamEvent = (
       isAnswered: false,
     };
     const currentQuestions =
-      state.pendingInput?.kind === "onboarding_question"
-        ? state.pendingInput.questions
-        : [];
+      state.pendingInput?.kind === "onboarding_question" ? state.pendingInput.questions : [];
     const existingIndex = currentQuestions.findIndex(
       (question) => question.id && question.id === incomingQuestion.id,
     );
@@ -512,30 +489,19 @@ const reduceSessionStreamEvent = (
     case ChatEventType.ASSISTANT_STARTED:
       return {
         ...state,
-        entries: startAssistantMessage(
-          state.entries,
-          event.messageId,
-          event.createdAt,
-        ),
+        entries: startAssistantMessage(state.entries, event.messageId, event.createdAt),
       };
 
     case ChatEventType.ASSISTANT_CHUNK:
       return {
         ...state,
-        entries: appendAssistantMessageChunk(
-          state.entries,
-          event.messageId,
-          event.chunk,
-        ),
+        entries: appendAssistantMessageChunk(state.entries, event.messageId, event.chunk),
       };
 
     case ChatEventType.ASSISTANT_COMPLETED:
       return {
         ...state,
-        entries: upsertChatEntry(
-          state.entries,
-          normalizeAssistantEntry(event.message),
-        ),
+        entries: upsertChatEntry(state.entries, normalizeAssistantEntry(event.message)),
       };
 
     case ChatEventType.ASSISTANT_CANCELLED:
@@ -547,52 +513,40 @@ const reduceSessionStreamEvent = (
     case ChatEventType.TOOL_CALL_SEQUENCE_ADDED:
       return {
         ...state,
-        entries: upsertChatEntry(
-          state.entries,
-          normalizeToolCallGroupEntry(event.sequence),
-        ),
+        entries: upsertChatEntry(state.entries, normalizeToolCallGroupEntry(event.sequence)),
       };
 
     case ChatEventType.TOOL_CALL_RESOLVED:
       return {
         ...state,
-        entries: updateToolCall(
-          state.entries,
-          event.sequenceId,
-          event.toolCallId,
-          {
-            state: ToolCallState.completed,
-            result: event.result,
-            resultItems: event.resultItems ?? [],
-            error: null,
-            retry: null,
-          },
-        ),
+        entries: updateToolCall(state.entries, event.sequenceId, event.toolCallId, {
+          state: ToolCallState.completed,
+          result: event.result,
+          resultItems: event.resultItems ?? [],
+          error: null,
+          retry: null,
+        }),
       };
 
     case ChatEventType.TOOL_CALL_FAILED:
       return {
         ...state,
-        entries: updateToolCall(
-          state.entries,
-          event.sequenceId,
-          event.toolCallId,
-          {
-            state: ToolCallState.failed,
-            result: null,
-            error: event.error,
-            retry: null,
-          },
-        ),
+        entries: updateToolCall(state.entries, event.sequenceId, event.toolCallId, {
+          state: ToolCallState.failed,
+          result: null,
+          error: event.error,
+          retry: null,
+        }),
       };
 
     case ChatEventType.TOOL_CALL_RETRY: {
       // sequenceId is best-effort on the backend; fall back to the entry that
       // owns the tool call so a missing id still updates the right chip.
       const sequenceId =
-        event.sequenceId ??
-        findToolCallSequenceId(state.entries, event.toolCallId);
-      if (!sequenceId) return state;
+        event.sequenceId ?? findToolCallSequenceId(state.entries, event.toolCallId);
+      if (!sequenceId) {
+        return state;
+      }
 
       return {
         ...state,
@@ -610,7 +564,9 @@ const reduceSessionStreamEvent = (
 
     case ChatEventType.PLAYLIST_SET: {
       const playlist = normalizePlaylist(event.playlist);
-      if (!playlist) return { ...state, playlist: null };
+      if (!playlist) {
+        return { ...state, playlist: null };
+      }
 
       return {
         ...state,
@@ -625,21 +581,13 @@ const reduceSessionStreamEvent = (
     case ChatEventType.PLAYLIST_TRACK_ADDED:
       return {
         ...state,
-        playlist: addPlaylistTrack(
-          state.playlist,
-          event.playlistId,
-          event.track,
-        ),
+        playlist: addPlaylistTrack(state.playlist, event.playlistId, event.track),
       };
 
     case ChatEventType.PLAYLIST_TRACK_REMOVED:
       return {
         ...state,
-        playlist: removePlaylistTrack(
-          state.playlist,
-          event.playlistId,
-          event.trackId,
-        ),
+        playlist: removePlaylistTrack(state.playlist, event.playlistId, event.trackId),
       };
 
     case ChatEventType.PLAYLIST_TRACK_REPLACED:
@@ -689,10 +637,10 @@ const createOptimisticUserEntry = (
   isOptimistic: true,
 });
 
-const toOptimisticImageAttachment = (
-  attachment: ChatAttachment,
-): string | null => {
-  if (attachment.kind !== "image") return null;
+const toOptimisticImageAttachment = (attachment: ChatAttachment): string | null => {
+  if (attachment.kind !== "image") {
+    return null;
+  }
   return attachment.imageUrl ?? null;
 };
 
@@ -708,23 +656,18 @@ const createAssistantEntry = (
   isStreaming: true,
 });
 
-const upsertChatEntry = (
-  entries: ChatEntry[],
-  entry: ChatEntry,
-): ChatEntry[] => {
+const upsertChatEntry = (entries: ChatEntry[], entry: ChatEntry): ChatEntry[] => {
   const index = entries.findIndex((candidate) => candidate.id === entry.id);
-  if (index === -1) return [...entries, entry];
+  if (index === -1) {
+    return [...entries, entry];
+  }
 
   const nextEntries = [...entries];
   nextEntries[index] = entry;
   return nextEntries;
 };
 
-const startAssistantMessage = (
-  entries: ChatEntry[],
-  messageId: string,
-  createdAt: string,
-) => {
+const startAssistantMessage = (entries: ChatEntry[], messageId: string, createdAt: string) => {
   const index = entries.findIndex((entry) => entry.id === messageId);
   if (index === -1) {
     return [...entries, createAssistantEntry(messageId, "", createdAt)];
@@ -738,11 +681,7 @@ const startAssistantMessage = (
   return nextEntries;
 };
 
-const appendAssistantMessageChunk = (
-  entries: ChatEntry[],
-  messageId: string,
-  chunk: string,
-) => {
+const appendAssistantMessageChunk = (entries: ChatEntry[], messageId: string, chunk: string) => {
   const index = entries.findIndex((entry) => entry.id === messageId);
   if (index === -1) {
     return [...entries, createAssistantEntry(messageId, chunk)];
@@ -775,44 +714,45 @@ const cancelAssistantMessage = (entries: ChatEntry[], messageId: string) => {
 
 const finishStreamingAssistantEntries = (entries: ChatEntry[]) =>
   entries.map((entry) =>
-    entry.kind === EntryKind.assistant_message
-      ? { ...entry, isStreaming: false }
-      : entry,
+    entry.kind === EntryKind.assistant_message ? { ...entry, isStreaming: false } : entry,
   );
 
 const updateToolCall = (
   entries: ChatEntry[],
   groupId: string,
   toolCallId: string,
-  patch: Partial<
-    Pick<ToolCallResponse, "state" | "result" | "resultItems" | "error">
-  > & { retry?: ToolCallRetry | null },
+  patch: Partial<Pick<ToolCallResponse, "state" | "result" | "resultItems" | "error">> & {
+    retry?: ToolCallRetry | null;
+  },
 ) =>
   entries.map((entry) => {
-    if (entry.kind !== "tool_call_group" || entry.id !== groupId) return entry;
+    if (entry.kind !== "tool_call_group" || entry.id !== groupId) {
+      return entry;
+    }
 
     return {
       ...entry,
-      calls: entry.calls.map((call) =>
-        call.id === toolCallId ? { ...call, ...patch } : call,
-      ),
+      calls: entry.calls.map((call) => (call.id === toolCallId ? { ...call, ...patch } : call)),
     };
   });
 
-const findToolCallSequenceId = (
-  entries: ChatEntry[],
-  toolCallId: string,
-): string | undefined => {
+const findToolCallSequenceId = (entries: ChatEntry[], toolCallId: string): string | undefined => {
   for (const entry of entries) {
-    if (entry.kind !== "tool_call_group") continue;
-    if (entry.calls.some((call) => call.id === toolCallId)) return entry.id;
+    if (entry.kind !== "tool_call_group") {
+      continue;
+    }
+    if (entry.calls.some((call) => call.id === toolCallId)) {
+      return entry.id;
+    }
   }
   return undefined;
 };
 
 const completeToolCallGroup = (entries: ChatEntry[], groupId: string) =>
   entries.map((entry) => {
-    if (entry.kind !== "tool_call_group" || entry.id !== groupId) return entry;
+    if (entry.kind !== "tool_call_group" || entry.id !== groupId) {
+      return entry;
+    }
 
     return {
       ...entry,
@@ -827,16 +767,16 @@ const completeToolCallGroup = (entries: ChatEntry[], groupId: string) =>
 const removeLastPendingToolCall = (entries: ChatEntry[]): ChatEntry[] => {
   for (let index = entries.length - 1; index >= 0; index -= 1) {
     const entry = entries[index];
-    if (entry.kind !== "tool_call_group") continue;
+    if (entry.kind !== "tool_call_group") {
+      continue;
+    }
 
-    const pendingIndex = entry.calls.findLastIndex(
-      (call) => call.state === ToolCallState.pending,
-    );
-    if (pendingIndex === -1) continue;
+    const pendingIndex = entry.calls.findLastIndex((call) => call.state === ToolCallState.pending);
+    if (pendingIndex === -1) {
+      continue;
+    }
 
-    const calls = entry.calls.filter(
-      (_call, callIndex) => callIndex !== pendingIndex,
-    );
+    const calls = entry.calls.filter((_call, callIndex) => callIndex !== pendingIndex);
     if (calls.length === 0) {
       return entries.filter((_candidate, entryIndex) => entryIndex !== index);
     }
@@ -849,14 +789,12 @@ const removeLastPendingToolCall = (entries: ChatEntry[]): ChatEntry[] => {
   return entries;
 };
 
-const upsertStreamErrorEntry = (
-  entries: ChatEntry[],
-  message: string,
-): ChatEntry[] => {
+const upsertStreamErrorEntry = (entries: ChatEntry[], message: string): ChatEntry[] => {
   for (let index = entries.length - 1; index >= 0; index -= 1) {
     const entry = entries[index];
-    if (entry.kind !== EntryKind.assistant_message || !entry.isStreaming)
+    if (entry.kind !== EntryKind.assistant_message || !entry.isStreaming) {
       continue;
+    }
 
     const nextEntries = [...entries];
     nextEntries[index] = {
@@ -890,8 +828,12 @@ const toToolCallItem = (call: ChatToolCall): ToolCallItem => ({
 });
 
 const toToolCallStatus = (call: ToolCallResponse): ToolCallStatus => {
-  if (call.state === ToolCallState.pending) return "running";
-  if (call.state === ToolCallState.failed) return "failed";
+  if (call.state === ToolCallState.pending) {
+    return "running";
+  }
+  if (call.state === ToolCallState.failed) {
+    return "failed";
+  }
   return "completed";
 };
 
@@ -899,11 +841,17 @@ const formatToolCallName = (call: ToolCallResponse) =>
   call.function.statusLabel ?? call.function.name.replaceAll("_", " ");
 
 const getToolCallDetail = (call: ToolCallResponse) => {
-  if (call.state === ToolCallState.failed) return call.error ?? undefined;
-  if (call.state === ToolCallState.completed) return call.result ?? undefined;
+  if (call.state === ToolCallState.failed) {
+    return call.error ?? undefined;
+  }
+  if (call.state === ToolCallState.completed) {
+    return call.result ?? undefined;
+  }
 
   const argumentKeys = Object.keys(call.function.arguments);
-  if (argumentKeys.length === 0) return undefined;
+  if (argumentKeys.length === 0) {
+    return undefined;
+  }
 
   return JSON.stringify(call.function.arguments, null, 2);
 };

@@ -1,8 +1,4 @@
-export type ChatAttachmentKind =
-  | "image"
-  | "spotify-track"
-  | "spotify-playlist"
-  | "spotify-artist";
+export type ChatAttachmentKind = "image" | "spotify-track" | "spotify-playlist" | "spotify-artist";
 
 export type ChatAttachment = {
   id: string;
