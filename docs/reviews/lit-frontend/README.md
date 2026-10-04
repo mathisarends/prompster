@@ -1,6 +1,6 @@
 # Lit frontend: review gallery
 
-Recorded on 2026-10-03 from application commit `2251f8a` in Chrome. Desktop:
+Recorded on 2026-10-04 from application commit `d05c54a` in Chrome. Desktop:
 1440 × 960; mobile: 390 × 844. The screenshots and videos use controlled HTTP
 and WebSocket fixtures plus a simulated browser speech-recognition service.
 They demonstrate layout, navigation, dictation controls and interactions;
@@ -51,6 +51,10 @@ The production application uses the real backend.
 The 17 screenshots include the full-height workspace with keyboard-accessible
 tabs, compact composer, card monogram and both card faces. Header divider lines,
 the composer reference button and the game-rules entry have been removed.
+Deck captions and the text button for closing the deck are also removed;
+workspace actions use icons with hover labels and keyboard-shortcut hints.
+Language selection is available exclusively in settings. Visiting settings
+preserves the chat draft and selected deck tab, while stopping active dictation.
 The language switch updates the interface while preserving the fixture's
 original German conversation and deck name. Card colors and proportions follow
 the existing PDF template; its precise print font and crop marks remain in the

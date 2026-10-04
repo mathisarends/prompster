@@ -124,7 +124,7 @@ try {
   await expect(desktop.getByRole("heading", { name: "Einstellungen", exact: true })).toBeVisible();
   await shot(desktop, "07-settings-desktop");
   await pause(1800);
-  await desktop.locator("side-bar").getByRole("combobox", { name: "Sprache" }).selectOption("en");
+  await desktop.getByRole("combobox", { name: "Sprache" }).selectOption("en");
   await desktop.getByRole("button", { name: /New deck/ }).click();
   await expect(desktop.getByRole("button", { name: /Back to the 90s/ })).toBeVisible();
   await shot(desktop, "15-studio-desktop-en");
@@ -168,7 +168,7 @@ try {
   await expect(mobile.locator("assistant-message")).toContainText("Spieleabend-Deck");
   await shot(mobile, "09-chat-mobile");
   await pause(2000);
-  await mobile.getByRole("button", { name: /Dein Deck/ }).click();
+  await mobile.getByRole("button", { name: "Deck öffnen" }).click();
   await expect(mobile.locator("deck-panel")).toBeVisible();
   await pause(1700);
   await mobile.getByRole("tab", { name: "Karten", exact: true }).click();
@@ -180,9 +180,11 @@ try {
   await expect(mobile.getByRole("textbox", { name: "Nachricht", exact: true })).toBeVisible();
   await pause(1200);
   await mobile.getByRole("button", { name: "Seitenleiste öffnen" }).click();
+  await mobile.getByRole("button", { name: /Mathi Dein Deckstudio/ }).click();
   await mobile.getByRole("combobox", { name: "Sprache" }).selectOption("en");
   await pause(1000);
-  await mobile.getByRole("button", { name: "Close sidebar" }).click();
+  await mobile.getByRole("button", { name: "Open sidebar" }).click();
+  await mobile.getByRole("button", { name: "Unser Spieleabend", exact: true }).click();
   await expect(mobile.getByRole("textbox", { name: "Message", exact: true })).toBeVisible();
   await shot(mobile, "17-chat-mobile-en");
   await pause(1700);
