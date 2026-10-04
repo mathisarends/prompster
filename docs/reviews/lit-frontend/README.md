@@ -1,6 +1,6 @@
 # Lit frontend: review gallery
 
-Recorded on 2026-10-04 from application commit `d05c54a` in Chrome. Desktop:
+Recorded on 2026-10-04 from application commit `e92000a` in Chrome. Desktop:
 1440 × 960; mobile: 390 × 844. The screenshots and videos use controlled HTTP
 and WebSocket fixtures plus a simulated browser speech-recognition service.
 They demonstrate layout, navigation, dictation controls and interactions;
@@ -53,6 +53,10 @@ tabs, compact composer, card monogram and both card faces. Header divider lines,
 the composer reference button and the game-rules entry have been removed.
 Deck captions and the text button for closing the deck are also removed;
 workspace actions use icons with hover labels and keyboard-shortcut hints.
+The composer shows the concrete model label and OpenAI mark from the reference.
+The fixtures use representative backend registry entries instead of a generic
+"Standard" option: GPT 6 Luna is the default, and the desktop walkthrough selects
+GPT 6 Sol. Codex variants remain distinguishable by their model labels.
 Language selection is available exclusively in settings. Visiting settings
 preserves the chat draft and selected deck tab, while stopping active dictation.
 The language switch updates the interface while preserving the fixture's

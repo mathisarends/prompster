@@ -83,6 +83,7 @@ try {
   await expect(desktop.locator("studio-page")).toBeVisible();
   await shot(desktop, "02-studio-desktop");
   await pause(1800);
+  await desktop.getByRole("combobox", { name: "KI-Modell" }).selectOption("gpt-6-sol-US");
   await desktop.getByRole("button", { name: "Diktieren", exact: true }).click();
   await desktop.evaluate(() =>
     (window as SpeechTestWindow).speechInstances
