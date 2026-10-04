@@ -1,86 +1,121 @@
-## prompster
+# prompster
 
-AI-powered Hitster playlist builder. Users describe a playlist in natural language; an agent researches Spotify, builds a draft, and can export a printable card deck as PDF.
+**Turn a music prompt into game night.**
 
-### packages
+Describe the music you love. Prompster researches Spotify, builds a playlist with you, and turns it into a printable, Hitster-style card deck. Fine-tune the selection in chat, curate it by hand, then take it to Spotify or the table.
 
-| Package    | Role                                                                      |
-| ---------- | ------------------------------------------------------------------------- |
-| `callm`    | External chat model package for OpenAI and Codex providers               |
-| `agent`    | Tool-calling agent loop, Spotify tools, workspace state, streaming events |
-| `backend`  | FastAPI HTTP/WebSocket API, auth, sessions, PDF export, DB + S3                 |
-| `frontend` | Lit SPA — chat UI, live RPC event rendering, Spotify deck player         |
-| `tokens`   | Standalone token utilities                                                |
+[![Frontend CI](https://github.com/mathisarends/prompster/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/mathisarends/prompster/actions/workflows/frontend-ci.yml)
+[![Backend CI](https://github.com/mathisarends/prompster/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/mathisarends/prompster/actions/workflows/backend-ci.yml)
 
-### how the pieces fit together
+[Demos](#demos) · [Run locally](#run-locally) · [How it works](#how-it-works) · [Development](#development)
 
-```
-frontend  ──JSON-RPC──►  backend  ──────►  agent  ──►  callm
-                       │                │
-                  PostgreSQL        Spotify API
-                  S3 / PDF
-```
+![Prompster: a game-night conversation beside colourful music cards with artists, song titles, and release years.](docs/reviews/lit-frontend/16-cards-desktop-en.png)
 
-1. **frontend** sends a user message to `backend` and opens a JSON-RPC subscription.
-2. **backend** creates or resumes a `Session`, delegates to the `agent` package, and maps each `AgentEvent` to a typed RPC event.
-3. **agent** runs a tool-calling loop: it calls Spotify APIs and builds a `PlaylistDraft` in the `PlaylistDraftStore`.
-4. **callm** provides the `ChatModel` used by both `agent` (tool calls) and `backend` (simple session chat). The backend model registry selects OpenAI API key or Codex subscription authentication.
-5. Once the draft is finalised the user can export a PDF deck or write the playlist back to their Spotify account — both handled by `backend`.
+## From a prompt to a deck
 
-The model selector identifies each provider explicitly:
+> “Build a deck for our game night: disco, pop and a little indie, from the '70s to the 2000s. Songs everyone can sing along to.”
 
-- **OpenAI** models use `callm.ChatOpenAIResponses` and `OPENAI_API_KEY` from `.env`.
-- **Codex** models use `callm.ChatCodex` with your ChatGPT subscription login from `codex login`. They do not use `OPENAI_API_KEY`.
+1. **Set the direction.** Start with a mood, an era, a genre, or a few favourites. Add artist and playlist references or images for context.
+2. **Build it together.** Answer follow-up questions and watch the agent's research and playlist updates as they arrive.
+3. **Make it yours.** Ask for changes, add or remove tracks, and switch between the playlist and card previews. Hide the answers to reveal the QR side.
+4. **Bring the music.** Export a Spotify playlist or download cards with QR codes, song titles, artists, and release years.
 
-For a local backend, log in with `codex login` before selecting a Codex model.
-`callm` reads the login from `~/.codex/auth.json`, or from `CODEX_HOME` when set.
+The studio works on **desktop and mobile**, with **German and English** interfaces and browser-supported voice dictation. Decks currently support **up to 50 tracks**. In-browser Spotify playback requires **Spotify Premium**; Spotify export requires a connected account.
 
-For Docker, start the stack with the optional read-only Codex mount:
+## Demos
 
-```bash
-bash scripts/start_codex.sh
-# Or run in the background:
-bash scripts/start_codex.sh -d
-```
+Explore the studio, refine a deck, preview both sides of the cards, and switch languages. Click a preview for the full MP4 walkthrough.
 
-The script works from any working directory, uses the repository's `.env`, checks
-for a readable `auth.json`, and starts `docker compose up --build` with both
-Compose files. Additional arguments are passed to `up`. Use Bash on Linux/macOS
-or Git Bash on Windows; Docker Compose v2 is required.
+| Desktop studio | On your phone |
+| --- | --- |
+| [<img src="docs/reviews/lit-frontend/desktop-preview.gif" width="720" alt="Desktop walkthrough: dictation, chat, cards, QR preview, export options, and settings.">](docs/reviews/lit-frontend/desktop-walkthrough.mp4) | [<img src="docs/reviews/lit-frontend/mobile-preview.gif" width="220" alt="Mobile walkthrough: dictation, navigation, chat, cards, and language switching.">](docs/reviews/lit-frontend/mobile-walkthrough.mp4) |
+| [Watch desktop demo · MP4](docs/reviews/lit-frontend/desktop-walkthrough.mp4) | [Watch mobile demo · MP4](docs/reviews/lit-frontend/mobile-walkthrough.mp4) |
 
-Set `CODEX_AUTH_DIR` in `.env` to the absolute path of your logged-in Codex
-directory (for example `C:/Users/you/.codex` on Windows or
-`/home/you/.codex` on Linux). An exported `CODEX_AUTH_DIR` takes precedence. If
-the value is empty or unset, the script uses `CODEX_HOME`, then `~/.codex`.
+The recordings use controlled API responses and simulated speech recognition. They demonstrate the interface and interactions; live AI, OAuth, Spotify playback, microphone recognition, and actual exports are not exercised. See the [full gallery and recording instructions](docs/reviews/lit-frontend/README.md).
 
-If your Codex login is stored in the OS credential store, create a file-based
-login in the intended Codex home so the container can read `auth.json`:
+## Run locally
+
+You'll need **Docker with Compose v2**, **Node.js 24**, a **Spotify developer app**, and an **OpenAI API key** for the default model configuration. Google sign-in is optional.
 
 ```bash
-codex -c 'cli_auth_credentials_store="file"' login
+git clone https://github.com/mathisarends/prompster.git
+cd prompster
+cp .env.example .env
 ```
 
-See the [Codex credential storage documentation](https://learn.chatgpt.com/docs/auth#credential-storage).
-Select a **Codex** model in the UI to use this login. Backend features that use
-the registry's default model still use OpenAI and require `OPENAI_API_KEY` with
-the current configuration.
-
-To manage the stack directly, set `CODEX_AUTH_DIR` explicitly and use both files:
+Fill in `.env` before starting: Spotify credentials, the token encryption key, and your OpenAI key. Use `http://127.0.0.1:8000/api/v1/auth/spotify/callback` for the Spotify redirect URI. The [setup guide](docs/getting-started.md) walks through key generation, OAuth callbacks, and optional Google sign-in.
 
 ```bash
-docker compose -f compose.yml -f compose.codex.yml up --build
+# API, database, object storage, and migrations
+docker compose up --build -d
+
+# Frontend (runs outside Docker)
+npm --prefix frontend ci
+npm --prefix frontend run dev
 ```
 
-The login directory and `auth.json` must already exist. The default Compose
-configuration only passes `OPENAI_API_KEY`; use the override to make Codex
-subscription credentials available inside the backend container.
+Open **[127.0.0.1:5173](http://127.0.0.1:5173)** and sign in with Spotify or your configured Google app. Keep `127.0.0.1` consistent across the frontend and OAuth callbacks.
 
-### workspace
+| Local service | Address |
+| --- | --- |
+| App | [127.0.0.1:5173](http://127.0.0.1:5173) |
+| API docs | [127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) |
+| MinIO console | [127.0.0.1:9001](http://127.0.0.1:9001) |
+| Database browser | [127.0.0.1:8080](http://127.0.0.1:8080) |
 
-This is a `uv` workspace. All packages share a single lockfile.
+**Using a Codex login?** The model selector distinguishes OpenAI API models from Codex models. See [Codex authentication](docs/getting-started.md#codex-authentication) for the local login and read-only Docker credential mount. Background tasks still use the default OpenAI model in the current configuration.
+
+## How it works
+
+The Lit frontend talks to FastAPI over HTTP and typed JSON-RPC WebSocket subscriptions. The agent researches Spotify and updates a shared deck draft; the backend persists the session and handles exports.
+
+```mermaid
+flowchart LR
+    UI[Lit frontend] <-->|HTTP + WebSocket| API[FastAPI backend]
+    API <--> Agent[Playlist agent]
+    Agent <--> Spotify[Spotify API]
+    Agent <--> Models[callm · OpenAI / Codex]
+    API --> DB[(PostgreSQL)]
+    API --> Export[Typst PDF + S3 storage]
+```
+
+| Location | Responsibility |
+| --- | --- |
+| [`frontend/`](frontend/README.md) | Lit 3, TypeScript, Vite, TanStack Lit Query; chat, cards, and playback |
+| [`backend/`](backend/README.md) | FastAPI, OAuth, sessions, Spotify export, and PDF generation |
+| [`libs/agent/`](libs/agent/README.md) | Tool-calling loop, Spotify research, deck state, and streaming events |
+| [`schema/`](schema/) | Generated OpenRPC contract for the session stream |
+
+The Python packages share a **uv workspace and lockfile**. [`callm`](https://github.com/mathisarends/callm) is an external dependency that supplies the model clients.
+
+## Development
+
+With **Python 3.14+** and **uv** installed, run these commands from the repository root:
 
 ```bash
-uv sync                 # install all packages
-uv run backend          # start the API server
-uv run agent            # run the agent standalone
+uv sync --all-packages --dev
+uv run pytest backend/tests/ -v
+uv run --package agent pytest libs/agent/tests/
+uv run --package backend rpckit generate --config rpcgen.toml --check
+
+npm --prefix frontend run lint
+npm --prefix frontend test
+npm --prefix frontend run build
 ```
+
+The Compose stack mounts the backend and agent source for local iteration. To regenerate the RPC contract and TypeScript client after changing a subscription:
+
+```bash
+uv run --package backend rpckit generate --config rpcgen.toml
+```
+
+For HTTP client generation, export the backend schema and regenerate the client:
+
+```bash
+npm --prefix frontend run api:export
+npm --prefix frontend run api:generate
+```
+
+The [frontend guide](frontend/README.md) also covers browser tests, translation checks, and the recording workflow.
+
+[Setup & troubleshooting](docs/getting-started.md) · [Database migrations](docs/migration.md) · [Backend internals](backend/README.md) · [Agent internals](libs/agent/README.md)
