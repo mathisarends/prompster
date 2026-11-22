@@ -70,7 +70,7 @@ class ActionResult(BaseModel):
             success=True,
             extracted_content=extracted_content,
             input_request=input_request,
-            items=list(items or ()),
+            items=list(items if items is not None else ()),
         )
 
     @classmethod
@@ -98,7 +98,9 @@ class Tool:
         self.description = description
         self.fn = fn
         self.action_type = action_type
-        self.included_in_phases = frozenset(included_in_phases or ())
+        self.included_in_phases = frozenset(
+            included_in_phases if included_in_phases is not None else ()
+        )
         self.is_onboarding_question = is_onboarding_question
         self._schema = schema
         self.param_model = param_model

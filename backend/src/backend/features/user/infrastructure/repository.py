@@ -59,7 +59,7 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
             created_at=orm.created_at,
             name=orm.name,
             profile_image_url=orm.profile_image_url,
-            spotify=spotify or SpotifyAccount.disconnected(),
+            spotify=spotify if spotify is not None else SpotifyAccount.disconnected(),
         )
 
     def _to_orm(self, domain: User) -> UserModel:

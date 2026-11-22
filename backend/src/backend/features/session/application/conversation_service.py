@@ -70,7 +70,7 @@ from backend.features.session.domain import (
 logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionMessageAttachment:
     kind: str
     external_id: str
@@ -80,7 +80,7 @@ class SessionMessageAttachment:
     spotify_id: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _ResolvedToolCall:
     sequence_id: UUID
     tool_call_id: str
@@ -89,7 +89,7 @@ class _ResolvedToolCall:
     items: tuple[ToolResultItem, ...] = field(default_factory=tuple)
 
 
-@dataclass
+@dataclass(slots=True)
 class _AgentRunState:
     current_assistant_message: AssistantMessage | None = None
     pending_tool_call_sequence_label: str | None = None
@@ -125,11 +125,15 @@ class SessionConversationService:
         referenced_images = await self._promote_image_attachment_references(
             user_id=user_id,
             session_id=session.id,
-            image_attachments=image_attachments or [],
+            image_attachments=image_attachments
+            if image_attachments is not None
+            else [],
         )
         session.add_user_message(
             content=content,
-            attachments=self._to_user_message_attachments(attachments or []),
+            attachments=self._to_user_message_attachments(
+                attachments if attachments is not None else []
+            ),
             image_attachments=referenced_images,
         )
         title_task = self._maybe_start_title_generation(

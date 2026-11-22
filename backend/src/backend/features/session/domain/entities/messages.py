@@ -194,9 +194,13 @@ class UserMessage(Entity):
     ) -> None:
         super().__init__(id=id, created_at=created_at)
         self.content = content
-        self.attachments = tuple(attachments or [])
-        self.image_attachments = tuple(image_attachments or [])
-        self.user_curation_events = tuple(user_curation_events or [])
+        self.attachments = tuple(attachments if attachments is not None else [])
+        self.image_attachments = tuple(
+            image_attachments if image_attachments is not None else []
+        )
+        self.user_curation_events = tuple(
+            user_curation_events if user_curation_events is not None else []
+        )
 
     @classmethod
     def create(

@@ -38,7 +38,7 @@ from agent.tools.retry_reporting import retry_sink
 from agent.views import Phase, UserEvent
 
 
-@dataclass
+@dataclass(slots=True)
 class _LLMResponse:
     completion: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)
@@ -60,14 +60,14 @@ class Agent:
         compaction_threshold: float = 0.8,
     ) -> None:
         self._llm = llm
-        self._tools = tools or Tools()
+        self._tools = tools if tools is not None else Tools()
         self._phase = phase
 
-        input_token_limit = max_input_tokens or 272_000
+        input_token_limit = max_input_tokens if max_input_tokens is not None else 272000
         self._compaction_budget = int(input_token_limit * compaction_threshold)
         self._last_prompt_tokens = 0
 
-        self._spotify = spotify or Spotify()
+        self._spotify = spotify if spotify is not None else Spotify()
         self._tools.provide(self._spotify)
 
         existing_store = self._tools.resolve(DeckStore)
@@ -117,8 +117,10 @@ class Agent:
     ) -> AsyncGenerator[AgentEvent, None]:
         self._stop_requested = False
         if message is not None or curation_events:
-            self._messages.add_user(message or "", curation_events)
-            yield RunStartedEvent(message=message or "")
+            self._messages.add_user(
+                message if message is not None else "", curation_events
+            )
+            yield RunStartedEvent(message=message if message is not None else "")
 
         async for event in self._run_loop():
             yield event

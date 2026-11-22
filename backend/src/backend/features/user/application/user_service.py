@@ -5,7 +5,7 @@ from backend.features.user.domain import User, UserRepository
 from backend.shared.authentication import SessionInvalidException
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class UserDeleteInformation:
     session_count: int
 

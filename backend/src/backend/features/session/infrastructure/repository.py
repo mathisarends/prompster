@@ -341,7 +341,11 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         position: int,
         existing_message: SessionUserMessageModel | None = None,
     ) -> SessionUserMessageModel:
-        orm_message = existing_message or SessionUserMessageModel(id=message.id)
+        orm_message = (
+            existing_message
+            if existing_message is not None
+            else SessionUserMessageModel(id=message.id)
+        )
         orm_message.session_id = session_id
         orm_message.position = position
         orm_message.content = message.content
@@ -378,7 +382,11 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         position: int,
         existing_attachment: SessionUserMessageAttachmentModel | None = None,
     ) -> SessionUserMessageAttachmentModel:
-        orm_attachment = existing_attachment or SessionUserMessageAttachmentModel()
+        orm_attachment = (
+            existing_attachment
+            if existing_attachment is not None
+            else SessionUserMessageAttachmentModel()
+        )
         orm_attachment.user_message_id = user_message_id
         orm_attachment.position = position
         orm_attachment.kind = attachment.kind.value
@@ -396,8 +404,10 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         user_message_id: UUID,
         existing_attachment: SessionUserMessageImageAttachmentModel | None = None,
     ) -> SessionUserMessageImageAttachmentModel:
-        orm_attachment = existing_attachment or SessionUserMessageImageAttachmentModel(
-            id=attachment.id
+        orm_attachment = (
+            existing_attachment
+            if existing_attachment is not None
+            else SessionUserMessageImageAttachmentModel(id=attachment.id)
         )
         orm_attachment.user_message_id = user_message_id
         orm_attachment.storage_key = attachment.storage_key
@@ -731,7 +741,11 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         position: int,
         existing_sequence: SessionToolCallSequenceModel | None = None,
     ) -> SessionToolCallSequenceModel:
-        orm = existing_sequence or SessionToolCallSequenceModel(id=sequence.id)
+        orm = (
+            existing_sequence
+            if existing_sequence is not None
+            else SessionToolCallSequenceModel(id=sequence.id)
+        )
         orm.session_id = session_id
         orm.position = position
         orm.label = sequence.label
@@ -767,7 +781,7 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
             state, result, error = _PENDING_STATE, None, None
             result_items = None
 
-        orm = existing_call or SessionToolCallModel()
+        orm = existing_call if existing_call is not None else SessionToolCallModel()
         orm.sequence_id = sequence_id
         orm.position = position
         orm.call_id = call.id
@@ -879,7 +893,11 @@ class SqlSessionRepository(Repository[SessionModel, Session], SessionRepository)
         position: int,
         existing_track: PlaylistTrackModel | None = None,
     ) -> PlaylistTrackModel:
-        orm = existing_track or PlaylistTrackModel(id=track.id)
+        orm = (
+            existing_track
+            if existing_track is not None
+            else PlaylistTrackModel(id=track.id)
+        )
         orm.playlist_id = playlist_id
         orm.position = position
         orm.title = track.title

@@ -13,7 +13,7 @@ class ToolActionType(StrEnum):
     SELF_REVIEW = "self_review"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ToolFunction:
     name: str
     arguments: dict[str, object]
@@ -22,7 +22,7 @@ class ToolFunction:
     is_onboarding_question: bool = False
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ToolResultItem:
     """A single result a tool surfaced — preview metadata.
 
@@ -36,13 +36,13 @@ class ToolResultItem:
     track_uri: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class PendingCall:
     id: str
     function: ToolFunction
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class CompletedCall:
     id: str
     function: ToolFunction
@@ -50,7 +50,7 @@ class CompletedCall:
     items: tuple[ToolResultItem, ...] = field(default_factory=tuple)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class FailedCall:
     id: str
     function: ToolFunction

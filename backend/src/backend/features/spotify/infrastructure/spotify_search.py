@@ -49,7 +49,9 @@ class SpotifyifySearch(SpotifySearchGateway):
                 artists=[],
             )
 
-        requested_types = types or set(DEFAULT_SPOTIFY_SEARCH_TYPES)
+        requested_types = (
+            types if types is not None else set(DEFAULT_SPOTIFY_SEARCH_TYPES)
+        )
 
         if not requested_types:
             return SpotifyUnifiedSearchResult(

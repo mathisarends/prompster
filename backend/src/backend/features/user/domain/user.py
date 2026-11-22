@@ -19,7 +19,7 @@ class User(Aggregate):
         super().__init__(id=id, created_at=created_at)
         self.name = name
         self.profile_image_url = profile_image_url
-        self.spotify = spotify or SpotifyAccount.disconnected()
+        self.spotify = spotify if spotify is not None else SpotifyAccount.disconnected()
 
     @classmethod
     def create(

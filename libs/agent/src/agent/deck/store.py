@@ -354,7 +354,7 @@ class DeckStore:
         *,
         existing_uris: set[str | None] | None = None,
     ) -> list[DeckDraftTrack]:
-        seen_uris = set(existing_uris or set())
+        seen_uris = set(existing_uris if existing_uris is not None else set())
         deduplicated: list[DeckDraftTrack] = []
         for track in tracks:
             if track.spotify_uri in seen_uris:

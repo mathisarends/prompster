@@ -72,12 +72,18 @@ class Session(Aggregate):
         self._owner_id = owner_id
         self._is_starred = is_starred
         self._playlist = playlist
-        self._user_curation_events: list[UserCurationEvent] = user_curation_events or []
-        self._playlist_references: list[PlaylistReference] = playlist_references or []
-        self._artist_references: list[ArtistReference] = artist_references or []
+        self._user_curation_events: list[UserCurationEvent] = (
+            user_curation_events if user_curation_events is not None else []
+        )
+        self._playlist_references: list[PlaylistReference] = (
+            playlist_references if playlist_references is not None else []
+        )
+        self._artist_references: list[ArtistReference] = (
+            artist_references if artist_references is not None else []
+        )
         self._phase = phase
         self._onboarding_questions: list[OnboardingQuestion] = (
-            onboarding_questions or []
+            onboarding_questions if onboarding_questions is not None else []
         )
         self._playlist_pdf_storage_key = playlist_pdf_storage_key
         self._playlist_pdf_fingerprint = playlist_pdf_fingerprint

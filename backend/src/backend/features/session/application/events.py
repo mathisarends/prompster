@@ -18,38 +18,38 @@ class SuspensionKind(StrEnum):
     PLAYLIST_CONTEXT = "playlist_context"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionSnapshot:
     session: Session
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionAssistantMessageStarted:
     message: AssistantMessage
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionAssistantMessageChunk:
     message_id: UUID
     chunk: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionAssistantMessageCompleted:
     message: AssistantMessage
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionAssistantMessageCancelled:
     message_id: UUID
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionToolCallSequenceAdded:
     sequence: ToolCallSequence
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionToolCallResolved:
     sequence_id: UUID
     tool_call_id: str
@@ -57,14 +57,14 @@ class SessionToolCallResolved:
     items: tuple[ToolResultItem, ...] = field(default_factory=tuple)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionToolCallFailed:
     sequence_id: UUID
     tool_call_id: str
     error: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionToolCallRetry:
     """A transient retry of a still-pending tool call's upstream request.
 
@@ -81,36 +81,36 @@ class SessionToolCallRetry:
     sequence_id: UUID | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionToolCallSequenceCompleted:
     sequence_id: UUID
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionPlaylistSet:
     playlist: Playlist
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionPlaylistTrackAdded:
     playlist_id: UUID
     track: PlaylistTrack
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionPlaylistTrackRemoved:
     playlist_id: UUID
     track_id: UUID
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionPlaylistTrackReplaced:
     playlist_id: UUID
     track_id: UUID
     track: PlaylistTrack
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionContextCompacted:
     """Older tool results were elided to stay under the model's token budget.
 
@@ -124,12 +124,12 @@ class SessionContextCompacted:
     compacted_tool_results: int = 0
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionTitleGenerated:
     title: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionOnboardingQuestionAsked:
     question: str
     options: list[str]
@@ -142,7 +142,7 @@ class SessionOnboardingQuestionAsked:
     is_last_question: bool = False
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionSuspendedForInput:
     kind: SuspensionKind
     question: str | None = None

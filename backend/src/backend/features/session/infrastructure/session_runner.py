@@ -28,7 +28,7 @@ from backend.features.session.infrastructure.agent_event_mapper import (
 from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
 
 
-@dataclass
+@dataclass(slots=True)
 class _ActiveRun:
     run_id: UUID
     cancellation: asyncio.Event

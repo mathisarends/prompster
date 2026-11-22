@@ -55,7 +55,7 @@ class SpotifyPlaylistLookupResult(BaseModel):
 
 class Spotify:
     def __init__(self, client: Spotifyify | None = None) -> None:
-        self._client = client or Spotifyify(scopes=[])
+        self._client = client if client is not None else Spotifyify(scopes=[])
         self._open = False
 
     async def __aenter__(self) -> Self:

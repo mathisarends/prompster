@@ -302,7 +302,9 @@ def to_image_attachment_urls(
     *,
     image_urls_by_storage_key: Mapping[str, str] | None = None,
 ) -> list[str]:
-    urls_by_storage_key = image_urls_by_storage_key or {}
+    urls_by_storage_key = (
+        image_urls_by_storage_key if image_urls_by_storage_key is not None else {}
+    )
     return [
         url
         for attachment in attachments

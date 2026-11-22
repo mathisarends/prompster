@@ -46,7 +46,10 @@ def render_track_tag(
     identity_value: str | None = None,
 ) -> str:
     attrs = [
-        (identity_attr, identity_value or str(track.id)),
+        (
+            identity_attr,
+            identity_value if identity_value is not None else str(track.id),
+        ),
         ("label", _render_track_label(track)),
     ]
     return f"<track {_render_attrs(attrs)} />"
