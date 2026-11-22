@@ -1,0 +1,68 @@
+project:
+  exclude:
+    - path: migrations/**
+      reason: Alembic revisions are immutable history and run outside the app.
+    - path: src/backend/__init__.py
+      reason: Packaging placeholder for the console script entry point.
+
+architecture:
+  features:
+    root: backend.features
+  shared:
+    - backend.shared
+    - backend.env
+    - backend._logging
+  composition_root:
+    - backend.main
+    - backend.lifespan
+    - backend.app
+  wiring:
+    - backend.features.auth
+    - backend.features.health
+    - backend.features.llm
+    - backend.features.oauth_connections
+    - backend.features.session
+    - backend.features.spotify
+    - backend.features.user
+    - backend.features.*.infrastructure.di
+    - backend.platform.*.di
+  layers:
+    domain:
+      path: domain
+      may_depend_on: []
+      third_party:
+        default: deny
+        allow: [pydantic]
+    application:
+      path: application
+      may_depend_on: [domain]
+      third_party:
+        default: allow
+        deny: [alembic, asyncpg, fastapi, httpx, jwt, obstore, sqlalchemy, sqlmodel, starlette, uvicorn]
+    infrastructure:
+      path: infrastructure
+      may_depend_on: [domain, application]
+      modules: [backend.platform]
+    presentation:
+      path: presentation
+      may_depend_on: [application, domain]
+      modules: [backend.presentation]
+      third_party:
+        default: allow
+        deny: [alembic, asyncpg, obstore, sqlalchemy, sqlmodel]
+  # Only intended, acyclic feature dependencies belong here. The auth, user and
+  # oauth_connections cycles are deliberately absent and tracked as debt.
+  cross_feature:
+    default: deny
+    allow:
+      - {from: oauth_connections.presentation, to: auth.presentation}
+      - {from: session.presentation, to: auth.presentation}
+      - {from: spotify.presentation, to: auth.presentation}
+      - {from: user.presentation, to: auth.presentation}
+      - {from: session.presentation, to: spotify.application}
+      - {from: session.application, to: spotify.application}
+      - {from: session.application, to: oauth_connections.application}
+      - {from: session.application, to: user.domain}
+      - {from: session.infrastructure, to: llm.application}
+      - {from: session.infrastructure, to: llm.domain}
+debt: .smelt/debt.json

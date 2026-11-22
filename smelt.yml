@@ -1,0 +1,78 @@
+# Shared policy for the uv workspace. Member architectures live in
+# backend/smelt.yml and libs/agent/smelt.yml.
+#
+# Smelt is pinned in .pre-commit-config.yaml and .github/workflows/backend-ci.yml.
+# It runs isolated because its pydantic requirement would otherwise move the
+# locked runtime version. Update both pins together.
+version: 2
+
+project:
+  workspace: uv
+  test_roots: [tests]
+  exclude:
+    - path: frontend/scripts/**
+      reason: Build tooling for the frontend, not part of a backend package.
+
+suppressions:
+  require_reason: true
+
+architecture:
+  import_graph:
+    cycles: [features, layers, siblings, modules]
+  members:
+    backend: {may_depend_on: [libs/agent]}
+    libs/agent: {may_depend_on: []}
+
+ignore:
+  - rule: architecture/non-public-module-import
+    paths: [backend/tests/**, libs/agent/tests/**]
+    reason: White-box tests may import the internals of the package they verify.
+
+rules:
+  # Architecture: boundaries are hard errors.
+  architecture/layer-boundary: error
+  architecture/cross-feature-import: error
+  architecture/forbidden-third-party-import: error
+  architecture/import-cycle: error
+  architecture/shared-imports-feature: error
+  architecture/composition-root-leak: error
+  architecture/non-public-module-import: error
+  architecture/missing-required-module: error
+  architecture/member-boundary: error
+  architecture/undeclared-member-dependency: error
+  architecture/unclassified-module: error
+  architecture/uncovered-source: error
+
+  # Correctness and security.
+  frameworks/prefer-secret-type: warning
+  typing/implicit-optional-default: warning
+  typing/deprecated-async-contextmanager-return: warning
+  modeling/mutable-field-in-frozen-dataclass: warning
+  modeling/implicit-duration-unit: warning
+  modeling/duplicate-class-name: warning
+  idioms/missing-broad-except-reason: warning
+  idioms/duplicate-narrowing-assert: warning
+  idioms/bundled-instance-assignment: error
+
+  # Module and API shape.
+  layout/definition-order: error
+  layout/misplaced-private-constant: warning
+  layout/misplaced-module-logger: warning
+  visibility/misplaced-dunder-all: error
+  visibility/foreign-private-access: warning
+  visibility/internal-public-member: warning
+  visibility/internal-public-module-symbol: warning
+  visibility/internal-public-attribute: warning
+  visibility/test-only-public-function: warning
+  visibility/test-only-public-attribute: warning
+  complexity/excess-positional-parameters: warning
+  complexity/duplicate-function: warning
+
+  # Test quality.
+  tests/private-access: error
+  tests/string-patch-target: error
+  tests/missing-outcome-check: warning
+  tests/vacuous-assertion: warning
+  tests/unbounded-wait: warning
+  tests/missing-await-assertion: warning
+debt: .smelt/debt.json

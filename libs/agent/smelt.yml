@@ -1,0 +1,19 @@
+architecture:
+  layers:
+    foundation:
+      modules: [agent.deck, agent.tokens, agent.views]
+      may_depend_on: []
+    messages:
+      modules: [agent.messages]
+      may_depend_on: [foundation]
+    capabilities:
+      modules: [agent.guardrails, agent.tools]
+      may_depend_on: [foundation, messages]
+    runtime:
+      modules: [agent.agent, agent.events]
+      may_depend_on: [foundation, messages, capabilities]
+  packages:
+    agent-api:
+      match: agent
+      public: ['.', deck, messages]
+debt: .smelt/debt.json
