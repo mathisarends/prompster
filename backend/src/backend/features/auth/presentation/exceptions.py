@@ -2,7 +2,7 @@ from fastapi import status
 from fastapi_canon import Error
 
 from backend.features.auth.domain import InvalidCredentialsException
-from backend.presentation.authentication import AUTHENTICATION_REQUIRED_ERROR
+from backend.presentation import AUTHENTICATION_REQUIRED_ERROR
 from backend.shared.authentication import (
     SessionExpiredException,
     SessionInvalidException,

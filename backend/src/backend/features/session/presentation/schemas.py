@@ -6,7 +6,7 @@ from uuid import UUID
 from pydantic import Field, RootModel, model_validator
 
 from backend.features.session.domain import OnboardingQuestionSelectionMode, Phase
-from backend.presentation.schema import Schema
+from backend.presentation import Schema
 
 
 class _AttachmentKey(NamedTuple):

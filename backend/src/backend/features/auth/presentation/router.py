@@ -18,7 +18,7 @@ from backend.features.auth.presentation.oauth_state_cookies import (
     GoogleOAuthStateCookies,
     SpotifyLoginOAuthStateCookies,
 )
-from backend.presentation.authentication import RefreshAuthenticatedUserId
+from backend.presentation import RefreshAuthenticatedUserId
 
 auth_router = APIRouter(
     prefix="/auth",

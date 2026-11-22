@@ -7,7 +7,7 @@ from backend.features.user.presentation.schemas import (
     UserDeleteInformationResponse,
     UserMeResponse,
 )
-from backend.presentation.authentication import (
+from backend.presentation import (
     AUTHENTICATION_REQUIRED_ERROR,
     AuthenticatedUserId,
 )

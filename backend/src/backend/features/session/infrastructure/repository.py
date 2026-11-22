@@ -10,8 +10,8 @@ from backend.features.session.domain import (
     SessionRepository,
 )
 from backend.features.session.infrastructure.orm_mapper import SessionOrmMapper
-from backend.platform.database import Repository
-from backend.platform.database.orm import (
+from backend.platform.database import (
+    Repository,
     SessionModel,
     SessionPlaylistModel,
     SessionToolCallSequenceModel,

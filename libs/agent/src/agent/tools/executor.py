@@ -1,10 +1,10 @@
 import inspect
 import logging
-from typing import Annotated, Any, get_args, get_origin, get_type_hints
+from typing import Any, get_args, get_type_hints
 
 from pydantic import BaseModel
 
-from agent.tools.di import InjectMarker, ToolContext
+from agent.tools.di import ToolContext, is_injectable
 from agent.tools.views import ActionResult, Tool
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class ToolExecutor:
 
         for param_name, param in signature.parameters.items():
             hint = hints.get(param_name)
-            if hint is None or not _is_injectable(hint):
+            if hint is None or not is_injectable(hint):
                 continue
 
             actual_type = get_args(hint)[0]
@@ -86,7 +86,7 @@ class ToolExecutor:
             if param_name in ("self", "cls"):
                 continue
             hint = hints.get(param_name)
-            if hint is not None and _is_injectable(hint):
+            if hint is not None and is_injectable(hint):
                 continue
             candidates.append(param_name)
             if hint == param_model:
@@ -95,9 +95,3 @@ class ToolExecutor:
         if len(candidates) == 1:
             return candidates[0]
         return None
-
-
-def _is_injectable(hint: Any) -> bool:
-    if get_origin(hint) is not Annotated:
-        return False
-    return any(isinstance(a, InjectMarker) for a in get_args(hint))

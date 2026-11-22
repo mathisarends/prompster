@@ -2,7 +2,7 @@ from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.env import EnvSettings
-from backend.features.auth.application.ports import SpotifyLoginProvider
+from backend.features.auth.application import SpotifyLoginProvider
 from backend.features.auth.infrastructure import AuthSettings, OAuthStateSettings
 from backend.features.oauth_connections.application import (
     SpotifyAccountLoginProvider,

@@ -26,7 +26,7 @@ from backend.features.session.domain import (
     UserMessageAttachment,
     UserMessageAttachmentKind,
 )
-from backend.platform.database.orm import (
+from backend.platform.database import (
     PlaylistTrackModel,
     SessionArtistReferenceModel,
     SessionAssistantMessageModel,

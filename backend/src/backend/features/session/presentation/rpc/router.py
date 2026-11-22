@@ -5,7 +5,7 @@ from fastapi_canon.integrations.websockets.adapters.dishka import Dishka
 
 from backend.features.session.presentation.rpc.channel import session_channel
 from backend.features.session.presentation.rpc.context import SessionRpcContext
-from backend.presentation.authentication import AuthenticatedUserId
+from backend.presentation import AuthenticatedUserId
 
 
 async def _session_rpc_context(

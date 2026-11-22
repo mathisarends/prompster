@@ -16,7 +16,7 @@ from backend.features.oauth_connections.presentation.schemas import (
 from backend.features.oauth_connections.presentation.spotify_oauth_state_cookies import (
     SpotifyOAuthStateCookies,
 )
-from backend.presentation.authentication import (
+from backend.presentation import (
     AUTHENTICATION_REQUIRED_ERROR,
     AuthenticatedUserId,
 )

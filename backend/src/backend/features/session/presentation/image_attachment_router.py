@@ -14,7 +14,7 @@ from backend.features.session.presentation.exceptions import (
 from backend.features.session.presentation.schemas import (
     UploadedImageAttachmentResponse,
 )
-from backend.presentation.authentication import (
+from backend.presentation import (
     AUTHENTICATION_REQUIRED_ERROR,
     AuthenticatedUserId,
 )

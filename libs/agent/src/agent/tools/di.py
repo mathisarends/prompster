@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Annotated, Any, Self, final
+from typing import TYPE_CHECKING, Annotated, Any, Self, final, get_args, get_origin
 
 
 @final
@@ -50,3 +50,9 @@ class InjectMarker:
 
 
 Inject = ToolContext.Inject
+
+
+def is_injectable(hint: Any) -> bool:
+    if get_origin(hint) is not Annotated:
+        return False
+    return any(isinstance(arg, InjectMarker) for arg in get_args(hint))

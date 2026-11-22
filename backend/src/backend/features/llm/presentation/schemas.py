@@ -1,5 +1,5 @@
 from backend.features.llm.domain import LLMProvider, ReasoningEffort
-from backend.presentation.schema import Schema
+from backend.presentation import Schema
 
 
 class LLMCapabilitiesResponse(Schema):

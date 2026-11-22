@@ -11,7 +11,7 @@ from backend.features.spotify.presentation.mapper import (
 from backend.features.spotify.presentation.schemas import (
     SpotifyUnifiedSearchResponse,
 )
-from backend.presentation.authentication import (
+from backend.presentation import (
     AUTHENTICATION_REQUIRED_ERROR,
     AuthenticatedUserId,
 )

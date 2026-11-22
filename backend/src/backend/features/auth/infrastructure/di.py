@@ -6,12 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.env import EnvSettings
 from backend.features.auth.application import (
     GoogleOAuthFlow,
-    SessionRefresher,
-    SpotifyOAuthFlow,
-)
-from backend.features.auth.application.ports import (
     GoogleOAuthProvider,
+    SessionRefresher,
     SpotifyLoginProvider,
+    SpotifyOAuthFlow,
 )
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.infrastructure.google_auth_settings import GoogleAuthSettings
@@ -28,7 +26,7 @@ from backend.features.oauth_connections.infrastructure.spotify_auth_settings imp
 )
 from backend.features.user.domain import UserRepository
 from backend.features.user.infrastructure.repository import SqlUserRepository
-from backend.presentation.authentication import AuthCookieSettings
+from backend.presentation import AuthCookieSettings
 from backend.shared.authentication import TokenIssuer
 
 _SECONDS_PER_MINUTE: Final = 60

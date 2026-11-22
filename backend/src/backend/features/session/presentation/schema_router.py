@@ -2,7 +2,7 @@ from fastapi import status
 from fastapi_canon import APIRouter
 
 from backend.features.session.presentation.schemas import EntryKindSchema
-from backend.presentation.authentication import (
+from backend.presentation import (
     AUTHENTICATION_REQUIRED_ERROR,
     AuthenticatedUserId,
 )

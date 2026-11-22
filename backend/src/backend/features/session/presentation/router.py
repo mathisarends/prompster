@@ -38,7 +38,7 @@ from backend.features.session.presentation.schemas import (
     SubmitOnboardingAnswerRequest,
 )
 from backend.features.spotify.application import SpotifySearch
-from backend.presentation.authentication import (
+from backend.presentation import (
     AUTHENTICATION_REQUIRED_ERROR,
     AuthenticatedUserId,
 )

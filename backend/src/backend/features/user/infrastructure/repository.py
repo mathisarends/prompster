@@ -12,10 +12,10 @@ from backend.features.user.domain import (
     User,
     UserRepository,
 )
-from backend.platform.database import Repository
-from backend.platform.database.orm import (
+from backend.platform.database import (
     AuthIdentityModel,
     OAuthConnectionModel,
+    Repository,
     SessionModel,
     UserModel,
 )

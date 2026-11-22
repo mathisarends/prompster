@@ -10,8 +10,7 @@ from backend.features.oauth_connections.domain import (
 from backend.features.oauth_connections.infrastructure.oauth_token_cipher import (
     OAuthTokenCipher,
 )
-from backend.platform.database import Repository
-from backend.platform.database.orm import OAuthConnectionModel
+from backend.platform.database import OAuthConnectionModel, Repository
 from backend.shared.oauth_provider import OAuthProvider
 
 
