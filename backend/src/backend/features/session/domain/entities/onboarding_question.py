@@ -38,9 +38,8 @@ class OnboardingQuestion(Entity):
         self.options = tuple(options)
         self.recommended_option = recommended_option
         self.selection_mode = OnboardingQuestionSelectionMode(selection_mode)
-        self.answers = tuple(
-            answers if answers is not None else ([answer] if answer else [])
-        )
+        single_answer = [answer] if answer else []
+        self.answers = tuple(answers if answers is not None else single_answer)
         self.is_last_question = is_last_question
         self.is_answered = is_answered
         self.answered_at = answered_at

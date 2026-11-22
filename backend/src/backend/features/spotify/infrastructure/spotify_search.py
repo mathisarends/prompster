@@ -203,7 +203,7 @@ class SpotifyifySearch(SpotifySearchGateway):
         return [
             _to_spotify_track(track)
             for track in result.items or []
-            if track is not None and track.id and track.name
+            if _has_id_and_name(track)
         ]
 
     async def _search_playlists(
@@ -217,7 +217,7 @@ class SpotifyifySearch(SpotifySearchGateway):
         return [
             _to_spotify_playlist(playlist)
             for playlist in result.items or []
-            if playlist is not None and playlist.id and playlist.name
+            if _has_id_and_name(playlist)
         ]
 
     async def _search_artists(
@@ -231,7 +231,7 @@ class SpotifyifySearch(SpotifySearchGateway):
         return [
             _to_spotify_artist(artist)
             for artist in result.items or []
-            if artist is not None and artist.id and artist.name
+            if _has_id_and_name(artist)
         ]
 
 
@@ -307,3 +307,7 @@ def _cover_url(images: list[Image] | None) -> str | None:
     if not images:
         return None
     return images[0].url
+
+
+def _has_id_and_name(item: Track | SimplifiedPlaylist | Artist | None) -> bool:
+    return item is not None and bool(item.id) and bool(item.name)

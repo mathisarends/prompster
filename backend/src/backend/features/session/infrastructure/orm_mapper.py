@@ -221,33 +221,34 @@ class SessionOrmMapper:
         tool_sequence_rows: list[SessionToolCallSequenceModel] = []
 
         for position, entry in enumerate(entries):
-            if isinstance(entry, UserMessage):
-                user_rows.append(
-                    self._to_orm_user_message(
-                        message=entry,
-                        session_id=session_id,
-                        position=position,
-                        existing_message=existing_user_rows.get(entry.id),
+            match entry:
+                case UserMessage():
+                    user_rows.append(
+                        self._to_orm_user_message(
+                            message=entry,
+                            session_id=session_id,
+                            position=position,
+                            existing_message=existing_user_rows.get(entry.id),
+                        )
                     )
-                )
-            elif isinstance(entry, AssistantMessage):
-                row = existing_assistant_rows.get(entry.id)
-                if row is None:
-                    row = SessionAssistantMessageModel(id=entry.id)
-                row.session_id = session_id
-                row.position = position
-                row.content = entry.content
-                row.created_at = entry.created_at
-                assistant_rows.append(row)
-            elif isinstance(entry, ToolCallSequence):
-                tool_sequence_rows.append(
-                    self._to_orm_tool_call_sequence(
-                        sequence=entry,
-                        session_id=session_id,
-                        position=position,
-                        existing_sequence=existing_tool_sequence_rows.get(entry.id),
+                case AssistantMessage():
+                    row = existing_assistant_rows.get(entry.id)
+                    if row is None:
+                        row = SessionAssistantMessageModel(id=entry.id)
+                    row.session_id = session_id
+                    row.position = position
+                    row.content = entry.content
+                    row.created_at = entry.created_at
+                    assistant_rows.append(row)
+                case ToolCallSequence():
+                    tool_sequence_rows.append(
+                        self._to_orm_tool_call_sequence(
+                            sequence=entry,
+                            session_id=session_id,
+                            position=position,
+                            existing_sequence=existing_tool_sequence_rows.get(entry.id),
+                        )
                     )
-                )
 
         orm.user_messages = user_rows
         orm.assistant_messages = assistant_rows

@@ -1,5 +1,6 @@
 import asyncio
 from collections.abc import Mapping
+from itertools import chain
 
 from backend.features.session.application.ports import MessageAttachmentStore
 from backend.features.session.domain import Session, UserMessage
@@ -14,13 +15,13 @@ class SessionImageUrlResolver:
         self._message_attachment_store = message_attachment_store
 
     async def resolve(self, *, session: Session) -> Mapping[str, str]:
+        attachments = chain.from_iterable(
+            entry.image_attachments
+            for entry in session.entries
+            if isinstance(entry, UserMessage)
+        )
         storage_keys = tuple(
-            dict.fromkeys(
-                attachment.storage_key
-                for entry in session.entries
-                if isinstance(entry, UserMessage)
-                for attachment in entry.image_attachments
-            )
+            dict.fromkeys(attachment.storage_key for attachment in attachments)
         )
         urls = await asyncio.gather(
             *(

@@ -1,3 +1,4 @@
+from typing import NamedTuple
 from uuid import UUID
 
 from sqlalchemy import and_, func, select
@@ -30,13 +31,19 @@ def _select_user_with_spotify_connection():
         OAuthConnectionModel,
         and_(
             OAuthConnectionModel.user_id == UserModel.id,
-            OAuthConnectionModel.provider == OAuthProvider.SPOTIFY.value,
+            OAuthConnectionModel.provider == OAuthProvider.SPOTIFY,
         ),
     )
 
 
+class _UserConnectionColumns(NamedTuple):
+    user: UserModel
+    oauth_connection_id: UUID | None
+    is_premium: bool | None
+
+
 def _split_user_with_connection(
-    row: Row[tuple[UserModel, UUID | None, bool | None]],
+    row: Row[_UserConnectionColumns],
 ) -> tuple[UserModel, SpotifyAccount]:
     user_orm, oauth_connection_id, is_premium = row[0], row[1], row[2]
     if oauth_connection_id is None:

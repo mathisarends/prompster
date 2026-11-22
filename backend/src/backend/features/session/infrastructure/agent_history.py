@@ -52,14 +52,15 @@ class AgentHistoryBuilder:
         bound_event_ids: set[UUID] = set()
         messages: list[LLMMessage] = []
         for entry in session.entries:
-            if isinstance(entry, UserMessage):
-                for event in entry.user_curation_events:
-                    bound_event_ids.add(event.id)
-                messages.append(await self._to_user_message(entry))
-            elif isinstance(entry, AssistantMessage):
-                messages.append(LLMAssistantMessage(content=entry.content))
-            elif isinstance(entry, ToolCallSequence):
-                messages.extend(self._to_tool_call_messages(entry))
+            match entry:
+                case UserMessage():
+                    for event in entry.user_curation_events:
+                        bound_event_ids.add(event.id)
+                    messages.append(await self._to_user_message(entry))
+                case AssistantMessage():
+                    messages.append(LLMAssistantMessage(content=entry.content))
+                case ToolCallSequence():
+                    messages.extend(self._to_tool_call_messages(entry))
 
         trailing_events = self._to_trailing_user_events(
             session=session, bound_event_ids=bound_event_ids

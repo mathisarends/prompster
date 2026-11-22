@@ -41,7 +41,7 @@ class ToolExecutor:
 
         for param_name, param in signature.parameters.items():
             hint = hints.get(param_name)
-            if hint is None or not self._is_injectable(hint):
+            if hint is None or not _is_injectable(hint):
                 continue
 
             actual_type = get_args(hint)[0]
@@ -86,7 +86,7 @@ class ToolExecutor:
             if param_name in ("self", "cls"):
                 continue
             hint = hints.get(param_name)
-            if hint is not None and self._is_injectable(hint):
+            if hint is not None and _is_injectable(hint):
                 continue
             candidates.append(param_name)
             if hint == param_model:
@@ -96,8 +96,8 @@ class ToolExecutor:
             return candidates[0]
         return None
 
-    @staticmethod
-    def _is_injectable(hint: Any) -> bool:
-        if get_origin(hint) is not Annotated:
-            return False
-        return any(isinstance(a, InjectMarker) for a in get_args(hint))
+
+def _is_injectable(hint: Any) -> bool:
+    if get_origin(hint) is not Annotated:
+        return False
+    return any(isinstance(a, InjectMarker) for a in get_args(hint))

@@ -241,29 +241,18 @@ class Agent:
         for param in params:
             if not isinstance(param, SequenceLabelParams):
                 continue
-            label = self._clean_sequence_label(param.sequence_label)
+            label = _clean_sequence_label(param.sequence_label)
             if label is not None:
                 return label
 
         for param in params:
             if not isinstance(param, ToolParams):
                 continue
-            label = self._clean_sequence_label(param.status)
+            label = _clean_sequence_label(param.status)
             if label is not None:
                 return label
 
         return None
-
-    @staticmethod
-    def _clean_sequence_label(value: str | None) -> str | None:
-        if value is None:
-            return None
-        label = " ".join(value.split())
-        if not label:
-            return None
-        if len(label) > 80:
-            return f"{label[:77].rstrip()}..."
-        return label
 
     async def _handle_tool_call(
         self,
@@ -362,3 +351,14 @@ class Agent:
             deck_draft=update.deck_draft,
             update=update,
         )
+
+
+def _clean_sequence_label(value: str | None) -> str | None:
+    if value is None:
+        return None
+    label = " ".join(value.split())
+    if not label:
+        return None
+    if len(label) > 80:
+        return f"{label[:77].rstrip()}..."
+    return label

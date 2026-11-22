@@ -29,7 +29,7 @@ class OAuthPopupResponse:
         reason: str | None,
     ) -> HTMLResponse:
         return HTMLResponse(
-            content=cls._build_html(
+            content=_build_html(
                 message_type=_OAUTH_POPUP_MESSAGE_TYPE,
                 target_origin=target_origin,
                 status_value="success" if succeeded else "error",
@@ -46,7 +46,7 @@ class OAuthPopupResponse:
         reason: str | None,
     ) -> HTMLResponse:
         return HTMLResponse(
-            content=cls._build_html(
+            content=_build_html(
                 message_type=_SPOTIFY_OAUTH_POPUP_MESSAGE_TYPE,
                 target_origin=target_origin,
                 status_value="success" if succeeded else "error",
@@ -63,7 +63,7 @@ class OAuthPopupResponse:
         reason: str | None,
     ) -> HTMLResponse:
         return HTMLResponse(
-            content=cls._build_html(
+            content=_build_html(
                 message_type=_SPOTIFY_LOGIN_POPUP_MESSAGE_TYPE,
                 target_origin=target_origin,
                 status_value="success" if succeeded else "error",
@@ -71,36 +71,36 @@ class OAuthPopupResponse:
             )
         )
 
-    @staticmethod
-    def _build_html(
-        *,
-        message_type: str,
-        target_origin: str,
-        status_value: str,
-        reason_value: str | None = None,
-    ) -> str:
-        payload = {"type": message_type, "status": status_value}
-        if reason_value is not None:
-            payload["reason"] = reason_value
-
-        payload_js = json.dumps(payload)
-        target_origin_js = json.dumps(target_origin)
-        return f"""<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>Google sign-in</title></head>
-<body>
-<script>
-  (function () {{
-    if (window.opener) {{
-      try {{ window.opener.postMessage({payload_js}, {target_origin_js}); }} catch (e) {{}}
-    }}
-    window.close();
-  }})();
-</script>
-</body>
-</html>"""
-
 
 _OAUTH_POPUP_MESSAGE_TYPE = "prompster-google-oauth"
 _SPOTIFY_OAUTH_POPUP_MESSAGE_TYPE = "prompster-spotify-oauth"
 _SPOTIFY_LOGIN_POPUP_MESSAGE_TYPE = "prompster-spotify-login"
+
+
+def _build_html(
+    *,
+    message_type: str,
+    target_origin: str,
+    status_value: str,
+    reason_value: str | None = None,
+) -> str:
+    payload = {"type": message_type, "status": status_value}
+    if reason_value is not None:
+        payload["reason"] = reason_value
+
+    payload_js = json.dumps(payload)
+    target_origin_js = json.dumps(target_origin)
+    return f"""<!DOCTYPE html>
+l lang="en">
+d><meta charset="utf-8"><title>Google sign-in</title></head>
+y>
+ipt>
+unction () {{
+if (window.opener) {{
+  try {{ window.opener.postMessage({payload_js}, {target_origin_js}); }} catch (e) {{}}
+}}
+window.close();
+)();
+ript>
+dy>
+ml>"""

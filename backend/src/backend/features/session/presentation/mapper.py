@@ -211,15 +211,16 @@ def to_spotify_playlist_export_response(
 
 def _to_tool_call_response(call: ToolCall) -> ToolCallResponse:
     result_items: tuple[ToolResultItem, ...] = ()
-    if isinstance(call, CompletedCall):
-        state, result, error = ToolCallState.COMPLETED, call.result, None
-        result_items = call.items
-    elif isinstance(call, FailedCall):
-        state, result, error = ToolCallState.FAILED, None, call.error
-    elif isinstance(call, PendingCall):
-        state, result, error = ToolCallState.PENDING, None, None
-    else:
-        raise TypeError(f"Unsupported tool call: {type(call).__name__}")
+    match call:
+        case CompletedCall():
+            state, result, error = ToolCallState.COMPLETED, call.result, None
+            result_items = call.items
+        case FailedCall():
+            state, result, error = ToolCallState.FAILED, None, call.error
+        case PendingCall():
+            state, result, error = ToolCallState.PENDING, None, None
+        case _:
+            raise TypeError(f"Unsupported tool call: {type(call).__name__}")
     return ToolCallResponse(
         id=call.id,
         function=ToolFunctionResponse(
