@@ -1,10 +1,18 @@
 import asyncio
 import logging
-from collections.abc import Awaitable
+from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable
+from contextlib import aclosing
+from typing import cast
 
-from spotifyify import Image, RetryEvent, Spotifyify, Track
-from spotifyify.exceptions import SpotifyAPIError
-from spotifyify.schemas import Artist, SimplifiedPlaylist
+from spotifyify import (
+    Artist,
+    Image,
+    RetryEvent,
+    SimplifiedPlaylist,
+    SpotifyAPIError,
+    SpotifyClient,
+    Track,
+)
 
 from backend.features.spotify.application import SpotifySearchGateway
 from backend.features.spotify.domain import (
@@ -23,11 +31,14 @@ logger = logging.getLogger(__name__)
 
 type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[SpotifyArtist]
 
+# Spotify's Development Mode rejects search pages larger than 10 items.
+_SEARCH_PAGE_SIZE = 10
+
 
 class SpotifyifySearch(SpotifySearchGateway):
     def __init__(
         self,
-        spotify: Spotifyify,
+        spotify: SpotifyClient,
         search_cache: SpotifySearchCache,
     ) -> None:
         self._spotify = spotify
@@ -103,6 +114,9 @@ class SpotifyifySearch(SpotifySearchGateway):
         try:
             with self._spotify.retry_hook(_log_spotifyify_retry):
                 track = await self._spotify.tracks.get(normalized_track_id)
+        except ValueError:
+            # spotifyify rejects malformed IDs before sending a request.
+            return None
         except SpotifyAPIError as error:
             if error.status_code == 404:
                 return None
@@ -199,12 +213,12 @@ class SpotifyifySearch(SpotifySearchGateway):
         if not normalized_query:
             return []
 
-        result = await self._spotify.tracks.find(normalized_query, limit=limit)
-        return [
-            _to_spotify_track(track)
-            for track in result.items or []
-            if _has_id_and_name(track)
-        ]
+        tracks = await _collect_search_results(
+            self._spotify.tracks.iter_search,
+            normalized_query,
+            limit,
+        )
+        return [_to_spotify_track(track) for track in tracks if _has_id_and_name(track)]
 
     async def _search_playlists(
         self, *, query: str, limit: int = 20
@@ -213,10 +227,14 @@ class SpotifyifySearch(SpotifySearchGateway):
         if not normalized_query:
             return []
 
-        result = await self._spotify.playlists.find(normalized_query, limit=limit)
+        playlists = await _collect_search_results(
+            self._spotify.playlists.iter_search,
+            normalized_query,
+            limit,
+        )
         return [
             _to_spotify_playlist(playlist)
-            for playlist in result.items or []
+            for playlist in playlists
             if _has_id_and_name(playlist)
         ]
 
@@ -227,12 +245,34 @@ class SpotifyifySearch(SpotifySearchGateway):
         if not normalized_query:
             return []
 
-        result = await self._spotify.artists.find(normalized_query, limit=limit)
+        artists = await _collect_search_results(
+            self._spotify.artists.iter_search,
+            normalized_query,
+            limit,
+        )
         return [
-            _to_spotify_artist(artist)
-            for artist in result.items or []
-            if _has_id_and_name(artist)
+            _to_spotify_artist(artist) for artist in artists if _has_id_and_name(artist)
         ]
+
+
+async def _collect_search_results[T](
+    search: Callable[..., AsyncIterator[T | None]],
+    query: str,
+    limit: int,
+) -> list[T]:
+    results: list[T] = []
+    pages = cast(
+        AsyncGenerator[T | None],
+        search(query, limit=min(limit, _SEARCH_PAGE_SIZE)),
+    )
+    async with aclosing(pages) as items:
+        async for item in items:
+            if item is None:
+                continue
+            results.append(item)
+            if len(results) == limit:
+                break
+    return results
 
 
 def _log_spotifyify_retry(event: RetryEvent) -> None:
@@ -309,5 +349,5 @@ def _cover_url(images: list[Image] | None) -> str | None:
     return images[0].url
 
 
-def _has_id_and_name(item: Track | SimplifiedPlaylist | Artist | None) -> bool:
-    return item is not None and bool(item.id) and bool(item.name)
+def _has_id_and_name(item: Track | SimplifiedPlaylist | Artist) -> bool:
+    return bool(item.id and item.name)

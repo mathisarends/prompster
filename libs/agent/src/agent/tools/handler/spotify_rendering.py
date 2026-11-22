@@ -96,7 +96,7 @@ def playlist_preview(
 
 
 def _playlist_track_count(playlist: Playlist | SimplifiedPlaylist) -> int:
-    tracks = playlist.items or playlist.tracks
+    tracks = playlist.items
     return tracks.total if tracks and tracks.total is not None else 0
 
 

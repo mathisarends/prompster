@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
-import httpx
+import httpx2
 import pytest
 from spotifyify import RetryEvent
 
@@ -24,7 +24,7 @@ def make_retry() -> RetryEvent:
     return RetryEvent(
         method="POST",
         path="/playlists",
-        response=httpx.Response(429),
+        response=httpx2.Response(429),
         retry_number=1,
         max_retries=3,
         retry_in_seconds=0.5,

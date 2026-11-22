@@ -1,6 +1,6 @@
 from callm import ChatModel
 from dishka import Provider, Scope, provide
-from spotifyify import Spotifyify
+from spotifyify import SpotifyClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from backend.features.llm.application import ChatModels
@@ -98,7 +98,7 @@ class SessionProvider(Provider):
         self,
         llm: ChatModel,
         chat_models: ChatModels,
-        spotify: Spotifyify,
+        spotify: SpotifyClient,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,
         *,

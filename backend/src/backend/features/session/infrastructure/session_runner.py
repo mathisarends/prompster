@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 from agent import Agent, DeckDraft, DeckDraftTrack, DeckStore, Spotify
 from agent import Phase as AgentPhase
 from callm import ChatModel
-from spotifyify import Spotifyify
+from spotifyify import SpotifyClient
 
 from backend.features.llm.application import ChatModels
 from backend.features.llm.domain import LLMRegistry
@@ -70,7 +70,7 @@ class AgentSessionRunner(SessionRunner):
         self,
         llm: ChatModel,
         chat_models: ChatModels,
-        spotify: Spotifyify,
+        spotify: SpotifyClient,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,
         active_runs: ActiveSessionRunStore,

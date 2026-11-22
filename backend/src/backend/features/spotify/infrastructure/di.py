@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator
 
 from dishka import Provider, Scope, provide
-from spotifyify import SpotifyCredentials, Spotifyify
+from spotifyify import SpotifyClient, SpotifyCredentials
 from spotifyify.cache_handler import MemoryCacheHandler
 
 import backend.features.spotify.infrastructure.spotify_playlist_creator as playlist_infra
@@ -25,15 +25,15 @@ class SpotifyProvider(Provider):
     async def spotify(
         self,
         credentials: SpotifyCredentials,
-    ) -> AsyncGenerator[Spotifyify]:
-        spotify = Spotifyify(
+    ) -> AsyncGenerator[SpotifyClient]:
+        spotify = SpotifyClient(
             credentials=credentials,
             cache_handler=MemoryCacheHandler(),
         )
         try:
             yield spotify
         finally:
-            await spotify.close()
+            await spotify.aclose()
 
     @provide(scope=Scope.APP)
     def provide_spotify_search_cache(self) -> SpotifySearchCache:
@@ -42,7 +42,7 @@ class SpotifyProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_spotify_search_gateway(
         self,
-        spotify: Spotifyify,
+        spotify: SpotifyClient,
         search_cache: SpotifySearchCache,
     ) -> SpotifySearchGateway:
         return SpotifyifySearch(
@@ -60,6 +60,6 @@ class SpotifyProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_spotify_playlist_creator(
         self,
-        spotify: Spotifyify,
+        spotify: SpotifyClient,
     ) -> SpotifyPlaylistCreator:
         return playlist_infra.SpotifyPlaylistCreator(spotify=spotify)
