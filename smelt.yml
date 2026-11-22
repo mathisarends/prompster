@@ -24,10 +24,27 @@ architecture:
     libs/agent: {may_depend_on: []}
 
 ignore:
+  - rule: imports/prefer-package-import
+    paths: [backend/tests/**, libs/agent/tests/**]
+    reason: Tests import the module they verify directly, matching the mirrored layout.
   - rule: architecture/non-public-module-import
     paths: [backend/tests/**, libs/agent/tests/**]
     reason: White-box tests may import the internals of the package they verify.
 
+style:
+  imports: {style: absolute}
+  reexports: all
+  future_annotations: forbid
+  private_modules: forbid
+  dataclass_options: [slots]
+  str_enum_values: explicit
+  type_dispatch: {style: match, min_branches: 3}
+  forbidden_names: [utils, helpers, common, misc, manager, managers]
+  file_naming: {compose_basename: compose}
+tests:
+  layout: mirror
+  mirror: '{root}/{path}/test_{module}.py'
+  forbidden_mock_paths: ['**/tests/**/domain/**']
 rules:
   # Architecture: boundaries are hard errors.
   architecture/layer-boundary: error
@@ -43,36 +60,109 @@ rules:
   architecture/unclassified-module: error
   architecture/uncovered-source: error
 
-  # Correctness and security.
-  frameworks/prefer-secret-type: warning
-  typing/implicit-optional-default: warning
-  typing/deprecated-async-contextmanager-return: warning
-  modeling/mutable-field-in-frozen-dataclass: warning
-  modeling/implicit-duration-unit: warning
-  modeling/duplicate-class-name: warning
-  idioms/missing-broad-except-reason: warning
-  idioms/duplicate-narrowing-assert: warning
-  idioms/bundled-instance-assignment: error
+  # Imports and package APIs.
+  imports/forbidden-import-style: error
+  imports/prefer-package-import: error
+  imports/excess-module-imports: error
 
-  # Module and API shape.
+  # Module layout.
   layout/definition-order: error
-  layout/misplaced-private-constant: warning
-  layout/misplaced-module-logger: warning
+  layout/misplaced-private-constant: error
+  layout/misplaced-module-logger: error
+  layout/misplaced-static-helper: error
+  layout/forbidden-module-name: error
+  layout/forbidden-private-module: error
+  layout/file-name-convention: error
+  layout/reexport-only-module: error
+
+  # Visibility.
   visibility/misplaced-dunder-all: error
-  visibility/foreign-private-access: warning
-  visibility/internal-public-member: warning
-  visibility/internal-public-module-symbol: warning
-  visibility/internal-public-attribute: warning
-  visibility/test-only-public-function: warning
-  visibility/test-only-public-attribute: warning
-  complexity/excess-positional-parameters: warning
-  complexity/duplicate-function: warning
+  visibility/foreign-private-access: error
+  visibility/internal-public-member: error
+  visibility/internal-public-module-symbol: error
+  visibility/internal-public-attribute: error
+  visibility/test-only-public-function: error
+  visibility/test-only-public-attribute: error
+  visibility/redundant-private-delegate: error
+  visibility/excess-private-definitions: error
+  visibility/reexport-convention: error
+
+  # Modeling.
+  modeling/mutable-field-in-frozen-dataclass: error
+  modeling/implicit-duration-unit: error
+  modeling/duplicate-class-name: error
+  modeling/missing-dataclass-option: error
+  modeling/redundant-str-enum-value: error
+  modeling/forbidden-base-class-affix: error
+  modeling/prefer-str-enum-discriminator: error
+  modeling/str-enum-value-convention: error
+  modeling/dataclass-field-mutation: error
+  modeling/parallel-record-fields: error
+
+  # Typing and security.
+  frameworks/prefer-secret-type: error
+  typing/implicit-optional-default: error
+  typing/deprecated-async-contextmanager-return: error
+  typing/forbidden-future-annotations: error
+  typing/duplicate-literal-type: error
+  typing/anonymous-tuple-type: error
+  typing/prefer-inline-type-parameters: error
+
+  # Complexity. Constructors may normalize several optional collaborators.
+  complexity/excess-positional-parameters: error
+  complexity/duplicate-function: error
+  complexity/forbidden-nested-conditional: error
+  complexity/excess-comprehension-loops: error
+  complexity/excess-constructor-decisions: {severity: error, max: 5}
+  complexity/inline-constructor-receiver: error
+
+  # Idioms.
+  idioms/missing-broad-except-reason: error
+  idioms/duplicate-narrowing-assert: error
+  idioms/bundled-instance-assignment: error
+  idioms/prefer-match-type-dispatch: error
+  idioms/redundant-name-alias: error
+  idioms/loop-invariant-collection: error
 
   # Test quality.
+  tests/misplaced-test: error
   tests/private-access: error
   tests/string-patch-target: error
-  tests/missing-outcome-check: warning
-  tests/vacuous-assertion: warning
-  tests/unbounded-wait: warning
-  tests/missing-await-assertion: warning
+  tests/forbidden-mock: error
+  tests/excess-patches: {severity: error, max: 3}
+  tests/missing-outcome-check: error
+  tests/vacuous-assertion: error
+  tests/unbounded-wait: error
+  tests/missing-await-assertion: error
+  tests/independent-case-loop: error
+
+  # Rejected on purpose. Each of these would need filler code or mass exceptions.
+  # Builtin errors need an error-to-status design first, so they get their own change.
+  modeling/prefer-domain-exception: off
+  # Three of 219 modules have docstrings; neither requiring nor forbidding them helps.
+  layout/module-docstring-convention: off
+  # Future annotations are already forbidden by typing/forbidden-future-annotations.
+  typing/redundant-future-annotations: off
+  # SQLModel and Pydantic resolve these forward references at runtime.
+  typing/prefer-deferred-annotations: off
+  # Contradicts layout/definition-order, which keeps the public API first.
+  layout/callee-before-caller: off
+  # Would turn descriptive names into many identical service.py and runner.py files.
+  layout/redundant-module-name: off
+  # prefer-package-import already enforces facades; tests import their module directly.
+  imports/excess-package-imports: off
+  # Extra locals for simple calls add names without adding meaning.
+  complexity/inline-call-argument: off
+  # Flags harmless reads of settings and SDK namespaces.
+  complexity/excess-attribute-depth: off
+  # Named methods describe the domain better than __call__.
+  idioms/prefer-callable-instance: off
+  # Would force restating docstrings on self-explanatory methods.
+  idioms/missing-interface-docstring: off
+  # Pydantic settings cannot be autowired, so factories stay the single wiring style.
+  frameworks/redundant-dishka-provider: off
+  # Random IDs and timestamps in tests are fixture data and do not cause flakiness.
+  tests/nondeterministic-data: off
+  # A required test per module would need ignore comments on thin modules.
+  tests/missing-mirror-test: off
 debt: .smelt/debt.json

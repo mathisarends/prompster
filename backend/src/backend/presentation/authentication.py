@@ -39,7 +39,7 @@ class AuthCookieSettings:
     same_site_prod: SameSitePolicy
 
 
-def get_authenticated_user_id(  # smelt: ignore[visibility/test-only-public-function] -- Public seam for FastAPI dependency overrides.
+def get_authenticated_user_id(
     payload: Annotated[TokenPayload, Depends(_get_access_token_payload)],
 ) -> UUID:
     return payload.user_id

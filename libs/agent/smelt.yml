@@ -16,4 +16,7 @@ architecture:
     agent-api:
       match: agent
       public: ['.', deck, messages]
+      min_importers_to_export: 3
+rules:
+  architecture/missing-facade-export: error
 debt: .smelt/debt.json

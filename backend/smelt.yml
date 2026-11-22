@@ -12,8 +12,6 @@ architecture:
     - backend.shared
     - backend.env
     - backend._logging
-    - backend.platform.storage.port
-    - backend.platform.storage.views
   composition_root:
     - backend.main
     - backend.lifespan
@@ -53,6 +51,12 @@ architecture:
         default: allow
         deny: [alembic, asyncpg, obstore, sqlalchemy, sqlmodel]
   packages:
+    feature-apis:
+      match: backend.features.*.application
+      min_importers_to_export: 3
+    domain-apis:
+      match: backend.features.*.domain
+      min_importers_to_export: 3
     feature-shape:
       match: backend.features.*
       required: [application, domain, infrastructure, presentation]
@@ -72,4 +76,18 @@ architecture:
       - {from: session.application, to: user.domain}
       - {from: session.infrastructure, to: llm.application}
       - {from: session.infrastructure, to: llm.domain}
+ignore:
+  - rule: layout/forbidden-private-module
+    paths: [src/backend/_logging.py]
+    reason: Keeps the app logging setup distinct from the stdlib logging module.
+style:
+  overrides:
+    presentation-schemas:
+      match: backend.features.*.presentation
+      bases:
+        pydantic.BaseModel: backend.presentation.schema.Schema
+      rules:
+        modeling/prefer-project-base-class: error
+rules:
+  architecture/missing-facade-export: error
 debt: .smelt/debt.json

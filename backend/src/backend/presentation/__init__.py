@@ -3,6 +3,7 @@ from backend.presentation.authentication import (
     AuthCookieSettings,
     AuthenticatedUserId,
     RefreshAuthenticatedUserId,
+    get_authenticated_user_id,
 )
 from backend.presentation.middleware import LoggingMiddleware
 from backend.presentation.schema import Schema
@@ -14,4 +15,5 @@ __all__ = [
     "LoggingMiddleware",
     "RefreshAuthenticatedUserId",
     "Schema",
+    "get_authenticated_user_id",
 ]
