@@ -9,6 +9,7 @@ from callm import ModelTool
 
 from agent.tools.schema_builder import ToolSchemaBuilder
 from agent.tools.schemas import ToolSchema
+from agent.views import Phase
 
 
 class ActionType(StrEnum):
@@ -20,11 +21,6 @@ class ActionType(StrEnum):
     REPLACE_DECK_TRACKS = "replace_deck_tracks"
     GET_SPOTIFY_PLAYLIST_TRACKS = "get_spotify_playlist_tracks"
     SELF_REVIEW = "self_review"
-
-
-class Phase(StrEnum):
-    ONBOARDING = "onboarding"
-    BUILD = "build"
 
 
 class OnboardingSelectionMode(StrEnum):

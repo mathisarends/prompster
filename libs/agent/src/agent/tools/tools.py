@@ -25,13 +25,8 @@ from agent.tools.params import (
     ReviewDeckParams,
     SearchParams,
 )
-from agent.tools.views import (
-    ActionResult,
-    ActionType,
-    InputRequest,
-    Phase,
-    Tool,
-)
+from agent.tools.views import ActionResult, ActionType, InputRequest, Tool
+from agent.views import Phase
 
 logger = logging.getLogger(__name__)
 

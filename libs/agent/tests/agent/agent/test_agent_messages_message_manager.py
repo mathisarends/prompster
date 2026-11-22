@@ -25,8 +25,7 @@ from agent.messages import MessageManager, render_user_message_content
 from agent.messages.rendering import (
     _render_user_events_block as render_user_events_block,
 )
-from agent.tools.views import Phase
-from agent.views import UserCurationEventType, UserEvent
+from agent.views import Phase, UserCurationEventType, UserEvent
 from agent.deck import DeckDraft, DeckDraftTrack
 
 

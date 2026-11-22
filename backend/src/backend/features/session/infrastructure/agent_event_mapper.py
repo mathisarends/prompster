@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from agent.agent import (
+from agent import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
     ContextCompactedEvent,

@@ -536,14 +536,6 @@
       ]
     },
     {
-      "code": "ARC007",
-      "path": "backend/src/backend/features/session/infrastructure/agent_event_mapper.py",
-      "message": "backend.features.session.infrastructure.agent_event_mapper imports private module agent.agent of contract \"libs/agent:agent-api\"",
-      "fingerprints": [
-        "a220d62c2d44c382674d5cec539600ae"
-      ]
-    },
-    {
       "code": "CPX003",
       "path": "backend/src/backend/features/session/infrastructure/di.py",
       "message": "provide_session_runner accepts 8 positional parameters; default allows 5",
@@ -603,14 +595,6 @@
       "scope": "SqlSessionRepository._to_orm_user_message_image_attachment",
       "fingerprints": [
         "0f0ec68e7f4e9f3f1524e8c15ab898a5"
-      ]
-    },
-    {
-      "code": "ARC007",
-      "path": "backend/src/backend/features/session/infrastructure/session_runner.py",
-      "message": "backend.features.session.infrastructure.session_runner imports private module agent.tools.views of contract \"libs/agent:agent-api\"",
-      "fingerprints": [
-        "60e2ac0fdbd5d3078b48a978c84d9159"
       ]
     },
     {

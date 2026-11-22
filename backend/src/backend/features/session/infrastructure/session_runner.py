@@ -10,7 +10,7 @@ from agent.deck import (
     DeckDraftTrack,
     DeckStore,
 )
-from agent.tools.views import Phase as AgentPhase
+from agent import Phase as AgentPhase
 from backend.features.llm.application import ChatModels
 from backend.features.llm.domain import LLMRegistry
 from backend.features.session.application.ports import ActiveSessionRunStore

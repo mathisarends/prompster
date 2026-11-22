@@ -10,12 +10,13 @@ from .events import (
     SuspendedForUserInputEvent,
     StepStartedEvent,
     ToolCallEvent,
+    ToolCallSequenceStartedEvent,
     ToolResultEvent,
+    ToolRetryEvent,
     DeckUpdatedEvent,
 )
-from .views import UserEvent, UserEvents
+from .views import Phase, UserEvent, UserEvents
 from .tools import Spotify
-from .tools.views import Phase
 from .deck import (
     DeckStore,
     DeckDraft,
@@ -47,7 +48,9 @@ __all__ = [
     "SuspendedForUserInputEvent",
     "StepStartedEvent",
     "ToolCallEvent",
+    "ToolCallSequenceStartedEvent",
     "ToolResultEvent",
+    "ToolRetryEvent",
     "UserEvent",
     "UserEvents",
     "DeckUpdatedEvent",

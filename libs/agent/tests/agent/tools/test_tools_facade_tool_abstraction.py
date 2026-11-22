@@ -3,7 +3,8 @@ import pytest
 from pydantic import BaseModel
 
 from agent.tools import ToolContext, Tools
-from agent.tools.views import ActionResult, ActionType, Phase
+from agent.tools.views import ActionResult, ActionType
+from agent.views import Phase
 from agent.deck import (
     DeckStore,
     DeckDraftTrack,

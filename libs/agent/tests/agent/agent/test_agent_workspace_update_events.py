@@ -24,7 +24,8 @@ from agent.agent import (
     RunCompletedEvent,
 )
 from agent.tools import ToolContext, Tools
-from agent.tools.views import ActionType, Phase
+from agent.tools.views import ActionType
+from agent.views import Phase
 from agent.deck import DeckDraft, DeckDraftTrack, DeckDraftTracksRemoved, DeckStore
 
 

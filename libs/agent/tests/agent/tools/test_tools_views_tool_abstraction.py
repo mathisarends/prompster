@@ -2,7 +2,8 @@ import pytest
 from pydantic import BaseModel
 
 from agent.tools.params import ToolParams
-from agent.tools.views import ActionResult, ActionType, Phase, Tool
+from agent.tools.views import ActionResult, ActionType, Tool
+from agent.views import Phase
 
 
 class _Params(BaseModel):

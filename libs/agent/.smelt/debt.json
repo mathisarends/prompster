@@ -83,14 +83,6 @@
       ]
     },
     {
-      "code": "ARC001",
-      "path": "libs/agent/src/agent/messages/messages.py",
-      "message": "messages must not depend on capabilities",
-      "fingerprints": [
-        "ed89ea267b081fee54e3cdfb9a02bb70"
-      ]
-    },
-    {
       "code": "LAY004",
       "path": "libs/agent/src/agent/messages/rendering.py",
       "message": "definitions in module have 8 avoidable ordering inversion(s)",

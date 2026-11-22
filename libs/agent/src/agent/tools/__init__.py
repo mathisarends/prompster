@@ -1,8 +1,8 @@
 from .di import Inject, ToolContext
 from .handler import DeckCritic, Spotify
 from .tools import Tools
-from .views import Phase
 from agent.deck import DeckStore
+from agent.views import Phase
 
 __all__ = [
     "DeckCritic",

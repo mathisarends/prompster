@@ -35,8 +35,7 @@ from agent.tokens import TokenTracker
 from agent.tools import DeckCritic, Spotify, Tools
 from agent.tools.params import SequenceLabelParams, ToolParams
 from agent.tools.retry_reporting import retry_sink
-from agent.tools.views import Phase
-from agent.views import UserEvent
+from agent.views import Phase, UserEvent
 
 
 @dataclass
