@@ -101,6 +101,7 @@ class SessionProvider(Provider):
         spotify: Spotifyify,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,
+        *,
         active_runs: ActiveSessionRunStore,
         runtime_registry: AgentRuntimeRegistry,
         llm_registry: LLMRegistry,

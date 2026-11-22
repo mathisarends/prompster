@@ -48,28 +48,6 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session=session, model=UserModel)
 
-    def _to_domain(
-        self,
-        orm: UserModel,
-        *,
-        spotify: SpotifyAccount | None = None,
-    ) -> User:
-        return User.restore(
-            id=orm.id,
-            created_at=orm.created_at,
-            name=orm.name,
-            profile_image_url=orm.profile_image_url,
-            spotify=spotify if spotify is not None else SpotifyAccount.disconnected(),
-        )
-
-    def _to_orm(self, domain: User) -> UserModel:
-        return UserModel(
-            id=domain.id,
-            name=domain.name,
-            profile_image_url=domain.profile_image_url,
-            created_at=domain.created_at,
-        )
-
     async def get_by_id(self, *, user_id: UUID) -> User | None:
         stmt = _select_user_with_spotify_connection().where(UserModel.id == user_id)
         row = (await self.session.execute(stmt)).first()
@@ -137,3 +115,25 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
         await self.session.flush()
         await self.session.refresh(user_orm)
         return self._to_domain(user_orm)
+
+    def _to_domain(
+        self,
+        orm: UserModel,
+        *,
+        spotify: SpotifyAccount | None = None,
+    ) -> User:
+        return User.restore(
+            id=orm.id,
+            created_at=orm.created_at,
+            name=orm.name,
+            profile_image_url=orm.profile_image_url,
+            spotify=spotify if spotify is not None else SpotifyAccount.disconnected(),
+        )
+
+    def _to_orm(self, domain: User) -> UserModel:
+        return UserModel(
+            id=domain.id,
+            name=domain.name,
+            profile_image_url=domain.profile_image_url,
+            created_at=domain.created_at,
+        )

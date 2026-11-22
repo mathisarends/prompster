@@ -13,12 +13,6 @@ class ToolContext:
             def __class_getitem__(cls, item: Any) -> Any:
                 return Annotated[item, ToolContext._get_marker()]
 
-    @staticmethod
-    def _get_marker() -> InjectMarker:
-        if ToolContext._marker_instance is None:
-            ToolContext._marker_instance = InjectMarker()
-        return ToolContext._marker_instance
-
     def __init__(self, *dependencies: Any) -> None:
         self._dependencies: list[Any] = list(dependencies)
 
@@ -29,6 +23,12 @@ class ToolContext:
     def clear(self) -> Self:
         self._dependencies.clear()
         return self
+
+    @staticmethod
+    def _get_marker() -> InjectMarker:
+        if ToolContext._marker_instance is None:
+            ToolContext._marker_instance = InjectMarker()
+        return ToolContext._marker_instance
 
     def resolve[T](self, expected_type: type[T]) -> T | None:
         for dep in self._dependencies:
