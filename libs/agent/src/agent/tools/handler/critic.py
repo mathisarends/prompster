@@ -1,11 +1,11 @@
 import logging
 from collections import Counter
 
-from callm import ChatModel, SystemMessage, UserMessage
 from pydantic import BaseModel, Field
+from pydantic_ai import Agent as StructuredAgent
+from pydantic_ai.models import Model
 
 from agent.deck import DeckDraftTrack, DeckStore
-from agent.messages import MessageManager
 
 logger = logging.getLogger(__name__)
 
@@ -65,18 +65,20 @@ class DeckCritic:
 
     def __init__(
         self,
-        llm: ChatModel,
+        llm: Model,
         *,
         deck_store: DeckStore,
-        message_manager: MessageManager,
         target_size: int = 50,
     ) -> None:
-        self._llm = llm
+        self._critique_agent = StructuredAgent(
+            llm,
+            instructions=_SYSTEM_PROMPT,
+            output_type=DeckCritique,
+        )
         self._deck_store = deck_store
-        self._message_manager = message_manager
         self._target_size = target_size
 
-    async def review(self) -> DeckReviewResult:
+    async def review(self, *, brief: str | None = None) -> DeckReviewResult:
         draft = self._deck_store.draft
         if draft is None or not draft.tracks:
             return DeckReviewResult(
@@ -108,7 +110,13 @@ class DeckCritic:
             },
         )
 
-        brief = self._message_manager.conversation_transcript()
+        if not concerns:
+            return DeckReviewResult(
+                content=self._render_balanced(metrics),
+                triggered_llm=False,
+                metrics=metrics,
+            )
+
         critique = await self._request_critique(draft.tracks, metrics, concerns, brief)
         return DeckReviewResult(
             content=self._render_critique(metrics, concerns, critique),
@@ -207,16 +215,10 @@ class DeckCritic:
         concerns: list[str],
         brief: str | None,
     ) -> DeckCritique:
-        response = await self._llm.call(
-            [
-                SystemMessage(content=_SYSTEM_PROMPT),
-                UserMessage(
-                    content=self._render_prompt(tracks, metrics, concerns, brief)
-                ),
-            ],
-            output_format=DeckCritique,
+        result = await self._critique_agent.run(
+            self._render_prompt(tracks, metrics, concerns, brief)
         )
-        return response.completion
+        return result.output
 
     def _render_prompt(
         self,
@@ -271,18 +273,30 @@ class DeckCritic:
             + track_block
         )
 
+    def _render_balanced(self, metrics: DeckReviewMetrics) -> str:
+        return "\n".join(
+            [
+                self._render_header(metrics),
+                "Static checks found no obvious concentration.",
+                "Refinement recommended: no",
+            ]
+        )
+
+    def _render_header(self, metrics: DeckReviewMetrics) -> str:
+        return (
+            f"Deck review — {metrics.track_count} tracks "
+            f"(target {metrics.target_size}), {metrics.distinct_artists} artists, "
+            f"{metrics.distinct_decades} decades, {metrics.distinct_years} "
+            "distinct years."
+        )
+
     def _render_critique(
         self,
         metrics: DeckReviewMetrics,
         concerns: list[str],
         critique: DeckCritique,
     ) -> str:
-        header = (
-            f"Deck review — {metrics.track_count} tracks "
-            f"(target {metrics.target_size}), {metrics.distinct_artists} artists, "
-            f"{metrics.distinct_decades} decades, {metrics.distinct_years} "
-            "distinct years."
-        )
+        header = self._render_header(metrics)
         flags = (
             "Detected concentration:\n"
             + "\n".join(f"- {concern}" for concern in concerns)

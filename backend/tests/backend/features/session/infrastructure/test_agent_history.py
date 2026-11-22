@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import cast
 from uuid import UUID
 
-from callm import ImageUrl
+from harnessed.models import ImagePart
 
 from backend.features.session.application.ports import MessageAttachmentStore
 from backend.features.session.domain import ImageAttachment, Session
@@ -16,7 +16,7 @@ class _AttachmentStore:
         return b"image-data"
 
 
-def test_image_attachment_is_replayed_as_callm_data_url() -> None:
+def test_image_attachment_is_replayed_as_data_url() -> None:
     session = Session.create(title="Vision", owner_id=UUID(int=1))
     session.add_user_message(
         "What is in this image?",
@@ -37,5 +37,5 @@ def test_image_attachment_is_replayed_as_callm_data_url() -> None:
 
     assert result.text == "What is in this image?"
     assert isinstance(result.content, tuple)
-    assert isinstance(result.content[1], ImageUrl)
+    assert isinstance(result.content[1], ImagePart)
     assert result.content[1].url == "data:image/jpeg;base64,aW1hZ2UtZGF0YQ=="

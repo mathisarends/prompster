@@ -5,8 +5,8 @@ from uuid import UUID
 
 import pytest
 from agent import Phase as AgentPhase
-from callm import AssistantMessage as LLMAssistantMessage
-from callm import UserMessage as LLMUserMessage
+from harnessed.models import AssistantMessage as LLMAssistantMessage
+from harnessed.models import UserMessage as LLMUserMessage
 
 from backend.features.session.application import SessionConversationService
 from backend.features.session.application.ports import (

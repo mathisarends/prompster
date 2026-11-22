@@ -51,9 +51,13 @@ class PostRunGuardrails:
         self._guardrails.append(guardrail)
 
     async def run(self) -> list[DeckDraftUpdate]:
+        await self.apply()
+        return self._deck_store.drain_deck_draft_updates()
+
+    async def apply(self) -> None:
+        """Apply every guardrail and leave the resulting updates in the store."""
         for guardrail in self._guardrails:
             await self._apply(guardrail)
-        return self._deck_store.drain_deck_draft_updates()
 
     async def _apply(self, guardrail: Guardrail) -> None:
         try:

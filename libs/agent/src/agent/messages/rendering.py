@@ -1,3 +1,4 @@
+from collections import Counter
 from collections.abc import Sequence
 from html import escape
 
@@ -18,24 +19,33 @@ def render_user_message_content(
     return f"{block}\n\n{content}"
 
 
-def render_deck_context(
-    deck_draft: DeckDraft,
+def render_deck_state(
+    deck_draft: DeckDraft | None,
     *,
     max_tracks: int,
 ) -> str:
+    """Render the live deck for the end of a model request.
+
+    It is appended to each request instead of stored in the history, so the
+    model always sees the current deck and the cached prompt prefix stays stable.
+    """
+    if deck_draft is None or not deck_draft.tracks:
+        return f'<deck_state track_count="0" max_tracks="{max_tracks}" />'
+
     track_count = len(deck_draft.tracks)
     remaining_tracks = max(0, max_tracks - track_count)
     lines = [
         (
-            f'<created_deck id="{deck_draft.id}" '
+            f'<deck_state id="{deck_draft.id}" '
             f'name="{escape(deck_draft.name, quote=True)}" '
             f'track_count="{track_count}" '
             f'max_tracks="{max_tracks}" '
             f'remaining_tracks="{remaining_tracks}">'
         ),
+        _render_coverage(deck_draft.tracks),
     ]
     lines.extend(render_track_tag(track) for track in deck_draft.tracks)
-    lines.append("</created_deck>")
+    lines.append("</deck_state>")
     return "\n".join(lines)
 
 
@@ -83,6 +93,23 @@ def render_playlist_tag(
         ("tracks", str(track_count) if track_count is not None else None),
     ]
     return f"<playlist {_render_attrs(attrs)} />"
+
+
+def _render_coverage(tracks: Sequence[DeckDraftTrack]) -> str:
+    years = [track.year for track in tracks if track.year]
+    decades = Counter((year // 10) * 10 for year in years)
+    decade_summary = ", ".join(
+        f"{decade}s: {count}" for decade, count in sorted(decades.items())
+    )
+    artists = Counter(track.artist.split(",")[0].strip() for track in tracks)
+    top_artist, top_artist_count = artists.most_common(1)[0]
+    attrs = [
+        ("decades", decade_summary or None),
+        ("undated", str(len(tracks) - len(years))),
+        ("artists", str(len(artists))),
+        ("top_artist", f"{top_artist} ({top_artist_count})"),
+    ]
+    return f"<coverage {_render_attrs(attrs)} />"
 
 
 def _render_user_events_block(events: Sequence[UserEvent]) -> str:

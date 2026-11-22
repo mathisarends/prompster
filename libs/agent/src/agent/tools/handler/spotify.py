@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from collections.abc import AsyncGenerator, AsyncIterator, Callable, Iterator
 from contextlib import aclosing, contextmanager
@@ -57,6 +58,7 @@ class Spotify:
             else SpotifyClient(scopes=[], cache_handler=MemoryCacheHandler())
         )
         self._open = False
+        self._open_lock = asyncio.Lock()
 
     async def __aenter__(self) -> Self:
         await self.open()
@@ -68,8 +70,12 @@ class Spotify:
     async def open(self) -> None:
         if self._open:
             return
-        await self._client.http.open()
-        self._open = True
+        # Research tools run in parallel and may all open the client at once.
+        async with self._open_lock:
+            if self._open:
+                return
+            await self._client.http.open()
+            self._open = True
 
     async def close(self) -> None:
         if not self._open:

@@ -1,7 +1,7 @@
 architecture:
   layers:
     foundation:
-      modules: [agent.deck, agent.tokens, agent.views]
+      modules: [agent.deck, agent.views]
       may_depend_on: []
     messages:
       modules: [agent.messages]
@@ -10,7 +10,7 @@ architecture:
       modules: [agent.guardrails, agent.tools]
       may_depend_on: [foundation, messages]
     runtime:
-      modules: [agent.agent, agent.events]
+      modules: [agent.agent, agent.events, agent.plugins]
       may_depend_on: [foundation, messages, capabilities]
   packages:
     agent-api:

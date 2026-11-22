@@ -829,7 +829,9 @@ class SessionConversationService:
     ) -> tuple[SessionEvent, ...]:
         state.cancelled = True
         state.stopped = True
-        session.remove_last_pending_tool_call()
+        # Research tools run in parallel, so several calls can be pending.
+        while session.remove_last_pending_tool_call() is not None:
+            pass
 
         message = state.current_assistant_message
         state.current_assistant_message = None

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from agent.agent import (
+from agent.events import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
     DeckUpdatedEvent,
