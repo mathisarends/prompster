@@ -43,8 +43,8 @@ from backend.features.session.domain.views import Phase
 from backend.shared.ddd import Aggregate
 
 MAX_PLAYLIST_TRACKS = 50
-PLAYLIST_FINGERPRINT_VERSION = 1
 DECIDE_FOR_ME_OPTION = "Entscheide für mich"
+_PLAYLIST_FINGERPRINT_VERSION = 1
 
 
 class Session(Aggregate):
@@ -178,7 +178,7 @@ class Session(Aggregate):
         if self._playlist is None:
             return None
         payload = {
-            "version": PLAYLIST_FINGERPRINT_VERSION,
+            "version": _PLAYLIST_FINGERPRINT_VERSION,
             "tracks": [
                 {
                     "title": track.title,

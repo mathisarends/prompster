@@ -8,7 +8,7 @@ from backend.shared.authentication import (
     SessionInvalidException,
 )
 
-INVALID_CREDENTIALS_ERROR = Error(
+_INVALID_CREDENTIALS_ERROR = Error(
     InvalidCredentialsException,
     status=status.HTTP_401_UNAUTHORIZED,
     code="invalid_credentials",
@@ -27,7 +27,7 @@ SESSION_INVALID_ERROR = Error(
 
 AUTH_ERRORS = (
     AUTHENTICATION_REQUIRED_ERROR,
-    INVALID_CREDENTIALS_ERROR,
+    _INVALID_CREDENTIALS_ERROR,
     SESSION_EXPIRED_ERROR,
     SESSION_INVALID_ERROR,
 )

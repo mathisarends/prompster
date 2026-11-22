@@ -20,7 +20,7 @@ from pydantic_core import PydanticUndefined
 from agent.tools.di import InjectMarker
 
 
-def is_injectable(hint: Any) -> bool:
+def _is_injectable(hint: Any) -> bool:
     if get_origin(hint) is not Annotated:
         return False
     return any(isinstance(a, InjectMarker) for a in get_args(hint))
@@ -93,7 +93,7 @@ class ToolSchemaBuilder:
                 continue
 
             hint = hints.get(param_name, str)
-            if is_injectable(hint):
+            if _is_injectable(hint):
                 continue
             actual_type, description = self._extract_type_and_description(hint)
             properties[param_name] = self._to_json_property(actual_type, description)

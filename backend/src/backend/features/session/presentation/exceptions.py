@@ -58,12 +58,12 @@ PLAYLIST_TRACK_LIMIT_EXCEEDED_ERROR = Error(
     status=status.HTTP_409_CONFLICT,
     code="playlist_track_limit_exceeded",
 )
-PLAYLIST_REFERENCE_NOT_FOUND_ERROR = Error(
+_PLAYLIST_REFERENCE_NOT_FOUND_ERROR = Error(
     PlaylistReferenceNotFoundError,
     status=status.HTTP_404_NOT_FOUND,
     code="playlist_reference_not_found",
 )
-ARTIST_REFERENCE_NOT_FOUND_ERROR = Error(
+_ARTIST_REFERENCE_NOT_FOUND_ERROR = Error(
     ArtistReferenceNotFoundError,
     status=status.HTTP_404_NOT_FOUND,
     code="artist_reference_not_found",
@@ -74,40 +74,40 @@ SESSION_PLAYLIST_EMPTY_ERROR = Error(
     code="session_playlist_empty",
     title="Session playlist is empty",
 )
-SESSION_PLAYLIST_MISSING_SPOTIFY_TRACKS_ERROR = Error(
+_SESSION_PLAYLIST_MISSING_SPOTIFY_TRACKS_ERROR = Error(
     SessionPlaylistMissingSpotifyTracksError,
     status=status.HTTP_400_BAD_REQUEST,
     code="session_playlist_missing_spotify_tracks",
     title="Session playlist has no Spotify tracks",
 )
-SESSION_EXPORT_REQUIRES_SPOTIFY_CONNECTION_ERROR = Error(
+_SESSION_EXPORT_REQUIRES_SPOTIFY_CONNECTION_ERROR = Error(
     SessionExportRequiresSpotifyConnectionError,
     status=status.HTTP_409_CONFLICT,
     code="session_export_requires_spotify_connection",
     title="Spotify connection required",
 )
-TOOL_CALL_NOT_FOUND_ERROR = Error(
+_TOOL_CALL_NOT_FOUND_ERROR = Error(
     ToolCallNotFoundError,
     status=status.HTTP_404_NOT_FOUND,
     code="tool_call_not_found",
 )
-TOOL_CALL_ALREADY_RESOLVED_ERROR = Error(
+_TOOL_CALL_ALREADY_RESOLVED_ERROR = Error(
     ToolCallAlreadyResolvedError,
     status=status.HTTP_409_CONFLICT,
     code="tool_call_already_resolved",
 )
-NO_PENDING_TOOL_CALL_SEQUENCE_ERROR = Error(
+_NO_PENDING_TOOL_CALL_SEQUENCE_ERROR = Error(
     NoPendingToolCallSequenceError,
     status=status.HTTP_409_CONFLICT,
     code="no_pending_tool_call_sequence",
 )
-PENDING_TOOL_CALLS_ERROR = Error(
+_PENDING_TOOL_CALLS_ERROR = Error(
     PendingToolCallsError,
     status=status.HTTP_409_CONFLICT,
     code="pending_tool_calls",
     title="Pending tool calls exist",
 )
-NO_CURRENT_ASSISTANT_MESSAGE_ERROR = Error(
+_NO_CURRENT_ASSISTANT_MESSAGE_ERROR = Error(
     NoCurrentAssistantMessageError,
     status=status.HTTP_409_CONFLICT,
     code="no_current_assistant_message",
@@ -155,16 +155,16 @@ SESSION_ERRORS = (
     INVALID_SESSION_PHASE_TRANSITION_ERROR,
     PLAYLIST_TRACK_NOT_FOUND_ERROR,
     PLAYLIST_TRACK_LIMIT_EXCEEDED_ERROR,
-    PLAYLIST_REFERENCE_NOT_FOUND_ERROR,
-    ARTIST_REFERENCE_NOT_FOUND_ERROR,
+    _PLAYLIST_REFERENCE_NOT_FOUND_ERROR,
+    _ARTIST_REFERENCE_NOT_FOUND_ERROR,
     SESSION_PLAYLIST_EMPTY_ERROR,
-    SESSION_PLAYLIST_MISSING_SPOTIFY_TRACKS_ERROR,
-    SESSION_EXPORT_REQUIRES_SPOTIFY_CONNECTION_ERROR,
-    TOOL_CALL_NOT_FOUND_ERROR,
-    TOOL_CALL_ALREADY_RESOLVED_ERROR,
-    NO_PENDING_TOOL_CALL_SEQUENCE_ERROR,
-    PENDING_TOOL_CALLS_ERROR,
-    NO_CURRENT_ASSISTANT_MESSAGE_ERROR,
+    _SESSION_PLAYLIST_MISSING_SPOTIFY_TRACKS_ERROR,
+    _SESSION_EXPORT_REQUIRES_SPOTIFY_CONNECTION_ERROR,
+    _TOOL_CALL_NOT_FOUND_ERROR,
+    _TOOL_CALL_ALREADY_RESOLVED_ERROR,
+    _NO_PENDING_TOOL_CALL_SEQUENCE_ERROR,
+    _PENDING_TOOL_CALLS_ERROR,
+    _NO_CURRENT_ASSISTANT_MESSAGE_ERROR,
     USER_CURATION_EVENT_NOT_FOUND_ERROR,
     USER_CURATION_EVENT_ALREADY_CONSUMED_ERROR,
     USER_CURATION_EVENT_MISSING_TRACK_YEAR_ERROR,

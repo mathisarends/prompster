@@ -12,7 +12,22 @@ from backend.features.spotify.presentation.schemas import (
 )
 
 
-def to_spotify_track_response(track: SpotifyTrack) -> SpotifyTrackResponse:
+def to_spotify_unified_search_response(
+    search_result: SpotifyUnifiedSearchResult,
+) -> SpotifyUnifiedSearchResponse:
+    return SpotifyUnifiedSearchResponse(
+        tracks=[_to_spotify_track_response(track) for track in search_result.tracks],
+        playlists=[
+            _to_spotify_playlist_response(playlist)
+            for playlist in search_result.playlists
+        ],
+        artists=[
+            _to_spotify_artist_response(artist) for artist in search_result.artists
+        ],
+    )
+
+
+def _to_spotify_track_response(track: SpotifyTrack) -> SpotifyTrackResponse:
     return SpotifyTrackResponse(
         id=track.id,
         title=track.title,
@@ -24,7 +39,7 @@ def to_spotify_track_response(track: SpotifyTrack) -> SpotifyTrackResponse:
     )
 
 
-def to_spotify_playlist_response(playlist: SpotifyPlaylist) -> SpotifyPlaylistResponse:
+def _to_spotify_playlist_response(playlist: SpotifyPlaylist) -> SpotifyPlaylistResponse:
     return SpotifyPlaylistResponse(
         id=playlist.id,
         name=playlist.name,
@@ -34,7 +49,7 @@ def to_spotify_playlist_response(playlist: SpotifyPlaylist) -> SpotifyPlaylistRe
     )
 
 
-def to_spotify_artist_response(artist: SpotifyArtist) -> SpotifyArtistResponse:
+def _to_spotify_artist_response(artist: SpotifyArtist) -> SpotifyArtistResponse:
     return SpotifyArtistResponse(
         id=artist.id,
         name=artist.name,
@@ -42,19 +57,4 @@ def to_spotify_artist_response(artist: SpotifyArtist) -> SpotifyArtistResponse:
         followers=artist.followers,
         popularity=artist.popularity,
         image_url=artist.image_url,
-    )
-
-
-def to_spotify_unified_search_response(
-    search_result: SpotifyUnifiedSearchResult,
-) -> SpotifyUnifiedSearchResponse:
-    return SpotifyUnifiedSearchResponse(
-        tracks=[to_spotify_track_response(track) for track in search_result.tracks],
-        playlists=[
-            to_spotify_playlist_response(playlist)
-            for playlist in search_result.playlists
-        ],
-        artists=[
-            to_spotify_artist_response(artist) for artist in search_result.artists
-        ],
     )

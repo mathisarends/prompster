@@ -71,21 +71,21 @@ def to_session_response(
             )
             for entry in session.entries
         ],
-        playlist=to_playlist_response(session.playlist),
+        playlist=_to_playlist_response(session.playlist),
         playlist_references=[
-            to_playlist_reference_response(reference)
+            _to_playlist_reference_response(reference)
             for reference in session.playlist_references
         ],
         artist_references=[
-            to_artist_reference_response(reference)
+            _to_artist_reference_response(reference)
             for reference in session.artist_references
         ],
         unconsumed_user_curation_events=[
-            to_user_curation_event_response(event)
+            _to_user_curation_event_response(event)
             for event in session.unconsumed_user_curation_events
         ],
         onboarding_questions=[
-            to_onboarding_question_response(question)
+            _to_onboarding_question_response(question)
             for question in session.onboarding_questions
         ],
     )
@@ -95,7 +95,7 @@ def to_session_summary_list_response(
     items: list[SessionSummary],
 ) -> SessionSummaryListResponse:
     return SessionSummaryListResponse(
-        items=[to_session_summary_response(item) for item in items],
+        items=[_to_session_summary_response(item) for item in items],
     )
 
 
@@ -140,15 +140,15 @@ def to_entry_response(
             id=entry.id,
             content=entry.content,
             attachments=[
-                to_user_message_attachment_response(attachment)
+                _to_user_message_attachment_response(attachment)
                 for attachment in entry.attachments
             ],
-            image_attachments=to_image_attachment_urls(
+            image_attachments=_to_image_attachment_urls(
                 entry.image_attachments,
                 image_urls_by_storage_key=image_urls_by_storage_key,
             ),
             user_curation_events=[
-                to_user_curation_event_response(event)
+                _to_user_curation_event_response(event)
                 for event in entry.user_curation_events
             ],
             created_at=entry.created_at,
@@ -171,11 +171,45 @@ def to_tool_call_sequence_response(
         id=sequence.id,
         created_at=sequence.created_at,
         label=sequence.label,
-        calls=[to_tool_call_response(call) for call in sequence.calls],
+        calls=[_to_tool_call_response(call) for call in sequence.calls],
     )
 
 
-def to_tool_call_response(call: ToolCall) -> ToolCallResponse:
+def to_tool_call_result_item_response(
+    item: ToolResultItem,
+) -> ToolCallResultItemResponse:
+    return ToolCallResultItemResponse(
+        title=item.title,
+        cover_url=item.cover_url,
+        artist=item.artist,
+        track_uri=item.track_uri,
+    )
+
+
+def to_playlist_track_response(track: PlaylistTrack) -> PlaylistTrackResponse:
+    return PlaylistTrackResponse(
+        id=track.id,
+        title=track.title,
+        artist=track.artist,
+        year=track.year,
+        spotify_uri=track.spotify_uri,
+        cover_url=track.cover_url,
+    )
+
+
+def to_spotify_playlist_export_response(
+    exported: ExportedSpotifyPlaylist,
+) -> SpotifyPlaylistExportResponse:
+    return SpotifyPlaylistExportResponse(
+        id=exported.id,
+        name=exported.name,
+        description=exported.description,
+        url=exported.url,
+        track_count=exported.track_count,
+    )
+
+
+def _to_tool_call_response(call: ToolCall) -> ToolCallResponse:
     result_items: tuple[ToolResultItem, ...] = ()
     if isinstance(call, CompletedCall):
         state, result, error = ToolCallState.COMPLETED, call.result, None
@@ -205,18 +239,7 @@ def to_tool_call_response(call: ToolCall) -> ToolCallResponse:
     )
 
 
-def to_tool_call_result_item_response(
-    item: ToolResultItem,
-) -> ToolCallResultItemResponse:
-    return ToolCallResultItemResponse(
-        title=item.title,
-        cover_url=item.cover_url,
-        artist=item.artist,
-        track_uri=item.track_uri,
-    )
-
-
-def to_session_summary_response(session: SessionSummary) -> SessionSummaryResponse:
+def _to_session_summary_response(session: SessionSummary) -> SessionSummaryResponse:
     return SessionSummaryResponse(
         id=session.id,
         title=session.title,
@@ -226,30 +249,7 @@ def to_session_summary_response(session: SessionSummary) -> SessionSummaryRespon
     )
 
 
-def to_playlist_track_response(track: PlaylistTrack) -> PlaylistTrackResponse:
-    return PlaylistTrackResponse(
-        id=track.id,
-        title=track.title,
-        artist=track.artist,
-        year=track.year,
-        spotify_uri=track.spotify_uri,
-        cover_url=track.cover_url,
-    )
-
-
-def to_spotify_playlist_export_response(
-    exported: ExportedSpotifyPlaylist,
-) -> SpotifyPlaylistExportResponse:
-    return SpotifyPlaylistExportResponse(
-        id=exported.id,
-        name=exported.name,
-        description=exported.description,
-        url=exported.url,
-        track_count=exported.track_count,
-    )
-
-
-def to_playlist_response(playlist: Playlist | None) -> PlaylistResponse | None:
+def _to_playlist_response(playlist: Playlist | None) -> PlaylistResponse | None:
     if playlist is None:
         return None
     return PlaylistResponse(
@@ -259,7 +259,7 @@ def to_playlist_response(playlist: Playlist | None) -> PlaylistResponse | None:
     )
 
 
-def to_playlist_reference_response(
+def _to_playlist_reference_response(
     reference: PlaylistReference,
 ) -> PlaylistReferenceResponse:
     return PlaylistReferenceResponse(
@@ -272,7 +272,9 @@ def to_playlist_reference_response(
     )
 
 
-def to_artist_reference_response(reference: ArtistReference) -> ArtistReferenceResponse:
+def _to_artist_reference_response(
+    reference: ArtistReference,
+) -> ArtistReferenceResponse:
     return ArtistReferenceResponse(
         id=reference.id,
         spotify_artist_id=reference.spotify_artist_id,
@@ -284,7 +286,7 @@ def to_artist_reference_response(reference: ArtistReference) -> ArtistReferenceR
     )
 
 
-def to_user_message_attachment_response(
+def _to_user_message_attachment_response(
     attachment: UserMessageAttachment,
 ) -> SessionMessageAttachmentResponse:
     return SessionMessageAttachmentResponse(
@@ -297,7 +299,7 @@ def to_user_message_attachment_response(
     )
 
 
-def to_image_attachment_urls(
+def _to_image_attachment_urls(
     attachments: tuple[ImageAttachment, ...],
     *,
     image_urls_by_storage_key: Mapping[str, str] | None = None,
@@ -312,7 +314,7 @@ def to_image_attachment_urls(
     ]
 
 
-def to_user_curation_event_response(
+def _to_user_curation_event_response(
     event: UserCurationEvent,
 ) -> UserCurationEventResponse:
     return UserCurationEventResponse(
@@ -328,7 +330,7 @@ def to_user_curation_event_response(
     )
 
 
-def to_onboarding_question_response(
+def _to_onboarding_question_response(
     question: OnboardingQuestion,
 ) -> OnboardingQuestionResponse:
     return OnboardingQuestionResponse(
