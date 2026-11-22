@@ -1,3 +1,5 @@
+from typing import Final
+
 from backend.features.user.infrastructure.repository import SqlUserRepository
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +20,7 @@ from backend.features.auth.infrastructure.google_auth_settings import GoogleAuth
 from backend.features.auth.infrastructure.google_oauth_client import GoogleOAuthClient
 from backend.features.auth.infrastructure.jwt_token_issuer import JwtTokenIssuer
 from backend.features.auth.infrastructure.oauth_state_settings import OAuthStateSettings
+from backend.features.auth.presentation.cookie_settings import AuthCookieSettings
 from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.oauth_state_cookies import (
     GoogleOAuthStateCookies,
@@ -28,6 +31,9 @@ from backend.features.oauth_connections.infrastructure.spotify_auth_settings imp
 )
 from backend.features.user.domain import UserRepository
 
+_SECONDS_PER_MINUTE: Final = 60
+_SECONDS_PER_DAY: Final = 60 * 60 * 24
+
 
 class AuthProvider(Provider):
     @provide(scope=Scope.APP)
@@ -37,6 +43,24 @@ class AuthProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_auth_settings(self) -> AuthSettings:
         return AuthSettings()
+
+    @provide(scope=Scope.APP)
+    def provide_auth_cookie_settings(
+        self,
+        auth_settings: AuthSettings,
+    ) -> AuthCookieSettings:
+        return AuthCookieSettings(
+            access_token_name=auth_settings.access_token_cookie_name,
+            refresh_token_name=auth_settings.jwt_refresh_token_cookie_name,
+            access_token_max_age_seconds=(
+                auth_settings.jwt_access_token_expire_minutes * _SECONDS_PER_MINUTE
+            ),
+            refresh_token_max_age_seconds=(
+                auth_settings.jwt_refresh_token_expire_days * _SECONDS_PER_DAY
+            ),
+            same_site_dev=auth_settings.cookie_samesite_dev.value,
+            same_site_prod=auth_settings.cookie_samesite_prod.value,
+        )
 
     @provide(scope=Scope.APP)
     def provide_google_auth_settings(self) -> GoogleAuthSettings:
@@ -120,10 +144,10 @@ class AuthProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def provide_auth_cookies(
         self,
-        auth_settings: AuthSettings,
+        cookie_settings: AuthCookieSettings,
         env_config: EnvSettings,
     ) -> AuthCookies:
-        return AuthCookies(auth_settings=auth_settings, env_config=env_config)
+        return AuthCookies(cookie_settings=cookie_settings, env_config=env_config)
 
     @provide(scope=Scope.REQUEST)
     def provide_google_oauth_state_cookies(

@@ -1,10 +1,19 @@
 import pytest
 from backend.env import EnvSettings
 from backend.features.auth.application.schemas import AuthSession
-from backend.features.auth.infrastructure.auth_settings import AuthSettings
+from backend.features.auth.presentation.cookie_settings import AuthCookieSettings
 from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.oauth_state_cookies import OAuthStateCookies
 from fastapi import Request, Response
+
+_COOKIE_SETTINGS = AuthCookieSettings(
+    access_token_name="access_token",
+    refresh_token_name="refresh_token",
+    access_token_max_age_seconds=3600,
+    refresh_token_max_age_seconds=86400,
+    same_site_dev="lax",
+    same_site_prod="strict",
+)
 
 
 def _set_cookie_headers(response: Response) -> list[str]:
@@ -19,7 +28,7 @@ class TestAuthCookies:
     def test_set_uses_host_only_cookies(self) -> None:
         response = Response()
         cookies = AuthCookies(
-            auth_settings=AuthSettings(),
+            cookie_settings=_COOKIE_SETTINGS,
             env_config=EnvSettings(frontend_base_url="http://127.0.0.1:5173"),
         )
 

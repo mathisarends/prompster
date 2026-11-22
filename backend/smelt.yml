@@ -12,6 +12,8 @@ architecture:
     - backend.shared
     - backend.env
     - backend._logging
+    - backend.platform.storage.port
+    - backend.platform.storage.views
   composition_root:
     - backend.main
     - backend.lifespan

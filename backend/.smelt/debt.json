@@ -78,22 +78,6 @@
       ]
     },
     {
-      "code": "ARC001",
-      "path": "backend/src/backend/features/auth/presentation/cookies.py",
-      "message": "presentation must not depend on infrastructure",
-      "fingerprints": [
-        "e7ac31e7645c20d501e9c45e91c9c45f"
-      ]
-    },
-    {
-      "code": "ARC001",
-      "path": "backend/src/backend/features/auth/presentation/dependencies.py",
-      "message": "presentation must not depend on infrastructure",
-      "fingerprints": [
-        "404eea6a4f3d51d6d2625457722325ab"
-      ]
-    },
-    {
       "code": "VIS002",
       "path": "backend/src/backend/features/auth/presentation/exceptions.py",
       "message": "INVALID_CREDENTIALS_ERROR is public, but has no observed use outside its module or public-signature evidence",
@@ -234,14 +218,6 @@
       "message": "Frozen dataclass SessionOnboardingQuestionAsked.options contains mutable list contents",
       "fingerprints": [
         "785ef7eed917e01b3ef57fe29f36bc91"
-      ]
-    },
-    {
-      "code": "ARC001",
-      "path": "backend/src/backend/features/session/application/session_exporter.py",
-      "message": "application must not depend on infrastructure",
-      "fingerprints": [
-        "3b22cc2b83d7bf9b88c4d8b2a0ab5c82"
       ]
     },
     {

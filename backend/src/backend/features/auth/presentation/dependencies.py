@@ -7,7 +7,7 @@ from backend.features.auth.application import (
 )
 from backend.features.auth.application.ports import TokenIssuer
 from backend.features.auth.application.schemas import TokenPayload, TokenType
-from backend.features.auth.infrastructure.auth_settings import AuthSettings
+from backend.features.auth.presentation.cookie_settings import AuthCookieSettings
 from backend.features.auth.presentation.exceptions import AuthenticationRequiredError
 from fastapi import Depends, WebSocket, WebSocketException, status
 from fastapi_canon import Inject
@@ -16,7 +16,6 @@ from starlette.requests import HTTPConnection
 
 def _get_cookie_token_payload(
     conn: HTTPConnection,
-    auth_settings: AuthSettings,
     token_issuer: TokenIssuer,
     *,
     cookie_name: str,
@@ -34,28 +33,26 @@ def _get_cookie_token_payload(
 
 def _get_access_token_payload(
     conn: HTTPConnection,
-    auth_settings: Inject[AuthSettings],
+    cookie_settings: Inject[AuthCookieSettings],
     token_issuer: Inject[TokenIssuer],
 ) -> TokenPayload:
     return _get_cookie_token_payload(
         conn,
-        auth_settings,
         token_issuer,
-        cookie_name=auth_settings.access_token_cookie_name,
+        cookie_name=cookie_settings.access_token_name,
         expected_type=TokenType.ACCESS,
     )
 
 
 def _get_refresh_token_payload(
     conn: HTTPConnection,
-    auth_settings: Inject[AuthSettings],
+    cookie_settings: Inject[AuthCookieSettings],
     token_issuer: Inject[TokenIssuer],
 ) -> TokenPayload:
     return _get_cookie_token_payload(
         conn,
-        auth_settings,
         token_issuer,
-        cookie_name=auth_settings.jwt_refresh_token_cookie_name,
+        cookie_name=cookie_settings.refresh_token_name,
         expected_type=TokenType.REFRESH,
     )
 
