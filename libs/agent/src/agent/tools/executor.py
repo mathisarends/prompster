@@ -4,7 +4,7 @@ from typing import Annotated, Any, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
-from agent.tools.di import ToolContext, _InjectMarker
+from agent.tools.di import ToolContext, InjectMarker
 from agent.tools.views import ActionResult, Tool
 
 logger = logging.getLogger(__name__)
@@ -99,4 +99,4 @@ class ToolExecutor:
     def _is_injectable(hint: Any) -> bool:
         if get_origin(hint) is not Annotated:
             return False
-        return any(isinstance(a, _InjectMarker) for a in get_args(hint))
+        return any(isinstance(a, InjectMarker) for a in get_args(hint))

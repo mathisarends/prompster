@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Annotated, Any, Self, final
 
 @final
 class ToolContext:
-    _marker_instance: _InjectMarker | None = None
+    _marker_instance: InjectMarker | None = None
 
     if TYPE_CHECKING:
         type Inject[T] = T
@@ -14,9 +14,9 @@ class ToolContext:
                 return Annotated[item, ToolContext._get_marker()]
 
     @staticmethod
-    def _get_marker() -> _InjectMarker:
+    def _get_marker() -> InjectMarker:
         if ToolContext._marker_instance is None:
-            ToolContext._marker_instance = _InjectMarker()
+            ToolContext._marker_instance = InjectMarker()
         return ToolContext._marker_instance
 
     def __init__(self, *dependencies: Any) -> None:
@@ -44,7 +44,7 @@ class ToolContext:
 
 
 @final
-class _InjectMarker:
+class InjectMarker:
     def __repr__(self) -> str:
         return "ToolContext.Inject"
 

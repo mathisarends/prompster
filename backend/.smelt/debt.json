@@ -2,22 +2,6 @@
   "version": 2,
   "violations": [
     {
-      "code": "FWK001",
-      "path": "backend/src/backend/features/auth/infrastructure/auth_settings.py",
-      "message": "review secret settings field AuthSettings.jwt_secret; use a masked secret type",
-      "fingerprints": [
-        "5c1e825a330c305335598ba81a451667"
-      ]
-    },
-    {
-      "code": "FWK001",
-      "path": "backend/src/backend/features/auth/infrastructure/google_auth_settings.py",
-      "message": "review secret settings field GoogleAuthSettings.client_secret; use a masked secret type",
-      "fingerprints": [
-        "37911f4d23417e5dfd5de98d78a2d3ef"
-      ]
-    },
-    {
       "code": "VIS002",
       "path": "backend/src/backend/features/auth/presentation/exceptions.py",
       "message": "INVALID_CREDENTIALS_ERROR is public, but has no observed use outside its module or public-signature evidence",
@@ -42,14 +26,6 @@
       ]
     },
     {
-      "code": "FWK001",
-      "path": "backend/src/backend/features/llm/infrastructure/credentials.py",
-      "message": "review secret settings field LLMCredentials.openai_api_key; use a masked secret type",
-      "fingerprints": [
-        "aeb5bcd5ee2b987b47c38f3a9ff1db9d"
-      ]
-    },
-    {
       "code": "LAY004",
       "path": "backend/src/backend/features/oauth_connections/infrastructure/repository.py",
       "message": "definitions in module.SqlOAuthConnectionRepository#0 have 8 avoidable ordering inversion(s)",
@@ -63,14 +39,6 @@
         "cb13e6de88fcbafb222b9d3ba79d90dc",
         "f0985f591269533e4de4f24ea452fbbd",
         "f0cb27494672a600f213237a962654b0"
-      ]
-    },
-    {
-      "code": "FWK001",
-      "path": "backend/src/backend/features/oauth_connections/infrastructure/spotify_auth_settings.py",
-      "message": "review secret settings field SpotifyAuthSettings.client_secret; use a masked secret type",
-      "fingerprints": [
-        "e9791ec8e4da8bc6b61d3fe589661403"
       ]
     },
     {

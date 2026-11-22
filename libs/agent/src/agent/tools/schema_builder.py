@@ -17,13 +17,13 @@ from typing import (
 from pydantic import BaseModel
 from pydantic_core import PydanticUndefined
 
-from agent.tools.di import _InjectMarker
+from agent.tools.di import InjectMarker
 
 
 def is_injectable(hint: Any) -> bool:
     if get_origin(hint) is not Annotated:
         return False
-    return any(isinstance(a, _InjectMarker) for a in get_args(hint))
+    return any(isinstance(a, InjectMarker) for a in get_args(hint))
 
 
 def _apply_field_constraints(prop: dict[str, Any], metadata: list[Any]) -> None:
