@@ -52,16 +52,21 @@ architecture:
       third_party:
         default: allow
         deny: [alembic, asyncpg, obstore, sqlalchemy, sqlmodel]
-  # Only intended, acyclic feature dependencies belong here. The auth, user and
-  # oauth_connections cycles are deliberately absent and tracked as debt.
+  packages:
+    feature-shape:
+      match: backend.features.*
+      required: [application, domain, infrastructure, presentation]
+  # Only intended dependencies belong here, and the graph must stay acyclic:
+  # session -> oauth_connections -> auth -> user.
   cross_feature:
     default: deny
     allow:
       - {from: oauth_connections.presentation, to: auth.presentation}
-      - {from: session.presentation, to: auth.presentation}
-      - {from: spotify.presentation, to: auth.presentation}
-      - {from: user.presentation, to: auth.presentation}
       - {from: session.presentation, to: spotify.application}
+      - {from: session.presentation, to: spotify.domain}
+      - {from: auth.application, to: user.domain}
+      - {from: oauth_connections.application, to: auth.application}
+      - {from: oauth_connections.application, to: auth.domain}
       - {from: session.application, to: spotify.application}
       - {from: session.application, to: oauth_connections.application}
       - {from: session.application, to: user.domain}

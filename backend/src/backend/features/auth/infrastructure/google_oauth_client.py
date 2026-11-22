@@ -4,7 +4,7 @@ import httpx
 from pydantic import ValidationError
 
 from backend.features.auth.application.ports import GoogleOAuthProvider
-from backend.features.auth.application.schemas import GoogleIdentity
+from backend.features.auth.domain import GoogleIdentity
 from backend.features.auth.infrastructure.google_auth_settings import GoogleAuthSettings
 
 

@@ -1,9 +1,9 @@
 import secrets
 
-from backend.features.auth.application.exceptions import InvalidCredentialsException
-from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
+from backend.features.auth.domain import InvalidCredentialsException
+from backend.shared.authentication import AuthSession, TokenIssuer
+from backend.features.auth.application.ports import GoogleOAuthProvider
 from backend.features.auth.application.schemas import (
-    AuthSession,
     GoogleAuthorizationRequest,
     GoogleCallbackResult,
 )

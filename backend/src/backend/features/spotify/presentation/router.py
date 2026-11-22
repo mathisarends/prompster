@@ -1,10 +1,11 @@
 from typing import Annotated
 
-from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exceptions import (
+from backend.presentation.authentication import (
+    AuthenticatedUserId,
     AUTHENTICATION_REQUIRED_ERROR,
 )
-from backend.features.spotify.application import SpotifySearch, SpotifySearchType
+from backend.features.spotify.application import SpotifySearch
+from backend.features.spotify.domain import SpotifySearchType
 from backend.features.spotify.presentation.mapper import (
     to_spotify_unified_search_response,
 )

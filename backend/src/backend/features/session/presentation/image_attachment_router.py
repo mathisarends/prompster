@@ -1,7 +1,7 @@
 from typing import Annotated
 
-from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exceptions import (
+from backend.presentation.authentication import (
+    AuthenticatedUserId,
     AUTHENTICATION_REQUIRED_ERROR,
 )
 from backend.features.session.application import (

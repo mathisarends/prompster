@@ -3,11 +3,11 @@ from uuid import uuid4
 
 import jwt
 import pytest
-from backend.features.auth.application.exceptions import (
+from backend.shared.authentication import (
     SessionExpiredException,
     SessionInvalidException,
+    TokenType,
 )
-from backend.features.auth.application.schemas import TokenType
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.infrastructure.jwt_token_issuer import JwtTokenIssuer
 

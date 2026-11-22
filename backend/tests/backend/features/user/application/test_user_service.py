@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from backend.features.auth.application.exceptions import SessionInvalidException
+from backend.shared.authentication import SessionInvalidException
 from backend.features.user.application.user_service import UserService
 from backend.features.user.domain import (
     AuthIdentity,

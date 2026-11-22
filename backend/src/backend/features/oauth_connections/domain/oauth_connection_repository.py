@@ -1,10 +1,8 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from backend.features.oauth_connections.domain.oauth_connection import (
-    OAuthConnection,
-    OAuthProvider,
-)
+from backend.features.oauth_connections.domain.oauth_connection import OAuthConnection
+from backend.shared.oauth_provider import OAuthProvider
 
 
 class OAuthConnectionRepository(ABC):

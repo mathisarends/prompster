@@ -17,8 +17,8 @@ from backend.features.oauth_connections.application.schemas import (
 from backend.features.oauth_connections.domain import (
     OAuthConnection,
     OAuthConnectionRepository,
-    OAuthProvider,
 )
+from backend.shared.oauth_provider import OAuthProvider
 
 
 class _OAuthConnectionRepositoryStub(OAuthConnectionRepository):

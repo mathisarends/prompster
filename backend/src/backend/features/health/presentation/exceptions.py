@@ -1,7 +1,7 @@
 from fastapi import status
 from fastapi_canon import Error
 
-from backend.features.health.application import ServiceNotReadyException
+from backend.features.health.domain import ServiceNotReadyException
 
 SERVICE_NOT_READY_ERROR = Error(
     ServiceNotReadyException,
@@ -9,6 +9,4 @@ SERVICE_NOT_READY_ERROR = Error(
     code="service_not_ready",
 )
 
-HEALTH_ERRORS = (
-    SERVICE_NOT_READY_ERROR,
-)
+HEALTH_ERRORS = (SERVICE_NOT_READY_ERROR,)

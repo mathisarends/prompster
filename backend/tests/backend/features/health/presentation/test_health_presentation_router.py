@@ -3,10 +3,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from fastapi_canon import Composition, ErrorOptions, Feature
 
-from backend.features.health.application import (
-    ReadinessCheck,
-    ServiceNotReadyException,
-)
+from backend.features.health.application import ReadinessCheck
+from backend.features.health.domain import ServiceNotReadyException
 from backend.features.health.presentation import HEALTH_ERRORS, health_router
 
 

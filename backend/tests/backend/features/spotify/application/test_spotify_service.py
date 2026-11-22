@@ -6,10 +6,9 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-from backend.features.spotify.application import (
+from backend.features.spotify.application import SpotifySearch, SpotifySearchGateway
+from backend.features.spotify.domain import (
     InvalidSpotifyTrackUriError,
-    SpotifySearch,
-    SpotifySearchGateway,
     SpotifySearchType,
     SpotifyTrack,
     SpotifyTrackNotFoundError,

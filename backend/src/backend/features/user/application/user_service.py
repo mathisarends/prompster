@@ -1,7 +1,7 @@
 from uuid import UUID
 from dataclasses import dataclass
 
-from backend.features.auth.application.exceptions import SessionInvalidException
+from backend.shared.authentication import SessionInvalidException
 from backend.features.user.domain import User, UserRepository
 
 

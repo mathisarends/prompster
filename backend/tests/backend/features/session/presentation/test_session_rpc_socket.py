@@ -4,7 +4,7 @@ from threading import Event
 from uuid import uuid4
 
 import pytest
-from backend.features.auth.presentation.dependencies import _get_authenticated_user_id
+from backend.presentation.authentication import get_authenticated_user_id
 from backend.features.session.application import (
     SessionAssistantMessageChunk,
     SessionConversationService,
@@ -39,7 +39,7 @@ def _session_app(provider: Provider, user_id_factory) -> FastAPI:
     app = FastAPI()
     app.include_router(rpc_router)
     Composition(features=[Feature(name="session", providers=[provider])]).build(app)
-    app.dependency_overrides[_get_authenticated_user_id] = user_id_factory
+    app.dependency_overrides[get_authenticated_user_id] = user_id_factory
     return app
 
 

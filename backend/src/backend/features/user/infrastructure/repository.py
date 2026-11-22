@@ -4,7 +4,7 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Row
 
-from backend.features.oauth_connections.domain import OAuthProvider
+from backend.shared.oauth_provider import OAuthProvider
 from backend.features.user.domain import (
     AuthIdentity,
     AuthProvider,

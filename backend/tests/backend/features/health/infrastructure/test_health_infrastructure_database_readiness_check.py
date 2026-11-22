@@ -4,7 +4,7 @@ from typing import cast
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.features.health.application import ServiceNotReadyException
+from backend.features.health.domain import ServiceNotReadyException
 from backend.features.health.infrastructure.database_readiness_check import (
     DatabaseReadinessCheck,
 )

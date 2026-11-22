@@ -6,10 +6,10 @@ import pytest
 from backend.features.auth.application.refresh_session import (
     SessionRefresher,
 )
-from backend.features.auth.application.exceptions import SessionInvalidException
-from backend.features.auth.application.ports import TokenIssuer
-from backend.features.auth.application.schemas import (
+from backend.shared.authentication import (
     AuthSession,
+    SessionInvalidException,
+    TokenIssuer,
     TokenPayload,
     TokenType,
 )

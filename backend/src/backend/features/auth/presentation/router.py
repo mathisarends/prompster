@@ -5,9 +5,7 @@ from backend.features.auth.application import (
 )
 from backend.env import EnvSettings
 from backend.features.auth.presentation.cookies import AuthCookies
-from backend.features.auth.presentation.dependencies import (
-    RefreshAuthenticatedUserId,
-)
+from backend.presentation.authentication import RefreshAuthenticatedUserId
 from backend.features.auth.presentation.exceptions import (
     SESSION_EXPIRED_ERROR,
     SESSION_INVALID_ERROR,

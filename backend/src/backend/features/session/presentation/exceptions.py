@@ -19,7 +19,7 @@ from backend.features.session.domain.exceptions import (
     UserCurationEventMissingTrackYearError,
     UserCurationEventNotFoundError,
 )
-from backend.features.spotify.application import (
+from backend.features.spotify.domain import (
     InvalidSpotifyTrackUriError,
     SpotifyTrackNotFoundError,
     SpotifyTrackYearMissingError,

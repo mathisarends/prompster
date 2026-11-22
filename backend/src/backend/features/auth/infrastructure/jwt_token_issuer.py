@@ -4,13 +4,11 @@ from uuid import UUID
 
 import jwt
 
-from backend.features.auth.application.exceptions import (
+from backend.shared.authentication import (
+    AuthSession,
     SessionExpiredException,
     SessionInvalidException,
-)
-from backend.features.auth.application.ports import TokenIssuer
-from backend.features.auth.application.schemas import (
-    AuthSession,
+    TokenIssuer,
     TokenPayload,
     TokenType,
 )

@@ -1,7 +1,7 @@
 import pytest
 from backend.env import EnvSettings
-from backend.features.auth.application.schemas import AuthSession
-from backend.features.auth.presentation.cookie_settings import AuthCookieSettings
+from backend.shared.authentication import AuthSession
+from backend.presentation.authentication import AuthCookieSettings
 from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.oauth_state_cookies import OAuthStateCookies
 from fastapi import Request, Response

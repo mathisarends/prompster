@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from backend.features.auth.presentation.dependencies import AuthenticatedUserId
+from backend.presentation.authentication import AuthenticatedUserId
 from backend.features.session.presentation.rpc.channel import session_channel
 from backend.features.session.presentation.rpc.context import SessionRpcContext
 from fastapi_canon.integrations.websockets import CanonWebSocketRouter

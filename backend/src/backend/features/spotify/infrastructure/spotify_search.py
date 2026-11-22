@@ -2,11 +2,11 @@ import asyncio
 import logging
 from collections.abc import Awaitable
 
-from backend.features.spotify.application.ports import (
+from backend.features.spotify.application.ports import SpotifySearchGateway
+from backend.features.spotify.domain import (
     DEFAULT_SPOTIFY_SEARCH_TYPES,
     SpotifyArtist,
     SpotifyPlaylist,
-    SpotifySearchGateway,
     SpotifySearchType,
     SpotifyTrack,
     SpotifyUnifiedSearchResult,

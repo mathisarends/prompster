@@ -21,35 +21,11 @@
       ]
     },
     {
-      "code": "ARC002",
-      "path": "backend/src/backend/features/auth/application/google_oauth_flow.py",
-      "message": "feature auth must not import feature user (application -> domain)",
-      "fingerprints": [
-        "b73162a64482a631943b5a8255fc66f5"
-      ]
-    },
-    {
       "code": "LAY008",
       "path": "backend/src/backend/features/auth/application/google_oauth_flow.py",
       "message": "move private constant GoogleOAuthFlow._STATE_TOKEN_BYTES to module scope",
       "fingerprints": [
         "22853d68e57057aee2ba1fcadc56c6c9"
-      ]
-    },
-    {
-      "code": "ARC002",
-      "path": "backend/src/backend/features/auth/application/refresh_session.py",
-      "message": "feature auth must not import feature user (application -> domain)",
-      "fingerprints": [
-        "727964d622e59223391bce57e37588dd"
-      ]
-    },
-    {
-      "code": "ARC002",
-      "path": "backend/src/backend/features/auth/application/spotify_oauth_flow.py",
-      "message": "feature auth must not import feature user (application -> domain)",
-      "fingerprints": [
-        "f036b422c8c33b1b9dc2656ede3ad49f"
       ]
     },
     {
@@ -118,15 +94,6 @@
       "message": "review secret settings field LLMCredentials.openai_api_key; use a masked secret type",
       "fingerprints": [
         "aeb5bcd5ee2b987b47c38f3a9ff1db9d"
-      ]
-    },
-    {
-      "code": "ARC002",
-      "path": "backend/src/backend/features/oauth_connections/application/spotify_login_provider.py",
-      "message": "feature oauth_connections must not import feature auth (application -> application)",
-      "fingerprints": [
-        "2d07f0e75b0b9fe2277467ea9d14ce88",
-        "33d6a8c2bda16852c298920f1675a60d"
       ]
     },
     {
@@ -761,34 +728,34 @@
     },
     {
       "code": "MOD011",
-      "path": "backend/src/backend/features/spotify/application/ports.py",
+      "path": "backend/src/backend/features/spotify/domain/models.py",
       "message": "Frozen dataclass SpotifyArtist.genres contains mutable list contents",
       "fingerprints": [
-        "06fdcf7f4160e8e9527ef5b53436b115"
+        "6f24992354c1b2c54c4bfc5bded12b22"
       ]
     },
     {
       "code": "MOD011",
-      "path": "backend/src/backend/features/spotify/application/ports.py",
+      "path": "backend/src/backend/features/spotify/domain/models.py",
       "message": "Frozen dataclass SpotifyUnifiedSearchResult.artists contains mutable list contents",
       "fingerprints": [
-        "91ce4b687f786d8c8f7b0dba04238ec3"
+        "2ba4d92117a8bdf5f74dbd9e96a35645"
       ]
     },
     {
       "code": "MOD011",
-      "path": "backend/src/backend/features/spotify/application/ports.py",
+      "path": "backend/src/backend/features/spotify/domain/models.py",
       "message": "Frozen dataclass SpotifyUnifiedSearchResult.playlists contains mutable list contents",
       "fingerprints": [
-        "0c745d2d284597b71cfaf4ce9e88004d"
+        "b07fa51f971199d5537312bf59496911"
       ]
     },
     {
       "code": "MOD011",
-      "path": "backend/src/backend/features/spotify/application/ports.py",
+      "path": "backend/src/backend/features/spotify/domain/models.py",
       "message": "Frozen dataclass SpotifyUnifiedSearchResult.tracks contains mutable list contents",
       "fingerprints": [
-        "f3e1e83374f35e85fbfb85b4ec5d9490"
+        "109c6a9ca535cf827a4587f632600d4a"
       ]
     },
     {
@@ -833,28 +800,12 @@
       ]
     },
     {
-      "code": "ARC002",
-      "path": "backend/src/backend/features/user/application/user_service.py",
-      "message": "feature user must not import feature auth (application -> application)",
-      "fingerprints": [
-        "d3778abc33efaf45757cfee623e89032"
-      ]
-    },
-    {
       "code": "TYP003",
       "path": "backend/src/backend/features/user/domain/user.py",
       "message": "optional parameter 'spotify' uses truthiness for its default",
       "scope": "User.__init__",
       "fingerprints": [
         "ac1e3dfb62108f9a88a0dd4ec694d75e"
-      ]
-    },
-    {
-      "code": "ARC002",
-      "path": "backend/src/backend/features/user/infrastructure/repository.py",
-      "message": "feature user must not import feature oauth_connections (infrastructure -> domain)",
-      "fingerprints": [
-        "e9a13cd51c43f0ff4a194049d68ad632"
       ]
     },
     {
@@ -886,6 +837,26 @@
       "scope": "SqlUserRepository._to_domain",
       "fingerprints": [
         "4497cb2caa63b76768b7173396fca841"
+      ]
+    },
+    {
+      "code": "LAY004",
+      "path": "backend/src/backend/presentation/authentication.py",
+      "message": "definitions in module have 4 avoidable ordering inversion(s)",
+      "scope": "module",
+      "fingerprints": [
+        "202b31239f128345ae3c7227d2d36014",
+        "76aebda9653c8e2ae0606a32db3f3723",
+        "9a88a1f682c0312207a534410a0b9529",
+        "a567f3cfab317a6af5d433a4eafc3235"
+      ]
+    },
+    {
+      "code": "VIS009",
+      "path": "backend/src/backend/presentation/authentication.py",
+      "message": "backend.presentation.authentication.get_authenticated_user_id is public; among analyzed modules, only tests access it outside its defining module",
+      "fingerprints": [
+        "a5ef880bb7f8ac6aa5ec7eda4a2c2de5"
       ]
     },
     {
@@ -1147,14 +1118,6 @@
       "message": "test_closing_subscription_closes_application_stream_immediately has no recognized outcome assertion",
       "fingerprints": [
         "74f2c4ccc063ab520f5eec2e00c46506"
-      ]
-    },
-    {
-      "code": "TST002",
-      "path": "backend/tests/backend/features/session/presentation/test_session_rpc_socket.py",
-      "message": "test accesses private production name backend.features.auth.presentation.dependencies._get_authenticated_user_id",
-      "fingerprints": [
-        "79e788281f4a676d1da6bd8c38ad0415"
       ]
     },
     {

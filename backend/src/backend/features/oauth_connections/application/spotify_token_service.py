@@ -8,10 +8,8 @@ from backend.features.oauth_connections.application.ports import (
     SpotifyOAuthProvider,
 )
 from backend.features.oauth_connections.application.schemas import SpotifyAccessToken
-from backend.features.oauth_connections.domain import (
-    OAuthConnectionRepository,
-    OAuthProvider,
-)
+from backend.features.oauth_connections.domain import OAuthConnectionRepository
+from backend.shared.oauth_provider import OAuthProvider
 
 
 class SpotifyTokenService:

@@ -1,17 +1,39 @@
-from typing import Annotated
+from dataclasses import dataclass
+from typing import Annotated, Literal
 from uuid import UUID
 
-from backend.features.auth.application import (
+from fastapi import Depends, WebSocket, WebSocketException, status
+from fastapi_canon import Error, Inject
+from starlette.requests import HTTPConnection
+
+from backend.shared.authentication import (
     SessionExpiredException,
     SessionInvalidException,
+    TokenIssuer,
+    TokenPayload,
+    TokenType,
 )
-from backend.features.auth.application.ports import TokenIssuer
-from backend.features.auth.application.schemas import TokenPayload, TokenType
-from backend.features.auth.presentation.cookie_settings import AuthCookieSettings
-from backend.features.auth.presentation.exceptions import AuthenticationRequiredError
-from fastapi import Depends, WebSocket, WebSocketException, status
-from fastapi_canon import Inject
-from starlette.requests import HTTPConnection
+
+
+class AuthenticationRequiredError(Exception):
+    """Raised when an HTTP request has no usable authentication session."""
+
+
+AUTHENTICATION_REQUIRED_ERROR = Error(
+    AuthenticationRequiredError,
+    status=status.HTTP_401_UNAUTHORIZED,
+    code="authentication_required",
+)
+
+
+@dataclass(frozen=True, slots=True)
+class AuthCookieSettings:
+    access_token_name: str
+    refresh_token_name: str
+    access_token_max_age_seconds: int
+    refresh_token_max_age_seconds: int
+    same_site_dev: Literal["lax", "strict", "none"]
+    same_site_prod: Literal["lax", "strict", "none"]
 
 
 def _get_cookie_token_payload(
@@ -67,7 +89,7 @@ def _raise(conn: HTTPConnection, detail: str, exc: Exception | None = None) -> N
     raise AuthenticationRequiredError from exc
 
 
-def _get_authenticated_user_id(
+def get_authenticated_user_id(
     payload: Annotated[TokenPayload, Depends(_get_access_token_payload)],
 ) -> UUID:
     return payload.user_id
@@ -79,7 +101,7 @@ def _get_refresh_authenticated_user_id(
     return payload.user_id
 
 
-AuthenticatedUserId = Annotated[UUID, Depends(_get_authenticated_user_id)]
+AuthenticatedUserId = Annotated[UUID, Depends(get_authenticated_user_id)]
 RefreshAuthenticatedUserId = Annotated[
     UUID,
     Depends(_get_refresh_authenticated_user_id),

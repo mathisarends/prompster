@@ -1,14 +1,12 @@
-from backend.features.spotify.application.exceptions import (
+from backend.features.spotify.domain import (
     InvalidSpotifyTrackUriError,
-    SpotifyTrackNotFoundError,
-    SpotifyTrackYearMissingError,
-)
-from backend.features.spotify.application.ports import (
-    SpotifySearchGateway,
     SpotifySearchType,
     SpotifyTrack,
+    SpotifyTrackNotFoundError,
+    SpotifyTrackYearMissingError,
     SpotifyUnifiedSearchResult,
 )
+from backend.features.spotify.application.ports import SpotifySearchGateway
 
 
 class SpotifySearch:

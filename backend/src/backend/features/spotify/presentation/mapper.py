@@ -1,4 +1,4 @@
-from backend.features.spotify.application.ports import (
+from backend.features.spotify.domain import (
     SpotifyArtist,
     SpotifyPlaylist,
     SpotifyTrack,

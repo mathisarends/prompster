@@ -1,6 +1,7 @@
 import secrets
 
-from backend.features.auth.application.ports import SpotifyLoginProvider, TokenIssuer
+from backend.features.auth.application.ports import SpotifyLoginProvider
+from backend.shared.authentication import TokenIssuer
 from backend.features.auth.application.schemas import (
     SpotifyLoginAuthorizationRequest,
     SpotifyLoginCallbackResult,
