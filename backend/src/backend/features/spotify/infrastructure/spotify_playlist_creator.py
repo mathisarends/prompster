@@ -1,6 +1,6 @@
 import logging
 
-from spotifyify import RetryEvent, Spotifyify
+from spotifyify import RetryEvent, SpotifyClient
 
 from backend.features.spotify.application.ports import (
     SpotifyPlaylistCreator as SpotifyPlaylistCreatorPort,
@@ -11,11 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 class SpotifyPlaylistCreator(SpotifyPlaylistCreatorPort):
-    def __init__(self, spotify: Spotifyify) -> None:
+    def __init__(self, spotify: SpotifyClient) -> None:
         self._spotify = spotify
-
-    async def aclose(self) -> None:
-        await self._spotify.close()
 
     async def create_private_playlist(
         self,
@@ -24,7 +21,7 @@ class SpotifyPlaylistCreator(SpotifyPlaylistCreatorPort):
         name: str,
         description: str,
     ) -> str:
-        async with self._spotify.session(
+        async with self._spotify.request_context(
             access_token=access_token,
             on_retry=_log_spotifyify_retry,
         ):
@@ -47,7 +44,7 @@ class SpotifyPlaylistCreator(SpotifyPlaylistCreatorPort):
         name: str,
         description: str,
     ) -> None:
-        async with self._spotify.session(
+        async with self._spotify.request_context(
             access_token=access_token,
             on_retry=_log_spotifyify_retry,
         ):
@@ -64,7 +61,7 @@ class SpotifyPlaylistCreator(SpotifyPlaylistCreatorPort):
         playlist_id: str,
         track_uris: list[str],
     ) -> None:
-        async with self._spotify.session(
+        async with self._spotify.request_context(
             access_token=access_token,
             on_retry=_log_spotifyify_retry,
         ):

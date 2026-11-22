@@ -9,7 +9,9 @@ _LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 # logs stay readable even when the app runs at DEBUG in dev.
 _NOISY_LOGGERS = (
     "httpx",
+    "httpx2",
     "httpcore",
+    "httpcore2",
     "openai",
     "websockets",
     "websockets.client",

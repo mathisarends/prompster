@@ -55,7 +55,7 @@ from backend.features.user.domain import UserRepository
 from backend.platform.storage import ObjectStorage
 from dishka import Provider, Scope, provide
 from callm import ChatModel
-from spotifyify import Spotifyify
+from spotifyify import SpotifyClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
@@ -101,7 +101,7 @@ class SessionProvider(Provider):
         self,
         llm: ChatModel,
         chat_models: ChatModels,
-        spotify: Spotifyify,
+        spotify: SpotifyClient,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,
         active_runs: ActiveSessionRunStore,

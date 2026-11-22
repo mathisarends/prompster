@@ -29,7 +29,7 @@ from backend.features.session.infrastructure.agent_event_mapper import (
 )
 from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
 from callm import ChatModel
-from spotifyify import Spotifyify
+from spotifyify import SpotifyClient
 
 
 @dataclass
@@ -74,7 +74,7 @@ class AgentSessionRunner(SessionRunner):
         self,
         llm: ChatModel,
         chat_models: ChatModels,
-        spotify: Spotifyify,
+        spotify: SpotifyClient,
         event_mapper: AgentSessionEventMapper,
         history_builder: AgentHistoryBuilder,
         active_runs: ActiveSessionRunStore,
