@@ -4,7 +4,7 @@ from uuid import uuid4
 from backend.features.session.infrastructure.message_attachment_store import (
     StorageMessageAttachmentStore,
 )
-from backend.platform.storage import ObjectStorage
+from backend.shared.storage import ObjectStorage
 
 
 class _ObjectStorageStub(ObjectStorage):

@@ -4,7 +4,7 @@ from typing import Annotated, Any, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
-from agent.tools.di import ToolContext, InjectMarker
+from agent.tools.di import InjectMarker, ToolContext
 from agent.tools.views import ActionResult, Tool
 
 logger = logging.getLogger(__name__)

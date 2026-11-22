@@ -2,7 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from agent.deck.views import TrackRef, TrackRefReplacement
+from agent.deck import TrackRef, TrackRefReplacement
 from agent.tools.views import OnboardingSelectionMode
 
 

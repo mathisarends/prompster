@@ -1,11 +1,11 @@
 from uuid import UUID
 
+from backend.features.user.domain import UserRepository
 from backend.shared.authentication import (
     AuthSession,
     SessionInvalidException,
     TokenIssuer,
 )
-from backend.features.user.domain import UserRepository
 
 
 class SessionRefresher:

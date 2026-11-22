@@ -34,8 +34,8 @@ from backend.features.session.application.image_attachment_service import (
     SessionImageAttachmentReference,
     normalize_content_type,
 )
-from backend.features.session.application.ports import MessageAttachmentStore
-from backend.features.session.application.ports.session_runner import (
+from backend.features.session.application.ports import (
+    MessageAttachmentStore,
     SessionRunner,
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
@@ -52,8 +52,6 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerToolCallRetry,
     SessionRunnerToolCallSequenceStarted,
     SessionRunnerToolCallStarted,
-)
-from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
 from backend.features.session.domain import (

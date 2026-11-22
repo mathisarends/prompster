@@ -1,9 +1,8 @@
 from collections.abc import Sequence
 from html import escape
 
+from agent.deck import DeckDraft, DeckDraftTrack
 from agent.views import UserEvent
-from agent.deck import DeckDraft
-from agent.deck.views import DeckDraftTrack
 
 
 def render_user_message_content(

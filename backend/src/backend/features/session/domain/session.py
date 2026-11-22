@@ -1,24 +1,10 @@
-from collections.abc import Sequence
-from datetime import UTC, datetime
 import hashlib
 import json
+from collections.abc import Sequence
+from datetime import UTC, datetime
 from typing import Self
 from uuid import UUID, uuid4
 
-from backend.features.session.domain.exceptions import (
-    ArtistReferenceNotFoundError,
-    InvalidSessionPhaseTransitionError,
-    NoCurrentAssistantMessageError,
-    NoPendingToolCallSequenceError,
-    PendingToolCallsError,
-    PlaylistTrackLimitExceededError,
-    PlaylistTrackNotFoundError,
-    PlaylistReferenceNotFoundError,
-    SessionAccessDeniedError,
-    UserCurationEventAlreadyConsumedError,
-    UserCurationEventMissingTrackYearError,
-    UserCurationEventNotFoundError,
-)
 from backend.features.session.domain.entities import (
     ArtistReference,
     AssistantMessage,
@@ -38,6 +24,20 @@ from backend.features.session.domain.entities import (
     UserCurationEventType,
     UserMessage,
     UserMessageAttachment,
+)
+from backend.features.session.domain.exceptions import (
+    ArtistReferenceNotFoundError,
+    InvalidSessionPhaseTransitionError,
+    NoCurrentAssistantMessageError,
+    NoPendingToolCallSequenceError,
+    PendingToolCallsError,
+    PlaylistReferenceNotFoundError,
+    PlaylistTrackLimitExceededError,
+    PlaylistTrackNotFoundError,
+    SessionAccessDeniedError,
+    UserCurationEventAlreadyConsumedError,
+    UserCurationEventMissingTrackYearError,
+    UserCurationEventNotFoundError,
 )
 from backend.features.session.domain.views import Phase
 from backend.shared.ddd import Aggregate

@@ -3,11 +3,11 @@ from uuid import uuid4
 from agent.agent import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
+    DeckUpdatedEvent,
     QuestionAskedEvent,
     SuspendedForUserInputEvent,
     ToolCallEvent,
     ToolResultEvent,
-    DeckUpdatedEvent,
 )
 from agent.deck import (
     DeckDraft,
@@ -25,9 +25,9 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerPlaylistTracksAdded,
     SessionRunnerPlaylistTracksRemoved,
     SessionRunnerPlaylistTracksReplaced,
+    SessionRunnerPlaylistUpdated,
     SessionRunnerQuestionAsked,
     SessionRunnerSuspendedForInput,
-    SessionRunnerPlaylistUpdated,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallStarted,
 )

@@ -4,6 +4,11 @@ from agent import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
     ContextCompactedEvent,
+    DeckDraft,
+    DeckDraftTrack,
+    DeckDraftTracksAdded,
+    DeckDraftTracksRemoved,
+    DeckDraftTracksReplaced,
     DeckUpdatedEvent,
     QuestionAskedEvent,
     SuspendedForUserInputEvent,
@@ -12,14 +17,8 @@ from agent import (
     ToolResultEvent,
     ToolRetryEvent,
 )
-from agent.deck import (
-    DeckDraft,
-    DeckDraftTrack,
-    DeckDraftTracksAdded,
-    DeckDraftTracksRemoved,
-    DeckDraftTracksReplaced,
-)
-from backend.features.session.application.ports.session_runner import (
+
+from backend.features.session.application.ports import (
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
     SessionRunnerContextCompacted,
@@ -28,12 +27,12 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerPlaylistTracksAdded,
     SessionRunnerPlaylistTracksRemoved,
     SessionRunnerPlaylistTracksReplaced,
+    SessionRunnerPlaylistUpdated,
     SessionRunnerQuestionAsked,
     SessionRunnerSuspendedForInput,
-    SessionRunnerToolCallSequenceStarted,
-    SessionRunnerPlaylistUpdated,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallRetry,
+    SessionRunnerToolCallSequenceStarted,
     SessionRunnerToolCallStarted,
 )
 from backend.features.session.domain import (

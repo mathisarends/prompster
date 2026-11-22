@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict, Field
+
 from backend.features.session.domain import (
     OnboardingQuestionSelectionMode,
     PendingCall,
@@ -10,7 +12,6 @@ from backend.features.session.domain import (
     Session,
     ToolResultItem,
 )
-from pydantic import BaseModel, ConfigDict, Field
 
 
 class _RunnerEvent(BaseModel):

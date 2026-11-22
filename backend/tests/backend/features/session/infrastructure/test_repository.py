@@ -7,7 +7,6 @@ from backend.features.session.domain import (
     OnboardingQuestionSelectionMode,
     PendingCall,
     Phase,
-    PlaylistTrack,
     Session,
     ToolActionType,
     ToolFunction,
@@ -19,12 +18,11 @@ from backend.features.session.domain import (
 )
 from backend.features.session.infrastructure.repository import SqlSessionRepository
 from backend.platform.database.orm import (
-    PlaylistTrackModel,
     SessionArtistReferenceModel,
-    SessionOnboardingQuestionModel,
-    SessionUserCurationEventModel,
     SessionModel,
+    SessionOnboardingQuestionModel,
     SessionPlaylistReferenceModel,
+    SessionUserCurationEventModel,
     SessionUserMessageAttachmentModel,
     SessionUserMessageImageAttachmentModel,
     SessionUserMessageModel,

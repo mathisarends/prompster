@@ -4,6 +4,7 @@ from typing import Self
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+
 from backend.features.auth.infrastructure.google_auth_settings import (
     GoogleAuthSettings,
 )

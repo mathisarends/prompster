@@ -4,17 +4,18 @@ from threading import Event
 from uuid import uuid4
 
 import pytest
-from backend.presentation.authentication import get_authenticated_user_id
-from backend.features.session.application import (
-    SessionAssistantMessageChunk,
-    SessionConversationService,
-)
-from backend.features.session.presentation.rpc import rpc_router
 from dishka import Provider, Scope, provide
 from fastapi import FastAPI, WebSocketException, status
 from fastapi.testclient import TestClient
 from fastapi_canon import Composition, Feature
 from starlette.websockets import WebSocketDisconnect
+
+from backend.features.session.application import (
+    SessionAssistantMessageChunk,
+    SessionConversationService,
+)
+from backend.features.session.presentation.rpc import rpc_router
+from backend.presentation.authentication import get_authenticated_user_id
 
 
 class ConversationStub:

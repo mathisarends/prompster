@@ -1,16 +1,24 @@
-from .active_run_store import ActiveSessionRunStore
-from .playlist_deck_generator import PlaylistDeckGenerator, PlaylistDeckTrack
-from .message_attachment_store import MessageAttachmentStore, StoredAttachment
-from .playlist_metadata_generator import (
+from backend.features.session.application.ports.active_run_store import (
+    ActiveSessionRunStore,
+)
+from backend.features.session.application.ports.message_attachment_store import (
+    MessageAttachmentStore,
+    StoredAttachment,
+)
+from backend.features.session.application.ports.playlist_deck_generator import (
+    PlaylistDeckGenerator,
+    PlaylistDeckTrack,
+)
+from backend.features.session.application.ports.playlist_metadata_generator import (
     PlaylistMetadata,
     PlaylistMetadataGenerator,
     PlaylistMetadataTrack,
 )
-from .session_runner import (
-    SessionRunnerCancelled,
+from backend.features.session.application.ports.session_runner import (
     SessionRunner,
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
+    SessionRunnerCancelled,
     SessionRunnerContextCompacted,
     SessionRunnerEvent,
     SessionRunnerPlaylistTrackReplacement,
@@ -25,8 +33,13 @@ from .session_runner import (
     SessionRunnerToolCallSequenceStarted,
     SessionRunnerToolCallStarted,
 )
-from .session_summary_query import SessionSummary, SessionSummaryQuery
-from .title_generator import SessionTitleGenerator
+from backend.features.session.application.ports.session_summary_query import (
+    SessionSummary,
+    SessionSummaryQuery,
+)
+from backend.features.session.application.ports.title_generator import (
+    SessionTitleGenerator,
+)
 
 __all__ = [
     "ActiveSessionRunStore",

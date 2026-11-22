@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 import httpx
 from pydantic import BaseModel, Field, ValidationError
 
-from backend.features.oauth_connections.application.ports import SpotifyOAuthProvider
+from backend.features.oauth_connections.application import SpotifyOAuthProvider
 from backend.features.oauth_connections.application.schemas import (
     SpotifyTokens,
     SpotifyUserProfile,

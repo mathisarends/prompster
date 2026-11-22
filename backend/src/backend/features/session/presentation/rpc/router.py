@@ -1,10 +1,11 @@
 from uuid import UUID
 
-from backend.presentation.authentication import AuthenticatedUserId
-from backend.features.session.presentation.rpc.channel import session_channel
-from backend.features.session.presentation.rpc.context import SessionRpcContext
 from fastapi_canon.integrations.websockets import CanonWebSocketRouter
 from fastapi_canon.integrations.websockets.adapters.dishka import Dishka
+
+from backend.features.session.presentation.rpc.channel import session_channel
+from backend.features.session.presentation.rpc.context import SessionRpcContext
+from backend.presentation.authentication import AuthenticatedUserId
 
 
 async def session_rpc_context(

@@ -3,7 +3,6 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from backend.shared.authentication import SessionInvalidException
 from backend.features.user.application.user_service import UserService
 from backend.features.user.domain import (
     AuthIdentity,
@@ -12,6 +11,7 @@ from backend.features.user.domain import (
     User,
     UserRepository,
 )
+from backend.shared.authentication import SessionInvalidException
 
 
 class _UserRepositoryStub(UserRepository):

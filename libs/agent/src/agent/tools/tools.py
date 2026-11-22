@@ -12,10 +12,6 @@ from agent.deck import (
 from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
 from agent.tools.handler import DeckCritic, Spotify
-from agent.tools.result_previews import (
-    playlist_preview_items,
-    track_preview_items,
-)
 from agent.tools.params import (
     AddDraftDeckTracksParams,
     AskOnboardingQuestionParams,
@@ -24,6 +20,10 @@ from agent.tools.params import (
     ReplaceDraftDeckTracksParams,
     ReviewDeckParams,
     SearchParams,
+)
+from agent.tools.result_previews import (
+    playlist_preview_items,
+    track_preview_items,
 )
 from agent.tools.views import ActionResult, ActionType, InputRequest, Tool
 from agent.views import Phase

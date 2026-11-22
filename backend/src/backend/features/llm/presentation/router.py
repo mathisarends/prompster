@@ -1,3 +1,6 @@
+from fastapi import status
+from fastapi_canon import APIRouter, Inject
+
 from backend.features.llm.domain import LLMRegistry
 from backend.features.llm.presentation.schemas import (
     LLMCapabilitiesResponse,
@@ -5,8 +8,6 @@ from backend.features.llm.presentation.schemas import (
     LLMOptionResponse,
     LLMOptionsResponse,
 )
-from fastapi import status
-from fastapi_canon import APIRouter, Inject
 
 router = APIRouter(
     prefix="/llm-options",

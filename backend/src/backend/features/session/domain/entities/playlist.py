@@ -4,7 +4,6 @@ from uuid import UUID, uuid4
 
 from backend.shared.ddd import Entity
 
-
 _MIN_TRACK_YEAR = 1900
 _MAX_TRACK_YEAR = 2100
 

@@ -1,10 +1,9 @@
 from uuid import UUID
 
 from sqlalchemy import and_, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Row
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.shared.oauth_provider import OAuthProvider
 from backend.features.user.domain import (
     AuthIdentity,
     AuthProvider,
@@ -12,13 +11,14 @@ from backend.features.user.domain import (
     User,
     UserRepository,
 )
+from backend.platform.database import Repository
 from backend.platform.database.orm import (
     AuthIdentityModel,
     OAuthConnectionModel,
     SessionModel,
     UserModel,
 )
-from backend.platform.database.repository import Repository
+from backend.shared.oauth_provider import OAuthProvider
 
 
 def _select_user_with_spotify_connection():

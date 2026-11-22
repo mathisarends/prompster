@@ -1,6 +1,5 @@
 from typing import Final
 
-from backend.features.user.infrastructure.repository import SqlUserRepository
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,13 +13,11 @@ from backend.features.auth.application.ports import (
     GoogleOAuthProvider,
     SpotifyLoginProvider,
 )
-from backend.shared.authentication import TokenIssuer
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.infrastructure.google_auth_settings import GoogleAuthSettings
 from backend.features.auth.infrastructure.google_oauth_client import GoogleOAuthClient
 from backend.features.auth.infrastructure.jwt_token_issuer import JwtTokenIssuer
 from backend.features.auth.infrastructure.oauth_state_settings import OAuthStateSettings
-from backend.presentation.authentication import AuthCookieSettings
 from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.oauth_state_cookies import (
     GoogleOAuthStateCookies,
@@ -30,6 +27,9 @@ from backend.features.oauth_connections.infrastructure.spotify_auth_settings imp
     SpotifyAuthSettings,
 )
 from backend.features.user.domain import UserRepository
+from backend.features.user.infrastructure.repository import SqlUserRepository
+from backend.presentation.authentication import AuthCookieSettings
+from backend.shared.authentication import TokenIssuer
 
 _SECONDS_PER_MINUTE: Final = 60
 _SECONDS_PER_DAY: Final = 60 * 60 * 24

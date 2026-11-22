@@ -4,6 +4,7 @@ from uuid import UUID
 
 import jwt
 
+from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.shared.authentication import (
     AuthSession,
     SessionExpiredException,
@@ -12,7 +13,6 @@ from backend.shared.authentication import (
     TokenPayload,
     TokenType,
 )
-from backend.features.auth.infrastructure.auth_settings import AuthSettings
 
 
 class _JwtPayload(TypedDict):

@@ -2,7 +2,7 @@ import logging
 
 from spotifyify import RetryEvent, Spotifyify
 
-from backend.features.spotify.application.ports import (
+from backend.features.spotify.application import (
     SpotifyPlaylistCreator as SpotifyPlaylistCreatorPort,
 )
 from backend.features.spotify.application.retry_reporting import report_retry

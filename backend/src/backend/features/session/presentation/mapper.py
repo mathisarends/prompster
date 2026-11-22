@@ -5,7 +5,7 @@ from backend.features.session.application import (
     SessionImageAttachmentReference,
     SessionMessageAttachment,
 )
-from backend.features.session.application.ports.session_summary_query import (
+from backend.features.session.application.ports import (
     SessionSummary,
 )
 from backend.features.session.domain import (

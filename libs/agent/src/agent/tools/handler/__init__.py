@@ -1,11 +1,11 @@
-from .critic import (
+from agent.tools.handler.critic import (
     DeckCritic,
     DeckCritique,
     DeckCritiqueSuggestion,
     DeckReviewMetrics,
     DeckReviewResult,
 )
-from .spotify import Spotify
+from agent.tools.handler.spotify import Spotify
 
 __all__ = [
     "DeckCritic",

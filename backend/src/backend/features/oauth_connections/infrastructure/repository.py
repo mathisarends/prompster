@@ -3,16 +3,16 @@ from uuid import UUID
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.features.oauth_connections.infrastructure.oauth_token_cipher import (
-    OAuthTokenCipher,
-)
 from backend.features.oauth_connections.domain import (
     OAuthConnection,
     OAuthConnectionRepository,
 )
-from backend.shared.oauth_provider import OAuthProvider
+from backend.features.oauth_connections.infrastructure.oauth_token_cipher import (
+    OAuthTokenCipher,
+)
+from backend.platform.database import Repository
 from backend.platform.database.orm import OAuthConnectionModel
-from backend.platform.database.repository import Repository
+from backend.shared.oauth_provider import OAuthProvider
 
 
 class SqlOAuthConnectionRepository(

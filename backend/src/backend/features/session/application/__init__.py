@@ -1,8 +1,8 @@
-from .conversation_service import (
+from backend.features.session.application.conversation_service import (
     SessionConversationService,
     SessionMessageAttachment,
 )
-from .events import (
+from backend.features.session.application.events import (
     SessionAssistantMessageCancelled,
     SessionAssistantMessageChunk,
     SessionAssistantMessageCompleted,
@@ -23,17 +23,21 @@ from .events import (
     SessionToolCallSequenceAdded,
     SessionToolCallSequenceCompleted,
 )
-from .image_attachment_service import (
+from backend.features.session.application.image_attachment_service import (
     ImageAttachmentService,
     InvalidImageAttachmentError,
     SessionImageAttachmentReference,
     SessionImageAttachmentUpload,
     StashedImageAttachment,
 )
-from .session_exporter import SessionPlaylistExporter
-from .session_image_url_resolver import SessionImageUrlResolver
-from .session_service import SessionService
-from .spotify_playlist_exporter import (
+from backend.features.session.application.session_exporter import (
+    SessionPlaylistExporter,
+)
+from backend.features.session.application.session_image_url_resolver import (
+    SessionImageUrlResolver,
+)
+from backend.features.session.application.session_service import SessionService
+from backend.features.session.application.spotify_playlist_exporter import (
     ExportedSpotifyPlaylist,
     SessionSpotifyPlaylistExporter,
 )

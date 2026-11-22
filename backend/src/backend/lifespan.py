@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-
 logger = logging.getLogger(__name__)
 
 

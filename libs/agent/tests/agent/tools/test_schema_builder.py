@@ -1,10 +1,9 @@
 from enum import Enum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
-
 from agent.tools.di import Inject
 from agent.tools.schema_builder import ToolSchemaBuilder
+from pydantic import BaseModel, Field
 
 
 class _Service:

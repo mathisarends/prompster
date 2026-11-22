@@ -4,6 +4,7 @@ from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
+
 from backend.features.session.application import (
     SessionAssistantMessageChunk,
     SessionConversationService,

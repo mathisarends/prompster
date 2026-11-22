@@ -1,8 +1,9 @@
 import logging
 
 import pytest
-from backend.env import EnvSettings, LoggingLevelSettings
 from pydantic import ValidationError
+
+from backend.env import EnvSettings, LoggingLevelSettings
 
 
 class TestEnvSettings:

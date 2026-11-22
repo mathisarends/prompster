@@ -1,9 +1,8 @@
 import pytest
-from pydantic import BaseModel
-
 from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
 from agent.tools.views import ActionResult, Tool
+from pydantic import BaseModel
 
 
 class _Service:

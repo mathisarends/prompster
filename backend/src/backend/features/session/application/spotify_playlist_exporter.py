@@ -6,7 +6,6 @@ from backend.features.oauth_connections.application import (
     SpotifyTokenRevokedException,
     SpotifyTokenService,
 )
-from backend.features.spotify.application.ports import SpotifyPlaylistCreator
 from backend.features.session.application.ports import (
     PlaylistMetadataGenerator,
     PlaylistMetadataTrack,
@@ -19,6 +18,7 @@ from backend.features.session.domain import (
     SessionPlaylistMissingSpotifyTracksError,
     SessionRepository,
 )
+from backend.features.spotify.application import SpotifyPlaylistCreator
 from backend.features.user.domain import UserRepository
 
 

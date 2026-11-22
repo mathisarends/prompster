@@ -5,6 +5,8 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from spotifyify import RetryEvent
+
 from backend.features.session.application import SessionSpotifyPlaylistExporter
 from backend.features.session.application.spotify_playlist_exporter import (
     ExportedSpotifyPlaylist,
@@ -16,7 +18,6 @@ from backend.features.session.presentation.rpc.spotify_export import (
     spotify_export_events,
 )
 from backend.features.spotify.application.retry_reporting import report_retry
-from spotifyify import RetryEvent
 
 
 def make_retry() -> RetryEvent:

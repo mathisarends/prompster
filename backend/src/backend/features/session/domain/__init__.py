@@ -1,31 +1,4 @@
-from .exceptions import (
-    ArtistReferenceNotFoundError,
-    InvalidSessionPhaseTransitionError,
-    NoCurrentAssistantMessageError,
-    NoPendingToolCallSequenceError,
-    PendingToolCallsError,
-    PlaylistTrackLimitExceededError,
-    PlaylistTrackNotFoundError,
-    PlaylistReferenceNotFoundError,
-    SessionAccessDeniedError,
-    SessionExportRequiresSpotifyConnectionError,
-    SessionPlaylistEmptyError,
-    SessionPlaylistMissingSpotifyTracksError,
-    SessionNotFoundError,
-    ToolCallAlreadyResolvedError,
-    ToolCallNotFoundError,
-    UserCurationEventAlreadyConsumedError,
-    UserCurationEventMissingTrackYearError,
-    UserCurationEventNotFoundError,
-)
-from .repository import SessionRepository
-from .session import (
-    DECIDE_FOR_ME_OPTION,
-    MAX_PLAYLIST_TRACKS,
-    Session,
-)
-from .views import Phase
-from .entities import (
+from backend.features.session.domain.entities import (
     ArtistReference,
     AssistantMessage,
     CompletedCall,
@@ -44,14 +17,41 @@ from .entities import (
     ToolCallSequence,
     ToolFunction,
     ToolResultItem,
+    UserCurationEvent,
+    UserCurationEventType,
     UserMessage,
     UserMessageAttachment,
     UserMessageAttachmentKind,
-    UserCurationEvent,
-    UserCurationEventType,
     is_pending,
     is_resolved,
 )
+from backend.features.session.domain.exceptions import (
+    ArtistReferenceNotFoundError,
+    InvalidSessionPhaseTransitionError,
+    NoCurrentAssistantMessageError,
+    NoPendingToolCallSequenceError,
+    PendingToolCallsError,
+    PlaylistReferenceNotFoundError,
+    PlaylistTrackLimitExceededError,
+    PlaylistTrackNotFoundError,
+    SessionAccessDeniedError,
+    SessionExportRequiresSpotifyConnectionError,
+    SessionNotFoundError,
+    SessionPlaylistEmptyError,
+    SessionPlaylistMissingSpotifyTracksError,
+    ToolCallAlreadyResolvedError,
+    ToolCallNotFoundError,
+    UserCurationEventAlreadyConsumedError,
+    UserCurationEventMissingTrackYearError,
+    UserCurationEventNotFoundError,
+)
+from backend.features.session.domain.repository import SessionRepository
+from backend.features.session.domain.session import (
+    DECIDE_FOR_ME_OPTION,
+    MAX_PLAYLIST_TRACKS,
+    Session,
+)
+from backend.features.session.domain.views import Phase
 
 __all__ = [
     "ArtistReference",

@@ -5,8 +5,11 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from backend.features.session.application.conversation_service import (
+    SessionConversationService,
+    SessionImageAttachmentReference,
+)
 from backend.features.session.application.events import (
-    SessionAssistantMessageChunk,
     SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
@@ -18,9 +21,16 @@ from backend.features.session.application.events import (
     SessionSnapshot,
     SessionSuspendedForInput,
     SessionTitleGenerated,
-    SessionToolCallSequenceAdded,
     SessionToolCallResolved,
-    SuspensionKind,
+    SessionToolCallSequenceAdded,
+)
+from backend.features.session.application.image_attachment_service import (
+    ImageAttachmentService,
+    SessionImageAttachmentUpload,
+)
+from backend.features.session.application.ports.message_attachment_store import (
+    MessageAttachmentStore,
+    StoredAttachment,
 )
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
@@ -42,31 +52,19 @@ from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
     SessionSummaryQuery,
 )
-from backend.features.session.application.ports.message_attachment_store import (
-    MessageAttachmentStore,
-    StoredAttachment,
-)
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
-)
-from backend.features.session.application.conversation_service import (
-    SessionConversationService,
-    SessionImageAttachmentReference,
-)
-from backend.features.session.application.image_attachment_service import (
-    ImageAttachmentService,
-    SessionImageAttachmentUpload,
-)
-from backend.features.session.application.session_service import (
-    SessionService,
 )
 from backend.features.session.application.session_image_url_resolver import (
     SessionImageUrlResolver,
 )
+from backend.features.session.application.session_service import (
+    SessionService,
+)
 from backend.features.session.domain import (
+    DECIDE_FOR_ME_OPTION,
     AssistantMessage,
     CompletedCall,
-    DECIDE_FOR_ME_OPTION,
     ImageAttachment,
     InvalidSessionPhaseTransitionError,
     PendingCall,

@@ -1,7 +1,7 @@
 from fastapi_canon import Feature
 
-from .infrastructure.di import UserProvider
-from .presentation import user_router
+from backend.features.user.infrastructure.di import UserProvider
+from backend.features.user.presentation import user_router
 
 feature = Feature(
     name="user",

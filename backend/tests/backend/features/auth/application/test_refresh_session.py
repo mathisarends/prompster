@@ -6,18 +6,18 @@ import pytest
 from backend.features.auth.application.refresh_session import (
     SessionRefresher,
 )
+from backend.features.user.domain import (
+    AuthIdentity,
+    AuthProvider,
+    User,
+    UserRepository,
+)
 from backend.shared.authentication import (
     AuthSession,
     SessionInvalidException,
     TokenIssuer,
     TokenPayload,
     TokenType,
-)
-from backend.features.user.domain import (
-    AuthIdentity,
-    AuthProvider,
-    User,
-    UserRepository,
 )
 
 

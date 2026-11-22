@@ -1,3 +1,3 @@
-from .di import LLMFeatureProvider
+from backend.features.llm.infrastructure.di import LLMFeatureProvider
 
 __all__ = ["LLMFeatureProvider"]

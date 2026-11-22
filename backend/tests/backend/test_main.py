@@ -1,5 +1,5 @@
-from backend.main import app
 from backend.features.session.presentation.rpc import contract
+from backend.main import app
 
 
 def test_compiles_canonical_success_response_contracts() -> None:

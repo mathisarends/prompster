@@ -3,18 +3,18 @@ from uuid import UUID
 
 from backend.features.auth.application.google_oauth_flow import GoogleOAuthFlow
 from backend.features.auth.application.ports import GoogleOAuthProvider
-from backend.shared.authentication import (
-    AuthSession,
-    TokenIssuer,
-    TokenPayload,
-    TokenType,
-)
 from backend.features.auth.domain import GoogleIdentity
 from backend.features.user.domain import (
     AuthIdentity,
     AuthProvider,
     User,
     UserRepository,
+)
+from backend.shared.authentication import (
+    AuthSession,
+    TokenIssuer,
+    TokenPayload,
+    TokenType,
 )
 
 

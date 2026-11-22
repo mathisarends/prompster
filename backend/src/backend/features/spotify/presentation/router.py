@@ -1,9 +1,8 @@
 from typing import Annotated
 
-from backend.presentation.authentication import (
-    AuthenticatedUserId,
-    AUTHENTICATION_REQUIRED_ERROR,
-)
+from fastapi import Query, status
+from fastapi_canon import APIRouter, Inject
+
 from backend.features.spotify.application import SpotifySearch
 from backend.features.spotify.domain import SpotifySearchType
 from backend.features.spotify.presentation.mapper import (
@@ -12,8 +11,10 @@ from backend.features.spotify.presentation.mapper import (
 from backend.features.spotify.presentation.schemas import (
     SpotifyUnifiedSearchResponse,
 )
-from fastapi import Query, status
-from fastapi_canon import APIRouter, Inject
+from backend.presentation.authentication import (
+    AUTHENTICATION_REQUIRED_ERROR,
+    AuthenticatedUserId,
+)
 
 spotify_router = APIRouter(
     prefix="/spotify",

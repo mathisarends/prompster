@@ -1,5 +1,8 @@
+from fastapi import status
+from fastapi_canon import Error
+
 from backend.features.session.application import InvalidImageAttachmentError
-from backend.features.session.domain.exceptions import (
+from backend.features.session.domain import (
     ArtistReferenceNotFoundError,
     InvalidSessionPhaseTransitionError,
     NoCurrentAssistantMessageError,
@@ -24,8 +27,6 @@ from backend.features.spotify.domain import (
     SpotifyTrackNotFoundError,
     SpotifyTrackYearMissingError,
 )
-from fastapi import status
-from fastapi_canon import Error
 
 SESSION_NOT_FOUND_ERROR = Error(
     SessionNotFoundError,

@@ -1,7 +1,7 @@
-from .auth_identity import AuthIdentity, AuthProvider
-from .repository import UserRepository
-from .spotify_account import SpotifyAccount
-from .user import User
+from backend.features.user.domain.auth_identity import AuthIdentity, AuthProvider
+from backend.features.user.domain.repository import UserRepository
+from backend.features.user.domain.spotify_account import SpotifyAccount
+from backend.features.user.domain.user import User
 
 __all__ = [
     "AuthIdentity",

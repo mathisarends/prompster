@@ -13,6 +13,12 @@ user's text for that turn — mirroring the backend domain where
 
 from datetime import datetime, timezone
 
+from agent.deck import DeckDraft, DeckDraftTrack
+from agent.messages import MessageManager, render_user_message_content
+from agent.messages.rendering import (
+    _render_user_events_block as render_user_events_block,
+)
+from agent.views import Phase, UserCurationEventType, UserEvent
 from callm import (
     AssistantMessage,
     SystemMessage,
@@ -20,13 +26,6 @@ from callm import (
     ToolResultMessage,
     UserMessage,
 )
-
-from agent.messages import MessageManager, render_user_message_content
-from agent.messages.rendering import (
-    _render_user_events_block as render_user_events_block,
-)
-from agent.views import Phase, UserCurationEventType, UserEvent
-from agent.deck import DeckDraft, DeckDraftTrack
 
 
 def _event(

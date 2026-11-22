@@ -1,9 +1,9 @@
-from .exceptions import (
+from backend.features.spotify.domain.exceptions import (
     InvalidSpotifyTrackUriError,
     SpotifyTrackNotFoundError,
     SpotifyTrackYearMissingError,
 )
-from .models import (
+from backend.features.spotify.domain.models import (
     DEFAULT_SPOTIFY_SEARCH_TYPES,
     SpotifyArtist,
     SpotifyPlaylist,

@@ -3,7 +3,6 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from agent.deck import DeckDraft, DeckDraftUpdate
-
 from agent.tools.views import ActionResultItem, ActionType, OnboardingSelectionMode
 
 

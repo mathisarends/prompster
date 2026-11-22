@@ -1,4 +1,4 @@
-from .model_registry import (
+from backend.features.llm.domain.model_registry import (
     LLMConfig,
     LLMModelInfo,
     LLMProvider,

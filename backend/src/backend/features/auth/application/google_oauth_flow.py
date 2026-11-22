@@ -1,18 +1,18 @@
 import secrets
 
-from backend.features.auth.domain import InvalidCredentialsException
-from backend.shared.authentication import AuthSession, TokenIssuer
 from backend.features.auth.application.ports import GoogleOAuthProvider
 from backend.features.auth.application.schemas import (
     GoogleAuthorizationRequest,
     GoogleCallbackResult,
 )
+from backend.features.auth.domain import InvalidCredentialsException
 from backend.features.user.domain import (
     AuthIdentity,
     AuthProvider,
     User,
     UserRepository,
 )
+from backend.shared.authentication import AuthSession, TokenIssuer
 
 
 class GoogleOAuthFlow:

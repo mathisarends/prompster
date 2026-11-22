@@ -4,17 +4,15 @@ from contextlib import aclosing
 from dataclasses import dataclass
 from uuid import UUID, uuid4
 
-from agent import Agent, Spotify
-from agent.deck import (
-    DeckDraft,
-    DeckDraftTrack,
-    DeckStore,
-)
+from agent import Agent, DeckDraft, DeckDraftTrack, DeckStore, Spotify
 from agent import Phase as AgentPhase
+from callm import ChatModel
+from spotifyify import Spotifyify
+
 from backend.features.llm.application import ChatModels
 from backend.features.llm.domain import LLMRegistry
-from backend.features.session.application.ports import ActiveSessionRunStore
-from backend.features.session.application.ports.session_runner import (
+from backend.features.session.application.ports import (
+    ActiveSessionRunStore,
     SessionRunner,
     SessionRunnerCancelled,
     SessionRunnerEvent,
@@ -28,8 +26,6 @@ from backend.features.session.infrastructure.agent_event_mapper import (
     AgentSessionEventMapper,
 )
 from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
-from callm import ChatModel
-from spotifyify import Spotifyify
 
 
 @dataclass

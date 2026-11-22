@@ -1,8 +1,9 @@
 import asyncio
 from urllib.parse import parse_qs, urlparse
 
-from backend.platform.storage.s3 import S3ObjectStorage
 from obstore.store import MemoryStore
+
+from backend.platform.storage.s3 import S3ObjectStorage
 
 
 def test_object_operations() -> None:

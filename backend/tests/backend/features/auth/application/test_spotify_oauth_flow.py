@@ -2,19 +2,19 @@ import asyncio
 from uuid import UUID
 
 from backend.features.auth.application.ports import SpotifyLogin, SpotifyLoginProvider
-from backend.shared.authentication import (
-    AuthSession,
-    TokenIssuer,
-    TokenPayload,
-    TokenType,
-)
-from backend.features.auth.domain import SpotifyIdentity
 from backend.features.auth.application.spotify_oauth_flow import SpotifyOAuthFlow
+from backend.features.auth.domain import SpotifyIdentity
 from backend.features.user.domain import (
     AuthIdentity,
     AuthProvider,
     User,
     UserRepository,
+)
+from backend.shared.authentication import (
+    AuthSession,
+    TokenIssuer,
+    TokenPayload,
+    TokenType,
 )
 
 

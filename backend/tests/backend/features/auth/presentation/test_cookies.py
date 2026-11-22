@@ -1,10 +1,11 @@
 import pytest
+from fastapi import Request, Response
+
 from backend.env import EnvSettings
-from backend.shared.authentication import AuthSession
-from backend.presentation.authentication import AuthCookieSettings
 from backend.features.auth.presentation.cookies import AuthCookies
 from backend.features.auth.presentation.oauth_state_cookies import OAuthStateCookies
-from fastapi import Request, Response
+from backend.presentation.authentication import AuthCookieSettings
+from backend.shared.authentication import AuthSession
 
 _COOKIE_SETTINGS = AuthCookieSettings(
     access_token_name="access_token",

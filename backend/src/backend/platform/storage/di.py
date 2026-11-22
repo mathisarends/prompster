@@ -1,11 +1,11 @@
 from dishka import Provider, Scope, provide
 
 from backend.platform.storage import (
-    ObjectStorage,
     S3ObjectStorage,
     S3StorageCredentials,
     StorageSettings,
 )
+from backend.shared.storage import ObjectStorage
 
 
 class ObjectStorageProvider(Provider):

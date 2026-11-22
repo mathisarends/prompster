@@ -1,19 +1,18 @@
-from callm import ToolCall
 import pytest
-from pydantic import BaseModel
-
-from agent.tools import ToolContext, Tools
-from agent.tools.handler import Spotify
-from agent.tools.handler.spotify import SpotifyTrackLookupResult
-from agent.tools.params import SearchParams
-from agent.tools.views import ActionResult, ActionType
-from agent.views import Phase
 from agent.deck import (
     DeckDraft,
     DeckDraftTrack,
     DeckStore,
     TrackRef,
 )
+from agent.tools import ToolContext, Tools
+from agent.tools.handler import Spotify
+from agent.tools.handler.spotify import SpotifyTrackLookupResult
+from agent.tools.params import SearchParams
+from agent.tools.views import ActionResult, ActionType
+from agent.views import Phase
+from callm import ToolCall
+from pydantic import BaseModel
 
 
 class _EchoParams(BaseModel):

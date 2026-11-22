@@ -3,38 +3,37 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from backend.features.session.domain import (
+    DECIDE_FOR_ME_OPTION,
+    AssistantMessage,
+    CompletedCall,
+    FailedCall,
+    OnboardingQuestionSelectionMode,
+    PendingCall,
+    Phase,
+    Playlist,
+    Session,
+    ToolCallSequence,
+    ToolFunction,
+    UserCurationEvent,
+    UserCurationEventType,
+    UserMessage,
+    UserMessageAttachment,
+    UserMessageAttachmentKind,
+)
 from backend.features.session.domain.exceptions import (
     ArtistReferenceNotFoundError,
     InvalidSessionPhaseTransitionError,
     NoCurrentAssistantMessageError,
     NoPendingToolCallSequenceError,
     PendingToolCallsError,
+    PlaylistReferenceNotFoundError,
     PlaylistTrackLimitExceededError,
     PlaylistTrackNotFoundError,
-    PlaylistReferenceNotFoundError,
     SessionAccessDeniedError,
     UserCurationEventAlreadyConsumedError,
     UserCurationEventMissingTrackYearError,
     UserCurationEventNotFoundError,
-)
-from backend.features.session.domain import (
-    AssistantMessage,
-    CompletedCall,
-    DECIDE_FOR_ME_OPTION,
-    FailedCall,
-    OnboardingQuestionSelectionMode,
-    PendingCall,
-    Phase,
-    Playlist,
-    PlaylistTrack,
-    Session,
-    ToolCallSequence,
-    ToolFunction,
-    UserMessage,
-    UserMessageAttachment,
-    UserMessageAttachmentKind,
-    UserCurationEvent,
-    UserCurationEventType,
 )
 
 

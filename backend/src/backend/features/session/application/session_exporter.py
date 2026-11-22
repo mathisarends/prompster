@@ -11,7 +11,7 @@ from backend.features.session.domain import (
     SessionPlaylistEmptyError,
     SessionRepository,
 )
-from backend.platform.storage.port import ObjectStorage
+from backend.shared.storage import ObjectStorage
 
 
 class SessionPlaylistExporter:

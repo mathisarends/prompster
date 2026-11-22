@@ -3,9 +3,8 @@ from collections.abc import Callable, Iterable
 from enum import StrEnum
 from typing import Any, Self
 
-from pydantic import BaseModel, Field
-
 from callm import ModelTool
+from pydantic import BaseModel, Field
 
 from agent.tools.schema_builder import ToolSchemaBuilder
 from agent.tools.schemas import ToolSchema

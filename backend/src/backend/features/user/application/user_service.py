@@ -1,8 +1,8 @@
-from uuid import UUID
 from dataclasses import dataclass
+from uuid import UUID
 
-from backend.shared.authentication import SessionInvalidException
 from backend.features.user.domain import User, UserRepository
+from backend.shared.authentication import SessionInvalidException
 
 
 @dataclass(frozen=True)

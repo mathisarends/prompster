@@ -1,8 +1,9 @@
 import pytest
+from cryptography.fernet import Fernet
+
 from backend.features.oauth_connections.infrastructure.fernet_token_cypher import (
     FernetOAuthTokenCipher,
 )
-from cryptography.fernet import Fernet
 
 
 class TestFernetOAuthTokenCipher:

@@ -1,7 +1,7 @@
 from uuid import UUID
 
-from backend.features.session.application.ports import MessageAttachmentStore
-from backend.features.session.application.ports.session_summary_query import (
+from backend.features.session.application.ports import (
+    MessageAttachmentStore,
     SessionSummary,
     SessionSummaryQuery,
 )

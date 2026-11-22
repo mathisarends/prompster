@@ -1,5 +1,6 @@
-from backend.features.session.presentation.schemas import SendMessageRequest
 from fastapi_canon.integrations.websockets import RpcModel
+
+from backend.features.session.presentation.schemas import SendMessageRequest
 
 
 class SendMessageParams(SendMessageRequest, RpcModel):

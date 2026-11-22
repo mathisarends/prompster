@@ -10,12 +10,13 @@ from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
     FailedCall,
+    ImageAttachment,
     OnboardingQuestion,
     PendingCall,
+    Phase,
     Playlist,
     PlaylistReference,
     PlaylistTrack,
-    Phase,
     Session,
     SessionEntry,
     SessionNotFoundError,
@@ -30,25 +31,23 @@ from backend.features.session.domain import (
     UserMessage,
     UserMessageAttachment,
     UserMessageAttachmentKind,
-    ImageAttachment,
 )
+from backend.platform.database import Repository
 from backend.platform.database.orm import (
     PlaylistTrackModel,
     SessionArtistReferenceModel,
     SessionAssistantMessageModel,
     SessionModel,
-    SessionPlaylistReferenceModel,
-    SessionPlaylistModel,
     SessionOnboardingQuestionModel,
-    SessionToolCallSequenceModel,
+    SessionPlaylistModel,
+    SessionPlaylistReferenceModel,
     SessionToolCallModel,
+    SessionToolCallSequenceModel,
     SessionUserCurationEventModel,
-    SessionUserMessageModel,
     SessionUserMessageAttachmentModel,
     SessionUserMessageImageAttachmentModel,
+    SessionUserMessageModel,
 )
-from backend.platform.database.repository import Repository
-
 
 _PENDING_STATE = "pending"
 _COMPLETED_STATE = "completed"

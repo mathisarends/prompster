@@ -1,5 +1,5 @@
-from .guardrails import PostRunGuardrails
-from .views import Guardrail
+from agent.guardrails.guardrails import PostRunGuardrails
+from agent.guardrails.views import Guardrail
 
 __all__ = [
     "Guardrail",

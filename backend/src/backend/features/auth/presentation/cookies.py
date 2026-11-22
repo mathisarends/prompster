@@ -1,8 +1,8 @@
 from fastapi import Response
 
 from backend.env import EnvSettings
-from backend.shared.authentication import AuthSession
 from backend.presentation.authentication import AuthCookieSettings
+from backend.shared.authentication import AuthSession
 
 
 class AuthCookies:

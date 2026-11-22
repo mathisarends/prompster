@@ -1,5 +1,5 @@
-from .store import DeckStore
-from .views import (
+from agent.deck.store import DeckStore
+from agent.deck.views import (
     DeckDraft,
     DeckDraftCreated,
     DeckDraftOperationStatus,

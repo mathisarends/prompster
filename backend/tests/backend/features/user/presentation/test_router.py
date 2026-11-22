@@ -3,8 +3,7 @@ from datetime import UTC, datetime
 from typing import cast
 from uuid import UUID, uuid4
 
-from backend.features.user.application import UserDeleteInformation
-from backend.features.user.application import UserService
+from backend.features.user.application import UserDeleteInformation, UserService
 from backend.features.user.domain import SpotifyAccount, User
 from backend.features.user.presentation.router import (
     delete_me,

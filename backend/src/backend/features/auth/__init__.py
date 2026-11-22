@@ -1,7 +1,7 @@
 from fastapi_canon import Feature
 
-from .infrastructure.di import AuthProvider
-from .presentation import AUTH_ERRORS, auth_router
+from backend.features.auth.infrastructure.di import AuthProvider
+from backend.features.auth.presentation import AUTH_ERRORS, auth_router
 
 feature = Feature(
     name="auth",

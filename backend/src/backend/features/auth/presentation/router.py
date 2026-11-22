@@ -1,11 +1,14 @@
+from fastapi import Query, Request, Response, status
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi_canon import APIRouter, CanonResponse, Inject
+
+from backend.env import EnvSettings
 from backend.features.auth.application import (
     GoogleOAuthFlow,
     SessionRefresher,
     SpotifyOAuthFlow,
 )
-from backend.env import EnvSettings
 from backend.features.auth.presentation.cookies import AuthCookies
-from backend.presentation.authentication import RefreshAuthenticatedUserId
 from backend.features.auth.presentation.exceptions import (
     SESSION_EXPIRED_ERROR,
     SESSION_INVALID_ERROR,
@@ -15,9 +18,7 @@ from backend.features.auth.presentation.oauth_state_cookies import (
     GoogleOAuthStateCookies,
     SpotifyLoginOAuthStateCookies,
 )
-from fastapi import Query, Request, Response, status
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi_canon import APIRouter, CanonResponse, Inject
+from backend.presentation.authentication import RefreshAuthenticatedUserId
 
 auth_router = APIRouter(
     prefix="/auth",

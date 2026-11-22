@@ -1,3 +1,8 @@
+from callm import ChatModel
+from dishka import Provider, Scope, provide
+from spotifyify import Spotifyify
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from backend.features.llm.application import ChatModels
 from backend.features.llm.domain import LLMRegistry
 from backend.features.oauth_connections.application import SpotifyTokenService
@@ -14,12 +19,8 @@ from backend.features.session.application.ports import (
     MessageAttachmentStore,
     PlaylistDeckGenerator,
     PlaylistMetadataGenerator,
-)
-from backend.features.session.application.ports.session_runner import SessionRunner
-from backend.features.session.application.ports.session_summary_query import (
+    SessionRunner,
     SessionSummaryQuery,
-)
-from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
 from backend.features.session.domain import SessionRepository
@@ -50,13 +51,9 @@ from backend.features.session.infrastructure.session_summary_query import (
 from backend.features.session.infrastructure.title_generator import (
     LLMSessionTitleGenerator,
 )
-from backend.features.spotify.application.ports import SpotifyPlaylistCreator
+from backend.features.spotify.application import SpotifyPlaylistCreator
 from backend.features.user.domain import UserRepository
-from backend.platform.storage import ObjectStorage
-from dishka import Provider, Scope, provide
-from callm import ChatModel
-from spotifyify import Spotifyify
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from backend.shared.storage import ObjectStorage
 
 
 class SessionProvider(Provider):

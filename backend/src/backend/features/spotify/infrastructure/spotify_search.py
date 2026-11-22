@@ -2,7 +2,11 @@ import asyncio
 import logging
 from collections.abc import Awaitable
 
-from backend.features.spotify.application.ports import SpotifySearchGateway
+from spotifyify import Image, RetryEvent, Spotifyify, Track
+from spotifyify.exceptions import SpotifyAPIError
+from spotifyify.schemas import Artist, SimplifiedPlaylist
+
+from backend.features.spotify.application import SpotifySearchGateway
 from backend.features.spotify.domain import (
     DEFAULT_SPOTIFY_SEARCH_TYPES,
     SpotifyArtist,
@@ -14,9 +18,6 @@ from backend.features.spotify.domain import (
 from backend.features.spotify.infrastructure.spotify_search_cache import (
     SpotifySearchCache,
 )
-from spotifyify import Image, RetryEvent, Spotifyify, Track
-from spotifyify.exceptions import SpotifyAPIError
-from spotifyify.schemas import Artist, SimplifiedPlaylist
 
 logger = logging.getLogger(__name__)
 

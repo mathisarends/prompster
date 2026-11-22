@@ -2,6 +2,7 @@ import asyncio
 from uuid import UUID, uuid4
 
 import pytest
+
 from backend.features.session.application.ports import (
     PlaylistDeckGenerator,
     PlaylistDeckTrack,
@@ -15,8 +16,7 @@ from backend.features.session.domain import (
     SessionPlaylistEmptyError,
     SessionRepository,
 )
-from backend.platform.storage import ObjectStorage
-from backend.platform.storage.views import StorageFile, UploadResponse
+from backend.shared.storage import ObjectStorage, StorageFile, UploadResponse
 
 
 class _SessionRepositoryStub(SessionRepository):

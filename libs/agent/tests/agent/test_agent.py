@@ -2,6 +2,23 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
+import pytest
+from agent.agent import (
+    Agent,
+    AssistantMessageChunkEvent,
+    AssistantMessageEvent,
+    ContextCompactedEvent,
+    DeckUpdatedEvent,
+    QuestionAskedEvent,
+    RunCompletedEvent,
+    SuspendedForUserInputEvent,
+    ToolCallEvent,
+    ToolResultEvent,
+)
+from agent.deck import DeckDraft, DeckDraftTrack, DeckDraftTracksRemoved, DeckStore
+from agent.tools import ToolContext, Tools
+from agent.tools.views import ActionType
+from agent.views import Phase
 from callm import (
     ContextLengthExceededError,
     ModelResponse,
@@ -9,24 +26,6 @@ from callm import (
     ToolCall,
     Usage,
 )
-import pytest
-
-from agent.agent import (
-    Agent,
-    AssistantMessageChunkEvent,
-    AssistantMessageEvent,
-    ContextCompactedEvent,
-    QuestionAskedEvent,
-    ToolCallEvent,
-    ToolResultEvent,
-    SuspendedForUserInputEvent,
-    DeckUpdatedEvent,
-    RunCompletedEvent,
-)
-from agent.tools import ToolContext, Tools
-from agent.tools.views import ActionType
-from agent.views import Phase
-from agent.deck import DeckDraft, DeckDraftTrack, DeckDraftTracksRemoved, DeckStore
 
 
 @dataclass

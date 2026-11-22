@@ -1,6 +1,8 @@
 from collections.abc import AsyncIterator
 from contextlib import aclosing
 
+from fastapi_canon.integrations.websockets import Inject, RpcChannel
+
 from backend.features.session.application import (
     SessionConversationService,
     SessionSpotifyPlaylistExporter,
@@ -20,7 +22,6 @@ from backend.features.session.presentation.rpc.spotify_export import (
     spotify_export_events,
 )
 from backend.features.session.presentation.rpc.stream import session_events
-from fastapi_canon.integrations.websockets import Inject, RpcChannel
 
 session_channel = RpcChannel("session")
 

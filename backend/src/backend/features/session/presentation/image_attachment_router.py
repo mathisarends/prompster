@@ -1,9 +1,8 @@
 from typing import Annotated
 
-from backend.presentation.authentication import (
-    AuthenticatedUserId,
-    AUTHENTICATION_REQUIRED_ERROR,
-)
+from fastapi import File, UploadFile, status
+from fastapi_canon import APIRouter, Inject
+
 from backend.features.session.application import (
     ImageAttachmentService,
     SessionImageAttachmentUpload,
@@ -15,8 +14,10 @@ from backend.features.session.presentation.exceptions import (
 from backend.features.session.presentation.schemas import (
     UploadedImageAttachmentResponse,
 )
-from fastapi import File, UploadFile, status
-from fastapi_canon import APIRouter, Inject
+from backend.presentation.authentication import (
+    AUTHENTICATION_REQUIRED_ERROR,
+    AuthenticatedUserId,
+)
 
 image_attachment_router = APIRouter(
     prefix="/image-attachments",

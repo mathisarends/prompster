@@ -1,9 +1,12 @@
 import asyncio
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from io import BytesIO
 from typing import cast
-from datetime import UTC, datetime
 from uuid import UUID, uuid4
+
+from fastapi import UploadFile
+from starlette.datastructures import Headers
 
 from backend.features.session.application import (
     ImageAttachmentService,
@@ -51,8 +54,6 @@ from backend.features.session.presentation.schemas import (
     SubmitOnboardingAnswerRequest,
     UserCurationEventTypeResponse,
 )
-from fastapi import UploadFile
-from starlette.datastructures import Headers
 
 
 class _SessionServiceStub:

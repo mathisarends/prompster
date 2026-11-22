@@ -1,7 +1,12 @@
 from fastapi_canon import Feature
 
-from .infrastructure.di import OAuthConnectionsProvider
-from .presentation import OAUTH_CONNECTION_ERRORS, spotify_oauth_router
+from backend.features.oauth_connections.infrastructure.di import (
+    OAuthConnectionsProvider,
+)
+from backend.features.oauth_connections.presentation import (
+    OAUTH_CONNECTION_ERRORS,
+    spotify_oauth_router,
+)
 
 feature = Feature(
     name="oauth_connections",
