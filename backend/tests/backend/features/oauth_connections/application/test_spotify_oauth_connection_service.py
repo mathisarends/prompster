@@ -1,4 +1,5 @@
 import asyncio
+import secrets
 from uuid import UUID, uuid4
 
 import pytest
@@ -89,7 +90,7 @@ class TestSpotifyOAuthConnectionService:
     def test_start_binds_user_id_into_state(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr("secrets.token_urlsafe", lambda _: "nonce-1")
+        monkeypatch.setattr(secrets, "token_urlsafe", lambda _: "nonce-1")
         repository = _OAuthConnectionRepositoryStub()
         provider = _SpotifyOAuthProviderStub()
         service = SpotifyOAuthConnectionService(

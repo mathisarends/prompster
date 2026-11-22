@@ -106,11 +106,13 @@ def test_closing_subscription_closes_application_stream_immediately(operation) -
             else complete_onboarding(CompleteOnboardingParams(), context, service)
         )
         event = await anext(stream)
-        assert event.chunk == "Hallo"
         await stream.aclose()
-        assert closed
+        return event
 
-    asyncio.run(run())
+    event = asyncio.run(run())
+
+    assert event.chunk == "Hallo"
+    assert closed
 
 
 def test_closing_rpc_stream_closes_runner_and_awaits_title_task():
@@ -155,9 +157,12 @@ def test_closing_rpc_stream_closes_runner_and_awaits_title_task():
             SessionRpcContext(session_id=session.id, user_id=owner_id),
             service,
         )
-        assert (await anext(stream)).type == "message.assistant_started"
+        event = await anext(stream)
         await stream.aclose()
-        assert runner_closed
-        assert title_closed
+        return event
 
-    asyncio.run(run())
+    event = asyncio.run(run())
+
+    assert event.type == "message.assistant_started"
+    assert runner_closed
+    assert title_closed

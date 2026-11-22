@@ -152,7 +152,6 @@ class TestToolAbstraction:
     def test_tool_without_phase_metadata_is_included_in_all_phases(self) -> None:
         tool = Tool(name="demo", description="Demo", fn=_sync_returns_empty_result)
 
-        assert tool.included_in_phases == frozenset()
         assert tool.is_included_in(Phase.ONBOARDING) is True
         assert tool.is_included_in(Phase.BUILD) is True
 
@@ -164,6 +163,5 @@ class TestToolAbstraction:
             included_in_phases={Phase.BUILD},
         )
 
-        assert tool.included_in_phases == frozenset({Phase.BUILD})
         assert tool.is_included_in(Phase.ONBOARDING) is False
         assert tool.is_included_in(Phase.BUILD) is True

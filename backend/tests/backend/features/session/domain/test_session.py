@@ -830,7 +830,7 @@ class TestSessionDomainSession:
             session.resolve_tool_call("tc-1", "ok")
 
     def test_has_access_allows_owner(self, session: Session, owner_id: UUID) -> None:
-        session.has_access(owner_id)
+        assert session.has_access(owner_id) is None
 
     def test_has_access_raises_for_non_owner(self, session: Session) -> None:
         with pytest.raises(SessionAccessDeniedError, match="does not have access"):

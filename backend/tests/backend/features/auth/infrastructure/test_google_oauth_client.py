@@ -3,6 +3,7 @@ from types import TracebackType
 from typing import Self
 from urllib.parse import parse_qs, urlparse
 
+import httpx
 import pytest
 
 from backend.features.auth.infrastructure.google_auth_settings import (
@@ -123,7 +124,7 @@ class TestGoogleOAuthClient:
         )
         AsyncClientStub.post_data = None
         AsyncClientStub.get_headers = None
-        monkeypatch.setattr("httpx.AsyncClient", AsyncClientStub)
+        monkeypatch.setattr(httpx, "AsyncClient", AsyncClientStub)
         client = GoogleOAuthClient(self._settings())
 
         identity = asyncio.run(
@@ -160,7 +161,7 @@ class TestGoogleOAuthClient:
     ) -> None:
         AsyncClientStub.post_response = token_response
         AsyncClientStub.get_response = _ResponseStub(status_code=200, payload={})
-        monkeypatch.setattr("httpx.AsyncClient", AsyncClientStub)
+        monkeypatch.setattr(httpx, "AsyncClient", AsyncClientStub)
         client = GoogleOAuthClient(self._settings())
 
         with pytest.raises(ValueError, match=message):
@@ -189,7 +190,7 @@ class TestGoogleOAuthClient:
             payload={"access_token": "access-token"},
         )
         AsyncClientStub.get_response = profile_response
-        monkeypatch.setattr("httpx.AsyncClient", AsyncClientStub)
+        monkeypatch.setattr(httpx, "AsyncClient", AsyncClientStub)
         client = GoogleOAuthClient(self._settings())
 
         with pytest.raises(ValueError, match=message):

@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from fastapi import Request, Response
 
@@ -109,10 +111,7 @@ class TestOAuthStateCookies:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.setattr(
-            "backend.features.auth.presentation.oauth_state_cookies.time.time",
-            lambda: 1_000,
-        )
+        monkeypatch.setattr(time, "time", lambda: 1_000)
         cookies = OAuthStateCookies(
             cookie_name="oauth_state",
             ttl_seconds=120,
@@ -146,10 +145,7 @@ class TestOAuthStateCookies:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.setattr(
-            "backend.features.auth.presentation.oauth_state_cookies.time.time",
-            lambda: 1_000,
-        )
+        monkeypatch.setattr(time, "time", lambda: 1_000)
         cookies = self._cookies()
         signed_state = cookies._encode(state="state-1")
 
@@ -159,8 +155,5 @@ class TestOAuthStateCookies:
             cookies.read(request=self._request_with_cookie(f"{signed_state}x")) is None
         )
 
-        monkeypatch.setattr(
-            "backend.features.auth.presentation.oauth_state_cookies.time.time",
-            lambda: 1_121,
-        )
+        monkeypatch.setattr(time, "time", lambda: 1_121)
         assert cookies.read(request=self._request_with_cookie(signed_state)) is None

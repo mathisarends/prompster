@@ -124,8 +124,11 @@ def test_closing_export_stream_cancels_and_awaits_execution():
 
     async def run():
         stream = spotify_export_events(exporter, session_id=uuid4(), user_id=uuid4())
-        assert (await anext(stream)).type == "spotify_export.retry"
+        event = await anext(stream)
         await stream.aclose()
-        assert closed
+        return event
 
-    asyncio.run(run())
+    event = asyncio.run(run())
+
+    assert event.type == "spotify_export.retry"
+    assert closed

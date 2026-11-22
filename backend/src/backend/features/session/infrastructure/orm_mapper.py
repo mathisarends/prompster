@@ -817,6 +817,7 @@ class SessionOrmMapper:
             cover_url=orm_track.cover_url,
         )
 
+
 _PENDING_STATE = "pending"
 _COMPLETED_STATE = "completed"
 _FAILED_STATE = "failed"

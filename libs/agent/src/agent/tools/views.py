@@ -98,7 +98,7 @@ class Tool:
         self.description = description
         self.fn = fn
         self.action_type = action_type
-        self.included_in_phases = frozenset(
+        self._included_in_phases = frozenset(
             included_in_phases if included_in_phases is not None else ()
         )
         self.is_onboarding_question = is_onboarding_question
@@ -116,7 +116,7 @@ class Tool:
         return hash(self.name)
 
     def is_included_in(self, phase: Phase) -> bool:
-        return not self.included_in_phases or phase in self.included_in_phases
+        return not self._included_in_phases or phase in self._included_in_phases
 
     def render_status(self, args: dict[str, Any]) -> str | None:
         if self._status_label is None or self.param_model is None:

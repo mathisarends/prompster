@@ -113,4 +113,4 @@ def test_aclose_closes_every_created_client(
 
     asyncio.run(chat_models.aclose())
 
-    assert all(model.closed for model in created)
+    assert [model.closed for model in created] == [True, True]
