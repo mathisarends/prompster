@@ -58,6 +58,13 @@ class Spotify:
         self._client = client or Spotifyify(scopes=[])
         self._open = False
 
+    async def __aenter__(self) -> Self:
+        await self.open()
+        return self
+
+    async def __aexit__(self, *_) -> None:
+        await self.close()
+
     async def open(self) -> None:
         if self._open:
             return
@@ -69,13 +76,6 @@ class Spotify:
             return
         await self._client.close()
         self._open = False
-
-    async def __aenter__(self) -> Self:
-        await self.open()
-        return self
-
-    async def __aexit__(self, *_) -> None:
-        await self.close()
 
     async def search_tracks(self, params: SearchParams) -> SpotifyTrackLookupResult:
         await self.open()

@@ -13,9 +13,6 @@ from backend.features.session.domain import (
 )
 from backend.platform.storage.port import ObjectStorage
 
-_CARDS_PER_DECK_PAGE = 15
-_PDF_PAGES_PER_CARD_BATCH = 2
-
 
 class SessionPlaylistExporter:
     def __init__(
@@ -126,3 +123,7 @@ class SessionPlaylistExporter:
         fingerprint: str,
     ) -> str:
         return f"users/{user_id}/chat/{session_id}/exports/playlist-{fingerprint}.pdf"
+
+
+_CARDS_PER_DECK_PAGE = 15
+_PDF_PAGES_PER_CARD_BATCH = 2

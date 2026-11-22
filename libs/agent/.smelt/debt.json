@@ -39,23 +39,6 @@
       ]
     },
     {
-      "code": "LAY004",
-      "path": "libs/agent/src/agent/deck/store.py",
-      "message": "definitions in module.DeckStore#0 have 9 avoidable ordering inversion(s)",
-      "scope": "module.DeckStore#0",
-      "fingerprints": [
-        "3d3fe0705a363c8269d3c0e7521dc98a",
-        "478d80964989a2a8f839382fbdddd03b",
-        "5882a4c9dd3ca06350f40fd2c04810e8",
-        "6aa899321ad06f9b72a928f977186868",
-        "7a3fa1f2e56ff7e2b9be93253078b89a",
-        "88c4602cebdbef73f4aff1539c30064a",
-        "abd64c0043f3962cce5c2d5a1ba13881",
-        "d67010bf9e4826d7cff9789a49ec6da2",
-        "f38b85f2abcda038736b63d3b8bf117a"
-      ]
-    },
-    {
       "code": "TYP003",
       "path": "libs/agent/src/agent/deck/store.py",
       "message": "optional parameter 'existing_uris' uses truthiness for its default",
@@ -70,32 +53,6 @@
       "message": "Handler for Exception does not say why it catches every failure",
       "fingerprints": [
         "84abdef4c73d9f40ae93b4cf508496ba"
-      ]
-    },
-    {
-      "code": "LAY004",
-      "path": "libs/agent/src/agent/guardrails/views.py",
-      "message": "definitions in module.Guardrail#0 have 2 avoidable ordering inversion(s)",
-      "scope": "module.Guardrail#0",
-      "fingerprints": [
-        "248b949be3d57293497a2886b30b3340",
-        "34ebea47c3340030a774751411f14cfb"
-      ]
-    },
-    {
-      "code": "LAY004",
-      "path": "libs/agent/src/agent/messages/rendering.py",
-      "message": "definitions in module have 8 avoidable ordering inversion(s)",
-      "scope": "module",
-      "fingerprints": [
-        "0b1a940c80dfff1358dfbe131d1f9354",
-        "58dfe72da416a09ba4a186a75e1f29a7",
-        "6ce8d1272551d03788e91973dc879f51",
-        "6f3776a9d83537a152b601cebac5f842",
-        "caea5f226793e0e923f41d4bde864dde",
-        "d4246d598a7dc15f7dff59f363d261a9",
-        "e4532c14f4892cdc496226bd122fcb2d",
-        "e887916fe5b033af2da67894c97fae5c"
       ]
     },
     {
@@ -132,27 +89,6 @@
       "message": "production code accesses private module symbol agent.tools.di._InjectMarker",
       "fingerprints": [
         "1a00ceb89c0275a52415246704744eab"
-      ]
-    },
-    {
-      "code": "LAY004",
-      "path": "libs/agent/src/agent/tools/handler/critic.py",
-      "message": "definitions in module have 1 avoidable ordering inversion(s)",
-      "scope": "module",
-      "fingerprints": [
-        "f8be3d9851448039ae74ac1abc6e718e"
-      ]
-    },
-    {
-      "code": "LAY004",
-      "path": "libs/agent/src/agent/tools/handler/spotify.py",
-      "message": "definitions in module.Spotify#0 have 4 avoidable ordering inversion(s)",
-      "scope": "module.Spotify#0",
-      "fingerprints": [
-        "58075a7ffe6096c59ccb343c6bb3abab",
-        "b77aba8a624b4283671a18106b24a291",
-        "c0367b254c58cc5d8876aba36fa35055",
-        "e63e76951574608e4e875cfe099dcce5"
       ]
     },
     {
@@ -204,41 +140,11 @@
       ]
     },
     {
-      "code": "LAY004",
-      "path": "libs/agent/src/agent/tools/tools.py",
-      "message": "definitions in module.Tools#0 have 4 avoidable ordering inversion(s)",
-      "scope": "module.Tools#0",
-      "fingerprints": [
-        "6fbd5920591a821204a6dca923497c7b",
-        "91887a7a383d97026f0b6a298dd63b7e",
-        "affc71129bde1a1fea4ba8cdf4d5e88c",
-        "e848b1dea1a9c408eedea76fd5031dcd"
-      ]
-    },
-    {
       "code": "IDM006",
       "path": "libs/agent/src/agent/tools/views.py",
       "message": "Handler for Exception does not say why it catches every failure",
       "fingerprints": [
         "b7098f15b1d9c7f8eab19c9e079a8430"
-      ]
-    },
-    {
-      "code": "LAY004",
-      "path": "libs/agent/src/agent/tools/views.py",
-      "message": "definitions in module.Tool#0 have 10 avoidable ordering inversion(s)",
-      "scope": "module.Tool#0",
-      "fingerprints": [
-        "04f72bda9fa733640e90dded3914e735",
-        "1cc702c49c4e2ee6d19d60428b86bc37",
-        "1fd368abaaa286eb543de91163fd6192",
-        "254bd7bb5414722206534464e97fd1f7",
-        "46d5ce4de7ded3165a895c49fc95185e",
-        "85b7e6eb999a76aed2aee885a25d725c",
-        "8f7f86c32a5a02eaeed8c505aca09bfc",
-        "b1716db7db998ba93dfe228a9ad60307",
-        "ca131150dc174218f9a0f9bc7d6cd80a",
-        "d0005ed80ebcc112c0104f7631f8ce24"
       ]
     },
     {

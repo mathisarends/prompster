@@ -79,72 +79,6 @@ class DeckStore:
         )
         return self._add_tracks(self.resolve_track_refs(track_refs))
 
-    def _add_tracks(self, tracks: list[DeckDraftTrack]) -> DeckDraft:
-        logger.info(
-            "Adding tracks to deck",
-            extra={
-                "requested_tracks": len(tracks),
-                "has_draft": self._draft is not None,
-            },
-        )
-        if self._draft is None:
-            deduplicated_tracks = self._deduplicate_tracks(tracks)
-            capped_tracks = self._cap_to_limit(deduplicated_tracks, current_count=0)
-            draft = DeckDraft(name="Deck", tracks=capped_tracks)
-            logger.info(
-                "Created deck draft via add operation",
-                extra={
-                    "deck_id": str(draft.id),
-                    "requested_tracks": len(tracks),
-                    "added_tracks": len(capped_tracks),
-                    "skipped_duplicates": len(tracks) - len(deduplicated_tracks),
-                    "skipped_over_limit": len(deduplicated_tracks) - len(capped_tracks),
-                },
-            )
-            return self.save_draft(draft)
-
-        draft = self._draft
-        existing_uris = {track.spotify_uri for track in draft.tracks}
-        deduplicated_tracks = self._deduplicate_tracks(
-            tracks, existing_uris=existing_uris
-        )
-        skipped_duplicates = len(tracks) - len(deduplicated_tracks)
-        deduplicated_tracks = self._cap_to_limit(
-            deduplicated_tracks, current_count=len(draft.tracks)
-        )
-        if not deduplicated_tracks:
-            logger.info(
-                "No new tracks added to deck",
-                extra={
-                    "deck_id": str(draft.id),
-                    "requested_tracks": len(tracks),
-                    "skipped_duplicates": skipped_duplicates,
-                    "at_limit": self._max_tracks is not None
-                    and len(draft.tracks) >= self._max_tracks,
-                },
-            )
-            return draft
-
-        draft.tracks.extend(deduplicated_tracks)
-        self.cache_tracks(deduplicated_tracks)
-        self._pending_updates.append(
-            DeckDraftTracksAdded(
-                deck_draft=draft,
-                tracks=deduplicated_tracks,
-            )
-        )
-        logger.info(
-            "Added tracks to deck",
-            extra={
-                "deck_id": str(draft.id),
-                "requested_tracks": len(tracks),
-                "added_tracks": len(deduplicated_tracks),
-                "skipped_duplicates": skipped_duplicates,
-                "total_tracks": len(draft.tracks),
-            },
-        )
-        return draft
-
     def remove_tracks(self, track_ids: list[UUID]) -> DeckDraft:
         logger.info(
             "Removing tracks from deck", extra={"requested_track_ids": len(track_ids)}
@@ -328,6 +262,72 @@ class DeckStore:
         self._pending_updates.clear()
         logger.info("Drained deck updates", extra={"update_count": len(updates)})
         return updates
+
+    def _add_tracks(self, tracks: list[DeckDraftTrack]) -> DeckDraft:
+        logger.info(
+            "Adding tracks to deck",
+            extra={
+                "requested_tracks": len(tracks),
+                "has_draft": self._draft is not None,
+            },
+        )
+        if self._draft is None:
+            deduplicated_tracks = self._deduplicate_tracks(tracks)
+            capped_tracks = self._cap_to_limit(deduplicated_tracks, current_count=0)
+            draft = DeckDraft(name="Deck", tracks=capped_tracks)
+            logger.info(
+                "Created deck draft via add operation",
+                extra={
+                    "deck_id": str(draft.id),
+                    "requested_tracks": len(tracks),
+                    "added_tracks": len(capped_tracks),
+                    "skipped_duplicates": len(tracks) - len(deduplicated_tracks),
+                    "skipped_over_limit": len(deduplicated_tracks) - len(capped_tracks),
+                },
+            )
+            return self.save_draft(draft)
+
+        draft = self._draft
+        existing_uris = {track.spotify_uri for track in draft.tracks}
+        deduplicated_tracks = self._deduplicate_tracks(
+            tracks, existing_uris=existing_uris
+        )
+        skipped_duplicates = len(tracks) - len(deduplicated_tracks)
+        deduplicated_tracks = self._cap_to_limit(
+            deduplicated_tracks, current_count=len(draft.tracks)
+        )
+        if not deduplicated_tracks:
+            logger.info(
+                "No new tracks added to deck",
+                extra={
+                    "deck_id": str(draft.id),
+                    "requested_tracks": len(tracks),
+                    "skipped_duplicates": skipped_duplicates,
+                    "at_limit": self._max_tracks is not None
+                    and len(draft.tracks) >= self._max_tracks,
+                },
+            )
+            return draft
+
+        draft.tracks.extend(deduplicated_tracks)
+        self.cache_tracks(deduplicated_tracks)
+        self._pending_updates.append(
+            DeckDraftTracksAdded(
+                deck_draft=draft,
+                tracks=deduplicated_tracks,
+            )
+        )
+        logger.info(
+            "Added tracks to deck",
+            extra={
+                "deck_id": str(draft.id),
+                "requested_tracks": len(tracks),
+                "added_tracks": len(deduplicated_tracks),
+                "skipped_duplicates": skipped_duplicates,
+                "total_tracks": len(draft.tracks),
+            },
+        )
+        return draft
 
     def _require_draft(self) -> DeckDraft:
         if self._draft is None:

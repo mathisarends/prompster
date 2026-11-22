@@ -2,10 +2,6 @@ import json
 
 from fastapi.responses import HTMLResponse
 
-_OAUTH_POPUP_MESSAGE_TYPE = "prompster-google-oauth"
-_SPOTIFY_OAUTH_POPUP_MESSAGE_TYPE = "prompster-spotify-oauth"
-_SPOTIFY_LOGIN_POPUP_MESSAGE_TYPE = "prompster-spotify-login"
-
 
 class OAuthPopupResponse:
     @classmethod
@@ -103,3 +99,8 @@ class OAuthPopupResponse:
 </script>
 </body>
 </html>"""
+
+
+_OAUTH_POPUP_MESSAGE_TYPE = "prompster-google-oauth"
+_SPOTIFY_OAUTH_POPUP_MESSAGE_TYPE = "prompster-spotify-oauth"
+_SPOTIFY_LOGIN_POPUP_MESSAGE_TYPE = "prompster-spotify-login"

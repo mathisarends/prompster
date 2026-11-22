@@ -36,6 +36,12 @@ class AuthCookieSettings:
     same_site_prod: Literal["lax", "strict", "none"]
 
 
+def get_authenticated_user_id(  # smelt: ignore[visibility/test-only-public-function] -- Public seam for FastAPI dependency overrides.
+    payload: Annotated[TokenPayload, Depends(_get_access_token_payload)],
+) -> UUID:
+    return payload.user_id
+
+
 def _get_cookie_token_payload(
     conn: HTTPConnection,
     token_issuer: TokenIssuer,
@@ -87,12 +93,6 @@ def _raise(conn: HTTPConnection, detail: str, exc: Exception | None = None) -> N
         ) from exc
 
     raise AuthenticationRequiredError from exc
-
-
-def get_authenticated_user_id(
-    payload: Annotated[TokenPayload, Depends(_get_access_token_payload)],
-) -> UUID:
-    return payload.user_id
 
 
 def _get_refresh_authenticated_user_id(

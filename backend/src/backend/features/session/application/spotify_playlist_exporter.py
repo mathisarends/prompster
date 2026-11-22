@@ -48,12 +48,19 @@ class SpotifyExportPlan:
     existing_playlist_id: str | None
 
 
-class SessionSpotifyPlaylistExporter:
-    _NAME_PREFIX = "prompster · "
-    _NAME_MAX_LENGTH = 100
-    _DESCRIPTION_MAX_LENGTH = 300
-    _PLAYLIST_URL_TEMPLATE = "https://open.spotify.com/playlist/{playlist_id}"
+_NAME_PREFIX = "prompster · "
 
+
+_NAME_MAX_LENGTH = 100
+
+
+_DESCRIPTION_MAX_LENGTH = 300
+
+
+_PLAYLIST_URL_TEMPLATE = "https://open.spotify.com/playlist/{playlist_id}"
+
+
+class SessionSpotifyPlaylistExporter:
     def __init__(
         self,
         session_repository: SessionRepository,
@@ -106,7 +113,7 @@ class SessionSpotifyPlaylistExporter:
             session=session,
             access_token=access_token,
             name=self._build_name(metadata.name),
-            description=metadata.description[: self._DESCRIPTION_MAX_LENGTH],
+            description=metadata.description[:_DESCRIPTION_MAX_LENGTH],
             track_uris=track_uris,
             existing_playlist_id=playlist.spotify_playlist_id or None,
         )
@@ -136,7 +143,7 @@ class SessionSpotifyPlaylistExporter:
             id=playlist_id,
             name=plan.name,
             description=plan.description,
-            url=self._PLAYLIST_URL_TEMPLATE.format(playlist_id=playlist_id),
+            url=_PLAYLIST_URL_TEMPLATE.format(playlist_id=playlist_id),
             track_count=len(plan.track_uris),
         )
 
@@ -209,8 +216,8 @@ class SessionSpotifyPlaylistExporter:
         return session
 
     def _build_name(self, generated_name: str) -> str:
-        max_suffix = self._NAME_MAX_LENGTH - len(self._NAME_PREFIX)
-        return f"{self._NAME_PREFIX}{generated_name.strip()[:max_suffix]}"
+        max_suffix = _NAME_MAX_LENGTH - len(_NAME_PREFIX)
+        return f"{_NAME_PREFIX}{generated_name.strip()[:max_suffix]}"
 
     def _to_metadata_track(self, track: PlaylistTrack) -> PlaylistMetadataTrack:
         return PlaylistMetadataTrack(

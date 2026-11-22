@@ -88,9 +88,6 @@ class Tools:
 
         return decorator
 
-    def _register(self, tool: Tool) -> None:
-        self._tools[tool.name] = tool
-
     async def execute(
         self, name: str, args: dict, phase: Phase | None = None
     ) -> ActionResult:
@@ -128,6 +125,9 @@ class Tools:
         except Exception as error:
             logger.error("Failed to validate tool params: %s", error)
             return None
+
+    def _register(self, tool: Tool) -> None:
+        self._tools[tool.name] = tool
 
     def _register_default_tools(self) -> None:
         @self.action(

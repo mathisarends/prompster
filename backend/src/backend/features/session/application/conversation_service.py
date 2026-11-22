@@ -186,6 +186,15 @@ class SessionConversationService:
             async for event in events:
                 yield event
 
+    async def stop_message(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+    ) -> bool:
+        await self._get_authorized(session_id=session_id, user_id=user_id)
+        return await self._runner.stop(session_id=session_id)
+
     def _maybe_start_title_generation(
         self,
         *,
@@ -291,15 +300,6 @@ class SessionConversationService:
             pass
         except Exception:
             pass
-
-    async def stop_message(
-        self,
-        *,
-        session_id: UUID,
-        user_id: UUID,
-    ) -> bool:
-        await self._get_authorized(session_id=session_id, user_id=user_id)
-        return await self._runner.stop(session_id=session_id)
 
     async def _persist_session(self, *, session: Session) -> Session:
         return await self._session_repository.save(session=session)

@@ -108,6 +108,12 @@ class Tool:
             None if schema else ToolSchemaBuilder(self.fn, param_model)
         )
 
+    def __eq__(self, other: object) -> bool:
+        return self.name == other.name if isinstance(other, Tool) else NotImplemented
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
     def is_included_in(self, phase: Phase) -> bool:
         return not self.included_in_phases or phase in self.included_in_phases
 
@@ -153,9 +159,3 @@ class Tool:
             description=function.get("description", ""),
             parameters=function["parameters"],
         )
-
-    def __eq__(self, other: object) -> bool:
-        return self.name == other.name if isinstance(other, Tool) else NotImplemented
-
-    def __hash__(self) -> int:
-        return hash(self.name)

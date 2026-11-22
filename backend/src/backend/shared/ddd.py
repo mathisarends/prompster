@@ -7,10 +7,6 @@ class Entity:
         self._id = id
         self.created_at = created_at
 
-    @property
-    def id(self) -> UUID:
-        return self._id
-
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Entity):
             return False
@@ -18,6 +14,10 @@ class Entity:
 
     def __hash__(self) -> int:
         return hash(self._id)
+
+    @property
+    def id(self) -> UUID:
+        return self._id
 
 
 class Aggregate(Entity):

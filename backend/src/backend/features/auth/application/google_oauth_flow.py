@@ -15,9 +15,10 @@ from backend.features.user.domain import (
 )
 
 
-class GoogleOAuthFlow:
-    _STATE_TOKEN_BYTES = 32
+_STATE_TOKEN_BYTES = 32
 
+
+class GoogleOAuthFlow:
     def __init__(
         self,
         user_repository: UserRepository,
@@ -29,7 +30,7 @@ class GoogleOAuthFlow:
         self._token_issuer = token_issuer
 
     def login(self) -> GoogleAuthorizationRequest:
-        oauth_state = secrets.token_urlsafe(self._STATE_TOKEN_BYTES)
+        oauth_state = secrets.token_urlsafe(_STATE_TOKEN_BYTES)
         authorization_url = self._google_oauth_provider.build_authorization_url(
             state=oauth_state,
         )

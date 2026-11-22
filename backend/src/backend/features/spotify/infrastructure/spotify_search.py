@@ -18,9 +18,9 @@ from spotifyify import Image, RetryEvent, Spotifyify, Track
 from spotifyify.exceptions import SpotifyAPIError
 from spotifyify.schemas import Artist, SimplifiedPlaylist
 
-type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[SpotifyArtist]
-
 logger = logging.getLogger(__name__)
+
+type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[SpotifyArtist]
 
 
 class SpotifyifySearch(SpotifySearchGateway):

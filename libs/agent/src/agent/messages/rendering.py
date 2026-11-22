@@ -19,27 +19,6 @@ def render_user_message_content(
     return f"{block}\n\n{content}"
 
 
-def _render_user_events_block(events: Sequence[UserEvent]) -> str:
-    """Render UserEvents as a single ``<user_events>`` XML block.
-
-    The block is meant to be embedded inside the same ``UserMessage`` content
-    as the user's text - it represents manual Hitster deck changes the user made
-    just before that turn.
-    """
-    lines = ["<user_events>"]
-    lines.extend(_render_event(event) for event in events)
-    lines.append("</user_events>")
-    return "\n".join(lines)
-
-
-def _render_event(event: UserEvent) -> str:
-    return (
-        f'<event type="{escape(event.type.value, quote=True)}" '
-        f'at="{escape(event.occurred_at.isoformat(), quote=True)}">'
-        f"{escape(event.label)}</event>"
-    )
-
-
 def render_deck_context(
     deck_draft: DeckDraft,
     *,
@@ -102,6 +81,27 @@ def render_playlist_tag(
         ("tracks", str(track_count) if track_count is not None else None),
     ]
     return f"<playlist {_render_attrs(attrs)} />"
+
+
+def _render_user_events_block(events: Sequence[UserEvent]) -> str:
+    """Render UserEvents as a single ``<user_events>`` XML block.
+
+    The block is meant to be embedded inside the same ``UserMessage`` content
+    as the user's text - it represents manual Hitster deck changes the user made
+    just before that turn.
+    """
+    lines = ["<user_events>"]
+    lines.extend(_render_event(event) for event in events)
+    lines.append("</user_events>")
+    return "\n".join(lines)
+
+
+def _render_event(event: UserEvent) -> str:
+    return (
+        f'<event type="{escape(event.type.value, quote=True)}" '
+        f'at="{escape(event.occurred_at.isoformat(), quote=True)}">'
+        f"{escape(event.label)}</event>"
+    )
 
 
 def _render_track_label(track: DeckDraftTrack) -> str:

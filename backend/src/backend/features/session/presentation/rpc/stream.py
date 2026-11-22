@@ -19,15 +19,6 @@ from backend.features.session.presentation.rpc.mappers import to_session_stream_
 
 logger = logging.getLogger(__name__)
 
-_COMMAND_ERRORS = (
-    InvalidSessionPhaseTransitionError,
-    NoPendingToolCallSequenceError,
-    PendingToolCallsError,
-    ToolCallAlreadyResolvedError,
-    ToolCallNotFoundError,
-    ValueError,
-)
-
 
 async def session_events(
     events: AsyncGenerator[SessionEvent],
@@ -46,3 +37,13 @@ async def session_events(
             code="InternalError", message="Die Antwort konnte nicht geladen werden."
         )
     yield DoneEvent()
+
+
+_COMMAND_ERRORS = (
+    InvalidSessionPhaseTransitionError,
+    NoPendingToolCallSequenceError,
+    PendingToolCallsError,
+    ToolCallAlreadyResolvedError,
+    ToolCallNotFoundError,
+    ValueError,
+)

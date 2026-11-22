@@ -43,18 +43,6 @@ _COMPOSITION = Composition(
 )
 
 
-def _setup_middleware(app: FastAPI, env: EnvSettings) -> None:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=env.allowed_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-    app.add_middleware(LoggingMiddleware)
-
-
 def create_app() -> FastAPI:
     env = EnvSettings()
     setup_logging(LoggingLevelSettings())
@@ -75,3 +63,15 @@ def create_app() -> FastAPI:
 
     logger.info("Application ready!")
     return app
+
+
+def _setup_middleware(app: FastAPI, env: EnvSettings) -> None:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=env.allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    app.add_middleware(LoggingMiddleware)

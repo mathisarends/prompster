@@ -2,6 +2,19 @@ import logging
 
 from backend.env import LoggingLevelSettings
 
+
+def setup_logging(settings: LoggingLevelSettings) -> None:
+    logging.basicConfig(
+        level=settings.effective_log_level,
+        format=_LOG_FORMAT,
+    )
+    logging.getLogger().setLevel(settings.effective_log_level)
+    logging.getLogger("backend").setLevel(settings.effective_log_level)
+
+    for name in _NOISY_LOGGERS:
+        logging.getLogger(name).setLevel(logging.WARNING)
+
+
 _LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 
 # Third-party libraries that emit very verbose DEBUG output (per-request headers,
@@ -17,15 +30,3 @@ _NOISY_LOGGERS = (
     "urllib3",
     "asyncio",
 )
-
-
-def setup_logging(settings: LoggingLevelSettings) -> None:
-    logging.basicConfig(
-        level=settings.effective_log_level,
-        format=_LOG_FORMAT,
-    )
-    logging.getLogger().setLevel(settings.effective_log_level)
-    logging.getLogger("backend").setLevel(settings.effective_log_level)
-
-    for name in _NOISY_LOGGERS:
-        logging.getLogger(name).setLevel(logging.WARNING)

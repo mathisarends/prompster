@@ -2,42 +2,6 @@
   "version": 2,
   "violations": [
     {
-      "code": "LAY004",
-      "path": "backend/src/backend/_logging.py",
-      "message": "definitions in module have 2 avoidable ordering inversion(s)",
-      "scope": "module",
-      "fingerprints": [
-        "4a8e909587241b75f287f08a3ade7dae",
-        "c1e79545026980ad1a6bdf20919d4dcf"
-      ]
-    },
-    {
-      "code": "LAY004",
-      "path": "backend/src/backend/app.py",
-      "message": "definitions in module have 1 avoidable ordering inversion(s)",
-      "scope": "module",
-      "fingerprints": [
-        "086b0822b700952e2af737d9362a275c"
-      ]
-    },
-    {
-      "code": "LAY008",
-      "path": "backend/src/backend/features/auth/application/google_oauth_flow.py",
-      "message": "move private constant GoogleOAuthFlow._STATE_TOKEN_BYTES to module scope",
-      "fingerprints": [
-        "22853d68e57057aee2ba1fcadc56c6c9"
-      ]
-    },
-    {
-      "code": "LAY004",
-      "path": "backend/src/backend/features/auth/application/spotify_oauth_flow.py",
-      "message": "definitions in module have 1 avoidable ordering inversion(s)",
-      "scope": "module",
-      "fingerprints": [
-        "314b24a3061e8175310954458c7cca12"
-      ]
-    },
-    {
       "code": "FWK001",
       "path": "backend/src/backend/features/auth/infrastructure/auth_settings.py",
       "message": "review secret settings field AuthSettings.jwt_secret; use a masked secret type",
@@ -62,17 +26,6 @@
       ]
     },
     {
-      "code": "LAY004",
-      "path": "backend/src/backend/features/auth/presentation/oauth_popup.py",
-      "message": "definitions in module have 3 avoidable ordering inversion(s)",
-      "scope": "module",
-      "fingerprints": [
-        "5f99e5d20778b811712ee5299f138c28",
-        "8c13c6992976f22bda43a38201765266",
-        "e1217662f9d580ab61590997192ad500"
-      ]
-    },
-    {
       "code": "CPX003",
       "path": "backend/src/backend/features/auth/presentation/router.py",
       "message": "google_callback accepts 8 positional parameters; default allows 5",
@@ -94,14 +47,6 @@
       "message": "review secret settings field LLMCredentials.openai_api_key; use a masked secret type",
       "fingerprints": [
         "aeb5bcd5ee2b987b47c38f3a9ff1db9d"
-      ]
-    },
-    {
-      "code": "LAY008",
-      "path": "backend/src/backend/features/oauth_connections/application/spotify_oauth_connection_service.py",
-      "message": "move private constant SpotifyOAuthConnectionService._STATE_TOKEN_BYTES to module scope",
-      "fingerprints": [
-        "1d935f5e4f1b1b2b3a005463e5410d2a"
       ]
     },
     {
@@ -147,21 +92,6 @@
       ]
     },
     {
-      "code": "LAY004",
-      "path": "backend/src/backend/features/session/application/conversation_service.py",
-      "message": "definitions in module.SessionConversationService#0 have 7 avoidable ordering inversion(s)",
-      "scope": "module.SessionConversationService#0",
-      "fingerprints": [
-        "01a458fbaa57faa839dd4bcd03140b74",
-        "3957e8be3209abd9faff631f5645ed78",
-        "5f9eda20f38e6dbc61dab98b791f73fb",
-        "ca4a02aa80468ac6fc27f3bd17e5bf85",
-        "ee9b3368c65ef1d4c3a19294b5db55d1",
-        "eedf4321a01fdc664eccf6bbb8162d8c",
-        "f090883752b7b01106a0c25654fa5991"
-      ]
-    },
-    {
       "code": "TYP003",
       "path": "backend/src/backend/features/session/application/conversation_service.py",
       "message": "optional parameter 'attachments' uses truthiness for its default",
@@ -185,48 +115,6 @@
       "message": "Frozen dataclass SessionOnboardingQuestionAsked.options contains mutable list contents",
       "fingerprints": [
         "785ef7eed917e01b3ef57fe29f36bc91"
-      ]
-    },
-    {
-      "code": "LAY004",
-      "path": "backend/src/backend/features/session/application/session_exporter.py",
-      "message": "definitions in module have 2 avoidable ordering inversion(s)",
-      "scope": "module",
-      "fingerprints": [
-        "eb4cf88add6ed52a5902e1e85ec9dad4",
-        "fa554d816c9ac30f6bf07ae220413c6b"
-      ]
-    },
-    {
-      "code": "LAY008",
-      "path": "backend/src/backend/features/session/application/spotify_playlist_exporter.py",
-      "message": "move private constant SessionSpotifyPlaylistExporter._DESCRIPTION_MAX_LENGTH to module scope",
-      "fingerprints": [
-        "9c1978ae431f7313aa7ebad20f8ac08c"
-      ]
-    },
-    {
-      "code": "LAY008",
-      "path": "backend/src/backend/features/session/application/spotify_playlist_exporter.py",
-      "message": "move private constant SessionSpotifyPlaylistExporter._NAME_MAX_LENGTH to module scope",
-      "fingerprints": [
-        "61a8476d9dc9426c47f1e2ba0ae0f7c4"
-      ]
-    },
-    {
-      "code": "LAY008",
-      "path": "backend/src/backend/features/session/application/spotify_playlist_exporter.py",
-      "message": "move private constant SessionSpotifyPlaylistExporter._NAME_PREFIX to module scope",
-      "fingerprints": [
-        "734735c13dadae439bb52d417361b149"
-      ]
-    },
-    {
-      "code": "LAY008",
-      "path": "backend/src/backend/features/session/application/spotify_playlist_exporter.py",
-      "message": "move private constant SessionSpotifyPlaylistExporter._PLAYLIST_URL_TEMPLATE to module scope",
-      "fingerprints": [
-        "78cc608a374498666010bb8d2a1b9d1c"
       ]
     },
     {
@@ -718,15 +606,6 @@
       ]
     },
     {
-      "code": "LAY004",
-      "path": "backend/src/backend/features/session/presentation/rpc/stream.py",
-      "message": "definitions in module have 1 avoidable ordering inversion(s)",
-      "scope": "module",
-      "fingerprints": [
-        "ffd5bde0ba51c8b323c7921033840fa0"
-      ]
-    },
-    {
       "code": "MOD011",
       "path": "backend/src/backend/features/spotify/domain/models.py",
       "message": "Frozen dataclass SpotifyArtist.genres contains mutable list contents",
@@ -756,14 +635,6 @@
       "message": "Frozen dataclass SpotifyUnifiedSearchResult.tracks contains mutable list contents",
       "fingerprints": [
         "109c6a9ca535cf827a4587f632600d4a"
-      ]
-    },
-    {
-      "code": "LAY011",
-      "path": "backend/src/backend/features/spotify/infrastructure/spotify_search.py",
-      "message": "place module logger logger immediately after imports",
-      "fingerprints": [
-        "409c9178f1506a39ffe65018d8cdb547"
       ]
     },
     {
@@ -837,36 +708,6 @@
       "scope": "SqlUserRepository._to_domain",
       "fingerprints": [
         "4497cb2caa63b76768b7173396fca841"
-      ]
-    },
-    {
-      "code": "LAY004",
-      "path": "backend/src/backend/presentation/authentication.py",
-      "message": "definitions in module have 4 avoidable ordering inversion(s)",
-      "scope": "module",
-      "fingerprints": [
-        "202b31239f128345ae3c7227d2d36014",
-        "76aebda9653c8e2ae0606a32db3f3723",
-        "9a88a1f682c0312207a534410a0b9529",
-        "a567f3cfab317a6af5d433a4eafc3235"
-      ]
-    },
-    {
-      "code": "VIS009",
-      "path": "backend/src/backend/presentation/authentication.py",
-      "message": "backend.presentation.authentication.get_authenticated_user_id is public; among analyzed modules, only tests access it outside its defining module",
-      "fingerprints": [
-        "a5ef880bb7f8ac6aa5ec7eda4a2c2de5"
-      ]
-    },
-    {
-      "code": "LAY004",
-      "path": "backend/src/backend/shared/ddd.py",
-      "message": "definitions in module.Entity#0 have 2 avoidable ordering inversion(s)",
-      "scope": "module.Entity#0",
-      "fingerprints": [
-        "a38e79019ec5ea3d1dcb6165f24c3198",
-        "d77135f87079542b063d0f84122c6525"
       ]
     },
     {

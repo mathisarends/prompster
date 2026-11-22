@@ -18,9 +18,10 @@ from backend.features.oauth_connections.domain import (
 from backend.shared.oauth_provider import OAuthProvider
 
 
-class SpotifyOAuthConnectionService:
-    _STATE_TOKEN_BYTES = 32
+_STATE_TOKEN_BYTES = 32
 
+
+class SpotifyOAuthConnectionService:
     def __init__(
         self,
         connection_repository: OAuthConnectionRepository,
@@ -30,7 +31,7 @@ class SpotifyOAuthConnectionService:
         self._spotify_oauth_provider = spotify_oauth_provider
 
     def start_connect(self, *, user_id: UUID) -> SpotifyAuthorizationRequest:
-        state_payload = f"{user_id}:{secrets.token_urlsafe(self._STATE_TOKEN_BYTES)}"
+        state_payload = f"{user_id}:{secrets.token_urlsafe(_STATE_TOKEN_BYTES)}"
         authorization_url = self._spotify_oauth_provider.build_authorization_url(
             state=state_payload,
         )
