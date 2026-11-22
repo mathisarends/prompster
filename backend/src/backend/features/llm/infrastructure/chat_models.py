@@ -42,7 +42,8 @@ class LLMChatModels(ChatModels):
                 )
 
     def _openai_api_key(self) -> str:
-        api_key = self._credentials.openai_api_key
+        credential = self._credentials.openai_api_key
+        api_key = credential.get_secret_value() if credential is not None else ""
         if not api_key:
             raise ValueError("OPENAI_API_KEY is required for OpenAI models.")
         return api_key

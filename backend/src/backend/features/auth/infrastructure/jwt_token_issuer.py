@@ -69,7 +69,7 @@ class JwtTokenIssuer(TokenIssuer):
                 "exp": exp,
                 "type": token_type.value,
             },
-            self._config.jwt_secret,
+            self._config.jwt_secret.get_secret_value(),
             algorithm=self._config.jwt_algorithm,
         )
 
@@ -77,7 +77,7 @@ class JwtTokenIssuer(TokenIssuer):
         try:
             return jwt.decode(
                 token,
-                self._config.jwt_secret,
+                self._config.jwt_secret.get_secret_value(),
                 algorithms=[self._config.jwt_algorithm],
             )
         except jwt.ExpiredSignatureError as exc:

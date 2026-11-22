@@ -48,7 +48,7 @@ class OAuthConnectionsProvider(Provider):
         spotify_auth_settings: SpotifyAuthSettings,
     ) -> OAuthTokenCipher:
         return FernetOAuthTokenCipher(
-            encryption_key=spotify_auth_settings.token_encryption_key,
+            encryption_key=spotify_auth_settings.token_encryption_key.get_secret_value(),
         )
 
     @provide(scope=Scope.APP)
@@ -110,7 +110,7 @@ class OAuthConnectionsProvider(Provider):
         return SpotifyOAuthStateCookies(
             cookie_name=spotify_auth_settings.state_cookie_name,
             ttl_seconds=oauth_state_settings.ttl_seconds,
-            signing_secret=auth_settings.jwt_secret,
+            signing_secret=auth_settings.jwt_secret.get_secret_value(),
             frontend_base_url=env_config.frontend_base_url,
             env_config=env_config,
         )

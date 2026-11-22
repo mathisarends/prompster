@@ -125,7 +125,7 @@ class AuthProvider(Provider):
         return SpotifyLoginOAuthStateCookies(
             cookie_name=spotify_auth_settings.login_state_cookie_name,
             ttl_seconds=oauth_state_settings.ttl_seconds,
-            signing_secret=auth_settings.jwt_secret,
+            signing_secret=auth_settings.jwt_secret.get_secret_value(),
             frontend_base_url=env_config.frontend_base_url,
             env_config=env_config,
         )
@@ -160,7 +160,7 @@ class AuthProvider(Provider):
         return GoogleOAuthStateCookies(
             cookie_name=google_auth_settings.state_cookie_name,
             ttl_seconds=oauth_state_settings.ttl_seconds,
-            signing_secret=auth_settings.jwt_secret,
+            signing_secret=auth_settings.jwt_secret.get_secret_value(),
             frontend_base_url=env_config.frontend_base_url,
             env_config=env_config,
         )

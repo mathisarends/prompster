@@ -89,7 +89,9 @@ class SpotifyOAuthClient(SpotifyOAuthProvider):
 
     async def _post_token(self, form: dict[str, str]) -> SpotifyTokens:
         basic_auth = base64.b64encode(
-            f"{self._settings.client_id}:{self._settings.client_secret}".encode("utf-8")
+            f"{self._settings.client_id}:{self._settings.client_secret.get_secret_value()}".encode(
+                "utf-8"
+            )
         ).decode("utf-8")
 
         async with httpx.AsyncClient(timeout=10.0) as client:

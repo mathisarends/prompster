@@ -1,4 +1,4 @@
-from pydantic import AliasChoices, Field, field_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,8 +14,8 @@ class GoogleAuthSettings(BaseSettings):
         default="",
         validation_alias=AliasChoices("GOOGLE_CLIENT_ID", "google_client_id"),
     )
-    client_secret: str = Field(
-        default="",
+    client_secret: SecretStr = Field(
+        default=SecretStr(""),
         validation_alias=AliasChoices(
             "GOOGLE_CLIENT_SECRET",
             "google_client_secret",
