@@ -44,9 +44,9 @@ class SpotifyifySearch(SpotifySearchGateway):
         normalized_query = query.strip()
         if not normalized_query:
             return SpotifyUnifiedSearchResult(
-                tracks=[],
-                playlists=[],
-                artists=[],
+                tracks=(),
+                playlists=(),
+                artists=(),
             )
 
         requested_types = (
@@ -55,9 +55,9 @@ class SpotifyifySearch(SpotifySearchGateway):
 
         if not requested_types:
             return SpotifyUnifiedSearchResult(
-                tracks=[],
-                playlists=[],
-                artists=[],
+                tracks=(),
+                playlists=(),
+                artists=(),
             )
 
         cache_key = self._build_search_cache_key(
@@ -81,9 +81,9 @@ class SpotifyifySearch(SpotifySearchGateway):
             if cached_result is not None:
                 return cached_result
             return SpotifyUnifiedSearchResult(
-                tracks=[],
-                playlists=[],
-                artists=[],
+                tracks=(),
+                playlists=(),
+                artists=(),
             )
 
         return await self._search_cache.run_with_cache(
@@ -156,18 +156,18 @@ class SpotifyifySearch(SpotifySearchGateway):
 
         if not search_tasks:
             return SpotifyUnifiedSearchResult(
-                tracks=[],
-                playlists=[],
-                artists=[],
+                tracks=(),
+                playlists=(),
+                artists=(),
             )
 
         task_results = await asyncio.gather(*search_tasks.values())
         results_by_type = dict(zip(search_tasks, task_results, strict=False))
 
         return SpotifyUnifiedSearchResult(
-            tracks=list(results_by_type.get(SpotifySearchType.TRACK, [])),
-            playlists=list(results_by_type.get(SpotifySearchType.PLAYLIST, [])),
-            artists=list(results_by_type.get(SpotifySearchType.ARTIST, [])),
+            tracks=tuple(results_by_type.get(SpotifySearchType.TRACK, ())),
+            playlists=tuple(results_by_type.get(SpotifySearchType.PLAYLIST, ())),
+            artists=tuple(results_by_type.get(SpotifySearchType.ARTIST, ())),
         )
 
     def _build_debounce_scope(
@@ -281,7 +281,7 @@ def _to_spotify_track(track: Track) -> SpotifyTrack:
 def _to_spotify_artist(artist: Artist) -> SpotifyArtist:
     followers = artist.followers.total if artist.followers else None
     image_url = _cover_url(artist.images)
-    genres = [genre for genre in (artist.genres or []) if genre]
+    genres = tuple(genre for genre in (artist.genres or ()) if genre)
     return SpotifyArtist(
         id=artist.id or "",
         name=artist.name or "",

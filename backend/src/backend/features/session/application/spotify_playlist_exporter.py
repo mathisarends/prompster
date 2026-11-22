@@ -44,7 +44,7 @@ class SpotifyExportPlan:
     access_token: str
     name: str
     description: str
-    track_uris: list[str]
+    track_uris: tuple[str, ...]
     existing_playlist_id: str | None
 
 
@@ -83,9 +83,9 @@ class SessionSpotifyPlaylistExporter:
                 f"Session {session.id} has no playlist tracks to export."
             )
 
-        track_uris = [
+        track_uris = tuple(
             track.spotify_uri for track in playlist.tracks if track.spotify_uri
-        ]
+        )
         if not track_uris:
             raise SessionPlaylistMissingSpotifyTracksError(
                 f"Session {session.id} playlist has no tracks linked to Spotify."
@@ -114,14 +114,14 @@ class SessionSpotifyPlaylistExporter:
                 access_token=plan.access_token,
                 name=plan.name,
                 description=plan.description,
-                track_uris=plan.track_uris,
+                track_uris=list(plan.track_uris),
             )
         else:
             playlist_id = await self._create_new_playlist(
                 access_token=plan.access_token,
                 name=plan.name,
                 description=plan.description,
-                track_uris=plan.track_uris,
+                track_uris=list(plan.track_uris),
             )
             if plan.session.playlist is not None:
                 plan.session.playlist.spotify_playlist_id = playlist_id
@@ -162,7 +162,7 @@ class SessionSpotifyPlaylistExporter:
         access_token: str,
         name: str,
         description: str,
-        track_uris: list[str],
+        track_uris: tuple[str, ...],
     ) -> str:
         playlist_id = await self._spotify_playlist_creator.create_private_playlist(
             access_token=access_token,
@@ -183,7 +183,7 @@ class SessionSpotifyPlaylistExporter:
         access_token: str,
         name: str,
         description: str,
-        track_uris: list[str],
+        track_uris: tuple[str, ...],
     ) -> str:
         await self._spotify_playlist_creator.update_playlist_details(
             access_token=access_token,

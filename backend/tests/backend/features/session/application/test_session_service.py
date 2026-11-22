@@ -1153,11 +1153,11 @@ class TestSessionServiceSendMessage:
         assert len(question_events) == 1
         assert question_events[0].question == "Fuer wen ist die Playlist?"
         assert question_events[0].hint == "Enge Zielgruppen machen das Deck spitzer."
-        assert question_events[0].options == [
+        assert question_events[0].options == (
             "Freunde",
             "Familie",
             DECIDE_FOR_ME_OPTION,
-        ]
+        )
         assert len(suspended_events) == 1
         assert suspended_events[0].question == "Welche Dekade?"
         assert (

@@ -41,7 +41,7 @@ class SpotifyPlaylist:
 class SpotifyArtist:
     id: str
     name: str
-    genres: list[str]
+    genres: tuple[str, ...]
     followers: int | None = None
     popularity: int | None = None
     image_url: str | None = None
@@ -49,6 +49,6 @@ class SpotifyArtist:
 
 @dataclass(frozen=True, slots=True)
 class SpotifyUnifiedSearchResult:
-    tracks: list[SpotifyTrack]
-    playlists: list[SpotifyPlaylist]
-    artists: list[SpotifyArtist]
+    tracks: tuple[SpotifyTrack, ...]
+    playlists: tuple[SpotifyPlaylist, ...]
+    artists: tuple[SpotifyArtist, ...]

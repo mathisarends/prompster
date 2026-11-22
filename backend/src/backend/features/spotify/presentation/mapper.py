@@ -53,7 +53,7 @@ def _to_spotify_artist_response(artist: SpotifyArtist) -> SpotifyArtistResponse:
     return SpotifyArtistResponse(
         id=artist.id,
         name=artist.name,
-        genres=artist.genres,
+        genres=list(artist.genres),
         followers=artist.followers,
         popularity=artist.popularity,
         image_url=artist.image_url,

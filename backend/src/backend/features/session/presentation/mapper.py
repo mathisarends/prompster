@@ -224,7 +224,7 @@ def _to_tool_call_response(call: ToolCall) -> ToolCallResponse:
         id=call.id,
         function=ToolFunctionResponse(
             name=call.function.name,
-            arguments=call.function.arguments,
+            arguments=dict(call.function.arguments),
             status_label=call.function.status_label,
             action_type=(
                 call.function.action_type.value

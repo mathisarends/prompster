@@ -7,7 +7,7 @@ from backend.features.spotify.infrastructure.spotify_search_cache import (
 
 
 def _empty_result() -> SpotifyUnifiedSearchResult:
-    return SpotifyUnifiedSearchResult(tracks=[], playlists=[], artists=[])
+    return SpotifyUnifiedSearchResult(tracks=(), playlists=(), artists=())
 
 
 class TestSpotifySearchCache:

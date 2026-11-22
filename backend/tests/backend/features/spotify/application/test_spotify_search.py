@@ -355,7 +355,7 @@ class TestSpotifySearch:
 
         assert len(result) == 1
         assert result[0].name == "Muse"
-        assert result[0].genres == ["alternative rock", "rock"]
+        assert result[0].genres == ("alternative rock", "rock")
         assert result[0].followers == 1234567
         assert result[0].popularity == 91
         assert result[0].image_url == "https://example.com/muse.jpg"
@@ -388,8 +388,8 @@ class TestSpotifySearch:
             )
         )
 
-        assert result.tracks == []
-        assert result.playlists == []
+        assert result.tracks == ()
+        assert result.playlists == ()
         assert len(result.artists) == 1
         assert result.artists[0].name == "Muse"
         assert spotify.tracks.received_query is None
@@ -424,9 +424,9 @@ class TestSpotifySearch:
 
         result = asyncio.run(service.search(query="  "))
 
-        assert result.tracks == []
-        assert result.playlists == []
-        assert result.artists == []
+        assert result.tracks == ()
+        assert result.playlists == ()
+        assert result.artists == ()
         assert spotify.tracks.received_query is None
         assert spotify.playlists.received_query is None
         assert spotify.artists.received_query is None
@@ -457,9 +457,9 @@ class TestSpotifySearch:
 
         first_result, second_result = asyncio.run(_run())
 
-        assert first_result.tracks == []
-        assert first_result.playlists == []
-        assert first_result.artists == []
+        assert first_result.tracks == ()
+        assert first_result.playlists == ()
+        assert first_result.artists == ()
         assert len(second_result.tracks) == 1
         assert spotify.tracks.call_count == 1
         assert spotify.tracks.received_query == "ski"
@@ -514,7 +514,7 @@ class TestSpotifySearch:
                     max_retries=3,
                 )
             )
-            return SpotifyUnifiedSearchResult(tracks=[], playlists=[], artists=[])
+            return SpotifyUnifiedSearchResult(tracks=(), playlists=(), artists=())
 
         service._execute_unified_search = _execute_unified_search  # type: ignore[method-assign]
 
@@ -530,7 +530,7 @@ class TestSpotifySearch:
                 )
             )
 
-        assert result == SpotifyUnifiedSearchResult(tracks=[], playlists=[], artists=[])
+        assert result == SpotifyUnifiedSearchResult(tracks=(), playlists=(), artists=())
         assert spotify.retry_hook_callback is None
         assert "Retrying Spotifyify request" in caplog.text
         assert "path=/search" in caplog.text

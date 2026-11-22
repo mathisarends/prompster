@@ -862,7 +862,7 @@ class SessionConversationService:
             events=(
                 SessionOnboardingQuestionAsked(
                     question=question.question_text,
-                    options=list(question.options),
+                    options=tuple(question.options),
                     hint=question.hint,
                     recommended_option=question.recommended_option,
                     selection_mode=question.selection_mode,

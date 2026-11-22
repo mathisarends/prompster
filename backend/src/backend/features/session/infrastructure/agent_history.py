@@ -152,7 +152,7 @@ class AgentHistoryBuilder:
         return LLMToolCall(
             id=call.id,
             name=call.function.name,
-            arguments=json.dumps(call.function.arguments, ensure_ascii=False),
+            arguments=json.dumps(dict(call.function.arguments), ensure_ascii=False),
         )
 
     def _to_user_events_for_message(self, *, message: UserMessage) -> list[UserEvent]:

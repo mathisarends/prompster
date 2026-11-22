@@ -132,7 +132,7 @@ class SessionTitleGenerated:
 @dataclass(frozen=True, slots=True)
 class SessionOnboardingQuestionAsked:
     question: str
-    options: list[str]
+    options: tuple[str, ...]
     hint: str | None = None
     recommended_option: str | None = None
     selection_mode: OnboardingQuestionSelectionMode = (

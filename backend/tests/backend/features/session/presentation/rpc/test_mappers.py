@@ -242,7 +242,7 @@ class TestSessionEventMapper:
             SessionOnboardingQuestionAsked(
                 question="Fuer wen ist die Playlist?",
                 hint="Enge Zielgruppen machen das Deck spitzer.",
-                options=["Freunde", "Familie"],
+                options=("Freunde", "Familie"),
                 question_id=question_id,
             )
         )

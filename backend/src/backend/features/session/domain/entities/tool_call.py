@@ -1,5 +1,7 @@
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
+from types import MappingProxyType
 
 
 class ToolActionType(StrEnum):
@@ -16,10 +18,13 @@ class ToolActionType(StrEnum):
 @dataclass(frozen=True, slots=True)
 class ToolFunction:
     name: str
-    arguments: dict[str, object]
+    arguments: Mapping[str, object]
     status_label: str | None = None
     action_type: ToolActionType | None = None
     is_onboarding_question: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "arguments", MappingProxyType(dict(self.arguments)))
 
 
 @dataclass(frozen=True, slots=True)
