@@ -18,9 +18,6 @@ from backend.features.oauth_connections.domain import (
 from backend.shared.oauth_provider import OAuthProvider
 
 
-_STATE_TOKEN_BYTES = 32
-
-
 class SpotifyOAuthConnectionService:
     def __init__(
         self,
@@ -184,3 +181,6 @@ class SpotifyOAuthConnectionService:
             connected_at=connected_at,
             is_premium=is_premium,
         )
+
+
+_STATE_TOKEN_BYTES = 32

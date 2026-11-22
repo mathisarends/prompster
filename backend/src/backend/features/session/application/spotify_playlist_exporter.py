@@ -48,18 +48,6 @@ class SpotifyExportPlan:
     existing_playlist_id: str | None
 
 
-_NAME_PREFIX = "prompster · "
-
-
-_NAME_MAX_LENGTH = 100
-
-
-_DESCRIPTION_MAX_LENGTH = 300
-
-
-_PLAYLIST_URL_TEMPLATE = "https://open.spotify.com/playlist/{playlist_id}"
-
-
 class SessionSpotifyPlaylistExporter:
     def __init__(
         self,
@@ -225,3 +213,15 @@ class SessionSpotifyPlaylistExporter:
             artist=track.artist,
             year=track.year,
         )
+
+
+_NAME_PREFIX = "prompster · "
+
+
+_NAME_MAX_LENGTH = 100
+
+
+_DESCRIPTION_MAX_LENGTH = 300
+
+
+_PLAYLIST_URL_TEMPLATE = "https://open.spotify.com/playlist/{playlist_id}"

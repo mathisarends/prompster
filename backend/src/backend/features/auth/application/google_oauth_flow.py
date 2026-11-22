@@ -15,9 +15,6 @@ from backend.features.user.domain import (
 )
 
 
-_STATE_TOKEN_BYTES = 32
-
-
 class GoogleOAuthFlow:
     def __init__(
         self,
@@ -126,3 +123,6 @@ class GoogleOAuthFlow:
 
         user.profile_image_url = profile_image_url
         return await self._user_repository.update(user=user)
+
+
+_STATE_TOKEN_BYTES = 32
