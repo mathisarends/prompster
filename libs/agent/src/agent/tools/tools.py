@@ -1,10 +1,11 @@
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
+from functools import wraps
 from typing import Any
 
 from callm import ModelTool, ToolCall
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from agent.deck import (
     DeckStore,
@@ -12,10 +13,6 @@ from agent.deck import (
 from agent.tools.di import Inject, ToolContext
 from agent.tools.executor import ToolExecutor
 from agent.tools.handler import DeckCritic, Spotify
-from agent.tools.result_previews import (
-    playlist_preview_items,
-    track_preview_items,
-)
 from agent.tools.params import (
     AddDraftDeckTracksParams,
     AskOnboardingQuestionParams,
@@ -25,13 +22,12 @@ from agent.tools.params import (
     ReviewDeckParams,
     SearchParams,
 )
-from agent.tools.views import (
-    ActionResult,
-    ActionType,
-    InputRequest,
-    Phase,
-    Tool,
+from agent.tools.result_previews import (
+    playlist_preview_items,
+    track_preview_items,
 )
+from agent.tools.views import ActionResult, ActionType, InputRequest, Tool
+from agent.views import Phase
 
 logger = logging.getLogger(__name__)
 
@@ -93,9 +89,6 @@ class Tools:
 
         return decorator
 
-    def _register(self, tool: Tool) -> None:
-        self._tools[tool.name] = tool
-
     async def execute(
         self, name: str, args: dict, phase: Phase | None = None
     ) -> ActionResult:
@@ -130,9 +123,12 @@ class Tools:
             return None
         try:
             return tool.param_model.model_validate(self.parse_args(call))
-        except Exception as error:
+        except ValidationError as error:
             logger.error("Failed to validate tool params: %s", error)
             return None
+
+    def _register(self, tool: Tool) -> None:
+        self._tools[tool.name] = tool
 
     def _register_default_tools(self) -> None:
         @self.action(
@@ -164,20 +160,18 @@ class Tools:
             action_type=ActionType.SEARCH_TRACKS,
             included_in_phases={Phase.BUILD},
         )
+        @_report_failures_to_model
         async def search_tracks(
             spotify: Inject[Spotify],
             store: Inject[DeckStore],
             params: SearchParams,
         ) -> ActionResult:
-            try:
-                tracks = await spotify.search_tracks(params)
-                store.cache_tracks(tracks.tracks)
-                return ActionResult.ok(
-                    tracks.content,
-                    items=track_preview_items(tracks.tracks),
-                )
-            except Exception as error:
-                return ActionResult.fail(error)
+            tracks = await spotify.search_tracks(params)
+            store.cache_tracks(tracks.tracks)
+            return ActionResult.ok(
+                tracks.content,
+                items=track_preview_items(tracks.tracks),
+            )
 
         @self.action(
             params=SearchParams,
@@ -185,18 +179,16 @@ class Tools:
             action_type=ActionType.SEARCH_PLAYLISTS,
             included_in_phases={Phase.BUILD},
         )
+        @_report_failures_to_model
         async def search_playlists(
             spotify: Inject[Spotify],
             params: SearchParams,
         ) -> ActionResult:
-            try:
-                playlists = await spotify.search_playlists(params)
-                return ActionResult.ok(
-                    playlists.content,
-                    items=playlist_preview_items(playlists.playlists),
-                )
-            except Exception as error:
-                return ActionResult.fail(error)
+            playlists = await spotify.search_playlists(params)
+            return ActionResult.ok(
+                playlists.content,
+                items=playlist_preview_items(playlists.playlists),
+            )
 
         @self.action(
             description=(
@@ -210,35 +202,33 @@ class Tools:
             action_type=ActionType.ADD_DECK_TRACKS,
             included_in_phases={Phase.BUILD},
         )
+        @_report_failures_to_model
         async def add_deck_tracks(
             store: Inject[DeckStore],
             params: AddDraftDeckTracksParams,
         ) -> ActionResult:
-            try:
-                before = len(store.draft.tracks) if store.draft is not None else 0
-                updated_deck = store.add_track_refs(params.tracks)
-                added = len(updated_deck.tracks) - before
-                requested = len(params.tracks)
-                total = len(updated_deck.tracks)
-                if added == requested:
-                    return ActionResult.ok(
-                        f"Added {added} track(s) to Hitster deck "
-                        f'"{updated_deck.name}" ({total} total).'
-                    )
-                message = (
-                    f"Added {added} of {requested} track(s) to Hitster deck "
+            before = len(store.draft.tracks) if store.draft is not None else 0
+            updated_deck = store.add_track_refs(params.tracks)
+            added = len(updated_deck.tracks) - before
+            requested = len(params.tracks)
+            total = len(updated_deck.tracks)
+            if added == requested:
+                return ActionResult.ok(
+                    f"Added {added} track(s) to Hitster deck "
                     f'"{updated_deck.name}" ({total} total).'
                 )
-                if store.is_full:
-                    message += (
-                        f" The deck is full (max {store.track_limit}); "
-                        "extra tracks were skipped."
-                    )
-                else:
-                    message += " The others were already in the deck."
-                return ActionResult.ok(message)
-            except Exception as error:
-                return ActionResult.fail(error)
+            message = (
+                f"Added {added} of {requested} track(s) to Hitster deck "
+                f'"{updated_deck.name}" ({total} total).'
+            )
+            if store.is_full:
+                message += (
+                    f" The deck is full (max {store.track_limit}); "
+                    "extra tracks were skipped."
+                )
+            else:
+                message += " The others were already in the deck."
+            return ActionResult.ok(message)
 
         @self.action(
             description=("Remove tracks from the current Hitster deck by ID."),
@@ -247,17 +237,15 @@ class Tools:
             action_type=ActionType.REMOVE_DECK_TRACKS,
             included_in_phases={Phase.BUILD},
         )
+        @_report_failures_to_model
         async def remove_deck_tracks(
             store: Inject[DeckStore],
             params: RemoveDraftDeckTracksParams,
         ) -> ActionResult:
-            try:
-                store.remove_tracks(params.track_ids)
-                return ActionResult.ok(
-                    f"{len(params.track_ids)} track(s) removed from Hitster deck."
-                )
-            except Exception as error:
-                return ActionResult.fail(error)
+            store.remove_tracks(params.track_ids)
+            return ActionResult.ok(
+                f"{len(params.track_ids)} track(s) removed from Hitster deck."
+            )
 
         @self.action(
             description=("Replace tracks in the current Hitster deck by ID."),
@@ -266,17 +254,15 @@ class Tools:
             action_type=ActionType.REPLACE_DECK_TRACKS,
             included_in_phases={Phase.BUILD},
         )
+        @_report_failures_to_model
         async def replace_deck_tracks(
             store: Inject[DeckStore],
             params: ReplaceDraftDeckTracksParams,
         ) -> ActionResult:
-            try:
-                store.replace_track_refs(params.replacements)
-                return ActionResult.ok(
-                    f"{len(params.replacements)} track replacement(s) processed."
-                )
-            except Exception as error:
-                return ActionResult.fail(error)
+            store.replace_track_refs(params.replacements)
+            return ActionResult.ok(
+                f"{len(params.replacements)} track replacement(s) processed."
+            )
 
         @self.action(
             description=(
@@ -293,20 +279,18 @@ class Tools:
             action_type=ActionType.GET_SPOTIFY_PLAYLIST_TRACKS,
             included_in_phases={Phase.BUILD},
         )
+        @_report_failures_to_model
         async def get_spotify_playlist_tracks(
             spotify: Inject[Spotify],
             store: Inject[DeckStore],
             params: PlaylistIdParams,
         ) -> ActionResult:
-            try:
-                playlist_tracks = await spotify.get_playlist_tracks(params)
-                store.cache_tracks(playlist_tracks.tracks)
-                return ActionResult.ok(
-                    playlist_tracks.content,
-                    items=track_preview_items(playlist_tracks.tracks),
-                )
-            except Exception as error:
-                return ActionResult.fail(error)
+            playlist_tracks = await spotify.get_playlist_tracks(params)
+            store.cache_tracks(playlist_tracks.tracks)
+            return ActionResult.ok(
+                playlist_tracks.content,
+                items=track_preview_items(playlist_tracks.tracks),
+            )
 
         @self.action(
             description=(
@@ -319,12 +303,24 @@ class Tools:
             action_type=ActionType.SELF_REVIEW,
             included_in_phases={Phase.BUILD},
         )
+        @_report_failures_to_model
         async def review_deck(
             critic: Inject[DeckCritic],
             params: ReviewDeckParams,
         ) -> ActionResult:
-            try:
-                result = await critic.review()
-                return ActionResult.ok(result.content)
-            except Exception as error:
-                return ActionResult.fail(error)
+            result = await critic.review()
+            return ActionResult.ok(result.content)
+
+
+def _report_failures_to_model[**P](
+    handler: Callable[P, Awaitable[ActionResult]],
+) -> Callable[P, Awaitable[ActionResult]]:
+    @wraps(handler)
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> ActionResult:
+        try:
+            return await handler(*args, **kwargs)
+        except Exception as error:
+            # The model reads tool errors and can retry or choose another tool.
+            return ActionResult.fail(error)
+
+    return wrapper

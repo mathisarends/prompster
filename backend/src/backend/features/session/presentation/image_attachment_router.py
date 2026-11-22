@@ -1,9 +1,8 @@
 from typing import Annotated
 
-from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exceptions import (
-    AUTHENTICATION_REQUIRED_ERROR,
-)
+from fastapi import File, UploadFile, status
+from fastapi_canon import APIRouter, Inject
+
 from backend.features.session.application import (
     ImageAttachmentService,
     SessionImageAttachmentUpload,
@@ -15,8 +14,10 @@ from backend.features.session.presentation.exceptions import (
 from backend.features.session.presentation.schemas import (
     UploadedImageAttachmentResponse,
 )
-from fastapi import File, UploadFile, status
-from fastapi_canon import APIRouter, Inject
+from backend.presentation import (
+    AUTHENTICATION_REQUIRED_ERROR,
+    AuthenticatedUserId,
+)
 
 image_attachment_router = APIRouter(
     prefix="/image-attachments",
@@ -38,12 +39,13 @@ async def upload_image_attachment(
     attachment_store: Inject[MessageAttachmentStore],
     file: Annotated[UploadFile, File()],
 ) -> UploadedImageAttachmentResponse:
+    content = await file.read()
     image = await service.stash_image(
         user_id=authenticated_user_id,
         image=SessionImageAttachmentUpload(
             file_name=file.filename or "attachment",
             content_type=file.content_type or "application/octet-stream",
-            content=await file.read(),
+            content=content,
         ),
     )
     url = await attachment_store.create_signed_url(

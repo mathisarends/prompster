@@ -6,15 +6,24 @@ from agent import UserEvent
 from agent.messages import render_user_message_content
 from callm import (
     AssistantMessage as LLMAssistantMessage,
+)
+from callm import (
     ImageUrl,
+)
+from callm import (
     Message as LLMMessage,
+)
+from callm import (
     ToolCall as LLMToolCall,
+)
+from callm import (
     ToolResultMessage as LLMToolResultMessage,
+)
+from callm import (
     UserMessage as LLMUserMessage,
 )
 
 from backend.features.session.application.ports import MessageAttachmentStore
-
 from backend.features.session.domain import (
     AssistantMessage,
     CompletedCall,
@@ -43,14 +52,16 @@ class AgentHistoryBuilder:
         bound_event_ids: set[UUID] = set()
         messages: list[LLMMessage] = []
         for entry in session.entries:
-            if isinstance(entry, UserMessage):
-                for event in entry.user_curation_events:
-                    bound_event_ids.add(event.id)
-                messages.append(await self._to_user_message(entry))
-            elif isinstance(entry, AssistantMessage):
-                messages.append(LLMAssistantMessage(content=entry.content))
-            elif isinstance(entry, ToolCallSequence):
-                messages.extend(self._to_tool_call_messages(entry))
+            match entry:
+                case UserMessage():
+                    for event in entry.user_curation_events:
+                        bound_event_ids.add(event.id)
+                    user_message = await self._to_user_message(entry)
+                    messages.append(user_message)
+                case AssistantMessage():
+                    messages.append(LLMAssistantMessage(content=entry.content))
+                case ToolCallSequence():
+                    messages.extend(self._to_tool_call_messages(entry))
 
         trailing_events = self._to_trailing_user_events(
             session=session, bound_event_ids=bound_event_ids
@@ -143,7 +154,7 @@ class AgentHistoryBuilder:
         return LLMToolCall(
             id=call.id,
             name=call.function.name,
-            arguments=json.dumps(call.function.arguments, ensure_ascii=False),
+            arguments=json.dumps(dict(call.function.arguments), ensure_ascii=False),
         )
 
     def _to_user_events_for_message(self, *, message: UserMessage) -> list[UserEvent]:

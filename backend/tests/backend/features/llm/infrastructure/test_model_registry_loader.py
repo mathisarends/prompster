@@ -1,10 +1,11 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
+
 from backend.features.llm.infrastructure.model_registry_loader import (
     load_llm_registry,
 )
-from pydantic import ValidationError
 
 
 def _write_config(path: Path, *, default_model_id: str = "fast") -> Path:

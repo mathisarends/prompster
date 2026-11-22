@@ -1,22 +1,14 @@
-from backend.features.auth.application import (
-    InvalidCredentialsException,
-    SessionExpiredException,
-    SessionInvalidException,
-)
 from fastapi import status
 from fastapi_canon import Error
 
-
-class AuthenticationRequiredError(Exception):
-    """Raised when an HTTP request has no usable authentication session."""
-
-
-AUTHENTICATION_REQUIRED_ERROR = Error(
-    AuthenticationRequiredError,
-    status=status.HTTP_401_UNAUTHORIZED,
-    code="authentication_required",
+from backend.features.auth.domain import InvalidCredentialsException
+from backend.presentation import AUTHENTICATION_REQUIRED_ERROR
+from backend.shared.authentication import (
+    SessionExpiredException,
+    SessionInvalidException,
 )
-INVALID_CREDENTIALS_ERROR = Error(
+
+_INVALID_CREDENTIALS_ERROR = Error(
     InvalidCredentialsException,
     status=status.HTTP_401_UNAUTHORIZED,
     code="invalid_credentials",
@@ -35,7 +27,7 @@ SESSION_INVALID_ERROR = Error(
 
 AUTH_ERRORS = (
     AUTHENTICATION_REQUIRED_ERROR,
-    INVALID_CREDENTIALS_ERROR,
+    _INVALID_CREDENTIALS_ERROR,
     SESSION_EXPIRED_ERROR,
     SESSION_INVALID_ERROR,
 )

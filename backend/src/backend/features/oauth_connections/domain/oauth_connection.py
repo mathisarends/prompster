@@ -1,13 +1,9 @@
 from datetime import UTC, datetime
-from enum import StrEnum
 from typing import Self
 from uuid import UUID, uuid4
 
 from backend.shared.ddd import Aggregate
-
-
-class OAuthProvider(StrEnum):
-    SPOTIFY = "spotify"
+from backend.shared.oauth_provider import OAuthProvider
 
 
 class OAuthConnection(Aggregate):

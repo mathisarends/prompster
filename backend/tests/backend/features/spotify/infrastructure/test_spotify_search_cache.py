@@ -1,13 +1,13 @@
 import asyncio
 
-from backend.features.spotify.application.ports import SpotifyUnifiedSearchResult
+from backend.features.spotify.domain import SpotifyUnifiedSearchResult
 from backend.features.spotify.infrastructure.spotify_search_cache import (
     SpotifySearchCache,
 )
 
 
 def _empty_result() -> SpotifyUnifiedSearchResult:
-    return SpotifyUnifiedSearchResult(tracks=[], playlists=[], artists=[])
+    return SpotifyUnifiedSearchResult(tracks=(), playlists=(), artists=())
 
 
 class TestSpotifySearchCache:

@@ -1,13 +1,14 @@
+from fastapi import Query, Request, Response, status
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi_canon import APIRouter, CanonResponse, Inject
+
+from backend.env import EnvSettings
 from backend.features.auth.application import (
     GoogleOAuthFlow,
     SessionRefresher,
     SpotifyOAuthFlow,
 )
-from backend.env import EnvSettings
 from backend.features.auth.presentation.cookies import AuthCookies
-from backend.features.auth.presentation.dependencies import (
-    RefreshAuthenticatedUserId,
-)
 from backend.features.auth.presentation.exceptions import (
     SESSION_EXPIRED_ERROR,
     SESSION_INVALID_ERROR,
@@ -17,9 +18,7 @@ from backend.features.auth.presentation.oauth_state_cookies import (
     GoogleOAuthStateCookies,
     SpotifyLoginOAuthStateCookies,
 )
-from fastapi import Query, Request, Response, status
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi_canon import APIRouter, CanonResponse, Inject
+from backend.presentation import RefreshAuthenticatedUserId
 
 auth_router = APIRouter(
     prefix="/auth",
@@ -66,6 +65,7 @@ async def google_callback(
     auth_cookies: Inject[AuthCookies],
     google_oauth_state_cookies: Inject[GoogleOAuthStateCookies],
     env_config: Inject[EnvSettings],
+    *,
     code: str | None = Query(default=None, min_length=1, max_length=4096),
     state: str = Query(min_length=1, max_length=4096),
     error: str | None = Query(default=None, min_length=1, max_length=256),
@@ -131,6 +131,7 @@ async def spotify_login_callback(
     auth_cookies: Inject[AuthCookies],
     spotify_login_state_cookies: Inject[SpotifyLoginOAuthStateCookies],
     env_config: Inject[EnvSettings],
+    *,
     code: str | None = Query(default=None, min_length=1, max_length=4096),
     state: str = Query(min_length=1, max_length=4096),
     error: str | None = Query(default=None, min_length=1, max_length=256),

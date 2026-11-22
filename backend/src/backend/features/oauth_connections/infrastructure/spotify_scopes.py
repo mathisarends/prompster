@@ -10,7 +10,7 @@ class SpotifyScope(StrEnum):
     USER_MODIFY_PLAYBACK_STATE = "user-modify-playback-state"
 
 
-REQUIRED_SPOTIFY_SCOPES: tuple[SpotifyScope, ...] = (
+_REQUIRED_SPOTIFY_SCOPES: tuple[SpotifyScope, ...] = (
     SpotifyScope.USER_READ_PRIVATE,
     SpotifyScope.PLAYLIST_MODIFY_PUBLIC,
     SpotifyScope.PLAYLIST_MODIFY_PRIVATE,
@@ -19,4 +19,4 @@ REQUIRED_SPOTIFY_SCOPES: tuple[SpotifyScope, ...] = (
     SpotifyScope.USER_MODIFY_PLAYBACK_STATE,
 )
 
-SPOTIFY_SCOPE_STRING: str = " ".join(REQUIRED_SPOTIFY_SCOPES)
+SPOTIFY_SCOPE_STRING: str = " ".join(_REQUIRED_SPOTIFY_SCOPES)

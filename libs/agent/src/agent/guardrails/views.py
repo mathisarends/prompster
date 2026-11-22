@@ -26,11 +26,6 @@ class Guardrail:
         self.description = description
         self._fn = fn
 
-    async def apply(self, store: DeckStore) -> None:
-        result = self._fn(store)
-        if inspect.isawaitable(result):
-            await result
-
     def __eq__(self, other: object) -> bool:
         return (
             self.name == other.name if isinstance(other, Guardrail) else NotImplemented
@@ -38,3 +33,8 @@ class Guardrail:
 
     def __hash__(self) -> int:
         return hash(self.name)
+
+    async def apply(self, store: DeckStore) -> None:
+        result = self._fn(store)
+        if inspect.isawaitable(result):
+            await result

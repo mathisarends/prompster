@@ -1,8 +1,8 @@
-from .contract import contract
-from .events import SessionStreamEvent
-from .router import rpc_router
-from .spotify_export import SpotifyExportEvent
-from .stream import session_events
+from backend.features.session.presentation.rpc.contract import contract
+from backend.features.session.presentation.rpc.events import SessionStreamEvent
+from backend.features.session.presentation.rpc.router import rpc_router
+from backend.features.session.presentation.rpc.spotify_export import SpotifyExportEvent
+from backend.features.session.presentation.rpc.stream import session_events
 
 __all__ = [
     "SessionStreamEvent",

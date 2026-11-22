@@ -6,7 +6,6 @@ from backend.features.oauth_connections.application import (
     SpotifyTokenRevokedException,
     SpotifyTokenService,
 )
-from backend.features.spotify.application.ports import SpotifyPlaylistCreator
 from backend.features.session.application.ports import (
     PlaylistMetadataGenerator,
     PlaylistMetadataTrack,
@@ -19,6 +18,7 @@ from backend.features.session.domain import (
     SessionPlaylistMissingSpotifyTracksError,
     SessionRepository,
 )
+from backend.features.spotify.application import SpotifyPlaylistCreator
 from backend.features.user.domain import UserRepository
 
 
@@ -44,16 +44,11 @@ class SpotifyExportPlan:
     access_token: str
     name: str
     description: str
-    track_uris: list[str]
+    track_uris: tuple[str, ...]
     existing_playlist_id: str | None
 
 
 class SessionSpotifyPlaylistExporter:
-    _NAME_PREFIX = "prompster · "
-    _NAME_MAX_LENGTH = 100
-    _DESCRIPTION_MAX_LENGTH = 300
-    _PLAYLIST_URL_TEMPLATE = "https://open.spotify.com/playlist/{playlist_id}"
-
     def __init__(
         self,
         session_repository: SessionRepository,
@@ -88,9 +83,9 @@ class SessionSpotifyPlaylistExporter:
                 f"Session {session.id} has no playlist tracks to export."
             )
 
-        track_uris = [
+        track_uris = tuple(
             track.spotify_uri for track in playlist.tracks if track.spotify_uri
-        ]
+        )
         if not track_uris:
             raise SessionPlaylistMissingSpotifyTracksError(
                 f"Session {session.id} playlist has no tracks linked to Spotify."
@@ -98,15 +93,14 @@ class SessionSpotifyPlaylistExporter:
 
         access_token = await self._require_spotify_access_token(user_id=user_id)
 
-        metadata = await self._metadata_generator.generate(
-            [self._to_metadata_track(track) for track in playlist.tracks]
-        )
+        metadata_tracks = [self._to_metadata_track(track) for track in playlist.tracks]
+        metadata = await self._metadata_generator.generate(metadata_tracks)
 
         return SpotifyExportPlan(
             session=session,
             access_token=access_token,
             name=self._build_name(metadata.name),
-            description=metadata.description[: self._DESCRIPTION_MAX_LENGTH],
+            description=metadata.description[:_DESCRIPTION_MAX_LENGTH],
             track_uris=track_uris,
             existing_playlist_id=playlist.spotify_playlist_id or None,
         )
@@ -119,14 +113,14 @@ class SessionSpotifyPlaylistExporter:
                 access_token=plan.access_token,
                 name=plan.name,
                 description=plan.description,
-                track_uris=plan.track_uris,
+                track_uris=list(plan.track_uris),
             )
         else:
             playlist_id = await self._create_new_playlist(
                 access_token=plan.access_token,
                 name=plan.name,
                 description=plan.description,
-                track_uris=plan.track_uris,
+                track_uris=list(plan.track_uris),
             )
             if plan.session.playlist is not None:
                 plan.session.playlist.spotify_playlist_id = playlist_id
@@ -136,7 +130,7 @@ class SessionSpotifyPlaylistExporter:
             id=playlist_id,
             name=plan.name,
             description=plan.description,
-            url=self._PLAYLIST_URL_TEMPLATE.format(playlist_id=playlist_id),
+            url=_PLAYLIST_URL_TEMPLATE.format(playlist_id=playlist_id),
             track_count=len(plan.track_uris),
         )
 
@@ -167,7 +161,7 @@ class SessionSpotifyPlaylistExporter:
         access_token: str,
         name: str,
         description: str,
-        track_uris: list[str],
+        track_uris: tuple[str, ...],
     ) -> str:
         playlist_id = await self._spotify_playlist_creator.create_private_playlist(
             access_token=access_token,
@@ -188,7 +182,7 @@ class SessionSpotifyPlaylistExporter:
         access_token: str,
         name: str,
         description: str,
-        track_uris: list[str],
+        track_uris: tuple[str, ...],
     ) -> str:
         await self._spotify_playlist_creator.update_playlist_details(
             access_token=access_token,
@@ -209,8 +203,8 @@ class SessionSpotifyPlaylistExporter:
         return session
 
     def _build_name(self, generated_name: str) -> str:
-        max_suffix = self._NAME_MAX_LENGTH - len(self._NAME_PREFIX)
-        return f"{self._NAME_PREFIX}{generated_name.strip()[:max_suffix]}"
+        max_suffix = _NAME_MAX_LENGTH - len(_NAME_PREFIX)
+        return f"{_NAME_PREFIX}{generated_name.strip()[:max_suffix]}"
 
     def _to_metadata_track(self, track: PlaylistTrack) -> PlaylistMetadataTrack:
         return PlaylistMetadataTrack(
@@ -218,3 +212,15 @@ class SessionSpotifyPlaylistExporter:
             artist=track.artist,
             year=track.year,
         )
+
+
+_NAME_PREFIX = "prompster · "
+
+
+_NAME_MAX_LENGTH = 100
+
+
+_DESCRIPTION_MAX_LENGTH = 300
+
+
+_PLAYLIST_URL_TEMPLATE = "https://open.spotify.com/playlist/{playlist_id}"

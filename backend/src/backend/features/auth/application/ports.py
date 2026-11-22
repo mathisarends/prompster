@@ -1,13 +1,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from backend.features.auth.application.schemas import (
-    AuthSession,
-    GoogleIdentity,
-    SpotifyIdentity,
-    TokenPayload,
-    TokenType,
-)
+from backend.features.auth.domain import GoogleIdentity, SpotifyIdentity
 
 
 class GoogleOAuthProvider(ABC):
@@ -41,15 +35,3 @@ class SpotifyLoginProvider(ABC):
     @abstractmethod
     async def authorize(self, *, authorization_code: str) -> SpotifyLogin:
         """Raises ValueError when Spotify rejects the authorization code."""
-
-
-class TokenIssuer(ABC):
-    @abstractmethod
-    def create_session(self, user_id: UUID) -> AuthSession: ...
-
-    @abstractmethod
-    def validate(
-        self,
-        token: str,
-        expected_type: TokenType = TokenType.ACCESS,
-    ) -> TokenPayload: ...

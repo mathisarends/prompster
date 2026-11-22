@@ -1,17 +1,15 @@
-from .exceptions import (
-    InvalidCredentialsException,
-    SessionExpiredException,
-    SessionInvalidException,
+from backend.features.auth.application.google_oauth_flow import GoogleOAuthFlow
+from backend.features.auth.application.ports import (
+    GoogleOAuthProvider,
+    SpotifyLoginProvider,
 )
-from .google_oauth_flow import GoogleOAuthFlow
-from .refresh_session import SessionRefresher
-from .spotify_oauth_flow import SpotifyOAuthFlow
+from backend.features.auth.application.refresh_session import SessionRefresher
+from backend.features.auth.application.spotify_oauth_flow import SpotifyOAuthFlow
 
 __all__ = [
     "GoogleOAuthFlow",
-    "InvalidCredentialsException",
+    "GoogleOAuthProvider",
     "SessionRefresher",
-    "SessionExpiredException",
-    "SessionInvalidException",
+    "SpotifyLoginProvider",
     "SpotifyOAuthFlow",
 ]

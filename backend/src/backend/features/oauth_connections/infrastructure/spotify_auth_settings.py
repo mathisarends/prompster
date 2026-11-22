@@ -1,6 +1,6 @@
 from urllib.parse import urlparse
 
-from pydantic import Field, ValidationInfo, field_validator
+from pydantic import Field, SecretStr, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,7 +13,7 @@ class SpotifyAuthSettings(BaseSettings):
     )
 
     client_id: str = Field(default="")
-    client_secret: str = Field(default="")
+    client_secret: SecretStr = Field(default=SecretStr(""))
     redirect_uri: str = Field(default="")
 
     authorization_endpoint: str = Field(
@@ -27,7 +27,7 @@ class SpotifyAuthSettings(BaseSettings):
     )
     state_cookie_name: str = "spotify_oauth_state"
     login_state_cookie_name: str = "spotify_login_state"
-    token_encryption_key: str = Field(default="")
+    token_encryption_key: SecretStr = Field(default=SecretStr(""))
 
     def validate_redirect_host(self, frontend_base_url: str) -> None:
         redirect_host = urlparse(self.redirect_uri).hostname
@@ -42,17 +42,23 @@ class SpotifyAuthSettings(BaseSettings):
                 "so access cookies are sent on /auth/spotify/callback"
             )
 
-    @field_validator("client_id", "client_secret", "redirect_uri")
+    @field_validator("client_id", "redirect_uri")
     @classmethod
     def validate_required_values(cls, value: str, info: ValidationInfo) -> str:
         normalized = value.strip()
         if not normalized:
             if info.field_name == "client_id":
                 raise ValueError("Spotify client ID is not configured")
-            if info.field_name == "client_secret":
-                raise ValueError("Spotify client secret is not configured")
             raise ValueError("Spotify redirect URI is not configured")
         return normalized
+
+    @field_validator("client_secret")
+    @classmethod
+    def validate_client_secret(cls, value: SecretStr) -> SecretStr:
+        normalized = value.get_secret_value().strip()
+        if not normalized:
+            raise ValueError("Spotify client secret is not configured")
+        return SecretStr(normalized)
 
     @field_validator(
         "redirect_uri",

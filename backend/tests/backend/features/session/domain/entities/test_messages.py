@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from uuid import uuid4
+from uuid import UUID
 
 from backend.features.session.domain import (
     AssistantMessage,
@@ -14,7 +14,7 @@ from backend.features.session.domain import (
 
 class TestUserMessage:
     def test_keeps_explicit_identity(self) -> None:
-        message_id = uuid4()
+        message_id = UUID(int=1)
         created_time = datetime(2026, 6, 6, tzinfo=UTC)
 
         message = UserMessage.restore(
@@ -49,7 +49,7 @@ class TestUserMessage:
     def test_keeps_user_curation_event_references(self) -> None:
         event = UserCurationEvent.create(
             event_type=UserCurationEventType.TRACK_ADDED,
-            track_id=uuid4(),
+            track_id=UUID(int=2),
             track_title="Starlight",
             track_artist="Muse",
         )
@@ -82,7 +82,7 @@ class TestAssistantMessage:
         assert message.content == ""
 
     def test_keeps_explicit_identity(self) -> None:
-        message_id = uuid4()
+        message_id = UUID(int=3)
         created_time = datetime(2026, 6, 6, tzinfo=UTC)
 
         message = AssistantMessage.restore(

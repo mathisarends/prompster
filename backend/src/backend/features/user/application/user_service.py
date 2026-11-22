@@ -1,11 +1,11 @@
-from uuid import UUID
 from dataclasses import dataclass
+from uuid import UUID
 
-from backend.features.auth.application.exceptions import SessionInvalidException
 from backend.features.user.domain import User, UserRepository
+from backend.shared.authentication import SessionInvalidException
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class UserDeleteInformation:
     session_count: int
 

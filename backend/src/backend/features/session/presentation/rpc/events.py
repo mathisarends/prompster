@@ -3,6 +3,9 @@ from enum import StrEnum
 from typing import Annotated, Literal
 from uuid import UUID
 
+from fastapi_canon.integrations.websockets import RpcModel
+from pydantic import Field
+
 from backend.features.session.domain import OnboardingQuestionSelectionMode
 from backend.features.session.presentation.schemas import (
     AssistantMessageEntryResponse,
@@ -11,8 +14,6 @@ from backend.features.session.presentation.schemas import (
     ToolCallResultItemResponse,
     ToolCallSequenceEntryResponse,
 )
-from pydantic import Field
-from fastapi_canon.integrations.websockets import RpcModel
 
 
 class SessionStreamEventType(StrEnum):

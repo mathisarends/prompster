@@ -1,3 +1,4 @@
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,4 +10,4 @@ class LLMCredentials(BaseSettings):
         populate_by_name=True,
     )
 
-    openai_api_key: str | None = None
+    openai_api_key: SecretStr | None = None

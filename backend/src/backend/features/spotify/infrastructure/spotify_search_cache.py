@@ -3,7 +3,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from time import monotonic
 
-from backend.features.spotify.application.ports import SpotifyUnifiedSearchResult
+from backend.features.spotify.domain import SpotifyUnifiedSearchResult
 
 _DEFAULT_DEBOUNCE_SECONDS = 0.12
 _DEFAULT_CACHE_TTL_SECONDS = 6.0

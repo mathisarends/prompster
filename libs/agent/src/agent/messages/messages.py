@@ -12,8 +12,7 @@ from callm import (
 
 from agent.deck import DeckDraft
 from agent.messages.rendering import render_deck_context, render_user_message_content
-from agent.tools.views import Phase
-from agent.views import UserEvent
+from agent.views import Phase, UserEvent
 
 type _DeckDraftProvider = Callable[[], DeckDraft | None]
 

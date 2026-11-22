@@ -1,5 +1,6 @@
 from enum import StrEnum
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,7 +23,7 @@ class AuthSettings(BaseSettings):
         populate_by_name=True,
     )
 
-    jwt_secret: str = "dev-secret-change-me"
+    jwt_secret: SecretStr = SecretStr("dev-secret-change-me")
     jwt_algorithm: _JwtAlgorithm = _JwtAlgorithm.HS256
     jwt_access_token_expire_minutes: int = 60 * 24
     jwt_refresh_token_expire_days: int = 7

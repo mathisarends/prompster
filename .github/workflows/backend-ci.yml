@@ -8,6 +8,8 @@ on:
       - "libs/**"
       - "pyproject.toml"
       - "uv.lock"
+      - "smelt.yml"
+      - ".smelt/**"
       - "rpcgen.toml"
       - "schema/**"
       - "frontend/src/api/session-rpc/**"
@@ -21,6 +23,8 @@ on:
       - "libs/**"
       - "pyproject.toml"
       - "uv.lock"
+      - "smelt.yml"
+      - ".smelt/**"
       - "rpcgen.toml"
       - "schema/**"
       - "frontend/src/api/session-rpc/**"
@@ -43,6 +47,9 @@ jobs:
 
       - name: Set up Python
         run: uv python install
+
+      - name: Check architecture and conventions
+        run: uvx --python 3.14 --from smelt-cli==0.16.1 smelt check --strict-coverage --fail-on warning --format github
 
       - name: Install dependencies
         run: uv sync --all-packages --dev

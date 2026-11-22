@@ -1,15 +1,16 @@
-from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exceptions import (
-    AUTHENTICATION_REQUIRED_ERROR,
-)
+from fastapi import Response, status
+from fastapi_canon import APIRouter, CanonResponse, Inject
+
 from backend.features.user.application import UserService
 from backend.features.user.presentation.mapper import to_user_me_response
 from backend.features.user.presentation.schemas import (
     UserDeleteInformationResponse,
     UserMeResponse,
 )
-from fastapi import Response, status
-from fastapi_canon import APIRouter, CanonResponse, Inject
+from backend.presentation import (
+    AUTHENTICATION_REQUIRED_ERROR,
+    AuthenticatedUserId,
+)
 
 user_router = APIRouter(
     prefix="/users",

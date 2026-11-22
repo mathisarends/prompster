@@ -5,7 +5,7 @@ from backend.features.session.application import (
     SessionImageAttachmentReference,
     SessionMessageAttachment,
 )
-from backend.features.session.application.ports.session_summary_query import (
+from backend.features.session.application.ports import (
     SessionSummary,
 )
 from backend.features.session.domain import (
@@ -58,44 +58,50 @@ def to_session_response(
     *,
     image_urls_by_storage_key: Mapping[str, str] | None = None,
 ) -> SessionResponse:
+    entries = [
+        to_entry_response(
+            entry,
+            image_urls_by_storage_key=image_urls_by_storage_key,
+        )
+        for entry in session.entries
+    ]
+    playlist_references = [
+        _to_playlist_reference_response(reference)
+        for reference in session.playlist_references
+    ]
+    artist_references = [
+        _to_artist_reference_response(reference)
+        for reference in session.artist_references
+    ]
+    unconsumed_user_curation_events = [
+        _to_user_curation_event_response(event)
+        for event in session.unconsumed_user_curation_events
+    ]
+    onboarding_questions = [
+        _to_onboarding_question_response(question)
+        for question in session.onboarding_questions
+    ]
     return SessionResponse(
         id=session.id,
         title=session.title,
         is_starred=session.is_starred,
         phase=session.phase,
         created_at=session.created_at,
-        entries=[
-            to_entry_response(
-                entry,
-                image_urls_by_storage_key=image_urls_by_storage_key,
-            )
-            for entry in session.entries
-        ],
-        playlist=to_playlist_response(session.playlist),
-        playlist_references=[
-            to_playlist_reference_response(reference)
-            for reference in session.playlist_references
-        ],
-        artist_references=[
-            to_artist_reference_response(reference)
-            for reference in session.artist_references
-        ],
-        unconsumed_user_curation_events=[
-            to_user_curation_event_response(event)
-            for event in session.unconsumed_user_curation_events
-        ],
-        onboarding_questions=[
-            to_onboarding_question_response(question)
-            for question in session.onboarding_questions
-        ],
+        entries=entries,
+        playlist=_to_playlist_response(session.playlist),
+        playlist_references=playlist_references,
+        artist_references=artist_references,
+        unconsumed_user_curation_events=unconsumed_user_curation_events,
+        onboarding_questions=onboarding_questions,
     )
 
 
 def to_session_summary_list_response(
     items: list[SessionSummary],
 ) -> SessionSummaryListResponse:
+    summaries = [_to_session_summary_response(item) for item in items]
     return SessionSummaryListResponse(
-        items=[to_session_summary_response(item) for item in items],
+        items=summaries,
     )
 
 
@@ -136,21 +142,23 @@ def to_entry_response(
     image_urls_by_storage_key: Mapping[str, str] | None = None,
 ) -> SessionEntryResponse:
     if isinstance(entry, UserMessage):
+        attachments = [
+            _to_user_message_attachment_response(attachment)
+            for attachment in entry.attachments
+        ]
+        user_curation_events = [
+            _to_user_curation_event_response(event)
+            for event in entry.user_curation_events
+        ]
         return UserMessageEntryResponse(
             id=entry.id,
             content=entry.content,
-            attachments=[
-                to_user_message_attachment_response(attachment)
-                for attachment in entry.attachments
-            ],
-            image_attachments=to_image_attachment_urls(
+            attachments=attachments,
+            image_attachments=_to_image_attachment_urls(
                 entry.image_attachments,
                 image_urls_by_storage_key=image_urls_by_storage_key,
             ),
-            user_curation_events=[
-                to_user_curation_event_response(event)
-                for event in entry.user_curation_events
-            ],
+            user_curation_events=user_curation_events,
             created_at=entry.created_at,
         )
     if isinstance(entry, AssistantMessage):
@@ -167,41 +175,12 @@ def to_entry_response(
 def to_tool_call_sequence_response(
     sequence: ToolCallSequence,
 ) -> ToolCallSequenceEntryResponse:
+    calls = [_to_tool_call_response(call) for call in sequence.calls]
     return ToolCallSequenceEntryResponse(
         id=sequence.id,
         created_at=sequence.created_at,
         label=sequence.label,
-        calls=[to_tool_call_response(call) for call in sequence.calls],
-    )
-
-
-def to_tool_call_response(call: ToolCall) -> ToolCallResponse:
-    result_items: tuple[ToolResultItem, ...] = ()
-    if isinstance(call, CompletedCall):
-        state, result, error = ToolCallState.COMPLETED, call.result, None
-        result_items = call.items
-    elif isinstance(call, FailedCall):
-        state, result, error = ToolCallState.FAILED, None, call.error
-    elif isinstance(call, PendingCall):
-        state, result, error = ToolCallState.PENDING, None, None
-    else:
-        raise TypeError(f"Unsupported tool call: {type(call).__name__}")
-    return ToolCallResponse(
-        id=call.id,
-        function=ToolFunctionResponse(
-            name=call.function.name,
-            arguments=call.function.arguments,
-            status_label=call.function.status_label,
-            action_type=(
-                call.function.action_type.value
-                if call.function.action_type is not None
-                else None
-            ),
-        ),
-        state=state,
-        result=result,
-        error=error,
-        result_items=[to_tool_call_result_item_response(item) for item in result_items],
+        calls=calls,
     )
 
 
@@ -213,16 +192,6 @@ def to_tool_call_result_item_response(
         cover_url=item.cover_url,
         artist=item.artist,
         track_uri=item.track_uri,
-    )
-
-
-def to_session_summary_response(session: SessionSummary) -> SessionSummaryResponse:
-    return SessionSummaryResponse(
-        id=session.id,
-        title=session.title,
-        is_starred=session.is_starred,
-        created_at=session.created_at,
-        last_activity_at=session.last_activity_at,
     )
 
 
@@ -249,17 +218,62 @@ def to_spotify_playlist_export_response(
     )
 
 
-def to_playlist_response(playlist: Playlist | None) -> PlaylistResponse | None:
-    if playlist is None:
-        return None
-    return PlaylistResponse(
-        id=playlist.id,
-        name=playlist.name,
-        tracks=[to_playlist_track_response(track) for track in playlist.tracks],
+def _to_tool_call_response(call: ToolCall) -> ToolCallResponse:
+    result_items: tuple[ToolResultItem, ...] = ()
+    match call:
+        case CompletedCall():
+            state, result, error = ToolCallState.COMPLETED, call.result, None
+            result_items = call.items
+        case FailedCall():
+            state, result, error = ToolCallState.FAILED, None, call.error
+        case PendingCall():
+            state, result, error = ToolCallState.PENDING, None, None
+        case _:
+            raise TypeError(f"Unsupported tool call: {type(call).__name__}")
+    result_item_responses = [
+        to_tool_call_result_item_response(item) for item in result_items
+    ]
+    return ToolCallResponse(
+        id=call.id,
+        function=ToolFunctionResponse(
+            name=call.function.name,
+            arguments=dict(call.function.arguments),
+            status_label=call.function.status_label,
+            action_type=(
+                call.function.action_type.value
+                if call.function.action_type is not None
+                else None
+            ),
+        ),
+        state=state,
+        result=result,
+        error=error,
+        result_items=result_item_responses,
     )
 
 
-def to_playlist_reference_response(
+def _to_session_summary_response(session: SessionSummary) -> SessionSummaryResponse:
+    return SessionSummaryResponse(
+        id=session.id,
+        title=session.title,
+        is_starred=session.is_starred,
+        created_at=session.created_at,
+        last_activity_at=session.last_activity_at,
+    )
+
+
+def _to_playlist_response(playlist: Playlist | None) -> PlaylistResponse | None:
+    if playlist is None:
+        return None
+    tracks = [to_playlist_track_response(track) for track in playlist.tracks]
+    return PlaylistResponse(
+        id=playlist.id,
+        name=playlist.name,
+        tracks=tracks,
+    )
+
+
+def _to_playlist_reference_response(
     reference: PlaylistReference,
 ) -> PlaylistReferenceResponse:
     return PlaylistReferenceResponse(
@@ -272,7 +286,9 @@ def to_playlist_reference_response(
     )
 
 
-def to_artist_reference_response(reference: ArtistReference) -> ArtistReferenceResponse:
+def _to_artist_reference_response(
+    reference: ArtistReference,
+) -> ArtistReferenceResponse:
     return ArtistReferenceResponse(
         id=reference.id,
         spotify_artist_id=reference.spotify_artist_id,
@@ -284,7 +300,7 @@ def to_artist_reference_response(reference: ArtistReference) -> ArtistReferenceR
     )
 
 
-def to_user_message_attachment_response(
+def _to_user_message_attachment_response(
     attachment: UserMessageAttachment,
 ) -> SessionMessageAttachmentResponse:
     return SessionMessageAttachmentResponse(
@@ -297,12 +313,14 @@ def to_user_message_attachment_response(
     )
 
 
-def to_image_attachment_urls(
+def _to_image_attachment_urls(
     attachments: tuple[ImageAttachment, ...],
     *,
     image_urls_by_storage_key: Mapping[str, str] | None = None,
 ) -> list[str]:
-    urls_by_storage_key = image_urls_by_storage_key or {}
+    urls_by_storage_key = (
+        image_urls_by_storage_key if image_urls_by_storage_key is not None else {}
+    )
     return [
         url
         for attachment in attachments
@@ -310,7 +328,7 @@ def to_image_attachment_urls(
     ]
 
 
-def to_user_curation_event_response(
+def _to_user_curation_event_response(
     event: UserCurationEvent,
 ) -> UserCurationEventResponse:
     return UserCurationEventResponse(
@@ -326,7 +344,7 @@ def to_user_curation_event_response(
     )
 
 
-def to_onboarding_question_response(
+def _to_onboarding_question_response(
     question: OnboardingQuestion,
 ) -> OnboardingQuestionResponse:
     return OnboardingQuestionResponse(

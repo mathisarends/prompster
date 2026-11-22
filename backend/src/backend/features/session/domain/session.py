@@ -1,24 +1,10 @@
-from collections.abc import Sequence
-from datetime import UTC, datetime
 import hashlib
 import json
+from collections.abc import Sequence
+from datetime import UTC, datetime
 from typing import Self
 from uuid import UUID, uuid4
 
-from backend.features.session.domain.exceptions import (
-    ArtistReferenceNotFoundError,
-    InvalidSessionPhaseTransitionError,
-    NoCurrentAssistantMessageError,
-    NoPendingToolCallSequenceError,
-    PendingToolCallsError,
-    PlaylistTrackLimitExceededError,
-    PlaylistTrackNotFoundError,
-    PlaylistReferenceNotFoundError,
-    SessionAccessDeniedError,
-    UserCurationEventAlreadyConsumedError,
-    UserCurationEventMissingTrackYearError,
-    UserCurationEventNotFoundError,
-)
 from backend.features.session.domain.entities import (
     ArtistReference,
     AssistantMessage,
@@ -39,12 +25,26 @@ from backend.features.session.domain.entities import (
     UserMessage,
     UserMessageAttachment,
 )
+from backend.features.session.domain.exceptions import (
+    ArtistReferenceNotFoundError,
+    InvalidSessionPhaseTransitionError,
+    NoCurrentAssistantMessageError,
+    NoPendingToolCallSequenceError,
+    PendingToolCallsError,
+    PlaylistReferenceNotFoundError,
+    PlaylistTrackLimitExceededError,
+    PlaylistTrackNotFoundError,
+    SessionAccessDeniedError,
+    UserCurationEventAlreadyConsumedError,
+    UserCurationEventMissingTrackYearError,
+    UserCurationEventNotFoundError,
+)
 from backend.features.session.domain.views import Phase
 from backend.shared.ddd import Aggregate
 
 MAX_PLAYLIST_TRACKS = 50
-PLAYLIST_FINGERPRINT_VERSION = 1
 DECIDE_FOR_ME_OPTION = "Entscheide für mich"
+_PLAYLIST_FINGERPRINT_VERSION = 1
 
 
 class Session(Aggregate):
@@ -72,12 +72,18 @@ class Session(Aggregate):
         self._owner_id = owner_id
         self._is_starred = is_starred
         self._playlist = playlist
-        self._user_curation_events: list[UserCurationEvent] = user_curation_events or []
-        self._playlist_references: list[PlaylistReference] = playlist_references or []
-        self._artist_references: list[ArtistReference] = artist_references or []
+        self._user_curation_events: list[UserCurationEvent] = (
+            user_curation_events if user_curation_events is not None else []
+        )
+        self._playlist_references: list[PlaylistReference] = (
+            playlist_references if playlist_references is not None else []
+        )
+        self._artist_references: list[ArtistReference] = (
+            artist_references if artist_references is not None else []
+        )
         self._phase = phase
         self._onboarding_questions: list[OnboardingQuestion] = (
-            onboarding_questions or []
+            onboarding_questions if onboarding_questions is not None else []
         )
         self._playlist_pdf_storage_key = playlist_pdf_storage_key
         self._playlist_pdf_fingerprint = playlist_pdf_fingerprint
@@ -172,7 +178,7 @@ class Session(Aggregate):
         if self._playlist is None:
             return None
         payload = {
-            "version": PLAYLIST_FINGERPRINT_VERSION,
+            "version": _PLAYLIST_FINGERPRINT_VERSION,
             "tracks": [
                 {
                     "title": track.title,
@@ -242,6 +248,7 @@ class Session(Aggregate):
         year: int,
         spotify_uri: str | None = None,
         cover_url: str | None = None,
+        *,
         record_user_curation_event: bool = True,
     ) -> PlaylistTrack:
         if self._playlist is None:
@@ -427,6 +434,102 @@ class Session(Aggregate):
 
         raise ValueError(f"Onboarding question {question_id} not found.")
 
+    def add_user_message(
+        self,
+        content: str,
+        attachments: list[UserMessageAttachment] | None = None,
+        image_attachments: list[ImageAttachment] | None = None,
+    ) -> UserMessage:
+        if self._find_pending_tool_call_sequence() is not None:
+            raise PendingToolCallsError(
+                f"Cannot add user message to session {self.id} "
+                "while tool calls are pending."
+            )
+        message = UserMessage.create(
+            content=content,
+            attachments=attachments,
+            image_attachments=image_attachments,
+            user_curation_events=self._unbound_unconsumed_user_curation_events(),
+        )
+        self._entries.append(message)
+        return message
+
+    def add_assistant_message(self, content: str = "") -> AssistantMessage:
+        message = AssistantMessage.create(content=content)
+        self._entries.append(message)
+        return message
+
+    def append_to_current_assistant_message(self, chunk: str) -> AssistantMessage:
+        message = self._require_current_assistant_message()
+        message.content += chunk
+        return message
+
+    def cancel_current_assistant_message(self) -> AssistantMessage:
+        message = self._require_current_assistant_message()
+        self._entries.pop()
+        return message
+
+    def add_tool_call(
+        self, call: PendingCall, sequence_label: str | None = None
+    ) -> ToolCallSequence:
+        last = self._entries[-1] if self._entries else None
+        if isinstance(last, ToolCallSequence):
+            last.add(call)
+            return last
+        sequence = ToolCallSequence.create(calls=[call], label=sequence_label)
+        self._entries.append(sequence)
+        return sequence
+
+    def resolve_tool_call(
+        self,
+        tool_call_id: str,
+        result: str,
+        items: Sequence[ToolResultItem] = (),
+    ) -> CompletedCall:
+        sequence = self._require_pending_tool_call_sequence()
+        return sequence.resolve(tool_call_id, result, items)
+
+    def fail_tool_call(self, tool_call_id: str, error: str) -> FailedCall:
+        sequence = self._require_pending_tool_call_sequence()
+        return sequence.fail(tool_call_id, error)
+
+    def remove_last_pending_tool_call(self) -> PendingCall | None:
+        sequence = self._find_pending_tool_call_sequence()
+        if sequence is None:
+            return None
+
+        removed = sequence.remove_last_pending()
+        if removed is not None and not sequence.calls:
+            self._entries.remove(sequence)
+        return removed
+
+    def pending_tool_call_sequence(self) -> ToolCallSequence | None:
+        return self._find_pending_tool_call_sequence()
+
+    def star(self) -> None:
+        self._is_starred = True
+
+    def unstar(self) -> None:
+        self._is_starred = False
+
+    def advance_to_building_phase(self) -> None:
+        if self._phase != Phase.ONBOARDING:
+            raise InvalidSessionPhaseTransitionError(
+                f"Cannot advance session {self.id} from {self._phase} to {Phase.BUILD}."
+            )
+        if any(not question.is_answered for question in self._onboarding_questions):
+            raise InvalidSessionPhaseTransitionError(
+                f"Cannot advance session {self.id} while onboarding questions are unanswered."
+            )
+        self._reconstruct_onboarding_history()
+        self._phase = Phase.BUILD
+
+    def has_access(self, user_id: UUID) -> None:
+        if self.owner_id != user_id:
+            raise SessionAccessDeniedError(
+                f"User {user_id} does not have access to session {self.id}."
+            )
+
     def _normalize_onboarding_answers(
         self,
         *,
@@ -519,75 +622,6 @@ class Session(Aggregate):
         if not entry.calls:
             return False
         return all(call.function.is_onboarding_question for call in entry.calls)
-
-    def add_user_message(
-        self,
-        content: str,
-        attachments: list[UserMessageAttachment] | None = None,
-        image_attachments: list[ImageAttachment] | None = None,
-    ) -> UserMessage:
-        if self._find_pending_tool_call_sequence() is not None:
-            raise PendingToolCallsError(
-                f"Cannot add user message to session {self.id} "
-                "while tool calls are pending."
-            )
-        message = UserMessage.create(
-            content=content,
-            attachments=attachments,
-            image_attachments=image_attachments,
-            user_curation_events=self._unbound_unconsumed_user_curation_events(),
-        )
-        self._entries.append(message)
-        return message
-
-    def add_assistant_message(self, content: str = "") -> AssistantMessage:
-        message = AssistantMessage.create(content=content)
-        self._entries.append(message)
-        return message
-
-    def append_to_current_assistant_message(self, chunk: str) -> AssistantMessage:
-        message = self._require_current_assistant_message()
-        message.content += chunk
-        return message
-
-    def cancel_current_assistant_message(self) -> AssistantMessage:
-        message = self._require_current_assistant_message()
-        self._entries.pop()
-        return message
-
-    def add_tool_call(
-        self, call: PendingCall, sequence_label: str | None = None
-    ) -> ToolCallSequence:
-        last = self._entries[-1] if self._entries else None
-        if isinstance(last, ToolCallSequence):
-            last.add(call)
-            return last
-        sequence = ToolCallSequence.create(calls=[call], label=sequence_label)
-        self._entries.append(sequence)
-        return sequence
-
-    def resolve_tool_call(
-        self,
-        tool_call_id: str,
-        result: str,
-        items: Sequence[ToolResultItem] = (),
-    ) -> CompletedCall:
-        sequence = self._require_pending_tool_call_sequence()
-        return sequence.resolve(tool_call_id, result, items)
-
-    def fail_tool_call(self, tool_call_id: str, error: str) -> FailedCall:
-        sequence = self._require_pending_tool_call_sequence()
-        return sequence.fail(tool_call_id, error)
-
-    def remove_last_pending_tool_call(self) -> PendingCall | None:
-        sequence = self._find_pending_tool_call_sequence()
-        if sequence is None:
-            return None
-
-        removed = sequence.remove_last_pending()
-        if removed is not None and not sequence.calls:
-            self._entries.remove(sequence)
-        return removed
 
     def _require_track(self, track_id: UUID) -> PlaylistTrack:
         if self._playlist is None:
@@ -712,33 +746,6 @@ class Session(Aggregate):
             )
             if len(remaining_events) != len(entry.user_curation_events):
                 entry.user_curation_events = remaining_events
-
-    def pending_tool_call_sequence(self) -> ToolCallSequence | None:
-        return self._find_pending_tool_call_sequence()
-
-    def star(self) -> None:
-        self._is_starred = True
-
-    def unstar(self) -> None:
-        self._is_starred = False
-
-    def advance_to_building_phase(self) -> None:
-        if self._phase != Phase.ONBOARDING:
-            raise InvalidSessionPhaseTransitionError(
-                f"Cannot advance session {self.id} from {self._phase} to {Phase.BUILD}."
-            )
-        if any(not question.is_answered for question in self._onboarding_questions):
-            raise InvalidSessionPhaseTransitionError(
-                f"Cannot advance session {self.id} while onboarding questions are unanswered."
-            )
-        self._reconstruct_onboarding_history()
-        self._phase = Phase.BUILD
-
-    def has_access(self, user_id: UUID) -> None:
-        if self.owner_id != user_id:
-            raise SessionAccessDeniedError(
-                f"User {user_id} does not have access to session {self.id}."
-            )
 
     def _require_pending_tool_call_sequence(self) -> ToolCallSequence:
         sequence = self._find_pending_tool_call_sequence()

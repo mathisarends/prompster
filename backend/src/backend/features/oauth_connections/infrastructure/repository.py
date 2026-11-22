@@ -3,16 +3,15 @@ from uuid import UUID
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.features.oauth_connections.infrastructure.oauth_token_cipher import (
-    OAuthTokenCipher,
-)
 from backend.features.oauth_connections.domain import (
     OAuthConnection,
     OAuthConnectionRepository,
-    OAuthProvider,
 )
-from backend.platform.database.orm import OAuthConnectionModel
-from backend.platform.database.repository import Repository
+from backend.features.oauth_connections.infrastructure.oauth_token_cipher import (
+    OAuthTokenCipher,
+)
+from backend.platform.database import OAuthConnectionModel, Repository
+from backend.shared.oauth_provider import OAuthProvider
 
 
 class SqlOAuthConnectionRepository(
@@ -22,6 +21,28 @@ class SqlOAuthConnectionRepository(
     def __init__(self, session: AsyncSession, token_cipher: OAuthTokenCipher) -> None:
         super().__init__(session=session, model=OAuthConnectionModel)
         self._token_cipher = token_cipher
+
+    async def get(
+        self,
+        *,
+        user_id: UUID,
+        provider: OAuthProvider,
+    ) -> OAuthConnection | None:
+        return await self.find_by(user_id=user_id, provider=provider.value)
+
+    async def save(self, *, connection: OAuthConnection) -> OAuthConnection:
+        return await super().save(connection)
+
+    async def delete(self, *, user_id: UUID, provider: OAuthProvider) -> bool:
+        stmt = delete(self.model).where(
+            self.model.user_id == user_id,
+            self.model.provider == provider.value,
+        )
+        result = await self.session.execute(stmt)
+        return result.rowcount > 0
+
+    async def exists(self, *, user_id: UUID, provider: OAuthProvider) -> bool:
+        return await super().exists(user_id=user_id, provider=provider.value)
 
     def _to_domain(self, orm: OAuthConnectionModel) -> OAuthConnection:
         return OAuthConnection.restore(
@@ -48,25 +69,3 @@ class SqlOAuthConnectionRepository(
             connected_at=domain.connected_at,
             is_premium=domain.is_premium,
         )
-
-    async def get(
-        self,
-        *,
-        user_id: UUID,
-        provider: OAuthProvider,
-    ) -> OAuthConnection | None:
-        return await self.find_by(user_id=user_id, provider=provider.value)
-
-    async def save(self, *, connection: OAuthConnection) -> OAuthConnection:
-        return await super().save(connection)
-
-    async def delete(self, *, user_id: UUID, provider: OAuthProvider) -> bool:
-        stmt = delete(self.model).where(
-            self.model.user_id == user_id,
-            self.model.provider == provider.value,
-        )
-        result = await self.session.execute(stmt)
-        return result.rowcount > 0
-
-    async def exists(self, *, user_id: UUID, provider: OAuthProvider) -> bool:
-        return await super().exists(user_id=user_id, provider=provider.value)

@@ -1,9 +1,8 @@
 from uuid import UUID
 
-from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exceptions import (
-    AUTHENTICATION_REQUIRED_ERROR,
-)
+from fastapi import Query, Response, status
+from fastapi_canon import APIRouter, CanonResponse, Inject
+
 from backend.features.session.application import (
     SessionConversationService,
     SessionImageUrlResolver,
@@ -39,8 +38,10 @@ from backend.features.session.presentation.schemas import (
     SubmitOnboardingAnswerRequest,
 )
 from backend.features.spotify.application import SpotifySearch
-from fastapi import Query, Response, status
-from fastapi_canon import APIRouter, CanonResponse, Inject
+from backend.presentation import (
+    AUTHENTICATION_REQUIRED_ERROR,
+    AuthenticatedUserId,
+)
 
 router = APIRouter(
     prefix="/sessions",

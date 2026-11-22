@@ -1,7 +1,7 @@
 from fastapi_canon import Feature
 
-from .infrastructure.di import SessionProvider
-from .presentation import (
+from backend.features.session.infrastructure.di import SessionProvider
+from backend.features.session.presentation import (
     SESSION_ERRORS,
     image_attachment_router,
     router,

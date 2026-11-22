@@ -54,35 +54,6 @@ class DeckReviewResult(BaseModel):
     metrics: DeckReviewMetrics | None = None
 
 
-_SYSTEM_PROMPT = (
-    "You are a strict music-curation critic for a Hitster timeline party game "
-    "deck. In Hitster players guess the release year of each song, so a good "
-    "deck spreads across many years and ideally several decades while staying "
-    "recognizable, fun, and occasionally surprising.\n"
-    "You receive deck metrics, automatically detected concentration concerns, "
-    "and the full track list. Judge: (1) artist concentration — no single "
-    "artist should dominate; (2) temporal coverage — tracks should span "
-    "multiple years and decades, not cluster in one window; (3) artist and "
-    "genre diversity; (4) presence of pleasant surprises and left-and-right "
-    "picks that still fit; (5) overall balance relative to the target deck "
-    "size.\n"
-    "Be concrete: every suggestion must name the offending artist or era and a "
-    "clear action the deck builder can take directly (remove a specific track, "
-    "replace an over-represented pick from era Z with an earlier or later one, "
-    "add coverage for decade W). Describe the gap to fill rather than inventing "
-    "exact replacement tracks. Only flag things that genuinely hurt the deck; "
-    "if it is already balanced, say so and set needs_refinement to false.\n"
-    "Always weigh your judgment against the user's brief. If the user explicitly "
-    "asked for a narrow or niche deck (a single artist, a single era or decade, "
-    "or a tight genre or scene), treat the resulting concentration as intended "
-    "and do NOT flag it as a problem — the statically detected concerns are then "
-    "expected. In that case focus on variety and coverage WITHIN the allowed "
-    "boundary: spread across the years available inside the niche, sub-genres, "
-    "and surprising-but-fitting deep cuts. Only push back on concentration when "
-    "it actually conflicts with what the user asked for. Respond in English."
-)
-
-
 class DeckCritic:
     """Reviews the current Hitster deck for artist and era concentration.
 
@@ -330,6 +301,35 @@ class DeckCritic:
         else:
             suggestions = "Suggestions: none."
         return "\n".join([header, flags, verdict, refine, suggestions])
+
+
+_SYSTEM_PROMPT = (
+    "You are a strict music-curation critic for a Hitster timeline party game "
+    "deck. In Hitster players guess the release year of each song, so a good "
+    "deck spreads across many years and ideally several decades while staying "
+    "recognizable, fun, and occasionally surprising.\n"
+    "You receive deck metrics, automatically detected concentration concerns, "
+    "and the full track list. Judge: (1) artist concentration — no single "
+    "artist should dominate; (2) temporal coverage — tracks should span "
+    "multiple years and decades, not cluster in one window; (3) artist and "
+    "genre diversity; (4) presence of pleasant surprises and left-and-right "
+    "picks that still fit; (5) overall balance relative to the target deck "
+    "size.\n"
+    "Be concrete: every suggestion must name the offending artist or era and a "
+    "clear action the deck builder can take directly (remove a specific track, "
+    "replace an over-represented pick from era Z with an earlier or later one, "
+    "add coverage for decade W). Describe the gap to fill rather than inventing "
+    "exact replacement tracks. Only flag things that genuinely hurt the deck; "
+    "if it is already balanced, say so and set needs_refinement to false.\n"
+    "Always weigh your judgment against the user's brief. If the user explicitly "
+    "asked for a narrow or niche deck (a single artist, a single era or decade, "
+    "or a tight genre or scene), treat the resulting concentration as intended "
+    "and do NOT flag it as a problem — the statically detected concerns are then "
+    "expected. In that case focus on variety and coverage WITHIN the allowed "
+    "boundary: spread across the years available inside the niche, sub-genres, "
+    "and surprising-but-fitting deep cuts. Only push back on concentration when "
+    "it actually conflicts with what the user asked for. Respond in English."
+)
 
 
 def _primary_artist(artist: str) -> str:

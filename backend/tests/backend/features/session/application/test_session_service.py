@@ -1,12 +1,15 @@
 import asyncio
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 
+from backend.features.session.application.conversation_service import (
+    SessionConversationService,
+    SessionImageAttachmentReference,
+)
 from backend.features.session.application.events import (
-    SessionAssistantMessageChunk,
     SessionAssistantMessageCancelled,
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
@@ -18,9 +21,16 @@ from backend.features.session.application.events import (
     SessionSnapshot,
     SessionSuspendedForInput,
     SessionTitleGenerated,
-    SessionToolCallSequenceAdded,
     SessionToolCallResolved,
-    SuspensionKind,
+    SessionToolCallSequenceAdded,
+)
+from backend.features.session.application.image_attachment_service import (
+    ImageAttachmentService,
+    SessionImageAttachmentUpload,
+)
+from backend.features.session.application.ports.message_attachment_store import (
+    MessageAttachmentStore,
+    StoredAttachment,
 )
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
@@ -42,31 +52,19 @@ from backend.features.session.application.ports.session_summary_query import (
     SessionSummary,
     SessionSummaryQuery,
 )
-from backend.features.session.application.ports.message_attachment_store import (
-    MessageAttachmentStore,
-    StoredAttachment,
-)
 from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
-)
-from backend.features.session.application.conversation_service import (
-    SessionConversationService,
-    SessionImageAttachmentReference,
-)
-from backend.features.session.application.image_attachment_service import (
-    ImageAttachmentService,
-    SessionImageAttachmentUpload,
-)
-from backend.features.session.application.session_service import (
-    SessionService,
 )
 from backend.features.session.application.session_image_url_resolver import (
     SessionImageUrlResolver,
 )
+from backend.features.session.application.session_service import (
+    SessionService,
+)
 from backend.features.session.domain import (
+    DECIDE_FOR_ME_OPTION,
     AssistantMessage,
     CompletedCall,
-    DECIDE_FOR_ME_OPTION,
     ImageAttachment,
     InvalidSessionPhaseTransitionError,
     PendingCall,
@@ -321,7 +319,7 @@ async def _collect_events(iterator):
 
 class TestSessionServiceGetById:
     def test_loads_session_and_allows_owner(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=1)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
@@ -331,17 +329,17 @@ class TestSessionServiceGetById:
         assert result is session
 
     def test_raises_when_user_does_not_own_session(self) -> None:
-        session = Session.create(title="Roadtrip", owner_id=uuid4())
+        session = Session.create(title="Roadtrip", owner_id=UUID(int=2))
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
         with pytest.raises(SessionAccessDeniedError, match="does not have access"):
-            asyncio.run(service.get_by_id(session_id=session.id, user_id=uuid4()))
+            asyncio.run(service.get_by_id(session_id=session.id, user_id=UUID(int=3)))
 
 
 class TestSessionServiceCreate:
     def test_creates_session_with_pending_empty_title(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=4)
         repository = _SessionRepositoryStub()
         service = _make_management_service(repository=repository)
 
@@ -356,7 +354,7 @@ class TestSessionServiceCreate:
 
 class TestSessionServiceUpdate:
     def test_delegates_to_repository_and_returns_updated_session(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=5)
         session = Session.create(title="Old", owner_id=owner_id)
         updated = Session.restore(
             title="New",
@@ -379,19 +377,19 @@ class TestSessionServiceUpdate:
         assert repository.received_update_title == "New"
 
     def test_raises_when_user_does_not_own_session(self) -> None:
-        session = Session.create(title="Old", owner_id=uuid4())
+        session = Session.create(title="Old", owner_id=UUID(int=6))
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
         with pytest.raises(SessionAccessDeniedError, match="does not have access"):
             asyncio.run(
-                service.update(session_id=session.id, user_id=uuid4(), title="New")
+                service.update(session_id=session.id, user_id=UUID(int=7), title="New")
             )
 
 
 class TestSessionServiceDelete:
     def test_deletes_session_by_id(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=8)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         attachment_store = _MessageAttachmentStoreStub()
@@ -406,17 +404,17 @@ class TestSessionServiceDelete:
         assert attachment_store.deleted_sessions == [(owner_id, session.id)]
 
     def test_raises_when_user_does_not_own_session(self) -> None:
-        session = Session.create(title="Roadtrip", owner_id=uuid4())
+        session = Session.create(title="Roadtrip", owner_id=UUID(int=9))
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
         with pytest.raises(SessionAccessDeniedError, match="does not have access"):
-            asyncio.run(service.delete(session_id=session.id, user_id=uuid4()))
+            asyncio.run(service.delete(session_id=session.id, user_id=UUID(int=10)))
 
 
 class TestSessionServiceStar:
     def test_marks_session_as_starred_and_persists(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=11)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
@@ -428,17 +426,17 @@ class TestSessionServiceStar:
         assert repository.saved_sessions == [session]
 
     def test_raises_when_user_does_not_own_session(self) -> None:
-        session = Session.create(title="Roadtrip", owner_id=uuid4())
+        session = Session.create(title="Roadtrip", owner_id=UUID(int=12))
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
         with pytest.raises(SessionAccessDeniedError, match="does not have access"):
-            asyncio.run(service.star(session_id=session.id, user_id=uuid4()))
+            asyncio.run(service.star(session_id=session.id, user_id=UUID(int=13)))
 
 
 class TestSessionServiceUnstar:
     def test_marks_session_as_not_starred_and_persists(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=14)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         session.star()
         repository = _SessionRepositoryStub(session_by_id=session)
@@ -451,20 +449,20 @@ class TestSessionServiceUnstar:
         assert repository.saved_sessions == [session]
 
     def test_raises_when_user_does_not_own_session(self) -> None:
-        session = Session.create(title="Roadtrip", owner_id=uuid4())
+        session = Session.create(title="Roadtrip", owner_id=UUID(int=15))
         repository = _SessionRepositoryStub(session_by_id=session)
         service = _make_management_service(repository=repository)
 
         with pytest.raises(SessionAccessDeniedError, match="does not have access"):
-            asyncio.run(service.unstar(session_id=session.id, user_id=uuid4()))
+            asyncio.run(service.unstar(session_id=session.id, user_id=UUID(int=16)))
 
 
 class TestSessionServiceList:
     def test_delegates_to_session_summary_query(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=17)
         summaries = [
             SessionSummary(
-                id=uuid4(),
+                id=UUID(int=18),
                 title="Roadtrip",
                 is_starred=False,
                 created_at=datetime(2026, 1, 1, tzinfo=UTC),
@@ -482,7 +480,7 @@ class TestSessionServiceList:
         assert query.received_offset == 20
 
     def test_searches_when_a_non_empty_query_is_provided(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=19)
         query = _SessionSummaryQueryStub(summaries=[])
         service = _make_management_service(summary_query=query)
 
@@ -503,7 +501,7 @@ class TestSessionServiceList:
 
 class TestSessionImageUrlResolver:
     def test_resolves_each_referenced_image_once(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=20)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         storage_key = f"users/{owner_id}/chat/{session.id}/image.png"
         image = ImageAttachment.create(
@@ -525,10 +523,10 @@ class TestSessionImageUrlResolver:
 
 class TestSessionServiceSearch:
     def test_delegates_to_session_summary_query(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=21)
         summaries = [
             SessionSummary(
-                id=uuid4(),
+                id=UUID(int=22),
                 title="Techno Mix",
                 is_starred=True,
                 created_at=datetime(2026, 1, 1, tzinfo=UTC),
@@ -551,7 +549,7 @@ class TestSessionServiceSearch:
 
 class TestSessionServiceSendMessage:
     def test_persists_user_message_and_streams_llm(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=23)
         prompt = "spiele rihanna hits"
         session = Session.create(title="Rihanna Deck", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
@@ -582,7 +580,7 @@ class TestSessionServiceSendMessage:
         assert isinstance(events[-1], SessionAssistantMessageCompleted)
 
     def test_forwards_model_id_to_runner_on_send_message(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=24)
         session = Session.create(title="Rihanna Deck", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub(chunks=["Hi"])
@@ -602,7 +600,7 @@ class TestSessionServiceSendMessage:
         assert runner.ran_model_ids == ["gpt-6-terra-US"]
 
     def test_stashes_image_attachment(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=25)
         attachment_store = _MessageAttachmentStoreStub()
         service = ImageAttachmentService(
             message_attachment_store=attachment_store,
@@ -624,7 +622,7 @@ class TestSessionServiceSendMessage:
         assert len(attachment_store.saved_stashed_payloads) == 1
 
     def test_promotes_stashed_image_attachments_on_send_message(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=26)
         session = Session.create(title="Rihanna Deck", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         attachment_store = _MessageAttachmentStoreStub()
@@ -632,7 +630,7 @@ class TestSessionServiceSendMessage:
             repository=repository,
             message_attachment_store=attachment_store,
         )
-        attachment_id = uuid4()
+        attachment_id = UUID(int=27)
         storage_key = f"users/{owner_id}/stash/{attachment_id}.png"
         attachment_store.existing_storage_keys.add(storage_key)
 
@@ -665,9 +663,9 @@ class TestSessionServiceSendMessage:
         assert attachment_store.promoted_calls == [(owner_id, session.id, storage_key)]
 
     def test_rejects_invalid_image_content_type(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=28)
         session = Session.create(title="Rihanna Deck", owner_id=owner_id)
-        attachment_id = uuid4()
+        attachment_id = UUID(int=29)
         service = _make_conversation_service(
             repository=_SessionRepositoryStub(session_by_id=session),
         )
@@ -695,7 +693,7 @@ class TestSessionServiceSendMessage:
             )
 
     def test_generates_title_for_untitled_session_during_message_stream(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=30)
         prompt = "spiele was ruhiges"
         session = Session.create(title="", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
@@ -727,7 +725,7 @@ class TestSessionServiceSendMessage:
         )
 
     def test_does_not_generate_title_for_already_titled_session(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=31)
         session = Session.create(title="Rihanna Deck", owner_id=owner_id)
         generator = _SessionTitleGeneratorStub(generated_title="New Title")
         service = _make_conversation_service(
@@ -750,7 +748,7 @@ class TestSessionServiceSendMessage:
         assert generator.call_count == 0
 
     def test_title_generator_error_falls_back_without_breaking_stream(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=32)
         session = Session.create(title="", owner_id=owner_id)
         generator = _SessionTitleGeneratorStub(error=RuntimeError("title failed"))
         service = _make_conversation_service(
@@ -775,7 +773,7 @@ class TestSessionServiceSendMessage:
         )
 
     def test_batches_consecutive_tool_calls_into_one_sequence(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=33)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         first_call = PendingCall(
             id="call-1",
@@ -834,8 +832,8 @@ class TestSessionServiceSendMessage:
         ]
 
     def test_emits_playlist_set_for_initial_runner_playlist(self) -> None:
-        owner_id = uuid4()
-        playlist_id = uuid4()
+        owner_id = UUID(int=34)
+        playlist_id = UUID(int=35)
         track = PlaylistTrack.create(title="Take On Me", artist="a-ha", year=1985)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         runner = _SessionRunnerStub(
@@ -873,8 +871,8 @@ class TestSessionServiceSendMessage:
         assert session.playlist.id == playlist_id
 
     def test_emits_playlist_set_for_initial_runner_track_addition(self) -> None:
-        owner_id = uuid4()
-        playlist_id = uuid4()
+        owner_id = UUID(int=36)
+        playlist_id = UUID(int=37)
         track = PlaylistTrack.create(title="Take On Me", artist="a-ha", year=1985)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         runner = _SessionRunnerStub(
@@ -908,8 +906,8 @@ class TestSessionServiceSendMessage:
         assert session.playlist.id == playlist_id
 
     def test_emits_playlist_track_diffs_for_runner_playlist_mutations(self) -> None:
-        owner_id = uuid4()
-        playlist_id = uuid4()
+        owner_id = UUID(int=38)
+        playlist_id = UUID(int=39)
         removed_track = PlaylistTrack.create(
             title="Take On Me",
             artist="a-ha",
@@ -926,7 +924,7 @@ class TestSessionServiceSendMessage:
             year=1982,
         )
         session = Session.restore(
-            id=uuid4(),
+            id=UUID(int=40),
             created_at=datetime.now(UTC),
             title="Roadtrip",
             entries=[],
@@ -988,7 +986,7 @@ class TestSessionServiceSendMessage:
         assert session.playlist.tracks == [replacement_track]
 
     def test_persists_partial_assistant_message_when_runner_is_cancelled(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=41)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub(
@@ -1020,7 +1018,7 @@ class TestSessionServiceSendMessage:
         assert len(repository.saved_sessions) == 3
 
     def test_removes_pending_tool_call_when_runner_is_cancelled(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=42)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         pending_call = PendingCall(
             id="call-1",
@@ -1051,7 +1049,7 @@ class TestSessionServiceSendMessage:
         assert len(repository.saved_sessions) == 3
 
     def test_stop_message_delegates_to_runner(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=43)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         repository = _SessionRepositoryStub(session_by_id=session)
         runner = _SessionRunnerStub()
@@ -1065,7 +1063,7 @@ class TestSessionServiceSendMessage:
         assert runner.stopped_session_ids == [session.id]
 
     def test_submit_onboarding_answer_persists_single_answer(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=44)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         question = session.add_onboarding_question(
             question_text="Fuer wen ist die Playlist?",
@@ -1098,7 +1096,7 @@ class TestSessionServiceSendMessage:
         assert runner.ran_sessions == []
 
     def test_persists_intermediate_onboarding_question_without_suspending(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=45)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         runner = _SessionRunnerStub(
             events=[
@@ -1155,11 +1153,11 @@ class TestSessionServiceSendMessage:
         assert len(question_events) == 1
         assert question_events[0].question == "Fuer wen ist die Playlist?"
         assert question_events[0].hint == "Enge Zielgruppen machen das Deck spitzer."
-        assert question_events[0].options == [
+        assert question_events[0].options == (
             "Freunde",
             "Familie",
             DECIDE_FOR_ME_OPTION,
-        ]
+        )
         assert len(suspended_events) == 1
         assert suspended_events[0].question == "Welche Dekade?"
         assert (
@@ -1169,7 +1167,7 @@ class TestSessionServiceSendMessage:
         assert suspended_events[0].options == ["80er", "90er", DECIDE_FOR_ME_OPTION]
 
     def test_onboarding_tool_call_events_are_not_persisted_or_emitted(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=46)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         onboarding_call = PendingCall(
             id="call-onboarding",
@@ -1223,7 +1221,7 @@ class TestSessionServiceSendMessage:
     def test_submit_onboarding_answer_for_last_question_persists_without_advancing_phase(
         self,
     ) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=47)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         question = session.add_onboarding_question(
             question_text="Letzte Frage?",
@@ -1250,7 +1248,7 @@ class TestSessionServiceSendMessage:
     def test_complete_onboarding_advances_phase_and_streams_agent(
         self,
     ) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=48)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         question = session.add_onboarding_question(
             question_text="Letzte Frage?",
@@ -1282,7 +1280,7 @@ class TestSessionServiceSendMessage:
         assert repository.saved_sessions[0] is session
 
     def test_complete_onboarding_forwards_model_id_to_runner(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=49)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         question = session.add_onboarding_question(
             question_text="Letzte Frage?",
@@ -1307,7 +1305,7 @@ class TestSessionServiceSendMessage:
         assert runner.ran_model_ids == ["gpt-6-luna-US"]
 
     def test_complete_onboarding_rejects_unanswered_questions(self) -> None:
-        owner_id = uuid4()
+        owner_id = UUID(int=50)
         session = Session.create(title="Roadtrip", owner_id=owner_id)
         session.add_onboarding_question(
             question_text="Fuer wen ist die Playlist?",

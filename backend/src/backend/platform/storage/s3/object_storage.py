@@ -3,8 +3,7 @@ from datetime import timedelta
 from obstore import sign_async
 from obstore.store import S3Store
 
-from backend.platform.storage.port import ObjectStorage
-from backend.platform.storage.views import StorageFile, UploadResponse
+from backend.shared.storage import ObjectStorage, StorageFile, UploadResponse
 
 
 class S3ObjectStorage(ObjectStorage):
@@ -48,7 +47,8 @@ class S3ObjectStorage(ObjectStorage):
 
     async def download_bytes(self, path: str) -> bytes:
         response = await self._store.get_async(path)
-        return bytes(await response.bytes_async())
+        content = await response.bytes_async()
+        return bytes(content)
 
     async def delete(self, path: str) -> None:
         await self._store.delete_async(path)
@@ -56,7 +56,8 @@ class S3ObjectStorage(ObjectStorage):
     async def delete_folder(self, path: str) -> None:
         objects = await self._store.list_async(path).collect_async()
         if objects:
-            await self._store.delete_async([obj["path"] for obj in objects])
+            paths = [obj["path"] for obj in objects]
+            await self._store.delete_async(paths)
 
     async def move(self, source_path: str, destination_path: str) -> None:
         await self._store.rename_async(source_path, destination_path)

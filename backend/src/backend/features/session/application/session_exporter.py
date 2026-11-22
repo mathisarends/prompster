@@ -11,10 +11,7 @@ from backend.features.session.domain import (
     SessionPlaylistEmptyError,
     SessionRepository,
 )
-from backend.platform.storage import ObjectStorage
-
-_CARDS_PER_DECK_PAGE = 15
-_PDF_PAGES_PER_CARD_BATCH = 2
+from backend.shared.storage import ObjectStorage
 
 
 class SessionPlaylistExporter:
@@ -60,7 +57,7 @@ class SessionPlaylistExporter:
             page_limit=page_limit,
         )
         if page_limit is None and fingerprint is not None:
-            storage_key = self._build_storage_key(
+            storage_key = _build_storage_key(
                 user_id=user_id,
                 session_id=session.id,
                 fingerprint=fingerprint,
@@ -107,22 +104,26 @@ class SessionPlaylistExporter:
             title=track.title,
             artist_names=track.artist,
             release_year=year,
-            spotify_url=self._build_spotify_url(track),
+            spotify_url=_build_spotify_url(track),
         )
 
-    @staticmethod
-    def _build_spotify_url(track: PlaylistTrack) -> str:
-        if track.spotify_uri and track.spotify_uri.startswith("spotify:track:"):
-            track_id = track.spotify_uri.removeprefix("spotify:track:")
-            return f"https://open.spotify.com/track/{track_id}"
-        query = quote_plus(f"{track.title} {track.artist}".strip())
-        return f"https://open.spotify.com/search/{query}"
 
-    @staticmethod
-    def _build_storage_key(
-        *,
-        user_id: UUID,
-        session_id: UUID,
-        fingerprint: str,
-    ) -> str:
-        return f"users/{user_id}/chat/{session_id}/exports/playlist-{fingerprint}.pdf"
+_CARDS_PER_DECK_PAGE = 15
+_PDF_PAGES_PER_CARD_BATCH = 2
+
+
+def _build_spotify_url(track: PlaylistTrack) -> str:
+    if track.spotify_uri and track.spotify_uri.startswith("spotify:track:"):
+        track_id = track.spotify_uri.removeprefix("spotify:track:")
+        return f"https://open.spotify.com/track/{track_id}"
+    query = quote_plus(f"{track.title} {track.artist}".strip())
+    return f"https://open.spotify.com/search/{query}"
+
+
+def _build_storage_key(
+    *,
+    user_id: UUID,
+    session_id: UUID,
+    fingerprint: str,
+) -> str:
+    return f"users/{user_id}/chat/{session_id}/exports/playlist-{fingerprint}.pdf"

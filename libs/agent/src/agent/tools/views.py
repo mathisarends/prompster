@@ -3,12 +3,12 @@ from collections.abc import Callable, Iterable
 from enum import StrEnum
 from typing import Any, Self
 
-from pydantic import BaseModel, Field
-
 from callm import ModelTool
+from pydantic import BaseModel, Field, ValidationError
 
 from agent.tools.schema_builder import ToolSchemaBuilder
 from agent.tools.schemas import ToolSchema
+from agent.views import Phase
 
 
 class ActionType(StrEnum):
@@ -20,11 +20,6 @@ class ActionType(StrEnum):
     REPLACE_DECK_TRACKS = "replace_deck_tracks"
     GET_SPOTIFY_PLAYLIST_TRACKS = "get_spotify_playlist_tracks"
     SELF_REVIEW = "self_review"
-
-
-class Phase(StrEnum):
-    ONBOARDING = "onboarding"
-    BUILD = "build"
 
 
 class OnboardingSelectionMode(StrEnum):
@@ -75,7 +70,7 @@ class ActionResult(BaseModel):
             success=True,
             extracted_content=extracted_content,
             input_request=input_request,
-            items=list(items or ()),
+            items=list(items if items is not None else ()),
         )
 
     @classmethod
@@ -103,7 +98,9 @@ class Tool:
         self.description = description
         self.fn = fn
         self.action_type = action_type
-        self.included_in_phases = frozenset(included_in_phases or ())
+        self._included_in_phases = frozenset(
+            included_in_phases if included_in_phases is not None else ()
+        )
         self.is_onboarding_question = is_onboarding_question
         self._schema = schema
         self.param_model = param_model
@@ -112,15 +109,21 @@ class Tool:
             None if schema else ToolSchemaBuilder(self.fn, param_model)
         )
 
+    def __eq__(self, other: object) -> bool:
+        return self.name == other.name if isinstance(other, Tool) else NotImplemented
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
     def is_included_in(self, phase: Phase) -> bool:
-        return not self.included_in_phases or phase in self.included_in_phases
+        return not self._included_in_phases or phase in self._included_in_phases
 
     def render_status(self, args: dict[str, Any]) -> str | None:
         if self._status_label is None or self.param_model is None:
             return None
         try:
             params = self.param_model.model_validate(args)
-        except Exception:
+        except ValidationError:
             return None
         return self._status_label(params)
 
@@ -157,9 +160,3 @@ class Tool:
             description=function.get("description", ""),
             parameters=function["parameters"],
         )
-
-    def __eq__(self, other: object) -> bool:
-        return self.name == other.name if isinstance(other, Tool) else NotImplemented
-
-    def __hash__(self) -> int:
-        return hash(self.name)

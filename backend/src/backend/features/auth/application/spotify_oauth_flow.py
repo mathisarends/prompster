@@ -1,6 +1,6 @@
 import secrets
 
-from backend.features.auth.application.ports import SpotifyLoginProvider, TokenIssuer
+from backend.features.auth.application.ports import SpotifyLoginProvider
 from backend.features.auth.application.schemas import (
     SpotifyLoginAuthorizationRequest,
     SpotifyLoginCallbackResult,
@@ -11,8 +11,7 @@ from backend.features.user.domain import (
     User,
     UserRepository,
 )
-
-_STATE_TOKEN_BYTES = 32
+from backend.shared.authentication import TokenIssuer
 
 
 class SpotifyOAuthFlow:
@@ -109,3 +108,6 @@ class SpotifyOAuthFlow:
 
         user.profile_image_url = profile_image_url
         return await self._user_repository.update(user=user)
+
+
+_STATE_TOKEN_BYTES = 32

@@ -1,6 +1,6 @@
 from typing import Literal
 
-from backend.presentation.schema import Schema
+from backend.presentation import Schema
 
 
 class HealthResponse(Schema):

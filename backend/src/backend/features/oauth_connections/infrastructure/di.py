@@ -2,9 +2,8 @@ from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.env import EnvSettings
-from backend.features.auth.infrastructure.auth_settings import AuthSettings
-from backend.features.auth.infrastructure.oauth_state_settings import OAuthStateSettings
-from backend.features.auth.application.ports import SpotifyLoginProvider
+from backend.features.auth.application import SpotifyLoginProvider
+from backend.features.auth.infrastructure import AuthSettings, OAuthStateSettings
 from backend.features.oauth_connections.application import (
     SpotifyAccountLoginProvider,
     SpotifyOAuthConnectionService,
@@ -12,6 +11,9 @@ from backend.features.oauth_connections.application import (
     SpotifyTokenService,
 )
 from backend.features.oauth_connections.domain import OAuthConnectionRepository
+from backend.features.oauth_connections.infrastructure.fernet_token_cypher import (
+    FernetOAuthTokenCipher,
+)
 from backend.features.oauth_connections.infrastructure.oauth_token_cipher import (
     OAuthTokenCipher,
 )
@@ -23,9 +25,6 @@ from backend.features.oauth_connections.infrastructure.spotify_auth_settings imp
 )
 from backend.features.oauth_connections.infrastructure.spotify_oauth_client import (
     SpotifyOAuthClient,
-)
-from backend.features.oauth_connections.infrastructure.fernet_token_cypher import (
-    FernetOAuthTokenCipher,
 )
 from backend.features.oauth_connections.presentation.spotify_oauth_state_cookies import (
     SpotifyOAuthStateCookies,
@@ -48,7 +47,7 @@ class OAuthConnectionsProvider(Provider):
         spotify_auth_settings: SpotifyAuthSettings,
     ) -> OAuthTokenCipher:
         return FernetOAuthTokenCipher(
-            encryption_key=spotify_auth_settings.token_encryption_key,
+            encryption_key=spotify_auth_settings.token_encryption_key.get_secret_value(),
         )
 
     @provide(scope=Scope.APP)
@@ -110,7 +109,7 @@ class OAuthConnectionsProvider(Provider):
         return SpotifyOAuthStateCookies(
             cookie_name=spotify_auth_settings.state_cookie_name,
             ttl_seconds=oauth_state_settings.ttl_seconds,
-            signing_secret=auth_settings.jwt_secret,
+            signing_secret=auth_settings.jwt_secret.get_secret_value(),
             frontend_base_url=env_config.frontend_base_url,
             env_config=env_config,
         )

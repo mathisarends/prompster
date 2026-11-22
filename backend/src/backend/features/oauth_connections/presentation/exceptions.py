@@ -1,9 +1,10 @@
+from fastapi import status
+from fastapi_canon import Error
+
 from backend.features.oauth_connections.application import (
     SpotifyConnectionNotFoundException,
     SpotifyTokenRevokedException,
 )
-from fastapi import status
-from fastapi_canon import Error
 
 SPOTIFY_CONNECTION_NOT_FOUND_ERROR = Error(
     SpotifyConnectionNotFoundException,

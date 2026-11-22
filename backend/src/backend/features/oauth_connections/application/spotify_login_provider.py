@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from backend.features.auth.application.ports import SpotifyLogin, SpotifyLoginProvider
-from backend.features.auth.application.schemas import SpotifyIdentity
+from backend.features.auth.domain import SpotifyIdentity
 from backend.features.oauth_connections.application.ports import SpotifyOAuthProvider
 from backend.features.oauth_connections.application.schemas import (
     SpotifyTokens,

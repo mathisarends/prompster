@@ -1,9 +1,8 @@
 from collections.abc import Sequence
 from html import escape
 
+from agent.deck import DeckDraft, DeckDraftTrack
 from agent.views import UserEvent
-from agent.deck import DeckDraft
-from agent.deck.views import DeckDraftTrack
 
 
 def render_user_message_content(
@@ -17,27 +16,6 @@ def render_user_message_content(
     if not content:
         return block
     return f"{block}\n\n{content}"
-
-
-def _render_user_events_block(events: Sequence[UserEvent]) -> str:
-    """Render UserEvents as a single ``<user_events>`` XML block.
-
-    The block is meant to be embedded inside the same ``UserMessage`` content
-    as the user's text - it represents manual Hitster deck changes the user made
-    just before that turn.
-    """
-    lines = ["<user_events>"]
-    lines.extend(_render_event(event) for event in events)
-    lines.append("</user_events>")
-    return "\n".join(lines)
-
-
-def _render_event(event: UserEvent) -> str:
-    return (
-        f'<event type="{escape(event.type.value, quote=True)}" '
-        f'at="{escape(event.occurred_at.isoformat(), quote=True)}">'
-        f"{escape(event.label)}</event>"
-    )
 
 
 def render_deck_context(
@@ -68,7 +46,10 @@ def render_track_tag(
     identity_value: str | None = None,
 ) -> str:
     attrs = [
-        (identity_attr, identity_value or str(track.id)),
+        (
+            identity_attr,
+            identity_value if identity_value is not None else str(track.id),
+        ),
         ("label", _render_track_label(track)),
     ]
     return f"<track {_render_attrs(attrs)} />"
@@ -102,6 +83,27 @@ def render_playlist_tag(
         ("tracks", str(track_count) if track_count is not None else None),
     ]
     return f"<playlist {_render_attrs(attrs)} />"
+
+
+def _render_user_events_block(events: Sequence[UserEvent]) -> str:
+    """Render UserEvents as a single ``<user_events>`` XML block.
+
+    The block is meant to be embedded inside the same ``UserMessage`` content
+    as the user's text - it represents manual Hitster deck changes the user made
+    just before that turn.
+    """
+    lines = ["<user_events>"]
+    lines.extend(_render_event(event) for event in events)
+    lines.append("</user_events>")
+    return "\n".join(lines)
+
+
+def _render_event(event: UserEvent) -> str:
+    return (
+        f'<event type="{escape(event.type.value, quote=True)}" '
+        f'at="{escape(event.occurred_at.isoformat(), quote=True)}">'
+        f"{escape(event.label)}</event>"
+    )
 
 
 def _render_track_label(track: DeckDraftTrack) -> str:

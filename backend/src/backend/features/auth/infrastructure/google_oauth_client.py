@@ -3,8 +3,8 @@ from urllib.parse import urlencode
 import httpx
 from pydantic import ValidationError
 
-from backend.features.auth.application.ports import GoogleOAuthProvider
-from backend.features.auth.application.schemas import GoogleIdentity
+from backend.features.auth.application import GoogleOAuthProvider
+from backend.features.auth.domain import GoogleIdentity
 from backend.features.auth.infrastructure.google_auth_settings import GoogleAuthSettings
 
 
@@ -45,7 +45,7 @@ class GoogleOAuthClient(GoogleOAuthProvider):
     def _validate_configuration(self) -> None:
         if not self._google_auth_settings.client_id:
             raise ValueError("Google client ID is not configured")
-        if not self._google_auth_settings.client_secret:
+        if not self._google_auth_settings.client_secret.get_secret_value():
             raise ValueError("Google client secret is not configured")
         if not self._google_auth_settings.redirect_uri:
             raise ValueError("Google redirect URI is not configured")
@@ -54,7 +54,7 @@ class GoogleOAuthClient(GoogleOAuthProvider):
         payload = {
             "code": authorization_code,
             "client_id": self._google_auth_settings.client_id,
-            "client_secret": self._google_auth_settings.client_secret,
+            "client_secret": self._google_auth_settings.client_secret.get_secret_value(),
             "redirect_uri": self._google_auth_settings.redirect_uri,
             "grant_type": "authorization_code",
         }

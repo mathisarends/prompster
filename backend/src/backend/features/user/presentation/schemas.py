@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from backend.presentation.schema import Schema
+from backend.presentation import Schema
 
 
 class UserMeResponse(Schema):

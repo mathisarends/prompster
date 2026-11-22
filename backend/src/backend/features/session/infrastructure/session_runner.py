@@ -4,17 +4,15 @@ from contextlib import aclosing
 from dataclasses import dataclass
 from uuid import UUID, uuid4
 
-from agent import Agent, Spotify
-from agent.deck import (
-    DeckDraft,
-    DeckDraftTrack,
-    DeckStore,
-)
-from agent.tools.views import Phase as AgentPhase
+from agent import Agent, DeckDraft, DeckDraftTrack, DeckStore, Spotify
+from agent import Phase as AgentPhase
+from callm import ChatModel
+from spotifyify import SpotifyClient
+
 from backend.features.llm.application import ChatModels
 from backend.features.llm.domain import LLMRegistry
-from backend.features.session.application.ports import ActiveSessionRunStore
-from backend.features.session.application.ports.session_runner import (
+from backend.features.session.application.ports import (
+    ActiveSessionRunStore,
     SessionRunner,
     SessionRunnerCancelled,
     SessionRunnerEvent,
@@ -28,11 +26,9 @@ from backend.features.session.infrastructure.agent_event_mapper import (
     AgentSessionEventMapper,
 )
 from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
-from callm import ChatModel
-from spotifyify import SpotifyClient
 
 
-@dataclass
+@dataclass(slots=True)
 class _ActiveRun:
     run_id: UUID
     cancellation: asyncio.Event
@@ -164,41 +160,39 @@ class AgentSessionRunner(SessionRunner):
             model_info = self._llm_registry.get(model_id)
             llm = self._chat_models.get(model_info)
 
+        history = await self._history_builder.build(session=session)
         return Agent(
             llm=llm,
-            history=await self._history_builder.build(session=session),
+            history=history,
             system_prompt=self._system_prompt,
             spotify=Spotify(client=self._spotify),
             deck_store=_to_deck_store(session.playlist),
             max_deck_tracks=MAX_PLAYLIST_TRACKS,
             max_input_tokens=model_info.input_token_limit,
-            phase=_agent_phase_for(session),
+            phase=AgentPhase(session.phase),
         )
-
-
-def _agent_phase_for(session: Session) -> AgentPhase:
-    return AgentPhase(session.phase)
 
 
 def _to_deck_store(playlist: Playlist | None) -> DeckStore:
     if playlist is None:
         return DeckStore(max_tracks=MAX_PLAYLIST_TRACKS)
 
+    tracks = [
+        DeckDraftTrack(
+            id=track.id,
+            title=track.title,
+            artist=track.artist,
+            year=track.year,
+            spotify_uri=track.spotify_uri,
+            cover_url=track.cover_url,
+        )
+        for track in playlist.tracks
+    ]
     return DeckStore(
         DeckDraft(
             id=playlist.id,
             name=playlist.name or "Deck",
-            tracks=[
-                DeckDraftTrack(
-                    id=track.id,
-                    title=track.title,
-                    artist=track.artist,
-                    year=track.year,
-                    spotify_uri=track.spotify_uri,
-                    cover_url=track.cover_url,
-                )
-                for track in playlist.tracks
-            ],
+            tracks=tracks,
         ),
         max_tracks=MAX_PLAYLIST_TRACKS,
     )

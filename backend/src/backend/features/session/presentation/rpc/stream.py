@@ -19,15 +19,6 @@ from backend.features.session.presentation.rpc.mappers import to_session_stream_
 
 logger = logging.getLogger(__name__)
 
-_COMMAND_ERRORS = (
-    InvalidSessionPhaseTransitionError,
-    NoPendingToolCallSequenceError,
-    PendingToolCallsError,
-    ToolCallAlreadyResolvedError,
-    ToolCallNotFoundError,
-    ValueError,
-)
-
 
 async def session_events(
     events: AsyncGenerator[SessionEvent],
@@ -41,8 +32,19 @@ async def session_events(
             code=type(exc).__name__, message=str(exc) or type(exc).__name__
         )
     except Exception:
+        # Stream boundary: clients get a generic error event, details stay in logs.
         logger.exception("Unexpected error while streaming session events.")
         yield ErrorEvent(
             code="InternalError", message="Die Antwort konnte nicht geladen werden."
         )
     yield DoneEvent()
+
+
+_COMMAND_ERRORS = (
+    InvalidSessionPhaseTransitionError,
+    NoPendingToolCallSequenceError,
+    PendingToolCallsError,
+    ToolCallAlreadyResolvedError,
+    ToolCallNotFoundError,
+    ValueError,
+)

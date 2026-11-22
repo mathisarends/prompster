@@ -1,9 +1,8 @@
 import asyncio
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 
-from backend.features.auth.application.exceptions import SessionInvalidException
 from backend.features.user.application.user_service import UserService
 from backend.features.user.domain import (
     AuthIdentity,
@@ -12,6 +11,7 @@ from backend.features.user.domain import (
     User,
     UserRepository,
 )
+from backend.shared.authentication import SessionInvalidException
 
 
 class _UserRepositoryStub(UserRepository):
@@ -64,7 +64,7 @@ class TestUserService:
         service = UserService(user_repository=repository)
 
         with pytest.raises(SessionInvalidException, match="Invalid user"):
-            asyncio.run(service.get_me(user_id=uuid4()))
+            asyncio.run(service.get_me(user_id=UUID(int=1)))
 
     def test_get_me_returns_user_and_spotify_status_when_existing(self) -> None:
         user = User.create(
@@ -86,7 +86,7 @@ class TestUserService:
         service = UserService(user_repository=repository)
 
         with pytest.raises(SessionInvalidException, match="Invalid user"):
-            asyncio.run(service.delete_me(user_id=uuid4()))
+            asyncio.run(service.delete_me(user_id=UUID(int=2)))
 
     def test_delete_me_deletes_existing_user(self) -> None:
         user = User.create(
@@ -104,7 +104,7 @@ class TestUserService:
         service = UserService(user_repository=repository)
 
         with pytest.raises(SessionInvalidException, match="Invalid user"):
-            asyncio.run(service.get_delete_information(user_id=uuid4()))
+            asyncio.run(service.get_delete_information(user_id=UUID(int=3)))
 
     def test_get_delete_information_returns_session_count(self) -> None:
         user = User.create(

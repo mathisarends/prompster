@@ -1,6 +1,6 @@
 import asyncio
 from datetime import UTC, datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 
@@ -17,8 +17,8 @@ from backend.features.oauth_connections.application.schemas import (
 from backend.features.oauth_connections.domain import (
     OAuthConnection,
     OAuthConnectionRepository,
-    OAuthProvider,
 )
+from backend.shared.oauth_provider import OAuthProvider
 
 
 class _OAuthConnectionRepositoryStub(OAuthConnectionRepository):
@@ -86,9 +86,9 @@ class _SpotifyOAuthProviderStub(SpotifyOAuthProvider):
 
 def _make_connection(*, refresh_token: str) -> OAuthConnection:
     return OAuthConnection.restore(
-        id=uuid4(),
+        id=UUID(int=1),
         created_at=datetime.now(UTC),
-        user_id=uuid4(),
+        user_id=UUID(int=2),
         provider=OAuthProvider.SPOTIFY,
         provider_user_id="spotify-user-1",
         refresh_token=refresh_token,
@@ -115,7 +115,7 @@ class TestSpotifyTokenService:
         )
 
         with pytest.raises(SpotifyConnectionNotFoundException):
-            asyncio.run(service.get_valid_access_token(user_id=uuid4()))
+            asyncio.run(service.get_valid_access_token(user_id=UUID(int=3)))
 
     def test_get_valid_access_token_deletes_connection_when_refresh_revoked(
         self,

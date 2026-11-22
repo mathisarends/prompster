@@ -1,7 +1,7 @@
-from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exceptions import (
-    AUTHENTICATION_REQUIRED_ERROR,
-)
+from fastapi import Response, status
+from fastapi.responses import RedirectResponse
+from fastapi_canon import APIRouter, CanonResponse, Inject
+
 from backend.features.oauth_connections.application import (
     SpotifyOAuthConnectionService,
     SpotifyTokenService,
@@ -16,9 +16,10 @@ from backend.features.oauth_connections.presentation.schemas import (
 from backend.features.oauth_connections.presentation.spotify_oauth_state_cookies import (
     SpotifyOAuthStateCookies,
 )
-from fastapi import Response, status
-from fastapi.responses import RedirectResponse
-from fastapi_canon import APIRouter, CanonResponse, Inject
+from backend.presentation import (
+    AUTHENTICATION_REQUIRED_ERROR,
+    AuthenticatedUserId,
+)
 
 spotify_oauth_router = APIRouter(
     prefix="/auth/spotify",

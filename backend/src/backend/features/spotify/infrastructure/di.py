@@ -1,18 +1,19 @@
 from collections.abc import AsyncGenerator
 
-import backend.features.spotify.infrastructure.spotify_playlist_creator as playlist_infra
-import backend.features.spotify.infrastructure.spotify_search as SpotifyifySearch
-from backend.features.spotify.application.ports import (
-    SpotifyPlaylistCreator,
-    SpotifySearchGateway,
-)
-from backend.features.spotify.application.spotify_search import SpotifySearch
-from backend.features.spotify.infrastructure.spotify_search_cache import (
-    SpotifySearchCache,
-)
 from dishka import Provider, Scope, provide
 from spotifyify import SpotifyClient, SpotifyCredentials
 from spotifyify.cache_handler import MemoryCacheHandler
+
+import backend.features.spotify.infrastructure.spotify_playlist_creator as playlist_infra
+import backend.features.spotify.infrastructure.spotify_search as SpotifyifySearch
+from backend.features.spotify.application import (
+    SpotifyPlaylistCreator,
+    SpotifySearch,
+    SpotifySearchGateway,
+)
+from backend.features.spotify.infrastructure.spotify_search_cache import (
+    SpotifySearchCache,
+)
 
 
 class SpotifyProvider(Provider):

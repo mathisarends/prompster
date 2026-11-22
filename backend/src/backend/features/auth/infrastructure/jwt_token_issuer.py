@@ -4,17 +4,15 @@ from uuid import UUID
 
 import jwt
 
-from backend.features.auth.application.exceptions import (
+from backend.features.auth.infrastructure.auth_settings import AuthSettings
+from backend.shared.authentication import (
+    AuthSession,
     SessionExpiredException,
     SessionInvalidException,
-)
-from backend.features.auth.application.ports import TokenIssuer
-from backend.features.auth.application.schemas import (
-    AuthSession,
+    TokenIssuer,
     TokenPayload,
     TokenType,
 )
-from backend.features.auth.infrastructure.auth_settings import AuthSettings
 
 
 class _JwtPayload(TypedDict):
@@ -71,7 +69,7 @@ class JwtTokenIssuer(TokenIssuer):
                 "exp": exp,
                 "type": token_type.value,
             },
-            self._config.jwt_secret,
+            self._config.jwt_secret.get_secret_value(),
             algorithm=self._config.jwt_algorithm,
         )
 
@@ -79,7 +77,7 @@ class JwtTokenIssuer(TokenIssuer):
         try:
             return jwt.decode(
                 token,
-                self._config.jwt_secret,
+                self._config.jwt_secret.get_secret_value(),
                 algorithms=[self._config.jwt_algorithm],
             )
         except jwt.ExpiredSignatureError as exc:

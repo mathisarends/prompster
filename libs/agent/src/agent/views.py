@@ -4,6 +4,11 @@ from enum import StrEnum
 from pydantic import BaseModel
 
 
+class Phase(StrEnum):
+    ONBOARDING = "onboarding"
+    BUILD = "build"
+
+
 class UserCurationEventType(StrEnum):
     TRACK_ADDED = "track_added"
     TRACK_REMOVED = "track_removed"

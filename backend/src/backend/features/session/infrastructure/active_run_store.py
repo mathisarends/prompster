@@ -5,7 +5,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from backend.features.session.application.ports import ActiveSessionRunStore
-from backend.platform.database.orm import ActiveSessionRunModel
+from backend.platform.database import ActiveSessionRunModel
 
 
 class SqlActiveSessionRunStore(ActiveSessionRunStore):
@@ -61,7 +61,8 @@ class SqlActiveSessionRunStore(ActiveSessionRunStore):
                 ActiveSessionRunModel.session_id == session_id,
                 ActiveSessionRunModel.run_id == run_id,
             )
-            return bool(await session.scalar(stmt))
+            stop_requested = await session.scalar(stmt)
+            return bool(stop_requested)
 
 
 def _now() -> datetime:

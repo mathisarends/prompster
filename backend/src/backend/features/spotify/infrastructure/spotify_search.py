@@ -4,18 +4,6 @@ from collections.abc import AsyncGenerator, AsyncIterator, Awaitable, Callable
 from contextlib import aclosing
 from typing import cast
 
-from backend.features.spotify.application.ports import (
-    DEFAULT_SPOTIFY_SEARCH_TYPES,
-    SpotifyArtist,
-    SpotifyPlaylist,
-    SpotifySearchGateway,
-    SpotifySearchType,
-    SpotifyTrack,
-    SpotifyUnifiedSearchResult,
-)
-from backend.features.spotify.infrastructure.spotify_search_cache import (
-    SpotifySearchCache,
-)
 from spotifyify import (
     Artist,
     Image,
@@ -26,9 +14,22 @@ from spotifyify import (
     Track,
 )
 
-type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[SpotifyArtist]
+from backend.features.spotify.application import SpotifySearchGateway
+from backend.features.spotify.domain import (
+    DEFAULT_SPOTIFY_SEARCH_TYPES,
+    SpotifyArtist,
+    SpotifyPlaylist,
+    SpotifySearchType,
+    SpotifyTrack,
+    SpotifyUnifiedSearchResult,
+)
+from backend.features.spotify.infrastructure.spotify_search_cache import (
+    SpotifySearchCache,
+)
 
 logger = logging.getLogger(__name__)
+
+type SearchTaskResult = list[SpotifyTrack] | list[SpotifyPlaylist] | list[SpotifyArtist]
 
 # Spotify's Development Mode rejects search pages larger than 10 items.
 _SEARCH_PAGE_SIZE = 10
@@ -54,18 +55,20 @@ class SpotifyifySearch(SpotifySearchGateway):
         normalized_query = query.strip()
         if not normalized_query:
             return SpotifyUnifiedSearchResult(
-                tracks=[],
-                playlists=[],
-                artists=[],
+                tracks=(),
+                playlists=(),
+                artists=(),
             )
 
-        requested_types = types or set(DEFAULT_SPOTIFY_SEARCH_TYPES)
+        requested_types = (
+            types if types is not None else set(DEFAULT_SPOTIFY_SEARCH_TYPES)
+        )
 
         if not requested_types:
             return SpotifyUnifiedSearchResult(
-                tracks=[],
-                playlists=[],
-                artists=[],
+                tracks=(),
+                playlists=(),
+                artists=(),
             )
 
         cache_key = self._build_search_cache_key(
@@ -89,9 +92,9 @@ class SpotifyifySearch(SpotifySearchGateway):
             if cached_result is not None:
                 return cached_result
             return SpotifyUnifiedSearchResult(
-                tracks=[],
-                playlists=[],
-                artists=[],
+                tracks=(),
+                playlists=(),
+                artists=(),
             )
 
         return await self._search_cache.run_with_cache(
@@ -167,18 +170,18 @@ class SpotifyifySearch(SpotifySearchGateway):
 
         if not search_tasks:
             return SpotifyUnifiedSearchResult(
-                tracks=[],
-                playlists=[],
-                artists=[],
+                tracks=(),
+                playlists=(),
+                artists=(),
             )
 
         task_results = await asyncio.gather(*search_tasks.values())
         results_by_type = dict(zip(search_tasks, task_results, strict=False))
 
         return SpotifyUnifiedSearchResult(
-            tracks=list(results_by_type.get(SpotifySearchType.TRACK, [])),
-            playlists=list(results_by_type.get(SpotifySearchType.PLAYLIST, [])),
-            artists=list(results_by_type.get(SpotifySearchType.ARTIST, [])),
+            tracks=tuple(results_by_type.get(SpotifySearchType.TRACK, ())),
+            playlists=tuple(results_by_type.get(SpotifySearchType.PLAYLIST, ())),
+            artists=tuple(results_by_type.get(SpotifySearchType.ARTIST, ())),
         )
 
     def _build_debounce_scope(
@@ -189,7 +192,8 @@ class SpotifyifySearch(SpotifySearchGateway):
         types: set[SpotifySearchType],
     ) -> str:
         requester_scope = requester_id or "anonymous"
-        type_scope = ",".join(sorted(search_type.value for search_type in types))
+        type_values = sorted(search_type.value for search_type in types)
+        type_scope = ",".join(type_values)
         return f"{requester_scope}|{limit}|{type_scope}"
 
     def _build_search_cache_key(
@@ -200,7 +204,8 @@ class SpotifyifySearch(SpotifySearchGateway):
         types: set[SpotifySearchType],
     ) -> str:
         normalized_query = " ".join(query.casefold().split())
-        type_scope = ",".join(sorted(search_type.value for search_type in types))
+        type_values = sorted(search_type.value for search_type in types)
+        type_scope = ",".join(type_values)
         return f"{normalized_query}|{limit}|{type_scope}"
 
     async def _search_tracks(
@@ -215,7 +220,7 @@ class SpotifyifySearch(SpotifySearchGateway):
             normalized_query,
             limit,
         )
-        return [_to_spotify_track(track) for track in tracks if track.id and track.name]
+        return [_to_spotify_track(track) for track in tracks if _has_id_and_name(track)]
 
     async def _search_playlists(
         self, *, query: str, limit: int = 20
@@ -232,7 +237,7 @@ class SpotifyifySearch(SpotifySearchGateway):
         return [
             _to_spotify_playlist(playlist)
             for playlist in playlists
-            if playlist.id and playlist.name
+            if _has_id_and_name(playlist)
         ]
 
     async def _search_artists(
@@ -248,9 +253,7 @@ class SpotifyifySearch(SpotifySearchGateway):
             limit,
         )
         return [
-            _to_spotify_artist(artist)
-            for artist in artists
-            if artist.id and artist.name
+            _to_spotify_artist(artist) for artist in artists if _has_id_and_name(artist)
         ]
 
 
@@ -320,7 +323,7 @@ def _to_spotify_track(track: Track) -> SpotifyTrack:
 def _to_spotify_artist(artist: Artist) -> SpotifyArtist:
     followers = artist.followers.total if artist.followers else None
     image_url = _cover_url(artist.images)
-    genres = [genre for genre in (artist.genres or []) if genre]
+    genres = tuple(genre for genre in (artist.genres or ()) if genre)
     return SpotifyArtist(
         id=artist.id or "",
         name=artist.name or "",
@@ -346,3 +349,7 @@ def _cover_url(images: list[Image] | None) -> str | None:
     if not images:
         return None
     return images[0].url
+
+
+def _has_id_and_name(item: Track | SimplifiedPlaylist | Artist) -> bool:
+    return bool(item.id and item.name)

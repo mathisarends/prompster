@@ -56,12 +56,13 @@ from backend.features.session.presentation.schemas import (
 
 def to_session_stream_event(event: SessionEvent) -> SessionStreamEvent:
     if isinstance(event, SessionSnapshot):
+        entries = [to_entry_response(entry) for entry in event.session.entries]
         return SessionSnapshotEvent(
             session=SessionSnapshotPayload(
                 id=event.session.id,
                 title=event.session.title,
                 created_at=event.session.created_at,
-                entries=[to_entry_response(entry) for entry in event.session.entries],
+                entries=entries,
                 playlist=(
                     _to_playlist_payload(event.session.playlist)
                     if event.session.playlist is not None
@@ -103,13 +104,12 @@ def to_session_stream_event(event: SessionEvent) -> SessionStreamEvent:
         )
 
     if isinstance(event, SessionToolCallResolved):
+        result_items = [to_tool_call_result_item_response(item) for item in event.items]
         return ToolCallResolvedEvent(
             sequence_id=event.sequence_id,
             tool_call_id=event.tool_call_id,
             result=event.result,
-            result_items=[
-                to_tool_call_result_item_response(item) for item in event.items
-            ],
+            result_items=result_items,
         )
 
     if isinstance(event, SessionToolCallFailed):
@@ -188,8 +188,9 @@ def to_session_stream_event(event: SessionEvent) -> SessionStreamEvent:
 
 
 def _to_playlist_payload(playlist: Playlist) -> PlaylistPayload:
+    tracks = [to_playlist_track_response(track) for track in playlist.tracks]
     return PlaylistPayload(
         id=playlist.id,
         name=playlist.name,
-        tracks=[to_playlist_track_response(track) for track in playlist.tracks],
+        tracks=tracks,
     )

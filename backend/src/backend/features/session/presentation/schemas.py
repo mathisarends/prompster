@@ -1,12 +1,17 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Literal, Self, Union
+from typing import Annotated, Literal, NamedTuple, Self, Union
 from uuid import UUID
 
 from pydantic import Field, RootModel, model_validator
 
 from backend.features.session.domain import OnboardingQuestionSelectionMode, Phase
-from backend.presentation.schema import Schema
+from backend.presentation import Schema
+
+
+class _AttachmentKey(NamedTuple):
+    kind: str
+    external_id: str
 
 
 class SessionUpdateRequest(Schema):
@@ -242,9 +247,9 @@ class SendMessageRequest(Schema):
 
     @model_validator(mode="after")
     def validate_unique_attachments(self) -> Self:
-        seen: set[tuple[str, str]] = set()
+        seen: set[_AttachmentKey] = set()
         for attachment in self.attachments:
-            key = (attachment.kind.value, attachment.external_id)
+            key = _AttachmentKey(attachment.kind.value, attachment.external_id)
             if key in seen:
                 raise ValueError("Duplicate attachments are not allowed.")
             seen.add(key)

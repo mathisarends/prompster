@@ -1,23 +1,21 @@
 import secrets
 
-from backend.features.auth.application.exceptions import InvalidCredentialsException
-from backend.features.auth.application.ports import GoogleOAuthProvider, TokenIssuer
+from backend.features.auth.application.ports import GoogleOAuthProvider
 from backend.features.auth.application.schemas import (
-    AuthSession,
     GoogleAuthorizationRequest,
     GoogleCallbackResult,
 )
+from backend.features.auth.domain import InvalidCredentialsException
 from backend.features.user.domain import (
     AuthIdentity,
     AuthProvider,
     User,
     UserRepository,
 )
+from backend.shared.authentication import AuthSession, TokenIssuer
 
 
 class GoogleOAuthFlow:
-    _STATE_TOKEN_BYTES = 32
-
     def __init__(
         self,
         user_repository: UserRepository,
@@ -29,7 +27,7 @@ class GoogleOAuthFlow:
         self._token_issuer = token_issuer
 
     def login(self) -> GoogleAuthorizationRequest:
-        oauth_state = secrets.token_urlsafe(self._STATE_TOKEN_BYTES)
+        oauth_state = secrets.token_urlsafe(_STATE_TOKEN_BYTES)
         authorization_url = self._google_oauth_provider.build_authorization_url(
             state=oauth_state,
         )
@@ -125,3 +123,6 @@ class GoogleOAuthFlow:
 
         user.profile_image_url = profile_image_url
         return await self._user_repository.update(user=user)
+
+
+_STATE_TOKEN_BYTES = 32

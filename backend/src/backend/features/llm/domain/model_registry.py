@@ -102,12 +102,11 @@ class LLMRegistry:
 
     @property
     def available_models(self) -> Sequence[LLMModelInfo]:
-        return tuple(
-            sorted(
-                (model for model in self._config.models if model.enabled),
-                key=lambda model: model.presentation.order,
-            )
+        enabled_models = sorted(
+            (model for model in self._config.models if model.enabled),
+            key=lambda model: model.presentation.order,
         )
+        return tuple(enabled_models)
 
     def get(self, model_id: str) -> LLMModelInfo:
         model = self._models.get(model_id)

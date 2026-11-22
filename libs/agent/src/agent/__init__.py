@@ -1,23 +1,5 @@
-from .agent import Agent
-from .events import (
-    AgentEvent,
-    AssistantMessageChunkEvent,
-    AssistantMessageEvent,
-    ContextCompactedEvent,
-    QuestionAskedEvent,
-    RunCompletedEvent,
-    RunStartedEvent,
-    SuspendedForUserInputEvent,
-    StepStartedEvent,
-    ToolCallEvent,
-    ToolResultEvent,
-    DeckUpdatedEvent,
-)
-from .views import UserEvent, UserEvents
-from .tools import Spotify
-from .tools.views import Phase
-from .deck import (
-    DeckStore,
+from agent.agent import Agent
+from agent.deck import (
     DeckDraft,
     DeckDraftCreated,
     DeckDraftOperationStatus,
@@ -30,9 +12,28 @@ from .deck import (
     DeckDraftTracksReplaced,
     DeckDraftUpdate,
     DeckDraftUpdateKind,
+    DeckStore,
     TrackRef,
     TrackRefReplacement,
 )
+from agent.events import (
+    AgentEvent,
+    AssistantMessageChunkEvent,
+    AssistantMessageEvent,
+    ContextCompactedEvent,
+    DeckUpdatedEvent,
+    QuestionAskedEvent,
+    RunCompletedEvent,
+    RunStartedEvent,
+    StepStartedEvent,
+    SuspendedForUserInputEvent,
+    ToolCallEvent,
+    ToolCallSequenceStartedEvent,
+    ToolResultEvent,
+    ToolRetryEvent,
+)
+from agent.tools import Spotify
+from agent.views import Phase, UserEvent, UserEvents
 
 __all__ = [
     "Agent",
@@ -47,7 +48,9 @@ __all__ = [
     "SuspendedForUserInputEvent",
     "StepStartedEvent",
     "ToolCallEvent",
+    "ToolCallSequenceStartedEvent",
     "ToolResultEvent",
+    "ToolRetryEvent",
     "UserEvent",
     "UserEvents",
     "DeckUpdatedEvent",

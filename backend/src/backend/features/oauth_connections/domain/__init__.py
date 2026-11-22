@@ -1,4 +1,6 @@
-from .oauth_connection import OAuthConnection, OAuthProvider
-from .oauth_connection_repository import OAuthConnectionRepository
+from backend.features.oauth_connections.domain.oauth_connection import OAuthConnection
+from backend.features.oauth_connections.domain.oauth_connection_repository import (
+    OAuthConnectionRepository,
+)
 
-__all__ = ["OAuthConnection", "OAuthConnectionRepository", "OAuthProvider"]
+__all__ = ["OAuthConnection", "OAuthConnectionRepository"]

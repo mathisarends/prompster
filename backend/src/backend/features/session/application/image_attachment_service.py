@@ -12,14 +12,14 @@ class InvalidImageAttachmentError(Exception):
     pass
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionImageAttachmentUpload:
     file_name: str
     content_type: str
     content: bytes
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionImageAttachmentReference:
     id: UUID
     storage_key: str
@@ -28,7 +28,7 @@ class SessionImageAttachmentReference:
     size_bytes: int
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class StashedImageAttachment:
     id: UUID
     storage_key: str

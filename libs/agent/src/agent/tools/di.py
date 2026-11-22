@@ -1,9 +1,9 @@
-from typing import TYPE_CHECKING, Annotated, Any, Self, final
+from typing import TYPE_CHECKING, Annotated, Any, Self, final, get_args, get_origin
 
 
 @final
 class ToolContext:
-    _marker_instance: _InjectMarker | None = None
+    _marker_instance: InjectMarker | None = None
 
     if TYPE_CHECKING:
         type Inject[T] = T
@@ -12,12 +12,6 @@ class ToolContext:
         class Inject:
             def __class_getitem__(cls, item: Any) -> Any:
                 return Annotated[item, ToolContext._get_marker()]
-
-    @staticmethod
-    def _get_marker() -> _InjectMarker:
-        if ToolContext._marker_instance is None:
-            ToolContext._marker_instance = _InjectMarker()
-        return ToolContext._marker_instance
 
     def __init__(self, *dependencies: Any) -> None:
         self._dependencies: list[Any] = list(dependencies)
@@ -29,6 +23,12 @@ class ToolContext:
     def clear(self) -> Self:
         self._dependencies.clear()
         return self
+
+    @staticmethod
+    def _get_marker() -> InjectMarker:
+        if ToolContext._marker_instance is None:
+            ToolContext._marker_instance = InjectMarker()
+        return ToolContext._marker_instance
 
     def resolve[T](self, expected_type: type[T]) -> T | None:
         for dep in self._dependencies:
@@ -44,9 +44,15 @@ class ToolContext:
 
 
 @final
-class _InjectMarker:
+class InjectMarker:
     def __repr__(self) -> str:
         return "ToolContext.Inject"
 
 
 Inject = ToolContext.Inject
+
+
+def is_injectable(hint: Any) -> bool:
+    if get_origin(hint) is not Annotated:
+        return False
+    return any(isinstance(arg, InjectMarker) for arg in get_args(hint))

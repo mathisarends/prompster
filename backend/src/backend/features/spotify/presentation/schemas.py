@@ -1,4 +1,4 @@
-from backend.presentation.schema import Schema
+from backend.presentation import Schema
 
 
 class SpotifyTrackResponse(Schema):

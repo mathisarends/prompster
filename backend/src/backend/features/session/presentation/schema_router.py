@@ -1,10 +1,11 @@
-from backend.features.auth.presentation.dependencies import AuthenticatedUserId
-from backend.features.auth.presentation.exceptions import (
-    AUTHENTICATION_REQUIRED_ERROR,
-)
-from backend.features.session.presentation.schemas import EntryKindSchema
 from fastapi import status
 from fastapi_canon import APIRouter
+
+from backend.features.session.presentation.schemas import EntryKindSchema
+from backend.presentation import (
+    AUTHENTICATION_REQUIRED_ERROR,
+    AuthenticatedUserId,
+)
 
 session_schema_router = APIRouter(
     prefix="/sessions",

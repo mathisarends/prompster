@@ -7,12 +7,8 @@ and keeps the count bounded so persisted previews never grow unboundedly.
 """
 
 from agent.deck import DeckDraftTrack
-from agent.tools.handler.spotify import SpotifyPlaylistPreview
+from agent.tools.handler.spotify_rendering import SpotifyPlaylistPreview
 from agent.tools.views import ActionResultItem
-
-# Cap how many results a single tool surfaces as previews — enough to give the
-# user a sense of what was found without persisting an unbounded list.
-RESULT_PREVIEW_LIMIT = 10
 
 
 def track_preview_items(tracks: list[DeckDraftTrack]) -> list[ActionResultItem]:
@@ -23,7 +19,7 @@ def track_preview_items(tracks: list[DeckDraftTrack]) -> list[ActionResultItem]:
             artist=track.artist,
             track_uri=track.spotify_uri,
         )
-        for track in tracks[:RESULT_PREVIEW_LIMIT]
+        for track in tracks[:_RESULT_PREVIEW_LIMIT]
     ]
 
 
@@ -32,5 +28,10 @@ def playlist_preview_items(
 ) -> list[ActionResultItem]:
     return [
         ActionResultItem(title=playlist.name, cover_url=playlist.cover_url)
-        for playlist in playlists[:RESULT_PREVIEW_LIMIT]
+        for playlist in playlists[:_RESULT_PREVIEW_LIMIT]
     ]
+
+
+# Cap how many results a single tool surfaces as previews — enough to give the
+# user a sense of what was found without persisting an unbounded list.
+_RESULT_PREVIEW_LIMIT = 10

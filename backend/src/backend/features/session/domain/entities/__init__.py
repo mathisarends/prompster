@@ -1,4 +1,4 @@
-from .messages import (
+from backend.features.session.domain.entities.messages import (
     AssistantMessage,
     ImageAttachment,
     UserCurationEvent,
@@ -7,11 +7,17 @@ from .messages import (
     UserMessageAttachment,
     UserMessageAttachmentKind,
 )
-from .onboarding_question import OnboardingQuestion, OnboardingQuestionSelectionMode
-from .playlist import Playlist, PlaylistTrack
-from .reference import ArtistReference, PlaylistReference
-from .session_entry import SessionEntry
-from .tool_call import (
+from backend.features.session.domain.entities.onboarding_question import (
+    OnboardingQuestion,
+    OnboardingQuestionSelectionMode,
+)
+from backend.features.session.domain.entities.playlist import Playlist, PlaylistTrack
+from backend.features.session.domain.entities.reference import (
+    ArtistReference,
+    PlaylistReference,
+)
+from backend.features.session.domain.entities.session_entry import SessionEntry
+from backend.features.session.domain.entities.tool_call import (
     CompletedCall,
     FailedCall,
     PendingCall,
@@ -23,7 +29,7 @@ from .tool_call import (
     is_pending,
     is_resolved,
 )
-from .tool_call_sequence import ToolCallSequence
+from backend.features.session.domain.entities.tool_call_sequence import ToolCallSequence
 
 __all__ = [
     "ArtistReference",

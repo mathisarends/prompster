@@ -1,10 +1,10 @@
+from typing import NamedTuple
 from uuid import UUID
 
 from sqlalchemy import and_, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Row
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.features.oauth_connections.domain import OAuthProvider
 from backend.features.user.domain import (
     AuthIdentity,
     AuthProvider,
@@ -12,13 +12,14 @@ from backend.features.user.domain import (
     User,
     UserRepository,
 )
-from backend.platform.database.orm import (
+from backend.platform.database import (
     AuthIdentityModel,
     OAuthConnectionModel,
+    Repository,
     SessionModel,
     UserModel,
 )
-from backend.platform.database.repository import Repository
+from backend.shared.oauth_provider import OAuthProvider
 
 
 def _select_user_with_spotify_connection():
@@ -30,13 +31,19 @@ def _select_user_with_spotify_connection():
         OAuthConnectionModel,
         and_(
             OAuthConnectionModel.user_id == UserModel.id,
-            OAuthConnectionModel.provider == OAuthProvider.SPOTIFY.value,
+            OAuthConnectionModel.provider == OAuthProvider.SPOTIFY,
         ),
     )
 
 
+class _UserConnectionColumns(NamedTuple):
+    user: UserModel
+    oauth_connection_id: UUID | None
+    is_premium: bool | None
+
+
 def _split_user_with_connection(
-    row: Row[tuple[UserModel, UUID | None, bool | None]],
+    row: Row[_UserConnectionColumns],
 ) -> tuple[UserModel, SpotifyAccount]:
     user_orm, oauth_connection_id, is_premium = row[0], row[1], row[2]
     if oauth_connection_id is None:
@@ -47,28 +54,6 @@ def _split_user_with_connection(
 class SqlUserRepository(Repository[UserModel, User], UserRepository):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session=session, model=UserModel)
-
-    def _to_domain(
-        self,
-        orm: UserModel,
-        *,
-        spotify: SpotifyAccount | None = None,
-    ) -> User:
-        return User.restore(
-            id=orm.id,
-            created_at=orm.created_at,
-            name=orm.name,
-            profile_image_url=orm.profile_image_url,
-            spotify=spotify or SpotifyAccount.disconnected(),
-        )
-
-    def _to_orm(self, domain: User) -> UserModel:
-        return UserModel(
-            id=domain.id,
-            name=domain.name,
-            profile_image_url=domain.profile_image_url,
-            created_at=domain.created_at,
-        )
 
     async def get_by_id(self, *, user_id: UUID) -> User | None:
         stmt = _select_user_with_spotify_connection().where(UserModel.id == user_id)
@@ -137,3 +122,25 @@ class SqlUserRepository(Repository[UserModel, User], UserRepository):
         await self.session.flush()
         await self.session.refresh(user_orm)
         return self._to_domain(user_orm)
+
+    def _to_domain(
+        self,
+        orm: UserModel,
+        *,
+        spotify: SpotifyAccount | None = None,
+    ) -> User:
+        return User.restore(
+            id=orm.id,
+            created_at=orm.created_at,
+            name=orm.name,
+            profile_image_url=orm.profile_image_url,
+            spotify=spotify if spotify is not None else SpotifyAccount.disconnected(),
+        )
+
+    def _to_orm(self, domain: User) -> UserModel:
+        return UserModel(
+            id=domain.id,
+            name=domain.name,
+            profile_image_url=domain.profile_image_url,
+            created_at=domain.created_at,
+        )

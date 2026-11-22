@@ -3,10 +3,8 @@ import logging
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.features.health.application import (
-    ReadinessCheck,
-    ServiceNotReadyException,
-)
+from backend.features.health.application import ReadinessCheck
+from backend.features.health.domain import ServiceNotReadyException
 
 logger = logging.getLogger(__name__)
 

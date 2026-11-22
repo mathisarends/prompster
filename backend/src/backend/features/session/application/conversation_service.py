@@ -34,8 +34,8 @@ from backend.features.session.application.image_attachment_service import (
     SessionImageAttachmentReference,
     normalize_content_type,
 )
-from backend.features.session.application.ports import MessageAttachmentStore
-from backend.features.session.application.ports.session_runner import (
+from backend.features.session.application.ports import (
+    MessageAttachmentStore,
     SessionRunner,
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
@@ -52,8 +52,6 @@ from backend.features.session.application.ports.session_runner import (
     SessionRunnerToolCallRetry,
     SessionRunnerToolCallSequenceStarted,
     SessionRunnerToolCallStarted,
-)
-from backend.features.session.application.ports.title_generator import (
     SessionTitleGenerator,
 )
 from backend.features.session.domain import (
@@ -72,7 +70,7 @@ from backend.features.session.domain import (
 logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionMessageAttachment:
     kind: str
     external_id: str
@@ -82,7 +80,7 @@ class SessionMessageAttachment:
     spotify_id: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _ResolvedToolCall:
     sequence_id: UUID
     tool_call_id: str
@@ -91,7 +89,7 @@ class _ResolvedToolCall:
     items: tuple[ToolResultItem, ...] = field(default_factory=tuple)
 
 
-@dataclass
+@dataclass(slots=True)
 class _AgentRunState:
     current_assistant_message: AssistantMessage | None = None
     pending_tool_call_sequence_label: str | None = None
@@ -127,11 +125,15 @@ class SessionConversationService:
         referenced_images = await self._promote_image_attachment_references(
             user_id=user_id,
             session_id=session.id,
-            image_attachments=image_attachments or [],
+            image_attachments=image_attachments
+            if image_attachments is not None
+            else [],
         )
         session.add_user_message(
             content=content,
-            attachments=self._to_user_message_attachments(attachments or []),
+            attachments=self._to_user_message_attachments(
+                attachments if attachments is not None else []
+            ),
             image_attachments=referenced_images,
         )
         title_task = self._maybe_start_title_generation(
@@ -185,6 +187,15 @@ class SessionConversationService:
         ) as events:
             async for event in events:
                 yield event
+
+    async def stop_message(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+    ) -> bool:
+        await self._get_authorized(session_id=session_id, user_id=user_id)
+        return await self._runner.stop(session_id=session_id)
 
     def _maybe_start_title_generation(
         self,
@@ -261,6 +272,7 @@ class SessionConversationService:
         except asyncio.CancelledError:
             return ()
         except Exception:
+            # A failed title generation must not fail the user's message.
             raw_title = "New Session"
 
         return await self._apply_title(session=session, raw_title=raw_title)
@@ -282,6 +294,7 @@ class SessionConversationService:
         except asyncio.CancelledError:
             return "New Session"
         except Exception:
+            # A failed title generation must not fail the user's message.
             return "New Session"
 
     def _consume_title_task_exception(self, title_task: asyncio.Task[str]) -> None:
@@ -290,16 +303,8 @@ class SessionConversationService:
         except asyncio.CancelledError:
             pass
         except Exception:
+            # Retrieving the error marks it handled; the title is best effort.
             pass
-
-    async def stop_message(
-        self,
-        *,
-        session_id: UUID,
-        user_id: UUID,
-    ) -> bool:
-        await self._get_authorized(session_id=session_id, user_id=user_id)
-        return await self._runner.stop(session_id=session_id)
 
     async def _persist_session(self, *, session: Session) -> Session:
         return await self._session_repository.save(session=session)
@@ -568,12 +573,11 @@ class SessionConversationService:
         session: Session,
         state: _AgentRunState,
     ) -> tuple[SessionEvent, ...]:
-        events = list(
-            await self._ensure_assistant_message_started(
-                session=session,
-                state=state,
-            )
+        started_events = await self._ensure_assistant_message_started(
+            session=session,
+            state=state,
         )
+        events = list(started_events)
         message = self._require_current_run_assistant_message(state=state)
 
         session.append_to_current_assistant_message(event.chunk)
@@ -592,12 +596,11 @@ class SessionConversationService:
         session: Session,
         state: _AgentRunState,
     ) -> tuple[SessionEvent, ...]:
-        events = list(
-            await self._ensure_assistant_message_started(
-                session=session,
-                state=state,
-            )
+        started_events = await self._ensure_assistant_message_started(
+            session=session,
+            state=state,
         )
+        events = list(started_events)
         message = self._require_current_run_assistant_message(state=state)
 
         if event.content and message.content:
@@ -631,12 +634,11 @@ class SessionConversationService:
         session: Session,
         state: _AgentRunState,
     ) -> tuple[SessionEvent, ...]:
-        events = list(
-            await self._finish_current_assistant_message(
-                session=session,
-                state=state,
-            )
+        finished_events = await self._finish_current_assistant_message(
+            session=session,
+            state=state,
         )
+        events = list(finished_events)
         if event.call.function.is_onboarding_question:
             state.skipped_onboarding_tool_call_ids.add(event.call.id)
             state.pending_tool_call_sequence_label = None
@@ -860,7 +862,7 @@ class SessionConversationService:
             events=(
                 SessionOnboardingQuestionAsked(
                     question=question.question_text,
-                    options=list(question.options),
+                    options=tuple(question.options),
                     hint=question.hint,
                     recommended_option=question.recommended_option,
                     selection_mode=question.selection_mode,
@@ -877,12 +879,11 @@ class SessionConversationService:
         session: Session,
         state: _AgentRunState,
     ) -> tuple[SessionEvent, ...]:
-        events = list(
-            await self._finish_current_assistant_message(
-                session=session,
-                state=state,
-            )
+        finished_events = await self._finish_current_assistant_message(
+            session=session,
+            state=state,
         )
+        events = list(finished_events)
         question_id = None
         suspended_options = list(event.options or [])
         recommended_option = event.recommended_option

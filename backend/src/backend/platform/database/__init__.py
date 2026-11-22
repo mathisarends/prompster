@@ -1,5 +1,41 @@
-from .repository import Repository
+from backend.platform.database.orm import (
+    ActiveSessionRunModel,
+    AuthIdentityModel,
+    OAuthConnectionModel,
+    PlaylistTrackModel,
+    SessionArtistReferenceModel,
+    SessionAssistantMessageModel,
+    SessionModel,
+    SessionOnboardingQuestionModel,
+    SessionPlaylistModel,
+    SessionPlaylistReferenceModel,
+    SessionToolCallModel,
+    SessionToolCallSequenceModel,
+    SessionUserCurationEventModel,
+    SessionUserMessageAttachmentModel,
+    SessionUserMessageImageAttachmentModel,
+    SessionUserMessageModel,
+    UserModel,
+)
+from backend.platform.database.repository import Repository
 
 __all__ = [
+    "ActiveSessionRunModel",
+    "AuthIdentityModel",
+    "OAuthConnectionModel",
+    "PlaylistTrackModel",
     "Repository",
+    "SessionArtistReferenceModel",
+    "SessionAssistantMessageModel",
+    "SessionModel",
+    "SessionOnboardingQuestionModel",
+    "SessionPlaylistModel",
+    "SessionPlaylistReferenceModel",
+    "SessionToolCallModel",
+    "SessionToolCallSequenceModel",
+    "SessionUserCurationEventModel",
+    "SessionUserMessageAttachmentModel",
+    "SessionUserMessageImageAttachmentModel",
+    "SessionUserMessageModel",
+    "UserModel",
 ]

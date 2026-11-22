@@ -1,8 +1,10 @@
-from .exceptions import SESSION_ERRORS
-from .image_attachment_router import image_attachment_router
-from .router import router
-from .rpc import rpc_router
-from .schema_router import session_schema_router
+from backend.features.session.presentation.exceptions import SESSION_ERRORS
+from backend.features.session.presentation.image_attachment_router import (
+    image_attachment_router,
+)
+from backend.features.session.presentation.router import router
+from backend.features.session.presentation.rpc import rpc_router
+from backend.features.session.presentation.schema_router import session_schema_router
 
 __all__ = [
     "SESSION_ERRORS",
