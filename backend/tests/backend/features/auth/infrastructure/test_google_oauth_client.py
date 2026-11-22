@@ -20,7 +20,7 @@ class _ResponseStub:
         return self._payload
 
 
-class _AsyncClientStub:
+class AsyncClientStub:
     post_response: _ResponseStub
     get_response: _ResponseStub
     post_data: dict[str, str] | None = None
@@ -113,17 +113,17 @@ class TestGoogleOAuthClient:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        _AsyncClientStub.post_response = _ResponseStub(
+        AsyncClientStub.post_response = _ResponseStub(
             status_code=200,
             payload={"access_token": "access-token"},
         )
-        _AsyncClientStub.get_response = _ResponseStub(
+        AsyncClientStub.get_response = _ResponseStub(
             status_code=200,
             payload={"sub": " google-subject ", "name": " Mathis ", "picture": " "},
         )
-        _AsyncClientStub.post_data = None
-        _AsyncClientStub.get_headers = None
-        monkeypatch.setattr("httpx.AsyncClient", _AsyncClientStub)
+        AsyncClientStub.post_data = None
+        AsyncClientStub.get_headers = None
+        monkeypatch.setattr("httpx.AsyncClient", AsyncClientStub)
         client = GoogleOAuthClient(self._settings())
 
         identity = asyncio.run(
@@ -133,14 +133,14 @@ class TestGoogleOAuthClient:
         assert identity.subject == "google-subject"
         assert identity.name == "Mathis"
         assert identity.profile_image_url is None
-        assert _AsyncClientStub.post_data == {
+        assert AsyncClientStub.post_data == {
             "code": "code-123",
             "client_id": "google-client-id",
             "client_secret": "google-client-secret",
             "redirect_uri": "https://app.example.com/auth/google/callback",
             "grant_type": "authorization_code",
         }
-        assert _AsyncClientStub.get_headers == {"Authorization": "Bearer access-token"}
+        assert AsyncClientStub.get_headers == {"Authorization": "Bearer access-token"}
 
     @pytest.mark.parametrize(
         ("token_response", "message"),
@@ -158,9 +158,9 @@ class TestGoogleOAuthClient:
         token_response: _ResponseStub,
         message: str,
     ) -> None:
-        _AsyncClientStub.post_response = token_response
-        _AsyncClientStub.get_response = _ResponseStub(status_code=200, payload={})
-        monkeypatch.setattr("httpx.AsyncClient", _AsyncClientStub)
+        AsyncClientStub.post_response = token_response
+        AsyncClientStub.get_response = _ResponseStub(status_code=200, payload={})
+        monkeypatch.setattr("httpx.AsyncClient", AsyncClientStub)
         client = GoogleOAuthClient(self._settings())
 
         with pytest.raises(ValueError, match=message):
@@ -184,12 +184,12 @@ class TestGoogleOAuthClient:
         profile_response: _ResponseStub,
         message: str,
     ) -> None:
-        _AsyncClientStub.post_response = _ResponseStub(
+        AsyncClientStub.post_response = _ResponseStub(
             status_code=200,
             payload={"access_token": "access-token"},
         )
-        _AsyncClientStub.get_response = profile_response
-        monkeypatch.setattr("httpx.AsyncClient", _AsyncClientStub)
+        AsyncClientStub.get_response = profile_response
+        monkeypatch.setattr("httpx.AsyncClient", AsyncClientStub)
         client = GoogleOAuthClient(self._settings())
 
         with pytest.raises(ValueError, match=message):

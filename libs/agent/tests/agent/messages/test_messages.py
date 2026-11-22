@@ -15,9 +15,6 @@ from datetime import datetime, timezone
 
 from agent.deck import DeckDraft, DeckDraftTrack
 from agent.messages import MessageManager, render_user_message_content
-from agent.messages.rendering import (
-    _render_user_events_block as render_user_events_block,
-)
 from agent.views import Phase, UserCurationEventType, UserEvent
 from callm import (
     AssistantMessage,
@@ -324,7 +321,7 @@ class TestRenderingHelpers:
     when rebuilding history from persistent state."""
 
     def test_render_user_events_block_format(self) -> None:
-        block = render_user_events_block([_event()])
+        block = render_user_message_content("", [_event()])
 
         assert block == (
             "<user_events>\n"
@@ -349,7 +346,12 @@ class TestRenderingHelpers:
     ) -> None:
         content = render_user_message_content("", [_event()])
 
-        assert content == render_user_events_block([_event()])
+        assert content == (
+            "<user_events>\n"
+            '<event type="track_removed" at="2026-01-01T00:00:00+00:00">'
+            "Rihanna - Umbrella</event>\n"
+            "</user_events>"
+        )
 
 
 class TestSystemPromptScope:

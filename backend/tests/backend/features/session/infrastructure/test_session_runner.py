@@ -3,7 +3,8 @@ from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from agent.tools.views import Phase as AgentPhase
+import pytest
+from agent import Phase as AgentPhase
 from callm import AssistantMessage as LLMAssistantMessage
 from callm import UserMessage as LLMUserMessage
 
@@ -28,7 +29,6 @@ from backend.features.session.domain import (
     UserCurationEventType,
 )
 from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
-from backend.features.session.infrastructure.session_runner import _agent_phase_for
 
 
 class _SessionRepositoryStub(SessionRepository):
@@ -167,17 +167,11 @@ class _MessageAttachmentStoreStub(MessageAttachmentStore):
 
 
 class TestAgentPhaseMapping:
-    def test_agent_phase_uses_persisted_session_phase(self) -> None:
-        session = Session.restore(
-            id=uuid4(),
-            created_at=datetime.now(UTC),
-            title="Deck",
-            entries=[],
-            owner_id=uuid4(),
-            phase=Phase.BUILD,
-        )
-
-        assert _agent_phase_for(session) == AgentPhase.BUILD
+    @pytest.mark.parametrize("phase", list(Phase))
+    def test_agent_understands_every_persisted_session_phase(
+        self, phase: Phase
+    ) -> None:
+        assert AgentPhase(phase).value == phase.value
 
 
 class TestSessionRunnerHistoryRendering:

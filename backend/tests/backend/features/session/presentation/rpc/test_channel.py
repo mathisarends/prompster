@@ -33,7 +33,6 @@ from backend.features.session.presentation.rpc.events import (
     PlaylistPayload,
     SessionSnapshotPayload,
     SessionStreamEvent,
-    _SessionEventSchema,
 )
 from backend.features.session.presentation.rpc.params import (
     CompleteOnboardingParams,
@@ -44,7 +43,7 @@ from backend.features.session.presentation.rpc.stream import session_events
 
 def test_event_union_has_discriminated_model_members() -> None:
     event_classes = get_args(get_args(SessionStreamEvent.__value__)[0])
-    assert all(issubclass(cls, _SessionEventSchema) for cls in event_classes)
+    assert all("type" in cls.model_fields for cls in event_classes)
     assert "type" not in PlaylistPayload.model_fields
     assert "type" not in SessionSnapshotPayload.model_fields
 

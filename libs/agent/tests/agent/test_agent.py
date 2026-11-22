@@ -24,6 +24,7 @@ from callm import (
     ModelResponse,
     TextDelta,
     ToolCall,
+    ToolResultMessage,
     Usage,
 )
 
@@ -93,9 +94,15 @@ class TestAgentWorkspaceUpdateEvents:
                 _ChatResponse(completion="Weiter gehts", tool_calls=[]),
             ]
         )
-        agent = Agent(llm=llm)
-        for index in range(5):
-            agent._messages.add_tool_result(f"call-{index}", "search_tracks", "x")
+        history = [
+            ToolResultMessage(
+                tool_call_id=f"call-{index}",
+                tool_name="search_tracks",
+                content="x",
+            )
+            for index in range(5)
+        ]
+        agent = Agent(llm=llm, history=history)
 
         events = [event async for event in agent.stream("Mach weiter")]
 

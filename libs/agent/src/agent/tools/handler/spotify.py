@@ -1,25 +1,25 @@
 import logging
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Self
 
 from pydantic import BaseModel
 from spotifyify import (
-    Image,
-    Playlist,
     RetryEvent,
-    SimplifiedAlbum,
-    SimplifiedArtist,
-    SimplifiedPlaylist,
     Spotifyify,
     Track,
 )
 
-from agent.deck import DeckDraftTrack
-from agent.messages.rendering import (
-    render_album_tag,
-    render_playlist_tag,
-    render_track_tag,
+from agent.tools.handler.spotify_rendering import (
+    SpotifyPlaylistPreview,
+    SpotifyTrackLookupResult,
+    cover_url,
+    format_album,
+    format_playlist,
+    playlist_preview,
+    track_cover_url,
+    track_lookup_result,
+    track_release_date,
 )
 from agent.tools.params import (
     AlbumTracksParams,
@@ -36,16 +36,6 @@ logger = logging.getLogger(__name__)
 # the whole playlist into a single tool result, which used to bloat the LLM
 # context by tens of thousands of tokens for large playlists.
 _PLAYLIST_PAGE_SIZE = 50
-
-
-class SpotifyTrackLookupResult(BaseModel):
-    content: str
-    tracks: list[DeckDraftTrack]
-
-
-class SpotifyPlaylistPreview(BaseModel):
-    name: str
-    cover_url: str | None = None
 
 
 class SpotifyPlaylistLookupResult(BaseModel):
@@ -98,10 +88,10 @@ class Spotify:
         )
         if not tracks:
             return SpotifyTrackLookupResult(content="No tracks found.", tracks=[])
-        return _track_lookup_result(
+        return track_lookup_result(
             tracks,
-            release_date_for=_track_release_date,
-            cover_url_for=_track_cover_url,
+            release_date_for=track_release_date,
+            cover_url_for=track_cover_url,
         )
 
     async def search_albums(self, params: SearchParams) -> str:
@@ -125,7 +115,7 @@ class Spotify:
         )
         if not albums:
             return "No albums found."
-        return "\n".join(_format_album(album) for album in albums)
+        return "\n".join(format_album(album) for album in albums)
 
     async def search_playlists(
         self, params: SearchParams
@@ -153,8 +143,8 @@ class Spotify:
                 content="No playlists found.", playlists=[]
             )
         return SpotifyPlaylistLookupResult(
-            content="\n".join(_format_playlist(playlist) for playlist in playlists),
-            playlists=[_playlist_preview(playlist) for playlist in playlists],
+            content="\n".join(format_playlist(playlist) for playlist in playlists),
+            playlists=[playlist_preview(playlist) for playlist in playlists],
         )
 
     async def get_artist_albums(self, params: ArtistAlbumsParams) -> str:
@@ -180,7 +170,7 @@ class Spotify:
         )
         if not albums:
             return "No albums found."
-        return "\n".join(_format_album(album) for album in albums)
+        return "\n".join(format_album(album) for album in albums)
 
     async def get_artist_top_tracks(
         self,
@@ -205,10 +195,10 @@ class Spotify:
         )
         if not tracks:
             return SpotifyTrackLookupResult(content="No top tracks found.", tracks=[])
-        return _track_lookup_result(
+        return track_lookup_result(
             tracks,
-            release_date_for=_track_release_date,
-            cover_url_for=_track_cover_url,
+            release_date_for=track_release_date,
+            cover_url_for=track_cover_url,
         )
 
     async def get_album_tracks(
@@ -229,8 +219,8 @@ class Spotify:
         )
         if not tracks:
             return SpotifyTrackLookupResult(content="No tracks found.", tracks=[])
-        album_cover_url = _cover_url(album.images)
-        return _track_lookup_result(
+        album_cover_url = cover_url(album.images)
+        return track_lookup_result(
             tracks,
             release_date_for=lambda _: album.release_date,
             cover_url_for=lambda _: album_cover_url,
@@ -267,10 +257,10 @@ class Spotify:
         if not tracks:
             content = "Playlist is empty." if offset == 0 else "No more tracks."
             return SpotifyTrackLookupResult(content=content, tracks=[])
-        result = _track_lookup_result(
+        result = track_lookup_result(
             tracks,
-            release_date_for=_track_release_date,
-            cover_url_for=_track_cover_url,
+            release_date_for=track_release_date,
+            cover_url_for=track_cover_url,
         )
         footer = _playlist_page_footer(
             offset=offset,
@@ -332,11 +322,6 @@ def _playlist_page_footer(
     return f"{scope} End of playlist."
 
 
-def _playlist_track_count(playlist: Playlist | SimplifiedPlaylist) -> int:
-    tracks = playlist.items or playlist.tracks
-    return tracks.total if tracks and tracks.total is not None else 0
-
-
 def _normalize_spotify_id(value: str, resource_type: str) -> str:
     prefix = f"spotify:{resource_type}:"
     if value.startswith(prefix):
@@ -348,101 +333,3 @@ def _normalize_spotify_id(value: str, resource_type: str) -> str:
         return tail.split("?", 1)[0].split("/", 1)[0]
 
     return value
-
-
-def _artist_names(artists: list[SimplifiedArtist] | None) -> str:
-    names = [artist.name for artist in (artists or []) if artist and artist.name]
-    return ", ".join(names) if names else "Unknown artist"
-
-
-def _track_title(track: Track) -> str:
-    return track.name or "Unknown title"
-
-
-def _release_year(release_date: str | None) -> int:
-    if release_date and len(release_date) >= 4 and release_date[:4].isdigit():
-        return int(release_date[:4])
-    return 0
-
-
-def _track_release_date(track: Track) -> str | None:
-    return track.album.release_date if track.album else None
-
-
-def _track_cover_url(track: Track) -> str | None:
-    return _cover_url(track.album.images) if track.album else None
-
-
-def _cover_url(images: list[Image] | None) -> str | None:
-    if not images:
-        return None
-    return images[0].url
-
-
-def _track_lookup_result(
-    tracks: list[Track],
-    *,
-    release_date_for: Callable[[Track], str | None],
-    cover_url_for: Callable[[Track], str | None],
-) -> SpotifyTrackLookupResult:
-    lines: list[str] = []
-    draft_tracks: list[DeckDraftTrack] = []
-
-    for _, track in enumerate(tracks):
-        release_date = release_date_for(track)
-        cover_url = cover_url_for(track)
-        draft_track = _deck_draft_track(track, release_date, cover_url)
-        if draft_track.spotify_uri is not None:
-            draft_tracks.append(draft_track)
-            lines.append(
-                render_track_tag(
-                    draft_track,
-                    identity_attr="uri",
-                    identity_value=draft_track.spotify_uri,
-                )
-            )
-
-    return SpotifyTrackLookupResult(content="\n".join(lines), tracks=draft_tracks)
-
-
-def _deck_draft_track(
-    track: Track,
-    release_date: str | None,
-    cover_url: str | None,
-) -> DeckDraftTrack:
-    return DeckDraftTrack(
-        title=_track_title(track),
-        artist=_artist_names(track.artists),
-        year=_release_year(release_date) or None,
-        spotify_uri=(
-            track.uri if track.uri and track.uri.startswith("spotify:track:") else None
-        ),
-        cover_url=cover_url,
-    )
-
-
-def _format_album(album: SimplifiedAlbum) -> str:
-    return render_album_tag(
-        uri=album.uri,
-        name=album.name,
-        artist=_artist_names(album.artists),
-        year=_release_year(album.release_date),
-        track_count=album.total_tracks,
-    )
-
-
-def _format_playlist(playlist: Playlist | SimplifiedPlaylist) -> str:
-    return render_playlist_tag(
-        id=playlist.id,
-        name=playlist.name,
-        track_count=_playlist_track_count(playlist),
-    )
-
-
-def _playlist_preview(
-    playlist: Playlist | SimplifiedPlaylist,
-) -> SpotifyPlaylistPreview:
-    return SpotifyPlaylistPreview(
-        name=playlist.name or "Unknown playlist",
-        cover_url=_cover_url(playlist.images),
-    )

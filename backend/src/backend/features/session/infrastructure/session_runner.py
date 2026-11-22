@@ -168,12 +168,8 @@ class AgentSessionRunner(SessionRunner):
             deck_store=_to_deck_store(session.playlist),
             max_deck_tracks=MAX_PLAYLIST_TRACKS,
             max_input_tokens=model_info.input_token_limit,
-            phase=_agent_phase_for(session),
+            phase=AgentPhase(session.phase),
         )
-
-
-def _agent_phase_for(session: Session) -> AgentPhase:
-    return AgentPhase(session.phase)
 
 
 def _to_deck_store(playlist: Playlist | None) -> DeckStore:

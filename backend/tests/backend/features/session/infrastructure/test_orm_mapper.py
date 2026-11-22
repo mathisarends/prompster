@@ -1,5 +1,4 @@
 from datetime import UTC, datetime, timedelta
-from unittest.mock import Mock
 from uuid import uuid4
 
 from backend.features.session.domain import (
@@ -9,6 +8,7 @@ from backend.features.session.domain import (
     Phase,
     Session,
     ToolActionType,
+    ToolCallSequence,
     ToolFunction,
     UserCurationEvent,
     UserCurationEventType,
@@ -16,7 +16,7 @@ from backend.features.session.domain import (
     UserMessageAttachment,
     UserMessageAttachmentKind,
 )
-from backend.features.session.infrastructure.repository import SqlSessionRepository
+from backend.features.session.infrastructure.orm_mapper import SessionOrmMapper
 from backend.platform.database.orm import (
     SessionArtistReferenceModel,
     SessionModel,
@@ -27,6 +27,29 @@ from backend.platform.database.orm import (
     SessionUserMessageImageAttachmentModel,
     SessionUserMessageModel,
 )
+
+
+def _session_model(session: Session, **relationships: object) -> SessionModel:
+    return SessionModel(
+        id=session.id,
+        title=session.title,
+        owner_id=session.owner_id,
+        is_starred=False,
+        last_activity_at=session.created_at,
+        created_at=session.created_at,
+        **relationships,
+    )
+
+
+def _restored_message(
+    mapper: SessionOrmMapper,
+    session: Session,
+    row: SessionUserMessageModel,
+) -> UserMessage:
+    restored = mapper.to_domain(_session_model(session, user_messages=[row]))
+    message = restored.entries[0]
+    assert isinstance(message, UserMessage)
+    return message
 
 
 def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
@@ -64,8 +87,8 @@ def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
     orm.assistant_messages = []
     orm.tool_call_sequences = []
 
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
-    repository._sync_entries(orm=orm, session_id=session_id, entries=session.entries)
+    mapper = SessionOrmMapper()
+    mapper.sync(orm=orm, session=session)
 
     assert len(orm.user_messages) == 1
     assert orm.user_messages[0] is existing_row
@@ -96,18 +119,16 @@ def test_user_message_attachment_mapping_roundtrip() -> None:
     assert isinstance(message, UserMessage)
     message_id = message.id
 
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
-    orm_message = repository._to_orm_user_message(
-        message=message,
-        session_id=session_id,
-        position=0,
-    )
+    mapper = SessionOrmMapper()
+    orm_message = mapper.to_orm(session).user_messages[0]
 
     assert len(orm_message.attachments) == 1
     assert orm_message.attachments[0].kind == "spotify-playlist"
     assert orm_message.attachments[0].external_id == "37i9dQZF1DX4dyzvuaRJ0n"
 
-    domain_message = repository._to_domain_user_message(
+    domain_message = _restored_message(
+        mapper,
+        session,
         SessionUserMessageModel(
             id=message_id,
             session_id=session_id,
@@ -126,7 +147,7 @@ def test_user_message_attachment_mapping_roundtrip() -> None:
                     spotify_id="37i9dQZF1DX4dyzvuaRJ0n",
                 )
             ],
-        )
+        ),
     )
 
     assert len(domain_message.attachments) == 1
@@ -167,18 +188,16 @@ def test_user_message_image_attachment_mapping_roundtrip() -> None:
     assert isinstance(message, UserMessage)
     message_id = message.id
 
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
-    orm_message = repository._to_orm_user_message(
-        message=message,
-        session_id=session_id,
-        position=0,
-    )
+    mapper = SessionOrmMapper()
+    orm_message = mapper.to_orm(session).user_messages[0]
 
     assert len(orm_message.image_attachments) == 1
     assert orm_message.image_attachments[0].storage_key.endswith(".png")
     assert orm_message.image_attachments[0].content_type == "image/png"
 
-    domain_message = repository._to_domain_user_message(
+    domain_message = _restored_message(
+        mapper,
+        session,
         SessionUserMessageModel(
             id=message_id,
             session_id=session_id,
@@ -200,7 +219,7 @@ def test_user_message_image_attachment_mapping_roundtrip() -> None:
                     created_at=message.created_at,
                 )
             ],
-        )
+        ),
     )
 
     assert len(domain_message.image_attachments) == 1
@@ -211,7 +230,7 @@ def test_user_message_image_attachment_mapping_roundtrip() -> None:
 def test_session_phase_mapping_roundtrip() -> None:
     owner_id = uuid4()
     session_id = uuid4()
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    mapper = SessionOrmMapper()
     session = Session.restore(
         title="Roadtrip",
         entries=[],
@@ -221,7 +240,7 @@ def test_session_phase_mapping_roundtrip() -> None:
         phase=Phase.BUILD,
     )
 
-    orm = repository._to_orm(session)
+    orm = mapper.to_orm(session)
 
     assert orm.phase == "build"
 
@@ -231,7 +250,7 @@ def test_session_phase_mapping_roundtrip() -> None:
     orm.user_curation_events = []
     orm.playlist_references = []
     orm.artist_references = []
-    mapped = repository._to_domain(orm)
+    mapped = mapper.to_domain(orm)
 
     assert mapped.phase == Phase.BUILD
 
@@ -280,12 +299,8 @@ def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:
     )
     orm.user_curation_events = [existing_row]
 
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
-    repository._sync_user_curation_events(
-        orm=orm,
-        session_id=session_id,
-        events=session.user_curation_events,
-    )
+    mapper = SessionOrmMapper()
+    mapper.sync(orm=orm, session=session)
 
     assert len(orm.user_curation_events) == 1
     assert orm.user_curation_events[0] is existing_row
@@ -332,17 +347,8 @@ def test_reference_mapping_roundtrip() -> None:
         last_activity_at=session.created_at,
         created_at=session.created_at,
     )
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
-    repository._sync_playlist_references(
-        orm=orm,
-        session_id=session_id,
-        references=session.playlist_references,
-    )
-    repository._sync_artist_references(
-        orm=orm,
-        session_id=session_id,
-        references=session.artist_references,
-    )
+    mapper = SessionOrmMapper()
+    mapper.sync(orm=orm, session=session)
 
     assert len(orm.playlist_references) == 1
     assert orm.playlist_references[0].id == playlist_reference.id
@@ -351,33 +357,40 @@ def test_reference_mapping_roundtrip() -> None:
     assert orm.artist_references[0].id == artist_reference.id
     assert orm.artist_references[0].genres == ["rock", "glam rock"]
 
-    mapped_playlist = repository._to_domain_playlist_reference(
-        SessionPlaylistReferenceModel(
-            id=playlist_reference.id,
-            session_id=session_id,
-            position=0,
-            spotify_playlist_id="37i9dQZF1DX4dyzvuaRJ0n",
-            name="Lo-Fi Beats",
-            owner="Spotify",
-            cover_url="https://example.com/playlist.jpg",
-            total_tracks=100,
-            created_at=playlist_reference.created_at,
+    restored = mapper.to_domain(
+        _session_model(
+            session,
+            playlist_references=[
+                SessionPlaylistReferenceModel(
+                    id=playlist_reference.id,
+                    session_id=session_id,
+                    position=0,
+                    spotify_playlist_id="37i9dQZF1DX4dyzvuaRJ0n",
+                    name="Lo-Fi Beats",
+                    owner="Spotify",
+                    cover_url="https://example.com/playlist.jpg",
+                    total_tracks=100,
+                    created_at=playlist_reference.created_at,
+                )
+            ],
+            artist_references=[
+                SessionArtistReferenceModel(
+                    id=artist_reference.id,
+                    session_id=session_id,
+                    position=0,
+                    spotify_artist_id="1dfeR4HaWDbWqFHLkxsg1d",
+                    name="Queen",
+                    image_url="https://example.com/queen.jpg",
+                    genres=["rock", "glam rock"],
+                    followers=50_000_000,
+                    popularity=81,
+                    created_at=artist_reference.created_at,
+                )
+            ],
         )
     )
-    mapped_artist = repository._to_domain_artist_reference(
-        SessionArtistReferenceModel(
-            id=artist_reference.id,
-            session_id=session_id,
-            position=0,
-            spotify_artist_id="1dfeR4HaWDbWqFHLkxsg1d",
-            name="Queen",
-            image_url="https://example.com/queen.jpg",
-            genres=["rock", "glam rock"],
-            followers=50_000_000,
-            popularity=81,
-            created_at=artist_reference.created_at,
-        )
-    )
+    mapped_playlist = restored.playlist_references[0]
+    mapped_artist = restored.artist_references[0]
 
     assert mapped_playlist.id == playlist_reference.id
     assert mapped_playlist.total_tracks == 100
@@ -393,8 +406,8 @@ def test_resolve_last_activity_at_includes_user_curation_events() -> None:
         minutes=5
     )
 
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
-    last_activity = repository._resolve_last_activity_at(session)
+    mapper = SessionOrmMapper()
+    last_activity = mapper.to_orm(session).last_activity_at
 
     assert last_activity == session.user_curation_events[0].created_at
 
@@ -408,14 +421,15 @@ def test_resolve_last_activity_at_includes_references() -> None:
     )
     reference.created_at = session.created_at + timedelta(minutes=5)
 
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
-    last_activity = repository._resolve_last_activity_at(session)
+    mapper = SessionOrmMapper()
+    last_activity = mapper.to_orm(session).last_activity_at
 
     assert last_activity == reference.created_at
 
 
 def test_user_curation_event_mapping_roundtrip() -> None:
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    mapper = SessionOrmMapper()
+    session = Session.create(title="Roadtrip", owner_id=uuid4())
     event = UserCurationEvent.create(
         event_type=UserCurationEventType.TRACK_ADDED,
         track_id=uuid4(),
@@ -427,7 +441,7 @@ def test_user_curation_event_mapping_roundtrip() -> None:
     )
     row = SessionUserCurationEventModel(
         id=event.id,
-        session_id=uuid4(),
+        session_id=session.id,
         position=3,
         event_type=event.event_type.value,
         track_id=event.track_id,
@@ -440,7 +454,8 @@ def test_user_curation_event_mapping_roundtrip() -> None:
         created_at=event.created_at,
     )
 
-    mapped = repository._to_domain_user_curation_event(row)
+    restored = mapper.to_domain(_session_model(session, user_curation_events=[row]))
+    mapped = restored.user_curation_events[0]
 
     assert mapped.id == event.id
     assert mapped.event_type == UserCurationEventType.TRACK_ADDED
@@ -453,7 +468,7 @@ def test_user_curation_event_mapping_roundtrip() -> None:
 
 
 def test_to_domain_hydrates_user_message_curation_events() -> None:
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    mapper = SessionOrmMapper()
     owner_id = uuid4()
     session_id = uuid4()
     message_id = uuid4()
@@ -526,7 +541,7 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
         )
     ]
 
-    mapped = repository._to_domain(orm)
+    mapped = mapper.to_domain(orm)
 
     message = mapped.entries[0]
     assert isinstance(message, UserMessage)
@@ -543,8 +558,7 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
 
 
 def test_tool_call_action_type_mapping_roundtrip() -> None:
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
-    sequence_id = uuid4()
+    mapper = SessionOrmMapper()
     call = PendingCall(
         id="call-1",
         function=ToolFunction(
@@ -556,16 +570,18 @@ def test_tool_call_action_type_mapping_roundtrip() -> None:
         ),
     )
 
-    orm_call = repository._to_orm_tool_call(
-        call=call,
-        sequence_id=sequence_id,
-        position=0,
-    )
+    session = Session.create(title="Roadtrip", owner_id=uuid4())
+    session.add_tool_call(call)
+
+    orm = mapper.to_orm(session)
+    orm_call = orm.tool_call_sequences[0].calls[0]
 
     assert orm_call.function_action_type == "search_tracks"
     assert orm_call.function_is_onboarding_question is True
 
-    mapped_call = repository._to_domain_tool_call(orm_call)
+    restored_sequence = mapper.to_domain(orm).entries[0]
+    assert isinstance(restored_sequence, ToolCallSequence)
+    mapped_call = restored_sequence.calls[0]
 
     assert mapped_call.function.action_type == ToolActionType.SEARCH_TRACKS
     assert mapped_call.function.is_onboarding_question is True
@@ -592,7 +608,7 @@ def test_onboarding_question_mapping_roundtrip() -> None:
         answers=["Freunde", "Familie"],
     )
 
-    repository = SqlSessionRepository(session=Mock())  # type: ignore[arg-type]
+    mapper = SessionOrmMapper()
     orm = SessionModel(
         id=session_id,
         title=session.title,
@@ -607,11 +623,7 @@ def test_onboarding_question_mapping_roundtrip() -> None:
     orm.user_curation_events = []
     orm.playlist_references = []
     orm.artist_references = []
-    repository._sync_onboarding_questions(
-        orm=orm,
-        session_id=session_id,
-        questions=session.onboarding_questions,
-    )
+    mapper.sync(orm=orm, session=session)
 
     assert len(orm.onboarding_questions) == 1
     assert orm.onboarding_questions[0].question_text == "Fuer wen ist die Playlist?"
@@ -623,22 +635,28 @@ def test_onboarding_question_mapping_roundtrip() -> None:
     assert orm.onboarding_questions[0].answers == ["Freunde", "Familie"]
     assert orm.onboarding_questions[0].is_answered is True
 
-    mapped = repository._to_domain_onboarding_question(
-        SessionOnboardingQuestionModel(
-            id=question.id,
-            session_id=session_id,
-            sequence_number=1,
-            question_text="Fuer wen ist die Playlist?",
-            hint="Enge Zielgruppen machen das Deck spitzer.",
-            options=["Freunde", "Familie"],
-            selection_mode="multi_select",
-            answers=["Freunde", "Familie"],
-            answer="Freunde, Familie",
-            is_answered=True,
-            answered_at=question.answered_at,
-            created_at=question.created_at,
+    restored = mapper.to_domain(
+        _session_model(
+            session,
+            onboarding_questions=[
+                SessionOnboardingQuestionModel(
+                    id=question.id,
+                    session_id=session_id,
+                    sequence_number=1,
+                    question_text="Fuer wen ist die Playlist?",
+                    hint="Enge Zielgruppen machen das Deck spitzer.",
+                    options=["Freunde", "Familie"],
+                    selection_mode="multi_select",
+                    answers=["Freunde", "Familie"],
+                    answer="Freunde, Familie",
+                    is_answered=True,
+                    answered_at=question.answered_at,
+                    created_at=question.created_at,
+                )
+            ],
         )
     )
+    mapped = restored.onboarding_questions[0]
 
     assert mapped.id == question.id
     assert mapped.sequence_number == 1

@@ -19,13 +19,13 @@ class _ResponseStub:
         return self._payload
 
 
-class _AsyncClientStub:
+class AsyncClientStub:
     response: _ResponseStub
 
     def __init__(self, *, timeout: float) -> None:
         self.timeout = timeout
 
-    async def __aenter__(self) -> "_AsyncClientStub":
+    async def __aenter__(self) -> "AsyncClientStub":
         return self
 
     async def __aexit__(
@@ -54,11 +54,11 @@ class TestSpotifyOAuthClient:
     def test_fetch_spotify_user_profile_maps_premium_flag(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        _AsyncClientStub.response = _ResponseStub(
+        AsyncClientStub.response = _ResponseStub(
             status_code=200,
             payload={"id": "spotify-user-1", "product": "premium"},
         )
-        monkeypatch.setattr("httpx.AsyncClient", _AsyncClientStub)
+        monkeypatch.setattr("httpx.AsyncClient", AsyncClientStub)
         client = SpotifyOAuthClient(settings=self._settings())
 
         profile = asyncio.run(client.fetch_spotify_user_profile(access_token="token-1"))
@@ -69,11 +69,11 @@ class TestSpotifyOAuthClient:
     def test_fetch_spotify_user_profile_raises_on_invalid_payload(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        _AsyncClientStub.response = _ResponseStub(
+        AsyncClientStub.response = _ResponseStub(
             status_code=200,
             payload={"product": "premium"},
         )
-        monkeypatch.setattr("httpx.AsyncClient", _AsyncClientStub)
+        monkeypatch.setattr("httpx.AsyncClient", AsyncClientStub)
         client = SpotifyOAuthClient(settings=self._settings())
 
         with pytest.raises(ValueError, match="Spotify /me payload is invalid"):

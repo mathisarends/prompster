@@ -7,7 +7,7 @@ and keeps the count bounded so persisted previews never grow unboundedly.
 """
 
 from agent.deck import DeckDraftTrack
-from agent.tools.handler.spotify import SpotifyPlaylistPreview
+from agent.tools.handler.spotify_rendering import SpotifyPlaylistPreview
 from agent.tools.views import ActionResultItem
 
 
