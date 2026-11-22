@@ -1,6 +1,6 @@
 import asyncio
 import secrets
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 
@@ -97,7 +97,7 @@ class TestSpotifyOAuthConnectionService:
             connection_repository=repository,
             spotify_oauth_provider=provider,
         )
-        user_id = uuid4()
+        user_id = UUID(int=1)
 
         result = service.start_connect(user_id=user_id)
 
@@ -113,12 +113,12 @@ class TestSpotifyOAuthConnectionService:
             connection_repository=repository,
             spotify_oauth_provider=provider,
         )
-        state_user_id = uuid4()
+        state_user_id = UUID(int=2)
         state = f"{state_user_id}:nonce-1"
 
         result = asyncio.run(
             service.complete_connect(
-                authenticated_user_id=uuid4(),
+                authenticated_user_id=UUID(int=3),
                 code="code-1",
                 state=state,
                 error=None,
@@ -135,7 +135,7 @@ class TestSpotifyOAuthConnectionService:
             connection_repository=repository,
             spotify_oauth_provider=provider,
         )
-        user_id = uuid4()
+        user_id = UUID(int=4)
         state = f"{user_id}:nonce-1"
 
         result = asyncio.run(

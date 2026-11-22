@@ -1,7 +1,7 @@
 import asyncio
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock
-from uuid import uuid4
+from uuid import UUID
 
 import httpx2
 import pytest
@@ -47,7 +47,7 @@ def test_export_errors_end_with_done_and_sanitize_unexpected_failures(stage, exp
         return [
             event
             async for event in spotify_export_events(
-                exporter, session_id=uuid4(), user_id=uuid4()
+                exporter, session_id=UUID(int=1), user_id=UUID(int=2)
             )
         ]
 
@@ -68,7 +68,7 @@ def test_export_errors_end_with_done_and_sanitize_unexpected_failures(stage, exp
 
 
 def test_export_stream_delivers_retries_and_final_playlist():
-    session_id, user_id = uuid4(), uuid4()
+    session_id, user_id = UUID(int=3), UUID(int=4)
     exporter = Mock(spec=SessionSpotifyPlaylistExporter)
     plan = object()
     exporter.prepare.return_value = plan
@@ -123,7 +123,9 @@ def test_closing_export_stream_cancels_and_awaits_execution():
     exporter.execute = AsyncMock(side_effect=execute)
 
     async def run():
-        stream = spotify_export_events(exporter, session_id=uuid4(), user_id=uuid4())
+        stream = spotify_export_events(
+            exporter, session_id=UUID(int=5), user_id=UUID(int=6)
+        )
         event = await anext(stream)
         await stream.aclose()
         return event

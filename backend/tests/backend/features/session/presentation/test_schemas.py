@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID
 
 import pytest
 from pydantic import ValidationError
@@ -36,7 +36,7 @@ class TestSendMessageRequest:
         assert request.attachments[0].external_id == "37i9dQZF1DX4dyzvuaRJ0n"
 
     def test_accepts_image_attachment_references(self) -> None:
-        attachment_id = uuid4()
+        attachment_id = UUID(int=1)
         request = SendMessageRequest(
             content="analysiere das bild",
             image_attachments=[
@@ -72,7 +72,7 @@ class TestSendMessageRequest:
             )
 
     def test_rejects_duplicate_image_attachments(self) -> None:
-        attachment_id = uuid4()
+        attachment_id = UUID(int=2)
         with pytest.raises(ValidationError, match="Duplicate image attachments"):
             SendMessageRequest(
                 content="duplikat",

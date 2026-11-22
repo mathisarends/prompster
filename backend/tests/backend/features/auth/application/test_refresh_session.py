@@ -1,5 +1,5 @@
 import asyncio
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 
@@ -83,7 +83,7 @@ class TestSessionRefresher:
         handler = SessionRefresher(user_repository=repository, token_issuer=issuer)
 
         with pytest.raises(SessionInvalidException, match="Invalid user"):
-            asyncio.run(handler.refresh(user_id=uuid4()))
+            asyncio.run(handler.refresh(user_id=UUID(int=1)))
 
     def test_handle_returns_new_auth_session_for_existing_user(self) -> None:
         user = User.create(

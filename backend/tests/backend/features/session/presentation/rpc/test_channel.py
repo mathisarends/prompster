@@ -1,7 +1,7 @@
 import asyncio
 from typing import get_args
 from unittest.mock import Mock
-from uuid import uuid4
+from uuid import UUID
 
 import pytest
 
@@ -90,14 +90,14 @@ def test_closing_subscription_closes_application_stream_immediately(operation) -
     async def source():
         nonlocal closed
         try:
-            yield SessionAssistantMessageChunk(message_id=uuid4(), chunk="Hallo")
+            yield SessionAssistantMessageChunk(message_id=UUID(int=1), chunk="Hallo")
             await asyncio.Event().wait()
         finally:
             closed = True
 
     service = Mock(spec=SessionConversationService)
     getattr(service, operation).return_value = source()
-    context = SessionRpcContext(session_id=uuid4(), user_id=uuid4())
+    context = SessionRpcContext(session_id=UUID(int=2), user_id=UUID(int=3))
 
     async def run():
         stream = (
@@ -116,7 +116,7 @@ def test_closing_subscription_closes_application_stream_immediately(operation) -
 
 
 def test_closing_rpc_stream_closes_runner_and_awaits_title_task():
-    owner_id = uuid4()
+    owner_id = UUID(int=4)
     session = Session.create(title="", owner_id=owner_id)
     repository = Mock(spec=SessionRepository)
     repository.get_by_id.return_value = session

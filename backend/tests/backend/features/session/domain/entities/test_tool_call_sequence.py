@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from uuid import uuid4
+from uuid import UUID
 
 import pytest
 
@@ -26,7 +26,7 @@ def make_pending_call(call_id: str = "tc-1") -> PendingCall:
 
 class TestSessionDomainToolCallSequence:
     def test_sequence_keeps_explicit_entity_identity(self) -> None:
-        sequence_id = uuid4()
+        sequence_id = UUID(int=1)
         created_time = datetime(2026, 5, 5, tzinfo=UTC)
 
         sequence = ToolCallSequence.restore(

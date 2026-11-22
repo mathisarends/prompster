@@ -1,5 +1,5 @@
 from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+from uuid import UUID
 
 from backend.features.session.domain import (
     ImageAttachment,
@@ -53,8 +53,8 @@ def _restored_message(
 
 
 def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
-    owner_id = uuid4()
-    session_id = uuid4()
+    owner_id = UUID(int=1)
+    session_id = UUID(int=2)
 
     session = Session.restore(
         title="Roadtrip",
@@ -96,8 +96,8 @@ def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
 
 
 def test_user_message_attachment_mapping_roundtrip() -> None:
-    owner_id = uuid4()
-    session_id = uuid4()
+    owner_id = UUID(int=3)
+    session_id = UUID(int=4)
     attachment = UserMessageAttachment(
         kind=UserMessageAttachmentKind.SPOTIFY_PLAYLIST,
         external_id="37i9dQZF1DX4dyzvuaRJ0n",
@@ -158,9 +158,9 @@ def test_user_message_attachment_mapping_roundtrip() -> None:
 
 
 def test_user_message_image_attachment_mapping_roundtrip() -> None:
-    owner_id = uuid4()
-    session_id = uuid4()
-    image_attachment_id = uuid4()
+    owner_id = UUID(int=5)
+    session_id = UUID(int=6)
+    image_attachment_id = UUID(int=7)
 
     session = Session.restore(
         title="Roadtrip",
@@ -228,8 +228,8 @@ def test_user_message_image_attachment_mapping_roundtrip() -> None:
 
 
 def test_session_phase_mapping_roundtrip() -> None:
-    owner_id = uuid4()
-    session_id = uuid4()
+    owner_id = UUID(int=8)
+    session_id = UUID(int=9)
     mapper = SessionOrmMapper()
     session = Session.restore(
         title="Roadtrip",
@@ -256,11 +256,11 @@ def test_session_phase_mapping_roundtrip() -> None:
 
 
 def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:
-    owner_id = uuid4()
-    session_id = uuid4()
+    owner_id = UUID(int=10)
+    session_id = UUID(int=11)
     event = UserCurationEvent.create(
         event_type=UserCurationEventType.TRACK_ADDED,
-        track_id=uuid4(),
+        track_id=UUID(int=12),
         track_title="Starlight",
         track_artist="Muse",
         track_year=2006,
@@ -289,7 +289,7 @@ def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:
         session_id=session_id,
         position=0,
         event_type="track_removed",
-        track_id=uuid4(),
+        track_id=UUID(int=13),
         track_title="old",
         track_artist="old",
         track_spotify_uri=None,
@@ -314,8 +314,8 @@ def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:
 
 
 def test_reference_mapping_roundtrip() -> None:
-    owner_id = uuid4()
-    session_id = uuid4()
+    owner_id = UUID(int=14)
+    session_id = UUID(int=15)
     session = Session.restore(
         title="Roadtrip",
         entries=[],
@@ -399,7 +399,7 @@ def test_reference_mapping_roundtrip() -> None:
 
 
 def test_resolve_last_activity_at_includes_user_curation_events() -> None:
-    owner_id = uuid4()
+    owner_id = UUID(int=16)
     session = Session.create(title="Roadtrip", owner_id=owner_id)
     session.add_track(title="Starlight", artist="Muse", year=2006)
     session.user_curation_events[0].created_at = session.created_at + timedelta(
@@ -413,7 +413,7 @@ def test_resolve_last_activity_at_includes_user_curation_events() -> None:
 
 
 def test_resolve_last_activity_at_includes_references() -> None:
-    owner_id = uuid4()
+    owner_id = UUID(int=17)
     session = Session.create(title="Roadtrip", owner_id=owner_id)
     reference = session.add_artist_reference(
         spotify_artist_id="1dfeR4HaWDbWqFHLkxsg1d",
@@ -429,10 +429,10 @@ def test_resolve_last_activity_at_includes_references() -> None:
 
 def test_user_curation_event_mapping_roundtrip() -> None:
     mapper = SessionOrmMapper()
-    session = Session.create(title="Roadtrip", owner_id=uuid4())
+    session = Session.create(title="Roadtrip", owner_id=UUID(int=18))
     event = UserCurationEvent.create(
         event_type=UserCurationEventType.TRACK_ADDED,
-        track_id=uuid4(),
+        track_id=UUID(int=19),
         track_title="Starlight",
         track_artist="Muse",
         track_year=2006,
@@ -469,9 +469,9 @@ def test_user_curation_event_mapping_roundtrip() -> None:
 
 def test_to_domain_hydrates_user_message_curation_events() -> None:
     mapper = SessionOrmMapper()
-    owner_id = uuid4()
-    session_id = uuid4()
-    message_id = uuid4()
+    owner_id = UUID(int=20)
+    session_id = UUID(int=21)
+    message_id = UUID(int=22)
     message_created_at = datetime(2026, 1, 1, tzinfo=UTC)
     event_created_at = message_created_at - timedelta(seconds=5)
 
@@ -497,11 +497,11 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
     orm.tool_call_sequences = []
     orm.user_curation_events = [
         SessionUserCurationEventModel(
-            id=uuid4(),
+            id=UUID(int=23),
             session_id=session_id,
             position=0,
             event_type=UserCurationEventType.TRACK_ADDED.value,
-            track_id=uuid4(),
+            track_id=UUID(int=24),
             track_title="Starlight",
             track_artist="Muse",
             track_year=2006,
@@ -511,7 +511,7 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
     ]
     orm.playlist_references = [
         SessionPlaylistReferenceModel(
-            id=uuid4(),
+            id=UUID(int=25),
             session_id=session_id,
             position=0,
             spotify_playlist_id="b",
@@ -520,7 +520,7 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
             created_at=message_created_at,
         ),
         SessionPlaylistReferenceModel(
-            id=uuid4(),
+            id=UUID(int=26),
             session_id=session_id,
             position=1,
             spotify_playlist_id="a",
@@ -531,7 +531,7 @@ def test_to_domain_hydrates_user_message_curation_events() -> None:
     ]
     orm.artist_references = [
         SessionArtistReferenceModel(
-            id=uuid4(),
+            id=UUID(int=27),
             session_id=session_id,
             position=0,
             spotify_artist_id="artist",
@@ -570,7 +570,7 @@ def test_tool_call_action_type_mapping_roundtrip() -> None:
         ),
     )
 
-    session = Session.create(title="Roadtrip", owner_id=uuid4())
+    session = Session.create(title="Roadtrip", owner_id=UUID(int=28))
     session.add_tool_call(call)
 
     orm = mapper.to_orm(session)
@@ -588,8 +588,8 @@ def test_tool_call_action_type_mapping_roundtrip() -> None:
 
 
 def test_onboarding_question_mapping_roundtrip() -> None:
-    owner_id = uuid4()
-    session_id = uuid4()
+    owner_id = UUID(int=29)
+    session_id = UUID(int=30)
     session = Session.restore(
         title="Roadtrip",
         entries=[],

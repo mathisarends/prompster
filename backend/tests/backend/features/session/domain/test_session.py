@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 
@@ -39,7 +39,7 @@ from backend.features.session.domain.exceptions import (
 
 @pytest.fixture
 def owner_id() -> UUID:
-    return uuid4()
+    return UUID(int=1)
 
 
 @pytest.fixture
@@ -84,7 +84,7 @@ class TestSessionDomainSession:
         assert created.entries == ()
 
     def test_session_keeps_explicit_aggregate_identity(self, owner_id: UUID) -> None:
-        session_id = uuid4()
+        session_id = UUID(int=2)
         created_time = datetime(2026, 7, 7, tzinfo=UTC)
 
         created = Session.restore(
@@ -112,7 +112,7 @@ class TestSessionDomainSession:
         self, owner_id: UUID
     ) -> None:
         session = Session.restore(
-            id=uuid4(),
+            id=UUID(int=3),
             created_at=datetime.now(UTC),
             title="Roadtrip",
             entries=[],
@@ -128,7 +128,7 @@ class TestSessionDomainSession:
         self, owner_id: UUID
     ) -> None:
         session = Session.restore(
-            id=uuid4(),
+            id=UUID(int=4),
             created_at=datetime.now(UTC),
             title="Roadtrip",
             entries=[],
@@ -496,12 +496,12 @@ class TestSessionDomainSession:
     ) -> None:
         message_time = datetime(2026, 7, 7, 12, 0, tzinfo=UTC)
         message = UserMessage.restore(
-            id=uuid4(), content="weiter", created_at=message_time
+            id=UUID(int=5), content="weiter", created_at=message_time
         )
         event = UserCurationEvent.restore(
-            id=uuid4(),
+            id=UUID(int=6),
             event_type=UserCurationEventType.TRACK_ADDED,
-            track_id=uuid4(),
+            track_id=UUID(int=7),
             track_title="Starlight",
             track_artist="Muse",
             track_year=2006,
@@ -509,7 +509,7 @@ class TestSessionDomainSession:
         )
 
         Session.restore(
-            id=uuid4(),
+            id=UUID(int=8),
             created_at=datetime.now(UTC),
             title="Roadtrip",
             entries=[message],
@@ -566,13 +566,13 @@ class TestSessionDomainSession:
 
     def test_remove_track_raises_when_playlist_missing(self, session: Session) -> None:
         with pytest.raises(PlaylistTrackNotFoundError, match="has no playlist"):
-            session.remove_track(uuid4())
+            session.remove_track(UUID(int=9))
 
     def test_remove_track_raises_when_track_missing(self, session: Session) -> None:
         session.add_track(title="Starlight", artist="Muse", year=2006)
 
         with pytest.raises(PlaylistTrackNotFoundError, match="not found in playlist"):
-            session.remove_track(uuid4())
+            session.remove_track(UUID(int=10))
 
     def test_unconsumed_user_curation_events_filters_consumed(
         self, session: Session
@@ -647,7 +647,7 @@ class TestSessionDomainSession:
         self, session: Session
     ) -> None:
         with pytest.raises(PlaylistReferenceNotFoundError, match="not found"):
-            session.remove_playlist_reference(uuid4())
+            session.remove_playlist_reference(UUID(int=11))
 
     def test_add_artist_reference_refreshes_existing_by_spotify_id(
         self, session: Session
@@ -690,7 +690,7 @@ class TestSessionDomainSession:
         self, session: Session
     ) -> None:
         with pytest.raises(ArtistReferenceNotFoundError, match="not found"):
-            session.remove_artist_reference(uuid4())
+            session.remove_artist_reference(UUID(int=12))
 
     def test_user_curation_event_snapshot_keeps_track_year(
         self, session: Session
@@ -746,12 +746,12 @@ class TestSessionDomainSession:
     ) -> None:
         event = UserCurationEvent.create(
             event_type=UserCurationEventType.TRACK_REMOVED,
-            track_id=uuid4(),
+            track_id=UUID(int=13),
             track_title="Starlight",
             track_artist="Muse",
         )
         session = Session.restore(
-            id=uuid4(),
+            id=UUID(int=14),
             created_at=datetime.now(UTC),
             title="Roadtrip",
             entries=[],
@@ -766,7 +766,7 @@ class TestSessionDomainSession:
         self, session: Session
     ) -> None:
         with pytest.raises(UserCurationEventNotFoundError, match="not found"):
-            session.restore_user_curation_event(uuid4())
+            session.restore_user_curation_event(UUID(int=15))
 
     def test_restore_user_curation_event_raises_when_event_already_consumed(
         self, session: Session
@@ -834,4 +834,4 @@ class TestSessionDomainSession:
 
     def test_has_access_raises_for_non_owner(self, session: Session) -> None:
         with pytest.raises(SessionAccessDeniedError, match="does not have access"):
-            session.has_access(uuid4())
+            session.has_access(UUID(int=16))

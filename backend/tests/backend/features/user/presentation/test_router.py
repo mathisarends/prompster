@@ -1,7 +1,7 @@
 import asyncio
 from datetime import UTC, datetime
 from typing import cast
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from backend.features.user.application import UserDeleteInformation, UserService
 from backend.features.user.domain import SpotifyAccount, User
@@ -19,7 +19,7 @@ class _UserServiceStub:
         self.received_delete_information_user_id: UUID | None = None
         self.session_count = 0
         self.user = User.restore(
-            id=uuid4(),
+            id=UUID(int=1),
             name="Mathis",
             spotify=SpotifyAccount.connected_with(is_premium=True),
             created_at=datetime(2026, 1, 1, tzinfo=UTC),
@@ -40,7 +40,7 @@ class _UserServiceStub:
 class TestGetMeRoute:
     def test_get_me_returns_user(self) -> None:
         user_service = _UserServiceStub()
-        authenticated_user_id = uuid4()
+        authenticated_user_id = UUID(int=2)
 
         response = asyncio.run(
             get_me(
@@ -59,7 +59,7 @@ class TestGetMeRoute:
 class TestDeleteMeRoute:
     def test_delete_me_calls_service_with_authenticated_user_id(self) -> None:
         service = _UserServiceStub()
-        authenticated_user_id = uuid4()
+        authenticated_user_id = UUID(int=3)
 
         response = asyncio.run(
             delete_me(
@@ -76,7 +76,7 @@ class TestGetDeleteInformationRoute:
     def test_get_delete_information_returns_minimal_session_count(self) -> None:
         service = _UserServiceStub()
         service.session_count = 5
-        authenticated_user_id = uuid4()
+        authenticated_user_id = UUID(int=4)
 
         response = asyncio.run(
             get_delete_information(

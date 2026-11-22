@@ -1,7 +1,7 @@
 import asyncio
 from datetime import UTC, datetime
 from typing import cast
-from uuid import uuid4
+from uuid import UUID
 
 from callm import ImageUrl
 
@@ -17,12 +17,12 @@ class _AttachmentStore:
 
 
 def test_image_attachment_is_replayed_as_callm_data_url() -> None:
-    session = Session.create(title="Vision", owner_id=uuid4())
+    session = Session.create(title="Vision", owner_id=UUID(int=1))
     session.add_user_message(
         "What is in this image?",
         image_attachments=[
             ImageAttachment.restore(
-                id=uuid4(),
+                id=UUID(int=2),
                 created_at=datetime.now(UTC),
                 storage_key="photo",
                 content_type="image/jpeg",

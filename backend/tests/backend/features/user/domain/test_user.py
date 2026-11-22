@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from backend.features.user.domain import AuthIdentity, AuthProvider, User
 
@@ -15,7 +15,7 @@ class TestUserDomainUser:
         assert user.profile_image_url == "https://example.com/avatar.jpg"
 
     def test_user_keeps_explicit_id_and_created_time(self) -> None:
-        user_id: UUID = uuid4()
+        user_id: UUID = UUID(int=1)
         created_time = datetime(2025, 1, 1, tzinfo=UTC)
 
         user = User.restore(
@@ -37,7 +37,7 @@ class TestUserDomainUser:
         assert user.created_at.utcoffset() == UTC.utcoffset(None)
 
     def test_auth_identity_assigns_constructor_fields(self) -> None:
-        user_id = uuid4()
+        user_id = UUID(int=2)
 
         auth_identity = AuthIdentity.create(
             user_id=user_id,

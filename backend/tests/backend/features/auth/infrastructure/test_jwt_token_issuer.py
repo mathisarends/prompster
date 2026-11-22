@@ -1,5 +1,5 @@
 from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+from uuid import UUID
 
 import jwt
 import pytest
@@ -27,7 +27,7 @@ class TestJwtTokenIssuer:
 
     def test_creates_and_validates_access_and_refresh_tokens(self) -> None:
         issuer = self._issuer()
-        user_id = uuid4()
+        user_id = UUID(int=1)
 
         session = issuer.create_session(user_id)
 
@@ -43,7 +43,7 @@ class TestJwtTokenIssuer:
     def test_rejects_token_with_unexpected_type(self) -> None:
         issuer = self._issuer()
 
-        access_token = issuer.create_session(uuid4()).access_token
+        access_token = issuer.create_session(UUID(int=2)).access_token
 
         with pytest.raises(
             SessionInvalidException, match="Expected token type 'refresh'"
@@ -54,7 +54,7 @@ class TestJwtTokenIssuer:
         issuer = self._issuer()
         expired_token = jwt.encode(
             {
-                "sub": str(uuid4()),
+                "sub": str(UUID(int=3)),
                 "iat": datetime.now(UTC),
                 "exp": datetime.now(UTC) - timedelta(seconds=1),
                 "type": TokenType.ACCESS.value,
@@ -78,7 +78,7 @@ class TestJwtTokenIssuer:
                 "not a valid UUID",
             ),
             (
-                {"type": "access", "sub": str(uuid4()), "exp": "tomorrow"},
+                {"type": "access", "sub": str(UUID(int=4)), "exp": "tomorrow"},
                 "expiration claim is invalid",
             ),
         ],

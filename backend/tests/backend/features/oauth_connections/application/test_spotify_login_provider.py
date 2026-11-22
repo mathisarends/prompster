@@ -1,5 +1,5 @@
 import asyncio
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from backend.features.oauth_connections.application.ports import SpotifyOAuthProvider
 from backend.features.oauth_connections.application.schemas import (
@@ -76,7 +76,7 @@ def test_authorize_exposes_the_spotify_identity() -> None:
 
 def test_connect_stores_the_authorized_tokens() -> None:
     connections = _ConnectionService()
-    user_id = uuid4()
+    user_id = UUID(int=1)
 
     async def _login_and_connect() -> None:
         login = await _provider(connections).authorize(authorization_code="c")

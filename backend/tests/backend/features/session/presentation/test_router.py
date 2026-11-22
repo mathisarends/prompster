@@ -3,7 +3,7 @@ from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from io import BytesIO
 from typing import cast
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import UploadFile
 from starlette.datastructures import Headers
@@ -224,7 +224,7 @@ class _ImageAttachmentServiceStub:
         self.received_user_id = user_id
         self.received_upload = image
         return StashedImageAttachment(
-            id=uuid4(),
+            id=UUID(int=1),
             storage_key=f"users/{user_id}/stash/uploaded.png",
             content_type=image.content_type,
             file_name=image.file_name,
@@ -234,10 +234,10 @@ class _ImageAttachmentServiceStub:
 
 class TestGetSessionByIdRoute:
     def test_returns_unconsumed_user_curation_events_only(self) -> None:
-        session_id = uuid4()
-        user_id = uuid4()
-        consumed_track_id = uuid4()
-        unconsumed_track_id = uuid4()
+        session_id = UUID(int=2)
+        user_id = UUID(int=3)
+        consumed_track_id = UUID(int=4)
+        unconsumed_track_id = UUID(int=5)
 
         consumed_event = UserCurationEvent.create(
             event_type=UserCurationEventType.TRACK_ADDED,
@@ -286,8 +286,8 @@ class TestGetSessionByIdRoute:
         )
 
     def test_returns_signed_image_attachment_urls(self) -> None:
-        session_id = uuid4()
-        user_id = uuid4()
+        session_id = UUID(int=6)
+        user_id = UUID(int=7)
         storage_key = f"users/{user_id}/chat/{session_id}/image.png"
         session = Session.restore(
             id=session_id,
@@ -327,7 +327,7 @@ class TestGetSessionByIdRoute:
 
 class TestCreateSessionRoute:
     def test_creates_empty_session(self) -> None:
-        user_id = uuid4()
+        user_id = UUID(int=8)
         session = Session.create(
             title="",
             owner_id=user_id,
@@ -351,8 +351,8 @@ class TestCreateSessionRoute:
 
 class TestRestoreUserCurationEventRoute:
     def test_restores_event_and_returns_updated_session(self) -> None:
-        session_id = uuid4()
-        user_id = uuid4()
+        session_id = UUID(int=9)
+        user_id = UUID(int=10)
         session = Session.restore(
             id=session_id,
             created_at=datetime.now(UTC),
@@ -390,8 +390,8 @@ class TestRestoreUserCurationEventRoute:
 
 class TestStopMessageRoute:
     def test_stops_running_message_stream(self) -> None:
-        session_id = uuid4()
-        user_id = uuid4()
+        session_id = UUID(int=11)
+        user_id = UUID(int=12)
         service = _SessionConversationServiceStub()
 
         response = asyncio.run(
@@ -409,8 +409,8 @@ class TestStopMessageRoute:
 
 class TestSendMessageSubscription:
     def test_routes_json_body_to_conversation_service(self) -> None:
-        session_id = uuid4()
-        user_id = uuid4()
+        session_id = UUID(int=13)
+        user_id = UUID(int=14)
         service = _SessionConversationServiceStub()
 
         async def collect():
@@ -448,7 +448,7 @@ class TestSendMessageSubscription:
 
 class TestUploadImageAttachmentRoute:
     def test_uploads_image_and_returns_reference(self) -> None:
-        user_id = uuid4()
+        user_id = UUID(int=15)
         service = _ImageAttachmentServiceStub()
         file = UploadFile(
             file=BytesIO(b"1234"),
@@ -479,9 +479,9 @@ class TestUploadImageAttachmentRoute:
 
 class TestSubmitOnboardingAnswerRoute:
     def test_routes_answer_to_conversation_service(self) -> None:
-        session_id = uuid4()
-        user_id = uuid4()
-        question_id = uuid4()
+        session_id = UUID(int=16)
+        user_id = UUID(int=17)
+        question_id = UUID(int=18)
         service = _SessionConversationServiceStub()
 
         response = asyncio.run(
@@ -509,8 +509,8 @@ class TestSubmitOnboardingAnswerRoute:
 
 class TestCompleteOnboardingSubscription:
     def test_routes_last_answer_to_explicit_complete_operation(self) -> None:
-        session_id = uuid4()
-        user_id = uuid4()
+        session_id = UUID(int=19)
+        user_id = UUID(int=20)
         service = _SessionConversationServiceStub()
 
         async def collect():
@@ -531,8 +531,8 @@ class TestCompleteOnboardingSubscription:
         assert [event.type for event in events] == ["done"]
 
     def test_passes_model_id_to_service(self) -> None:
-        session_id = uuid4()
-        user_id = uuid4()
+        session_id = UUID(int=21)
+        user_id = UUID(int=22)
         service = _SessionConversationServiceStub()
 
         async def collect():

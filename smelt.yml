@@ -115,6 +115,7 @@ rules:
   complexity/excess-comprehension-loops: error
   complexity/excess-constructor-decisions: {severity: error, max: 5}
   complexity/inline-constructor-receiver: error
+  complexity/inline-call-argument: error
 
   # Idioms.
   idioms/missing-broad-except-reason: error
@@ -135,6 +136,7 @@ rules:
   tests/unbounded-wait: error
   tests/missing-await-assertion: error
   tests/independent-case-loop: error
+  tests/nondeterministic-data: error
 
   # Rejected on purpose. Each of these would need filler code or mass exceptions.
   # Builtin errors need an error-to-status design first, so they get their own change.
@@ -151,8 +153,6 @@ rules:
   layout/redundant-module-name: off
   # prefer-package-import already enforces facades; tests import their module directly.
   imports/excess-package-imports: off
-  # Extra locals for simple calls add names without adding meaning.
-  complexity/inline-call-argument: off
   # Flags harmless reads of settings and SDK namespaces.
   complexity/excess-attribute-depth: off
   # Named methods describe the domain better than __call__.
@@ -161,8 +161,6 @@ rules:
   idioms/missing-interface-docstring: off
   # Pydantic settings cannot be autowired, so factories stay the single wiring style.
   frameworks/redundant-dishka-provider: off
-  # Random IDs and timestamps in tests are fixture data and do not cause flakiness.
-  tests/nondeterministic-data: off
   # A required test per module would need ignore comments on thin modules.
   tests/missing-mirror-test: off
 debt: .smelt/debt.json

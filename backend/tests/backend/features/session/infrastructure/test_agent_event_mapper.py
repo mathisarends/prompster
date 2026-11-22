@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID
 
 from agent.agent import (
     AssistantMessageChunkEvent,
@@ -153,7 +153,7 @@ class TestWorkspaceUpdateMapping:
     def test_tracks_removed_propagates_ids(self) -> None:
         mapper = AgentSessionEventMapper()
         draft = self._draft()
-        removed_id = uuid4()
+        removed_id = UUID(int=1)
 
         result = mapper.map(
             DeckUpdatedEvent(
@@ -171,7 +171,7 @@ class TestWorkspaceUpdateMapping:
     def test_tracks_replaced_maps_each_replacement_to_session_track(self) -> None:
         mapper = AgentSessionEventMapper()
         draft = self._draft()
-        original_id = uuid4()
+        original_id = UUID(int=2)
         replacement_track = DeckDraftTrack(title="New", artist="Artist", year=2020)
 
         result = mapper.map(

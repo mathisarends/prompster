@@ -1,7 +1,7 @@
 import asyncio
 from collections.abc import AsyncIterator
 from threading import Event
-from uuid import uuid4
+from uuid import UUID
 
 import pytest
 from dishka import Provider, Scope, provide
@@ -45,8 +45,8 @@ def _session_app(provider: Provider, user_id_factory) -> FastAPI:
 
 
 def test_session_stream_uses_authenticated_socket_context() -> None:
-    user_id = uuid4()
-    session_id = uuid4()
+    user_id = UUID(int=1)
+    session_id = UUID(int=2)
     service = ConversationStub()
     app = _session_app(_conversation_provider(service), lambda: user_id)
 
@@ -76,14 +76,14 @@ def test_session_stream_uses_authenticated_socket_context() -> None:
 
 @pytest.mark.parametrize(
     "params",
-    [{"content": ""}, {"content": "Hallo", "userId": str(uuid4())}],
+    [{"content": ""}, {"content": "Hallo", "userId": str(UUID(int=3))}],
 )
 def test_session_stream_rejects_invalid_params(params) -> None:
-    app = _session_app(_conversation_provider(ConversationStub()), uuid4)
+    app = _session_app(_conversation_provider(ConversationStub()), lambda: UUID(int=8))
 
     with (
         TestClient(app) as client,
-        client.websocket_connect(f"/api/v1/sessions/{uuid4()}/stream") as socket,
+        client.websocket_connect(f"/api/v1/sessions/{UUID(int=4)}/stream") as socket,
     ):
         socket.send_json(
             {
@@ -105,7 +105,9 @@ def test_session_stream_closes_stream_before_dishka_request_scope(termination):
     class StreamingConversation:
         async def send_message(self, **kwargs):
             try:
-                yield SessionAssistantMessageChunk(message_id=uuid4(), chunk="Hallo")
+                yield SessionAssistantMessageChunk(
+                    message_id=UUID(int=5), chunk="Hallo"
+                )
                 await asyncio.Event().wait()
             finally:
                 lifecycle.append("stream_closed")
@@ -120,10 +122,12 @@ def test_session_stream_closes_stream_before_dishka_request_scope(termination):
                 lifecycle.append("request_closed")
                 scope_closed.set()
 
-    app = _session_app(ConversationProvider(), uuid4)
+    app = _session_app(ConversationProvider(), lambda: UUID(int=9))
 
     with TestClient(app) as client:
-        with client.websocket_connect(f"/api/v1/sessions/{uuid4()}/stream") as socket:
+        with client.websocket_connect(
+            f"/api/v1/sessions/{UUID(int=6)}/stream"
+        ) as socket:
             socket.send_json(
                 {
                     "jsonrpc": "2.0",
@@ -166,7 +170,7 @@ def test_session_socket_rejects_unauthenticated_connection() -> None:
     with (
         TestClient(app) as client,
         pytest.raises(WebSocketDisconnect) as error,
-        client.websocket_connect(f"/api/v1/sessions/{uuid4()}/stream"),
+        client.websocket_connect(f"/api/v1/sessions/{UUID(int=7)}/stream"),
     ):
         pass
 

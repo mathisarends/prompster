@@ -1,5 +1,5 @@
 import asyncio
-from uuid import uuid4
+from uuid import UUID
 
 from backend.features.session.infrastructure.message_attachment_store import (
     StorageMessageAttachmentStore,
@@ -55,8 +55,8 @@ def test_save_stashed_image_attachment_builds_expected_storage_key() -> None:
     backend = _ObjectStorageStub()
     store = StorageMessageAttachmentStore(storage_backend=backend)
 
-    user_id = uuid4()
-    attachment_id = uuid4()
+    user_id = UUID(int=1)
+    attachment_id = UUID(int=2)
 
     stored = asyncio.run(
         store.save_stashed_image_attachment(
@@ -80,9 +80,9 @@ def test_promote_stashed_image_attachment_moves_into_chat_folder() -> None:
     backend = _ObjectStorageStub()
     store = StorageMessageAttachmentStore(storage_backend=backend)
 
-    user_id = uuid4()
-    session_id = uuid4()
-    attachment_id = uuid4()
+    user_id = UUID(int=3)
+    session_id = UUID(int=4)
+    attachment_id = UUID(int=5)
     stash_key = f"users/{user_id}/stash/{attachment_id}.png"
 
     destination_key = asyncio.run(
@@ -101,8 +101,8 @@ def test_promote_stashed_image_attachment_moves_into_chat_folder() -> None:
 def test_delete_session_attachments_deletes_chat_prefix() -> None:
     backend = _ObjectStorageStub()
     store = StorageMessageAttachmentStore(storage_backend=backend)
-    user_id = uuid4()
-    session_id = uuid4()
+    user_id = UUID(int=6)
+    session_id = UUID(int=7)
 
     asyncio.run(
         store.delete_session_attachments(user_id=user_id, session_id=session_id)
@@ -114,7 +114,7 @@ def test_delete_session_attachments_deletes_chat_prefix() -> None:
 def test_delete_user_attachments_deletes_user_prefix() -> None:
     backend = _ObjectStorageStub()
     store = StorageMessageAttachmentStore(storage_backend=backend)
-    user_id = uuid4()
+    user_id = UUID(int=8)
 
     asyncio.run(store.delete_user_attachments(user_id=user_id))
 

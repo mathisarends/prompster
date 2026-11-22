@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from uuid import uuid4
+from uuid import UUID
 
 from backend.features.session.application import (
     SessionAssistantMessageCancelled,
@@ -47,7 +47,7 @@ from backend.features.session.presentation.rpc.mappers import to_session_stream_
 def _make_assistant_message() -> AssistantMessage:
     return AssistantMessage.restore(
         content="",
-        id=uuid4(),
+        id=UUID(int=1),
         created_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
 
@@ -64,7 +64,7 @@ class TestSessionEventMapper:
         assert event.created_at == message.created_at
 
     def test_to_session_stream_event_maps_assistant_message_chunk(self) -> None:
-        message_id = uuid4()
+        message_id = UUID(int=2)
 
         event = to_session_stream_event(
             SessionAssistantMessageChunk(message_id=message_id, chunk="hello")
@@ -89,7 +89,7 @@ class TestSessionEventMapper:
         assert event.message.content == "Hello world"
 
     def test_to_session_stream_event_maps_assistant_message_cancelled(self) -> None:
-        message_id = uuid4()
+        message_id = UUID(int=3)
 
         event = to_session_stream_event(
             SessionAssistantMessageCancelled(message_id=message_id)
@@ -122,7 +122,7 @@ class TestSessionEventMapper:
         assert event.sequence.calls[0].function.action_type == "search_tracks"
 
     def test_to_session_stream_event_maps_tool_call_resolved(self) -> None:
-        sequence_id = uuid4()
+        sequence_id = UUID(int=4)
 
         event = to_session_stream_event(
             SessionToolCallResolved(
@@ -168,7 +168,7 @@ class TestSessionEventMapper:
         assert event.playlist.tracks[0].title == "Take On Me"
 
     def test_to_session_stream_event_maps_playlist_track_added(self) -> None:
-        playlist_id = uuid4()
+        playlist_id = UUID(int=5)
         track = PlaylistTrack.create(
             title="Billie Jean",
             artist="Michael Jackson",
@@ -185,8 +185,8 @@ class TestSessionEventMapper:
         assert event.track.id == track.id
 
     def test_to_session_stream_event_maps_playlist_track_removed(self) -> None:
-        playlist_id = uuid4()
-        track_id = uuid4()
+        playlist_id = UUID(int=6)
+        track_id = UUID(int=7)
 
         event = to_session_stream_event(
             SessionPlaylistTrackRemoved(playlist_id=playlist_id, track_id=track_id)
@@ -198,8 +198,8 @@ class TestSessionEventMapper:
         assert event.track_id == track_id
 
     def test_to_session_stream_event_maps_playlist_track_replaced(self) -> None:
-        playlist_id = uuid4()
-        track_id = uuid4()
+        playlist_id = UUID(int=8)
+        track_id = UUID(int=9)
         track = PlaylistTrack.create(title="Africa", artist="Toto", year=1982)
 
         event = to_session_stream_event(
@@ -223,7 +223,7 @@ class TestSessionEventMapper:
                 question="Fuer wen ist die Playlist?",
                 hint="Enge Zielgruppen machen das Deck spitzer.",
                 options=["Freunde", "Familie"],
-                question_id=uuid4(),
+                question_id=UUID(int=10),
                 is_last_question=True,
             )
         )
@@ -236,7 +236,7 @@ class TestSessionEventMapper:
         assert event.is_last_question is True
 
     def test_to_session_stream_event_maps_onboarding_question_asked(self) -> None:
-        question_id = uuid4()
+        question_id = UUID(int=11)
 
         event = to_session_stream_event(
             SessionOnboardingQuestionAsked(

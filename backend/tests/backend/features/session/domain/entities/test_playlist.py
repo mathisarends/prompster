@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 
@@ -19,7 +19,7 @@ class TestSessionDomainPlaylistEntities:
         assert_utc_datetime(track.created_at)
 
     def test_playlist_track_assigns_constructor_fields(self) -> None:
-        track_id: UUID = uuid4()
+        track_id: UUID = UUID(int=1)
         created_time = datetime(2026, 1, 1, tzinfo=UTC)
 
         track = PlaylistTrack.restore(
@@ -49,7 +49,7 @@ class TestSessionDomainPlaylistEntities:
         assert playlist.tracks == [track]
 
     def test_playlist_keeps_explicit_entity_identity(self) -> None:
-        playlist_id = uuid4()
+        playlist_id = UUID(int=2)
         created_time = datetime(2026, 2, 2, tzinfo=UTC)
 
         playlist = Playlist.restore(tracks=[], id=playlist_id, created_at=created_time)

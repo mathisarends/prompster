@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID
 
 from backend.features.session.domain import (
     DECIDE_FOR_ME_OPTION,
@@ -18,7 +18,7 @@ from backend.features.session.presentation.schemas import (
 
 
 def test_to_session_response_maps_references() -> None:
-    owner_id = uuid4()
+    owner_id = UUID(int=1)
     session = Session.create(title="Roadtrip", owner_id=owner_id)
     playlist_reference = session.add_playlist_reference(
         spotify_playlist_id="37i9dQZF1DX4dyzvuaRJ0n",
@@ -50,7 +50,7 @@ def test_to_session_response_maps_references() -> None:
 
 
 def test_to_session_response_maps_image_attachments_with_signed_urls() -> None:
-    owner_id = uuid4()
+    owner_id = UUID(int=2)
     session = Session.create(title="Roadtrip", owner_id=owner_id)
     message = session.add_user_message("check this")
     message.image_attachments = (
@@ -75,7 +75,7 @@ def test_to_session_response_maps_image_attachments_with_signed_urls() -> None:
 
 
 def test_to_session_response_maps_all_onboarding_questions_with_answers() -> None:
-    session = Session.create(title="Roadtrip", owner_id=uuid4())
+    session = Session.create(title="Roadtrip", owner_id=UUID(int=3))
     answered_question = session.add_onboarding_question(
         question_text="Who is joining?",
         options=("Friends", "Family"),
@@ -135,7 +135,7 @@ def test_to_session_message_attachments_maps_request_models() -> None:
 
 
 def test_to_session_image_attachment_references_maps_request_models() -> None:
-    attachment_id = uuid4()
+    attachment_id = UUID(int=4)
 
     attachments = to_session_image_attachment_references(
         [

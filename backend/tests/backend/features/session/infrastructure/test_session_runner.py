@@ -1,7 +1,7 @@
 import asyncio
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
-from uuid import uuid4
+from uuid import UUID
 
 import pytest
 from agent import Phase as AgentPhase
@@ -182,7 +182,7 @@ class TestSessionRunnerHistoryRendering:
     """
 
     def test_bound_event_renders_inside_its_user_message(self) -> None:
-        session = Session.create(title="Deck", owner_id=uuid4())
+        session = Session.create(title="Deck", owner_id=UUID(int=1))
         session.add_user_message("start")
         session.add_assistant_message("ok")
         session.add_track(title="Umbrella", artist="Rihanna", year=2007)
@@ -205,20 +205,20 @@ class TestSessionRunnerHistoryRendering:
         # gets a synthetic UserMessage
         # so the LLM still sees the manual change in turn order.
         event = UserCurationEvent.restore(
-            id=uuid4(),
+            id=UUID(int=2),
             event_type=UserCurationEventType.TRACK_REMOVED,
-            track_id=uuid4(),
+            track_id=UUID(int=3),
             track_title="Umbrella",
             track_artist="Rihanna",
             track_year=2007,
             created_at=datetime(2026, 1, 1, tzinfo=UTC),
         )
         session = Session.restore(
-            id=uuid4(),
+            id=UUID(int=4),
             created_at=datetime.now(UTC),
             title="Deck",
             entries=[],
-            owner_id=uuid4(),
+            owner_id=UUID(int=5),
             user_curation_events=[event],
         )
 
@@ -241,7 +241,7 @@ class TestSessionRunnerHistoryRendering:
         # (mirrors the domain coupling UserMessage <-> user_curation_events).
         # The ``consumed`` flag only gates user-facing restoration, not
         # history visibility.
-        session = Session.create(title="Deck", owner_id=uuid4())
+        session = Session.create(title="Deck", owner_id=UUID(int=6))
         session.add_user_message("start")
         session.add_track(title="Umbrella", artist="Rihanna", year=2007)
         session.add_user_message("weiter")
@@ -257,7 +257,7 @@ class TestSessionRunnerHistoryRendering:
         assert "track_added" in user_messages[1].content
 
     def test_session_without_curation_events_emits_plain_user_messages(self) -> None:
-        session = Session.create(title="Deck", owner_id=uuid4())
+        session = Session.create(title="Deck", owner_id=UUID(int=7))
         session.add_user_message("hi")
         session.add_assistant_message("hey")
 
@@ -277,7 +277,7 @@ class TestSessionRunnerHistoryRendering:
         ``expected`` list, so you can read this test as a spec of how the
         agent perceives a multi-turn conversation with manual user actions.
         """
-        session = Session.create(title="Deck", owner_id=uuid4())
+        session = Session.create(title="Deck", owner_id=UUID(int=8))
 
         # Turn 1 — user opens the deck, no manual changes yet.
         session.add_user_message("Bau mir ein 80er-Deck")
@@ -330,15 +330,15 @@ class TestSessionRunnerHistoryRendering:
 
 class TestSendMessageConsumesCurationEvents:
     def test_send_message_consumes_user_curation_events_after_runner(self) -> None:
-        user_id = uuid4()
+        user_id = UUID(int=9)
         event = UserCurationEvent.create(
             event_type=UserCurationEventType.TRACK_ADDED,
-            track_id=uuid4(),
+            track_id=UUID(int=10),
             track_title="Umbrella",
             track_artist="Rihanna",
         )
         session = Session.restore(
-            id=uuid4(),
+            id=UUID(int=11),
             created_at=datetime.now(UTC),
             title="Deck",
             entries=[],
@@ -368,15 +368,15 @@ class TestSendMessageConsumesCurationEvents:
     def test_send_message_does_not_consume_user_curation_events_when_cancelled(
         self,
     ) -> None:
-        user_id = uuid4()
+        user_id = UUID(int=12)
         event = UserCurationEvent.create(
             event_type=UserCurationEventType.TRACK_ADDED,
-            track_id=uuid4(),
+            track_id=UUID(int=13),
             track_title="Umbrella",
             track_artist="Rihanna",
         )
         session = Session.restore(
-            id=uuid4(),
+            id=UUID(int=14),
             created_at=datetime.now(UTC),
             title="Deck",
             entries=[],
