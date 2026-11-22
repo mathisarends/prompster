@@ -1,19 +1,22 @@
 import logging
-from collections.abc import Callable, Iterator
-from contextlib import contextmanager
-from typing import Self
+from collections.abc import AsyncGenerator, AsyncIterator, Callable, Iterator
+from contextlib import aclosing, contextmanager
+from typing import Self, cast
 
 from pydantic import BaseModel
 from spotifyify import (
     Image,
+    PagingPlaylistTrack,
     Playlist,
     RetryEvent,
     SimplifiedAlbum,
     SimplifiedArtist,
     SimplifiedPlaylist,
-    Spotifyify,
+    SpotifyClient,
     Track,
 )
+from spotifyify.cache_handler import MemoryCacheHandler
+from spotifyify.validation import spotify_id
 
 from agent.deck import DeckDraftTrack
 from agent.messages.rendering import (
@@ -36,6 +39,8 @@ logger = logging.getLogger(__name__)
 # the whole playlist into a single tool result, which used to bloat the LLM
 # context by tens of thousands of tokens for large playlists.
 _PLAYLIST_PAGE_SIZE = 50
+# Spotify's Development Mode rejects search pages larger than 10 items.
+_SEARCH_PAGE_SIZE = 10
 
 
 class SpotifyTrackLookupResult(BaseModel):
@@ -54,8 +59,13 @@ class SpotifyPlaylistLookupResult(BaseModel):
 
 
 class Spotify:
-    def __init__(self, client: Spotifyify | None = None) -> None:
-        self._client = client or Spotifyify(scopes=[])
+    def __init__(self, client: SpotifyClient | None = None) -> None:
+        self._owns_client = client is None
+        self._client = (
+            client
+            if client is not None
+            else SpotifyClient(scopes=[], cache_handler=MemoryCacheHandler())
+        )
         self._open = False
 
     async def open(self) -> None:
@@ -67,8 +77,11 @@ class Spotify:
     async def close(self) -> None:
         if not self._open:
             return
-        await self._client.close()
         self._open = False
+        # A closed SpotifyClient cannot reopen, so injected clients stay with
+        # their owner: the backend shares one across all agent runs.
+        if self._owns_client:
+            await self._client.aclose()
 
     async def __aenter__(self) -> Self:
         await self.open()
@@ -86,11 +99,11 @@ class Spotify:
             query_limit,
         )
         with self._retry_logging():
-            page = await self._client.tracks.find(
+            tracks = await _collect_search_results(
+                self._client.tracks.iter_search,
                 params.query,
-                limit=query_limit,
+                query_limit,
             )
-        tracks = page.items or []
         logger.info(
             "Spotify search_tracks: found=%d query=%r",
             len(tracks),
@@ -113,11 +126,11 @@ class Spotify:
             query_limit,
         )
         with self._retry_logging():
-            page = await self._client.albums.find(
+            albums = await _collect_search_results(
+                self._client.albums.iter_search,
                 params.query,
-                limit=query_limit,
+                query_limit,
             )
-        albums = page.items or []
         logger.info(
             "Spotify search_albums: found=%d query=%r",
             len(albums),
@@ -138,11 +151,11 @@ class Spotify:
             query_limit,
         )
         with self._retry_logging():
-            page = await self._client.playlists.find(
+            playlists = await _collect_search_results(
+                self._client.playlists.iter_search,
                 params.query,
-                limit=query_limit,
+                query_limit,
             )
-        playlists = [playlist for playlist in (page.items or []) if playlist]
         logger.info(
             "Spotify search_playlists: found=%d query=%r",
             len(playlists),
@@ -240,7 +253,7 @@ class Spotify:
         self,
         params: PlaylistIdParams,
     ) -> SpotifyTrackLookupResult:
-        playlist_id = _normalize_spotify_id(params.playlist_id, "playlist")
+        playlist_id = spotify_id(_normalize_spotify_id(params.playlist_id, "playlist"))
         offset = max(0, params.offset)
         await self.open()
         logger.info(
@@ -249,11 +262,18 @@ class Spotify:
             offset,
         )
         with self._retry_logging():
-            page = await self._client.playlists.tracks(
-                playlist_id,
-                limit=_PLAYLIST_PAGE_SIZE,
-                offset=offset,
-                additional_types=["track"],
+            # playlists.items() needs a user token in Development Mode. Agent
+            # runs only have an app token, which the legacy route still accepts
+            # for public playlists.
+            page = await self._client.http.get(
+                f"/playlists/{playlist_id}/tracks",
+                params={
+                    "limit": _PLAYLIST_PAGE_SIZE,
+                    "offset": offset,
+                    "additional_types": "track",
+                },
+                require_user=False,
+                response_model=PagingPlaylistTrack,
             )
         tracks = _extract_playlist_tracks(page.items)
         total = page.total
@@ -301,10 +321,30 @@ def _log_retry(event: RetryEvent) -> None:
     report_retry(event)
 
 
+async def _collect_search_results[T](
+    search: Callable[..., AsyncIterator[T | None]],
+    query: str,
+    limit: int,
+) -> list[T]:
+    results: list[T] = []
+    pages = cast(
+        AsyncGenerator[T | None],
+        search(query, limit=min(limit, _SEARCH_PAGE_SIZE)),
+    )
+    async with aclosing(pages) as items:
+        async for item in items:
+            if item is None:
+                continue
+            results.append(item)
+            if len(results) == limit:
+                break
+    return results
+
+
 def _extract_playlist_tracks(items: list | None) -> list[Track]:
     tracks: list[Track] = []
     for playlist_item in items or []:
-        item = playlist_item.item or playlist_item.track
+        item = playlist_item.item
         if item is not None and getattr(item, "type", None) == "track":
             tracks.append(item)
     return tracks
@@ -333,7 +373,7 @@ def _playlist_page_footer(
 
 
 def _playlist_track_count(playlist: Playlist | SimplifiedPlaylist) -> int:
-    tracks = playlist.items or playlist.tracks
+    tracks = playlist.items
     return tracks.total if tracks and tracks.total is not None else 0
 
 

@@ -1,10 +1,11 @@
 import asyncio
 import logging
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from types import SimpleNamespace
 from typing import Any, cast
 
+import httpx2
 import pytest
 from backend.features.spotify.application import (
     InvalidSpotifyTrackUriError,
@@ -23,6 +24,7 @@ from backend.features.spotify.infrastructure.spotify_search import SpotifyifySea
 from backend.features.spotify.infrastructure.spotify_search_cache import (
     SpotifySearchCache,
 )
+from spotifyify import SpotifyClient
 
 
 def _make_search(spotify: Any) -> SpotifyifySearch:
@@ -56,46 +58,21 @@ def _make_playlist_creator(spotify: Any | None = None) -> SpotifyPlaylistCreator
     return SpotifyPlaylistCreator(spotify=spotify or _PlaylistCreatorSpotifyStub())
 
 
-class _TracksStub:
+class _SearchStub:
     def __init__(self, items: list[SimpleNamespace]) -> None:
         self._items = items
         self.received_query: str | None = None
         self.received_limit: int | None = None
         self.call_count = 0
 
-    async def find(self, query: str, *, limit: int) -> SimpleNamespace:
+    async def iter_search(
+        self, query: str, *, limit: int
+    ) -> AsyncIterator[SimpleNamespace]:
         self.call_count += 1
         self.received_query = query
         self.received_limit = limit
-        return SimpleNamespace(items=self._items)
-
-
-class _ArtistsStub:
-    def __init__(self, items: list[SimpleNamespace]) -> None:
-        self._items = items
-        self.received_query: str | None = None
-        self.received_limit: int | None = None
-        self.call_count = 0
-
-    async def find(self, query: str, *, limit: int) -> SimpleNamespace:
-        self.call_count += 1
-        self.received_query = query
-        self.received_limit = limit
-        return SimpleNamespace(items=self._items)
-
-
-class _PlaylistsStub:
-    def __init__(self, items: list[SimpleNamespace]) -> None:
-        self._items = items
-        self.received_query: str | None = None
-        self.received_limit: int | None = None
-        self.call_count = 0
-
-    async def find(self, query: str, *, limit: int) -> SimpleNamespace:
-        self.call_count += 1
-        self.received_query = query
-        self.received_limit = limit
-        return SimpleNamespace(items=self._items)
+        for item in self._items:
+            yield item
 
 
 class _SpotifyStub:
@@ -106,9 +83,9 @@ class _SpotifyStub:
         playlist_items: list[SimpleNamespace] | None = None,
         artist_items: list[SimpleNamespace] | None = None,
     ) -> None:
-        self.tracks = _TracksStub(items=track_items or [])
-        self.playlists = _PlaylistsStub(items=playlist_items or [])
-        self.artists = _ArtistsStub(items=artist_items or [])
+        self.tracks = _SearchStub(items=track_items or [])
+        self.playlists = _SearchStub(items=playlist_items or [])
+        self.artists = _SearchStub(items=artist_items or [])
         self.retry_hook_callback = None
 
     @contextmanager
@@ -196,10 +173,9 @@ class _PlaylistCreatorSpotifyStub:
         self.playlists = _PlaylistCreatorPlaylistsStub(self)
         self.session_calls: list[tuple[str | None, Any]] = []
         self.retry_hook_callback = None
-        self.close_called = False
 
     @asynccontextmanager
-    async def session(
+    async def request_context(
         self,
         *,
         access_token: str | None = None,
@@ -212,8 +188,73 @@ class _PlaylistCreatorSpotifyStub:
         finally:
             self.retry_hook_callback = None
 
-    async def close(self) -> None:
-        self.close_called = True
+
+class _AppTokenProvider:
+    async def get_access_token(
+        self,
+        require_user: bool,
+        scope: str | list[str] | tuple[str, ...] | None = None,
+    ) -> str:
+        return "app-token"
+
+
+def _track_payload(index: int) -> dict[str, Any]:
+    return {
+        "id": f"track{index}",
+        "name": f"Track {index}",
+        "type": "track",
+        "uri": f"spotify:track:track{index}",
+        "artists": [{"name": "Muse"}],
+        "album": {
+            "album_type": "album",
+            "total_tracks": 1,
+            "external_urls": {},
+            "href": "https://api.spotify.com/v1/albums/album1",
+            "id": "album1",
+            "images": [],
+            "name": "Origin",
+            "release_date": "2001-06-18",
+            "release_date_precision": "day",
+            "type": "album",
+            "uri": "spotify:album:album1",
+            "artists": [],
+        },
+    }
+
+
+def _paged_track_search(
+    total: int,
+    requested_limits: list[int],
+) -> Callable[[httpx2.Request], httpx2.Response]:
+    def handle(request: httpx2.Request) -> httpx2.Response:
+        limit = int(request.url.params["limit"])
+        offset = int(request.url.params["offset"])
+        requested_limits.append(limit)
+        end = offset + limit
+        next_url = (
+            f"https://api.spotify.com/v1/search?offset={end}&limit={limit}"
+            if end < total
+            else None
+        )
+        return httpx2.Response(
+            200,
+            json={
+                "tracks": {
+                    "href": "https://api.spotify.com/v1/search",
+                    "limit": limit,
+                    "offset": offset,
+                    "total": total,
+                    "next": next_url,
+                    "previous": None,
+                    "items": [
+                        _track_payload(index)
+                        for index in range(offset, min(end, total))
+                    ],
+                }
+            },
+        )
+
+    return handle
 
 
 def _make_track() -> SimpleNamespace:
@@ -325,7 +366,7 @@ class TestSpotifySearch:
         assert result[0].title == "Starlight"
         assert result[0].artist == "Muse"
         assert spotify.tracks.received_query == "muse"
-        assert spotify.tracks.received_limit == 20
+        assert spotify.tracks.received_limit == 10
 
     def test_search_tracks_uses_explicit_limit(self) -> None:
         spotify = _SpotifyStub(track_items=[_make_track()])
@@ -360,7 +401,7 @@ class TestSpotifySearch:
         assert result[0].popularity == 91
         assert result[0].image_url == "https://example.com/muse.jpg"
         assert spotify.artists.received_query == "muse"
-        assert spotify.artists.received_limit == 20
+        assert spotify.artists.received_limit == 10
 
     def test_search_artists_short_circuits_blank_query(self) -> None:
         spotify = _SpotifyStub(artist_items=[_make_artist()])
@@ -542,16 +583,13 @@ class TestSpotifyPlaylistCreator:
         spotify = _PlaylistCreatorSpotifyStub()
         service = _make_playlist_creator(cast(Any, spotify))
 
-        try:
-            playlist_id = asyncio.run(
-                service.create_private_playlist(
-                    access_token="token-123",
-                    name="Roadtrip",
-                    description="Late night drive",
-                )
+        playlist_id = asyncio.run(
+            service.create_private_playlist(
+                access_token="token-123",
+                name="Roadtrip",
+                description="Late night drive",
             )
-        finally:
-            asyncio.run(service.aclose())
+        )
 
         assert playlist_id == "playlist-1"
         assert spotify.playlists.calls == [
@@ -569,30 +607,26 @@ class TestSpotifyPlaylistCreator:
         assert len(spotify.session_calls) == 1
         assert spotify.session_calls[0][0] == "token-123"
         assert callable(spotify.session_calls[0][1])
-        assert spotify.close_called is True
 
     def test_update_playlist_and_replace_tracks_use_user_token(self) -> None:
         spotify = _PlaylistCreatorSpotifyStub()
         service = _make_playlist_creator(cast(Any, spotify))
 
-        try:
-            asyncio.run(
-                service.update_playlist_details(
-                    access_token="token-123",
-                    playlist_id="playlist-1",
-                    name="Updated",
-                    description="Updated description",
-                )
+        asyncio.run(
+            service.update_playlist_details(
+                access_token="token-123",
+                playlist_id="playlist-1",
+                name="Updated",
+                description="Updated description",
             )
-            asyncio.run(
-                service.replace_playlist_tracks(
-                    access_token="token-123",
-                    playlist_id="playlist-1",
-                    track_uris=["spotify:track:1", "spotify:track:2"],
-                )
+        )
+        asyncio.run(
+            service.replace_playlist_tracks(
+                access_token="token-123",
+                playlist_id="playlist-1",
+                track_uris=["spotify:track:1", "spotify:track:2"],
             )
-        finally:
-            asyncio.run(service.aclose())
+        )
 
         assert spotify.playlists.calls == [
             (
@@ -616,4 +650,88 @@ class TestSpotifyPlaylistCreator:
             "token-123",
         ]
         assert all(callable(session_call[1]) for session_call in spotify.session_calls)
-        assert spotify.close_called is True
+
+
+class TestSpotifyClientContract:
+    def test_search_pages_within_development_mode_limit(self) -> None:
+        requested_limits: list[int] = []
+        transport = httpx2.MockTransport(_paged_track_search(40, requested_limits))
+
+        async def _run() -> list[SpotifyTrack]:
+            async with SpotifyClient(
+                token_provider=_AppTokenProvider(),
+                transport=transport,
+            ) as spotify:
+                return await _make_search(spotify)._search_tracks(
+                    query="muse",
+                    limit=25,
+                )
+
+        result = asyncio.run(_run())
+
+        assert [track.id for track in result] == [
+            f"track{index}" for index in range(25)
+        ]
+        assert result[0].year == 2001
+        assert requested_limits == [10, 10, 10]
+
+    def test_get_track_returns_none_for_malformed_id_without_request(self) -> None:
+        requests: list[httpx2.Request] = []
+
+        def handle(request: httpx2.Request) -> httpx2.Response:
+            requests.append(request)
+            return httpx2.Response(200, json=_track_payload(1))
+
+        async def _run() -> SpotifyTrack | None:
+            async with SpotifyClient(
+                token_provider=_AppTokenProvider(),
+                transport=httpx2.MockTransport(handle),
+            ) as spotify:
+                return await _make_search(spotify).get_track_by_id(
+                    track_id="bad id",
+                )
+
+        assert asyncio.run(_run()) is None
+        assert requests == []
+
+    def test_playlist_export_uses_user_token_on_current_routes(self) -> None:
+        requests: list[tuple[str, str, str | None]] = []
+
+        def handle(request: httpx2.Request) -> httpx2.Response:
+            requests.append(
+                (
+                    request.method,
+                    request.url.path,
+                    request.headers.get("Authorization"),
+                )
+            )
+            if request.method == "POST":
+                return httpx2.Response(
+                    201,
+                    json={"id": "playlist1", "type": "playlist", "name": "Roadtrip"},
+                )
+            return httpx2.Response(200, json={"snapshot_id": "snapshot1"})
+
+        async def _run() -> str:
+            async with SpotifyClient(
+                token_provider=_AppTokenProvider(),
+                transport=httpx2.MockTransport(handle),
+            ) as spotify:
+                creator = SpotifyPlaylistCreator(spotify=spotify)
+                playlist_id = await creator.create_private_playlist(
+                    access_token="user-token",
+                    name="Roadtrip",
+                    description="Late night drive",
+                )
+                await creator.replace_playlist_tracks(
+                    access_token="user-token",
+                    playlist_id=playlist_id,
+                    track_uris=["spotify:track:track1"],
+                )
+                return playlist_id
+
+        assert asyncio.run(_run()) == "playlist1"
+        assert requests == [
+            ("POST", "/v1/me/playlists", "Bearer user-token"),
+            ("PUT", "/v1/playlists/playlist1/items", "Bearer user-token"),
+        ]
