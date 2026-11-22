@@ -1,6 +1,5 @@
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.exceptions import (
-    AUTH_ERRORS,
     AUTHENTICATION_REQUIRED_ERROR,
 )
 from backend.features.user.application import UserService
@@ -9,15 +8,12 @@ from backend.features.user.presentation.schemas import (
     UserDeleteInformationResponse,
     UserMeResponse,
 )
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import Response, status
-from fastapi_canon import CanonResponse, CanonRouter
+from fastapi_canon import APIRouter, CanonResponse, Inject
 
-user_router = CanonRouter(
-    route_class=DishkaRoute,
+user_router = APIRouter(
     prefix="/users",
     tags=["users"],
-    error_registry=AUTH_ERRORS,
     raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 
@@ -30,7 +26,7 @@ user_router = CanonRouter(
 )
 async def get_me(
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[UserService],
+    service: Inject[UserService],
 ) -> UserMeResponse:
     user = await service.get_me(user_id=authenticated_user_id)
     return to_user_me_response(user=user)
@@ -44,7 +40,7 @@ async def get_me(
 )
 async def get_delete_information(
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[UserService],
+    service: Inject[UserService],
 ) -> UserDeleteInformationResponse:
     delete_information = await service.get_delete_information(
         user_id=authenticated_user_id
@@ -62,7 +58,7 @@ async def get_delete_information(
 )
 async def delete_me(
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[UserService],
+    service: Inject[UserService],
 ) -> Response:
     await service.delete_me(user_id=authenticated_user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

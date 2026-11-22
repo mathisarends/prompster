@@ -2,7 +2,7 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_canon import Composition, ErrorOptions, Feature
+from fastapi_canon import APIRouter, Composition, ErrorOptions, Feature
 
 from backend._logging import setup_logging
 from backend.env import EnvSettings, LoggingLevelSettings
@@ -18,7 +18,7 @@ from backend.features import (
 from backend.lifespan import lifespan
 from backend.platform.database.di import DatabaseProvider
 from backend.platform.storage.di import ObjectStorageProvider
-from backend.presentation import LoggingMiddleware, PascalCaseRouter
+from backend.presentation import LoggingMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +37,9 @@ _PLATFORM_FEATURE = Feature(
     providers=(DatabaseProvider, ObjectStorageProvider),
 )
 _COMPOSITION = Composition(
-    _PLATFORM_FEATURE,
-    *_FEATURES,
+    features=(_PLATFORM_FEATURE, *_FEATURES),
     errors=ErrorOptions(type_base="https://api.prompster.dev/problems"),
-    router_factory=lambda: PascalCaseRouter(prefix="/api/v1"),
+    router_factory=lambda: APIRouter(prefix="/api/v1"),
 )
 
 
@@ -71,9 +70,8 @@ def create_app() -> FastAPI:
 
     _setup_middleware(app, env)
     app.include_router(health.health_router)
-    _COMPOSITION.apply(app)
     app.include_router(session.rpc_router)
-    _COMPOSITION.validate(app)
+    _COMPOSITION.build(app)
 
     logger.info("Application ready!")
     return app

@@ -10,7 +10,7 @@ Encapsulates:
 - File storage for generated assets (S3 via aioboto3)
 - Spotify integration (OAuth token management, playlist creation)
 - PDF playlist deck generation (Typst + QR codes)
-- Streaming agent runs over rpckit subscriptions
+- Streaming agent runs over typed Canon WebSocket streams
 
 ### features
 
@@ -25,10 +25,10 @@ Encapsulates:
 
 `/api/v1/sessions/{session_id}/stream` is a cookie-authenticated WebSocket
 endpoint. The presentation layer exposes `send_message`, `complete_onboarding`,
-and `export_spotify` as typed rpckit subscriptions. Each subscription uses a
-Dishka request scope for its entire lifetime. Unsubscribe and disconnect close
+and `export_spotify` as typed Canon message streams. Each stream uses a
+Dishka request scope for its entire lifetime. Cancel and disconnect close
 the application stream and cancel pending export tasks before releasing that
-scope. The integration uses `pyrpckit[codegen,dishka,fastapi]==0.10.0`.
+scope. The integration uses `fastapi-canon[websockets]`.
 
 Session subscriptions yield `SessionStreamEvent`; Spotify exports yield
 `SpotifyExportEvent`. Clients initiate these streams with RPC calls and typed
@@ -50,8 +50,8 @@ exports in `__init__.py`.
 The OpenRPC contract and TypeScript client are generated from `rpcgen.toml`:
 
 ```bash
-uv run --package backend rpckit generate --config rpcgen.toml
-uv run --package backend rpckit generate --config rpcgen.toml --check
+uv run --package backend fastapi-canon websockets generate --config rpcgen.toml
+uv run --package backend fastapi-canon websockets generate --config rpcgen.toml --check
 ```
 
 From `frontend/`, the equivalent commands are `npm run generate:rpc` and

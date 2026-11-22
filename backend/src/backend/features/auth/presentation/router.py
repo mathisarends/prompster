@@ -9,7 +9,6 @@ from backend.features.auth.presentation.dependencies import (
     RefreshAuthenticatedUserId,
 )
 from backend.features.auth.presentation.exceptions import (
-    AUTH_ERRORS,
     SESSION_EXPIRED_ERROR,
     SESSION_INVALID_ERROR,
 )
@@ -18,16 +17,13 @@ from backend.features.auth.presentation.oauth_state_cookies import (
     GoogleOAuthStateCookies,
     SpotifyLoginOAuthStateCookies,
 )
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi_canon import CanonResponse, CanonRouter
+from fastapi_canon import APIRouter, CanonResponse, Inject
 
-auth_router = CanonRouter(
-    route_class=DishkaRoute,
+auth_router = APIRouter(
     prefix="/auth",
     tags=["auth"],
-    error_registry=AUTH_ERRORS,
 )
 
 
@@ -42,8 +38,8 @@ auth_router = CanonRouter(
     ),
 )
 async def google_login(
-    google_auth_flow: FromDishka[GoogleOAuthFlow],
-    google_oauth_state_cookies: FromDishka[GoogleOAuthStateCookies],
+    google_auth_flow: Inject[GoogleOAuthFlow],
+    google_oauth_state_cookies: Inject[GoogleOAuthStateCookies],
 ) -> RedirectResponse:
     authorization_request = google_auth_flow.login()
 
@@ -66,10 +62,10 @@ async def google_login(
 )
 async def google_callback(
     request: Request,
-    google_auth_flow: FromDishka[GoogleOAuthFlow],
-    auth_cookies: FromDishka[AuthCookies],
-    google_oauth_state_cookies: FromDishka[GoogleOAuthStateCookies],
-    env_config: FromDishka[EnvSettings],
+    google_auth_flow: Inject[GoogleOAuthFlow],
+    auth_cookies: Inject[AuthCookies],
+    google_oauth_state_cookies: Inject[GoogleOAuthStateCookies],
+    env_config: Inject[EnvSettings],
     code: str | None = Query(default=None, min_length=1, max_length=4096),
     state: str = Query(min_length=1, max_length=4096),
     error: str | None = Query(default=None, min_length=1, max_length=256),
@@ -107,8 +103,8 @@ async def google_callback(
     ),
 )
 async def spotify_login(
-    spotify_oauth_flow: FromDishka[SpotifyOAuthFlow],
-    spotify_login_state_cookies: FromDishka[SpotifyLoginOAuthStateCookies],
+    spotify_oauth_flow: Inject[SpotifyOAuthFlow],
+    spotify_login_state_cookies: Inject[SpotifyLoginOAuthStateCookies],
 ) -> RedirectResponse:
     authorization_request = spotify_oauth_flow.login()
 
@@ -131,10 +127,10 @@ async def spotify_login(
 )
 async def spotify_login_callback(
     request: Request,
-    spotify_oauth_flow: FromDishka[SpotifyOAuthFlow],
-    auth_cookies: FromDishka[AuthCookies],
-    spotify_login_state_cookies: FromDishka[SpotifyLoginOAuthStateCookies],
-    env_config: FromDishka[EnvSettings],
+    spotify_oauth_flow: Inject[SpotifyOAuthFlow],
+    auth_cookies: Inject[AuthCookies],
+    spotify_login_state_cookies: Inject[SpotifyLoginOAuthStateCookies],
+    env_config: Inject[EnvSettings],
     code: str | None = Query(default=None, min_length=1, max_length=4096),
     state: str = Query(min_length=1, max_length=4096),
     error: str | None = Query(default=None, min_length=1, max_length=256),
@@ -172,7 +168,7 @@ async def spotify_login_callback(
 )
 async def logout(
     response: Response,
-    auth_cookies: FromDishka[AuthCookies],
+    auth_cookies: Inject[AuthCookies],
 ) -> None:
     auth_cookies.delete(response)
 
@@ -190,8 +186,8 @@ async def logout(
 async def refresh(
     authenticated_user_id: RefreshAuthenticatedUserId,
     response: Response,
-    session_refresher: FromDishka[SessionRefresher],
-    auth_cookies: FromDishka[AuthCookies],
+    session_refresher: Inject[SessionRefresher],
+    auth_cookies: Inject[AuthCookies],
 ) -> None:
     new_session = await session_refresher.refresh(user_id=authenticated_user_id)
 

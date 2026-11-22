@@ -1,6 +1,5 @@
 import asyncio
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from threading import Event
 from uuid import uuid4
 
@@ -11,10 +10,10 @@ from backend.features.session.application import (
     SessionConversationService,
 )
 from backend.features.session.presentation.rpc import rpc_router
-from dishka import Provider, Scope, make_async_container, provide
+from dishka import Provider, Scope, provide
 from fastapi import FastAPI, WebSocketException, status
 from fastapi.testclient import TestClient
-from rpckit.dishka import Dishka
+from fastapi_canon import Composition, Feature
 from starlette.websockets import WebSocketDisconnect
 
 
@@ -30,25 +29,25 @@ class ConversationStub:
             yield
 
 
-class ResolverStub:
-    def __init__(self, service: ConversationStub) -> None:
-        self.service = service
-
-    async def resolve(self, dependency: type):
-        if dependency is SessionConversationService:
-            return self.service
-        raise LookupError(dependency)
+def _conversation_provider(service: object) -> Provider:
+    provider = Provider(scope=Scope.REQUEST)
+    provider.provide(lambda: service, provides=SessionConversationService)
+    return provider
 
 
-def test_session_subscription_uses_authenticated_socket_context(monkeypatch) -> None:
+def _session_app(provider: Provider, user_id_factory) -> FastAPI:
+    app = FastAPI()
+    app.include_router(rpc_router)
+    Composition(features=[Feature(name="session", providers=[provider])]).build(app)
+    app.dependency_overrides[_get_authenticated_user_id] = user_id_factory
+    return app
+
+
+def test_session_stream_uses_authenticated_socket_context() -> None:
     user_id = uuid4()
     session_id = uuid4()
     service = ConversationStub()
-    app = FastAPI()
-    app.include_router(rpc_router)
-    app.dependency_overrides[_get_authenticated_user_id] = lambda: user_id
-    app.state.dishka_container = object()
-    monkeypatch.setattr(Dishka, "for_websocket", lambda *_: ResolverStub(service))
+    app = _session_app(_conversation_provider(service), lambda: user_id)
 
     with (
         TestClient(app) as client,
@@ -58,12 +57,12 @@ def test_session_subscription_uses_authenticated_socket_context(monkeypatch) -> 
             {
                 "jsonrpc": "2.0",
                 "id": 1,
-                "method": "session.send_message.subscribe",
+                "method": "session.send_message.open",
                 "params": {"content": "Hallo", "modelId": "test-model"},
             }
         )
         response = socket.receive_json()
-        assert response["result"]["subscriptionId"] == "1"
+        assert response["result"]["streamId"]
         event = socket.receive_json()
         assert event["method"] == "session.send_message"
         assert event["params"]["payload"] == {"type": "done"}
@@ -78,14 +77,8 @@ def test_session_subscription_uses_authenticated_socket_context(monkeypatch) -> 
     "params",
     [{"content": ""}, {"content": "Hallo", "userId": str(uuid4())}],
 )
-def test_session_subscription_rejects_invalid_params(params, monkeypatch) -> None:
-    app = FastAPI()
-    app.include_router(rpc_router)
-    app.dependency_overrides[_get_authenticated_user_id] = uuid4
-    app.state.dishka_container = object()
-    monkeypatch.setattr(
-        Dishka, "for_websocket", lambda *_: ResolverStub(ConversationStub())
-    )
+def test_session_stream_rejects_invalid_params(params) -> None:
+    app = _session_app(_conversation_provider(ConversationStub()), uuid4)
 
     with (
         TestClient(app) as client,
@@ -95,7 +88,7 @@ def test_session_subscription_rejects_invalid_params(params, monkeypatch) -> Non
             {
                 "jsonrpc": "2.0",
                 "id": 1,
-                "method": "session.send_message.subscribe",
+                "method": "session.send_message.open",
                 "params": params,
             }
         )
@@ -103,8 +96,8 @@ def test_session_subscription_rejects_invalid_params(params, monkeypatch) -> Non
         assert response["error"]["code"] == -32602
 
 
-@pytest.mark.parametrize("termination", ["unsubscribe", "disconnect"])
-def test_session_subscription_closes_stream_before_dishka_request_scope(termination):
+@pytest.mark.parametrize("termination", ["cancel", "disconnect"])
+def test_session_stream_closes_stream_before_dishka_request_scope(termination):
     lifecycle: list[str] = []
     scope_closed = Event()
 
@@ -126,17 +119,7 @@ def test_session_subscription_closes_stream_before_dishka_request_scope(terminat
                 lifecycle.append("request_closed")
                 scope_closed.set()
 
-    @asynccontextmanager
-    async def lifespan(app):
-        app.state.dishka_container = make_async_container(ConversationProvider())
-        try:
-            yield
-        finally:
-            await app.state.dishka_container.close()
-
-    app = FastAPI(lifespan=lifespan)
-    app.include_router(rpc_router)
-    app.dependency_overrides[_get_authenticated_user_id] = uuid4
+    app = _session_app(ConversationProvider(), uuid4)
 
     with TestClient(app) as client:
         with client.websocket_connect(f"/api/v1/sessions/{uuid4()}/stream") as socket:
@@ -144,21 +127,21 @@ def test_session_subscription_closes_stream_before_dishka_request_scope(terminat
                 {
                     "jsonrpc": "2.0",
                     "id": 1,
-                    "method": "session.send_message.subscribe",
+                    "method": "session.send_message.open",
                     "params": {"content": "Hallo"},
                 }
             )
-            subscription_id = socket.receive_json()["result"]["subscriptionId"]
+            stream_id = socket.receive_json()["result"]["streamId"]
             event = socket.receive_json()
             assert event["params"]["payload"]["chunk"] == "Hallo"
             assert lifecycle == ["request_opened"]
-            if termination == "unsubscribe":
+            if termination == "cancel":
                 socket.send_json(
                     {
                         "jsonrpc": "2.0",
                         "id": 2,
-                        "method": "session.send_message.unsubscribe",
-                        "params": {"subscriptionId": subscription_id},
+                        "method": "session.send_message.cancel",
+                        "params": {"streamId": stream_id},
                     }
                 )
                 assert socket.receive_json() == {
@@ -177,9 +160,7 @@ def test_session_socket_rejects_unauthenticated_connection() -> None:
     def reject_user() -> None:
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
 
-    app = FastAPI()
-    app.include_router(rpc_router)
-    app.dependency_overrides[_get_authenticated_user_id] = reject_user
+    app = _session_app(_conversation_provider(ConversationStub()), reject_user)
 
     with (
         TestClient(app) as client,

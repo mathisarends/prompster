@@ -1,4 +1,4 @@
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncIterator
 from contextlib import aclosing
 
 from backend.features.session.application import (
@@ -20,7 +20,7 @@ from backend.features.session.presentation.rpc.spotify_export import (
     spotify_export_events,
 )
 from backend.features.session.presentation.rpc.stream import session_events
-from rpckit import Inject, RpcChannel
+from fastapi_canon.integrations.websockets import Inject, RpcChannel
 
 session_channel = RpcChannel("session")
 
@@ -31,12 +31,12 @@ async def ping() -> str:
     return "pong"
 
 
-@session_channel.subscription()
+@session_channel.stream()
 async def send_message(
     params: SendMessageParams,
     context: Inject[SessionRpcContext],
     service: Inject[SessionConversationService],
-) -> AsyncGenerator[SessionStreamEvent]:
+) -> AsyncIterator[SessionStreamEvent]:
     """Send a message and stream the resulting session updates."""
     async with aclosing(
         session_events(
@@ -56,12 +56,12 @@ async def send_message(
             yield event
 
 
-@session_channel.subscription()
+@session_channel.stream()
 async def complete_onboarding(
     params: CompleteOnboardingParams,
     context: Inject[SessionRpcContext],
     service: Inject[SessionConversationService],
-) -> AsyncGenerator[SessionStreamEvent]:
+) -> AsyncIterator[SessionStreamEvent]:
     """Complete onboarding and stream the resulting session updates."""
     async with aclosing(
         session_events(
@@ -76,11 +76,11 @@ async def complete_onboarding(
             yield event
 
 
-@session_channel.subscription()
+@session_channel.stream()
 async def export_spotify(
     context: Inject[SessionRpcContext],
     exporter: Inject[SessionSpotifyPlaylistExporter],
-) -> AsyncGenerator[SpotifyExportEvent]:
+) -> AsyncIterator[SpotifyExportEvent]:
     """Export the session playlist with retry updates and the final playlist."""
     async with aclosing(
         spotify_export_events(

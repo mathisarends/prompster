@@ -1,9 +1,9 @@
-from backend.presentation.feature import api_feature
+from fastapi_canon import Feature
 
 from .infrastructure.di import SpotifyProvider
 from .presentation import spotify_router
 
-feature = api_feature(
+feature = Feature(
     name="spotify",
     routers=[spotify_router],
     providers=[SpotifyProvider],

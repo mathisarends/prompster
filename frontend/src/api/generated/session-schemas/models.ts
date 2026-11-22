@@ -22,12 +22,23 @@ export type EntryKindSchema = EntryKind;
  */
 export interface AuthenticationRequiredProblem {
   type: "https://api.prompster.dev/problems/authentication_required";
-  title: "Authentication required";
+  title: string;
   status: 401;
   code: "authentication_required";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * RFC 9457 Problem Details with a stable application code.
+ */
+export interface InternalServerProblem {
+  type: "https://api.prompster.dev/problems/internal_server_error";
+  title: string;
+  status: 500;
+  code: "internal_server_error";
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }

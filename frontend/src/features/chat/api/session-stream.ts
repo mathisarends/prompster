@@ -1,5 +1,10 @@
-import type { SendMessageParams, SessionStreamEvent } from "@/api/session-rpc";
+import type { RpcStream, SendMessageParams, SessionRpcClient } from "@/api/session-rpc";
 import { withSessionRpcClient } from "@/shared/api/session-rpc-client";
+
+type StreamItem<T> = T extends RpcStream<infer Item> ? Item : never;
+export type SessionStreamEvent = StreamItem<
+  Awaited<ReturnType<SessionRpcClient["session"]["sendMessage"]>>
+>;
 
 export type SessionMessageAttachmentRequest = NonNullable<SendMessageParams["attachments"]>[number];
 export type ImageAttachmentReferenceRequest = NonNullable<
@@ -19,7 +24,7 @@ export const streamSendMessage = (
   options: StreamSessionOptions,
 ): Promise<void> =>
   withSessionRpcClient(sessionId, options.signal, async (client) => {
-    for await (const event of client.session.sendMessage({
+    for await (const event of await client.session.sendMessage({
       ...body,
       modelId: options.modelId,
     })) {
@@ -35,7 +40,7 @@ export const streamCompleteOnboarding = (
   options: StreamSessionOptions,
 ): Promise<void> =>
   withSessionRpcClient(sessionId, options.signal, async (client) => {
-    for await (const event of client.session.completeOnboarding({
+    for await (const event of await client.session.completeOnboarding({
       modelId: options.modelId,
     })) {
       options.onEvent?.(event);
