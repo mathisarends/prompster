@@ -12,7 +12,7 @@ from backend.features.session.presentation.schemas import (
     ToolCallSequenceEntryResponse,
 )
 from pydantic import Field
-from rpckit import RpcModel
+from fastapi_canon.integrations.websockets import RpcModel
 
 
 class SessionStreamEventType(StrEnum):

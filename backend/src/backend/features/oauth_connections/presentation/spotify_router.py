@@ -1,15 +1,12 @@
-from backend.env import EnvSettings
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.exceptions import (
     AUTHENTICATION_REQUIRED_ERROR,
 )
-from backend.features.auth.presentation.oauth_popup import OAuthPopupResponse
 from backend.features.oauth_connections.application import (
     SpotifyOAuthConnectionService,
     SpotifyTokenService,
 )
 from backend.features.oauth_connections.presentation.exceptions import (
-    OAUTH_CONNECTION_ERRORS,
     SPOTIFY_CONNECTION_NOT_FOUND_ERROR,
     SPOTIFY_TOKEN_REVOKED_ERROR,
 )
@@ -19,16 +16,13 @@ from backend.features.oauth_connections.presentation.schemas import (
 from backend.features.oauth_connections.presentation.spotify_oauth_state_cookies import (
     SpotifyOAuthStateCookies,
 )
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import Query, Request, Response, status
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi_canon import CanonResponse, CanonRouter
+from fastapi import Response, status
+from fastapi.responses import RedirectResponse
+from fastapi_canon import APIRouter, CanonResponse, Inject
 
-spotify_oauth_router = CanonRouter(
-    route_class=DishkaRoute,
+spotify_oauth_router = APIRouter(
     prefix="/auth/spotify",
     tags=["spotify"],
-    error_registry=OAUTH_CONNECTION_ERRORS,
     raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 
@@ -45,8 +39,8 @@ spotify_oauth_router = CanonRouter(
 )
 async def spotify_connect(
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SpotifyOAuthConnectionService],
-    spotify_oauth_state_cookies: FromDishka[SpotifyOAuthStateCookies],
+    service: Inject[SpotifyOAuthConnectionService],
+    spotify_oauth_state_cookies: Inject[SpotifyOAuthStateCookies],
 ) -> RedirectResponse:
     authorization_request = service.start_connect(user_id=authenticated_user_id)
     response = RedirectResponse(
@@ -60,38 +54,6 @@ async def spotify_connect(
     return response
 
 
-@spotify_oauth_router.get(
-    "/callback",
-    response_model=None,
-    operation_id="spotify_callback",
-    include_in_schema=False,
-)
-async def spotify_callback(
-    request: Request,
-    authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SpotifyOAuthConnectionService],
-    spotify_oauth_state_cookies: FromDishka[SpotifyOAuthStateCookies],
-    env_config: FromDishka[EnvSettings],
-    code: str | None = Query(default=None, min_length=1, max_length=4096),
-    state: str = Query(min_length=1, max_length=4096),
-    error: str | None = Query(default=None, min_length=1, max_length=256),
-) -> HTMLResponse:
-    result = await service.complete_connect(
-        authenticated_user_id=authenticated_user_id,
-        code=code,
-        state=state,
-        error=error,
-        expected_oauth_state=spotify_oauth_state_cookies.read(request=request),
-    )
-    response = OAuthPopupResponse.for_spotify(
-        target_origin=env_config.frontend_base_url,
-        succeeded=result.succeeded,
-        reason=result.error_reason,
-    )
-    spotify_oauth_state_cookies.clear(response)
-    return response
-
-
 @spotify_oauth_router.delete(
     "",
     response_model=None,
@@ -100,7 +62,7 @@ async def spotify_callback(
 )
 async def spotify_disconnect(
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SpotifyOAuthConnectionService],
+    service: Inject[SpotifyOAuthConnectionService],
 ) -> None:
     await service.disconnect(user_id=authenticated_user_id)
 
@@ -118,7 +80,7 @@ async def spotify_disconnect(
 async def spotify_get_access_token(
     authenticated_user_id: AuthenticatedUserId,
     response: Response,
-    token_service: FromDishka[SpotifyTokenService],
+    token_service: Inject[SpotifyTokenService],
 ) -> SpotifyAccessTokenResponse:
     response.headers["Cache-Control"] = "no-store"
 

@@ -5,22 +5,18 @@ from backend.features.auth.presentation.exceptions import (
     AUTHENTICATION_REQUIRED_ERROR,
 )
 from backend.features.spotify.application import SpotifySearch, SpotifySearchType
-from backend.features.spotify.presentation.errors import SPOTIFY_ERRORS
 from backend.features.spotify.presentation.mapper import (
     to_spotify_unified_search_response,
 )
 from backend.features.spotify.presentation.schemas import (
     SpotifyUnifiedSearchResponse,
 )
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import Query, status
-from fastapi_canon import CanonRouter
+from fastapi_canon import APIRouter, Inject
 
-spotify_router = CanonRouter(
-    route_class=DishkaRoute,
+spotify_router = APIRouter(
     prefix="/spotify",
     tags=["spotify"],
-    error_registry=SPOTIFY_ERRORS,
     raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 _DEFAULT_SEARCH_TYPES = (
@@ -38,7 +34,7 @@ _DEFAULT_SEARCH_TYPES = (
 )
 async def search_spotify(
     authenticated_user_id: AuthenticatedUserId,
-    spotify_search: FromDishka[SpotifySearch],
+    spotify_search: Inject[SpotifySearch],
     query: Annotated[
         str, Query(min_length=1, max_length=200, description="Search query")
     ],

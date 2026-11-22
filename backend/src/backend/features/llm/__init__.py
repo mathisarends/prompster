@@ -1,9 +1,9 @@
-from backend.presentation.feature import api_feature
+from fastapi_canon import Feature
 
 from .infrastructure import LLMFeatureProvider
 from .presentation import router
 
-feature = api_feature(
+feature = Feature(
     name="llm",
     routers=[router],
     providers=[LLMFeatureProvider],

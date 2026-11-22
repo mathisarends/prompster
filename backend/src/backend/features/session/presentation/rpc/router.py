@@ -1,13 +1,10 @@
 from uuid import UUID
 
 from backend.features.auth.presentation.dependencies import AuthenticatedUserId
+from backend.features.session.presentation.rpc.channel import session_channel
 from backend.features.session.presentation.rpc.context import SessionRpcContext
-from backend.features.session.presentation.rpc.contract import session_endpoint
-from fastapi import APIRouter
-from rpckit.dishka import Dishka
-from rpckit.fastapi import RpcRoutes
-
-rpc_router = APIRouter(prefix="/api/v1/sessions")
+from fastapi_canon.integrations.websockets import CanonWebSocketRouter
+from fastapi_canon.integrations.websockets.adapters.dishka import Dishka
 
 
 async def session_rpc_context(
@@ -17,6 +14,9 @@ async def session_rpc_context(
     return SessionRpcContext(session_id=session_id, user_id=authenticated_user_id)
 
 
-RpcRoutes(rpc_router, context=session_rpc_context, resolver=Dishka()).mount(
-    session_endpoint
+rpc_router = CanonWebSocketRouter(context=session_rpc_context, resolver=Dishka())
+rpc_router.socket(
+    "/api/v1/sessions/{session_id}/stream",
+    channels=(session_channel,),
+    name="session",
 )

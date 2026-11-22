@@ -33,7 +33,7 @@ src/
     request.ts             # Fetch, Cookies, einmaliger Session-Refresh, PDF, Fehler
     query-client.ts        # gemeinsamer Query-Cache
     generated/<tag>/       # api.ts, models.ts, queries.ts, mutations.ts, index.ts
-    session-rpc/           # unveränderter, von rpckit erzeugter WebSocket-Client
+    session-rpc/           # unveränderter, von fastapi-canon erzeugter WebSocket-Client
   features/
     auth/                  # Login-Seite und OAuth-ReactiveController
     chat/                  # Chat-Seite, ChatController, reiner Stream-Reducer

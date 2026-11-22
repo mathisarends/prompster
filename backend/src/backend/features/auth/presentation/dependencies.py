@@ -10,15 +10,8 @@ from backend.features.auth.application.schemas import TokenPayload, TokenType
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.presentation.exceptions import AuthenticationRequiredError
 from fastapi import Depends, WebSocket, WebSocketException, status
+from fastapi_canon import Inject
 from starlette.requests import HTTPConnection
-
-
-async def _get_auth_settings(conn: HTTPConnection) -> AuthSettings:
-    return await conn.state.dishka_container.get(AuthSettings)
-
-
-async def _get_token_issuer(conn: HTTPConnection) -> TokenIssuer:
-    return await conn.state.dishka_container.get(TokenIssuer)
 
 
 def _get_cookie_token_payload(
@@ -41,8 +34,8 @@ def _get_cookie_token_payload(
 
 def _get_access_token_payload(
     conn: HTTPConnection,
-    auth_settings: Annotated[AuthSettings, Depends(_get_auth_settings)],
-    token_issuer: Annotated[TokenIssuer, Depends(_get_token_issuer)],
+    auth_settings: Inject[AuthSettings],
+    token_issuer: Inject[TokenIssuer],
 ) -> TokenPayload:
     return _get_cookie_token_payload(
         conn,
@@ -55,8 +48,8 @@ def _get_access_token_payload(
 
 def _get_refresh_token_payload(
     conn: HTTPConnection,
-    auth_settings: Annotated[AuthSettings, Depends(_get_auth_settings)],
-    token_issuer: Annotated[TokenIssuer, Depends(_get_token_issuer)],
+    auth_settings: Inject[AuthSettings],
+    token_issuer: Inject[TokenIssuer],
 ) -> TokenPayload:
     return _get_cookie_token_payload(
         conn,

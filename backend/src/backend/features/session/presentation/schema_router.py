@@ -2,17 +2,13 @@ from backend.features.auth.presentation.dependencies import AuthenticatedUserId
 from backend.features.auth.presentation.exceptions import (
     AUTHENTICATION_REQUIRED_ERROR,
 )
-from backend.features.session.presentation.exceptions import SESSION_ERRORS
 from backend.features.session.presentation.schemas import EntryKindSchema
-from dishka.integrations.fastapi import DishkaRoute
 from fastapi import status
-from fastapi_canon import CanonRouter
+from fastapi_canon import APIRouter
 
-session_schema_router = CanonRouter(
-    route_class=DishkaRoute,
+session_schema_router = APIRouter(
     prefix="/sessions",
     tags=["session_schemas"],
-    error_registry=SESSION_ERRORS,
     raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 

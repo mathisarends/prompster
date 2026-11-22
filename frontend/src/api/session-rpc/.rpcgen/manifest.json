@@ -1,9 +1,9 @@
 {
-  "generator": "rpckit",
-  "generatorVersion": "0.10.0",
-  "layoutVersion": 10,
+  "generator": "fastapi-canon",
+  "generatorVersion": "0.24.0",
+  "layoutVersion": 12,
   "language": "typescript",
-  "contractSha256": "f6d9a945ea78a79ad7c297bb9a686700eea30f4dbaf07d262f4ea438db64af7d",
+  "contractSha256": "91156434bf6f165ac2b7d99fcb80ba65c4a137a710d88e2e5dd773e6ff6a5001",
   "files": [
     ".rpcgen/manifest.json",
     "client.ts",
@@ -14,6 +14,7 @@
     "models.ts",
     "namespaces/index.ts",
     "namespaces/session.ts",
+    "problem.ts",
     "routes.ts",
     "transport.ts"
   ]

@@ -13,7 +13,7 @@ export const streamSpotifyExport = (
 ): Promise<SpotifyPlaylistExportResponse> =>
   withSessionRpcClient(sessionId, signal, async (client) => {
     let result: SpotifyPlaylistExportResponse | undefined;
-    for await (const event of client.session.exportSpotify()) {
+    for await (const event of await client.session.exportSpotify()) {
       switch (event.type) {
         case "spotify_export.retry":
           onRetry?.(event);

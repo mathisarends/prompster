@@ -21,6 +21,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -50,6 +60,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -66,6 +86,16 @@
               "Location": {
                 "schema": {
                   "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -88,6 +118,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -100,6 +140,16 @@
         "responses": {
           "204": {
             "description": "No content"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -127,12 +177,22 @@
                     }
                   ],
                   "discriminator": {
-                    "propertyName": "code",
+                    "propertyName": "type",
                     "mapping": {
-                      "session_expired": "#/components/schemas/SessionExpiredProblem",
-                      "session_invalid": "#/components/schemas/SessionInvalidProblem"
+                      "https://api.prompster.dev/problems/session_expired": "#/components/schemas/SessionExpiredProblem",
+                      "https://api.prompster.dev/problems/session_invalid": "#/components/schemas/SessionInvalidProblem"
                     }
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -152,6 +212,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LLMOptionsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -184,6 +254,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -203,6 +283,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -252,6 +342,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/SpotifyTokenRevokedProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -337,6 +437,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -419,6 +529,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       },
@@ -443,6 +563,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -514,6 +644,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -596,6 +736,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       },
@@ -655,6 +805,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -749,6 +909,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -810,6 +980,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -904,6 +1084,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -970,10 +1160,10 @@
                     }
                   ],
                   "discriminator": {
-                    "propertyName": "code",
+                    "propertyName": "type",
                     "mapping": {
-                      "session_not_found": "#/components/schemas/SessionNotFoundProblem",
-                      "spotify_track_not_found": "#/components/schemas/SpotifyTrackNotFoundProblem"
+                      "https://api.prompster.dev/problems/session_not_found": "#/components/schemas/SessionNotFoundProblem",
+                      "https://api.prompster.dev/problems/spotify_track_not_found": "#/components/schemas/SpotifyTrackNotFoundProblem"
                     }
                   }
                 }
@@ -1004,10 +1194,10 @@
                     }
                   ],
                   "discriminator": {
-                    "propertyName": "code",
+                    "propertyName": "type",
                     "mapping": {
-                      "playlist_track_limit_exceeded": "#/components/schemas/PlaylistTrackLimitExceededProblem",
-                      "spotify_track_year_missing": "#/components/schemas/SpotifyTrackYearMissingProblem"
+                      "https://api.prompster.dev/problems/playlist_track_limit_exceeded": "#/components/schemas/PlaylistTrackLimitExceededProblem",
+                      "https://api.prompster.dev/problems/spotify_track_year_missing": "#/components/schemas/SpotifyTrackYearMissingProblem"
                     }
                   }
                 }
@@ -1030,6 +1220,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -1092,10 +1292,10 @@
                     }
                   ],
                   "discriminator": {
-                    "propertyName": "code",
+                    "propertyName": "type",
                     "mapping": {
-                      "session_not_found": "#/components/schemas/SessionNotFoundProblem",
-                      "playlist_track_not_found": "#/components/schemas/PlaylistTrackNotFoundProblem"
+                      "https://api.prompster.dev/problems/session_not_found": "#/components/schemas/SessionNotFoundProblem",
+                      "https://api.prompster.dev/problems/playlist_track_not_found": "#/components/schemas/PlaylistTrackNotFoundProblem"
                     }
                   }
                 }
@@ -1118,6 +1318,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -1187,10 +1397,10 @@
                     }
                   ],
                   "discriminator": {
-                    "propertyName": "code",
+                    "propertyName": "type",
                     "mapping": {
-                      "session_not_found": "#/components/schemas/SessionNotFoundProblem",
-                      "user_curation_event_not_found": "#/components/schemas/UserCurationEventNotFoundProblem"
+                      "https://api.prompster.dev/problems/session_not_found": "#/components/schemas/SessionNotFoundProblem",
+                      "https://api.prompster.dev/problems/user_curation_event_not_found": "#/components/schemas/UserCurationEventNotFoundProblem"
                     }
                   }
                 }
@@ -1221,10 +1431,10 @@
                     }
                   ],
                   "discriminator": {
-                    "propertyName": "code",
+                    "propertyName": "type",
                     "mapping": {
-                      "user_curation_event_already_consumed": "#/components/schemas/UserCurationEventAlreadyConsumedProblem",
-                      "user_curation_event_missing_track_year": "#/components/schemas/UserCurationEventMissingTrackYearProblem"
+                      "https://api.prompster.dev/problems/user_curation_event_already_consumed": "#/components/schemas/UserCurationEventAlreadyConsumedProblem",
+                      "https://api.prompster.dev/problems/user_curation_event_missing_track_year": "#/components/schemas/UserCurationEventMissingTrackYearProblem"
                     }
                   }
                 }
@@ -1237,6 +1447,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -1347,6 +1567,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -1415,6 +1645,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -1489,6 +1729,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -1548,6 +1798,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       }
@@ -1574,6 +1834,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -1606,6 +1876,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            }
           }
         }
       },
@@ -1623,6 +1903,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -1652,6 +1942,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
                 }
               }
             }
@@ -3047,10 +3347,10 @@
             "pattern": "^[a-z][a-z0-9_]{2,}$"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3068,8 +3368,7 @@
             "const": "https://api.prompster.dev/problems/authentication_required"
           },
           "title": {
-            "type": "string",
-            "const": "Authentication required"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3080,10 +3379,10 @@
             "const": "authentication_required"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3101,8 +3400,7 @@
             "const": "https://api.prompster.dev/problems/invalid_credentials"
           },
           "title": {
-            "type": "string",
-            "const": "Invalid credentials"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3113,10 +3411,10 @@
             "const": "invalid_credentials"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3134,8 +3432,7 @@
             "const": "https://api.prompster.dev/problems/session_expired"
           },
           "title": {
-            "type": "string",
-            "const": "Session expired"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3146,10 +3443,10 @@
             "const": "session_expired"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3167,8 +3464,7 @@
             "const": "https://api.prompster.dev/problems/session_invalid"
           },
           "title": {
-            "type": "string",
-            "const": "Invalid session"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3179,10 +3475,10 @@
             "const": "session_invalid"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3200,8 +3496,7 @@
             "const": "https://api.prompster.dev/problems/service_not_ready"
           },
           "title": {
-            "type": "string",
-            "const": "Service not ready"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3212,10 +3507,10 @@
             "const": "service_not_ready"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3233,8 +3528,7 @@
             "const": "https://api.prompster.dev/problems/spotify_connection_not_found"
           },
           "title": {
-            "type": "string",
-            "const": "Spotify is not connected"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3245,10 +3539,10 @@
             "const": "spotify_connection_not_found"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3266,8 +3560,7 @@
             "const": "https://api.prompster.dev/problems/spotify_token_revoked"
           },
           "title": {
-            "type": "string",
-            "const": "Spotify access revoked"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3278,10 +3571,10 @@
             "const": "spotify_token_revoked"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3299,8 +3592,7 @@
             "const": "https://api.prompster.dev/problems/session_not_found"
           },
           "title": {
-            "type": "string",
-            "const": "Session not found"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3311,10 +3603,10 @@
             "const": "session_not_found"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3332,8 +3624,7 @@
             "const": "https://api.prompster.dev/problems/invalid_image_attachment"
           },
           "title": {
-            "type": "string",
-            "const": "Invalid image attachment"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3344,10 +3635,10 @@
             "const": "invalid_image_attachment"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3365,8 +3656,7 @@
             "const": "https://api.prompster.dev/problems/session_access_denied"
           },
           "title": {
-            "type": "string",
-            "const": "Session access denied"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3377,10 +3667,10 @@
             "const": "session_access_denied"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3398,8 +3688,7 @@
             "const": "https://api.prompster.dev/problems/invalid_session_phase_transition"
           },
           "title": {
-            "type": "string",
-            "const": "Invalid session phase transition"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3410,10 +3699,10 @@
             "const": "invalid_session_phase_transition"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3431,8 +3720,7 @@
             "const": "https://api.prompster.dev/problems/playlist_track_not_found"
           },
           "title": {
-            "type": "string",
-            "const": "Playlist track not found"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3443,10 +3731,10 @@
             "const": "playlist_track_not_found"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3464,8 +3752,7 @@
             "const": "https://api.prompster.dev/problems/playlist_track_limit_exceeded"
           },
           "title": {
-            "type": "string",
-            "const": "Playlist track limit exceeded"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3476,10 +3763,10 @@
             "const": "playlist_track_limit_exceeded"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3497,8 +3784,7 @@
             "const": "https://api.prompster.dev/problems/playlist_reference_not_found"
           },
           "title": {
-            "type": "string",
-            "const": "Playlist reference not found"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3509,10 +3795,10 @@
             "const": "playlist_reference_not_found"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3530,8 +3816,7 @@
             "const": "https://api.prompster.dev/problems/artist_reference_not_found"
           },
           "title": {
-            "type": "string",
-            "const": "Artist reference not found"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3542,10 +3827,10 @@
             "const": "artist_reference_not_found"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3563,8 +3848,7 @@
             "const": "https://api.prompster.dev/problems/session_playlist_empty"
           },
           "title": {
-            "type": "string",
-            "const": "Session playlist is empty"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3575,10 +3859,10 @@
             "const": "session_playlist_empty"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3596,8 +3880,7 @@
             "const": "https://api.prompster.dev/problems/session_playlist_missing_spotify_tracks"
           },
           "title": {
-            "type": "string",
-            "const": "Session playlist has no Spotify tracks"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3608,10 +3891,10 @@
             "const": "session_playlist_missing_spotify_tracks"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3629,8 +3912,7 @@
             "const": "https://api.prompster.dev/problems/session_export_requires_spotify_connection"
           },
           "title": {
-            "type": "string",
-            "const": "Spotify connection required"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3641,10 +3923,10 @@
             "const": "session_export_requires_spotify_connection"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3662,8 +3944,7 @@
             "const": "https://api.prompster.dev/problems/tool_call_not_found"
           },
           "title": {
-            "type": "string",
-            "const": "Tool call not found"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3674,10 +3955,10 @@
             "const": "tool_call_not_found"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3695,8 +3976,7 @@
             "const": "https://api.prompster.dev/problems/tool_call_already_resolved"
           },
           "title": {
-            "type": "string",
-            "const": "Tool call already resolved"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3707,10 +3987,10 @@
             "const": "tool_call_already_resolved"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3728,8 +4008,7 @@
             "const": "https://api.prompster.dev/problems/no_pending_tool_call_sequence"
           },
           "title": {
-            "type": "string",
-            "const": "No pending tool call sequence"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3740,10 +4019,10 @@
             "const": "no_pending_tool_call_sequence"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3761,8 +4040,7 @@
             "const": "https://api.prompster.dev/problems/pending_tool_calls"
           },
           "title": {
-            "type": "string",
-            "const": "Pending tool calls exist"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3773,10 +4051,10 @@
             "const": "pending_tool_calls"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3794,8 +4072,7 @@
             "const": "https://api.prompster.dev/problems/no_current_assistant_message"
           },
           "title": {
-            "type": "string",
-            "const": "No current assistant message"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3806,10 +4083,10 @@
             "const": "no_current_assistant_message"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3827,8 +4104,7 @@
             "const": "https://api.prompster.dev/problems/user_curation_event_not_found"
           },
           "title": {
-            "type": "string",
-            "const": "Curation event not found"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3839,10 +4115,10 @@
             "const": "user_curation_event_not_found"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3860,8 +4136,7 @@
             "const": "https://api.prompster.dev/problems/user_curation_event_already_consumed"
           },
           "title": {
-            "type": "string",
-            "const": "Curation event already consumed"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3872,10 +4147,10 @@
             "const": "user_curation_event_already_consumed"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3893,8 +4168,7 @@
             "const": "https://api.prompster.dev/problems/user_curation_event_missing_track_year"
           },
           "title": {
-            "type": "string",
-            "const": "Curation event track year missing"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3905,10 +4179,10 @@
             "const": "user_curation_event_missing_track_year"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3926,8 +4200,7 @@
             "const": "https://api.prompster.dev/problems/invalid_spotify_track_uri"
           },
           "title": {
-            "type": "string",
-            "const": "Invalid Spotify track URI"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3938,10 +4211,10 @@
             "const": "invalid_spotify_track_uri"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3959,8 +4232,7 @@
             "const": "https://api.prompster.dev/problems/spotify_track_not_found"
           },
           "title": {
-            "type": "string",
-            "const": "Spotify track not found"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -3971,10 +4243,10 @@
             "const": "spotify_track_not_found"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -3992,8 +4264,7 @@
             "const": "https://api.prompster.dev/problems/spotify_track_year_missing"
           },
           "title": {
-            "type": "string",
-            "const": "Spotify track release year missing"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -4004,10 +4275,10 @@
             "const": "spotify_track_year_missing"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           }
         },
@@ -4025,8 +4296,7 @@
             "const": "https://api.prompster.dev/problems/request_validation_error"
           },
           "title": {
-            "type": "string",
-            "const": "Request validation failed"
+            "type": "string"
           },
           "status": {
             "type": "integer",
@@ -4037,10 +4307,10 @@
             "const": "request_validation_error"
           },
           "detail": {
-            "type": ["string", "null"]
+            "type": "string"
           },
           "instance": {
-            "type": ["string", "null"],
+            "type": "string",
             "format": "uri-reference"
           },
           "errors": {
@@ -4071,6 +4341,38 @@
           }
         },
         "required": ["type", "title", "status", "code", "errors"],
+        "additionalProperties": true
+      },
+      "InternalServerProblem": {
+        "type": "object",
+        "title": "InternalServerProblem",
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "const": "https://api.prompster.dev/problems/internal_server_error"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "const": 500
+          },
+          "code": {
+            "type": "string",
+            "const": "internal_server_error"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri-reference"
+          }
+        },
+        "required": ["type", "title", "status", "code"],
         "additionalProperties": true
       }
     }

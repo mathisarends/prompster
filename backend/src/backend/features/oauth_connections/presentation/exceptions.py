@@ -1,10 +1,9 @@
-from backend.features.auth.presentation.exceptions import AUTH_ERRORS
 from backend.features.oauth_connections.application import (
     SpotifyConnectionNotFoundException,
     SpotifyTokenRevokedException,
 )
 from fastapi import status
-from fastapi_canon import Error, ErrorRegistry
+from fastapi_canon import Error
 
 SPOTIFY_CONNECTION_NOT_FOUND_ERROR = Error(
     SpotifyConnectionNotFoundException,
@@ -19,11 +18,7 @@ SPOTIFY_TOKEN_REVOKED_ERROR = Error(
     title="Spotify access revoked",
 )
 
-OAUTH_CONNECTION_ERRORS = ErrorRegistry.merge(
-    AUTH_ERRORS,
-    ErrorRegistry(
-        name="oauth_connections_domain",
-        errors=(SPOTIFY_CONNECTION_NOT_FOUND_ERROR, SPOTIFY_TOKEN_REVOKED_ERROR),
-    ),
-    name="oauth_connections",
+OAUTH_CONNECTION_ERRORS = (
+    SPOTIFY_CONNECTION_NOT_FOUND_ERROR,
+    SPOTIFY_TOKEN_REVOKED_ERROR,
 )

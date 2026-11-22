@@ -11,20 +11,16 @@ from backend.features.session.application import (
 from backend.features.session.application.ports import MessageAttachmentStore
 from backend.features.session.presentation.exceptions import (
     INVALID_IMAGE_ATTACHMENT_ERROR,
-    SESSION_ERRORS,
 )
 from backend.features.session.presentation.schemas import (
     UploadedImageAttachmentResponse,
 )
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import File, UploadFile, status
-from fastapi_canon import CanonRouter
+from fastapi_canon import APIRouter, Inject
 
-image_attachment_router = CanonRouter(
-    route_class=DishkaRoute,
+image_attachment_router = APIRouter(
     prefix="/image-attachments",
     tags=["image-attachments"],
-    error_registry=SESSION_ERRORS,
     raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 
@@ -38,8 +34,8 @@ image_attachment_router = CanonRouter(
 )
 async def upload_image_attachment(
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[ImageAttachmentService],
-    attachment_store: FromDishka[MessageAttachmentStore],
+    service: Inject[ImageAttachmentService],
+    attachment_store: Inject[MessageAttachmentStore],
     file: Annotated[UploadFile, File()],
 ) -> UploadedImageAttachmentResponse:
     image = await service.stash_image(

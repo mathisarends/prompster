@@ -16,7 +16,6 @@ from backend.features.session.presentation.exceptions import (
     PLAYLIST_TRACK_LIMIT_EXCEEDED_ERROR,
     PLAYLIST_TRACK_NOT_FOUND_ERROR,
     SESSION_ACCESS_DENIED_ERROR,
-    SESSION_ERRORS,
     SESSION_NOT_FOUND_ERROR,
     SESSION_PLAYLIST_EMPTY_ERROR,
     SPOTIFY_TRACK_NOT_FOUND_ERROR,
@@ -40,15 +39,12 @@ from backend.features.session.presentation.schemas import (
     SubmitOnboardingAnswerRequest,
 )
 from backend.features.spotify.application import SpotifySearch
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import Query, Response, status
-from fastapi_canon import CanonResponse, CanonRouter
+from fastapi_canon import APIRouter, CanonResponse, Inject
 
-router = CanonRouter(
-    route_class=DishkaRoute,
+router = APIRouter(
     prefix="/sessions",
     tags=["sessions"],
-    error_registry=SESSION_ERRORS,
     raises=(AUTHENTICATION_REQUIRED_ERROR,),
 )
 
@@ -61,7 +57,7 @@ router = CanonRouter(
 )
 async def list_sessions(
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionService],
+    service: Inject[SessionService],
     q: str | None = Query(default=None, min_length=1, max_length=120),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
@@ -89,8 +85,8 @@ async def list_sessions(
 async def get_session_by_id(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionService],
-    image_url_resolver: FromDishka[SessionImageUrlResolver],
+    service: Inject[SessionService],
+    image_url_resolver: Inject[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.get_by_id(
         session_id=session_id,
@@ -111,8 +107,8 @@ async def get_session_by_id(
 )
 async def create_session(
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionService],
-    image_url_resolver: FromDishka[SessionImageUrlResolver],
+    service: Inject[SessionService],
+    image_url_resolver: Inject[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.create(
         owner_id=authenticated_user_id,
@@ -139,8 +135,8 @@ async def submit_onboarding_answer(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     body: SubmitOnboardingAnswerRequest,
-    service: FromDishka[SessionConversationService],
-    image_url_resolver: FromDishka[SessionImageUrlResolver],
+    service: Inject[SessionConversationService],
+    image_url_resolver: Inject[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.submit_onboarding_answer(
         session_id=session_id,
@@ -168,7 +164,7 @@ async def submit_onboarding_answer(
 async def stop_message(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionConversationService],
+    service: Inject[SessionConversationService],
 ) -> Response:
     await service.stop_message(
         session_id=session_id,
@@ -192,7 +188,7 @@ async def add_session_playlist_track(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     body: AddPlaylistTrackRequest,
-    service: FromDishka[SessionService],
+    service: Inject[SessionService],
 ) -> PlaylistTrackResponse:
     track = await service.add_track(
         session_id=session_id,
@@ -224,8 +220,8 @@ async def add_session_spotify_playlist_track(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     body: AddSpotifyPlaylistTrackRequest,
-    service: FromDishka[SessionService],
-    spotify_search: FromDishka[SpotifySearch],
+    service: Inject[SessionService],
+    spotify_search: Inject[SpotifySearch],
 ) -> PlaylistTrackResponse:
     spotify_track = await spotify_search.get_track(spotify_uri=body.spotify_uri)
     assert spotify_track.year is not None
@@ -256,7 +252,7 @@ async def remove_session_playlist_track(
     session_id: UUID,
     track_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionService],
+    service: Inject[SessionService],
 ) -> Response:
     await service.remove_track(
         session_id=session_id,
@@ -283,8 +279,8 @@ async def restore_session_user_curation_event(
     session_id: UUID,
     event_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionService],
-    image_url_resolver: FromDishka[SessionImageUrlResolver],
+    service: Inject[SessionService],
+    image_url_resolver: Inject[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.restore_user_curation_event(
         session_id=session_id,
@@ -315,7 +311,7 @@ async def restore_session_user_curation_event(
 async def export_session_playlist(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    exporter: FromDishka[SessionPlaylistExporter],
+    exporter: Inject[SessionPlaylistExporter],
     pages: int | None = Query(default=None, ge=1, le=100),
 ) -> Response:
     pdf = await exporter.export(
@@ -346,8 +342,8 @@ async def update_session(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
     body: SessionUpdateRequest,
-    service: FromDishka[SessionService],
-    image_url_resolver: FromDishka[SessionImageUrlResolver],
+    service: Inject[SessionService],
+    image_url_resolver: Inject[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.update(
         session_id=session_id,
@@ -374,8 +370,8 @@ async def update_session(
 async def star_session(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionService],
-    image_url_resolver: FromDishka[SessionImageUrlResolver],
+    service: Inject[SessionService],
+    image_url_resolver: Inject[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.star(
         session_id=session_id,
@@ -401,8 +397,8 @@ async def star_session(
 async def unstar_session(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionService],
-    image_url_resolver: FromDishka[SessionImageUrlResolver],
+    service: Inject[SessionService],
+    image_url_resolver: Inject[SessionImageUrlResolver],
 ) -> SessionResponse:
     session = await service.unstar(
         session_id=session_id,
@@ -427,7 +423,7 @@ async def unstar_session(
 async def delete_session(
     session_id: UUID,
     authenticated_user_id: AuthenticatedUserId,
-    service: FromDishka[SessionService],
+    service: Inject[SessionService],
 ) -> Response:
     await service.delete(session_id=session_id, user_id=authenticated_user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -38,8 +38,9 @@ def _client(*, ready: bool = True) -> TestClient:
         errors=HEALTH_ERRORS,
     )
     Composition(
-        feature, errors=ErrorOptions(type_base="https://example.test/problems")
-    ).apply(app)
+        features=[feature],
+        errors=ErrorOptions(type_base="https://example.test/problems"),
+    ).build(app)
     return TestClient(app)
 
 

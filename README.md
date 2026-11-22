@@ -67,7 +67,7 @@ Open **[127.0.0.1:5173](http://127.0.0.1:5173)** and sign in with Spotify or you
 
 ## How it works
 
-The Lit frontend talks to FastAPI over HTTP and typed JSON-RPC WebSocket subscriptions. The agent researches Spotify and updates a shared deck draft; the backend persists the session and handles exports.
+The Lit frontend talks to FastAPI over HTTP and typed JSON-RPC WebSocket streams. The agent researches Spotify and updates a shared deck draft; the backend persists the session and handles exports.
 
 ```mermaid
 flowchart LR
@@ -96,17 +96,17 @@ With **Python 3.14+** and **uv** installed, run these commands from the reposito
 uv sync --all-packages --dev
 uv run pytest backend/tests/ -v
 uv run --package agent pytest libs/agent/tests/
-uv run --package backend rpckit generate --config rpcgen.toml --check
+uv run --package backend fastapi-canon websockets generate --config rpcgen.toml --check
 
 npm --prefix frontend run lint
 npm --prefix frontend test
 npm --prefix frontend run build
 ```
 
-The Compose stack mounts the backend and agent source for local iteration. To regenerate the RPC contract and TypeScript client after changing a subscription:
+The Compose stack mounts the backend and agent source for local iteration. To regenerate the RPC contract and TypeScript client after changing a stream:
 
 ```bash
-uv run --package backend rpckit generate --config rpcgen.toml
+uv run --package backend fastapi-canon websockets generate --config rpcgen.toml
 ```
 
 For HTTP client generation, export the backend schema and regenerate the client:

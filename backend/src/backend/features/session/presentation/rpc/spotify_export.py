@@ -19,7 +19,7 @@ from backend.features.session.presentation.mapper import (
 from backend.features.session.presentation.schemas import SpotifyPlaylistExportResponse
 from backend.features.spotify.application.retry_reporting import retry_sink
 from pydantic import Field
-from rpckit import RpcModel
+from fastapi_canon.integrations.websockets import RpcModel
 from spotifyify import RetryEvent
 
 logger = logging.getLogger(__name__)

@@ -21,13 +21,11 @@ export interface SessionSummaryListResponse {
  */
 export interface AuthenticationRequiredProblem {
   type: "https://api.prompster.dev/problems/authentication_required";
-  title: "Authentication required";
+  title: string;
   status: 401;
   code: "authentication_required";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -54,14 +52,25 @@ export type RequestValidationProblemErrorsItem = {
  */
 export interface RequestValidationProblem {
   type: "https://api.prompster.dev/problems/request_validation_error";
-  title: "Request validation failed";
+  title: string;
   status: 422;
   code: "request_validation_error";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   errors: RequestValidationProblemErrorsItem[];
+  [key: string]: unknown;
+}
+
+/**
+ * RFC 9457 Problem Details with a stable application code.
+ */
+export interface InternalServerProblem {
+  type: "https://api.prompster.dev/problems/internal_server_error";
+  title: string;
+  status: 500;
+  code: "internal_server_error";
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -243,13 +252,11 @@ export interface SessionResponse {
  */
 export interface SessionAccessDeniedProblem {
   type: "https://api.prompster.dev/problems/session_access_denied";
-  title: "Session access denied";
+  title: string;
   status: 403;
   code: "session_access_denied";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -258,13 +265,11 @@ export interface SessionAccessDeniedProblem {
  */
 export interface SessionNotFoundProblem {
   type: "https://api.prompster.dev/problems/session_not_found";
-  title: "Session not found";
+  title: string;
   status: 404;
   code: "session_not_found";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -288,13 +293,11 @@ export interface SubmitOnboardingAnswerRequest {
  */
 export interface InvalidSessionPhaseTransitionProblem {
   type: "https://api.prompster.dev/problems/invalid_session_phase_transition";
-  title: "Invalid session phase transition";
+  title: string;
   status: 409;
   code: "invalid_session_phase_transition";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -323,13 +326,11 @@ export interface AddPlaylistTrackRequest {
  */
 export interface PlaylistTrackLimitExceededProblem {
   type: "https://api.prompster.dev/problems/playlist_track_limit_exceeded";
-  title: "Playlist track limit exceeded";
+  title: string;
   status: 409;
   code: "playlist_track_limit_exceeded";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -346,13 +347,11 @@ export interface AddSpotifyPlaylistTrackRequest {
  */
 export interface InvalidSpotifyTrackUriProblem {
   type: "https://api.prompster.dev/problems/invalid_spotify_track_uri";
-  title: "Invalid Spotify track URI";
+  title: string;
   status: 400;
   code: "invalid_spotify_track_uri";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -361,13 +360,11 @@ export interface InvalidSpotifyTrackUriProblem {
  */
 export interface SpotifyTrackNotFoundProblem {
   type: "https://api.prompster.dev/problems/spotify_track_not_found";
-  title: "Spotify track not found";
+  title: string;
   status: 404;
   code: "spotify_track_not_found";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -376,13 +373,11 @@ export interface SpotifyTrackNotFoundProblem {
  */
 export interface SpotifyTrackYearMissingProblem {
   type: "https://api.prompster.dev/problems/spotify_track_year_missing";
-  title: "Spotify track release year missing";
+  title: string;
   status: 409;
   code: "spotify_track_year_missing";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -391,13 +386,11 @@ export interface SpotifyTrackYearMissingProblem {
  */
 export interface PlaylistTrackNotFoundProblem {
   type: "https://api.prompster.dev/problems/playlist_track_not_found";
-  title: "Playlist track not found";
+  title: string;
   status: 404;
   code: "playlist_track_not_found";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -406,13 +399,11 @@ export interface PlaylistTrackNotFoundProblem {
  */
 export interface UserCurationEventNotFoundProblem {
   type: "https://api.prompster.dev/problems/user_curation_event_not_found";
-  title: "Curation event not found";
+  title: string;
   status: 404;
   code: "user_curation_event_not_found";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -421,13 +412,11 @@ export interface UserCurationEventNotFoundProblem {
  */
 export interface UserCurationEventAlreadyConsumedProblem {
   type: "https://api.prompster.dev/problems/user_curation_event_already_consumed";
-  title: "Curation event already consumed";
+  title: string;
   status: 409;
   code: "user_curation_event_already_consumed";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -436,13 +425,11 @@ export interface UserCurationEventAlreadyConsumedProblem {
  */
 export interface UserCurationEventMissingTrackYearProblem {
   type: "https://api.prompster.dev/problems/user_curation_event_missing_track_year";
-  title: "Curation event track year missing";
+  title: string;
   status: 409;
   code: "user_curation_event_missing_track_year";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -451,13 +438,11 @@ export interface UserCurationEventMissingTrackYearProblem {
  */
 export interface SessionPlaylistEmptyProblem {
   type: "https://api.prompster.dev/problems/session_playlist_empty";
-  title: "Session playlist is empty";
+  title: string;
   status: 400;
   code: "session_playlist_empty";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 

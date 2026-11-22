@@ -159,19 +159,19 @@ export async function mockApi(
   await page.routeWebSocket(/\/api\/v1\/sessions\/.*\/stream/, (socket) => {
     socket.onMessage((raw) => {
       const request = JSON.parse(String(raw));
-      if (request.method.endsWith(".unsubscribe")) {
+      if (request.method.endsWith(".cancel")) {
         socket.send(JSON.stringify({ jsonrpc: "2.0", id: request.id, result: null }));
         return;
       }
-      if (!request.method.endsWith(".subscribe")) {
+      if (!request.method.endsWith(".open")) {
         return;
       }
-      const method = request.method.replace(/\.subscribe$/, "");
+      const method = request.method.replace(/\.open$/, "");
       socket.send(
         JSON.stringify({
           jsonrpc: "2.0",
           id: request.id,
-          result: { subscriptionId: "subscription" },
+          result: { streamId: "stream" },
         }),
       );
       const send = (payload: unknown) =>
@@ -179,7 +179,7 @@ export async function mockApi(
           JSON.stringify({
             jsonrpc: "2.0",
             method,
-            params: { subscriptionId: "subscription", payload },
+            params: { streamId: "stream", payload },
           }),
         );
       if (slow) {
@@ -225,7 +225,7 @@ export async function mockApi(
         JSON.stringify({
           jsonrpc: "2.0",
           method,
-          params: { subscriptionId: "subscription", complete: true },
+          params: { streamId: "stream", complete: true },
         }),
       );
     });

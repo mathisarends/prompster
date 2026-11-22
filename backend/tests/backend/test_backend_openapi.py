@@ -13,12 +13,9 @@ def test_compiles_canonical_success_response_contracts() -> None:
     assert health["properties"]["status"]["const"] == "ok"
 
     assert "/api/v1/sessions/{session_id}/messages" not in paths
-    assert any(
-        route.path == "/api/v1/sessions/{session_id}/stream" for route in app.routes
-    )
-    assert [server["name"] for server in contract.to_openrpc()["servers"]] == [
-        "session"
-    ]
+    servers = contract.to_openrpc()["servers"]
+    assert [server["name"] for server in servers] == ["session"]
+    assert servers[0]["url"].endswith("/api/v1/sessions/{session_id}/stream")
 
     pdf = paths["/api/v1/sessions/{session_id}/playlist/pdf"]["get"]["responses"]["200"]
     assert set(pdf["content"]) == {"application/pdf"}

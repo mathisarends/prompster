@@ -5,12 +5,10 @@ from backend.features.llm.presentation.schemas import (
     LLMOptionResponse,
     LLMOptionsResponse,
 )
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import status
-from fastapi_canon import CanonRouter
+from fastapi_canon import APIRouter, Inject
 
-router = CanonRouter(
-    route_class=DishkaRoute,
+router = APIRouter(
     prefix="/llm-options",
     tags=["llm-options"],
 )
@@ -23,7 +21,7 @@ router = CanonRouter(
     operation_id="list_llm_options",
 )
 async def list_llm_options(
-    registry: FromDishka[LLMRegistry],
+    registry: Inject[LLMRegistry],
 ) -> LLMOptionsResponse:
     return LLMOptionsResponse(
         items=[

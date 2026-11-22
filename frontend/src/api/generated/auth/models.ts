@@ -7,15 +7,26 @@
 /**
  * RFC 9457 Problem Details with a stable application code.
  */
+export interface InternalServerProblem {
+  type: "https://api.prompster.dev/problems/internal_server_error";
+  title: string;
+  status: 500;
+  code: "internal_server_error";
+  detail?: string;
+  instance?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * RFC 9457 Problem Details with a stable application code.
+ */
 export interface SessionExpiredProblem {
   type: "https://api.prompster.dev/problems/session_expired";
-  title: "Session expired";
+  title: string;
   status: 401;
   code: "session_expired";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }
 
@@ -24,12 +35,10 @@ export interface SessionExpiredProblem {
  */
 export interface SessionInvalidProblem {
   type: "https://api.prompster.dev/problems/session_invalid";
-  title: "Invalid session";
+  title: string;
   status: 401;
   code: "session_invalid";
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
+  detail?: string;
+  instance?: string;
   [key: string]: unknown;
 }

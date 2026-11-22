@@ -1,10 +1,8 @@
-from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import status
-from fastapi_canon import CanonRouter
+from fastapi_canon import APIRouter, Inject
 
 from backend.features.health.application import ReadinessCheck
 from backend.features.health.presentation.exceptions import (
-    HEALTH_ERRORS,
     SERVICE_NOT_READY_ERROR,
 )
 from backend.features.health.presentation.schemas import (
@@ -12,10 +10,8 @@ from backend.features.health.presentation.schemas import (
     ReadinessResponse,
 )
 
-health_router = CanonRouter(
-    route_class=DishkaRoute,
+health_router = APIRouter(
     tags=["system"],
-    error_registry=HEALTH_ERRORS,
 )
 
 
@@ -37,7 +33,7 @@ async def health_check() -> HealthResponse:
     raises=(SERVICE_NOT_READY_ERROR,),
 )
 async def readiness_check(
-    readiness: FromDishka[ReadinessCheck],
+    readiness: Inject[ReadinessCheck],
 ) -> ReadinessResponse:
     await readiness.check()
     return ReadinessResponse()

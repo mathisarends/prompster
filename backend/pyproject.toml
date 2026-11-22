@@ -10,7 +10,7 @@ requires-python = ">=3.14"
 dependencies = [
     "agent",
     "dishka>=1.10.1",
-    "fastapi>=0.136.1",
+    "fastapi>=0.143.3",
     "httpx>=0.28.1",
     "asyncpg>=0.30.0",
     "uvicorn[standard]>=0.35.0",
@@ -26,10 +26,9 @@ dependencies = [
     "qrcode[pil]>=8.2",
     "tokenary>=0.1.1",
     "python-multipart>=0.0.20",
-    "fastapi-canon>=0.4.0",
+    "fastapi-canon[websockets]>=0.24.0",
     "callm @ git+https://github.com/mathisarends/callm.git@982472f056789d0cbd5a878a15f77e5fbde6f334",
     "pyyaml>=6.0.3",
-    "pyrpckit[codegen,dishka,fastapi]==0.10.0",
 ]
 
 [project.scripts]
@@ -41,6 +40,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "fastapi-canon[codegen]>=0.24.0",
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
 ]

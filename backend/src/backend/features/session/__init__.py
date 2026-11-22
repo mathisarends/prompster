@@ -1,16 +1,18 @@
-from backend.presentation.feature import api_feature
+from fastapi_canon import Feature
 
 from .infrastructure.di import SessionProvider
 from .presentation import (
+    SESSION_ERRORS,
     image_attachment_router,
     router,
     rpc_router,
     session_schema_router,
 )
 
-feature = api_feature(
+feature = Feature(
     name="session",
     routers=[router, image_attachment_router, session_schema_router],
+    errors=SESSION_ERRORS,
     providers=[SessionProvider],
 )
 

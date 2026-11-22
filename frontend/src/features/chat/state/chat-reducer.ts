@@ -10,12 +10,8 @@ import type {
 } from "@api/generated/sessions";
 import { ToolCallState } from "@api/generated/sessions";
 import { EntryKind } from "@api/generated/session-schemas";
-import { SessionStreamEventType } from "@/api/session-rpc/models";
-import type {
-  PlaylistPayload,
-  SessionSnapshotPayload,
-  SessionStreamEvent,
-} from "@/api/session-rpc";
+import type { PlaylistPayload, SessionSnapshotPayload } from "@/api/session-rpc";
+import type { SessionStreamEvent } from "@/features/chat/api/session-stream";
 import type { ChatAttachment } from "@/features/chat/components/attachments/attachment-types";
 import type { ToolCallItem, ToolCallRetry, ToolCallStatus } from "@/features/chat/types";
 
@@ -101,27 +97,27 @@ export const ChatActionType = {
 } as const;
 
 const ChatEventType = {
-  SESSION_SNAPSHOT: SessionStreamEventType.SESSION_SNAPSHOT,
-  TITLE_GENERATED: SessionStreamEventType.SESSION_TITLE_GENERATED,
-  ASSISTANT_STARTED: SessionStreamEventType.MESSAGE_ASSISTANT_STARTED,
-  ASSISTANT_CHUNK: SessionStreamEventType.MESSAGE_ASSISTANT_CHUNK,
-  ASSISTANT_COMPLETED: SessionStreamEventType.MESSAGE_ASSISTANT_COMPLETED,
-  ASSISTANT_CANCELLED: SessionStreamEventType.MESSAGE_ASSISTANT_CANCELLED,
-  TOOL_CALL_SEQUENCE_ADDED: SessionStreamEventType.TOOL_CALL_SEQUENCE_ADDED,
-  TOOL_CALL_RESOLVED: SessionStreamEventType.TOOL_CALL_RESOLVED,
-  TOOL_CALL_FAILED: SessionStreamEventType.TOOL_CALL_FAILED,
-  TOOL_CALL_RETRY: SessionStreamEventType.TOOL_CALL_RETRY,
-  TOOL_CALL_SEQUENCE_COMPLETED: SessionStreamEventType.TOOL_CALL_SEQUENCE_COMPLETED,
-  CONTEXT_COMPACTED: SessionStreamEventType.SESSION_CONTEXT_COMPACTED,
-  PLAYLIST_SET: SessionStreamEventType.PLAYLIST_SET,
-  PLAYLIST_TRACK_ADDED: SessionStreamEventType.PLAYLIST_TRACK_ADDED,
-  PLAYLIST_TRACK_REMOVED: SessionStreamEventType.PLAYLIST_TRACK_REMOVED,
-  PLAYLIST_TRACK_REPLACED: SessionStreamEventType.PLAYLIST_TRACK_REPLACED,
-  ONBOARDING_QUESTION_ASKED: SessionStreamEventType.SESSION_ONBOARDING_QUESTION_ASKED,
-  SUSPENDED_FOR_INPUT: SessionStreamEventType.SESSION_SUSPENDED_FOR_INPUT,
-  DONE: SessionStreamEventType.DONE,
-  ERROR: SessionStreamEventType.ERROR,
-} as const;
+  SESSION_SNAPSHOT: "session.snapshot",
+  TITLE_GENERATED: "session.title_generated",
+  ASSISTANT_STARTED: "message.assistant_started",
+  ASSISTANT_CHUNK: "message.assistant_chunk",
+  ASSISTANT_COMPLETED: "message.assistant_completed",
+  ASSISTANT_CANCELLED: "message.assistant_cancelled",
+  TOOL_CALL_SEQUENCE_ADDED: "tool_call.sequence_added",
+  TOOL_CALL_RESOLVED: "tool_call.resolved",
+  TOOL_CALL_FAILED: "tool_call.failed",
+  TOOL_CALL_RETRY: "tool_call.retry",
+  TOOL_CALL_SEQUENCE_COMPLETED: "tool_call.sequence_completed",
+  CONTEXT_COMPACTED: "session.context_compacted",
+  PLAYLIST_SET: "playlist.set",
+  PLAYLIST_TRACK_ADDED: "playlist.track_added",
+  PLAYLIST_TRACK_REMOVED: "playlist.track_removed",
+  PLAYLIST_TRACK_REPLACED: "playlist.track_replaced",
+  ONBOARDING_QUESTION_ASKED: "session.onboarding_question_asked",
+  SUSPENDED_FOR_INPUT: "session.suspended_for_input",
+  DONE: "done",
+  ERROR: "error",
+} as const satisfies Record<string, SessionStreamEvent["type"]>;
 
 export type ChatAction =
   | { type: typeof ChatActionType.SESSION_LOADED; session: SessionLike }

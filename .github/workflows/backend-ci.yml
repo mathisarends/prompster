@@ -51,7 +51,7 @@ jobs:
         run: uv run pytest backend/tests/ -v
 
       - name: Check RPC contract and client
-        run: uv run --package backend rpckit generate --config rpcgen.toml --check
+        run: uv run --package backend fastapi-canon websockets generate --config rpcgen.toml --check
 
       - name: Check OpenAPI document
         run: uv run --package backend python frontend/scripts/export-openapi.py --check
