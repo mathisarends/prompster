@@ -110,6 +110,7 @@ async def spotify_export_events(
             code=type(exc).__name__, message=str(exc) or type(exc).__name__
         )
     except Exception:
+        # Stream boundary: clients get a generic error event, details stay in logs.
         logger.exception("Unexpected error while exporting playlist to Spotify.")
         yield SpotifyExportErrorEvent(
             code="InternalError",

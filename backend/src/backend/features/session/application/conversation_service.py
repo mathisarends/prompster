@@ -272,6 +272,7 @@ class SessionConversationService:
         except asyncio.CancelledError:
             return ()
         except Exception:
+            # A failed title generation must not fail the user's message.
             raw_title = "New Session"
 
         return await self._apply_title(session=session, raw_title=raw_title)
@@ -293,6 +294,7 @@ class SessionConversationService:
         except asyncio.CancelledError:
             return "New Session"
         except Exception:
+            # A failed title generation must not fail the user's message.
             return "New Session"
 
     def _consume_title_task_exception(self, title_task: asyncio.Task[str]) -> None:
@@ -301,6 +303,7 @@ class SessionConversationService:
         except asyncio.CancelledError:
             pass
         except Exception:
+            # Retrieving the error marks it handled; the title is best effort.
             pass
 
     async def _persist_session(self, *, session: Session) -> Session:

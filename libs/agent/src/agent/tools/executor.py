@@ -28,6 +28,7 @@ class ToolExecutor:
         try:
             resolved_args = self._resolve_args(tool, args)
         except Exception as error:
+            # Unusable arguments are reported to the model instead of ending the run.
             logger.exception("Failed to resolve args for tool '%s'", name)
             return ActionResult.fail(error)
 

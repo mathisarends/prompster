@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import Any, Self
 
 from callm import ModelTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from agent.tools.schema_builder import ToolSchemaBuilder
 from agent.tools.schemas import ToolSchema
@@ -123,7 +123,7 @@ class Tool:
             return None
         try:
             params = self.param_model.model_validate(args)
-        except Exception:
+        except ValidationError:
             return None
         return self._status_label(params)
 

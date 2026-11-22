@@ -56,10 +56,10 @@ class PostRunGuardrails:
         return self._deck_store.drain_deck_draft_updates()
 
     async def _apply(self, guardrail: Guardrail) -> None:
-        # One guardrail failing must not block the others or the completion.
         try:
             await guardrail.apply(self._deck_store)
         except Exception:
+            # One guardrail failing must not block the others or the completion.
             logger.exception("Post-run guardrail '%s' failed", guardrail.name)
 
     def _register_default_guardrails(self) -> None:
