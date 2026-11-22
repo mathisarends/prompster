@@ -189,7 +189,8 @@ class DeckStore:
             else track
             for track in draft.tracks
         ]
-        self.cache_tracks([replacement.track for replacement in replacements])
+        replacement_tracks = [replacement.track for replacement in replacements]
+        self.cache_tracks(replacement_tracks)
         self._pending_updates.append(
             DeckDraftTracksReplaced(
                 deck_draft=draft,

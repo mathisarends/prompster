@@ -56,7 +56,8 @@ class AgentHistoryBuilder:
                 case UserMessage():
                     for event in entry.user_curation_events:
                         bound_event_ids.add(event.id)
-                    messages.append(await self._to_user_message(entry))
+                    user_message = await self._to_user_message(entry)
+                    messages.append(user_message)
                 case AssistantMessage():
                     messages.append(LLMAssistantMessage(content=entry.content))
                 case ToolCallSequence():

@@ -155,9 +155,10 @@ class Spotify:
             return SpotifyPlaylistLookupResult(
                 content="No playlists found.", playlists=[]
             )
+        playlist_previews = [playlist_preview(playlist) for playlist in playlists]
         return SpotifyPlaylistLookupResult(
             content="\n".join(format_playlist(playlist) for playlist in playlists),
-            playlists=[playlist_preview(playlist) for playlist in playlists],
+            playlists=playlist_previews,
         )
 
     async def get_artist_albums(self, params: ArtistAlbumsParams) -> str:

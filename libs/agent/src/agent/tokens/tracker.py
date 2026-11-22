@@ -37,11 +37,15 @@ class TokenTracker:
         return list(self._entries)
 
     def summary(self) -> UsageSummary:
+        total_tokens = sum(e.total_tokens for e in self._entries)
+        total_prompt_tokens = sum(e.prompt_tokens for e in self._entries)
+        total_completion_tokens = sum(e.completion_tokens for e in self._entries)
+        total_prompt_cached_tokens = sum(
+            e.prompt_cached_tokens or 0 for e in self._entries
+        )
         return UsageSummary(
-            total_tokens=sum(e.total_tokens for e in self._entries),
-            total_prompt_tokens=sum(e.prompt_tokens for e in self._entries),
-            total_completion_tokens=sum(e.completion_tokens for e in self._entries),
-            total_prompt_cached_tokens=sum(
-                e.prompt_cached_tokens or 0 for e in self._entries
-            ),
+            total_tokens=total_tokens,
+            total_prompt_tokens=total_prompt_tokens,
+            total_completion_tokens=total_completion_tokens,
+            total_prompt_cached_tokens=total_prompt_cached_tokens,
         )

@@ -39,12 +39,13 @@ async def upload_image_attachment(
     attachment_store: Inject[MessageAttachmentStore],
     file: Annotated[UploadFile, File()],
 ) -> UploadedImageAttachmentResponse:
+    content = await file.read()
     image = await service.stash_image(
         user_id=authenticated_user_id,
         image=SessionImageAttachmentUpload(
             file_name=file.filename or "attachment",
             content_type=file.content_type or "application/octet-stream",
-            content=await file.read(),
+            content=content,
         ),
     )
     url = await attachment_store.create_signed_url(

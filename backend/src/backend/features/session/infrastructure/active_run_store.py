@@ -61,7 +61,8 @@ class SqlActiveSessionRunStore(ActiveSessionRunStore):
                 ActiveSessionRunModel.session_id == session_id,
                 ActiveSessionRunModel.run_id == run_id,
             )
-            return bool(await session.scalar(stmt))
+            stop_requested = await session.scalar(stmt)
+            return bool(stop_requested)
 
 
 def _now() -> datetime:

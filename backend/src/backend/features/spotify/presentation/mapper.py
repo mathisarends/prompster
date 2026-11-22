@@ -15,15 +15,15 @@ from backend.features.spotify.presentation.schemas import (
 def to_spotify_unified_search_response(
     search_result: SpotifyUnifiedSearchResult,
 ) -> SpotifyUnifiedSearchResponse:
+    tracks = [_to_spotify_track_response(track) for track in search_result.tracks]
+    playlists = [
+        _to_spotify_playlist_response(playlist) for playlist in search_result.playlists
+    ]
+    artists = [_to_spotify_artist_response(artist) for artist in search_result.artists]
     return SpotifyUnifiedSearchResponse(
-        tracks=[_to_spotify_track_response(track) for track in search_result.tracks],
-        playlists=[
-            _to_spotify_playlist_response(playlist)
-            for playlist in search_result.playlists
-        ],
-        artists=[
-            _to_spotify_artist_response(artist) for artist in search_result.artists
-        ],
+        tracks=tracks,
+        playlists=playlists,
+        artists=artists,
     )
 
 

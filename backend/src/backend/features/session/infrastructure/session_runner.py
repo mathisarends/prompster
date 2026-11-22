@@ -160,9 +160,10 @@ class AgentSessionRunner(SessionRunner):
             model_info = self._llm_registry.get(model_id)
             llm = self._chat_models.get(model_info)
 
+        history = await self._history_builder.build(session=session)
         return Agent(
             llm=llm,
-            history=await self._history_builder.build(session=session),
+            history=history,
             system_prompt=self._system_prompt,
             spotify=Spotify(client=self._spotify),
             deck_store=_to_deck_store(session.playlist),
@@ -176,21 +177,22 @@ def _to_deck_store(playlist: Playlist | None) -> DeckStore:
     if playlist is None:
         return DeckStore(max_tracks=MAX_PLAYLIST_TRACKS)
 
+    tracks = [
+        DeckDraftTrack(
+            id=track.id,
+            title=track.title,
+            artist=track.artist,
+            year=track.year,
+            spotify_uri=track.spotify_uri,
+            cover_url=track.cover_url,
+        )
+        for track in playlist.tracks
+    ]
     return DeckStore(
         DeckDraft(
             id=playlist.id,
             name=playlist.name or "Deck",
-            tracks=[
-                DeckDraftTrack(
-                    id=track.id,
-                    title=track.title,
-                    artist=track.artist,
-                    year=track.year,
-                    spotify_uri=track.spotify_uri,
-                    cover_url=track.cover_url,
-                )
-                for track in playlist.tracks
-            ],
+            tracks=tracks,
         ),
         max_tracks=MAX_PLAYLIST_TRACKS,
     )

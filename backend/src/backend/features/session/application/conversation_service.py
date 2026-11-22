@@ -573,12 +573,11 @@ class SessionConversationService:
         session: Session,
         state: _AgentRunState,
     ) -> tuple[SessionEvent, ...]:
-        events = list(
-            await self._ensure_assistant_message_started(
-                session=session,
-                state=state,
-            )
+        started_events = await self._ensure_assistant_message_started(
+            session=session,
+            state=state,
         )
+        events = list(started_events)
         message = self._require_current_run_assistant_message(state=state)
 
         session.append_to_current_assistant_message(event.chunk)
@@ -597,12 +596,11 @@ class SessionConversationService:
         session: Session,
         state: _AgentRunState,
     ) -> tuple[SessionEvent, ...]:
-        events = list(
-            await self._ensure_assistant_message_started(
-                session=session,
-                state=state,
-            )
+        started_events = await self._ensure_assistant_message_started(
+            session=session,
+            state=state,
         )
+        events = list(started_events)
         message = self._require_current_run_assistant_message(state=state)
 
         if event.content and message.content:
@@ -636,12 +634,11 @@ class SessionConversationService:
         session: Session,
         state: _AgentRunState,
     ) -> tuple[SessionEvent, ...]:
-        events = list(
-            await self._finish_current_assistant_message(
-                session=session,
-                state=state,
-            )
+        finished_events = await self._finish_current_assistant_message(
+            session=session,
+            state=state,
         )
+        events = list(finished_events)
         if event.call.function.is_onboarding_question:
             state.skipped_onboarding_tool_call_ids.add(event.call.id)
             state.pending_tool_call_sequence_label = None
@@ -882,12 +879,11 @@ class SessionConversationService:
         session: Session,
         state: _AgentRunState,
     ) -> tuple[SessionEvent, ...]:
-        events = list(
-            await self._finish_current_assistant_message(
-                session=session,
-                state=state,
-            )
+        finished_events = await self._finish_current_assistant_message(
+            session=session,
+            state=state,
         )
+        events = list(finished_events)
         question_id = None
         suspended_options = list(event.options or [])
         recommended_option = event.recommended_option

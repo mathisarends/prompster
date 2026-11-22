@@ -93,9 +93,8 @@ class SessionSpotifyPlaylistExporter:
 
         access_token = await self._require_spotify_access_token(user_id=user_id)
 
-        metadata = await self._metadata_generator.generate(
-            [self._to_metadata_track(track) for track in playlist.tracks]
-        )
+        metadata_tracks = [self._to_metadata_track(track) for track in playlist.tracks]
+        metadata = await self._metadata_generator.generate(metadata_tracks)
 
         return SpotifyExportPlan(
             session=session,

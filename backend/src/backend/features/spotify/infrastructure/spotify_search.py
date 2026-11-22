@@ -192,7 +192,8 @@ class SpotifyifySearch(SpotifySearchGateway):
         types: set[SpotifySearchType],
     ) -> str:
         requester_scope = requester_id or "anonymous"
-        type_scope = ",".join(sorted(search_type.value for search_type in types))
+        type_values = sorted(search_type.value for search_type in types)
+        type_scope = ",".join(type_values)
         return f"{requester_scope}|{limit}|{type_scope}"
 
     def _build_search_cache_key(
@@ -203,7 +204,8 @@ class SpotifyifySearch(SpotifySearchGateway):
         types: set[SpotifySearchType],
     ) -> str:
         normalized_query = " ".join(query.casefold().split())
-        type_scope = ",".join(sorted(search_type.value for search_type in types))
+        type_values = sorted(search_type.value for search_type in types)
+        type_scope = ",".join(type_values)
         return f"{normalized_query}|{limit}|{type_scope}"
 
     async def _search_tracks(

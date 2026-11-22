@@ -121,18 +121,19 @@ class AgentSessionEventMapper:
     def _map_tool_call_completed(
         self, event: ToolResultEvent
     ) -> SessionRunnerToolCallCompleted:
+        items = [
+            ToolResultItem(
+                title=item.title,
+                cover_url=item.cover_url,
+                artist=item.artist,
+                track_uri=item.track_uri,
+            )
+            for item in event.items
+        ]
         return SessionRunnerToolCallCompleted(
             tool_call_id=event.tool_call_id,
             result=event.result,
-            items=[
-                ToolResultItem(
-                    title=item.title,
-                    cover_url=item.cover_url,
-                    artist=item.artist,
-                    track_uri=item.track_uri,
-                )
-                for item in event.items
-            ],
+            items=items,
         )
 
     def _map_context_compacted(
@@ -148,9 +149,10 @@ class AgentSessionEventMapper:
         update = event.update
         match update:
             case DeckDraftTracksAdded():
+                tracks = [self._to_playlist_track(track) for track in update.tracks]
                 return SessionRunnerPlaylistTracksAdded(
                     playlist_id=update.deck_draft.id,
-                    tracks=[self._to_playlist_track(track) for track in update.tracks],
+                    tracks=tracks,
                 )
             case DeckDraftTracksRemoved():
                 return SessionRunnerPlaylistTracksRemoved(
@@ -158,15 +160,16 @@ class AgentSessionEventMapper:
                     track_ids=update.track_ids,
                 )
             case DeckDraftTracksReplaced():
+                replacements = [
+                    SessionRunnerPlaylistTrackReplacement(
+                        track_id=replacement.track_id,
+                        track=self._to_playlist_track(replacement.track),
+                    )
+                    for replacement in update.replacements
+                ]
                 return SessionRunnerPlaylistTracksReplaced(
                     playlist_id=update.deck_draft.id,
-                    replacements=[
-                        SessionRunnerPlaylistTrackReplacement(
-                            track_id=replacement.track_id,
-                            track=self._to_playlist_track(replacement.track),
-                        )
-                        for replacement in update.replacements
-                    ],
+                    replacements=replacements,
                 )
             case _:
                 return SessionRunnerPlaylistUpdated(
@@ -205,11 +208,12 @@ class AgentSessionEventMapper:
             return None
 
     def _to_playlist(self, deck_draft: DeckDraft) -> Playlist:
+        tracks = [self._to_playlist_track(track) for track in deck_draft.tracks]
         return Playlist.restore(
             id=deck_draft.id,
             created_at=datetime.now(UTC),
             name=deck_draft.name,
-            tracks=[self._to_playlist_track(track) for track in deck_draft.tracks],
+            tracks=tracks,
         )
 
     def _to_playlist_track(self, track: DeckDraftTrack) -> PlaylistTrack:

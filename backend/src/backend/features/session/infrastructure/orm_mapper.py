@@ -83,6 +83,18 @@ class SessionOrmMapper:
             events=domain_user_curation_events,
         )
 
+        domain_playlist_references = [
+            self._to_domain_playlist_reference(reference)
+            for reference in playlist_references
+        ]
+        domain_artist_references = [
+            self._to_domain_artist_reference(reference)
+            for reference in artist_references
+        ]
+        domain_onboarding_questions = [
+            self._to_domain_onboarding_question(question)
+            for question in onboarding_questions
+        ]
         return Session.restore(
             id=orm.id,
             created_at=orm.created_at,
@@ -95,18 +107,9 @@ class SessionOrmMapper:
             playlist_pdf_storage_key=orm.playlist_pdf_storage_key,
             playlist_pdf_fingerprint=orm.playlist_pdf_fingerprint,
             user_curation_events=domain_user_curation_events,
-            playlist_references=[
-                self._to_domain_playlist_reference(reference)
-                for reference in playlist_references
-            ],
-            artist_references=[
-                self._to_domain_artist_reference(reference)
-                for reference in artist_references
-            ],
-            onboarding_questions=[
-                self._to_domain_onboarding_question(question)
-                for question in onboarding_questions
-            ],
+            playlist_references=domain_playlist_references,
+            artist_references=domain_artist_references,
+            onboarding_questions=domain_onboarding_questions,
         )
 
     def to_orm(self, domain: Session) -> SessionModel:
@@ -552,18 +555,20 @@ class SessionOrmMapper:
             row.image_attachments,
             key=lambda item: item.created_at or row.created_at,
         )
+        domain_attachments = [
+            self._to_domain_user_message_attachment(attachment)
+            for attachment in attachments
+        ]
+        domain_image_attachments = [
+            self._to_domain_user_message_image_attachment(attachment)
+            for attachment in image_attachments
+        ]
         return UserMessage.restore(
             id=row.id,
             created_at=row.created_at,
             content=row.content,
-            attachments=[
-                self._to_domain_user_message_attachment(attachment)
-                for attachment in attachments
-            ],
-            image_attachments=[
-                self._to_domain_user_message_image_attachment(attachment)
-                for attachment in image_attachments
-            ],
+            attachments=domain_attachments,
+            image_attachments=domain_image_attachments,
         )
 
     def _to_domain_user_message_attachment(
@@ -603,10 +608,11 @@ class SessionOrmMapper:
         self, row: SessionToolCallSequenceModel
     ) -> ToolCallSequence:
         calls = sorted(row.calls, key=lambda c: c.position)
+        domain_calls = [self._to_domain_tool_call(call) for call in calls]
         return ToolCallSequence.restore(
             id=row.id,
             created_at=row.created_at,
-            calls=[self._to_domain_tool_call(call) for call in calls],
+            calls=domain_calls,
             label=row.label,
         )
 
@@ -773,12 +779,13 @@ class SessionOrmMapper:
             return None
 
         tracks = sorted(orm_playlist.tracks, key=lambda item: item.position)
+        domain_tracks = [self._to_domain_track(track) for track in tracks]
         return Playlist.restore(
             id=orm_playlist.id,
             created_at=orm_playlist.created_at,
             name=orm_playlist.name,
             spotify_playlist_id=orm_playlist.spotify_playlist_id,
-            tracks=[self._to_domain_track(track) for track in tracks],
+            tracks=domain_tracks,
         )
 
     def _to_orm_track(
