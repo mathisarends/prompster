@@ -11,8 +11,9 @@ dependencies = [
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.1",
     "spotifyify==0.9.0",
-    "callm @ git+https://github.com/mathisarends/callm.git@982472f056789d0cbd5a878a15f77e5fbde6f334",
     "tokenary>=0.1.1",
+    "harnessed[openai] @ git+https://github.com/mathisarends/harnessed.git@65d772032aad3e1f4318abd98d12366f323e8aca",
+    "pydantic-ai-slim[openai]>=2.71.0",
 ]
 
 [project.scripts]

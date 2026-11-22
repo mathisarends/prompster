@@ -1,5 +1,6 @@
-from callm import ChatModel, SystemMessage, UserMessage
 from pydantic import BaseModel, Field
+from pydantic_ai import Agent
+from pydantic_ai.models import Model
 
 from backend.features.session.application.ports import (
     PlaylistMetadata,
@@ -21,18 +22,19 @@ class LLMPlaylistMetadataGenerator(PlaylistMetadataGenerator):
         "Do not enumerate the tracks. Respond in the user's language."
     )
 
-    def __init__(self, llm: ChatModel) -> None:
+    def __init__(self, llm: Model) -> None:
         self._llm = llm
+        self._agent = Agent(
+            llm,
+            instructions=self._SYSTEM_PROMPT,
+            output_type=_PlaylistMetadataOutput,
+        )
 
     async def generate(self, tracks: list[PlaylistMetadataTrack]) -> PlaylistMetadata:
-        output = await self._llm.call(
-            [
-                SystemMessage(content=self._SYSTEM_PROMPT),
-                UserMessage(content=self._format_tracks(tracks)),
-            ],
-            output_format=_PlaylistMetadataOutput,
-        )
-        metadata = output.completion
+        # Holding the model context keeps its shared client open during this call.
+        async with self._llm:
+            result = await self._agent.run(self._format_tracks(tracks))
+        metadata = result.output
         return PlaylistMetadata(
             name=metadata.name.strip(),
             description=metadata.description.strip(),

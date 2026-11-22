@@ -4,24 +4,12 @@ from uuid import UUID
 
 from agent import UserEvent
 from agent.messages import render_user_message_content
-from callm import (
-    AssistantMessage as LLMAssistantMessage,
-)
-from callm import (
-    ImageUrl,
-)
-from callm import (
-    Message as LLMMessage,
-)
-from callm import (
-    ToolCall as LLMToolCall,
-)
-from callm import (
-    ToolResultMessage as LLMToolResultMessage,
-)
-from callm import (
-    UserMessage as LLMUserMessage,
-)
+from harnessed.models import AssistantMessage as LLMAssistantMessage
+from harnessed.models import ImagePart, TextPart, ToolStatus
+from harnessed.models import Message as LLMMessage
+from harnessed.models import ToolCall as LLMToolCall
+from harnessed.models import ToolMessage as LLMToolMessage
+from harnessed.models import UserMessage as LLMUserMessage
 
 from backend.features.session.application.ports import MessageAttachmentStore
 from backend.features.session.domain import (
@@ -59,7 +47,7 @@ class AgentHistoryBuilder:
                     user_message = await self._to_user_message(entry)
                     messages.append(user_message)
                 case AssistantMessage():
-                    messages.append(LLMAssistantMessage(content=entry.content))
+                    messages.append(LLMAssistantMessage(entry.content))
                 case ToolCallSequence():
                     messages.extend(self._to_tool_call_messages(entry))
 
@@ -70,7 +58,7 @@ class AgentHistoryBuilder:
             # No user message followed these manual changes yet. Surface them
             # in a synthetic UserMessage so the LLM sees the curation block.
             messages.append(
-                LLMUserMessage(content=render_user_message_content("", trailing_events))
+                LLMUserMessage(render_user_message_content("", trailing_events))
             )
 
         return messages
@@ -81,7 +69,7 @@ class AgentHistoryBuilder:
             self._to_user_events_for_message(message=message),
         )
         if not message.image_attachments:
-            return LLMUserMessage(content=rendered_text)
+            return LLMUserMessage(rendered_text)
 
         images = []
         for attachment in message.image_attachments:
@@ -90,35 +78,22 @@ class AgentHistoryBuilder:
             )
             encoded = base64.b64encode(data).decode("ascii")
             images.append(
-                ImageUrl(
-                    url=f"data:{attachment.content_type};base64,{encoded}",
-                )
+                ImagePart(f"data:{attachment.content_type};base64,{encoded}")
             )
-        return LLMUserMessage(content=(rendered_text or " ", *images))
+        return LLMUserMessage((TextPart(rendered_text or " "), *images))
 
     def _to_tool_call_messages(self, sequence: ToolCallSequence) -> list[LLMMessage]:
         messages: list[LLMMessage] = []
         for call in sequence.calls:
-            messages.append(
-                LLMAssistantMessage(
-                    content="", tool_calls=(self._to_llm_tool_call(call),)
-                )
-            )
+            messages.append(LLMAssistantMessage("", (self._to_llm_tool_call(call),)))
             if isinstance(call, CompletedCall):
-                messages.append(
-                    LLMToolResultMessage(
-                        tool_call_id=call.id,
-                        tool_name=call.function.name,
-                        content=call.result,
-                    )
-                )
+                messages.append(LLMToolMessage(call.result, tool_call_id=call.id))
             elif isinstance(call, FailedCall):
                 messages.append(
-                    LLMToolResultMessage(
+                    LLMToolMessage(
+                        call.error,
                         tool_call_id=call.id,
-                        tool_name=call.function.name,
-                        content=call.error,
-                        is_error=True,
+                        status=ToolStatus.ERROR,
                     )
                 )
         return messages
@@ -152,9 +127,9 @@ class AgentHistoryBuilder:
 
     def _to_llm_tool_call(self, call: ToolCall) -> LLMToolCall:
         return LLMToolCall(
+            call.function.name,
+            dict(call.function.arguments),
             id=call.id,
-            name=call.function.name,
-            arguments=json.dumps(dict(call.function.arguments), ensure_ascii=False),
         )
 
     def _to_user_events_for_message(self, *, message: UserMessage) -> list[UserEvent]:

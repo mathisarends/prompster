@@ -1,10 +1,11 @@
-import json
-from dataclasses import dataclass
+import asyncio
+from collections.abc import AsyncIterator, Callable
 from typing import Any
 
 import pytest
-from agent.agent import (
-    Agent,
+from agent.agent import Agent
+from agent.deck import DeckDraft, DeckDraftTrack, DeckDraftTracksRemoved, DeckStore
+from agent.events import (
     AssistantMessageChunkEvent,
     AssistantMessageEvent,
     ContextCompactedEvent,
@@ -15,338 +16,338 @@ from agent.agent import (
     ToolCallEvent,
     ToolResultEvent,
 )
-from agent.deck import DeckDraft, DeckDraftTrack, DeckDraftTracksRemoved, DeckStore
-from agent.tools import ToolContext, Tools
 from agent.tools.views import ActionType
 from agent.views import Phase
-from callm import (
-    ContextLengthExceededError,
-    ModelResponse,
-    TextDelta,
-    ToolCall,
-    ToolResultMessage,
-    Usage,
-)
+from harnessed.models import AssistantMessage, ToolCall, ToolMessage, UserMessage
+from pydantic_ai.exceptions import ModelHTTPError
+from pydantic_ai.messages import ModelRequest, UserPromptPart
+from pydantic_ai.models.function import AgentInfo, FunctionModel
+
+_TAKE_ON_ME_URI = "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L"
 
 
-@dataclass
-class _ChatResponse:
-    completion: str | None
-    tool_calls: list[ToolCall]
-    chunks: list[str] | None = None
-    usage: Usage = Usage()
+def _track(
+    title: str = "Take On Me",
+    artist: str = "a-ha",
+    uri: str = _TAKE_ON_ME_URI,
+    year: int = 1985,
+) -> DeckDraftTrack:
+    return DeckDraftTrack(title=title, artist=artist, year=year, spotify_uri=uri)
 
 
-class _FakeLlm:
-    def __init__(self, responses: list[_ChatResponse | Exception]) -> None:
-        self._responses = responses
-        self.tool_schema_batches: list[list[Any]] = []
-
-    async def stream(self, messages: list[Any], tools: list[Any]):
-        self.tool_schema_batches.append(tools)
-        response = self._responses.pop(0)
-        if isinstance(response, Exception):
-            raise response
-        for chunk in response.chunks or []:
-            yield TextDelta(delta=chunk)
-        yield ModelResponse(
-            completion=response.completion or "",
-            tool_calls=tuple(response.tool_calls),
-            usage=response.usage,
-        )
+def _question(*, is_last: bool) -> dict[str, Any]:
+    return {
+        "question": "Fuer wen ist die Playlist?",
+        "hint": "Die Zielgruppe hilft beim Schwierigkeitsgrad.",
+        "options": ["Freunde", "Familie", "Kolleg:innen"],
+        "is_last_question": is_last,
+    }
 
 
-class TestAgentWorkspaceUpdateEvents:
-    @pytest.mark.asyncio
-    async def test_stream_emits_assistant_chunks_before_completed_message(self) -> None:
-        llm = _FakeLlm(
-            [
-                _ChatResponse(
-                    completion="Hallo Welt",
-                    chunks=["Hallo", " Welt"],
-                    tool_calls=[],
-                )
-            ]
-        )
-        agent = Agent(llm=llm)
+def _last_user_text(request: list[Any]) -> str:
+    message = request[-1]
+    assert isinstance(message, ModelRequest)
+    parts = [part for part in message.parts if isinstance(part, UserPromptPart)]
+    return str(parts[-1].content)
 
-        events = [event async for event in agent.stream("Sag hallo")]
 
-        chunks = [
-            event.chunk
-            for event in events
-            if isinstance(event, AssistantMessageChunkEvent)
-        ]
-        completed = next(
-            event for event in events if isinstance(event, AssistantMessageEvent)
-        )
+async def _collect(agent: Agent, message: str | None = "Los") -> list[Any]:
+    return [event async for event in agent.stream(message)]
 
-        assert chunks == ["Hallo", " Welt"]
-        assert completed.content == "Hallo Welt"
 
-    @pytest.mark.asyncio
-    async def test_stream_compacts_context_and_retries_context_length_error(
-        self,
-    ) -> None:
-        llm = _FakeLlm(
-            [
-                ContextLengthExceededError(),
-                _ChatResponse(completion="Weiter gehts", tool_calls=[]),
-            ]
-        )
-        history = [
-            ToolResultMessage(
-                tool_call_id=f"call-{index}",
-                tool_name="search_tracks",
-                content="x",
+@pytest.mark.asyncio
+async def test_stream_emits_chunks_before_the_completed_message(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    llm = scripted_llm(("Hallo", " Welt"))
+
+    events = await _collect(Agent(llm=llm.model), "Sag hallo")
+
+    chunks = [e.chunk for e in events if isinstance(e, AssistantMessageChunkEvent)]
+    completed = next(e for e in events if isinstance(e, AssistantMessageEvent))
+    assert chunks == ["Hallo", " Welt"]
+    assert completed.content == "Hallo Welt"
+    assert isinstance(events[-1], RunCompletedEvent)
+    assert events[-1].output == "Hallo Welt"
+
+
+@pytest.mark.asyncio
+async def test_context_length_error_compacts_and_retries(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    overflow = ModelHTTPError(
+        status_code=400,
+        model_name="scripted",
+        body={"code": "context_length_exceeded", "message": "too long"},
+        provider_error_code="context_length_exceeded",
+    )
+    llm = scripted_llm(overflow, "Zusammenfassung", "Weiter gehts")
+    history: list[Any] = [UserMessage("Bau ein Deck")]
+    for index in range(6):
+        call = ToolCall("search_tracks", {"query": str(index)}, id=f"call-{index}")
+        history.append(AssistantMessage("", (call,)))
+        history.append(ToolMessage("x", tool_call_id=call.id))
+    agent = Agent(llm=llm.model, history=history, phase=Phase.BUILD)
+
+    events = await _collect(agent, "Mach weiter")
+
+    compacted = next(e for e in events if isinstance(e, ContextCompactedEvent))
+    completed = next(e for e in events if isinstance(e, AssistantMessageEvent))
+    assert compacted.reason == "reactive"
+    assert completed.content == "Weiter gehts"
+
+
+@pytest.mark.asyncio
+async def test_deck_update_follows_its_tool_result(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    store = DeckStore()
+    store.cache_tracks([_track()])
+    llm = scripted_llm(
+        {
+            "call-1": (
+                "add_deck_tracks",
+                {"tracks": [{"uri": _TAKE_ON_ME_URI}], "status": "Baue das 80er-Deck"},
             )
-            for index in range(5)
-        ]
-        agent = Agent(llm=llm, history=history)
+        },
+        "Der Entwurf ist bereit.",
+    )
+    agent = Agent(llm=llm.model, deck_store=store, phase=Phase.BUILD)
 
-        events = [event async for event in agent.stream("Mach weiter")]
+    events = await _collect(agent, "Bau mir ein Deck")
 
-        compacted = next(
-            event for event in events if isinstance(event, ContextCompactedEvent)
-        )
-        completed = next(
-            event for event in events if isinstance(event, AssistantMessageEvent)
-        )
-        assert compacted.reason == "reactive"
-        assert compacted.compacted_tool_results == 3
-        assert completed.content == "Weiter gehts"
-        assert len(llm.tool_schema_batches) == 2
+    result_index = next(
+        i for i, e in enumerate(events) if isinstance(e, ToolResultEvent)
+    )
+    update_index = next(
+        i for i, e in enumerate(events) if isinstance(e, DeckUpdatedEvent)
+    )
+    tool_call = next(e for e in events if isinstance(e, ToolCallEvent))
+    assert update_index == result_index + 1
+    assert tool_call.action_type == ActionType.ADD_DECK_TRACKS
+    assert tool_call.status_label == "Baue das 80er-Deck"
+    assert events[result_index].result == (
+        'Added 1 track(s) to Hitster deck "Deck" (1 total).'
+    )
+    assert events[update_index].deck_draft.tracks[0].title == "Take On Me"
+    assert store.drain_deck_draft_updates() == []
 
-    @pytest.mark.asyncio
-    async def test_stream_emits_deck_update_after_tool_result(self) -> None:
-        store = DeckStore()
-        store.cache_tracks(
-            [
-                DeckDraftTrack(
-                    title="Take On Me",
-                    artist="a-ha",
-                    year=1985,
-                    spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-                    cover_url="https://i.scdn.co/image/take-on-me.jpg",
-                )
-            ]
-        )
-        tools = Tools(ToolContext(store))
-        tool_args = {
-            "status": "Baue das 80er-Deck",
-            "tracks": [{"uri": "spotify:track:2WfaOiMkCvy7F5fcp2zZ8L"}],
-        }
-        llm = _FakeLlm(
-            [
-                _ChatResponse(
-                    completion="",
-                    tool_calls=[
-                        ToolCall(
-                            id="call-1",
-                            name="add_deck_tracks",
-                            arguments=json.dumps(tool_args),
-                        )
-                    ],
-                ),
-                _ChatResponse(completion="Der Entwurf ist bereit.", tool_calls=[]),
-            ]
-        )
-        agent = Agent(llm=llm, tools=tools, phase=Phase.BUILD)
 
-        events = [event async for event in agent.stream("Bau mir ein Deck")]
-
-        tool_result_index = next(
-            index
-            for index, event in enumerate(events)
-            if isinstance(event, ToolResultEvent)
-        )
-        tool_call = next(event for event in events if isinstance(event, ToolCallEvent))
-        deck_update_index = next(
-            index
-            for index, event in enumerate(events)
-            if isinstance(event, DeckUpdatedEvent)
-        )
-        tool_result = events[tool_result_index]
-        deck_update = events[deck_update_index]
-
-        assert deck_update_index == tool_result_index + 1
-        assert tool_call.action_type == ActionType.ADD_DECK_TRACKS
-        assert tool_call.status_label == "Baue das 80er-Deck"
-        assert isinstance(tool_result, ToolResultEvent)
-        assert isinstance(deck_update, DeckUpdatedEvent)
-        assert tool_result.result == (
-            'Added 1 track(s) to Hitster deck "Deck" (1 total).'
-        )
-        assert deck_update.deck_draft.name == "Deck"
-        assert deck_update.deck_draft.tracks[0].title == "Take On Me"
-        assert store.drain_deck_draft_updates() == []
-
-    @pytest.mark.asyncio
-    async def test_completion_guardrail_removes_duplicate_deck_tracks(self) -> None:
-        first_track = DeckDraftTrack(
-            title="Take On Me",
-            artist="a-ha",
-            year=1985,
-            spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-            cover_url="https://i.scdn.co/image/take-on-me.jpg",
-        )
-        duplicate_track = DeckDraftTrack(
-            title="Take On Me",
-            artist="a-ha",
-            year=1985,
-            spotify_uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
-            cover_url="https://i.scdn.co/image/take-on-me-alt.jpg",
-        )
-        other_track = DeckDraftTrack(
-            title="Billie Jean",
-            artist="Michael Jackson",
-            year=1982,
-            spotify_uri="spotify:track:5ChkMS8OtdzJeqyybCc9R5",
-            cover_url="https://i.scdn.co/image/billie-jean.jpg",
-        )
-        store = DeckStore(
-            DeckDraft(
-                name="80er Party",
-                tracks=[first_track, duplicate_track, other_track],
+@pytest.mark.asyncio
+async def test_ui_labels_never_reach_the_tool_or_the_replayed_arguments(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    store = DeckStore()
+    store.cache_tracks([_track()])
+    llm = scripted_llm(
+        {
+            "call-1": (
+                "add_deck_tracks",
+                {
+                    "tracks": [{"uri": _TAKE_ON_ME_URI}],
+                    "status": "Lege Tracks ab",
+                    "sequence_label": "Deck bauen",
+                },
             )
-        )
-        llm = _FakeLlm(
-            [_ChatResponse(completion="Der Entwurf ist bereit.", tool_calls=[])]
-        )
-        agent = Agent(llm=llm, deck_store=store, phase=Phase.BUILD)
+        },
+        "Fertig.",
+    )
+    agent = Agent(llm=llm.model, deck_store=store, phase=Phase.BUILD)
 
-        events = [event async for event in agent.stream("Fertig?")]
+    events = await _collect(agent)
 
-        deck_update_index = next(
-            index
-            for index, event in enumerate(events)
-            if isinstance(event, DeckUpdatedEvent)
-        )
-        run_completed_index = next(
-            index
-            for index, event in enumerate(events)
-            if isinstance(event, RunCompletedEvent)
-        )
-        deck_update = events[deck_update_index]
+    result = next(e for e in events if isinstance(e, ToolResultEvent))
+    assert result.result.startswith("Added 1 track(s)")
 
-        assert deck_update_index < run_completed_index
-        assert isinstance(deck_update, DeckUpdatedEvent)
-        assert isinstance(deck_update.update, DeckDraftTracksRemoved)
-        assert deck_update.update.track_ids == [duplicate_track.id]
-        assert store.draft is not None
-        assert [track.id for track in store.draft.tracks] == [
-            first_track.id,
-            other_track.id,
-        ]
-        assert store.drain_deck_draft_updates() == []
 
-    @pytest.mark.asyncio
-    async def test_agent_passes_only_onboarding_tools_by_default(self) -> None:
-        llm = _FakeLlm([_ChatResponse(completion="ok", tool_calls=[])])
-        agent = Agent(llm=llm)
+@pytest.mark.asyncio
+async def test_every_request_ends_with_the_live_deck_state(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    store = DeckStore()
+    store.cache_tracks([_track()])
+    llm = scripted_llm(
+        {"call-1": ("add_deck_tracks", {"tracks": [{"uri": _TAKE_ON_ME_URI}]})},
+        "Fertig.",
+    )
+    agent = Agent(llm=llm.model, deck_store=store, phase=Phase.BUILD)
 
-        _ = [event async for event in agent.stream("Hallo")]
+    await _collect(agent)
 
-        tool_names = {tool.name for tool in llm.tool_schema_batches[0]}
-        assert agent.phase == Phase.ONBOARDING
-        assert "ask_onboarding_question" in tool_names
+    assert 'track_count="0"' in _last_user_text(llm.requests[0])
+    assert 'track_count="1"' in _last_user_text(llm.requests[1])
 
-    @pytest.mark.asyncio
-    async def test_agent_uses_build_tools_when_started_in_build_phase(self) -> None:
-        llm = _FakeLlm([_ChatResponse(completion="ok", tool_calls=[])])
-        agent = Agent(llm=llm, phase=Phase.BUILD)
 
-        _ = [event async for event in agent.stream("Bau mir ein Deck")]
+@pytest.mark.asyncio
+async def test_completion_guardrail_removes_duplicate_deck_tracks(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    first = _track()
+    duplicate = _track()
+    other = _track("Billie Jean", "Michael Jackson", "spotify:track:billie", 1982)
+    store = DeckStore(DeckDraft(name="80er Party", tracks=[first, duplicate, other]))
+    llm = scripted_llm("Der Entwurf ist bereit.")
+    agent = Agent(llm=llm.model, deck_store=store, phase=Phase.BUILD)
 
-        tool_names = {tool.name for tool in llm.tool_schema_batches[0]}
-        assert agent.phase == Phase.BUILD
-        assert "search_tracks" in tool_names
-        assert "add_deck_tracks" in tool_names
-        assert "create_deck" not in tool_names
+    events = await _collect(agent, "Fertig?")
 
-    @pytest.mark.asyncio
-    async def test_last_onboarding_question_suspends_run(self) -> None:
-        tool_args = {
-            "question": "Fuer wen ist die Playlist?",
-            "hint": "Enge Zielgruppen machen das Deck spitzer.",
-            "options": ["Freunde", "Familie", "Kolleg:innen"],
-            "status": "Frage stellen",
-            "is_last_question": True,
-        }
+    update_index = next(
+        i for i, e in enumerate(events) if isinstance(e, DeckUpdatedEvent)
+    )
+    message_index = next(
+        i for i, e in enumerate(events) if isinstance(e, AssistantMessageEvent)
+    )
+    assert update_index < message_index
+    assert isinstance(events[update_index].update, DeckDraftTracksRemoved)
+    assert events[update_index].update.track_ids == [duplicate.id]
+    assert store.draft is not None
+    assert [track.id for track in store.draft.tracks] == [first.id, other.id]
 
-        llm = _FakeLlm(
-            [
-                _ChatResponse(
-                    completion="",
-                    tool_calls=[
-                        ToolCall(
-                            id="call-1",
-                            name="ask_onboarding_question",
-                            arguments=json.dumps(tool_args),
-                        )
-                    ],
-                ),
-                _ChatResponse(completion="should-not-run", tool_calls=[]),
-            ]
-        )
-        agent = Agent(llm=llm)
 
-        events = [event async for event in agent.stream("Start")]
+@pytest.mark.asyncio
+async def test_onboarding_phase_offers_only_the_question_tool(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    llm = scripted_llm("ok")
+    agent = Agent(llm=llm.model)
 
-        assert not any(isinstance(event, ToolCallEvent) for event in events)
-        assert not any(isinstance(event, ToolResultEvent) for event in events)
-        suspended = next(
-            event for event in events if isinstance(event, SuspendedForUserInputEvent)
-        )
-        assert suspended.hint == "Enge Zielgruppen machen das Deck spitzer."
-        assert suspended.options == [
-            "Freunde",
-            "Familie",
-            "Kolleg:innen",
-        ]
-        assert len(llm.tool_schema_batches) == 1
+    await _collect(agent, "Hallo")
 
-    @pytest.mark.asyncio
-    async def test_non_last_onboarding_question_does_not_suspend_run(self) -> None:
-        tool_args = {
-            "question": "Fuer wen ist die Playlist?",
-            "hint": "Die Zielgruppe hilft beim Schwierigkeitsgrad.",
-            "options": ["Freunde", "Familie", "Kolleg:innen"],
-            "status": "Frage stellen",
-            "is_last_question": False,
-        }
+    assert agent.phase == Phase.ONBOARDING
+    assert llm.tool_names[0] == {"ask_onboarding_question"}
 
-        llm = _FakeLlm(
-            [
-                _ChatResponse(
-                    completion="",
-                    tool_calls=[
-                        ToolCall(
-                            id="call-1",
-                            name="ask_onboarding_question",
-                            arguments=json.dumps(tool_args),
-                        )
-                    ],
-                ),
-                _ChatResponse(completion="done", tool_calls=[]),
-            ]
-        )
-        agent = Agent(llm=llm)
 
-        events = [event async for event in agent.stream("Start")]
+@pytest.mark.asyncio
+async def test_build_phase_offers_research_and_deck_tools(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    llm = scripted_llm("ok")
 
-        assert not any(isinstance(event, ToolCallEvent) for event in events)
-        assert not any(isinstance(event, ToolResultEvent) for event in events)
-        question = next(
-            event for event in events if isinstance(event, QuestionAskedEvent)
-        )
-        assert question.hint == "Die Zielgruppe hilft beim Schwierigkeitsgrad."
-        assert question.options == [
-            "Freunde",
-            "Familie",
-            "Kolleg:innen",
-        ]
-        assert not any(
-            isinstance(event, SuspendedForUserInputEvent) for event in events
-        )
-        assert len(llm.tool_schema_batches) == 2
+    await _collect(Agent(llm=llm.model, phase=Phase.BUILD), "Bau mir ein Deck")
+
+    assert llm.tool_names[0] == {
+        "search_tracks",
+        "search_playlists",
+        "get_spotify_playlist_tracks",
+        "add_deck_tracks",
+        "remove_deck_tracks",
+        "replace_deck_tracks",
+        "review_deck",
+    }
+
+
+@pytest.mark.asyncio
+async def test_last_onboarding_question_suspends_the_run(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    llm = scripted_llm(
+        {"call-1": ("ask_onboarding_question", _question(is_last=True))},
+        "should-not-run",
+    )
+
+    events = await _collect(Agent(llm=llm.model), "Start")
+
+    suspended = next(e for e in events if isinstance(e, SuspendedForUserInputEvent))
+    assert suspended.options == ["Freunde", "Familie", "Kolleg:innen"]
+    assert not any(isinstance(e, ToolCallEvent | ToolResultEvent) for e in events)
+    assert not any(isinstance(e, RunCompletedEvent) for e in events)
+    assert len(llm.requests) == 1
+
+
+@pytest.mark.asyncio
+async def test_earlier_onboarding_question_keeps_the_run_going(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    llm = scripted_llm(
+        {"call-1": ("ask_onboarding_question", _question(is_last=False))},
+        "done",
+    )
+
+    events = await _collect(Agent(llm=llm.model), "Start")
+
+    question = next(e for e in events if isinstance(e, QuestionAskedEvent))
+    assert question.hint == "Die Zielgruppe hilft beim Schwierigkeitsgrad."
+    assert not any(isinstance(e, SuspendedForUserInputEvent) for e in events)
+    assert len(llm.requests) == 2
+
+
+@pytest.mark.asyncio
+async def test_invalid_tool_arguments_go_back_to_the_model(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    llm = scripted_llm(
+        {"call-1": ("add_deck_tracks", {"tracks": [{"uri": "spotify:album:nope"}]})},
+        "Korrigiert.",
+    )
+    store = DeckStore()
+
+    await _collect(Agent(llm=llm.model, deck_store=store, phase=Phase.BUILD))
+
+    assert len(llm.requests) == 2
+    assert store.draft is None
+
+
+@pytest.mark.asyncio
+async def test_only_tools_without_derived_labels_ask_for_a_status(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    llm = scripted_llm("ok")
+
+    await _collect(Agent(llm=llm.model, phase=Phase.BUILD))
+
+    schemas = {
+        tool.name: tool.parameters_json_schema["properties"]
+        for tool in llm.infos[0].function_tools
+    }
+    assert "status" not in schemas["search_tracks"]
+    assert "sequence_label" in schemas["search_tracks"]
+    assert "status" in schemas["add_deck_tracks"]
+
+
+@pytest.mark.asyncio
+async def test_trailing_user_message_is_the_run_input(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    llm = scripted_llm("Klar")
+    history = [
+        UserMessage("Erste Frage"),
+        AssistantMessage("Antwort"),
+        UserMessage("Zweite Frage"),
+    ]
+
+    await _collect_without_message(Agent(llm=llm.model, history=history))
+
+    prompts = [
+        part.content
+        for message in llm.requests[0]
+        if isinstance(message, ModelRequest)
+        for part in message.parts
+        if isinstance(part, UserPromptPart)
+    ]
+    assert prompts == ["Erste Frage", "Zweite Frage"]
+
+
+@pytest.mark.asyncio
+async def test_request_stop_ends_a_running_stream_without_completion() -> None:
+    started = asyncio.Event()
+
+    async def hang(_messages: list[Any], _info: AgentInfo) -> AsyncIterator[str]:
+        yield "Teil"
+        started.set()
+        await asyncio.Event().wait()
+
+    agent = Agent(llm=FunctionModel(stream_function=hang, model_name="hanging"))
+
+    async def stop_once_started() -> None:
+        await started.wait()
+        agent.request_stop()
+
+    stopper = asyncio.create_task(stop_once_started())
+    events = await asyncio.wait_for(_collect(agent), timeout=5)
+    await asyncio.wait_for(stopper, timeout=5)
+
+    assert not any(isinstance(e, RunCompletedEvent) for e in events)
+
+
+async def _collect_without_message(agent: Agent) -> list[Any]:
+    return [event async for event in agent.stream()]

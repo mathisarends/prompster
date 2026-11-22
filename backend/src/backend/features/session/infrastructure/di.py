@@ -1,5 +1,5 @@
-from callm import ChatModel
 from dishka import Provider, Scope, provide
+from pydantic_ai.models import Model
 from spotifyify import SpotifyClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -60,7 +60,7 @@ class SessionProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_session_title_generator(
         self,
-        llm: ChatModel,
+        llm: Model,
     ) -> SessionTitleGenerator:
         return LLMSessionTitleGenerator(llm=llm)
 
@@ -96,7 +96,7 @@ class SessionProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_session_runner(
         self,
-        llm: ChatModel,
+        llm: Model,
         chat_models: ChatModels,
         spotify: SpotifyClient,
         event_mapper: AgentSessionEventMapper,
@@ -194,7 +194,7 @@ class SessionProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_playlist_metadata_generator(
         self,
-        llm: ChatModel,
+        llm: Model,
     ) -> PlaylistMetadataGenerator:
         return LLMPlaylistMetadataGenerator(llm=llm)
 

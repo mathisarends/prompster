@@ -1,8 +1,8 @@
 from collections.abc import AsyncGenerator
 from pathlib import Path
 
-from callm import ChatModel
 from dishka import Provider, Scope, provide
+from pydantic_ai.models import Model
 
 from backend.features.llm.application import ChatModels
 from backend.features.llm.domain import LLMRegistry
@@ -40,5 +40,5 @@ class LLMFeatureProvider(Provider):
         self,
         registry: LLMRegistry,
         chat_models: ChatModels,
-    ) -> ChatModel:
+    ) -> Model:
         return chat_models.get(registry.default_model)

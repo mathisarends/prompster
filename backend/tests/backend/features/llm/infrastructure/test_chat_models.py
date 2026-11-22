@@ -1,7 +1,16 @@
 import asyncio
+import json
 
+import httpx2
 import pytest
-from callm import ReasoningEffort
+from openai import AsyncOpenAI
+from pydantic_ai.direct import model_request_stream
+from pydantic_ai.exceptions import ModelHTTPError
+from pydantic_ai.messages import ModelRequest, SystemPromptPart, UserPromptPart
+from pydantic_ai.models.openai import OpenAIResponsesModel
+from pydantic_ai.models.openai_codex import OpenAICodexModel
+from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.providers.openai_codex import OpenAICodexProvider
 
 from backend.features.llm.domain import (
     LLMModelInfo,
@@ -9,20 +18,12 @@ from backend.features.llm.domain import (
     ModelCapabilities,
     ModelDefaults,
     ModelPresentation,
+    ReasoningEffort,
 )
-from backend.features.llm.domain import ReasoningEffort as ModelReasoningEffort
 from backend.features.llm.infrastructure.chat_models import LLMChatModels
 from backend.features.llm.infrastructure.credentials import LLMCredentials
 
 _CHAT_MODELS_MODULE = "backend.features.llm.infrastructure.chat_models"
-
-
-class _ChatModelStub:
-    def __init__(self) -> None:
-        self.closed = False
-
-    async def aclose(self) -> None:
-        self.closed = True
 
 
 def _model_info(provider: LLMProvider, model_id: str = "a-model-id") -> LLMModelInfo:
@@ -31,54 +32,87 @@ def _model_info(provider: LLMProvider, model_id: str = "a-model-id") -> LLMModel
         provider_model="a-model-added-only-in-yaml",
         provider=provider,
         presentation=ModelPresentation(label="Model", profile="Fast", order=10),
-        capabilities=ModelCapabilities(reasoning_effort=(ModelReasoningEffort.MEDIUM,)),
-        defaults=ModelDefaults(reasoning_effort=ModelReasoningEffort.MEDIUM),
+        capabilities=ModelCapabilities(reasoning_effort=(ReasoningEffort.MEDIUM,)),
+        defaults=ModelDefaults(reasoning_effort=ReasoningEffort.MEDIUM),
     )
 
 
-def _record_calls(monkeypatch: pytest.MonkeyPatch, name: str) -> list[dict]:
-    calls: list[dict] = []
+@pytest.fixture
+def codex_provider(monkeypatch: pytest.MonkeyPatch) -> list[int]:
+    """Replace the provider so tests never read a real Codex login."""
+    created: list[int] = []
 
-    def create(model_name: str, **kwargs: object) -> _ChatModelStub:
-        calls.append({"model_name": model_name, **kwargs})
-        return _ChatModelStub()
+    def create() -> OpenAIProvider:
+        created.append(1)
+        return OpenAIProvider(api_key="unused")
 
-    monkeypatch.setattr(f"{_CHAT_MODELS_MODULE}.{name}", create)
-    return calls
+    monkeypatch.setattr(f"{_CHAT_MODELS_MODULE}.OpenAICodexProvider", create)
+    return created
 
 
-def test_openai_provider_uses_the_configured_api_key(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    calls = _record_calls(monkeypatch, "ChatOpenAIResponses")
+def test_openai_provider_uses_the_configured_api_key() -> None:
     chat_models = LLMChatModels(LLMCredentials(openai_api_key="key"))
 
-    chat_models.get(_model_info(LLMProvider.OPENAI))
+    model = chat_models.get(_model_info(LLMProvider.OPENAI))
 
-    assert calls == [
-        {
-            "model_name": "a-model-added-only-in-yaml",
-            "api_key": "key",
-            "reasoning_effort": ReasoningEffort.MEDIUM,
-        }
-    ]
+    assert isinstance(model, OpenAIResponsesModel)
+    assert not isinstance(model, OpenAICodexModel)
+    assert model.model_name == "a-model-added-only-in-yaml"
+    assert model.client.api_key == "key"
+    assert model.settings is not None
+    assert model.settings["openai_reasoning_effort"] == "medium"
 
 
 @pytest.mark.parametrize("api_key", [None, "openai-key"])
 def test_codex_provider_uses_subscription_credentials(
-    monkeypatch: pytest.MonkeyPatch, api_key: str | None
+    codex_provider: list[int],
+    api_key: str | None,
 ) -> None:
-    calls = _record_calls(monkeypatch, "ChatCodex")
     chat_models = LLMChatModels(LLMCredentials(openai_api_key=api_key))
 
-    chat_models.get(_model_info(LLMProvider.CODEX))
+    model = chat_models.get(_model_info(LLMProvider.CODEX))
 
-    assert calls == [
-        {
-            "model_name": "a-model-added-only-in-yaml",
-            "reasoning_effort": ReasoningEffort.MEDIUM,
-        }
+    assert isinstance(model, OpenAICodexModel)
+    assert model.settings is not None
+    assert model.settings["openai_reasoning_effort"] == "medium"
+    assert codex_provider == [1]
+
+
+def test_codex_sends_the_system_prompt_as_instructions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bodies: list[dict] = []
+
+    def reject(request: httpx2.Request) -> httpx2.Response:
+        bodies.append(json.loads(request.content))
+        return httpx2.Response(400, json={"error": {"message": "stop"}})
+
+    client = AsyncOpenAI(
+        api_key="unused",
+        max_retries=0,
+        http_client=httpx2.AsyncClient(transport=httpx2.MockTransport(reject)),
+    )
+    monkeypatch.setattr(
+        f"{_CHAT_MODELS_MODULE}.OpenAICodexProvider",
+        lambda: OpenAICodexProvider(openai_client=client),
+    )
+    model = LLMChatModels(LLMCredentials(openai_api_key=None)).get(
+        _model_info(LLMProvider.CODEX)
+    )
+    messages = [
+        ModelRequest([SystemPromptPart("The system prompt")]),
+        ModelRequest([UserPromptPart("Hallo")]),
     ]
+
+    async def send() -> None:
+        async with model_request_stream(model, messages):
+            pass
+
+    with pytest.raises(ModelHTTPError):
+        asyncio.run(send())
+
+    assert bodies[0]["instructions"] == "The system prompt"
+    assert [item["role"] for item in bodies[0]["input"]] == ["user"]
 
 
 def test_openai_provider_without_api_key_fails() -> None:
@@ -88,8 +122,7 @@ def test_openai_provider_without_api_key_fails() -> None:
         chat_models.get(_model_info(LLMProvider.OPENAI))
 
 
-def test_get_reuses_one_client_per_model(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls = _record_calls(monkeypatch, "ChatCodex")
+def test_get_reuses_one_client_per_model(codex_provider: list[int]) -> None:
     chat_models = LLMChatModels(LLMCredentials(openai_api_key=None))
 
     first = chat_models.get(_model_info(LLMProvider.CODEX, "luna"))
@@ -98,19 +131,16 @@ def test_get_reuses_one_client_per_model(monkeypatch: pytest.MonkeyPatch) -> Non
 
     assert first is again
     assert other is not first
-    assert len(calls) == 2
+    assert len(codex_provider) == 2
 
 
-def test_aclose_closes_every_created_client(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    _record_calls(monkeypatch, "ChatCodex")
-    chat_models = LLMChatModels(LLMCredentials(openai_api_key=None))
+def test_aclose_closes_every_created_client() -> None:
+    chat_models = LLMChatModels(LLMCredentials(openai_api_key="key"))
     created = [
-        chat_models.get(_model_info(LLMProvider.CODEX, model_id))
+        chat_models.get(_model_info(LLMProvider.OPENAI, model_id))
         for model_id in ("luna", "terra")
     ]
 
     asyncio.run(chat_models.aclose())
 
-    assert [model.closed for model in created] == [True, True]
+    assert [model.client.is_closed() for model in created] == [True, True]

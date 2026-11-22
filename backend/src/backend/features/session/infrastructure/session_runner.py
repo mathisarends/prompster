@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 
 from agent import Agent, DeckDraft, DeckDraftTrack, DeckStore, Spotify
 from agent import Phase as AgentPhase
-from callm import ChatModel
+from pydantic_ai.models import Model
 from spotifyify import SpotifyClient
 
 from backend.features.llm.application import ChatModels
@@ -68,7 +68,7 @@ class AgentRuntimeRegistry:
 class AgentSessionRunner(SessionRunner):
     def __init__(
         self,
-        llm: ChatModel,
+        llm: Model,
         chat_models: ChatModels,
         spotify: SpotifyClient,
         event_mapper: AgentSessionEventMapper,
@@ -122,6 +122,12 @@ class AgentSessionRunner(SessionRunner):
                         ):
                             yield SessionRunnerCancelled()
                             return
+            # A stop can end the agent stream without another event to check on.
+            if await self._is_cancelled(
+                session_id=session.id,
+                active_run=active_run,
+            ):
+                yield SessionRunnerCancelled()
         finally:
             await self._runtime_registry.complete(session_id=session.id, run=active_run)
             await self._active_runs.complete(

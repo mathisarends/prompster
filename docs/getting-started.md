@@ -64,11 +64,11 @@ docker compose down
 
 The model selector identifies each provider explicitly:
 
-- **OpenAI** models use `callm.ChatOpenAIResponses` and `OPENAI_API_KEY` from `.env`.
-- **Codex** models use `callm.ChatCodex` with your ChatGPT subscription login from `codex login`. They do not use `OPENAI_API_KEY`.
+- **OpenAI** models use pydantic_ai's `OpenAIResponsesModel` and `OPENAI_API_KEY` from `.env`.
+- **Codex** models use pydantic_ai's `OpenAICodexModel` with your ChatGPT subscription login from `codex login`. They do not use `OPENAI_API_KEY`.
 
 For a local backend, log in with `codex login` before selecting a Codex model.
-`callm` reads the login from `~/.codex/auth.json`, or from `CODEX_HOME` when set.
+pydantic_ai reads the login from `~/.codex/auth.json`, or from `CODEX_HOME` when set, and never writes to it.
 
 For Docker, start the stack with the optional read-only Codex mount:
 

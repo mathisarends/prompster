@@ -74,7 +74,7 @@ flowchart LR
     UI[Lit frontend] <-->|HTTP + WebSocket| API[FastAPI backend]
     API <--> Agent[Playlist agent]
     Agent <--> Spotify[Spotify API]
-    Agent <--> Models[callm · OpenAI / Codex]
+    Agent <--> Models[pydantic_ai · OpenAI / Codex]
     API --> DB[(PostgreSQL)]
     API --> Export[Typst PDF + S3 storage]
 ```
@@ -83,10 +83,10 @@ flowchart LR
 | --- | --- |
 | [`frontend/`](frontend/README.md) | Lit 3, TypeScript, Vite, TanStack Lit Query; chat, cards, and playback |
 | [`backend/`](backend/README.md) | FastAPI, OAuth, sessions, Spotify export, and PDF generation |
-| [`libs/agent/`](libs/agent/README.md) | Tool-calling loop, Spotify research, deck state, and streaming events |
+| [`libs/agent/`](libs/agent/README.md) | harnessed agent, Spotify research, deck state, and streaming events |
 | [`schema/`](schema/) | Generated OpenRPC contract for the session stream |
 
-The Python packages share a **uv workspace and lockfile**. [`callm`](https://github.com/mathisarends/callm) is an external dependency that supplies the model clients.
+The Python packages share a **uv workspace and lockfile**. [`harnessed`](https://github.com/mathisarends/harnessed) runs the agent, and [`pydantic_ai`](https://github.com/pydantic/pydantic-ai) supplies the model clients.
 
 ## Development
 
