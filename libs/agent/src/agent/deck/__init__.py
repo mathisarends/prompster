@@ -1,38 +1,25 @@
-from agent.deck.store import DeckStore
-from agent.deck.views import (
-    DeckDraft,
-    DeckDraftCreated,
-    DeckDraftOperationStatus,
-    DeckDraftReplaced,
-    DeckDraftToolResult,
-    DeckDraftTrack,
-    DeckDraftTrackReplacement,
-    DeckDraftTracksAdded,
-    DeckDraftTracksRemoved,
-    DeckDraftTracksReplaced,
-    DeckDraftUpdate,
-    DeckDraftUpdateKind,
-    TrackRef,
-    TrackRefReplacement,
+from agent.deck.events import (
+    DeckChangedEvent,
+    DeckCreatedEvent,
+    DeckEventKind,
+    DeckTracksAddedEvent,
+    DeckTracksRemovedEvent,
+    DeckTracksReplacedEvent,
 )
+from agent.deck.plugin import DeckPlugin
+from agent.deck.store import DeckStore
+from agent.deck.views import Deck, DeckTrack, TrackReplacement
 
 __all__ = [
+    "Deck",
+    "DeckChangedEvent",
+    "DeckCreatedEvent",
+    "DeckEventKind",
+    "DeckPlugin",
     "DeckStore",
-    "DeckDraft",
-    "DeckDraftCreated",
-    "DeckDraftOperationStatus",
-    "DeckDraftReplaced",
-    "DeckDraftToolResult",
-    "DeckDraftTrack",
-    "DeckDraftTrackReplacement",
-    "DeckDraftTracksAdded",
-    "DeckDraftTracksRemoved",
-    "DeckDraftTracksReplaced",
-    "DeckDraftUpdate",
-    "DeckDraftUpdateKind",
-    "TrackRef",
-    "TrackRefReplacement",
-    "render_album_tag",
-    "render_playlist_tag",
-    "render_track_tag",
+    "DeckTrack",
+    "DeckTracksAddedEvent",
+    "DeckTracksRemovedEvent",
+    "DeckTracksReplacedEvent",
+    "TrackReplacement",
 ]

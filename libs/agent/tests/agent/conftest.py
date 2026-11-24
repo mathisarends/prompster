@@ -1,8 +1,12 @@
+import asyncio
 import json
 from collections.abc import AsyncIterator, Callable, Mapping, Sequence
 from typing import Any
 
 import pytest
+from agent.research import FoundTrack, Spotify
+from agent.research.params import SearchParams
+from agent.research.spotify import TrackResults
 from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart, ToolCallPart
 from pydantic_ai.models.function import (
     AgentInfo,
@@ -22,14 +26,16 @@ class ScriptedLlm:
     ``call_id -> (tool, args)`` is a tool-call step, and an exception is raised.
     """
 
-    def __init__(self, steps: Sequence[ScriptStep]) -> None:
+    def __init__(
+        self, steps: Sequence[ScriptStep], *, model_name: str = "scripted"
+    ) -> None:
         self._steps = list(steps)
         self.requests: list[list[ModelMessage]] = []
         self.infos: list[AgentInfo] = []
         self.model = FunctionModel(
             self._respond,
             stream_function=self._stream,
-            model_name="scripted",
+            model_name=model_name,
         )
 
     @property
@@ -74,7 +80,38 @@ class ScriptedLlm:
 
 @pytest.fixture
 def scripted_llm() -> Callable[..., ScriptedLlm]:
-    def create(*steps: ScriptStep) -> ScriptedLlm:
-        return ScriptedLlm(steps)
+    def create(*steps: ScriptStep, model_name: str = "scripted") -> ScriptedLlm:
+        return ScriptedLlm(steps, model_name=model_name)
 
     return create
+
+
+class FakeSpotify(Spotify):
+    """Answers track searches from a fixed catalog, without any network."""
+
+    def __init__(self, *tracks: FoundTrack, gate: asyncio.Event | None = None) -> None:
+        super().__init__()
+        self._tracks = tracks
+        self._gate = gate
+        self.searches: list[str] = []
+
+    async def open(self) -> None:
+        return None
+
+    async def close(self) -> None:
+        return None
+
+    async def search_tracks(self, params: SearchParams) -> TrackResults:
+        self.searches.append(params.query)
+        if self._gate is not None:
+            await self._gate.wait()
+        content = "\n".join(f'<track uri="{track.uri}" />' for track in self._tracks)
+        return TrackResults(content=content or "No tracks found.", tracks=self._tracks)
+
+
+TAKE_ON_ME = FoundTrack(
+    uri="spotify:track:2WfaOiMkCvy7F5fcp2zZ8L",
+    title="Take On Me",
+    artist="a-ha",
+    year=1985,
+)

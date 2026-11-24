@@ -1,192 +1,216 @@
-import asyncio
 from collections.abc import AsyncGenerator, Sequence
+from contextlib import AsyncExitStack
+from enum import StrEnum
+from pathlib import Path
+from typing import Self
 
-from harnessed import Agent as HarnessedAgent
-from harnessed import AgentLoop, Compaction, Context, Plugin, SystemPrompt
-from harnessed.events.turn import FinalStepPolicy
-from harnessed.models import Message, ToolCall
+import harnessed
+from harnessed import (
+    AgentLoop,
+    Compaction,
+    Context,
+    FinalStepPolicy,
+    Plugin,
+    SessionStatus,
+)
+from harnessed import Session as HarnessedSession
+from harnessed.models import ToolCall, UserMessage
 from harnessed.models.pydantic_ai import PydanticAIModel
-from harnessed.plugins import CallEnvelope, EnvelopePosition, InvalidEnvelope
-from harnessed.runtime.session import Session
+from harnessed.prompts import SystemPrompt
+from harnessed.sessions import SessionCommit
 from pydantic_ai.models import Model
 
-from agent.deck import DeckStore
-from agent.events import AgentEvent, RunCompletedEvent, RunStartedEvent
-from agent.messages import load_prompt, render_user_message_content, replay_history
-from agent.plugins import (
-    AgentRunContext,
-    DeckPlugin,
-    EventBridge,
-    OnboardingPlugin,
-    ResearchPlugin,
-    ReviewPlugin,
-    SequenceLabel,
-    StatusLabel,
-    needs_status_label,
+from agent.activity import tool_activity
+from agent.conversation import (
+    AgentCheckpoint,
+    AgentCommit,
+    CommitSink,
+    InputImage,
+    ProviderReplayGuard,
+    ReplyPlugin,
+    UserEvent,
+    user_input,
 )
-from agent.tools import DeckCritic, Spotify
-from agent.views import Phase, UserEvent
+from agent.deck import Deck, DeckPlugin, DeckStore
+from agent.events import AGENT_EVENT_TYPES, AgentEvent
+from agent.onboarding import OnboardingPlugin
+from agent.prompts import read_prompt
+from agent.research import ResearchPlugin, Spotify
+from agent.review import ReviewPlugin
 
-_DEFAULT_INPUT_TOKEN_LIMIT = 272_000
-_ONBOARDING_MAX_STEPS = 6
-_BUILD_MAX_STEPS = 48
-_TOOL_TIMEOUT_SECONDS = 90.0
-_MAX_PARALLEL_TOOLS = 4
-_MAX_TOOL_OUTPUT_CHARS = 24_000
+
+class Phase(StrEnum):
+    ONBOARDING = "onboarding"
+    BUILD = "build"
 
 
 class Agent:
-    """Prompster's deck-building agent, running on a harnessed session per run."""
+    """Prompster's deck-building agent: one live harnessed session.
+
+    Open it with ``async with``. It continues ``checkpoint`` when given and
+    hands every durable change to ``on_commit``, so a stored checkpoint reopens
+    the agent exactly where it stopped. ``stream`` runs one turn and yields its
+    events; ``pause``, ``resume``, ``stop`` and ``abort`` control the turn from
+    anywhere else while it runs.
+    """
 
     def __init__(
         self,
         llm: Model,
-        history: Sequence[Message] | None = None,
-        system_prompt: str | None = None,
-        spotify: Spotify | None = None,
-        deck_store: DeckStore | None = None,
-        max_deck_tracks: int = 50,
+        *,
         phase: Phase = Phase.ONBOARDING,
+        deck: Deck | None = None,
+        spotify: Spotify | None = None,
+        max_deck_tracks: int = 50,
         max_input_tokens: int | None = None,
         compaction_threshold: float = 0.8,
+        checkpoint: AgentCheckpoint | None = None,
+        on_commit: CommitSink | None = None,
+        session_id: str | None = None,
+        transcript: str | None = None,
     ) -> None:
-        self._history = list(history) if history is not None else []
-        self._system_prompt = system_prompt
-        self._spotify = spotify if spotify is not None else Spotify()
-        self._deck_store = (
-            deck_store if deck_store is not None else DeckStore(max_tracks=max_deck_tracks)
-        )
-        self._max_deck_tracks = max_deck_tracks
         self._phase = phase
-        self._model = PydanticAIModel(
-            llm,
-            context_window=(
-                max_input_tokens
-                if max_input_tokens is not None
-                else _DEFAULT_INPUT_TOKEN_LIMIT
+        self._store = DeckStore(deck, max_tracks=max_deck_tracks)
+        self._spotify = spotify if spotify is not None else Spotify()
+        self._checkpoint = checkpoint
+        self._on_commit = on_commit
+        self._session_id = session_id
+        self._transcript = transcript
+        self._harness = harnessed.Agent(
+            model=PydanticAIModel(
+                llm,
+                context_window=(
+                    max_input_tokens
+                    if max_input_tokens is not None
+                    else _DEFAULT_CONTEXT_WINDOW
+                ),
             ),
-        )
-        self._compaction_threshold = compaction_threshold
-        self._critic = DeckCritic(
-            llm,
-            deck_store=self._deck_store,
-            target_size=max_deck_tracks,
-        )
-        self._stop_requested = asyncio.Event()
-
-    @property
-    def phase(self) -> Phase:
-        return self._phase
-
-    async def close(self) -> None:
-        await self._spotify.close()
-
-    def request_stop(self) -> None:
-        self._stop_requested.set()
-
-    async def stream(
-        self,
-        message: str | None = None,
-        curation_events: Sequence[UserEvent] | None = None,
-    ) -> AsyncGenerator[AgentEvent, None]:
-        self._stop_requested.clear()
-        new_input = None
-        if message is not None or curation_events:
-            text = message if message is not None else ""
-            new_input = render_user_message_content(text, curation_events)
-            yield RunStartedEvent(message=text)
-
-        replay = replay_history(self._history, new_input=new_input)
-        run = AgentRunContext(
-            spotify=self._spotify,
-            deck_store=self._deck_store,
-            critic=self._critic,
-            max_deck_tracks=self._max_deck_tracks,
-        )
-        harness = self._build_harness(run)
-        async with harness.session(state=replay.state) as session:
-            handle = await session.submit(replay.run_input)
-            stop_watcher = asyncio.create_task(self._abort_when_stopped(session))
-
-            async def finish() -> str:
-                try:
-                    result = await handle.result()
-                    return result.text
-                finally:
-                    run.channel.close()
-
-            completion = asyncio.create_task(finish())
-            try:
-                async for event in run.channel:
-                    yield event
-                output = await completion
-            finally:
-                stop_watcher.cancel()
-                completion.cancel()
-                await asyncio.gather(stop_watcher, completion, return_exceptions=True)
-
-        if not run.suspended and not self._stop_requested.is_set():
-            yield RunCompletedEvent(output=output)
-
-    async def _abort_when_stopped(self, session: Session) -> None:
-        await self._stop_requested.wait()
-        await session.abort()
-
-    def _build_harness(self, run: AgentRunContext) -> HarnessedAgent:
-        is_onboarding = self._phase == Phase.ONBOARDING
-        return HarnessedAgent(
-            model=self._model,
-            instructions=self._build_instructions(),
-            plugins=[
-                *(_onboarding_plugins(run) if is_onboarding else _build_plugins(run)),
-                EventBridge(run, compaction_threshold=self._compaction_threshold),
-            ],
+            instructions=SystemPrompt.from_plugins(read_prompt(_INSTRUCTIONS)),
+            plugins=self._plugins(),
             context=Context(
                 max_tool_output_chars=_MAX_TOOL_OUTPUT_CHARS,
                 compaction=Compaction(
-                    at=self._compaction_threshold,
-                    prompt=load_prompt("compaction"),
-                    keep_last_steps=3,
+                    at=compaction_threshold,
+                    prompt=read_prompt(_COMPACTION_PROMPT),
+                    keep_last_steps=_COMPACTION_KEEP_LAST_STEPS,
                 ),
             ),
             loop=AgentLoop(
-                max_steps=_ONBOARDING_MAX_STEPS if is_onboarding else _BUILD_MAX_STEPS,
+                max_steps=_MAX_STEPS[phase],
                 tool_timeout_seconds=_TOOL_TIMEOUT_SECONDS,
                 max_parallel_tools=_MAX_PARALLEL_TOOLS,
                 final_step=FinalStepPolicy.SUMMARIZE,
                 error_formatter=_format_tool_error,
             ),
         )
+        self._exit_stack = AsyncExitStack()
+        self._session: HarnessedSession | None = None
 
-    def _build_instructions(self) -> SystemPrompt:
-        if self._system_prompt:
-            return SystemPrompt(self._system_prompt)
-        return SystemPrompt.from_plugins(load_prompt("shared"))
+    async def __aenter__(self) -> Self:
+        try:
+            await self._open()
+        except BaseException:
+            await self.__aexit__()
+            raise
+        return self
+
+    async def __aexit__(self, *exc_info: object) -> None:
+        self._session = None
+        await self._exit_stack.aclose()
+
+    @property
+    def phase(self) -> Phase:
+        return self._phase
+
+    @property
+    def deck(self) -> Deck | None:
+        return self._store.deck
+
+    @property
+    def status(self) -> SessionStatus:
+        return self._live.status
+
+    async def stream(
+        self,
+        text: str = "",
+        *,
+        images: Sequence[InputImage] = (),
+        curation_events: Sequence[UserEvent] = (),
+    ) -> AsyncGenerator[AgentEvent]:
+        message = user_input(text, images=images, curation_events=curation_events)
+        async with self._live.stream(message, buffer_size=_STREAM_BUFFER_SIZE) as run:
+            async for item in run:
+                if isinstance(item, AGENT_EVENT_TYPES):
+                    yield item
+
+    async def pause(self) -> None:
+        """Pause after the current step; the stream reports the new status."""
+        await self._live.pause()
+
+    async def resume(self) -> None:
+        await self._live.resume()
+
+    async def stop(self) -> None:
+        """Finish the current step, then end the turn."""
+        await self._live.stop()
+
+    async def abort(self) -> None:
+        """End the turn now, cancelling a running model request or tool."""
+        await self._live.abort()
+
+    @property
+    def _live(self) -> HarnessedSession:
+        if self._session is None:
+            raise RuntimeError("Open the agent with 'async with' first.")
+        return self._session
+
+    async def _open(self) -> None:
+        stack = self._exit_stack
+        await stack.enter_async_context(self._spotify)
+        self._session = session = await stack.enter_async_context(
+            self._harness.session(
+                state=self._checkpoint.restore() if self._checkpoint else None,
+                id=self._session_id,
+                on_commit=self._commit if self._on_commit is not None else None,
+            )
+        )
+        if session.status is SessionStatus.PAUSED:
+            # The process ended while paused. The user writes again, so the open
+            # turn ends here and the new message starts a fresh one.
+            await session.stop()
+        elif self._checkpoint is None and self._transcript:
+            await session.append_message(UserMessage(self._transcript))
+
+    async def _commit(self, commit: SessionCommit) -> None:
+        if self._on_commit is not None and commit.session_id == self._live.id:
+            await self._on_commit(AgentCommit.from_session(commit))
+
+    def _plugins(self) -> list[Plugin]:
+        if self._phase is Phase.ONBOARDING:
+            capabilities: list[Plugin] = [OnboardingPlugin()]
+        else:
+            capabilities = [
+                *tool_activity(),
+                ResearchPlugin(self._spotify),
+                DeckPlugin(self._store),
+                ReviewPlugin(self._store),
+            ]
+        # Hooks run in mount order: the deck settles before the final reply.
+        return [*capabilities, ProviderReplayGuard(), ReplyPlugin()]
 
 
-def _onboarding_plugins(run: AgentRunContext) -> list[Plugin]:
-    return [OnboardingPlugin(run)]
-
-
-def _build_plugins(run: AgentRunContext) -> list[Plugin]:
-    return [
-        CallEnvelope(
-            StatusLabel,
-            select=needs_status_label,
-            on_invalid=InvalidEnvelope.DROP,
-            position=EnvelopePosition.TRAILING,
-            name="status-label",
-        ),
-        CallEnvelope(
-            SequenceLabel,
-            on_invalid=InvalidEnvelope.DROP,
-            position=EnvelopePosition.TRAILING,
-            name="sequence-label",
-        ),
-        ResearchPlugin(run),
-        DeckPlugin(run),
-        ReviewPlugin(run),
-    ]
+_PACKAGE = Path(__file__).parent
+_INSTRUCTIONS = _PACKAGE / "instructions.md"
+_COMPACTION_PROMPT = _PACKAGE / "conversation" / "compaction.md"
+_COMPACTION_KEEP_LAST_STEPS = 3
+_DEFAULT_CONTEXT_WINDOW = 272_000
+_MAX_STEPS = {Phase.ONBOARDING: 6, Phase.BUILD: 48}
+_TOOL_TIMEOUT_SECONDS = 90.0
+_MAX_PARALLEL_TOOLS = 4
+_MAX_TOOL_OUTPUT_CHARS = 24_000
+# Deck changes, previews and deltas of a long turn must not block the loop
+# while the consumer forwards them to a websocket.
+_STREAM_BUFFER_SIZE = 1024
 
 
 def _format_tool_error(_call: ToolCall, error: Exception) -> str:
