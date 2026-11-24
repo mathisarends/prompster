@@ -51,7 +51,7 @@ from backend.features.session.domain.session import (
     MAX_PLAYLIST_TRACKS,
     Session,
 )
-from backend.features.session.domain.views import Phase
+from backend.features.session.domain.views import Phase, RunStatus
 
 __all__ = [
     "ArtistReference",
@@ -69,6 +69,7 @@ __all__ = [
     "PendingCall",
     "PendingToolCallsError",
     "Phase",
+    "RunStatus",
     "Playlist",
     "PlaylistReference",
     "PlaylistReferenceNotFoundError",

@@ -1,20 +1,33 @@
 import asyncio
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
+from types import SimpleNamespace
+from typing import cast
 from uuid import UUID
 
 import pytest
+from agent import AgentCheckpoint, AgentCommit
 from agent import Phase as AgentPhase
-from harnessed.models import AssistantMessage as LLMAssistantMessage
-from harnessed.models import UserMessage as LLMUserMessage
+from pydantic_ai.messages import ModelMessage, ModelRequest, UserPromptPart
+from pydantic_ai.models.function import AgentInfo, FunctionModel
+from spotifyify import SpotifyClient
 
+from backend.features.llm.application import ChatModels
+from backend.features.llm.domain import LLMRegistry
+from backend.features.llm.domain.model_registry import (
+    LLMConfig,
+    LLMModelInfo,
+    ModelPresentation,
+)
 from backend.features.session.application import SessionConversationService
 from backend.features.session.application.ports import (
+    ActiveSessionRunStore,
     MessageAttachmentStore,
     StoredAttachment,
 )
 from backend.features.session.application.ports.session_runner import (
     SessionRunner,
+    SessionRunnerAssistantMessage,
     SessionRunnerCancelled,
     SessionRunnerEvent,
 )
@@ -28,7 +41,14 @@ from backend.features.session.domain import (
     UserCurationEvent,
     UserCurationEventType,
 )
-from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
+from backend.features.session.infrastructure.agent_checkpoint_store import (
+    SqlAgentCheckpointStore,
+)
+from backend.features.session.infrastructure.agent_input import AgentInputBuilder
+from backend.features.session.infrastructure.session_runner import (
+    AgentRuntimeRegistry,
+    AgentSessionRunner,
+)
 
 
 class _SessionRepositoryStub(SessionRepository):
@@ -174,160 +194,6 @@ class TestAgentPhaseMapping:
         assert AgentPhase(phase).value == phase.value
 
 
-class TestSessionRunnerHistoryRendering:
-    """``AgentHistoryBuilder.build`` produces the exact LLM message sequence the
-    agent will replay. Curation events bind to the user message they belong
-    to and appear inline in its content — mirroring the domain model where
-    ``UserMessage.user_curation_events`` is part of the user entity.
-    """
-
-    def test_bound_event_renders_inside_its_user_message(self) -> None:
-        session = Session.create(title="Deck", owner_id=UUID(int=1))
-        session.add_user_message("start")
-        session.add_assistant_message("ok")
-        session.add_track(title="Umbrella", artist="Rihanna", year=2007)
-        session.add_user_message("mach weiter")
-
-        history = asyncio.run(
-            AgentHistoryBuilder(_MessageAttachmentStoreStub()).build(session=session)
-        )
-
-        user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
-        assert len(user_messages) == 2
-        assert user_messages[0].content == "start"
-        assert "<user_events>" in user_messages[1].content
-        assert "track_added" in user_messages[1].content
-        assert "Rihanna - Umbrella" in user_messages[1].content
-        assert user_messages[1].content.endswith("mach weiter")
-
-    def test_trailing_unbound_event_becomes_a_synthetic_user_message(self) -> None:
-        # Curation event recorded without a following user message
-        # gets a synthetic UserMessage
-        # so the LLM still sees the manual change in turn order.
-        event = UserCurationEvent.restore(
-            id=UUID(int=2),
-            event_type=UserCurationEventType.TRACK_REMOVED,
-            track_id=UUID(int=3),
-            track_title="Umbrella",
-            track_artist="Rihanna",
-            track_year=2007,
-            created_at=datetime(2026, 1, 1, tzinfo=UTC),
-        )
-        session = Session.restore(
-            id=UUID(int=4),
-            created_at=datetime.now(UTC),
-            title="Deck",
-            entries=[],
-            owner_id=UUID(int=5),
-            user_curation_events=[event],
-        )
-
-        history = asyncio.run(
-            AgentHistoryBuilder(_MessageAttachmentStoreStub()).build(session=session)
-        )
-
-        assert len(history) == 1
-        assert isinstance(history[0], LLMUserMessage)
-        assert history[0].content == (
-            "<user_events>\n"
-            '<event type="track_removed" at="2026-01-01T00:00:00+00:00">'
-            "Rihanna - Umbrella</event>\n"
-            "</user_events>"
-        )
-
-    def test_consumed_bound_events_stay_visible_in_history(self) -> None:
-        # Past curation events must remain visible on every subsequent run —
-        # they are a permanent record of the user's intent for that turn
-        # (mirrors the domain coupling UserMessage <-> user_curation_events).
-        # The ``consumed`` flag only gates user-facing restoration, not
-        # history visibility.
-        session = Session.create(title="Deck", owner_id=UUID(int=6))
-        session.add_user_message("start")
-        session.add_track(title="Umbrella", artist="Rihanna", year=2007)
-        session.add_user_message("weiter")
-        for event in session.unconsumed_user_curation_events:
-            event.mark_consumed()
-
-        history = asyncio.run(
-            AgentHistoryBuilder(_MessageAttachmentStoreStub()).build(session=session)
-        )
-
-        user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
-        assert "<user_events>" in user_messages[1].content
-        assert "track_added" in user_messages[1].content
-
-    def test_session_without_curation_events_emits_plain_user_messages(self) -> None:
-        session = Session.create(title="Deck", owner_id=UUID(int=7))
-        session.add_user_message("hi")
-        session.add_assistant_message("hey")
-
-        history = asyncio.run(
-            AgentHistoryBuilder(_MessageAttachmentStoreStub()).build(session=session)
-        )
-
-        user_messages = [m for m in history if isinstance(m, LLMUserMessage)]
-        assert [m.content for m in user_messages] == ["hi"]
-
-    def test_full_multi_turn_rendering_keeps_past_events_visible(self) -> None:
-        """Golden output: a 5-turn history where the user added a track
-        2 turns ago. The curation event lives inside its bound UserMessage
-        and remains visible on every later run — exactly what the LLM sees.
-
-        The session transcript built below maps 1:1 to the asserted
-        ``expected`` list, so you can read this test as a spec of how the
-        agent perceives a multi-turn conversation with manual user actions.
-        """
-        session = Session.create(title="Deck", owner_id=UUID(int=8))
-
-        # Turn 1 — user opens the deck, no manual changes yet.
-        session.add_user_message("Bau mir ein 80er-Deck")
-        session.add_assistant_message("Klar, ich starte mit ein paar Klassikern.")
-
-        # Turn 2 — user adds a track BEFORE typing the next message.
-        # The addition is recorded as a curation event and binds to turn-2's UserMessage.
-        session.add_track(title="Take On Me", artist="a-ha", year=1985)
-        session.add_user_message("der track bleibt, sonst gerne austauschen")
-        session.add_assistant_message("Verstanden, a-ha bleibt drin.")
-
-        # Turn 3 — plain conversation, no manual change.
-        # The earlier curation event is now "2 turns ago" — it must still be visible.
-        session.add_user_message("Mach es etwas tanzbarer")
-
-        # Simulate that previous agent runs already consumed the curation event.
-        # consumed=True must NOT hide it from history rendering.
-        for event in session.user_curation_events:
-            event.mark_consumed()
-
-        history = asyncio.run(
-            AgentHistoryBuilder(_MessageAttachmentStoreStub()).build(session=session)
-        )
-
-        # The event timestamp is generated at runtime — pull it out so
-        # the golden output below stays deterministic.
-        track_added_event = session.user_curation_events[0]
-        track_added_iso = track_added_event.occurred_at.isoformat()
-
-        expected = [
-            LLMUserMessage(content="Bau mir ein 80er-Deck"),
-            LLMAssistantMessage(content="Klar, ich starte mit ein paar Klassikern."),
-            LLMUserMessage(
-                content=(
-                    "<user_events>\n"
-                    f'<event type="track_added" at="{track_added_iso}">'
-                    "a-ha - Take On Me</event>\n"
-                    "</user_events>\n"
-                    "\n"
-                    "der track bleibt, sonst gerne austauschen"
-                )
-            ),
-            LLMAssistantMessage(content="Verstanden, a-ha bleibt drin."),
-            LLMUserMessage(content="Mach es etwas tanzbarer"),
-        ]
-
-        assert [type(m) for m in history] == [type(m) for m in expected]
-        assert [m.content for m in history] == [m.content for m in expected]
-
-
 class TestSendMessageConsumesCurationEvents:
     def test_send_message_consumes_user_curation_events_after_runner(self) -> None:
         user_id = UUID(int=9)
@@ -402,3 +268,110 @@ class TestSendMessageConsumesCurationEvents:
         asyncio.run(run())
 
         assert event.consumed is False
+
+
+class _MemoryCheckpointStore(SqlAgentCheckpointStore):
+    def __init__(self) -> None:
+        self.checkpoint: AgentCheckpoint | None = None
+
+    async def load(self, *, session_id: UUID) -> AgentCheckpoint | None:
+        return self.checkpoint
+
+    async def save(self, *, session_id: UUID, commit: AgentCommit) -> None:
+        state = commit.state
+        if state is None:
+            assert self.checkpoint is not None
+            state = self.checkpoint.state
+        self.checkpoint = AgentCheckpoint(state=state, execution=commit.execution)
+
+
+class _MemoryActiveRuns(ActiveSessionRunStore):
+    def __init__(self) -> None:
+        self.runs: dict[UUID, UUID] = {}
+
+    async def register(self, *, session_id: UUID, run_id: UUID) -> None:
+        self.runs[session_id] = run_id
+
+    async def complete(self, *, session_id: UUID, run_id: UUID) -> None:
+        self.runs.pop(session_id, None)
+
+    async def request_stop(self, *, session_id: UUID) -> bool:
+        return False
+
+    async def is_stop_requested(self, *, session_id: UUID, run_id: UUID) -> bool:
+        return False
+
+
+class _SpotifyHttp:
+    async def open(self) -> None:
+        return None
+
+
+def _replying_model(prompts: list[list[str]], reply: str) -> FunctionModel:
+    async def stream(
+        messages: list[ModelMessage], _info: AgentInfo
+    ) -> AsyncIterator[str]:
+        prompts.append(
+            [
+                str(part.content)
+                for message in messages
+                if isinstance(message, ModelRequest)
+                for part in message.parts
+                if isinstance(part, UserPromptPart)
+            ]
+        )
+        yield reply
+
+    return FunctionModel(stream_function=stream, model_name="scripted")
+
+
+def _runner(
+    llm: FunctionModel, checkpoints: SqlAgentCheckpointStore
+) -> AgentSessionRunner:
+    model = LLMModelInfo(
+        id="scripted",
+        provider_model="scripted",
+        presentation=ModelPresentation(label="Scripted", profile="test", order=0),
+    )
+    return AgentSessionRunner(
+        llm=llm,
+        chat_models=cast(ChatModels, None),
+        spotify=cast(SpotifyClient, SimpleNamespace(http=_SpotifyHttp())),
+        input_builder=AgentInputBuilder(_MessageAttachmentStoreStub()),
+        checkpoints=checkpoints,
+        active_runs=_MemoryActiveRuns(),
+        runtime_registry=AgentRuntimeRegistry(),
+        llm_registry=LLMRegistry(
+            LLMConfig(version=1, default_model_id="scripted", models=(model,))
+        ),
+    )
+
+
+async def _run(runner: AgentSessionRunner, session: Session) -> list[object]:
+    return [event async for event in runner.run(session=session)]
+
+
+class TestAgentSessionRunner:
+    def test_next_run_continues_from_the_saved_checkpoint(self) -> None:
+        checkpoints = _MemoryCheckpointStore()
+        prompts: list[list[str]] = []
+        session = Session.create(title="Deck", owner_id=UUID(int=20))
+        session.add_user_message("Hallo")
+
+        first = asyncio.run(
+            _run(_runner(_replying_model(prompts, "Hi"), checkpoints), session)
+        )
+        session.add_assistant_message("Hi")
+        session.add_user_message("Weiter")
+        asyncio.run(_run(_runner(_replying_model(prompts, "Ok"), checkpoints), session))
+
+        assert SessionRunnerAssistantMessage(content="Hi") in first
+        assert checkpoints.checkpoint is not None
+        assert prompts[1] == ["Hallo", "Weiter"]
+
+    def test_controls_without_a_running_agent_do_nothing(self) -> None:
+        registry = AgentRuntimeRegistry()
+
+        assert registry.pause(session_id=UUID(int=21)) is False
+        assert registry.resume(session_id=UUID(int=21)) is False
+        assert registry.abort(session_id=UUID(int=21)) is False

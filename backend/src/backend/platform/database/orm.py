@@ -11,6 +11,7 @@ from sqlalchemy import (
     LargeBinary,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Relationship, SQLModel, text
 
 
@@ -165,6 +166,34 @@ class ActiveSessionRunModel(SQLModel, table=True):
     stop_requested_at: datetime | None = Field(
         default=None,
         sa_type=DateTime(timezone=True),
+    )
+
+
+class SessionAgentCheckpointModel(SQLModel, table=True):
+    """The agent's harnessed session, saved as JSON to reopen it exactly.
+
+    ``state`` is the settled history and changes only when history does;
+    ``execution`` is the open turn on top of it and changes at every commit.
+    """
+
+    __tablename__ = "session_agent_checkpoints"
+
+    session_id: UUID = Field(
+        sa_column=Column(
+            ForeignKey("sessions.id", ondelete="CASCADE"),
+            primary_key=True,
+            nullable=False,
+        )
+    )
+    state: dict = Field(sa_column=Column(JSONB, nullable=False))
+    execution: dict | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
+    updated_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=True),
+        sa_column_kwargs={
+            "server_default": text("now()"),
+            "onupdate": text("now()"),
+        },
     )
 
 

@@ -420,3 +420,30 @@ async def _collect(agent: Agent) -> list[AgentEvent]:
 def _checkpoint(commits: Sequence[AgentCommit]) -> AgentCheckpoint:
     state = next(c.state for c in reversed(commits) if c.state is not None)
     return AgentCheckpoint(state=state, execution=commits[-1].execution)
+
+
+@pytest.mark.asyncio
+async def test_onboarding_checkpoint_continues_in_the_build_phase(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    commits: list[AgentCommit] = []
+
+    async def store(commit: AgentCommit) -> None:
+        commits.append(commit)
+
+    question = {
+        "question": "Fuer wen?",
+        "options": ["Freunde", "Familie"],
+        "is_last_question": True,
+    }
+    onboarding = scripted_llm({"call-q": ("ask_onboarding_question", question)})
+    await _run(Agent(onboarding.model, on_commit=store, session_id="s1"), "Start")
+    build = scripted_llm("Los gehts.")
+
+    events = await _run(
+        _build_agent(build, checkpoint=_checkpoint(commits), session_id="s1"),
+        "Antwort: Freunde",
+    )
+
+    assert _result(events).result.text == "Los gehts."
+    assert _user_prompts(build.requests[0])[0] == "Start"

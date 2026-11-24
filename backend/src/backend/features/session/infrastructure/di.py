@@ -27,10 +27,10 @@ from backend.features.session.domain import SessionRepository
 from backend.features.session.infrastructure.active_run_store import (
     SqlActiveSessionRunStore,
 )
-from backend.features.session.infrastructure.agent_event_mapper import (
-    AgentSessionEventMapper,
+from backend.features.session.infrastructure.agent_checkpoint_store import (
+    SqlAgentCheckpointStore,
 )
-from backend.features.session.infrastructure.agent_history import AgentHistoryBuilder
+from backend.features.session.infrastructure.agent_input import AgentInputBuilder
 from backend.features.session.infrastructure.message_attachment_store import (
     StorageMessageAttachmentStore,
 )
@@ -65,10 +65,6 @@ class SessionProvider(Provider):
         return LLMSessionTitleGenerator(llm=llm)
 
     @provide(scope=Scope.APP)
-    def provide_agent_session_event_mapper(self) -> AgentSessionEventMapper:
-        return AgentSessionEventMapper()
-
-    @provide(scope=Scope.APP)
     def provide_message_attachment_store(
         self,
         storage_backend: ObjectStorage,
@@ -76,11 +72,18 @@ class SessionProvider(Provider):
         return StorageMessageAttachmentStore(storage_backend=storage_backend)
 
     @provide(scope=Scope.APP)
-    def provide_agent_history_builder(
+    def provide_agent_input_builder(
         self,
         message_attachment_store: MessageAttachmentStore,
-    ) -> AgentHistoryBuilder:
-        return AgentHistoryBuilder(message_attachment_store=message_attachment_store)
+    ) -> AgentInputBuilder:
+        return AgentInputBuilder(message_attachment_store=message_attachment_store)
+
+    @provide(scope=Scope.APP)
+    def provide_agent_checkpoint_store(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+    ) -> SqlAgentCheckpointStore:
+        return SqlAgentCheckpointStore(session_factory=session_factory)
 
     @provide(scope=Scope.APP)
     def provide_active_session_run_store(
@@ -99,8 +102,8 @@ class SessionProvider(Provider):
         llm: Model,
         chat_models: ChatModels,
         spotify: SpotifyClient,
-        event_mapper: AgentSessionEventMapper,
-        history_builder: AgentHistoryBuilder,
+        input_builder: AgentInputBuilder,
+        checkpoints: SqlAgentCheckpointStore,
         *,
         active_runs: ActiveSessionRunStore,
         runtime_registry: AgentRuntimeRegistry,
@@ -110,8 +113,8 @@ class SessionProvider(Provider):
             llm=llm,
             chat_models=chat_models,
             spotify=spotify,
-            event_mapper=event_mapper,
-            history_builder=history_builder,
+            input_builder=input_builder,
+            checkpoints=checkpoints,
             active_runs=active_runs,
             runtime_registry=runtime_registry,
             llm_registry=llm_registry,

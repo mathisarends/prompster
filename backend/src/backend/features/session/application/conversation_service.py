@@ -18,6 +18,7 @@ from backend.features.session.application.events import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionPlaylistTrackReplaced,
+    SessionRunStatusChanged,
     SessionSnapshot,
     SessionSuspendedForInput,
     SessionTitleGenerated,
@@ -47,6 +48,7 @@ from backend.features.session.application.ports import (
     SessionRunnerPlaylistTracksReplaced,
     SessionRunnerPlaylistUpdated,
     SessionRunnerQuestionAsked,
+    SessionRunnerRunStatusChanged,
     SessionRunnerSuspendedForInput,
     SessionRunnerToolCallCompleted,
     SessionRunnerToolCallRetry,
@@ -196,6 +198,14 @@ class SessionConversationService:
     ) -> bool:
         await self._get_authorized(session_id=session_id, user_id=user_id)
         return await self._runner.stop(session_id=session_id)
+
+    async def pause_message(self, *, session_id: UUID, user_id: UUID) -> bool:
+        await self._get_authorized(session_id=session_id, user_id=user_id)
+        return await self._runner.pause(session_id=session_id)
+
+    async def resume_message(self, *, session_id: UUID, user_id: UUID) -> bool:
+        await self._get_authorized(session_id=session_id, user_id=user_id)
+        return await self._runner.resume(session_id=session_id)
 
     def _maybe_start_title_generation(
         self,
@@ -527,7 +537,14 @@ class SessionConversationService:
                     session=session,
                 )
             case SessionRunnerContextCompacted():
-                return self._handle_context_compacted(event=event)
+                return (
+                    SessionContextCompacted(
+                        tokens_before=event.tokens_before,
+                        tokens_after=event.tokens_after,
+                    ),
+                )
+            case SessionRunnerRunStatusChanged():
+                return (SessionRunStatusChanged(status=event.status),)
             case SessionRunnerPlaylistUpdated():
                 return await self._handle_playlist_updated(
                     event=event,
@@ -669,21 +686,6 @@ class SessionConversationService:
                 max_attempts=event.max_attempts,
                 retry_in_seconds=event.retry_in_seconds,
                 sequence_id=pending_sequence.id if pending_sequence else None,
-            ),
-        )
-
-    def _handle_context_compacted(
-        self,
-        *,
-        event: SessionRunnerContextCompacted,
-    ) -> tuple[SessionEvent, ...]:
-        # Transient, informational: the agent trimmed older tool results to stay
-        # under the token budget. Surface it live but never persist or mutate.
-        return (
-            SessionContextCompacted(
-                reason=event.reason,
-                tokens_before=event.tokens_before,
-                compacted_tool_results=event.compacted_tool_results,
             ),
         )
 

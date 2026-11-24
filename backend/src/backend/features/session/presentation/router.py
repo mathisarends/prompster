@@ -175,6 +175,48 @@ async def stop_message(
 
 
 @router.post(
+    "/{session_id}/messages/pause",
+    operation_id="pause_message",
+    raises=(
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+    ),
+    response=CanonResponse.empty(),
+)
+async def pause_message(
+    session_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    service: Inject[SessionConversationService],
+) -> Response:
+    await service.pause_message(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/{session_id}/messages/resume",
+    operation_id="resume_message",
+    raises=(
+        SESSION_NOT_FOUND_ERROR,
+        SESSION_ACCESS_DENIED_ERROR,
+    ),
+    response=CanonResponse.empty(),
+)
+async def resume_message(
+    session_id: UUID,
+    authenticated_user_id: AuthenticatedUserId,
+    service: Inject[SessionConversationService],
+) -> Response:
+    await service.resume_message(
+        session_id=session_id,
+        user_id=authenticated_user_id,
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
     "/{session_id}/tracks",
     response_model=PlaylistTrackResponse,
     status_code=status.HTTP_201_CREATED,
