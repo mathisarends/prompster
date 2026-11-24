@@ -37,11 +37,11 @@ export class AppBreadcrumb extends LitElement {
     }
     li:last-child {
       color: var(--color-text);
-      font-weight: var(--font-weight-control);
+      font-weight: var(--font-weight-regular);
     }
     .separator {
       color: var(--color-muted);
-      font-weight: var(--font-weight-control);
+      font-weight: var(--font-weight-regular);
     }
     .label {
       overflow: hidden;

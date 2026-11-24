@@ -7,13 +7,15 @@ export class BrandMark extends LitElement {
     :host {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      font: 500 18px var(--font-sans);
+      gap: 9px;
+      font-family: var(--font-sans);
+      font-size: 18px;
+      font-weight: var(--font-weight-medium);
       letter-spacing: -0.6px;
     }
     .mark {
-      width: 36px;
-      height: 36px;
+      width: var(--brand-mark-size, 36px);
+      height: var(--brand-mark-size, 36px);
       flex-shrink: 0;
     }
   `;

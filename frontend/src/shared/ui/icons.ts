@@ -25,6 +25,19 @@ import {
   Sparkles,
   Trash2,
   X,
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  VolumeX,
+  Paperclip,
+  Settings,
+  SquarePen,
+  ExternalLink,
+  AudioLines,
+  Star,
+  PanelRight,
   type IconNode,
 } from "lucide";
 
@@ -53,6 +66,19 @@ const icons = {
   sparkles: Sparkles,
   trash: Trash2,
   close: X,
+  play: Play,
+  pause: Pause,
+  previous: SkipBack,
+  next: SkipForward,
+  volume: Volume2,
+  mute: VolumeX,
+  paperclip: Paperclip,
+  settings: Settings,
+  compose: SquarePen,
+  external: ExternalLink,
+  equalizer: AudioLines,
+  star: Star,
+  panelRight: PanelRight,
 } satisfies Record<string, IconNode>;
 export type IconName = keyof typeof icons;
 
@@ -70,6 +96,7 @@ const markup = Object.fromEntries(
       .join(""),
   ]),
 ) as Record<IconName, string>;
-export function icon(name: IconName, size = 20) {
-  return svg`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${unsafeSVG(markup[name])}</svg>`;
+/** Pass `filled` for solid transport glyphs such as play and pause. */
+export function icon(name: IconName, size = 20, filled = false) {
+  return svg`<svg width=${size} height=${size} viewBox="0 0 24 24" fill=${filled ? "currentColor" : "none"} stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${unsafeSVG(markup[name])}</svg>`;
 }

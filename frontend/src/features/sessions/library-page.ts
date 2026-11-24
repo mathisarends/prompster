@@ -6,6 +6,7 @@ import type { SessionSummaryResponse } from "@api/generated/sessions";
 import { pageStyles } from "@shared/styles/page";
 import { icon } from "@shared/ui/icons";
 import { emit } from "@shared/events";
+import "@shared/ui/deck-cover";
 
 @customElement("library-page")
 @localized()
@@ -15,90 +16,130 @@ export class LibraryPage extends LitElement {
   @property() error = "";
   @state() private filter = "";
   static styles = css`
-    ${pageStyles} :host {
+    ${pageStyles}
+    :host {
       display: block;
-      padding: 40px clamp(20px, 5vw, 72px);
       overflow-y: auto;
+    }
+    .page {
+      width: min(100%, var(--content-width));
+      margin: 0 auto;
+      padding: 56px 24px 64px;
     }
     header {
       display: flex;
-      gap: 20px;
+      align-items: flex-end;
       justify-content: space-between;
-      align-items: center;
+      gap: 20px;
+      margin-bottom: 24px;
     }
     h1 {
-      font-size: 30px;
       margin: 0;
+      font-size: var(--font-size-title);
     }
     header p {
+      margin: 4px 0 0;
       color: var(--color-muted);
-      font-size: 13px;
     }
-    .input {
-      margin: 22px 0;
-      max-width: 380px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-      gap: 18px;
-    }
-    .tile {
-      position: relative;
-      padding: 22px;
+    .filter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 40px;
+      margin-bottom: 12px;
+      padding: 0 12px;
       border: 1px solid var(--color-border);
-      border-radius: 16px;
-      background: var(--color-sidebar);
+      border-radius: var(--radius-control);
+      background: var(--color-surface);
+      color: var(--color-faint);
+    }
+    .filter:focus-within {
+      border-color: var(--color-border-strong);
+    }
+    .filter input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--color-text);
+      font: inherit;
+    }
+    .filter input::placeholder {
+      color: var(--color-faint);
+    }
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .deck {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      height: 64px;
+      padding: 0 8px;
+      border: 0;
+      border-radius: var(--radius-xs);
+      background: none;
       color: var(--color-text);
       text-align: left;
     }
-    .tile:hover {
-      background: var(--color-panel);
+    .deck:hover {
+      background: var(--color-row-hover);
     }
-    .art {
-      width: 60px;
-      height: 76px;
-      display: grid;
-      place-items: center;
-      border-radius: 9px;
-      background: var(--color-card-lime);
-      color: var(--color-card-ink);
-      transform: rotate(-8deg);
-      margin: 4px 0 26px;
+    deck-cover {
+      width: 48px;
+      flex-shrink: 0;
     }
-    .tile:nth-child(3n + 2) .art {
-      background: var(--color-card-lilac);
+    .meta {
+      flex: 1;
+      min-width: 0;
+      line-height: 1.35;
     }
-    .tile:nth-child(3n) .art {
-      background: var(--color-card-peach);
+    .title,
+    .subtitle {
+      display: block;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
     .title {
-      display: block;
-      font-size: 14px;
-      overflow-wrap: anywhere;
+      color: var(--color-text-strong);
+      font-size: var(--font-size-track);
     }
-    small {
-      display: block;
-      font-size: 11px;
-      margin-top: 8px;
+    .subtitle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       color: var(--color-muted);
+      font-size: var(--font-size-label);
     }
-    .star {
-      position: absolute;
-      right: 22px;
-      top: 22px;
-      color: var(--color-accent);
+    .subtitle svg {
+      flex-shrink: 0;
+      color: var(--color-play);
+    }
+    @media (max-width: 560px) {
+      .page {
+        padding: 32px 16px 48px;
+      }
+      header {
+        align-items: center;
+      }
+      header p {
+        display: none;
+      }
     }
   `;
   render() {
+    const query = this.filter.toLocaleLowerCase(getLocale());
     const sessions = this.sessions.filter((item) =>
-      item.title
-        .toLocaleLowerCase(getLocale())
-        .includes(this.filter.toLocaleLowerCase(getLocale())),
+      item.title.toLocaleLowerCase(getLocale()).includes(query),
     );
-    return html`<header>
+    return html`<div class="page">
+      <header>
         <div>
-          <p class="eyebrow">${msg("DEINE MUSIK. DEINE ERINNERUNGEN.")}</p>
           <h1>${msg("Meine Decks")}</h1>
           <p>${msg("Für die nächste Runde ist immer Platz.")}</p>
         </div>
@@ -106,17 +147,61 @@ export class LibraryPage extends LitElement {
           ${icon("plus", 16)} ${msg("Neues Deck")}
         </button>
       </header>
-      <input
-        class="input"
-        type="search"
-        aria-label=${msg("Sammlung filtern")}
-        placeholder=${msg("Dein nächster Lieblingsmix …")}
-        .value=${this.filter}
-        @input=${(event: Event) => (this.filter = (event.target as HTMLInputElement).value)}
-      />${this.loading ? html`<p class="status" role="status">${msg("Decks werden geladen …")}</p>` : nothing}${this.error ? html`<p class="error" role="alert">${this.error}<button class="text-button" @click=${() => emit(this, "sessions-retry")}>${msg("Erneut versuchen")}</button></p>` : nothing}
-      <div class="grid">
-        ${sessions.map((session) => html`<button class="tile" @click=${() => emit(this, "session-select", session.id)}><span class="art">${icon("music", 28)}</span>${session.isStarred ? html`<span class="star">${icon("sparkles", 16)}</span>` : nothing}<strong class="title">${session.title || msg("Neues Deck")}</strong><small>${formatDate(session.lastActivityAt)}</small></button>`)}
-      </div>
-      ${!sessions.length && !this.loading && !this.error ? html`<div class="status"><p>${this.filter ? msg("Kein Deck passt zu deiner Suche.") : msg("Deine Sammlung beginnt mit einer Idee.")}</p></div>` : nothing}`;
+      <label class="filter">
+        ${icon("search", 16)}
+        <input
+          type="search"
+          aria-label=${msg("Sammlung filtern")}
+          placeholder=${msg("Dein nächster Lieblingsmix …")}
+          .value=${this.filter}
+          @input=${(event: Event) => (this.filter = (event.target as HTMLInputElement).value)}
+        />
+      </label>
+      ${this.loading ? html`<p class="status" role="status">${msg("Decks werden geladen …")}</p>` : nothing}
+      ${
+        this.error
+          ? html`<p class="error" role="alert">
+              ${this.error}
+              <button class="text-button" @click=${() => emit(this, "sessions-retry")}>
+                ${msg("Erneut versuchen")}
+              </button>
+            </p>`
+          : nothing
+      }
+      <ul>
+        ${sessions.map((session) => {
+          const title = session.title || msg("Neues Deck");
+          return html`<li>
+            <button
+              class="deck"
+              aria-label=${title}
+              @click=${() => emit(this, "session-select", session.id)}
+            >
+              <deck-cover .urls=${session.coverUrls ?? []}></deck-cover>
+              <span class="meta">
+                <span class="title">${title}</span>
+                <span class="subtitle">
+                  ${session.isStarred ? html`<span role="img" aria-label=${msg("Favorit")}>${icon("star", 12, true)}</span>` : nothing}
+                  ${msg("Deck")} ·
+                  <time datetime=${session.lastActivityAt}
+                    >${formatDate(session.lastActivityAt)}</time
+                  >
+                </span>
+              </span>
+            </button>
+          </li>`;
+        })}
+      </ul>
+      ${
+        !sessions.length && !this.loading && !this.error
+          ? html`<div class="status">
+              ${icon("layers", 24)}
+              <p>
+                ${this.filter ? msg("Kein Deck passt zu deiner Suche.") : msg("Deine Sammlung beginnt mit einer Idee.")}
+              </p>
+            </div>`
+          : nothing
+      }
+    </div>`;
   }
 }

@@ -11,6 +11,7 @@ class SessionSummary:
     is_starred: bool
     created_at: datetime
     last_activity_at: datetime
+    cover_urls: tuple[str, ...] = ()
 
 
 class SessionSummaryQuery(ABC):

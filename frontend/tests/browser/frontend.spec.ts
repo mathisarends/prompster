@@ -52,7 +52,7 @@ test("model selection stays distinct for Codex and survives mobile settings and 
   const selector = await model.boundingBox();
   expect(selector!.x + selector!.width).toBeLessThan(send!.x);
   await page.getByRole("button", { name: "Seitenleiste öffnen" }).click();
-  await page.getByRole("button", { name: /Mathi Dein Deckstudio/ }).click();
+  await page.getByRole("button", { name: /Mathi · Konto und Einstellungen/ }).click();
   await page.getByRole("combobox", { name: "Sprache" }).selectOption("en");
   await page.getByRole("button", { name: "Open sidebar" }).click();
   await page.getByRole("button", { name: /New deck/ }).click();
@@ -94,7 +94,7 @@ test("rename and star propagate to the collection", async ({ page }) => {
   await expect(page.getByRole("button", { name: "90er Party", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Aktionen für 90er Party" }).click();
   await page.getByRole("button", { name: "Als Favorit speichern" }).click();
-  await expect(page.getByText("FAVORITEN", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Favoriten/ })).toBeVisible();
   await page.getByRole("button", { name: "Meine Decks", exact: true }).click();
   await expect(page.locator("library-page")).toContainText("90er Party");
 });

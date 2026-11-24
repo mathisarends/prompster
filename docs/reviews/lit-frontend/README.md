@@ -1,6 +1,6 @@
 # Lit frontend: review gallery
 
-Recorded on 2026-10-04 from application commit `e92000a` in Chrome. Desktop:
+Recorded on 2026-11-24 from the T3-style redesign (based on `64cb21c`) in Chrome. Desktop:
 1440 × 960; mobile: 390 × 844. The screenshots and videos use controlled HTTP
 and WebSocket fixtures plus a simulated browser speech-recognition service.
 They demonstrate layout, navigation, dictation controls and interactions;
@@ -48,21 +48,22 @@ The production application uses the real backend.
 - [16 · English card workspace](16-cards-desktop-en.png)
 - [17 · English mobile chat](17-chat-mobile-en.png)
 
-The 17 screenshots include the full-height workspace with keyboard-accessible
-tabs, compact composer, card monogram and both card faces. Header divider lines,
-the composer reference button and the game-rules entry have been removed.
-Deck captions and the text button for closing the deck are also removed;
-workspace actions use icons with hover labels and keyboard-shortcut hints.
-The composer shows the concrete model label and OpenAI mark from the reference.
-The fixtures use representative backend registry entries instead of a generic
-"Standard" option: GPT 6 Luna is the default, and the desktop walkthrough selects
-GPT 6 Sol. Codex variants remain distinguishable by their model labels.
-Language selection is available exclusively in settings. Visiting settings
-preserves the chat draft and selected deck tab, while stopping active dictation.
-The language switch updates the interface while preserving the fixture's
-original German conversation and deck name. Card colors and proportions follow
-the existing PDF template; its precise print font and crop marks remain in the
-generated PDF. The browser preview uses an available serif font.
+The 17 screenshots show the black, T3-inspired theme built on shared design
+tokens (`src/style.css`) and the Inter typeface. The sidebar lists decks as plain
+titles with a favorite marker. The library shows each deck with Spotify-style
+artwork: a 2×2 mosaic of its first four distinct album covers, a single cover,
+or a neutral placeholder. The workspace uses pill tabs, a Spotify-like track
+table with album art, and a browser player bar that becomes a mini player in
+narrow panels. Track actions appear on hover instead of reserving a column.
+The composer shows the concrete model label and OpenAI mark; GPT 6 Luna is the
+default, and the desktop walkthrough selects GPT 6 Sol. Codex variants remain
+distinguishable by their model labels. Language selection is available
+exclusively in settings. Visiting settings preserves the chat draft and selected
+deck tab, while stopping active dictation. The language switch updates the
+interface while preserving the fixture's original German conversation and deck
+name. Card colors and proportions follow the existing PDF template. Album art in
+the fixtures is loaded from public catalogue URLs; the fixture account has no
+Spotify Premium, so the player shows its Premium notice.
 
 ![Desktop studio](02-studio-desktop.png)
 

@@ -73,11 +73,11 @@ export class ChatComposer extends LitElement {
       display: block;
     }
     form {
-      padding: 16px 14px 10px;
+      padding: 16px 12px 10px;
       border: 1px solid var(--color-border);
-      border-radius: 20px;
-      background: var(--color-composer);
-      box-shadow: 0 4px 20px #0001;
+      border-radius: var(--radius-panel);
+      background: var(--color-surface);
+      transition: border-color 0.15s;
     }
     form:focus-within {
       border-color: var(--color-border-strong);
@@ -86,14 +86,14 @@ export class ChatComposer extends LitElement {
       display: block;
       resize: none;
       width: 100%;
-      min-height: 48px;
+      min-height: 44px;
       max-height: 180px;
       border: 0;
       outline: none !important;
       background: transparent;
       color: var(--color-text);
-      padding: 0 4px;
-      font-size: 14px;
+      padding: 0 8px;
+      font-size: var(--font-size-chat);
       line-height: 1.6;
     }
     footer {
@@ -118,7 +118,7 @@ export class ChatComposer extends LitElement {
     .voice-error {
       margin: 8px 4px 0;
       color: var(--color-error);
-      font-size: 12px;
+      font-size: var(--font-size-caption);
       line-height: 1.5;
     }
     .type {
@@ -126,22 +126,28 @@ export class ChatComposer extends LitElement {
       align-items: center;
       gap: 7px;
       color: var(--color-muted);
-      font-size: 12px;
+      font-size: var(--font-size-caption);
     }
     .send {
       display: grid;
       place-items: center;
-      width: 36px;
-      height: 36px;
+      width: 34px;
+      height: 34px;
+      margin-left: 2px;
       padding: 0;
       border: 0;
       border-radius: 50%;
-      background: var(--color-accent);
-      color: var(--color-on-accent);
+      background: var(--color-text);
+      color: var(--color-background);
+      transition:
+        background 0.15s,
+        color 0.15s;
     }
     .send:disabled {
       cursor: default;
-      opacity: 0.4;
+      opacity: 1;
+      background: var(--color-control);
+      color: var(--color-muted);
     }
   `;
   render() {
@@ -181,6 +187,7 @@ export class ChatComposer extends LitElement {
           >
         </div>
         <div class="actions">
+          <slot name="model"></slot>
           <voice-input
             .disabled=${this.pending || this.inactive}
             .context=${this.context}
@@ -189,7 +196,7 @@ export class ChatComposer extends LitElement {
             @dictation-error=${(event: CustomEvent<string>) => (this.voiceError = event.detail)}
             @transcript=${this.acceptTranscript}
           ></voice-input>
-          ${this.dictating ? nothing : this.pending ? html`<button class="send" type="button" title=${msg("Antwort stoppen")} aria-label=${msg("Antwort stoppen")} ?disabled=${this.stopping} @click=${() => this.dispatchEvent(new CustomEvent("stop-request", { bubbles: true, composed: true }))}>${icon("close", 18)}</button>` : html`<button class="send" type="submit" title=${`${msg("Nachricht senden")} · Enter`} aria-keyshortcuts="Enter" aria-label=${msg("Nachricht senden")} ?disabled=${!this.value.trim() && !this.hasAttachments}>${icon("arrowUp", 19)}</button>`}
+          ${this.dictating ? nothing : this.pending ? html`<button class="send" type="button" title=${msg("Antwort stoppen")} aria-label=${msg("Antwort stoppen")} ?disabled=${this.stopping} @click=${() => this.dispatchEvent(new CustomEvent("stop-request", { bubbles: true, composed: true }))}>${icon("close", 15)}</button>` : html`<button class="send" type="submit" title=${`${msg("Nachricht senden")} · Enter`} aria-keyshortcuts="Enter" aria-label=${msg("Nachricht senden")} ?disabled=${!this.value.trim() && !this.hasAttachments}>${icon("arrowUp", 16)}</button>`}
         </div>
       </footer>
     </form>`;

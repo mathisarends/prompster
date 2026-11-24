@@ -1,36 +1,37 @@
 import { css } from "lit";
 import { workspaceStyles } from "./workspace";
 
+/** Page-level building blocks: status text, form fields, alerts and dialogs. */
 export const pageStyles = css`
   ${workspaceStyles}
   .muted {
     color: var(--color-muted);
   }
   .error {
-    color: var(--color-error);
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius-control);
     background: var(--color-error-surface);
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-size: 13px;
+    color: var(--color-error);
+    font-size: var(--font-size-label);
   }
   .status {
-    padding: 40px 24px;
-    text-align: center;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding: 48px 24px;
     color: var(--color-muted);
+    text-align: center;
+  }
+  .status p {
+    margin: 0;
   }
   .field {
     display: grid;
-    gap: 7px;
+    gap: 6px;
     margin-bottom: 16px;
-    font-size: 12px;
-  }
-  .input {
-    width: 100%;
-    border: 1px solid var(--color-border);
-    border-radius: 10px;
-    padding: 12px;
-    background: var(--color-sidebar);
-    color: var(--color-text);
+    color: var(--color-muted);
+    font-size: var(--font-size-label);
   }
   .actions {
     display: flex;
@@ -39,32 +40,27 @@ export const pageStyles = css`
     margin-top: 20px;
   }
   dialog {
-    width: min(500px, calc(100vw - 40px));
+    width: min(440px, calc(100vw - 32px));
     max-height: calc(100dvh - 48px);
     overflow: auto;
-    padding: 28px;
+    padding: 24px;
     border: 1px solid var(--color-border);
-    border-radius: 20px;
+    border-radius: var(--radius-panel);
+    background: var(--color-surface);
     color: var(--color-text);
-    background: var(--color-sidebar);
     box-shadow: var(--shadow-panel);
   }
   dialog::backdrop {
-    background: #000a;
-    backdrop-filter: blur(5px);
+    background: var(--color-backdrop);
+    backdrop-filter: blur(4px);
   }
   dialog h2 {
-    margin: 0 0 12px;
-    font-size: 21px;
+    margin: 0 0 8px;
+    font-size: var(--font-size-track);
   }
   dialog p {
+    margin: 0 0 8px;
     color: var(--color-muted);
-    font-size: 13px;
-  }
-  .tag {
-    border: 1px solid var(--color-border);
-    border-radius: 20px;
-    padding: 4px 9px;
-    font-size: 10px;
+    font-size: var(--font-size-label);
   }
 `;

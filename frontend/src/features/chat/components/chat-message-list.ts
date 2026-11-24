@@ -32,65 +32,86 @@ export class ChatMessageList extends LitElement {
     .scroll {
       width: 100%;
       overflow-y: auto;
-      padding: 28px max(22px, calc((100% - 740px) / 2));
+      padding: 24px max(24px, calc((100% - var(--content-width)) / 2));
     }
     .entry {
-      margin-bottom: 30px;
+      margin-bottom: 32px;
     }
+    /* Research steps collapse into one quiet line, like T3's tool calls. */
     details {
-      padding: 10px 0;
       color: var(--color-muted);
-      font-size: 12px;
+      font-size: var(--font-size-label);
     }
     summary {
-      cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      padding: 4px 8px 4px 0;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      list-style: none;
+    }
+    summary::-webkit-details-marker {
+      display: none;
+    }
+    summary:hover {
+      color: var(--color-text);
+    }
+    summary svg {
+      color: var(--color-faint);
     }
     .tool {
-      margin: 10px 0;
-      padding: 10px 14px;
+      margin: 8px 0 0 7px;
+      padding: 2px 0 2px 16px;
       border-left: 1px solid var(--color-border);
     }
     .tool strong {
       color: var(--color-text);
-      font-size: 12px;
+      font-weight: var(--font-weight-medium);
     }
     .tool p {
-      margin: 4px 0;
+      margin: 2px 0 0;
+      color: var(--color-faint);
+      font-size: var(--font-size-caption);
       white-space: pre-wrap;
     }
     .pending {
       display: flex;
       align-items: center;
-      gap: 9px;
-      font-size: 12px;
+      gap: 8px;
       color: var(--color-muted);
+      font-size: var(--font-size-label);
     }
     .pending svg {
       color: var(--color-accent);
+      animation: glow 1.6s ease-in-out infinite;
+    }
+    @keyframes glow {
+      50% {
+        opacity: 0.35;
+      }
     }
     .attachments {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       justify-content: flex-end;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .attachment {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      font-size: 11px;
-      padding: 7px 10px;
-      border: 1px solid var(--color-border);
-      border-radius: 9px;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      background: var(--color-chip);
+      color: var(--color-muted);
+      font-size: var(--font-size-caption);
     }
     img {
       max-width: 170px;
       max-height: 140px;
-      border-radius: 10px;
+      border-radius: var(--radius-control);
     }
   `;
   render() {

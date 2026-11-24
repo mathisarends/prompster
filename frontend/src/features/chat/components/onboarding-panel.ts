@@ -41,32 +41,65 @@ export class OnboardingPanel extends LitElement {
     });
   }
   static styles = css`
-    ${pageStyles} :host {
+    ${pageStyles}
+    :host {
       display: block;
-      border: 1px solid var(--color-border);
-      border-radius: 16px;
-      padding: 22px;
       margin: 24px 0;
+      padding: 20px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      background: var(--color-surface);
     }
     fieldset {
-      border: 0;
+      margin: 0 0 24px;
       padding: 0;
-      margin: 0 0 20px;
+      border: 0;
     }
     legend {
-      font-weight: 500;
-      margin-bottom: 10px;
-    }
-    label.option {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 7px 0;
-      font-size: 13px;
+      margin-bottom: 4px;
+      padding: 0;
+      color: var(--color-text-strong);
+      font-weight: var(--font-weight-medium);
     }
     .hint {
+      margin: 0 0 4px;
       color: var(--color-muted);
-      font-size: 12px;
+      font-size: var(--font-size-label);
+    }
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    label.option {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 32px;
+      padding: 0 14px 0 10px;
+      border: 1px solid var(--color-border-strong);
+      border-radius: var(--radius-pill);
+      color: var(--color-text);
+      font-size: var(--font-size-label);
+      cursor: pointer;
+      transition:
+        background 0.12s,
+        color 0.12s;
+    }
+    label.option:hover {
+      background: var(--color-chip);
+    }
+    label.option:has(input:checked) {
+      border-color: var(--color-text-strong);
+      background: var(--color-text-strong);
+      color: var(--color-inverse);
+    }
+    label.option input {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      accent-color: var(--color-inverse);
     }
     input[type="text"] {
       margin-top: 12px;
@@ -88,33 +121,37 @@ export class OnboardingPanel extends LitElement {
         (question) =>
           html`<fieldset ?disabled=${this.pending}>
             <legend>${question.question}</legend>
-            ${question.hint ? html`<p class="hint">${question.hint}</p>` : nothing}${question.options.map(
-              (option) =>
-                html`<label class="option"
-                  ><input
-                    type=${question.selectionMode === "multi_select" ? "checkbox" : "radio"}
-                    name=${question.id}
-                    .checked=${(this.selections[question.id] ?? []).includes(option)}
-                    @change=${(event: Event) => {
-                      const checked = (event.target as HTMLInputElement).checked;
-                      this.selections = {
-                        ...this.selections,
-                        [question.id]:
-                          question.selectionMode === "single_select"
-                            ? [option]
-                            : checked
-                              ? [...(this.selections[question.id] ?? []), option]
-                              : (this.selections[question.id] ?? []).filter(
-                                  (value) => value !== option,
-                                ),
-                      };
-                      if (question.selectionMode === "single_select") {
-                        this.freeText = { ...this.freeText, [question.id]: "" };
-                      }
-                    }}
-                  />${option}</label
-                >`,
-            )}<input
+            ${question.hint ? html`<p class="hint">${question.hint}</p>` : nothing}
+            <div class="options">
+              ${question.options.map(
+                (option) =>
+                  html`<label class="option"
+                    ><input
+                      type=${question.selectionMode === "multi_select" ? "checkbox" : "radio"}
+                      name=${question.id}
+                      .checked=${(this.selections[question.id] ?? []).includes(option)}
+                      @change=${(event: Event) => {
+                        const checked = (event.target as HTMLInputElement).checked;
+                        this.selections = {
+                          ...this.selections,
+                          [question.id]:
+                            question.selectionMode === "single_select"
+                              ? [option]
+                              : checked
+                                ? [...(this.selections[question.id] ?? []), option]
+                                : (this.selections[question.id] ?? []).filter(
+                                    (value) => value !== option,
+                                  ),
+                        };
+                        if (question.selectionMode === "single_select") {
+                          this.freeText = { ...this.freeText, [question.id]: "" };
+                        }
+                      }}
+                    />${option}</label
+                  >`,
+              )}
+            </div>
+            <input
               class="input"
               type="text"
               aria-label=${msg("Eigene Antwort")}

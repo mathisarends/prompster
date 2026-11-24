@@ -1,4 +1,4 @@
-import "@fontsource-variable/geist";
+import "@fontsource-variable/inter";
 import "@fontsource-variable/geist-mono";
 import { QueryClientProvider } from "@tanstack/lit-query";
 import { queryClient } from "@api/query-client";

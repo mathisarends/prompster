@@ -134,18 +134,19 @@ export class ChatPage extends LitElement {
           ?disabled=${this.chat.busy || this.attachments.length >= 8}
           @click=${() => this.renderRoot.querySelector<HTMLInputElement>("#images")?.click()}
         >
-          ${icon("plus", 20)}
+          ${icon("paperclip", 18)}
         </button>
-        <model-select
-          .options=${options}
-          .value=${this.chat.modelId ?? ""}
-          ?disabled=${this.chat.busy || !options.length}
-          @model-change=${(event: CustomEvent<string>) => {
-            this.chat.modelId = event.detail;
-            this.requestUpdate();
-          }}
-        ></model-select>
       </div>
+      <model-select
+        slot="model"
+        .options=${options}
+        .value=${this.chat.modelId ?? ""}
+        ?disabled=${this.chat.busy || !options.length}
+        @model-change=${(event: CustomEvent<string>) => {
+          this.chat.modelId = event.detail;
+          this.requestUpdate();
+        }}
+      ></model-select>
     </chat-composer>`;
   }
   static styles = css`
@@ -174,36 +175,28 @@ export class ChatPage extends LitElement {
     .toolbar {
       display: flex;
       align-items: center;
-      padding: 0 20px;
-      height: 58px;
+      padding: 0 12px 0 16px;
+      height: var(--header-height);
       flex-shrink: 0;
-      gap: 10px;
+      gap: 8px;
     }
     .toolbar app-breadcrumb {
       flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-size: 12px;
     }
     .composer-area {
-      width: min(100%, 780px);
+      width: min(100%, calc(var(--content-width) + 48px));
       margin: 0 auto;
-      padding: 12px 24px 20px;
-    }
-    .composer-tools {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      min-width: 0;
+      padding: 8px 24px 14px;
     }
     .inline-error {
       margin: 10px 24px;
     }
     deck-panel {
-      width: min(46%, 600px);
-      min-width: 340px;
-      border-left: 1px solid var(--color-border);
+      width: min(44%, 560px);
+      min-width: 380px;
     }
     deck-panel.expanded {
       flex: 1;
@@ -253,7 +246,7 @@ export class ChatPage extends LitElement {
                     aria-expanded="false"
                     @click=${this.openWorkspace}
                   >
-                    ${icon("layers", 18)}
+                    ${icon("panelRight", 16)}
                   </button>`
                 : nothing
             }
@@ -290,7 +283,10 @@ export class ChatPage extends LitElement {
                 .user=${this.user}
                 .curationEvents=${this.chat.session?.unconsumedUserCurationEvents ?? []}
                 ?busy=${this.chat.busy}
-                @deck-changed=${() => this.chat.refresh()}
+                @deck-changed=${() => {
+                  void this.chat.refresh();
+                  emit(this, "session-changed");
+                }}
                 @toggle-expand=${() => (this.workspaceExpanded = !this.workspaceExpanded)}
                 @close-panel=${this.closeWorkspace}
               ></deck-panel>`

@@ -119,6 +119,14 @@ export async function mockApi(
                 isStarred: current.isStarred,
                 createdAt: current.createdAt,
                 lastActivityAt: current.createdAt,
+                // Mirrors the backend: up to four distinct covers in playlist order.
+                coverUrls: [
+                  ...new Set(
+                    (current.playlist?.tracks ?? []).flatMap((track) =>
+                      track.coverUrl ? [track.coverUrl] : [],
+                    ),
+                  ),
+                ].slice(0, 4),
               },
             ],
       });

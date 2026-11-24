@@ -118,9 +118,9 @@ export class AppLayout extends LitElement {
       height: 100%;
     }
     side-bar {
-      width: 252px;
-      flex: 0 0 252px;
-      border-right: 1px solid var(--color-border);
+      width: var(--sidebar-width);
+      flex: 0 0 var(--sidebar-width);
+      border-right: 1px solid var(--color-border-subtle);
     }
     main {
       display: flex;
@@ -132,26 +132,13 @@ export class AppLayout extends LitElement {
     .topbar {
       display: flex;
       align-items: center;
-      height: 58px;
+      height: var(--header-height);
       flex-shrink: 0;
-      gap: 12px;
-      padding: 0 24px;
+      gap: 8px;
+      padding: 0 12px 0 16px;
     }
     .topbar app-breadcrumb {
       flex: 1;
-    }
-    .studio-status {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      color: var(--color-muted);
-      font-size: 10px;
-    }
-    .dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--color-accent);
     }
     chat-page {
       flex: 1;
@@ -171,6 +158,15 @@ export class AppLayout extends LitElement {
     .danger {
       color: var(--color-error);
     }
+    dialog details {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-border);
+    }
+    dialog summary {
+      cursor: pointer;
+      font-size: var(--font-size-label);
+    }
     @media (max-width: 800px) {
       side-bar {
         position: fixed;
@@ -182,7 +178,7 @@ export class AppLayout extends LitElement {
         display: block;
         position: fixed;
         inset: 0;
-        background: #0009;
+        background: var(--color-backdrop);
         border: 0;
         z-index: 29;
       }
@@ -211,11 +207,8 @@ export class AppLayout extends LitElement {
               ? html`<div class="topbar">
                   ${!this.sidebarOpen ? html`<button class="icon-button" aria-label=${msg("Seitenleiste öffnen")} title=${shortcutTitle(msg("Seitenleiste öffnen"), "sidebar")} aria-keyshortcuts=${shortcutKeys("sidebar")} @click=${() => (this.sidebarOpen = true)}>${icon("panelLeft", 18)}</button>` : nothing}<app-breadcrumb
                     label=${msg("Seitennavigation")}
-                    .items=${[{ label: msg("Dein Deckstudio") }, { label: this.path === "/settings" ? msg("Einstellungen") : this.path === "/decks" ? msg("Meine Decks") : msg("Musik & Erinnerungen") }]}
-                  ></app-breadcrumb
-                  ><span class="studio-status"
-                    ><span class="dot"></span> ${msg("Made for game night")}</span
-                  >
+                    .items=${[{ label: msg("Deckstudio") }, { label: this.path === "/settings" ? msg("Einstellungen") : this.path === "/decks" ? msg("Meine Decks") : msg("Musik & Erinnerungen") }]}
+                  ></app-breadcrumb>
                 </div>`
               : nothing
           }
@@ -291,7 +284,7 @@ export class AppLayout extends LitElement {
             </button>
           </div>
         </form>
-        <details style="margin-top: 24px">
+        <details>
           <summary class="danger">${msg("Deck löschen")}</summary>
           <p>${msg("Das Deck und seine Unterhaltung werden dauerhaft gelöscht.")}</p>
           <button

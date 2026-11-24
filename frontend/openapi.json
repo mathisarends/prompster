@@ -2652,6 +2652,13 @@
             "type": "string",
             "format": "date-time",
             "title": "Lastactivityat"
+          },
+          "coverUrls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Coverurls"
           }
         },
         "type": "object",
