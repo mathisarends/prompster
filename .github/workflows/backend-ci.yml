@@ -10,9 +10,9 @@ on:
       - "uv.lock"
       - "smelt.yml"
       - ".smelt/**"
-      - "rpcgen.toml"
+      - "codegen.toml"
       - "schema/**"
-      - "frontend/src/api/session-rpc/**"
+      - "frontend/src/api/session-streams/**"
       - "frontend/openapi.json"
       - "frontend/scripts/export-openapi.py"
       - ".github/workflows/backend-ci.yml"
@@ -25,9 +25,9 @@ on:
       - "uv.lock"
       - "smelt.yml"
       - ".smelt/**"
-      - "rpcgen.toml"
+      - "codegen.toml"
       - "schema/**"
-      - "frontend/src/api/session-rpc/**"
+      - "frontend/src/api/session-streams/**"
       - "frontend/openapi.json"
       - "frontend/scripts/export-openapi.py"
       - ".github/workflows/backend-ci.yml"
@@ -57,8 +57,8 @@ jobs:
       - name: Run tests
         run: uv run pytest backend/tests/ -v
 
-      - name: Check RPC contract and client
-        run: uv run --package backend fastapi-canon websockets generate --config rpcgen.toml --check
+      - name: Check stream contract and client
+        run: uv run --package backend fastapi-canon generate --config codegen.toml --check
 
       - name: Check OpenAPI document
         run: uv run --package backend python frontend/scripts/export-openapi.py --check

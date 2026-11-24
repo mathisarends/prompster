@@ -14,7 +14,7 @@ npm ci
 npm run dev
 ```
 
-Vite leitet `/api` inklusive WebSockets an `http://127.0.0.1:8000` weiter.
+Vite leitet `/api` an `http://127.0.0.1:8000` weiter.
 Das vorhandene Backend muss laufen; die Anwendung enthält keine Demo-Anmeldung
 oder simulierte KI-Antworten. `.env.example` dokumentiert getrennte API- und
 OAuth-Origins. Im Development öffnet OAuth den Backend-Port 8000, passend zu
@@ -22,7 +22,7 @@ den vorhandenen Callback-Seiten. Cookies, erlaubte Origins und OAuth-Redirects
 müssen auf dieselbe Host-Schreibweise (z. B. `127.0.0.1`) abgestimmt sein.
 
 Produktionshosting benötigt einen SPA-Fallback für `/new`, `/chat/:id`, `/decks`
-und `/settings` sowie einen Proxy für HTTP und WebSockets unter `/api`.
+und `/settings` sowie einen Proxy unter `/api`, der Server-Sent Events nicht puffert.
 
 ## Aufbau
 
@@ -33,12 +33,12 @@ src/
     request.ts             # Fetch, Cookies, einmaliger Session-Refresh, PDF, Fehler
     query-client.ts        # gemeinsamer Query-Cache
     generated/<tag>/       # api.ts, models.ts, queries.ts, mutations.ts, index.ts
-    session-rpc/           # unveränderter, von fastapi-canon erzeugter WebSocket-Client
+    session-streams/       # unveränderter, von fastapi-canon erzeugter SSE-Client
   features/
     auth/                  # Login-Seite und OAuth-ReactiveController
     chat/                  # Chat-Seite, ChatController, reiner Stream-Reducer
       components/          # Nachrichtenliste, Rückfragen, Anhänge
-      api/                 # typisierte OpenRPC-Streams
+      api/                 # typisierte SSE-Streams
     deck/                  # Deck-Panel, DeckController, Musik-Karten, Exporte
     sessions/              # Sammlung und Query-/Mutation-Verwaltung
     settings/              # Sprache, Konto und Spotify-Verbindung
@@ -47,7 +47,7 @@ src/
     i18n/                  # Locale-Auswahl, Intl-Formatierung und generierte Übersetzungen
     ui/                    # wiederverwendbare UI: Sidebar, Chat, Breadcrumb, Logo
     styles/                # native Controls, Workspace- und Seitenstile
-    api/                   # Integration des generierten RPC-Clients
+    api/                   # Integration des generierten SSE-Clients
   style.css                # gemeinsame Farben, Typografie und Radien
 ```
 
@@ -56,9 +56,9 @@ bubbelnde `CustomEvent`s. Shared UI kennt keine Backend-Services. Reactive
 Controller besitzen asynchrone Abläufe, Abbruchsignale und Lifecycle-Aufräumen.
 Der bestehende fachliche Chat-Reducer bleibt unabhängig von Lit. Imports nutzen
 `@app`, `@api`, `@features`, `@shared` und `@chat`; der Alias `@/` bleibt für
-übernommene RPC- und Reducer-Module verfügbar.
+übernommene Stream- und Reducer-Module verfügbar.
 
-## HTTP- und RPC-Generierung
+## HTTP- und Stream-Generierung
 
 Die echte API-Spec liegt in `openapi.json`. Sie wird direkt aus der vorhandenen
 FastAPI-Anwendung exportiert. Orval erzeugt pro OpenAPI-Tag unabhängige Module.
@@ -71,8 +71,8 @@ npm run api:export          # Backend-Umgebung über uv erforderlich
 npm run api:generate        # Spec -> Fetch-Funktionen + TanStack-Optionen
 npm run api:check-backend   # Backend -> Spec ohne Drift
 npm run api:check           # Spec -> generierter Client ohne Drift
-npm run generate:rpc       # vorhandener OpenRPC-Vertrag und Client
-npm run check:rpc
+npm run generate:streams   # Backend -> Stream-Vertrag + SSE-Client
+npm run check:streams
 ```
 
 `generate:api` bleibt als Alias erhalten. `download:openapi` kann alternativ
@@ -103,13 +103,13 @@ npm run test:e2e
 npm run i18n:check
 ```
 
-Die Browser-Tests verwenden kontrollierte HTTP- und WebSocket-Antworten und
+Die Browser-Tests verwenden kontrollierte HTTP- und SSE-Antworten und
 prüfen Desktop sowie Mobil. Unter Windows nutzen sie installiertes Chrome;
 andernfalls einmal `npx playwright install chromium` ausführen. Echte OAuth-
 Provider, Spotify-Premium-Wiedergabe und Modellanbieter benötigen verbundene
 Konten und einen gesonderten Live-Test. CI prüft Formatierung, Typen, Build,
 HTTP-Codegenerierung, vollständige Übersetzungen, Unit- und Browser-Tests; Backend-CI prüft zusätzlich die
-Spec und den bestehenden RPC-Client.
+Spec und den generierten SSE-Client.
 
 ## Mehrsprachigkeit
 

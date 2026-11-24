@@ -4,13 +4,13 @@ FastAPI application that exposes the Prompster API, wires all features together 
 
 Encapsulates:
 
-- HTTP & WebSocket API under `/api/v1` with `dishka` DI container
+- HTTP API under `/api/v1` with `dishka` DI container
 - Google OAuth 2.0 authentication + JWT session management
 - Persistent chat sessions with tool-call history (PostgreSQL via SQLModel / asyncpg)
 - File storage for generated assets (S3 via aioboto3)
 - Spotify integration (OAuth token management, playlist creation)
 - PDF playlist deck generation (Typst + QR codes)
-- Streaming agent runs over typed Canon WebSocket streams
+- Streaming agent runs over typed Canon server-sent events
 
 ### features
 
@@ -21,46 +21,49 @@ Encapsulates:
 | `spotify` | Spotify account connection, playlist write-back |
 | `user` | User profile read / update |
 
-### session RPC stream
+### session event streams
 
-`/api/v1/sessions/{session_id}/stream` is a cookie-authenticated WebSocket
-endpoint. The presentation layer exposes `send_message`, `complete_onboarding`,
-and `export_spotify` as typed Canon message streams. Each stream uses a
-Dishka request scope for its entire lifetime. Cancel and disconnect close
-the application stream and cancel pending export tasks before releasing that
-scope. The integration uses `fastapi-canon[websockets]`.
+Agent runs and Spotify exports stream as server-sent events. Each stream is a
+cookie-authenticated `POST` endpoint declared with `fastapi-canon`'s
+`APIRouter.sse`:
 
-Session subscriptions yield `SessionStreamEvent`; Spotify exports yield
-`SpotifyExportEvent`. Clients initiate these streams with RPC calls and typed
-parameters. The API does not define client event payloads.
+| Endpoint | Body | Events |
+|---|---|---|
+| `POST /api/v1/sessions/{session_id}/messages` | `SendMessageRequest` | `SessionStreamEvent` |
+| `POST /api/v1/sessions/{session_id}/onboarding/complete` | `CompleteOnboardingRequest` | `SessionStreamEvent` |
+| `POST /api/v1/sessions/{session_id}/playlist/spotify-export` | none | `SpotifyExportEvent` |
 
-The RPC code lives in `src/backend/features/session/presentation/rpc/`:
+Request validation and authentication run before the stream opens, so clients
+get ordinary `422`/`401` problem responses. Every event is a `data:` frame;
+Canon ends the stream with `canon.complete` or `canon.problem`. Each route opens
+its application service through an APP-scoped `ServiceScope`, which keeps a
+Dishka request scope alive for the stream's lifetime. Closing the HTTP
+connection closes the application stream and cancels pending export tasks
+before that scope is released. The integration uses `fastapi-canon[sse]`.
 
-- `__init__.py` exports `rpc_router` and `contract` for application wiring and codegen.
-- `channel.py` declares the typed methods and subscriptions with `Inject`.
-- `context.py` holds the authenticated session identity; it is never a public parameter.
-- `params.py` and `events.py` define RPC payloads using `RpcModel` and camelCase wire names.
+The stream code lives in `src/backend/features/session/presentation/streams/`:
+
+- `router.py` declares the three SSE routes on `stream_router`.
+- `events.py` defines the event payloads using `Schema` and camelCase wire names.
 - `stream.py`, `mappers.py`, and `spotify_export.py` adapt application events and export progress.
-- `contract.py` declares the service and socket, then derives its OpenRPC contract.
-- `router.py` mounts that socket through `RpcRoutes` and the Dishka adapter.
 
 Python modules use absolute imports. Relative imports are reserved for package
 exports in `__init__.py`.
 
-The OpenRPC contract and TypeScript client are generated from `rpcgen.toml`:
+The OpenAPI contract in `schema/` and the TypeScript stream client are generated
+from `codegen.toml`:
 
 ```bash
-uv run --package backend fastapi-canon websockets generate --config rpcgen.toml
-uv run --package backend fastapi-canon websockets generate --config rpcgen.toml --check
+uv run --package backend fastapi-canon generate --config codegen.toml
+uv run --package backend fastapi-canon generate --config codegen.toml --check
 ```
 
-From `frontend/`, the equivalent commands are `npm run generate:rpc` and
-`npm run check:rpc`. Commit the contract in `schema/session-stream.openrpc.json`
-and the generated client in `frontend/src/api/session-rpc/` together; the CI
-check rejects stale generated files. The frontend calls `client.session` methods
-and consumes their typed async iterables. Its shared connection helper derives
-the socket path from the generated endpoint, supports `AbortSignal` during the
-handshake and streaming, and closes the client after each operation.
+From `frontend/`, the equivalent commands are `npm run generate:streams` and
+`npm run check:streams`. Commit the contract and the generated client in
+`frontend/src/api/session-streams/` together; the CI check rejects stale
+generated files. The frontend consumes each operation as a typed async iterable
+over `fetch`, passing an `AbortSignal` to stop a stream and refreshing the
+session cookie once on `401` before the stream starts.
 
 ### platform
 
