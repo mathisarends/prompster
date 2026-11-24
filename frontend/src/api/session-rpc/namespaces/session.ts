@@ -18,6 +18,7 @@ import type {
   PlaylistTrackAddedEvent,
   PlaylistTrackRemovedEvent,
   PlaylistTrackReplacedEvent,
+  RunStatusChangedEvent,
   SendMessageParams,
   SessionSnapshotEvent,
   SpotifyExportCompletedEvent,
@@ -48,7 +49,7 @@ export class Session {
   sendMessage(
     params: SendMessageParams,
     options?: { readonly signal?: AbortSignal },
-  ): Promise<RpcStream<SessionSnapshotEvent | TitleGeneratedEvent | AssistantMessageStartedEvent | AssistantMessageChunkEvent | AssistantMessageCompletedEvent | AssistantMessageCancelledEvent | ToolCallSequenceAddedEvent | ToolCallResolvedEvent | ToolCallFailedEvent | ToolCallRetryEvent | ToolCallSequenceCompletedEvent | ContextCompactedEvent | PlaylistSetEvent | PlaylistTrackAddedEvent | PlaylistTrackRemovedEvent | PlaylistTrackReplacedEvent | OnboardingQuestionAskedEvent | SuspendedForInputEvent | DoneEvent | ErrorEvent>> {
+  ): Promise<RpcStream<SessionSnapshotEvent | TitleGeneratedEvent | AssistantMessageStartedEvent | AssistantMessageChunkEvent | AssistantMessageCompletedEvent | AssistantMessageCancelledEvent | ToolCallSequenceAddedEvent | ToolCallResolvedEvent | ToolCallFailedEvent | ToolCallRetryEvent | ToolCallSequenceCompletedEvent | ContextCompactedEvent | RunStatusChangedEvent | PlaylistSetEvent | PlaylistTrackAddedEvent | PlaylistTrackRemovedEvent | PlaylistTrackReplacedEvent | OnboardingQuestionAskedEvent | SuspendedForInputEvent | DoneEvent | ErrorEvent>> {
     return this.#rpc.openMessageStream(
       notifications.sessionSendMessage,
       params,
@@ -60,7 +61,7 @@ export class Session {
   completeOnboarding(
     params: CompleteOnboardingParams,
     options?: { readonly signal?: AbortSignal },
-  ): Promise<RpcStream<SessionSnapshotEvent | TitleGeneratedEvent | AssistantMessageStartedEvent | AssistantMessageChunkEvent | AssistantMessageCompletedEvent | AssistantMessageCancelledEvent | ToolCallSequenceAddedEvent | ToolCallResolvedEvent | ToolCallFailedEvent | ToolCallRetryEvent | ToolCallSequenceCompletedEvent | ContextCompactedEvent | PlaylistSetEvent | PlaylistTrackAddedEvent | PlaylistTrackRemovedEvent | PlaylistTrackReplacedEvent | OnboardingQuestionAskedEvent | SuspendedForInputEvent | DoneEvent | ErrorEvent>> {
+  ): Promise<RpcStream<SessionSnapshotEvent | TitleGeneratedEvent | AssistantMessageStartedEvent | AssistantMessageChunkEvent | AssistantMessageCompletedEvent | AssistantMessageCancelledEvent | ToolCallSequenceAddedEvent | ToolCallResolvedEvent | ToolCallFailedEvent | ToolCallRetryEvent | ToolCallSequenceCompletedEvent | ContextCompactedEvent | RunStatusChangedEvent | PlaylistSetEvent | PlaylistTrackAddedEvent | PlaylistTrackRemovedEvent | PlaylistTrackReplacedEvent | OnboardingQuestionAskedEvent | SuspendedForInputEvent | DoneEvent | ErrorEvent>> {
     return this.#rpc.openMessageStream(
       notifications.sessionCompleteOnboarding,
       params,

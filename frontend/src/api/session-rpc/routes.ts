@@ -16,6 +16,7 @@ import type {
   PlaylistTrackAddedEvent,
   PlaylistTrackRemovedEvent,
   PlaylistTrackReplacedEvent,
+  RunStatusChangedEvent,
   SessionSnapshotEvent,
   SpotifyExportCompletedEvent,
   SpotifyExportDoneEvent,
@@ -38,11 +39,11 @@ export const routes = {
 } as const;
 
 export const notifications = {
-  sessionSendMessage: defineNotification<SessionSnapshotEvent | TitleGeneratedEvent | AssistantMessageStartedEvent | AssistantMessageChunkEvent | AssistantMessageCompletedEvent | AssistantMessageCancelledEvent | ToolCallSequenceAddedEvent | ToolCallResolvedEvent | ToolCallFailedEvent | ToolCallRetryEvent | ToolCallSequenceCompletedEvent | ContextCompactedEvent | PlaylistSetEvent | PlaylistTrackAddedEvent | PlaylistTrackRemovedEvent | PlaylistTrackReplacedEvent | OnboardingQuestionAskedEvent | SuspendedForInputEvent | DoneEvent | ErrorEvent>({
+  sessionSendMessage: defineNotification<SessionSnapshotEvent | TitleGeneratedEvent | AssistantMessageStartedEvent | AssistantMessageChunkEvent | AssistantMessageCompletedEvent | AssistantMessageCancelledEvent | ToolCallSequenceAddedEvent | ToolCallResolvedEvent | ToolCallFailedEvent | ToolCallRetryEvent | ToolCallSequenceCompletedEvent | ContextCompactedEvent | RunStatusChangedEvent | PlaylistSetEvent | PlaylistTrackAddedEvent | PlaylistTrackRemovedEvent | PlaylistTrackReplacedEvent | OnboardingQuestionAskedEvent | SuspendedForInputEvent | DoneEvent | ErrorEvent>({
     method: "session.send_message",
     server: "session",
   }),
-  sessionCompleteOnboarding: defineNotification<SessionSnapshotEvent | TitleGeneratedEvent | AssistantMessageStartedEvent | AssistantMessageChunkEvent | AssistantMessageCompletedEvent | AssistantMessageCancelledEvent | ToolCallSequenceAddedEvent | ToolCallResolvedEvent | ToolCallFailedEvent | ToolCallRetryEvent | ToolCallSequenceCompletedEvent | ContextCompactedEvent | PlaylistSetEvent | PlaylistTrackAddedEvent | PlaylistTrackRemovedEvent | PlaylistTrackReplacedEvent | OnboardingQuestionAskedEvent | SuspendedForInputEvent | DoneEvent | ErrorEvent>({
+  sessionCompleteOnboarding: defineNotification<SessionSnapshotEvent | TitleGeneratedEvent | AssistantMessageStartedEvent | AssistantMessageChunkEvent | AssistantMessageCompletedEvent | AssistantMessageCancelledEvent | ToolCallSequenceAddedEvent | ToolCallResolvedEvent | ToolCallFailedEvent | ToolCallRetryEvent | ToolCallSequenceCompletedEvent | ContextCompactedEvent | RunStatusChangedEvent | PlaylistSetEvent | PlaylistTrackAddedEvent | PlaylistTrackRemovedEvent | PlaylistTrackReplacedEvent | OnboardingQuestionAskedEvent | SuspendedForInputEvent | DoneEvent | ErrorEvent>({
     method: "session.complete_onboarding",
     server: "session",
   }),
