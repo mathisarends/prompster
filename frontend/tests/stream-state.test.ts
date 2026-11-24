@@ -48,3 +48,17 @@ test("reset clears old session state and pending onboarding", () => {
   assert.equal(state.pendingInput?.questions[0].id, "question");
   assert.deepEqual(chatReducer(state, { type: "session/reset" }), createInitialChatState());
 });
+test("run status follows pause, compaction and the end of the turn", () => {
+  let state = chatReducer(createInitialChatState(), { type: "stream/started" });
+  const statuses = [];
+  for (const status of ["paused", "running", "compacting"] as const) {
+    state = chatReducer(state, {
+      type: "stream/event",
+      event: { type: "session.run_status_changed", status },
+    });
+    statuses.push(state.runStatus);
+  }
+  assert.deepEqual(statuses, ["paused", "running", "compacting"]);
+  state = chatReducer(state, { type: "stream/event", event: { type: "done" } });
+  assert.equal(state.runStatus, "running");
+});

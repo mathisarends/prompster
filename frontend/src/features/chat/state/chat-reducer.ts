@@ -10,7 +10,7 @@ import type {
 } from "@api/generated/sessions";
 import { ToolCallState } from "@api/generated/sessions";
 import { EntryKind } from "@api/generated/session-schemas";
-import type { PlaylistPayload, SessionSnapshotPayload } from "@/api/session-rpc";
+import type { PlaylistPayload, RunStatus, SessionSnapshotPayload } from "@/api/session-rpc";
 import type { SessionStreamEvent } from "@/features/chat/api/session-stream";
 import type { ChatAttachment } from "@/features/chat/components/attachments/attachment-types";
 import type { ToolCallItem, ToolCallRetry, ToolCallStatus } from "@/features/chat/types";
@@ -56,6 +56,8 @@ export type ChatState = {
   entries: ChatEntry[];
   playlist: ChatPlaylist | null;
   isStreaming: boolean;
+  /** What the running turn is doing: working, paused by the user, or compacting its context. */
+  runStatus: RunStatus;
   pendingInput: PendingInput | null;
   errorMessage?: string;
 };
@@ -108,7 +110,7 @@ const ChatEventType = {
   TOOL_CALL_FAILED: "tool_call.failed",
   TOOL_CALL_RETRY: "tool_call.retry",
   TOOL_CALL_SEQUENCE_COMPLETED: "tool_call.sequence_completed",
-  CONTEXT_COMPACTED: "session.context_compacted",
+  RUN_STATUS_CHANGED: "session.run_status_changed",
   PLAYLIST_SET: "playlist.set",
   PLAYLIST_TRACK_ADDED: "playlist.track_added",
   PLAYLIST_TRACK_REMOVED: "playlist.track_removed",
@@ -138,6 +140,7 @@ export const createInitialChatState = (): ChatState => ({
   entries: [],
   playlist: null,
   isStreaming: false,
+  runStatus: "running",
   pendingInput: null,
 });
 
@@ -170,6 +173,7 @@ export const chatReducer = (state: ChatState, action: ChatAction): ChatState => 
             ]
           : state.entries,
         isStreaming: true,
+        runStatus: "running",
         pendingInput: null,
         errorMessage: undefined,
       };
@@ -179,6 +183,7 @@ export const chatReducer = (state: ChatState, action: ChatAction): ChatState => 
         ...state,
         entries: finishStreamingAssistantEntries(state.entries),
         isStreaming: false,
+        runStatus: "running",
       };
 
     case ChatActionType.STREAM_STOPPED:
@@ -192,6 +197,7 @@ export const chatReducer = (state: ChatState, action: ChatAction): ChatState => 
         ...state,
         entries: upsertStreamErrorEntry(state.entries, action.message),
         isStreaming: false,
+        runStatus: "running",
         errorMessage: action.message,
       };
 
@@ -476,6 +482,12 @@ const reduceSessionStreamEvent = (state: ChatState, event: SessionStreamEvent): 
         errorMessage: undefined,
       };
 
+    case ChatEventType.RUN_STATUS_CHANGED:
+      return {
+        ...state,
+        runStatus: event.status,
+      };
+
     case ChatEventType.TITLE_GENERATED:
       return {
         ...state,
@@ -602,6 +614,7 @@ const reduceSessionStreamEvent = (state: ChatState, event: SessionStreamEvent): 
         ...state,
         entries: finishStreamingAssistantEntries(state.entries),
         isStreaming: false,
+        runStatus: "running",
       };
 
     case ChatEventType.ERROR:
@@ -609,6 +622,7 @@ const reduceSessionStreamEvent = (state: ChatState, event: SessionStreamEvent): 
         ...state,
         entries: upsertStreamErrorEntry(state.entries, event.message),
         isStreaming: false,
+        runStatus: "running",
         errorMessage: event.message,
       };
 
