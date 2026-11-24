@@ -37,9 +37,8 @@ export type CompleteOnboardingParams = {
 
 export type ContextCompactedEvent = {
   type: "session.context_compacted";
-  reason: string;
-  tokensBefore?: number | null;
-  compactedToolResults?: number;
+  tokensBefore: number;
+  tokensAfter: number;
 };
 
 export type DoneEvent = {
@@ -117,6 +116,19 @@ export type PlaylistTrackResponse = {
   year: number;
   spotifyUri?: string | null;
   coverUrl?: string | null;
+};
+
+export const RunStatus = {
+  RUNNING: "running",
+  PAUSED: "paused",
+  COMPACTING: "compacting",
+} as const;
+
+export type RunStatus = (typeof RunStatus)[keyof typeof RunStatus];
+
+export type RunStatusChangedEvent = {
+  type: "session.run_status_changed";
+  status: RunStatus;
 };
 
 export type SendMessageParams = {

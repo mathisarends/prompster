@@ -1,68 +1,61 @@
 ## agent package
 
-Prompster's deck-building agent, built on [harnessed](https://github.com/mathisarends/harnessed) and shared across the workspace.
+Prompster's deck-building agent. It is a thin layer over [harnessed](https://github.com/mathisarends/harnessed): one live harnessed session, a set of plugins, and nothing that harnessed already does.
 
-Encapsulates:
+```
+agent/
+├── agent.py          Agent: opens the session, streams turns, pause/resume/stop/abort
+├── events.py         AgentEvent: the union of stream events the agent yields
+├── instructions.md   shared system prompt; plugins add their own sections
+├── activity/         UI labels for tool calls (call envelopes) → ToolCallAnnouncedEvent
+├── conversation/     user input, checkpoints, provider replay, finished replies
+├── research/         Spotify search tools → TracksFoundEvent, PlaylistsFoundEvent, SpotifyRetryEvent
+├── deck/             deck tools and live deck state → Deck*Event
+├── onboarding/       clarifying questions → QuestionAskedEvent
+└── review/           deck balance critique
+```
 
-- One harnessed session per run, wrapped by `Agent`
-- A stable streaming event model (`AgentEvent` subclasses)
-- Tools and prompts per capability, as harnessed plugins
-- Spotify interaction via `spotifyify` (`Spotify`)
-- Workspace state for Hitster deck drafts (`DeckStore`)
+Each capability package holds its plugin, tools, params, events and prompt.
 
 ### agent
 
 ```python
-class Agent:
-    def __init__(
-        self,
-        llm: pydantic_ai.models.Model,
-        history: Sequence[harnessed.models.Message] | None = None,
-        system_prompt: str | None = None,
-        spotify: Spotify | None = None,
-        deck_store: DeckStore | None = None,
-        max_deck_tracks: int = 50,
-        phase: Phase = Phase.ONBOARDING,
-        max_input_tokens: int | None = None,
-        compaction_threshold: float = 0.8,
-    ) -> None: ...
-
-    async def close(self) -> None            # closes the Spotify session
-    def request_stop(self) -> None           # aborts the running session
-    async def stream(message=None, curation_events=None) -> AsyncGenerator[AgentEvent, None]
+async with Agent(
+    llm,                       # pydantic_ai model
+    phase=Phase.BUILD,
+    deck=deck,                 # the workspace deck, or None
+    checkpoint=checkpoint,     # AgentCheckpoint from the last commit, or None
+    on_commit=save,            # async (AgentCommit) -> None
+    session_id=str(session.id),
+) as agent:
+    async for event in agent.stream(text, images=images, curation_events=events):
+        ...
 ```
 
-Without a `message`, the trailing user message in `history` starts the run.
-
-### plugins
-
-| Plugin | Phase | Responsibility |
-| --- | --- | --- |
-| `OnboardingPlugin` | onboarding | Asks questions and suspends the run for the answer |
-| `ResearchPlugin` | build | Read-only Spotify tools that run in parallel |
-| `DeckPlugin` | build | Deck edits, plus the live deck state on every request |
-| `ReviewPlugin` | build | Static balance checks, with an LLM critique only when they find a concern |
-| `EventBridge` | both | Translates harnessed events into `AgentEvent`s and runs the final guardrails |
-
-UI labels (`status`, `sequence_label`) are call envelopes. harnessed removes them before a tool runs, and a missing or invalid label never fails a call.
-
-### context management
-
-- Prompts live in `messages/prompts/`, one file per capability, and form a stable system prefix.
-- The current deck is appended to each request as `<deck_state>` and is never stored in the history, so the cached prompt prefix stays valid.
-- Track results from earlier runs are replayed as stable digests without their expired URIs.
-- harnessed compacts the history at 80% of the context window and after a provider context-length error.
+`pause()`, `resume()`, `stop()` and `abort()` act on the running turn from any task, so an HTTP request can pause a turn that a websocket is streaming. Status changes arrive on the stream as `SessionStatusChangedEvent`.
 
 ### events
 
-Each step of the run yields a typed event:
+Plugins emit typed events through harnessed (`ctx.emit` in tools, `SessionContext.emit` in hooks). They reach `session.stream` like harnessed's own events, and `Agent.stream` yields the subset in `AgentEvent`:
 
-```python
-RunStartedEvent(message: str)
-StepStartedEvent(step: int)
-ToolCallEvent(name: str, args: dict)
-ToolResultEvent(name: str, result: str)
-DeckUpdatedEvent(deck_draft: DeckDraft)
-AssistantMessageEvent(content: str)
-RunCompletedEvent(output: str)
-```
+| Event | From |
+| --- | --- |
+| `TextDeltaEvent`, `AssistantRepliedEvent` | harnessed, `ReplyPlugin` |
+| `ToolCallAnnouncedEvent`, `ToolCallFinishedEvent` | `ToolActivityPlugin`, harnessed |
+| `TracksFoundEvent`, `PlaylistsFoundEvent`, `SpotifyRetryEvent` | `ResearchPlugin` |
+| `DeckCreatedEvent`, `DeckTracksAdded/Removed/ReplacedEvent` | `DeckPlugin` |
+| `QuestionAskedEvent` | `OnboardingPlugin` |
+| `CompactionStarted/Applied/FinishedEvent` | harnessed compaction |
+| `SessionStatusChangedEvent`, `TurnResultEvent` | harnessed run control |
+
+Plugins also listen to each other's events: `DeckPlugin` remembers the tracks in every `TracksFoundEvent`, so their URIs stay addable.
+
+### persistence
+
+Each `AgentCommit` holds harnessed's `SessionExecution` and, when history changed, its `SessionState`, both as JSON. Store them (two JSONB columns) and pass them back as `AgentCheckpoint` to reopen the agent where it stopped. Plugin state such as the deck's track catalog is saved with it as a harnessed `SessionValue`. A checkpoint saved while paused reopens idle, ready for the next message.
+
+### context management
+
+- The current deck is appended to each request as `<deck_state>` and is never stored in the history, so the cached prompt prefix stays valid.
+- harnessed compacts the history at 80% of the context window and after a provider context-length error, keeping the last three steps.
+- `ProviderReplayGuard` drops provider replay state from replies of another model, so a conversation can switch models.

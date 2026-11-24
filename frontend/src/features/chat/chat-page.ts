@@ -136,6 +136,7 @@ export class ChatPage extends LitElement {
         >
           ${icon("paperclip", 18)}
         </button>
+        ${this.pauseButton()}
       </div>
       <model-select
         slot="model"
@@ -148,6 +149,24 @@ export class ChatPage extends LitElement {
         }}
       ></model-select>
     </chat-composer>`;
+  }
+  private pauseButton() {
+    const { isStreaming, runStatus } = this.chat.state;
+    if (!this.chat.busy || !isStreaming) {
+      return nothing;
+    }
+    const paused = runStatus === "paused";
+    const label = paused ? msg("Fortsetzen") : msg("Nach diesem Schritt pausieren");
+    return html`<button
+      class="icon-button"
+      title=${label}
+      aria-label=${label}
+      aria-pressed=${paused}
+      ?disabled=${this.chat.stopping}
+      @click=${() => this.chat.togglePause()}
+    >
+      ${icon(paused ? "play" : "pause", 18)}
+    </button>`;
   }
   static styles = css`
     ${pageStyles}
@@ -251,7 +270,7 @@ export class ChatPage extends LitElement {
                 : nothing
             }
           </header>
-          ${this.chat.loading ? html`<div class="status" role="status">${msg("Deck wird geladen …")}</div>` : !hasConversation ? html`<studio-page ?pending=${this.chat.busy} @draft-change=${(event: CustomEvent<string>) => (this.draft = event.detail)}>${this.composer()}</studio-page>` : html`<chat-message-list .entries=${state.entries} ?pending=${this.chat.busy}>${state.pendingInput ? html`<onboarding-panel .input=${state.pendingInput} ?pending=${this.chat.busy} @onboarding-submit=${(event: CustomEvent<{ answers: SubmitOnboardingAnswerRequest[]; complete: boolean }>) => this.chat.answer(event.detail.answers, event.detail.complete)}></onboarding-panel>` : nothing}</chat-message-list>`}
+          ${this.chat.loading ? html`<div class="status" role="status">${msg("Deck wird geladen …")}</div>` : !hasConversation ? html`<studio-page ?pending=${this.chat.busy} @draft-change=${(event: CustomEvent<string>) => (this.draft = event.detail)}>${this.composer()}</studio-page>` : html`<chat-message-list .entries=${state.entries} .runStatus=${state.runStatus} ?pending=${this.chat.busy}>${state.pendingInput ? html`<onboarding-panel .input=${state.pendingInput} ?pending=${this.chat.busy} @onboarding-submit=${(event: CustomEvent<{ answers: SubmitOnboardingAnswerRequest[]; complete: boolean }>) => this.chat.answer(event.detail.answers, event.detail.complete)}></onboarding-panel>` : nothing}</chat-message-list>`}
           ${
             this.chat.error
               ? html`<p class="error inline-error" role="alert">

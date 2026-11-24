@@ -1,104 +1,55 @@
-from typing import Any
+from typing import get_args, get_origin
 
-from pydantic import BaseModel, Field
+from harnessed.events import (
+    CompactionAppliedEvent,
+    CompactionFinishedEvent,
+    CompactionStartedEvent,
+    SessionStatusChangedEvent,
+    TextDeltaEvent,
+    ToolCallFinishedEvent,
+)
+from harnessed.events.completion import TurnResultEvent
 
-from agent.deck import DeckDraft, DeckDraftUpdate
-from agent.tools.views import ActionResultItem, ActionType, OnboardingSelectionMode
+from agent.activity import ToolCallAnnouncedEvent
+from agent.conversation import AssistantRepliedEvent
+from agent.deck import (
+    DeckCreatedEvent,
+    DeckTracksAddedEvent,
+    DeckTracksRemovedEvent,
+    DeckTracksReplacedEvent,
+)
+from agent.onboarding import QuestionAskedEvent
+from agent.research import PlaylistsFoundEvent, SpotifyRetryEvent, TracksFoundEvent
 
-
-class AgentEvent(BaseModel):
-    pass
-
-
-class RunStartedEvent(AgentEvent):
-    message: str
-
-
-class StepStartedEvent(AgentEvent):
-    step: int
-
-
-class AssistantMessageEvent(AgentEvent):
-    content: str
-
-
-class AssistantMessageChunkEvent(AgentEvent):
-    chunk: str
-
-
-class ToolCallEvent(AgentEvent):
-    tool_call_id: str
-    name: str
-    args: dict[str, Any]
-    status_label: str | None = None
-    action_type: ActionType | None = None
-    is_onboarding_question: bool = False
-
-
-class ToolCallSequenceStartedEvent(AgentEvent):
-    label: str | None = None
-
-
-class ToolResultEvent(AgentEvent):
-    tool_call_id: str
-    name: str
-    result: str
-    items: list[ActionResultItem] = Field(default_factory=list)
-
-
-class ToolRetryEvent(AgentEvent):
-    """A transient retry of the in-flight tool call's upstream request.
-
-    Surfaced live while the tool is still running so the UI can reassure the
-    user (e.g. "Spotify is busy, retrying…") — it does not resolve the call.
-    """
-
-    tool_call_id: str
-    name: str
-    attempt: int
-    max_attempts: int
-    retry_in_seconds: float | None = None
-    status_code: int | None = None
+type AgentEvent = (
+    # Text: deltas while the model writes, then the finished message.
+    TextDeltaEvent
+    | AssistantRepliedEvent
+    # Tools: announced with UI labels, then finished with their result.
+    | ToolCallAnnouncedEvent
+    | ToolCallFinishedEvent
+    # Capabilities, emitted by their plugins.
+    | TracksFoundEvent
+    | PlaylistsFoundEvent
+    | SpotifyRetryEvent
+    | DeckCreatedEvent
+    | DeckTracksAddedEvent
+    | DeckTracksRemovedEvent
+    | DeckTracksReplacedEvent
+    | QuestionAskedEvent
+    # Context compaction, from harnessed's built-in compactor.
+    | CompactionStartedEvent
+    | CompactionAppliedEvent
+    | CompactionFinishedEvent
+    # Run control: running, paused and idle, then how the turn ended.
+    | SessionStatusChangedEvent
+    | TurnResultEvent[None]
+)
+"""Everything ``Agent.stream`` yields, all of it straight from the harnessed stream."""
 
 
-class QuestionAskedEvent(AgentEvent):
-    """A question that does not suspend the run — the agent keeps going."""
-
-    question: str | None = None
-    hint: str | None = None
-    options: list[str] = Field(default_factory=list)
-    recommended_option: str | None = None
-    selection_mode: OnboardingSelectionMode = OnboardingSelectionMode.SINGLE_SELECT
+def _event_types() -> tuple[type, ...]:
+    return tuple(get_origin(item) or item for item in get_args(AgentEvent.__value__))
 
 
-class SuspendedForUserInputEvent(AgentEvent):
-    """The final question — the run suspends and waits for human-in-the-loop input."""
-
-    question: str | None = None
-    hint: str | None = None
-    options: list[str] = Field(default_factory=list)
-    recommended_option: str | None = None
-    selection_mode: OnboardingSelectionMode = OnboardingSelectionMode.SINGLE_SELECT
-    is_last_question: bool = True
-
-
-class DeckUpdatedEvent(AgentEvent):
-    deck_draft: DeckDraft
-    update: DeckDraftUpdate
-
-
-class ContextCompactedEvent(AgentEvent):
-    """Older tool results were elided to keep the run under the token budget.
-
-    Informational/transient: it never mutates the deck or persists. ``reason``
-    is ``"proactive"`` (budget threshold reached before a call) or ``"reactive"``
-    (recovered from a provider context-length error and retried).
-    """
-
-    reason: str
-    tokens_before: int | None = None
-    compacted_tool_results: int = 0
-
-
-class RunCompletedEvent(AgentEvent):
-    output: str
+AGENT_EVENT_TYPES = _event_types()

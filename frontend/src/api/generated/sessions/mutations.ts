@@ -13,6 +13,8 @@ import {
   deleteSession,
   submitOnboardingAnswer,
   stopMessage,
+  pauseMessage,
+  resumeMessage,
   addPlaylistTrack,
   addSpotifyPlaylistTrack,
   removePlaylistTrack,
@@ -56,6 +58,18 @@ export const stopMessageMutation = () =>
   mutationOptions({
     mutationKey: ["sessions", "stopMessage"] as const,
     mutationFn: (variables: Parameters<typeof stopMessage>[0]) => stopMessage(variables),
+  });
+
+export const pauseMessageMutation = () =>
+  mutationOptions({
+    mutationKey: ["sessions", "pauseMessage"] as const,
+    mutationFn: (variables: Parameters<typeof pauseMessage>[0]) => pauseMessage(variables),
+  });
+
+export const resumeMessageMutation = () =>
+  mutationOptions({
+    mutationKey: ["sessions", "resumeMessage"] as const,
+    mutationFn: (variables: Parameters<typeof resumeMessage>[0]) => resumeMessage(variables),
   });
 
 export const addPlaylistTrackMutation = () =>

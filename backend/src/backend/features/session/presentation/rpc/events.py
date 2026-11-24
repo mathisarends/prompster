@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi_canon.integrations.websockets import RpcModel
 from pydantic import Field
 
-from backend.features.session.domain import OnboardingQuestionSelectionMode
+from backend.features.session.domain import OnboardingQuestionSelectionMode, RunStatus
 from backend.features.session.presentation.schemas import (
     AssistantMessageEntryResponse,
     PlaylistTrackResponse,
@@ -32,6 +32,7 @@ class SessionStreamEventType(StrEnum):
     TOOL_CALL_SEQUENCE_COMPLETED = "tool_call.sequence_completed"
 
     CONTEXT_COMPACTED = "session.context_compacted"
+    RUN_STATUS_CHANGED = "session.run_status_changed"
 
     PLAYLIST_SET = "playlist.set"
     PLAYLIST_TRACK_ADDED = "playlist.track_added"
@@ -155,9 +156,15 @@ class ContextCompactedEvent(_SessionEventSchema):
     type: Literal[SessionStreamEventType.CONTEXT_COMPACTED] = (
         SessionStreamEventType.CONTEXT_COMPACTED
     )
-    reason: str
-    tokens_before: int | None = None
-    compacted_tool_results: int = 0
+    tokens_before: int
+    tokens_after: int
+
+
+class RunStatusChangedEvent(_SessionEventSchema):
+    type: Literal[SessionStreamEventType.RUN_STATUS_CHANGED] = (
+        SessionStreamEventType.RUN_STATUS_CHANGED
+    )
+    status: RunStatus
 
 
 class PlaylistSetEvent(_SessionEventSchema):
@@ -247,6 +254,7 @@ type SessionStreamEvent = Annotated[
     | ToolCallRetryEvent
     | ToolCallSequenceCompletedEvent
     | ContextCompactedEvent
+    | RunStatusChangedEvent
     | PlaylistSetEvent
     | PlaylistTrackAddedEvent
     | PlaylistTrackRemovedEvent

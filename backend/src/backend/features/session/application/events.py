@@ -7,6 +7,7 @@ from backend.features.session.domain import (
     OnboardingQuestionSelectionMode,
     Playlist,
     PlaylistTrack,
+    RunStatus,
     Session,
     ToolCallSequence,
     ToolResultItem,
@@ -112,16 +113,20 @@ class SessionPlaylistTrackReplaced:
 
 @dataclass(frozen=True, slots=True)
 class SessionContextCompacted:
-    """Older tool results were elided to stay under the model's token budget.
+    """The agent summarized older history to stay inside the context window.
 
     Transient and informational: never persisted, never mutates the session.
-    Surfaced so the UI can reassure the user that a long run is being trimmed
-    rather than failing.
     """
 
-    reason: str
-    tokens_before: int | None = None
-    compacted_tool_results: int = 0
+    tokens_before: int
+    tokens_after: int
+
+
+@dataclass(frozen=True, slots=True)
+class SessionRunStatusChanged:
+    """The running turn paused, resumed or is compacting its context."""
+
+    status: RunStatus
 
 
 @dataclass(frozen=True, slots=True)
@@ -173,6 +178,7 @@ type SessionEvent = (
     | SessionPlaylistTrackReplaced
     | SessionTitleGenerated
     | SessionContextCompacted
+    | SessionRunStatusChanged
     | SessionOnboardingQuestionAsked
     | SessionSuspendedForInput
 )

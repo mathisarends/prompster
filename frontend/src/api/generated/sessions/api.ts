@@ -75,6 +75,18 @@ export const stopMessage = (sessionId: string, options?: ApiRequestOptions): Pro
     method: "POST",
   });
 
+export const pauseMessage = (sessionId: string, options?: ApiRequestOptions): Promise<void> =>
+  apiFetch<void>(`/api/v1/sessions/${encodeURIComponent(sessionId)}/messages/pause`, {
+    ...options,
+    method: "POST",
+  });
+
+export const resumeMessage = (sessionId: string, options?: ApiRequestOptions): Promise<void> =>
+  apiFetch<void>(`/api/v1/sessions/${encodeURIComponent(sessionId)}/messages/resume`, {
+    ...options,
+    method: "POST",
+  });
+
 export const addPlaylistTrack = (
   sessionId: string,
   request: AddPlaylistTrackRequest,

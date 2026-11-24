@@ -4,6 +4,8 @@ import { queryClient } from "@api/query-client";
 import {
   createSession,
   getSessionQuery,
+  pauseMessage,
+  resumeMessage,
   stopMessage,
   submitOnboardingAnswer,
   type SessionResponse,
@@ -217,6 +219,21 @@ export class ChatController implements ReactiveController {
       }
     }
     return succeeded;
+  }
+  /**
+   * Pauses the running turn after its current step, or resumes a paused one.
+   * The stream reports the new run status once the agent applied it.
+   */
+  async togglePause(): Promise<void> {
+    if (!this.busy || this.stopping || !this.id || !this.state.isStreaming) {
+      return;
+    }
+    try {
+      await (this.state.runStatus === "paused" ? resumeMessage : pauseMessage)(this.id);
+    } catch (error) {
+      this.error = errorMessage(error);
+      this.host.requestUpdate();
+    }
   }
   async stop(): Promise<void> {
     if (!this.busy || this.stopping) {

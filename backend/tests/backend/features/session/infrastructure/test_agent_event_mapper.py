@@ -1,270 +1,223 @@
 from uuid import UUID
 
-from agent.events import (
-    AssistantMessageChunkEvent,
-    AssistantMessageEvent,
-    DeckUpdatedEvent,
+from agent import (
+    ActionType,
+    AssistantRepliedEvent,
+    Deck,
+    DeckCreatedEvent,
+    DeckTrack,
+    DeckTracksAddedEvent,
+    DeckTracksRemovedEvent,
+    DeckTracksReplacedEvent,
+    FoundTrack,
     QuestionAskedEvent,
-    SuspendedForUserInputEvent,
-    ToolCallEvent,
-    ToolResultEvent,
+    SelectionMode,
+    ToolCallAnnouncedEvent,
+    TrackReplacement,
+    TracksFoundEvent,
 )
-from agent.deck import (
-    DeckDraft,
-    DeckDraftCreated,
-    DeckDraftTrack,
-    DeckDraftTrackReplacement,
-    DeckDraftTracksAdded,
-    DeckDraftTracksRemoved,
-    DeckDraftTracksReplaced,
+from harnessed import SessionStatus
+from harnessed.events import (
+    CompactionFinishedEvent,
+    CompactionStartedEvent,
+    SessionStatusChangedEvent,
+    TextDeltaEvent,
+    ToolCallFinishedEvent,
 )
+from harnessed.events.compaction import CompactionOutcome
+from harnessed.events.completion import TurnResultEvent
+from harnessed.models import StopReason, ToolCall, ToolResult
+from harnessed import RunResult
 
 from backend.features.session.application.ports.session_runner import (
     SessionRunnerAssistantMessage,
     SessionRunnerAssistantMessageChunk,
+    SessionRunnerCancelled,
+    SessionRunnerContextCompacted,
     SessionRunnerPlaylistTracksAdded,
     SessionRunnerPlaylistTracksRemoved,
     SessionRunnerPlaylistTracksReplaced,
     SessionRunnerPlaylistUpdated,
     SessionRunnerQuestionAsked,
+    SessionRunnerRunStatusChanged,
     SessionRunnerSuspendedForInput,
     SessionRunnerToolCallCompleted,
+    SessionRunnerToolCallSequenceStarted,
     SessionRunnerToolCallStarted,
 )
-from backend.features.session.domain import ToolActionType
+from backend.features.session.domain import RunStatus, ToolActionType
 from backend.features.session.infrastructure.agent_event_mapper import (
-    AgentSessionEventMapper,
+    AgentRunEventMapper,
 )
 
-
-class TestAssistantMessageMapping:
-    def test_assistant_chunk_event_maps_to_chunk(self) -> None:
-        mapper = AgentSessionEventMapper()
-
-        result = mapper.map(AssistantMessageChunkEvent(chunk="hel"))
-
-        assert result == [SessionRunnerAssistantMessageChunk(chunk="hel")]
-
-    def test_assistant_message_event_maps_to_final_message(self) -> None:
-        mapper = AgentSessionEventMapper()
-
-        result = mapper.map(AssistantMessageEvent(content="hello world"))
-
-        assert result == [SessionRunnerAssistantMessage(content="hello world")]
+_DECK_ID = str(UUID(int=1))
+_TRACK_ID = str(UUID(int=2))
+_SEARCH = ToolCall("search_tracks", {"query": "a-ha"}, id="call-1")
 
 
-class TestToolCallMapping:
-    def test_tool_call_event_carries_arguments_and_status_label(self) -> None:
-        mapper = AgentSessionEventMapper()
+def _track(track_id: str = _TRACK_ID) -> DeckTrack:
+    return DeckTrack(id=track_id, title="Take On Me", artist="a-ha", year=1985)
 
-        result = mapper.map(
-            ToolCallEvent(
-                tool_call_id="call_1",
-                name="add_tracks",
-                args={"query": "80s synth"},
-                status_label="Adding tracks...",
-                action_type=None,
-                is_onboarding_question=True,
-            )
+
+def _finished(call: ToolCall, text: str = "ok") -> ToolCallFinishedEvent:
+    return ToolCallFinishedEvent(call=call, result=ToolResult(text))
+
+
+def _turn_result(stop_reason: StopReason) -> TurnResultEvent[None]:
+    return TurnResultEvent(
+        result=RunResult(text="", events=(), stop_reason=stop_reason)
+    )
+
+
+def test_text_deltas_and_replies_map_to_assistant_messages() -> None:
+    mapper = AgentRunEventMapper()
+
+    events = [
+        *mapper.map(TextDeltaEvent(message_id="m1", text="Hal")),
+        *mapper.map(TextDeltaEvent(message_id="m1", text="")),
+        *mapper.map(AssistantRepliedEvent(message_id="m1", text="Hallo", final=True)),
+    ]
+
+    assert events == [
+        SessionRunnerAssistantMessageChunk(chunk="Hal"),
+        SessionRunnerAssistantMessage(content="Hallo"),
+    ]
+
+
+def test_announced_call_starts_a_labelled_tool_call() -> None:
+    mapper = AgentRunEventMapper()
+
+    events = mapper.map(
+        ToolCallAnnouncedEvent(
+            call=_SEARCH,
+            status_label="Suche Tracks: a-ha",
+            batch_label="Recherche",
+            action_type=ActionType.SEARCH_TRACKS,
         )
+    )
 
-        assert len(result) == 1
-        event = result[0]
-        assert isinstance(event, SessionRunnerToolCallStarted)
-        assert event.call.id == "call_1"
-        assert event.call.function.name == "add_tracks"
-        assert event.call.function.arguments == {"query": "80s synth"}
-        assert event.call.function.status_label == "Adding tracks..."
-        assert event.call.function.action_type is None
-        assert event.call.function.is_onboarding_question is True
+    assert events[0] == SessionRunnerToolCallSequenceStarted(label="Recherche")
+    started = events[1]
+    assert isinstance(started, SessionRunnerToolCallStarted)
+    assert started.call.id == "call-1"
+    assert dict(started.call.function.arguments) == {"query": "a-ha"}
+    assert started.call.function.status_label == "Suche Tracks: a-ha"
+    assert started.call.function.action_type is ToolActionType.SEARCH_TRACKS
 
-    def test_unknown_action_type_string_becomes_none(self) -> None:
-        mapper = AgentSessionEventMapper()
 
-        # ``model_construct`` bypasses validation so we can simulate a malformed
-        # or drifted event whose ``action_type`` the backend's ``ToolActionType``
-        # does not recognise — the mapper must coerce it to None.
-        event = ToolCallEvent.model_construct(
-            tool_call_id="call_x",
-            name="mystery",
-            args={},
-            status_label=None,
-            action_type="not_a_real_action_type",
+def test_finished_call_carries_the_previews_its_tool_found() -> None:
+    mapper = AgentRunEventMapper()
+    tracks = tuple(
+        FoundTrack(uri=f"spotify:track:{index}", title=f"Song {index}", artist="a-ha")
+        for index in range(12)
+    )
+    mapper.map(ToolCallAnnouncedEvent(call=_SEARCH))
+    mapper.map(TracksFoundEvent(call_id="call-1", tracks=tracks))
+
+    [completed] = mapper.map(_finished(_SEARCH, "<track />"))
+
+    assert isinstance(completed, SessionRunnerToolCallCompleted)
+    assert completed.result == "<track />"
+    assert len(completed.items) == 10
+    assert completed.items[0].track_uri == "spotify:track:0"
+
+
+def test_calls_the_ui_never_showed_finish_silently() -> None:
+    question = ToolCall("ask_onboarding_question", {}, id="call-q")
+
+    assert AgentRunEventMapper().map(_finished(question)) == []
+
+
+def test_deck_events_map_to_playlist_changes() -> None:
+    mapper = AgentRunEventMapper()
+    replacement = _track(str(UUID(int=3)))
+
+    [created] = mapper.map(
+        DeckCreatedEvent(deck=Deck(id=_DECK_ID, name="Deck", tracks=(_track(),)))
+    )
+    [added] = mapper.map(DeckTracksAddedEvent(deck_id=_DECK_ID, tracks=(_track(),)))
+    [removed] = mapper.map(
+        DeckTracksRemovedEvent(deck_id=_DECK_ID, track_ids=(_TRACK_ID,))
+    )
+    [replaced] = mapper.map(
+        DeckTracksReplacedEvent(
+            deck_id=_DECK_ID,
+            replacements=(TrackReplacement(track_id=_TRACK_ID, track=replacement),),
         )
+    )
 
-        result = mapper.map(event)
-
-        assert isinstance(result[0], SessionRunnerToolCallStarted)
-        assert result[0].call.function.action_type is None
-
-    def test_known_action_type_value_is_translated_to_enum(self) -> None:
-        mapper = AgentSessionEventMapper()
-        known_value = next(iter(ToolActionType)).value
-
-        result = mapper.map(
-            ToolCallEvent(
-                tool_call_id="call_y",
-                name="x",
-                args={},
-                action_type=known_value,  # type: ignore[arg-type]
-            )
-        )
-
-        assert isinstance(result[0], SessionRunnerToolCallStarted)
-        assert result[0].call.function.action_type == ToolActionType(known_value)
-
-    def test_tool_result_event_maps_to_completed(self) -> None:
-        mapper = AgentSessionEventMapper()
-
-        result = mapper.map(
-            ToolResultEvent(tool_call_id="call_1", name="add_tracks", result="ok")
-        )
-
-        assert result == [
-            SessionRunnerToolCallCompleted(tool_call_id="call_1", result="ok")
-        ]
+    assert isinstance(created, SessionRunnerPlaylistUpdated)
+    assert created.playlist.id == UUID(_DECK_ID)
+    assert isinstance(added, SessionRunnerPlaylistTracksAdded)
+    assert added.tracks[0].id == UUID(_TRACK_ID)
+    assert isinstance(removed, SessionRunnerPlaylistTracksRemoved)
+    assert removed.track_ids == [UUID(_TRACK_ID)]
+    assert isinstance(replaced, SessionRunnerPlaylistTracksReplaced)
+    assert replaced.replacements[0].track.id == UUID(int=3)
 
 
-class TestWorkspaceUpdateMapping:
-    def _draft(self, *, tracks: list[DeckDraftTrack] | None = None) -> DeckDraft:
-        return DeckDraft(name="Deck", tracks=tracks or [])
+def test_only_the_last_onboarding_question_suspends_the_run() -> None:
+    mapper = AgentRunEventMapper()
 
-    def test_tracks_added_propagates_playlist_id_and_tracks(self) -> None:
-        mapper = AgentSessionEventMapper()
-        draft = self._draft()
-        added = DeckDraftTrack(title="Umbrella", artist="Rihanna", year=2007)
-
-        result = mapper.map(
-            DeckUpdatedEvent(
-                deck_draft=draft,
-                update=DeckDraftTracksAdded(deck_draft=draft, tracks=[added]),
-            )
-        )
-
-        assert len(result) == 1
-        event = result[0]
-        assert isinstance(event, SessionRunnerPlaylistTracksAdded)
-        assert event.playlist_id == draft.id
-        assert len(event.tracks) == 1
-        assert event.tracks[0].title == "Umbrella"
-        assert event.tracks[0].artist == "Rihanna"
-        assert event.tracks[0].year == 2007
-
-    def test_tracks_removed_propagates_ids(self) -> None:
-        mapper = AgentSessionEventMapper()
-        draft = self._draft()
-        removed_id = UUID(int=1)
-
-        result = mapper.map(
-            DeckUpdatedEvent(
-                deck_draft=draft,
-                update=DeckDraftTracksRemoved(deck_draft=draft, track_ids=[removed_id]),
-            )
-        )
-
-        assert result == [
-            SessionRunnerPlaylistTracksRemoved(
-                playlist_id=draft.id, track_ids=[removed_id]
-            )
-        ]
-
-    def test_tracks_replaced_maps_each_replacement_to_session_track(self) -> None:
-        mapper = AgentSessionEventMapper()
-        draft = self._draft()
-        original_id = UUID(int=2)
-        replacement_track = DeckDraftTrack(title="New", artist="Artist", year=2020)
-
-        result = mapper.map(
-            DeckUpdatedEvent(
-                deck_draft=draft,
-                update=DeckDraftTracksReplaced(
-                    deck_draft=draft,
-                    replacements=[
-                        DeckDraftTrackReplacement(
-                            track_id=original_id, track=replacement_track
-                        )
-                    ],
-                ),
-            )
-        )
-
-        assert len(result) == 1
-        event = result[0]
-        assert isinstance(event, SessionRunnerPlaylistTracksReplaced)
-        assert event.playlist_id == draft.id
-        assert len(event.replacements) == 1
-        assert event.replacements[0].track_id == original_id
-        assert event.replacements[0].track.title == "New"
-        assert event.replacements[0].track.artist == "Artist"
-
-    def test_non_incremental_update_falls_back_to_full_playlist_snapshot(
-        self,
-    ) -> None:
-        mapper = AgentSessionEventMapper()
-        track = DeckDraftTrack(title="Take On Me", artist="a-ha", year=1985)
-        draft = self._draft(tracks=[track])
-
-        result = mapper.map(
-            DeckUpdatedEvent(
-                deck_draft=draft,
-                update=DeckDraftCreated(deck_draft=draft),
-            )
-        )
-
-        assert len(result) == 1
-        event = result[0]
-        assert isinstance(event, SessionRunnerPlaylistUpdated)
-        assert event.playlist.id == draft.id
-        assert event.playlist.name == draft.name
-        assert [track.title for track in event.playlist.tracks] == ["Take On Me"]
-
-
-class TestUnknownEvent:
-    def test_unknown_event_type_yields_no_runner_events(self) -> None:
-        mapper = AgentSessionEventMapper()
-
-        result = mapper.map(object())
-
-        assert result == []
-
-
-class TestSuspendedForInputMapping:
-    def test_question_asked_event_maps_to_runner_event(self) -> None:
-        mapper = AgentSessionEventMapper()
-
-        result = mapper.map(
+    def ask(*, is_last: bool) -> object:
+        [event] = mapper.map(
             QuestionAskedEvent(
-                question="Fuer wen ist die Playlist?",
-                hint="Enge Zielgruppen machen das Deck spitzer.",
-                options=["Freunde", "Familie"],
+                question="Fuer wen?",
+                options=("Freunde", "Familie"),
+                selection_mode=SelectionMode.MULTI_SELECT,
+                is_last_question=is_last,
             )
         )
+        return event
 
-        assert result == [
-            SessionRunnerQuestionAsked(
-                question="Fuer wen ist die Playlist?",
-                hint="Enge Zielgruppen machen das Deck spitzer.",
-                options=["Freunde", "Familie"],
-            )
-        ]
+    asked = ask(is_last=False)
+    suspended = ask(is_last=True)
 
-    def test_suspended_event_maps_to_runner_event(self) -> None:
-        mapper = AgentSessionEventMapper()
+    assert isinstance(asked, SessionRunnerQuestionAsked)
+    assert isinstance(suspended, SessionRunnerSuspendedForInput)
+    assert suspended.options == ["Freunde", "Familie"]
+    assert suspended.is_last_question is True
 
-        result = mapper.map(
-            SuspendedForUserInputEvent(
-                question="Fuer wen ist die Playlist?",
-                hint="Enge Zielgruppen machen das Deck spitzer.",
-                options=["Freunde", "Familie"],
-                is_last_question=True,
-            )
+
+def test_compaction_reports_its_status_and_result() -> None:
+    mapper = AgentRunEventMapper()
+
+    started = mapper.map(CompactionStartedEvent("c1", before_tokens=900))
+    finished = mapper.map(
+        CompactionFinishedEvent(
+            "c1",
+            CompactionOutcome.APPLIED,
+            before_tokens=900,
+            after_tokens=200,
         )
+    )
 
-        assert result == [
-            SessionRunnerSuspendedForInput(
-                question="Fuer wen ist die Playlist?",
-                hint="Enge Zielgruppen machen das Deck spitzer.",
-                options=["Freunde", "Familie"],
-                is_last_question=True,
-            )
-        ]
+    assert started == [SessionRunnerRunStatusChanged(status=RunStatus.COMPACTING)]
+    assert finished == [
+        SessionRunnerContextCompacted(tokens_before=900, tokens_after=200),
+        SessionRunnerRunStatusChanged(status=RunStatus.RUNNING),
+    ]
+
+
+def test_pause_and_resume_change_the_run_status_once() -> None:
+    mapper = AgentRunEventMapper()
+
+    def status(value: SessionStatus) -> list[object]:
+        return list(mapper.map(SessionStatusChangedEvent(status=value)))
+
+    assert status(SessionStatus.RUNNING) == []
+    assert status(SessionStatus.PAUSED) == [
+        SessionRunnerRunStatusChanged(status=RunStatus.PAUSED)
+    ]
+    assert status(SessionStatus.RUNNING) == [
+        SessionRunnerRunStatusChanged(status=RunStatus.RUNNING)
+    ]
+    assert status(SessionStatus.IDLE) == []
+
+
+def test_only_interrupted_turns_are_cancelled() -> None:
+    mapper = AgentRunEventMapper()
+
+    assert mapper.map(_turn_result(StopReason.END)) == []
+    assert mapper.map(_turn_result(StopReason.ABORTED)) == [SessionRunnerCancelled()]
+    assert mapper.map(_turn_result(StopReason.STOPPED)) == [SessionRunnerCancelled()]

@@ -7,6 +7,7 @@ from backend.features.session.application import (
     SessionAssistantMessageCompleted,
     SessionAssistantMessageStarted,
     SessionContextCompacted,
+    SessionRunStatusChanged,
     SessionOnboardingQuestionAsked,
     SessionPlaylistSet,
     SessionPlaylistTrackAdded,
@@ -21,6 +22,7 @@ from backend.features.session.domain import (
     PendingCall,
     Playlist,
     PlaylistTrack,
+    RunStatus,
     ToolActionType,
     ToolCallSequence,
     ToolFunction,
@@ -31,6 +33,7 @@ from backend.features.session.presentation.rpc.events import (
     AssistantMessageCompletedEvent,
     AssistantMessageStartedEvent,
     ContextCompactedEvent,
+    RunStatusChangedEvent,
     OnboardingQuestionAskedEvent,
     PlaylistSetEvent,
     PlaylistTrackAddedEvent,
@@ -140,18 +143,22 @@ class TestSessionEventMapper:
 
     def test_to_session_stream_event_maps_context_compacted(self) -> None:
         event = to_session_stream_event(
-            SessionContextCompacted(
-                reason="reactive",
-                tokens_before=275000,
-                compacted_tool_results=3,
-            )
+            SessionContextCompacted(tokens_before=275000, tokens_after=40000)
         )
 
         assert isinstance(event, ContextCompactedEvent)
         assert event.type == SessionStreamEventType.CONTEXT_COMPACTED
-        assert event.reason == "reactive"
         assert event.tokens_before == 275000
-        assert event.compacted_tool_results == 3
+        assert event.tokens_after == 40000
+
+    def test_to_session_stream_event_maps_run_status_changed(self) -> None:
+        event = to_session_stream_event(
+            SessionRunStatusChanged(status=RunStatus.PAUSED)
+        )
+
+        assert isinstance(event, RunStatusChangedEvent)
+        assert event.type == SessionStreamEventType.RUN_STATUS_CHANGED
+        assert event.status is RunStatus.PAUSED
 
     def test_to_session_stream_event_maps_playlist_set(self) -> None:
         playlist = Playlist.create(

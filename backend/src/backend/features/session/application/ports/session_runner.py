@@ -9,6 +9,7 @@ from backend.features.session.domain import (
     PendingCall,
     Playlist,
     PlaylistTrack,
+    RunStatus,
     Session,
     ToolResultItem,
 )
@@ -77,9 +78,12 @@ class SessionRunnerPlaylistTracksReplaced(_RunnerEvent):
 
 
 class SessionRunnerContextCompacted(_RunnerEvent):
-    reason: str
-    tokens_before: int | None = None
-    compacted_tool_results: int = 0
+    tokens_before: int
+    tokens_after: int
+
+
+class SessionRunnerRunStatusChanged(_RunnerEvent):
+    status: RunStatus
 
 
 class SessionRunnerCancelled(_RunnerEvent):
@@ -119,6 +123,7 @@ type SessionRunnerEvent = (
     | SessionRunnerPlaylistTracksRemoved
     | SessionRunnerPlaylistTracksReplaced
     | SessionRunnerContextCompacted
+    | SessionRunnerRunStatusChanged
     | SessionRunnerCancelled
     | SessionRunnerQuestionAsked
     | SessionRunnerSuspendedForInput
@@ -137,4 +142,12 @@ class SessionRunner(ABC):
 
     async def stop(self, *, session_id: UUID) -> bool:
         """Requests a running session execution to stop."""
+        return False
+
+    async def pause(self, *, session_id: UUID) -> bool:
+        """Pauses a running session execution after its current step."""
+        return False
+
+    async def resume(self, *, session_id: UUID) -> bool:
+        """Resumes a paused session execution."""
         return False

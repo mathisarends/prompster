@@ -802,6 +802,22 @@
   <source>Deck</source>
         <target>Deck</target>
 </trans-unit>
+<trans-unit id="s2c20a3b184afca19">
+  <source>Fortsetzen</source>
+        <target>Resume</target>
+</trans-unit>
+<trans-unit id="s5f152b3e491d85f5">
+  <source>Nach diesem Schritt pausieren</source>
+        <target>Pause after this step</target>
+</trans-unit>
+<trans-unit id="sa17aeba79c7e6bee">
+  <source>Pausiert. Setze fort, wenn du so weit bist.</source>
+        <target>Paused. Resume whenever you are ready.</target>
+</trans-unit>
+<trans-unit id="sa13c35c6c127b858">
+  <source>Prompster fasst den bisherigen Verlauf zusammen …</source>
+        <target>Prompster is summarizing the conversation so far …</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

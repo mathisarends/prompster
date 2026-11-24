@@ -7,6 +7,7 @@ import { pageStyles } from "@shared/styles/page";
 import { icon } from "@shared/ui/icons";
 import { emit } from "@shared/events";
 import "@chat";
+import type { RunStatus } from "@/api/session-rpc";
 import type { ChatEntry } from "../state/chat-reducer";
 import { toToolCallItems } from "../state/chat-reducer";
 
@@ -15,11 +16,28 @@ import { toToolCallItems } from "../state/chat-reducer";
 export class ChatMessageList extends LitElement {
   @property({ attribute: false }) entries: ChatEntry[] = [];
   @property({ type: Boolean }) pending = false;
+  @property({ attribute: false }) runStatus: RunStatus = "running";
   @query(".scroll") private scroller!: HTMLElement;
   private stick = true;
   protected updated(changed: PropertyValues): void {
     if (this.stick && (changed.has("entries") || changed.has("pending"))) {
       this.scroller.scrollTop = this.scroller.scrollHeight;
+    }
+  }
+  private pendingStatus() {
+    switch (this.runStatus) {
+      case "paused":
+        return html`<p class="pending" role="status">
+          ${icon("pause", 16)} ${msg("Pausiert. Setze fort, wenn du so weit bist.")}
+        </p>`;
+      case "compacting":
+        return html`<p class="pending" role="status">
+          ${icon("layers", 16)} ${msg("Prompster fasst den bisherigen Verlauf zusammen …")}
+        </p>`;
+      default:
+        return html`<p class="pending" role="status">
+          ${icon("sparkles", 16)} ${msg("Prompster arbeitet an deinem Deck …")}
+        </p>`;
     }
   }
   static styles = css`
@@ -155,8 +173,7 @@ export class ChatMessageList extends LitElement {
                     </details>`
             }
           </div>`,
-      )}${this.pending ? html`<p class="pending" role="status">${icon("sparkles", 16)} ${msg("Prompster arbeitet an deinem Deck …")}</p>` : nothing}<slot
-      ></slot>
+      )}${this.pending ? this.pendingStatus() : nothing}<slot></slot>
     </div>`;
   }
 }

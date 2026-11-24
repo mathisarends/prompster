@@ -208,30 +208,18 @@
             "title": "Type",
             "type": "string"
           },
-          "reason": {
-            "title": "Reason",
-            "type": "string"
-          },
           "tokensBefore": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Tokensbefore"
+            "title": "Tokensbefore",
+            "type": "integer"
           },
-          "compactedToolResults": {
-            "default": 0,
-            "title": "Compactedtoolresults",
+          "tokensAfter": {
+            "title": "Tokensafter",
             "type": "integer"
           }
         },
         "required": [
-          "reason"
+          "tokensBefore",
+          "tokensAfter"
         ],
         "title": "ContextCompactedEvent",
         "type": "object"
@@ -596,6 +584,35 @@
           "year"
         ],
         "title": "PlaylistTrackResponse",
+        "type": "object"
+      },
+      "RunStatus": {
+        "description": "What a running agent turn is doing, as far as the user can tell.",
+        "enum": [
+          "running",
+          "paused",
+          "compacting"
+        ],
+        "title": "RunStatus",
+        "type": "string"
+      },
+      "RunStatusChangedEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "session.run_status_changed",
+            "default": "session.run_status_changed",
+            "title": "Type",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "RunStatusChangedEvent",
         "type": "object"
       },
       "SendMessageParams": {
@@ -1723,6 +1740,7 @@
             "playlist.track_replaced": "#/components/schemas/PlaylistTrackReplacedEvent",
             "session.context_compacted": "#/components/schemas/ContextCompactedEvent",
             "session.onboarding_question_asked": "#/components/schemas/OnboardingQuestionAskedEvent",
+            "session.run_status_changed": "#/components/schemas/RunStatusChangedEvent",
             "session.snapshot": "#/components/schemas/SessionSnapshotEvent",
             "session.suspended_for_input": "#/components/schemas/SuspendedForInputEvent",
             "session.title_generated": "#/components/schemas/TitleGeneratedEvent",
@@ -1770,6 +1788,9 @@
           },
           {
             "$ref": "#/components/schemas/ContextCompactedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/RunStatusChangedEvent"
           },
           {
             "$ref": "#/components/schemas/PlaylistSetEvent"
@@ -1845,6 +1866,7 @@
             "playlist.track_replaced": "#/components/schemas/PlaylistTrackReplacedEvent",
             "session.context_compacted": "#/components/schemas/ContextCompactedEvent",
             "session.onboarding_question_asked": "#/components/schemas/OnboardingQuestionAskedEvent",
+            "session.run_status_changed": "#/components/schemas/RunStatusChangedEvent",
             "session.snapshot": "#/components/schemas/SessionSnapshotEvent",
             "session.suspended_for_input": "#/components/schemas/SuspendedForInputEvent",
             "session.title_generated": "#/components/schemas/TitleGeneratedEvent",
@@ -1892,6 +1914,9 @@
           },
           {
             "$ref": "#/components/schemas/ContextCompactedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/RunStatusChangedEvent"
           },
           {
             "$ref": "#/components/schemas/PlaylistSetEvent"

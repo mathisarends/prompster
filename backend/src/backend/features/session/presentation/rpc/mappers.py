@@ -10,6 +10,7 @@ from backend.features.session.application import (
     SessionPlaylistTrackAdded,
     SessionPlaylistTrackRemoved,
     SessionPlaylistTrackReplaced,
+    SessionRunStatusChanged,
     SessionSnapshot,
     SessionSuspendedForInput,
     SessionTitleGenerated,
@@ -38,6 +39,7 @@ from backend.features.session.presentation.rpc.events import (
     PlaylistTrackAddedEvent,
     PlaylistTrackRemovedEvent,
     PlaylistTrackReplacedEvent,
+    RunStatusChangedEvent,
     SessionSnapshotEvent,
     SessionSnapshotPayload,
     SessionStreamEvent,
@@ -134,10 +136,12 @@ def to_session_stream_event(event: SessionEvent) -> SessionStreamEvent:
 
     if isinstance(event, SessionContextCompacted):
         return ContextCompactedEvent(
-            reason=event.reason,
             tokens_before=event.tokens_before,
-            compacted_tool_results=event.compacted_tool_results,
+            tokens_after=event.tokens_after,
         )
+
+    if isinstance(event, SessionRunStatusChanged):
+        return RunStatusChangedEvent(status=event.status)
 
     if isinstance(event, SessionPlaylistSet):
         return PlaylistSetEvent(playlist=_to_playlist_payload(event.playlist))

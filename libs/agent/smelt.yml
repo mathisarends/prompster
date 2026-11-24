@@ -1,21 +1,24 @@
 architecture:
   layers:
     foundation:
-      modules: [agent.deck, agent.views]
+      modules: [agent.markup, agent.prompts]
       may_depend_on: []
-    messages:
-      modules: [agent.messages]
-      may_depend_on: [foundation]
     capabilities:
-      modules: [agent.guardrails, agent.tools]
-      may_depend_on: [foundation, messages]
+      modules:
+        - agent.activity
+        - agent.conversation
+        - agent.deck
+        - agent.onboarding
+        - agent.research
+        - agent.review
+      may_depend_on: [foundation]
     runtime:
-      modules: [agent.agent, agent.events, agent.plugins]
-      may_depend_on: [foundation, messages, capabilities]
+      modules: [agent.agent, agent.events]
+      may_depend_on: [foundation, capabilities]
   packages:
     agent-api:
       match: agent
-      public: ['.', deck, messages]
+      public: ['.', activity, conversation, deck, onboarding, research, review]
       min_importers_to_export: 3
 rules:
   architecture/missing-facade-export: error
