@@ -7,7 +7,7 @@ import {
 } from "@api/generated/sessions";
 import type { SpotifyTrackResponse } from "@api/generated/spotify";
 import { streamSpotifyExport } from "./api/spotify-export-stream";
-import type { SpotifyPlaylistExportResponse } from "@api/session-rpc";
+import type { SpotifyPlaylistExportResponse } from "@api/session-streams";
 import { emit, errorMessage } from "@shared/events";
 
 export class DeckController implements ReactiveController {

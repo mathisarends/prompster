@@ -240,7 +240,7 @@ try {
         languages: ["de", "en"],
         browserErrors: failures,
         fixture:
-          "Local HTTP, WebSocket and SpeechRecognition mocks; no external account actions or microphone capture",
+          "Local HTTP, SSE and SpeechRecognition mocks; no external account actions or microphone capture",
       },
       null,
       2,

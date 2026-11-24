@@ -1,16 +1,8 @@
-import type { RpcStream, SendMessageParams, SessionRpcClient } from "@/api/session-rpc";
-import { withSessionRpcClient } from "@/shared/api/session-rpc-client";
+import type { SendMessageRequest, SessionStreamEvent } from "@/api/session-streams";
+import { sessionStreams } from "@/shared/api/session-streams";
 
-type StreamItem<T> = T extends RpcStream<infer Item> ? Item : never;
-export type SessionStreamEvent = StreamItem<
-  Awaited<ReturnType<SessionRpcClient["session"]["sendMessage"]>>
->;
-
-export type SessionMessageAttachmentRequest = NonNullable<SendMessageParams["attachments"]>[number];
-export type ImageAttachmentReferenceRequest = NonNullable<
-  SendMessageParams["imageAttachments"]
->[number];
-export type SendMessageRequest = Omit<SendMessageParams, "modelId">;
+export type { SessionStreamEvent };
+export type SendMessageBody = Omit<SendMessageRequest, "modelId">;
 
 type StreamSessionOptions = {
   signal?: AbortSignal;
@@ -18,34 +10,33 @@ type StreamSessionOptions = {
   modelId?: string;
 };
 
+const consume = async (
+  events: AsyncIterable<SessionStreamEvent>,
+  onEvent: StreamSessionOptions["onEvent"],
+): Promise<void> => {
+  for await (const event of events) {
+    onEvent?.(event);
+    if (event.type === "error") {
+      throw new Error(event.message || event.code);
+    }
+  }
+};
+
 export const streamSendMessage = (
   sessionId: string,
-  body: SendMessageRequest,
-  options: StreamSessionOptions,
+  body: SendMessageBody,
+  { signal, onEvent, modelId }: StreamSessionOptions,
 ): Promise<void> =>
-  withSessionRpcClient(sessionId, options.signal, async (client) => {
-    for await (const event of await client.session.sendMessage({
-      ...body,
-      modelId: options.modelId,
-    })) {
-      options.onEvent?.(event);
-      if (event.type === "error") {
-        throw new Error(event.message || event.code);
-      }
-    }
-  });
+  consume(
+    sessionStreams().sendMessage({ sessionId, body: { ...body, modelId } }, { signal }),
+    onEvent,
+  );
 
 export const streamCompleteOnboarding = (
   sessionId: string,
-  options: StreamSessionOptions,
+  { signal, onEvent, modelId }: StreamSessionOptions,
 ): Promise<void> =>
-  withSessionRpcClient(sessionId, options.signal, async (client) => {
-    for await (const event of await client.session.completeOnboarding({
-      modelId: options.modelId,
-    })) {
-      options.onEvent?.(event);
-      if (event.type === "error") {
-        throw new Error(event.message || event.code);
-      }
-    }
-  });
+  consume(
+    sessionStreams().completeOnboarding({ sessionId, body: { modelId } }, { signal }),
+    onEvent,
+  );

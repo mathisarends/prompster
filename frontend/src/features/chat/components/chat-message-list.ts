@@ -7,7 +7,7 @@ import { pageStyles } from "@shared/styles/page";
 import { icon } from "@shared/ui/icons";
 import { emit } from "@shared/events";
 import "@chat";
-import type { RunStatus } from "@/api/session-rpc";
+import type { RunStatus } from "@/api/session-streams";
 import type { ChatEntry } from "../state/chat-reducer";
 import { toToolCallItems } from "../state/chat-reducer";
 

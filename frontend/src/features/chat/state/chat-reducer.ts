@@ -10,7 +10,7 @@ import type {
 } from "@api/generated/sessions";
 import { ToolCallState } from "@api/generated/sessions";
 import { EntryKind } from "@api/generated/session-schemas";
-import type { PlaylistPayload, RunStatus, SessionSnapshotPayload } from "@/api/session-rpc";
+import type { PlaylistPayload, RunStatus, SessionSnapshotPayload } from "@/api/session-streams";
 import type { SessionStreamEvent } from "@/features/chat/api/session-stream";
 import type { ChatAttachment } from "@/features/chat/components/attachments/attachment-types";
 import type { ToolCallItem, ToolCallRetry, ToolCallStatus } from "@/features/chat/types";

@@ -74,6 +74,11 @@ export function session(id = "deck-1") {
   };
 }
 
+/** Frames events the way fastapi-canon streams them, ending with its completion event. */
+const sseBody = (events: unknown[]): string =>
+  events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join("") +
+  "event: canon.complete\ndata: {}\n\n";
+
 export async function mockApi(
   page: Page,
   authenticated = true,
@@ -131,6 +136,48 @@ export async function mockApi(
             ],
       });
     }
+    if (
+      method === "POST" &&
+      /\/(messages|onboarding\/complete|playlist\/spotify-export)$/.test(path)
+    ) {
+      // An open stream that never finishes, so the UI stays busy.
+      if (slow) {
+        return new Promise<void>(() => {});
+      }
+      const events: unknown[] = [];
+      if (path.endsWith("/playlist/spotify-export")) {
+        events.push(
+          { type: "spotify_export.retry", attempt: 2, maxAttempts: 3 },
+          {
+            type: "spotify_export.completed",
+            playlist: {
+              id: "spotify-deck",
+              name: "Game Night",
+              url: "https://open.spotify.com/playlist/spotify-deck",
+              trackCount: 1,
+              description: "",
+            },
+          },
+        );
+      } else {
+        const body = route.request().postDataJSON();
+        messages.push(body.content);
+        modelIds.push(body.modelId);
+        current = { ...structuredClone(initialSession), id: current.id };
+        events.push(
+          { type: "session.title_generated", title: current.title },
+          { type: "message.assistant_started", messageId: "reply", createdAt: current.createdAt },
+          {
+            type: "message.assistant_chunk",
+            messageId: "reply",
+            chunk: "Hier ist dein **Kartendeck**.",
+          },
+          { type: "playlist.set", playlist: current.playlist },
+        );
+      }
+      events.push({ type: "done" });
+      return route.fulfill({ contentType: "text/event-stream", body: sseBody(events) });
+    }
     if (path.endsWith("/playlist/pdf")) {
       return route.fulfill({ contentType: "application/pdf", body: "%PDF-1.4\n%%EOF" });
     }
@@ -163,80 +210,6 @@ export async function mockApi(
       return json({ tracks: [song], playlists: [], artists: [] });
     }
     return json({ detail: `Unhandled fixture: ${method} ${path}` }, 404);
-  });
-  await page.routeWebSocket(/\/api\/v1\/sessions\/.*\/stream/, (socket) => {
-    socket.onMessage((raw) => {
-      const request = JSON.parse(String(raw));
-      if (request.method.endsWith(".cancel")) {
-        socket.send(JSON.stringify({ jsonrpc: "2.0", id: request.id, result: null }));
-        return;
-      }
-      if (!request.method.endsWith(".open")) {
-        return;
-      }
-      const method = request.method.replace(/\.open$/, "");
-      socket.send(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          id: request.id,
-          result: { streamId: "stream" },
-        }),
-      );
-      const send = (payload: unknown) =>
-        socket.send(
-          JSON.stringify({
-            jsonrpc: "2.0",
-            method,
-            params: { streamId: "stream", payload },
-          }),
-        );
-      if (slow) {
-        send({
-          type: "message.assistant_started",
-          messageId: "reply",
-          createdAt: current.createdAt,
-        });
-        send({ type: "message.assistant_chunk", messageId: "reply", chunk: "Recherche läuft …" });
-        return;
-      }
-      if (method === "session.export_spotify") {
-        send({ type: "spotify_export.retry", attempt: 2, maxAttempts: 3 });
-        send({
-          type: "spotify_export.completed",
-          playlist: {
-            id: "spotify-deck",
-            name: "Game Night",
-            url: "https://open.spotify.com/playlist/spotify-deck",
-            trackCount: 1,
-            description: "",
-          },
-        });
-      } else {
-        messages.push(request.params.content);
-        modelIds.push(request.params.modelId);
-        current = { ...structuredClone(initialSession), id: current.id };
-        send({ type: "session.title_generated", title: current.title });
-        send({
-          type: "message.assistant_started",
-          messageId: "reply",
-          createdAt: current.createdAt,
-        });
-        send({
-          type: "message.assistant_chunk",
-          messageId: "reply",
-          chunk: "Hier ist dein **Kartendeck**.",
-        });
-        send({ type: "playlist.set", playlist: current.playlist });
-      }
-      send({ type: "done" });
-      socket.send(
-        JSON.stringify({
-          jsonrpc: "2.0",
-          method,
-          params: { streamId: "stream", complete: true },
-        }),
-      );
-    });
   });
   return { messages, modelIds };
 }
