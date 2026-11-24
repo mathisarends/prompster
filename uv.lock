@@ -140,7 +140,7 @@ dependencies = [
     { name = "cryptography" },
     { name = "dishka" },
     { name = "fastapi" },
-    { name = "fastapi-canon", extra = ["websockets"] },
+    { name = "fastapi-canon", extra = ["sse"] },
     { name = "harnessed", extra = ["openai"] },
     { name = "httpx" },
     { name = "obstore" },
@@ -175,7 +175,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=45.0.7" },
     { name = "dishka", specifier = ">=1.10.1" },
     { name = "fastapi", specifier = ">=0.143.3" },
-    { name = "fastapi-canon", extras = ["websockets"], specifier = ">=0.24.0" },
+    { name = "fastapi-canon", extras = ["sse"], specifier = ">=0.24.0" },
     { name = "harnessed", extras = ["openai"], git = "https://github.com/mathisarends/harnessed.git?rev=65d772032aad3e1f4318abd98d12366f323e8aca" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "obstore", specifier = ">=0.11.1" },
@@ -534,13 +534,10 @@ codegen = [
     { name = "typing-extensions", version = "4.15.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15'" },
     { name = "typing-extensions", version = "4.16.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
 ]
-websockets = [
+sse = [
+    { name = "fastapi" },
     { name = "pydantic", version = "2.13.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15'" },
     { name = "pydantic", version = "2.14.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
-    { name = "pydantic-core", version = "2.46.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15'" },
-    { name = "pydantic-core", version = "2.50.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
-    { name = "typing-extensions", version = "4.15.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15'" },
-    { name = "typing-extensions", version = "4.16.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
 ]
 
 [[package]]

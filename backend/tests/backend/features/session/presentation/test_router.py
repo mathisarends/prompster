@@ -1,11 +1,13 @@
 import asyncio
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from io import BytesIO
 from typing import cast
 from uuid import UUID
 
 from fastapi import UploadFile
+from fastapi_canon import ServiceScope
 from starlette.datastructures import Headers
 
 from backend.features.session.application import (
@@ -39,21 +41,26 @@ from backend.features.session.presentation.router import (
     stop_message,
     submit_onboarding_answer,
 )
-from backend.features.session.presentation.rpc.channel import (
-    complete_onboarding,
-    send_message,
-)
-from backend.features.session.presentation.rpc.context import SessionRpcContext
-from backend.features.session.presentation.rpc.params import (
-    CompleteOnboardingParams,
-    SendMessageParams,
-)
 from backend.features.session.presentation.schemas import (
+    CompleteOnboardingRequest,
+    SendMessageRequest,
     SessionMessageAttachmentKind,
     SessionMessageAttachmentRequest,
     SubmitOnboardingAnswerRequest,
     UserCurationEventTypeResponse,
 )
+from backend.features.session.presentation.streams.router import (
+    complete_onboarding,
+    send_message,
+)
+
+
+def _scope(service: object) -> ServiceScope[SessionConversationService]:
+    @asynccontextmanager
+    async def open_scope() -> AsyncIterator[object]:
+        yield service
+
+    return cast(ServiceScope[SessionConversationService], open_scope)
 
 
 class _SessionServiceStub:
@@ -417,7 +424,8 @@ class TestSendMessageSubscription:
             return [
                 event
                 async for event in send_message(
-                    params=SendMessageParams(
+                    session_id=session_id,
+                    body=SendMessageRequest(
                         content="Hallo",
                         attachments=[
                             SessionMessageAttachmentRequest(
@@ -428,8 +436,8 @@ class TestSendMessageSubscription:
                         ],
                         model_id="gpt-6-terra-US",
                     ),
-                    context=SessionRpcContext(session_id=session_id, user_id=user_id),
-                    service=cast(SessionConversationService, service),
+                    authenticated_user_id=user_id,
+                    conversations=_scope(service),
                 )
             ]
 
@@ -517,9 +525,10 @@ class TestCompleteOnboardingSubscription:
             return [
                 event
                 async for event in complete_onboarding(
-                    params=CompleteOnboardingParams(),
-                    context=SessionRpcContext(session_id=session_id, user_id=user_id),
-                    service=cast(SessionConversationService, service),
+                    session_id=session_id,
+                    body=CompleteOnboardingRequest(),
+                    authenticated_user_id=user_id,
+                    conversations=_scope(service),
                 )
             ]
 
@@ -539,9 +548,10 @@ class TestCompleteOnboardingSubscription:
             return [
                 event
                 async for event in complete_onboarding(
-                    params=CompleteOnboardingParams(model_id="gpt-6-terra-US"),
-                    context=SessionRpcContext(session_id=session_id, user_id=user_id),
-                    service=cast(SessionConversationService, service),
+                    session_id=session_id,
+                    body=CompleteOnboardingRequest(model_id="gpt-6-terra-US"),
+                    authenticated_user_id=user_id,
+                    conversations=_scope(service),
                 )
             ]
 

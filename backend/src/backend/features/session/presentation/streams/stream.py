@@ -10,12 +10,14 @@ from backend.features.session.domain import (
     ToolCallAlreadyResolvedError,
     ToolCallNotFoundError,
 )
-from backend.features.session.presentation.rpc.events import (
+from backend.features.session.presentation.streams.events import (
     DoneEvent,
     ErrorEvent,
     SessionStreamEvent,
 )
-from backend.features.session.presentation.rpc.mappers import to_session_stream_event
+from backend.features.session.presentation.streams.mappers import (
+    to_session_stream_event,
+)
 
 logger = logging.getLogger(__name__)
 

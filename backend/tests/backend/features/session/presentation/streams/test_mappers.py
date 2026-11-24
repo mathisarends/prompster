@@ -27,7 +27,7 @@ from backend.features.session.domain import (
     ToolCallSequence,
     ToolFunction,
 )
-from backend.features.session.presentation.rpc.events import (
+from backend.features.session.presentation.streams.events import (
     AssistantMessageCancelledEvent,
     AssistantMessageChunkEvent,
     AssistantMessageCompletedEvent,
@@ -44,7 +44,9 @@ from backend.features.session.presentation.rpc.events import (
     ToolCallResolvedEvent,
     ToolCallSequenceAddedEvent,
 )
-from backend.features.session.presentation.rpc.mappers import to_session_stream_event
+from backend.features.session.presentation.streams.mappers import (
+    to_session_stream_event,
+)
 
 
 def _make_assistant_message() -> AssistantMessage:

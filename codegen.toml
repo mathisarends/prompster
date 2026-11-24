@@ -1,0 +1,9 @@
+[codegen]
+version = 2
+app = "backend.main:app"
+contracts = "schema"
+
+[codegen.targets.session_streams]
+generator = "sse"
+language = "typescript"
+output = "frontend/src/api/session-streams"

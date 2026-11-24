@@ -235,8 +235,13 @@ class SessionSummaryListResponse(Schema):
     items: list[SessionSummaryResponse]
 
 
+class CompleteOnboardingRequest(Schema):
+    model_id: str | None = None
+
+
 class SendMessageRequest(Schema):
     content: str = Field(min_length=1, max_length=4000)
+    model_id: str | None = None
     attachments: list[SessionMessageAttachmentRequest] = Field(
         default_factory=list,
         max_length=25,

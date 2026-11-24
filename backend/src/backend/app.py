@@ -58,7 +58,6 @@ def create_app() -> FastAPI:
 
     _setup_middleware(app, env)
     app.include_router(health.health_router)
-    app.include_router(session.rpc_router)
     _COMPOSITION.build(app)
 
     logger.info("Application ready!")

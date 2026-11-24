@@ -3,7 +3,6 @@ from enum import StrEnum
 from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi_canon.integrations.websockets import RpcModel
 from pydantic import Field
 
 from backend.features.session.domain import OnboardingQuestionSelectionMode, RunStatus
@@ -14,6 +13,7 @@ from backend.features.session.presentation.schemas import (
     ToolCallResultItemResponse,
     ToolCallSequenceEntryResponse,
 )
+from backend.presentation import Schema
 
 
 class SessionStreamEventType(StrEnum):
@@ -45,17 +45,17 @@ class SessionStreamEventType(StrEnum):
     ERROR = "error"
 
 
-class _SessionEventSchema(RpcModel):
+class _SessionEventSchema(Schema):
     type: SessionStreamEventType
 
 
-class PlaylistPayload(RpcModel):
+class PlaylistPayload(Schema):
     id: UUID
     name: str | None = None
     tracks: list[PlaylistTrackResponse]
 
 
-class SessionSnapshotPayload(RpcModel):
+class SessionSnapshotPayload(Schema):
     id: UUID
     title: str
     created_at: datetime
