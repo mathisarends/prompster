@@ -5,7 +5,6 @@ from typing import Any
 
 import pytest
 from agent.research import FoundTrack, Spotify
-from agent.research.params import SearchParams
 from agent.research.spotify import TrackResults
 from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart, ToolCallPart
 from pydantic_ai.models.function import (
@@ -101,8 +100,9 @@ class FakeSpotify(Spotify):
     async def close(self) -> None:
         return None
 
-    async def search_tracks(self, params: SearchParams) -> TrackResults:
-        self.searches.append(params.query)
+    async def search_tracks(self, query: str, *, limit: int = 10) -> TrackResults:
+        del limit
+        self.searches.append(query)
         if self._gate is not None:
             await self._gate.wait()
         content = "\n".join(f'<track uri="{track.uri}" />' for track in self._tracks)

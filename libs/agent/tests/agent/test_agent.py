@@ -35,7 +35,7 @@ _SEARCH = {"call-search": ("search_tracks", {"query": "a-ha"})}
 _ADD = {
     "call-add": (
         "add_deck_tracks",
-        {"tracks": [{"uri": TAKE_ON_ME.uri}], "status": "Baue das 80er-Deck"},
+        {"uris": [TAKE_ON_ME.uri], "status": "Baue das 80er-Deck"},
     )
 }
 
@@ -122,7 +122,7 @@ async def test_ui_labels_never_reach_the_tool(
         "call-add": (
             "add_deck_tracks",
             {
-                "tracks": [{"uri": TAKE_ON_ME.uri}],
+                "uris": [TAKE_ON_ME.uri],
                 "status": "Lege Tracks ab",
                 "sequence_label": "Deck bauen",
             },
@@ -222,6 +222,31 @@ async def test_only_tools_without_derived_labels_ask_for_a_status(
     assert "status" not in schemas["search_tracks"]
     assert "sequence_label" in schemas["search_tracks"]
     assert "status" in schemas["add_deck_tracks"]
+
+
+@pytest.mark.asyncio
+async def test_tool_schemas_come_from_the_tool_signatures(
+    scripted_llm: Callable[..., Any],
+) -> None:
+    onboarding = scripted_llm("ok")
+    build = scripted_llm("ok")
+
+    await _run(Agent(onboarding.model), "Hallo")
+    await _run(_build_agent(build))
+
+    tools = {
+        tool.name: tool
+        for llm in (onboarding, build)
+        for tool in llm.infos[0].function_tools
+    }
+    add = tools["add_deck_tracks"].parameters_json_schema
+    question = tools["ask_onboarding_question"].parameters_json_schema
+    assert tools["add_deck_tracks"].description.startswith("Add tracks")
+    assert add["properties"]["uris"]["minItems"] == 1
+    assert add["properties"]["uris"]["items"]["pattern"] == "^spotify:track:"
+    assert question["properties"]["options"]["minItems"] == 2
+    assert question["properties"]["options"]["maxItems"] == 4
+    assert {"hint", "recommended_option"}.isdisjoint(question["required"])
 
 
 @pytest.mark.asyncio

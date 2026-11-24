@@ -15,7 +15,7 @@ agent/
 └── review/           deck balance critique
 ```
 
-Each capability package holds its plugin, tools, params, events and prompt.
+Each capability package holds its plugin, tools and events. Tools follow harnessed's idiom: flat signatures with `Annotated[..., Field(...)]` parameters and the docstring as description; short plugin instructions live inline next to the plugin. Only standalone prompts (`instructions.md`, the compaction and critic prompts) are Markdown files.
 
 ### agent
 

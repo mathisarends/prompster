@@ -4,7 +4,10 @@ from typing import Literal
 
 from harnessed.events import TransientEvent
 
-from agent.onboarding.params import SelectionMode
+
+class SelectionMode(StrEnum):
+    SINGLE_SELECT = "single_select"
+    MULTI_SELECT = "multi_select"
 
 
 class OnboardingEventKind(StrEnum):

@@ -20,7 +20,6 @@ from spotifyify.validation import spotify_id
 
 from agent.markup import release_label, tag
 from agent.research.events import FoundPlaylist, FoundTrack
-from agent.research.params import PlaylistIdParams, SearchParams
 
 logger = logging.getLogger(__name__)
 
@@ -84,22 +83,22 @@ class Spotify:
         with self._client.retry_hook(hook):
             yield
 
-    async def search_tracks(self, params: SearchParams) -> TrackResults:
+    async def search_tracks(self, query: str, *, limit: int = 10) -> TrackResults:
         await self.open()
         tracks = await _collect_search_results(
-            self._client.tracks.iter_search, params.query, params.limit
+            self._client.tracks.iter_search, query, limit
         )
-        logger.info("Spotify track search %r found %d", params.query, len(tracks))
+        logger.info("Spotify track search %r found %d", query, len(tracks))
         if not tracks:
             return TrackResults(content="No tracks found.", tracks=())
         return _track_results(tracks)
 
-    async def search_playlists(self, params: SearchParams) -> PlaylistResults:
+    async def search_playlists(self, query: str, *, limit: int = 10) -> PlaylistResults:
         await self.open()
         playlists = await _collect_search_results(
-            self._client.playlists.iter_search, params.query, params.limit
+            self._client.playlists.iter_search, query, limit
         )
-        logger.info("Spotify playlist search %r found %d", params.query, len(playlists))
+        logger.info("Spotify playlist search %r found %d", query, len(playlists))
         if not playlists:
             return PlaylistResults(content="No playlists found.", playlists=())
         return PlaylistResults(
@@ -107,9 +106,11 @@ class Spotify:
             playlists=tuple(_found_playlist(playlist) for playlist in playlists),
         )
 
-    async def get_playlist_tracks(self, params: PlaylistIdParams) -> TrackResults:
-        playlist_id = spotify_id(_normalize_spotify_id(params.playlist_id, "playlist"))
-        offset = max(0, params.offset)
+    async def get_playlist_tracks(
+        self, playlist: str, *, offset: int = 0
+    ) -> TrackResults:
+        playlist_id = spotify_id(_normalize_spotify_id(playlist, "playlist"))
+        offset = max(0, offset)
         await self.open()
         # playlists.items() needs a user token in Development Mode. Agent runs
         # only have an app token, which the legacy route still accepts for

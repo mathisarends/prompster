@@ -1,5 +1,8 @@
-from agent.onboarding.events import OnboardingEventKind, QuestionAskedEvent
-from agent.onboarding.params import SelectionMode
+from agent.onboarding.events import (
+    OnboardingEventKind,
+    QuestionAskedEvent,
+    SelectionMode,
+)
 from agent.onboarding.plugin import OnboardingPlugin
 
 __all__ = [

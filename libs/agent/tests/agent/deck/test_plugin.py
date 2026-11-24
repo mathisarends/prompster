@@ -46,8 +46,8 @@ async def _tool_result(
 
 
 def _add(*tracks: FoundTrack) -> dict[str, tuple[str, dict[str, Any]]]:
-    refs = [{"uri": track.uri} for track in tracks]
-    return {"call-1": ("add_deck_tracks", {"tracks": refs})}
+    uris = [track.uri for track in tracks]
+    return {"call-1": ("add_deck_tracks", {"uris": uris})}
 
 
 @pytest.mark.asyncio
@@ -88,7 +88,7 @@ async def test_replace_swaps_a_deck_track_for_a_found_one(
     step = {
         "call-1": (
             "replace_deck_tracks",
-            {"replacements": [{"old_id": first.id, "new_uri": _AFRICA.uri}]},
+            {"swaps": [{"track_id": first.id, "uri": _AFRICA.uri}]},
         )
     }
 

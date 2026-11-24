@@ -3,7 +3,6 @@ from typing import Any
 import httpx2
 import pytest
 from agent.research import Spotify
-from agent.research.params import PlaylistIdParams, SearchParams
 from spotifyify import SpotifyClient
 
 
@@ -85,9 +84,7 @@ async def test_search_tracks_pages_within_the_development_mode_limit() -> None:
         return _track_search(request, total=40)
 
     async with _client(handle) as client:
-        result = await Spotify(client).search_tracks(
-            SearchParams(query="a-ha", limit=25)
-        )
+        result = await Spotify(client).search_tracks("a-ha", limit=25)
 
     assert len(result.tracks) == 25
     assert result.tracks[24].uri == "spotify:track:track24"
@@ -97,9 +94,7 @@ async def test_search_tracks_pages_within_the_development_mode_limit() -> None:
 @pytest.mark.asyncio
 async def test_track_results_render_one_tag_per_addable_track() -> None:
     async with _client(lambda request: _track_search(request, total=1)) as client:
-        result = await Spotify(client).search_tracks(
-            SearchParams(query="a-ha", limit=1)
-        )
+        result = await Spotify(client).search_tracks("a-ha", limit=1)
 
     assert result.content == (
         '<track uri="spotify:track:track0" label="a-ha - Track 0 (1985)" />'
@@ -120,11 +115,7 @@ async def test_playlist_tracks_use_the_legacy_route_with_an_app_token() -> None:
         return httpx2.Response(200, json=page)
 
     async with _client(handle, tokens) as client:
-        result = await Spotify(client).get_playlist_tracks(
-            PlaylistIdParams(
-                playlist_id="spotify:playlist:playlist1", playlist_name="All Out 80s"
-            )
-        )
+        result = await Spotify(client).get_playlist_tracks("spotify:playlist:playlist1")
 
     assert paths == ["/v1/playlists/playlist1/tracks"]
     assert tokens.require_user_calls == [False]
@@ -141,9 +132,7 @@ async def test_playlist_tracks_reject_path_traversal_without_a_request() -> None
 
     async with _client(handle) as client:
         with pytest.raises(ValueError, match="Expected a nonempty Spotify ID"):
-            await Spotify(client).get_playlist_tracks(
-                PlaylistIdParams(playlist_id="../me", playlist_name="All Out 80s")
-            )
+            await Spotify(client).get_playlist_tracks("../me")
 
     assert requests == []
 
@@ -152,11 +141,9 @@ async def test_playlist_tracks_reject_path_traversal_without_a_request() -> None
 async def test_closing_keeps_a_shared_client_usable() -> None:
     async with _client(lambda request: _track_search(request, total=1)) as client:
         first = Spotify(client)
-        await first.search_tracks(SearchParams(query="a-ha", limit=1))
+        await first.search_tracks("a-ha", limit=1)
         await first.close()
 
-        result = await Spotify(client).search_tracks(
-            SearchParams(query="a-ha", limit=1)
-        )
+        result = await Spotify(client).search_tracks("a-ha", limit=1)
 
     assert len(result.tracks) == 1

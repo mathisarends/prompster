@@ -1,23 +1,31 @@
-from pathlib import Path
-from uuid import uuid4
+from typing import Annotated, TypedDict
+from uuid import UUID, uuid4
 
 from harnessed import Inject, Plugin, SystemPrompt, ToolContext, hook, needs, tool
 from harnessed.events import AssistantMessageEvent
 from harnessed.hooks import Next, PrepareRequest
 from harnessed.models import ModelRequest, UserMessage
 from harnessed.sessions import SessionContext, SessionValue
+from pydantic import Field
 
 from agent.deck.events import DECK_EVENTS, DeckChangedEvent
-from agent.deck.params import (
-    AddDeckTracksParams,
-    RemoveDeckTracksParams,
-    ReplaceDeckTracksParams,
-)
 from agent.deck.rendering import render_deck_state
 from agent.deck.store import DeckStore
 from agent.deck.views import DeckTrack, TrackReplacement
-from agent.prompts import read_prompt
 from agent.research import FoundTrack, TracksFoundEvent
+
+TrackUri = Annotated[
+    str,
+    Field(
+        pattern=r"^spotify:track:",
+        description="Spotify track URI from search or playlist results.",
+    ),
+]
+
+
+class TrackSwap(TypedDict):
+    track_id: UUID
+    uri: TrackUri
 
 
 class DeckPlugin(Plugin):
@@ -39,7 +47,7 @@ class DeckPlugin(Plugin):
         self._store = store
 
     def instructions(self) -> SystemPrompt:
-        return SystemPrompt(read_prompt(Path(__file__).with_name("prompt.md")))
+        return SystemPrompt(_INSTRUCTIONS)
 
     @hook(PrepareRequest)
     async def append_deck_state(
@@ -70,23 +78,25 @@ class DeckPlugin(Plugin):
         if (change := self._store.remove_duplicates()) is not None:
             await self.session.emit(change)
 
-    @tool(
-        description=(
-            "Add tracks to the Hitster deck by Spotify URI. Creates the deck if "
-            "needed and skips tracks already in it. Does not touch Spotify playlists."
-        ),
-        params=AddDeckTracksParams,
-    )
+    @tool
     async def add_deck_tracks(
-        self, params: AddDeckTracksParams, *, ctx: Inject[ToolContext]
+        self,
+        uris: Annotated[list[TrackUri], Field(min_length=1)],
+        *,
+        ctx: Inject[ToolContext],
     ) -> str:
+        """Add tracks to the Hitster deck by Spotify URI.
+
+        Creates the deck if needed and skips tracks already in it. Does not
+        touch Spotify playlists.
+        """
         before = self._store.track_count
-        tracks = [self._resolve(track.uri) for track in params.tracks]
+        tracks = [self._resolve(uri) for uri in uris]
         await self._publish(ctx, self._store.add(tracks))
         deck = self._store.deck
         assert deck is not None
         added = self._store.track_count - before
-        requested = len(params.tracks)
+        requested = len(uris)
         total = self._store.track_count
         if added == requested:
             return (
@@ -103,30 +113,40 @@ class DeckPlugin(Plugin):
             )
         return f"{message} The others were already in the deck."
 
-    @tool(
-        description="Remove tracks from the Hitster deck by their deck track ID.",
-        params=RemoveDeckTracksParams,
-    )
+    @tool
     async def remove_deck_tracks(
-        self, params: RemoveDeckTracksParams, *, ctx: Inject[ToolContext]
+        self,
+        track_ids: Annotated[
+            list[UUID],
+            Field(min_length=1, description="Track IDs from the current deck state."),
+        ],
+        *,
+        ctx: Inject[ToolContext],
     ) -> str:
-        track_ids = [str(track_id) for track_id in params.track_ids]
-        await self._publish(ctx, self._store.remove(track_ids))
-        return f"{len(track_ids)} track(s) removed from Hitster deck."
+        """Remove tracks from the Hitster deck by their deck track ID."""
+        removed = [str(track_id) for track_id in track_ids]
+        await self._publish(ctx, self._store.remove(removed))
+        return f"{len(removed)} track(s) removed from Hitster deck."
 
-    @tool(
-        description="Swap Hitster deck tracks for other tracks by Spotify URI.",
-        params=ReplaceDeckTracksParams,
-    )
+    @tool
     async def replace_deck_tracks(
-        self, params: ReplaceDeckTracksParams, *, ctx: Inject[ToolContext]
+        self,
+        swaps: Annotated[
+            list[TrackSwap],
+            Field(
+                min_length=1,
+                description="Deck track IDs and the Spotify track URIs replacing them.",
+            ),
+        ],
+        *,
+        ctx: Inject[ToolContext],
     ) -> str:
+        """Swap Hitster deck tracks for other tracks by Spotify URI."""
         replacements = [
             TrackReplacement(
-                track_id=str(replacement.old_id),
-                track=self._resolve(replacement.new_uri),
+                track_id=str(swap["track_id"]), track=self._resolve(swap["uri"])
             )
-            for replacement in params.replacements
+            for swap in swaps
         ]
         await self._publish(ctx, self._store.replace(replacements))
         return f"{len(replacements)} track replacement(s) processed."
@@ -153,3 +173,24 @@ class DeckPlugin(Plugin):
 
 # Bounds the catalog saved with the conversation; the oldest results go first.
 _MAX_KNOWN_TRACKS = 600
+
+_INSTRUCTIONS = """\
+<deck_building>
+The latest `<deck_state>` message is the source of truth for the current deck, including track IDs, remaining capacity, and year coverage. Never fetch or restate the deck to find out what is in it.
+
+Building:
+1. Finish researching and settle on the selection first. Do not add tracks piecemeal while still searching.
+2. Write one short line saying what you built and what stands out, for example: "Hab dir einen Mix aus 80s-Synthpop, New Wave und ein paar vergessenen Talk-Talk-Cuts zusammengestellt."
+3. Add the selection with `add_deck_tracks`, ideally in one call.
+4. Fill the deck toward its capacity unless the user asked for fewer songs or the niche genuinely runs out.
+
+Refining:
+- Use the smallest fitting edit: `add_deck_tracks`, `remove_deck_tracks`, or `replace_deck_tracks`.
+- If a URI is rejected as unknown, search for that song again and retry.
+- A `<user_events>` block lists manual deck changes the user made right before that message. Treat them as deliberate and never undo them unless asked.
+
+Tool labels:
+- `status` is a short German present-tense label for the UI, specific to the action: "Baue das 80er-Deck", "Tausche zwei Synthpop-Tracks".
+- When several calls form one work step, set `sequence_label` on the first call only: "Grabe Deutschrap-Kanten aus".
+- Search and playlist tools show their query automatically, so they need no `status`.
+</deck_building>"""
