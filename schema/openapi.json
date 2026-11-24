@@ -1,0 +1,6680 @@
+{
+  "components": {
+    "schemas": {
+      "AddPlaylistTrackRequest": {
+        "properties": {
+          "artist": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Artist",
+            "type": "string"
+          },
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverurl"
+          },
+          "spotifyUri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spotifyuri"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "year": {
+            "maximum": 2100.0,
+            "minimum": 1900.0,
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "title",
+          "artist",
+          "year"
+        ],
+        "title": "AddPlaylistTrackRequest",
+        "type": "object"
+      },
+      "AddSpotifyPlaylistTrackRequest": {
+        "properties": {
+          "spotifyUri": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Spotifyuri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "spotifyUri"
+        ],
+        "title": "AddSpotifyPlaylistTrackRequest",
+        "type": "object"
+      },
+      "ArtistReferenceNotFoundProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "artist_reference_not_found",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 404,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/artist_reference_not_found",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "ArtistReferenceNotFoundProblem",
+        "type": "object"
+      },
+      "ArtistReferenceResponse": {
+        "properties": {
+          "followers": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Followers"
+          },
+          "genres": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Genres",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "imageUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Imageurl"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "popularity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Popularity"
+          },
+          "spotifyArtistId": {
+            "title": "Spotifyartistid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "spotifyArtistId",
+          "name"
+        ],
+        "title": "ArtistReferenceResponse",
+        "type": "object"
+      },
+      "AssistantMessageCancelledEvent": {
+        "properties": {
+          "messageId": {
+            "format": "uuid",
+            "title": "Messageid",
+            "type": "string"
+          },
+          "type": {
+            "const": "message.assistant_cancelled",
+            "default": "message.assistant_cancelled",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "messageId"
+        ],
+        "title": "AssistantMessageCancelledEvent",
+        "type": "object"
+      },
+      "AssistantMessageChunkEvent": {
+        "properties": {
+          "chunk": {
+            "title": "Chunk",
+            "type": "string"
+          },
+          "messageId": {
+            "format": "uuid",
+            "title": "Messageid",
+            "type": "string"
+          },
+          "type": {
+            "const": "message.assistant_chunk",
+            "default": "message.assistant_chunk",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "messageId",
+          "chunk"
+        ],
+        "title": "AssistantMessageChunkEvent",
+        "type": "object"
+      },
+      "AssistantMessageCompletedEvent": {
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/AssistantMessageEntryResponse"
+          },
+          "type": {
+            "const": "message.assistant_completed",
+            "default": "message.assistant_completed",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "AssistantMessageCompletedEvent",
+        "type": "object"
+      },
+      "AssistantMessageEntryResponse": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "assistant_message",
+            "default": "assistant_message",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "content",
+          "createdAt"
+        ],
+        "title": "AssistantMessageEntryResponse",
+        "type": "object"
+      },
+      "AssistantMessageStartedEvent": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "messageId": {
+            "format": "uuid",
+            "title": "Messageid",
+            "type": "string"
+          },
+          "type": {
+            "const": "message.assistant_started",
+            "default": "message.assistant_started",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "messageId",
+          "createdAt"
+        ],
+        "title": "AssistantMessageStartedEvent",
+        "type": "object"
+      },
+      "AuthenticationRequiredProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "authentication_required",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 401,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/authentication_required",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "AuthenticationRequiredProblem",
+        "type": "object"
+      },
+      "AuthenticationRequiredProblemEmbedded": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "authentication_required",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/authentication_required",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "code"
+        ],
+        "title": "AuthenticationRequiredProblem",
+        "type": "object"
+      },
+      "Body_upload_image_attachment": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_image_attachment",
+        "type": "object"
+      },
+      "CanonInternalServerErrorEmbedded": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "internal_server_error",
+            "pattern": "^[a-z][a-z0-9_]{2,}$",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/internal_server_error",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "code"
+        ],
+        "title": "Problem",
+        "type": "object"
+      },
+      "CompleteOnboardingRequest": {
+        "properties": {
+          "modelId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelid"
+          }
+        },
+        "title": "CompleteOnboardingRequest",
+        "type": "object"
+      },
+      "ContextCompactedEvent": {
+        "properties": {
+          "tokensAfter": {
+            "title": "Tokensafter",
+            "type": "integer"
+          },
+          "tokensBefore": {
+            "title": "Tokensbefore",
+            "type": "integer"
+          },
+          "type": {
+            "const": "session.context_compacted",
+            "default": "session.context_compacted",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tokensBefore",
+          "tokensAfter"
+        ],
+        "title": "ContextCompactedEvent",
+        "type": "object"
+      },
+      "DoneEvent": {
+        "properties": {
+          "type": {
+            "const": "done",
+            "default": "done",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "DoneEvent",
+        "type": "object"
+      },
+      "EntryKind": {
+        "enum": [
+          "user_message",
+          "assistant_message",
+          "tool_call_sequence"
+        ],
+        "title": "EntryKind",
+        "type": "string"
+      },
+      "EntryKindSchema": {
+        "$ref": "#/components/schemas/EntryKind",
+        "description": "Schema-only model to expose EntryKind in OpenAPI.",
+        "title": "EntryKindSchema"
+      },
+      "ErrorEvent": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "correlationId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlationid"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "const": "error",
+            "default": "error",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorEvent",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "ImageAttachmentReferenceRequest": {
+        "properties": {
+          "contentType": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Contenttype",
+            "type": "string"
+          },
+          "fileName": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Filename",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "exclusiveMinimum": 0.0,
+            "title": "Sizebytes",
+            "type": "integer"
+          },
+          "storageKey": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Storagekey",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "storageKey",
+          "contentType",
+          "fileName",
+          "sizeBytes"
+        ],
+        "title": "ImageAttachmentReferenceRequest",
+        "type": "object"
+      },
+      "InternalServerProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "internal_server_error",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 500,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/internal_server_error",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "InternalServerProblem",
+        "type": "object"
+      },
+      "InvalidCredentialsProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "invalid_credentials",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 401,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/invalid_credentials",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "InvalidCredentialsProblem",
+        "type": "object"
+      },
+      "InvalidImageAttachmentProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "invalid_image_attachment",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 400,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/invalid_image_attachment",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "InvalidImageAttachmentProblem",
+        "type": "object"
+      },
+      "InvalidSessionPhaseTransitionProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "invalid_session_phase_transition",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 409,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/invalid_session_phase_transition",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "InvalidSessionPhaseTransitionProblem",
+        "type": "object"
+      },
+      "InvalidSpotifyTrackUriProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "invalid_spotify_track_uri",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 400,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/invalid_spotify_track_uri",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "InvalidSpotifyTrackUriProblem",
+        "type": "object"
+      },
+      "LLMCapabilitiesResponse": {
+        "properties": {
+          "reasoningEffort": {
+            "items": {
+              "$ref": "#/components/schemas/ReasoningEffort"
+            },
+            "title": "Reasoningeffort",
+            "type": "array"
+          },
+          "temperature": {
+            "title": "Temperature",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "temperature",
+          "reasoningEffort"
+        ],
+        "title": "LLMCapabilitiesResponse",
+        "type": "object"
+      },
+      "LLMDefaultsResponse": {
+        "properties": {
+          "reasoningEffort": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReasoningEffort"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "reasoningEffort"
+        ],
+        "title": "LLMDefaultsResponse",
+        "type": "object"
+      },
+      "LLMOptionResponse": {
+        "properties": {
+          "capabilities": {
+            "$ref": "#/components/schemas/LLMCapabilitiesResponse"
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/LLMDefaultsResponse"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "isDefault": {
+            "title": "Isdefault",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "profile": {
+            "title": "Profile",
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/LLMProvider"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "label",
+          "profile",
+          "capabilities",
+          "defaults",
+          "isDefault"
+        ],
+        "title": "LLMOptionResponse",
+        "type": "object"
+      },
+      "LLMOptionsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LLMOptionResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "LLMOptionsResponse",
+        "type": "object"
+      },
+      "LLMProvider": {
+        "enum": [
+          "openai",
+          "codex"
+        ],
+        "title": "LLMProvider",
+        "type": "string"
+      },
+      "NoCurrentAssistantMessageProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "no_current_assistant_message",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 409,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/no_current_assistant_message",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "NoCurrentAssistantMessageProblem",
+        "type": "object"
+      },
+      "NoPendingToolCallSequenceProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "no_pending_tool_call_sequence",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 409,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/no_pending_tool_call_sequence",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "NoPendingToolCallSequenceProblem",
+        "type": "object"
+      },
+      "OnboardingQuestionAskedEvent": {
+        "properties": {
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
+          },
+          "isLastQuestion": {
+            "default": false,
+            "title": "Islastquestion",
+            "type": "boolean"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "questionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Questionid"
+          },
+          "recommendedOption": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendedoption"
+          },
+          "selectionMode": {
+            "$ref": "#/components/schemas/OnboardingQuestionSelectionMode",
+            "default": "single_select"
+          },
+          "type": {
+            "const": "session.onboarding_question_asked",
+            "default": "session.onboarding_question_asked",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "OnboardingQuestionAskedEvent",
+        "type": "object"
+      },
+      "OnboardingQuestionResponse": {
+        "properties": {
+          "answers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Answers",
+            "type": "array"
+          },
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "isAnswered": {
+            "default": false,
+            "title": "Isanswered",
+            "type": "boolean"
+          },
+          "isLastQuestion": {
+            "title": "Islastquestion",
+            "type": "boolean"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "questionText": {
+            "title": "Questiontext",
+            "type": "string"
+          },
+          "recommendedOption": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendedoption"
+          },
+          "selectionMode": {
+            "$ref": "#/components/schemas/OnboardingQuestionSelectionMode",
+            "default": "single_select"
+          },
+          "sequenceNumber": {
+            "title": "Sequencenumber",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "sequenceNumber",
+          "questionText",
+          "isLastQuestion"
+        ],
+        "title": "OnboardingQuestionResponse",
+        "type": "object"
+      },
+      "OnboardingQuestionSelectionMode": {
+        "enum": [
+          "single_select",
+          "multi_select"
+        ],
+        "title": "OnboardingQuestionSelectionMode",
+        "type": "string"
+      },
+      "PendingToolCallsProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "pending_tool_calls",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 409,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/pending_tool_calls",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "PendingToolCallsProblem",
+        "type": "object"
+      },
+      "Phase": {
+        "enum": [
+          "onboarding",
+          "build"
+        ],
+        "title": "Phase",
+        "type": "string"
+      },
+      "PlaylistPayload": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/PlaylistTrackResponse"
+            },
+            "title": "Tracks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "tracks"
+        ],
+        "title": "PlaylistPayload",
+        "type": "object"
+      },
+      "PlaylistReferenceNotFoundProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "playlist_reference_not_found",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 404,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/playlist_reference_not_found",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "PlaylistReferenceNotFoundProblem",
+        "type": "object"
+      },
+      "PlaylistReferenceResponse": {
+        "properties": {
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverurl"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "spotifyPlaylistId": {
+            "title": "Spotifyplaylistid",
+            "type": "string"
+          },
+          "totalTracks": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Totaltracks"
+          }
+        },
+        "required": [
+          "id",
+          "spotifyPlaylistId",
+          "name"
+        ],
+        "title": "PlaylistReferenceResponse",
+        "type": "object"
+      },
+      "PlaylistResponse": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/PlaylistTrackResponse"
+            },
+            "title": "Tracks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "tracks"
+        ],
+        "title": "PlaylistResponse",
+        "type": "object"
+      },
+      "PlaylistSetEvent": {
+        "properties": {
+          "playlist": {
+            "$ref": "#/components/schemas/PlaylistPayload"
+          },
+          "type": {
+            "const": "playlist.set",
+            "default": "playlist.set",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "playlist"
+        ],
+        "title": "PlaylistSetEvent",
+        "type": "object"
+      },
+      "PlaylistTrackAddedEvent": {
+        "properties": {
+          "playlistId": {
+            "format": "uuid",
+            "title": "Playlistid",
+            "type": "string"
+          },
+          "track": {
+            "$ref": "#/components/schemas/PlaylistTrackResponse"
+          },
+          "type": {
+            "const": "playlist.track_added",
+            "default": "playlist.track_added",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "playlistId",
+          "track"
+        ],
+        "title": "PlaylistTrackAddedEvent",
+        "type": "object"
+      },
+      "PlaylistTrackLimitExceededProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "playlist_track_limit_exceeded",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 409,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/playlist_track_limit_exceeded",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "PlaylistTrackLimitExceededProblem",
+        "type": "object"
+      },
+      "PlaylistTrackNotFoundProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "playlist_track_not_found",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 404,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/playlist_track_not_found",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "PlaylistTrackNotFoundProblem",
+        "type": "object"
+      },
+      "PlaylistTrackRemovedEvent": {
+        "properties": {
+          "playlistId": {
+            "format": "uuid",
+            "title": "Playlistid",
+            "type": "string"
+          },
+          "trackId": {
+            "format": "uuid",
+            "title": "Trackid",
+            "type": "string"
+          },
+          "type": {
+            "const": "playlist.track_removed",
+            "default": "playlist.track_removed",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "playlistId",
+          "trackId"
+        ],
+        "title": "PlaylistTrackRemovedEvent",
+        "type": "object"
+      },
+      "PlaylistTrackReplacedEvent": {
+        "properties": {
+          "playlistId": {
+            "format": "uuid",
+            "title": "Playlistid",
+            "type": "string"
+          },
+          "track": {
+            "$ref": "#/components/schemas/PlaylistTrackResponse"
+          },
+          "trackId": {
+            "format": "uuid",
+            "title": "Trackid",
+            "type": "string"
+          },
+          "type": {
+            "const": "playlist.track_replaced",
+            "default": "playlist.track_replaced",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "playlistId",
+          "trackId",
+          "track"
+        ],
+        "title": "PlaylistTrackReplacedEvent",
+        "type": "object"
+      },
+      "PlaylistTrackResponse": {
+        "properties": {
+          "artist": {
+            "title": "Artist",
+            "type": "string"
+          },
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverurl"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "spotifyUri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spotifyuri"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "artist",
+          "year"
+        ],
+        "title": "PlaylistTrackResponse",
+        "type": "object"
+      },
+      "Problem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "pattern": "^[a-z][a-z0-9_]{2,}$",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "maximum": 599,
+            "minimum": 100,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "Problem",
+        "type": "object"
+      },
+      "ReadinessResponse": {
+        "properties": {
+          "status": {
+            "const": "ready",
+            "default": "ready",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "ReadinessResponse",
+        "type": "object"
+      },
+      "ReasoningEffort": {
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "title": "ReasoningEffort",
+        "type": "string"
+      },
+      "RequestValidationProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "request_validation_error",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "errors": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "detail": {
+                  "type": "string"
+                },
+                "in": {
+                  "enum": [
+                    "path",
+                    "query",
+                    "header",
+                    "cookie"
+                  ],
+                  "type": "string"
+                },
+                "parameter": {
+                  "type": "string"
+                },
+                "pointer": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "code",
+                "detail"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 422,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/request_validation_error",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "errors"
+        ],
+        "title": "RequestValidationProblem",
+        "type": "object"
+      },
+      "RunStatus": {
+        "description": "What a running agent turn is doing, as far as the user can tell.",
+        "enum": [
+          "running",
+          "paused",
+          "compacting"
+        ],
+        "title": "RunStatus",
+        "type": "string"
+      },
+      "RunStatusChangedEvent": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "type": {
+            "const": "session.run_status_changed",
+            "default": "session.run_status_changed",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "RunStatusChangedEvent",
+        "type": "object"
+      },
+      "SendMessageRequest": {
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/SessionMessageAttachmentRequest"
+            },
+            "maxItems": 25,
+            "title": "Attachments",
+            "type": "array"
+          },
+          "content": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          },
+          "imageAttachments": {
+            "items": {
+              "$ref": "#/components/schemas/ImageAttachmentReferenceRequest"
+            },
+            "maxItems": 5,
+            "title": "Imageattachments",
+            "type": "array"
+          },
+          "modelId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelid"
+          }
+        },
+        "required": [
+          "content"
+        ],
+        "title": "SendMessageRequest",
+        "type": "object"
+      },
+      "ServiceNotReadyProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "service_not_ready",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 503,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/service_not_ready",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "ServiceNotReadyProblem",
+        "type": "object"
+      },
+      "SessionAccessDeniedProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "session_access_denied",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 403,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/session_access_denied",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "SessionAccessDeniedProblem",
+        "type": "object"
+      },
+      "SessionExpiredProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "session_expired",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 401,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/session_expired",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "SessionExpiredProblem",
+        "type": "object"
+      },
+      "SessionExportRequiresSpotifyConnectionProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "session_export_requires_spotify_connection",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 409,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/session_export_requires_spotify_connection",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "SessionExportRequiresSpotifyConnectionProblem",
+        "type": "object"
+      },
+      "SessionInvalidProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "session_invalid",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 401,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/session_invalid",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "SessionInvalidProblem",
+        "type": "object"
+      },
+      "SessionMessageAttachmentKind": {
+        "enum": [
+          "spotify-playlist",
+          "spotify-artist"
+        ],
+        "title": "SessionMessageAttachmentKind",
+        "type": "string"
+      },
+      "SessionMessageAttachmentRequest": {
+        "properties": {
+          "externalId": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Externalid",
+            "type": "string"
+          },
+          "imageUrl": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Imageurl"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SessionMessageAttachmentKind"
+          },
+          "spotifyId": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spotifyid"
+          },
+          "subtitle": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitle"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "externalId",
+          "title"
+        ],
+        "title": "SessionMessageAttachmentRequest",
+        "type": "object"
+      },
+      "SessionMessageAttachmentResponse": {
+        "properties": {
+          "externalId": {
+            "title": "Externalid",
+            "type": "string"
+          },
+          "imageUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Imageurl"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SessionMessageAttachmentKind"
+          },
+          "spotifyId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spotifyid"
+          },
+          "subtitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitle"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "externalId",
+          "title"
+        ],
+        "title": "SessionMessageAttachmentResponse",
+        "type": "object"
+      },
+      "SessionNotFoundProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "session_not_found",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 404,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/session_not_found",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "SessionNotFoundProblem",
+        "type": "object"
+      },
+      "SessionPlaylistEmptyProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "session_playlist_empty",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 400,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/session_playlist_empty",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "SessionPlaylistEmptyProblem",
+        "type": "object"
+      },
+      "SessionPlaylistMissingSpotifyTracksProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "session_playlist_missing_spotify_tracks",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 400,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/session_playlist_missing_spotify_tracks",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "SessionPlaylistMissingSpotifyTracksProblem",
+        "type": "object"
+      },
+      "SessionResponse": {
+        "properties": {
+          "artistReferences": {
+            "items": {
+              "$ref": "#/components/schemas/ArtistReferenceResponse"
+            },
+            "title": "Artistreferences",
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "assistant_message": "#/components/schemas/AssistantMessageEntryResponse",
+                  "tool_call_sequence": "#/components/schemas/ToolCallSequenceEntryResponse",
+                  "user_message": "#/components/schemas/UserMessageEntryResponse"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/UserMessageEntryResponse"
+                },
+                {
+                  "$ref": "#/components/schemas/AssistantMessageEntryResponse"
+                },
+                {
+                  "$ref": "#/components/schemas/ToolCallSequenceEntryResponse"
+                }
+              ]
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "isStarred": {
+            "title": "Isstarred",
+            "type": "boolean"
+          },
+          "onboardingQuestions": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingQuestionResponse"
+            },
+            "title": "Onboardingquestions",
+            "type": "array"
+          },
+          "phase": {
+            "$ref": "#/components/schemas/Phase"
+          },
+          "playlist": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlaylistResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "playlistReferences": {
+            "items": {
+              "$ref": "#/components/schemas/PlaylistReferenceResponse"
+            },
+            "title": "Playlistreferences",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "unconsumedUserCurationEvents": {
+            "items": {
+              "$ref": "#/components/schemas/UserCurationEventResponse"
+            },
+            "title": "Unconsumedusercurationevents",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "isStarred",
+          "phase",
+          "createdAt",
+          "entries"
+        ],
+        "title": "SessionResponse",
+        "type": "object"
+      },
+      "SessionSnapshotEvent": {
+        "properties": {
+          "session": {
+            "$ref": "#/components/schemas/SessionSnapshotPayload"
+          },
+          "type": {
+            "const": "session.snapshot",
+            "default": "session.snapshot",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session"
+        ],
+        "title": "SessionSnapshotEvent",
+        "type": "object"
+      },
+      "SessionSnapshotPayload": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "assistant_message": "#/components/schemas/AssistantMessageEntryResponse",
+                  "tool_call_sequence": "#/components/schemas/ToolCallSequenceEntryResponse",
+                  "user_message": "#/components/schemas/UserMessageEntryResponse"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/UserMessageEntryResponse"
+                },
+                {
+                  "$ref": "#/components/schemas/AssistantMessageEntryResponse"
+                },
+                {
+                  "$ref": "#/components/schemas/ToolCallSequenceEntryResponse"
+                }
+              ]
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "playlist": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlaylistPayload"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "createdAt",
+          "entries"
+        ],
+        "title": "SessionSnapshotPayload",
+        "type": "object"
+      },
+      "SessionStreamEvent": {
+        "discriminator": {
+          "mapping": {
+            "done": "#/components/schemas/DoneEvent",
+            "error": "#/components/schemas/ErrorEvent",
+            "message.assistant_cancelled": "#/components/schemas/AssistantMessageCancelledEvent",
+            "message.assistant_chunk": "#/components/schemas/AssistantMessageChunkEvent",
+            "message.assistant_completed": "#/components/schemas/AssistantMessageCompletedEvent",
+            "message.assistant_started": "#/components/schemas/AssistantMessageStartedEvent",
+            "playlist.set": "#/components/schemas/PlaylistSetEvent",
+            "playlist.track_added": "#/components/schemas/PlaylistTrackAddedEvent",
+            "playlist.track_removed": "#/components/schemas/PlaylistTrackRemovedEvent",
+            "playlist.track_replaced": "#/components/schemas/PlaylistTrackReplacedEvent",
+            "session.context_compacted": "#/components/schemas/ContextCompactedEvent",
+            "session.onboarding_question_asked": "#/components/schemas/OnboardingQuestionAskedEvent",
+            "session.run_status_changed": "#/components/schemas/RunStatusChangedEvent",
+            "session.snapshot": "#/components/schemas/SessionSnapshotEvent",
+            "session.suspended_for_input": "#/components/schemas/SuspendedForInputEvent",
+            "session.title_generated": "#/components/schemas/TitleGeneratedEvent",
+            "tool_call.failed": "#/components/schemas/ToolCallFailedEvent",
+            "tool_call.resolved": "#/components/schemas/ToolCallResolvedEvent",
+            "tool_call.retry": "#/components/schemas/ToolCallRetryEvent",
+            "tool_call.sequence_added": "#/components/schemas/ToolCallSequenceAddedEvent",
+            "tool_call.sequence_completed": "#/components/schemas/ToolCallSequenceCompletedEvent"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SessionSnapshotEvent"
+          },
+          {
+            "$ref": "#/components/schemas/TitleGeneratedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AssistantMessageStartedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AssistantMessageChunkEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AssistantMessageCompletedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/AssistantMessageCancelledEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ToolCallSequenceAddedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ToolCallResolvedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ToolCallFailedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ToolCallRetryEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ToolCallSequenceCompletedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ContextCompactedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/RunStatusChangedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/PlaylistSetEvent"
+          },
+          {
+            "$ref": "#/components/schemas/PlaylistTrackAddedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/PlaylistTrackRemovedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/PlaylistTrackReplacedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/OnboardingQuestionAskedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/SuspendedForInputEvent"
+          },
+          {
+            "$ref": "#/components/schemas/DoneEvent"
+          },
+          {
+            "$ref": "#/components/schemas/ErrorEvent"
+          }
+        ]
+      },
+      "SessionSummaryListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SessionSummaryResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SessionSummaryListResponse",
+        "type": "object"
+      },
+      "SessionSummaryResponse": {
+        "properties": {
+          "coverUrls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Coverurls",
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "isStarred": {
+            "title": "Isstarred",
+            "type": "boolean"
+          },
+          "lastActivityAt": {
+            "format": "date-time",
+            "title": "Lastactivityat",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "isStarred",
+          "createdAt",
+          "lastActivityAt"
+        ],
+        "title": "SessionSummaryResponse",
+        "type": "object"
+      },
+      "SessionUpdateRequest": {
+        "properties": {
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "SessionUpdateRequest",
+        "type": "object"
+      },
+      "SpotifyAccessTokenResponse": {
+        "properties": {
+          "accessToken": {
+            "title": "Accesstoken",
+            "type": "string"
+          },
+          "expiresIn": {
+            "title": "Expiresin",
+            "type": "integer"
+          },
+          "scope": {
+            "title": "Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "scope"
+        ],
+        "title": "SpotifyAccessTokenResponse",
+        "type": "object"
+      },
+      "SpotifyArtistResponse": {
+        "properties": {
+          "followers": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Followers"
+          },
+          "genres": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Genres",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "imageUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Imageurl"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "popularity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Popularity"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "genres"
+        ],
+        "title": "SpotifyArtistResponse",
+        "type": "object"
+      },
+      "SpotifyConnectionNotFoundProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "spotify_connection_not_found",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 409,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/spotify_connection_not_found",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "SpotifyConnectionNotFoundProblem",
+        "type": "object"
+      },
+      "SpotifyExportCompletedEvent": {
+        "properties": {
+          "playlist": {
+            "$ref": "#/components/schemas/SpotifyPlaylistExportResponse"
+          },
+          "type": {
+            "const": "spotify_export.completed",
+            "default": "spotify_export.completed",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "playlist"
+        ],
+        "title": "SpotifyExportCompletedEvent",
+        "type": "object"
+      },
+      "SpotifyExportDoneEvent": {
+        "properties": {
+          "type": {
+            "const": "done",
+            "default": "done",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "title": "SpotifyExportDoneEvent",
+        "type": "object"
+      },
+      "SpotifyExportErrorEvent": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "const": "error",
+            "default": "error",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "SpotifyExportErrorEvent",
+        "type": "object"
+      },
+      "SpotifyExportEvent": {
+        "discriminator": {
+          "mapping": {
+            "done": "#/components/schemas/SpotifyExportDoneEvent",
+            "error": "#/components/schemas/SpotifyExportErrorEvent",
+            "spotify_export.completed": "#/components/schemas/SpotifyExportCompletedEvent",
+            "spotify_export.retry": "#/components/schemas/SpotifyExportRetryEvent"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SpotifyExportRetryEvent"
+          },
+          {
+            "$ref": "#/components/schemas/SpotifyExportCompletedEvent"
+          },
+          {
+            "$ref": "#/components/schemas/SpotifyExportDoneEvent"
+          },
+          {
+            "$ref": "#/components/schemas/SpotifyExportErrorEvent"
+          }
+        ]
+      },
+      "SpotifyExportRetryEvent": {
+        "properties": {
+          "attempt": {
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "maxAttempts": {
+            "title": "Maxattempts",
+            "type": "integer"
+          },
+          "retryInSeconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retryinseconds"
+          },
+          "type": {
+            "const": "spotify_export.retry",
+            "default": "spotify_export.retry",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt",
+          "maxAttempts"
+        ],
+        "title": "SpotifyExportRetryEvent",
+        "type": "object"
+      },
+      "SpotifyPlaylistExportResponse": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "trackCount": {
+            "title": "Trackcount",
+            "type": "integer"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "url",
+          "trackCount"
+        ],
+        "title": "SpotifyPlaylistExportResponse",
+        "type": "object"
+      },
+      "SpotifyPlaylistResponse": {
+        "properties": {
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverurl"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "totalTracks": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Totaltracks"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "SpotifyPlaylistResponse",
+        "type": "object"
+      },
+      "SpotifySearchType": {
+        "enum": [
+          "track",
+          "playlist",
+          "artist"
+        ],
+        "title": "SpotifySearchType",
+        "type": "string"
+      },
+      "SpotifyTokenRevokedProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "spotify_token_revoked",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 410,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/spotify_token_revoked",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "SpotifyTokenRevokedProblem",
+        "type": "object"
+      },
+      "SpotifyTrackNotFoundProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "spotify_track_not_found",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 404,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/spotify_track_not_found",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "SpotifyTrackNotFoundProblem",
+        "type": "object"
+      },
+      "SpotifyTrackResponse": {
+        "properties": {
+          "album": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Album"
+          },
+          "artist": {
+            "title": "Artist",
+            "type": "string"
+          },
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverurl"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "artist",
+          "year"
+        ],
+        "title": "SpotifyTrackResponse",
+        "type": "object"
+      },
+      "SpotifyTrackYearMissingProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "spotify_track_year_missing",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 409,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/spotify_track_year_missing",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "SpotifyTrackYearMissingProblem",
+        "type": "object"
+      },
+      "SpotifyUnifiedSearchResponse": {
+        "properties": {
+          "artists": {
+            "items": {
+              "$ref": "#/components/schemas/SpotifyArtistResponse"
+            },
+            "title": "Artists",
+            "type": "array"
+          },
+          "playlists": {
+            "items": {
+              "$ref": "#/components/schemas/SpotifyPlaylistResponse"
+            },
+            "title": "Playlists",
+            "type": "array"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/SpotifyTrackResponse"
+            },
+            "title": "Tracks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tracks",
+          "playlists",
+          "artists"
+        ],
+        "title": "SpotifyUnifiedSearchResponse",
+        "type": "object"
+      },
+      "SubmitOnboardingAnswerRequest": {
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "answers": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Answers",
+            "type": "array"
+          },
+          "questionId": {
+            "format": "uuid",
+            "title": "Questionid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "questionId"
+        ],
+        "title": "SubmitOnboardingAnswerRequest",
+        "type": "object"
+      },
+      "SuspendedForInputEvent": {
+        "properties": {
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
+          },
+          "isLastQuestion": {
+            "default": false,
+            "title": "Islastquestion",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question"
+          },
+          "questionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Questionid"
+          },
+          "recommendedOption": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendedoption"
+          },
+          "selectionMode": {
+            "$ref": "#/components/schemas/OnboardingQuestionSelectionMode",
+            "default": "single_select"
+          },
+          "type": {
+            "const": "session.suspended_for_input",
+            "default": "session.suspended_for_input",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "SuspendedForInputEvent",
+        "type": "object"
+      },
+      "TitleGeneratedEvent": {
+        "properties": {
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "const": "session.title_generated",
+            "default": "session.title_generated",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "TitleGeneratedEvent",
+        "type": "object"
+      },
+      "ToolCallAlreadyResolvedProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "tool_call_already_resolved",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 409,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/tool_call_already_resolved",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "ToolCallAlreadyResolvedProblem",
+        "type": "object"
+      },
+      "ToolCallFailedEvent": {
+        "properties": {
+          "error": {
+            "title": "Error",
+            "type": "string"
+          },
+          "sequenceId": {
+            "format": "uuid",
+            "title": "Sequenceid",
+            "type": "string"
+          },
+          "toolCallId": {
+            "title": "Toolcallid",
+            "type": "string"
+          },
+          "type": {
+            "const": "tool_call.failed",
+            "default": "tool_call.failed",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sequenceId",
+          "toolCallId",
+          "error"
+        ],
+        "title": "ToolCallFailedEvent",
+        "type": "object"
+      },
+      "ToolCallNotFoundProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "tool_call_not_found",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 404,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/tool_call_not_found",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "ToolCallNotFoundProblem",
+        "type": "object"
+      },
+      "ToolCallResolvedEvent": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          },
+          "resultItems": {
+            "items": {
+              "$ref": "#/components/schemas/ToolCallResultItemResponse"
+            },
+            "title": "Resultitems",
+            "type": "array"
+          },
+          "sequenceId": {
+            "format": "uuid",
+            "title": "Sequenceid",
+            "type": "string"
+          },
+          "toolCallId": {
+            "title": "Toolcallid",
+            "type": "string"
+          },
+          "type": {
+            "const": "tool_call.resolved",
+            "default": "tool_call.resolved",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sequenceId",
+          "toolCallId",
+          "result"
+        ],
+        "title": "ToolCallResolvedEvent",
+        "type": "object"
+      },
+      "ToolCallResponse": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "function": {
+            "$ref": "#/components/schemas/ToolFunctionResponse"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "resultItems": {
+            "items": {
+              "$ref": "#/components/schemas/ToolCallResultItemResponse"
+            },
+            "title": "Resultitems",
+            "type": "array"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ToolCallState"
+          }
+        },
+        "required": [
+          "id",
+          "function",
+          "state"
+        ],
+        "title": "ToolCallResponse",
+        "type": "object"
+      },
+      "ToolCallResultItemResponse": {
+        "properties": {
+          "artist": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artist"
+          },
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverurl"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "trackUri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trackuri"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "ToolCallResultItemResponse",
+        "type": "object"
+      },
+      "ToolCallRetryEvent": {
+        "properties": {
+          "attempt": {
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "maxAttempts": {
+            "title": "Maxattempts",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "retryInSeconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retryinseconds"
+          },
+          "sequenceId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequenceid"
+          },
+          "toolCallId": {
+            "title": "Toolcallid",
+            "type": "string"
+          },
+          "type": {
+            "const": "tool_call.retry",
+            "default": "tool_call.retry",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "toolCallId",
+          "name",
+          "attempt",
+          "maxAttempts"
+        ],
+        "title": "ToolCallRetryEvent",
+        "type": "object"
+      },
+      "ToolCallSequenceAddedEvent": {
+        "properties": {
+          "sequence": {
+            "$ref": "#/components/schemas/ToolCallSequenceEntryResponse"
+          },
+          "type": {
+            "const": "tool_call.sequence_added",
+            "default": "tool_call.sequence_added",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sequence"
+        ],
+        "title": "ToolCallSequenceAddedEvent",
+        "type": "object"
+      },
+      "ToolCallSequenceCompletedEvent": {
+        "properties": {
+          "sequenceId": {
+            "format": "uuid",
+            "title": "Sequenceid",
+            "type": "string"
+          },
+          "type": {
+            "const": "tool_call.sequence_completed",
+            "default": "tool_call.sequence_completed",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sequenceId"
+        ],
+        "title": "ToolCallSequenceCompletedEvent",
+        "type": "object"
+      },
+      "ToolCallSequenceEntryResponse": {
+        "properties": {
+          "calls": {
+            "items": {
+              "$ref": "#/components/schemas/ToolCallResponse"
+            },
+            "title": "Calls",
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "tool_call_sequence",
+            "default": "tool_call_sequence",
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "calls"
+        ],
+        "title": "ToolCallSequenceEntryResponse",
+        "type": "object"
+      },
+      "ToolCallState": {
+        "enum": [
+          "pending",
+          "completed",
+          "failed"
+        ],
+        "title": "ToolCallState",
+        "type": "string"
+      },
+      "ToolFunctionResponse": {
+        "properties": {
+          "actionType": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actiontype"
+          },
+          "arguments": {
+            "additionalProperties": true,
+            "title": "Arguments",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "statusLabel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statuslabel"
+          }
+        },
+        "required": [
+          "name",
+          "arguments"
+        ],
+        "title": "ToolFunctionResponse",
+        "type": "object"
+      },
+      "UploadedImageAttachmentResponse": {
+        "properties": {
+          "contentType": {
+            "title": "Contenttype",
+            "type": "string"
+          },
+          "fileName": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "title": "Sizebytes",
+            "type": "integer"
+          },
+          "storageKey": {
+            "title": "Storagekey",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "id",
+          "contentType",
+          "fileName",
+          "sizeBytes",
+          "storageKey"
+        ],
+        "title": "UploadedImageAttachmentResponse",
+        "type": "object"
+      },
+      "UserCurationEventAlreadyConsumedProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "user_curation_event_already_consumed",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 409,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/user_curation_event_already_consumed",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "UserCurationEventAlreadyConsumedProblem",
+        "type": "object"
+      },
+      "UserCurationEventMissingTrackYearProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "user_curation_event_missing_track_year",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 409,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/user_curation_event_missing_track_year",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "UserCurationEventMissingTrackYearProblem",
+        "type": "object"
+      },
+      "UserCurationEventNotFoundProblem": {
+        "additionalProperties": true,
+        "description": "RFC 9457 Problem Details with a stable application code.",
+        "properties": {
+          "code": {
+            "const": "user_curation_event_not_found",
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "format": "uri-reference",
+            "type": "string"
+          },
+          "status": {
+            "const": 404,
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "const": "https://api.prompster.dev/problems/user_curation_event_not_found",
+            "format": "uri-reference",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "UserCurationEventNotFoundProblem",
+        "type": "object"
+      },
+      "UserCurationEventResponse": {
+        "properties": {
+          "eventType": {
+            "$ref": "#/components/schemas/UserCurationEventTypeResponse"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "trackArtist": {
+            "title": "Trackartist",
+            "type": "string"
+          },
+          "trackCoverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trackcoverurl"
+          },
+          "trackId": {
+            "format": "uuid",
+            "title": "Trackid",
+            "type": "string"
+          },
+          "trackSpotifyUri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trackspotifyuri"
+          },
+          "trackTitle": {
+            "title": "Tracktitle",
+            "type": "string"
+          },
+          "trackYear": {
+            "anyOf": [
+              {
+                "maximum": 2100.0,
+                "minimum": 1900.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trackyear"
+          }
+        },
+        "required": [
+          "id",
+          "eventType",
+          "trackId",
+          "trackTitle",
+          "trackArtist",
+          "occurredAt"
+        ],
+        "title": "UserCurationEventResponse",
+        "type": "object"
+      },
+      "UserCurationEventTypeResponse": {
+        "enum": [
+          "track_added",
+          "track_removed"
+        ],
+        "title": "UserCurationEventTypeResponse",
+        "type": "string"
+      },
+      "UserDeleteInformationResponse": {
+        "properties": {
+          "sessionCount": {
+            "title": "Sessioncount",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sessionCount"
+        ],
+        "title": "UserDeleteInformationResponse",
+        "type": "object"
+      },
+      "UserMeResponse": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "spotifyConnected": {
+            "title": "Spotifyconnected",
+            "type": "boolean"
+          },
+          "spotifyPremium": {
+            "title": "Spotifypremium",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "spotifyConnected",
+          "spotifyPremium"
+        ],
+        "title": "UserMeResponse",
+        "type": "object"
+      },
+      "UserMessageEntryResponse": {
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/SessionMessageAttachmentResponse"
+            },
+            "title": "Attachments",
+            "type": "array"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "imageAttachments": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Imageattachments",
+            "type": "array"
+          },
+          "kind": {
+            "const": "user_message",
+            "default": "user_message",
+            "title": "Kind",
+            "type": "string"
+          },
+          "userCurationEvents": {
+            "items": {
+              "$ref": "#/components/schemas/UserCurationEventResponse"
+            },
+            "title": "Usercurationevents",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "content",
+          "createdAt"
+        ],
+        "title": "UserMessageEntryResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "API for Prompster",
+    "title": "Prompster API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.2.0",
+  "paths": {
+    "/api/v1/auth/google/login": {
+      "get": {
+        "operationId": "google_login",
+        "responses": {
+          "307": {
+            "description": "Redirect to Google authorization.",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Google Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "operationId": "refresh",
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "https://api.prompster.dev/problems/session_expired": "#/components/schemas/SessionExpiredProblem",
+                      "https://api.prompster.dev/problems/session_invalid": "#/components/schemas/SessionInvalidProblem"
+                    },
+                    "propertyName": "type"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/SessionExpiredProblem"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SessionInvalidProblem"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Possible problems: Session expired, Invalid session"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Refresh",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/spotify": {
+      "delete": {
+        "operationId": "spotify_disconnect",
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Spotify Disconnect",
+        "tags": [
+          "spotify"
+        ]
+      }
+    },
+    "/api/v1/auth/spotify/connect": {
+      "get": {
+        "operationId": "spotify_connect",
+        "responses": {
+          "307": {
+            "description": "Redirect to Spotify authorization.",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Spotify Connect",
+        "tags": [
+          "spotify"
+        ]
+      }
+    },
+    "/api/v1/auth/spotify/login": {
+      "get": {
+        "operationId": "spotify_login",
+        "responses": {
+          "307": {
+            "description": "Redirect to Spotify authorization.",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Spotify Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/spotify/token": {
+      "get": {
+        "operationId": "spotify_get_access_token",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotifyAccessTokenResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotifyConnectionNotFoundProblem"
+                }
+              }
+            },
+            "description": "Spotify is not connected"
+          },
+          "410": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotifyTokenRevokedProblem"
+                }
+              }
+            },
+            "description": "Spotify access revoked"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Spotify Get Access Token",
+        "tags": [
+          "spotify"
+        ]
+      }
+    },
+    "/api/v1/image-attachments": {
+      "post": {
+        "operationId": "upload_image_attachment",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_image_attachment"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadedImageAttachmentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidImageAttachmentProblem"
+                }
+              }
+            },
+            "description": "Invalid image attachment"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Upload Image Attachment",
+        "tags": [
+          "image-attachments"
+        ]
+      }
+    },
+    "/api/v1/llm-options": {
+      "get": {
+        "operationId": "list_llm_options",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LLMOptionsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "List Llm Options",
+        "tags": [
+          "llm-options"
+        ]
+      }
+    },
+    "/api/v1/sessions": {
+      "get": {
+        "operationId": "list_sessions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionSummaryListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "List Sessions",
+        "tags": [
+          "sessions"
+        ]
+      },
+      "post": {
+        "operationId": "create_session",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Create Session",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/entries/kind/schema": {
+      "get": {
+        "operationId": "get_session_entry_kind_schema",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryKindSchema"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get Session Entry Kind Schema",
+        "tags": [
+          "session_schemas"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}": {
+      "delete": {
+        "operationId": "delete_session",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
+                }
+              }
+            },
+            "description": "Session not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Delete Session",
+        "tags": [
+          "sessions"
+        ]
+      },
+      "get": {
+        "operationId": "get_session",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
+                }
+              }
+            },
+            "description": "Session not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get Session By Id",
+        "tags": [
+          "sessions"
+        ]
+      },
+      "patch": {
+        "operationId": "update_session",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
+                }
+              }
+            },
+            "description": "Session not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Update Session",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/curation-events/{event_id}/restore": {
+      "post": {
+        "operationId": "restore_user_curation_event",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "https://api.prompster.dev/problems/session_not_found": "#/components/schemas/SessionNotFoundProblem",
+                      "https://api.prompster.dev/problems/user_curation_event_not_found": "#/components/schemas/UserCurationEventNotFoundProblem"
+                    },
+                    "propertyName": "type"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/SessionNotFoundProblem"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UserCurationEventNotFoundProblem"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Possible problems: Session not found, Curation event not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "https://api.prompster.dev/problems/user_curation_event_already_consumed": "#/components/schemas/UserCurationEventAlreadyConsumedProblem",
+                      "https://api.prompster.dev/problems/user_curation_event_missing_track_year": "#/components/schemas/UserCurationEventMissingTrackYearProblem"
+                    },
+                    "propertyName": "type"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/UserCurationEventAlreadyConsumedProblem"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UserCurationEventMissingTrackYearProblem"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Possible problems: Curation event already consumed, Curation event track year missing"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Restore Session User Curation Event",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/messages": {
+      "post": {
+        "description": "Send a message and stream the resulting session updates.",
+        "operationId": "send_message",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "data": {
+                          "contentMediaType": "application/json",
+                          "contentSchema": {
+                            "$ref": "#/components/schemas/SessionStreamEvent"
+                          },
+                          "type": "string"
+                        },
+                        "event": {
+                          "not": {
+                            "pattern": "^canon\\."
+                          },
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "retry": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "contentMediaType": "application/json",
+                          "contentSchema": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/components/schemas/AuthenticationRequiredProblemEmbedded"
+                              },
+                              {
+                                "$ref": "#/components/schemas/CanonInternalServerErrorEmbedded"
+                              }
+                            ]
+                          },
+                          "type": "string"
+                        },
+                        "event": {
+                          "const": "canon.problem",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "event",
+                        "data"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "contentMediaType": "application/json",
+                          "contentSchema": {
+                            "maxProperties": 0,
+                            "type": "object"
+                          },
+                          "type": "string"
+                        },
+                        "event": {
+                          "const": "canon.complete",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "event",
+                        "data"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Stream of JSON events"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Send Message",
+        "tags": [
+          "session-streams"
+        ],
+        "x-canon-stream": {
+          "businessItemSchema": {
+            "properties": {
+              "data": {
+                "contentMediaType": "application/json",
+                "contentSchema": {
+                  "$ref": "#/components/schemas/SessionStreamEvent"
+                },
+                "type": "string"
+              },
+              "event": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "retry": {
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "data"
+            ],
+            "type": "object"
+          },
+          "completeEvent": "canon.complete",
+          "problemEvent": "canon.problem",
+          "problems": [
+            {
+              "$ref": "#/components/schemas/AuthenticationRequiredProblemEmbedded"
+            }
+          ],
+          "version": 1
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/messages/pause": {
+      "post": {
+        "operationId": "pause_message",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
+                }
+              }
+            },
+            "description": "Session not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Pause Message",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/messages/resume": {
+      "post": {
+        "operationId": "resume_message",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
+                }
+              }
+            },
+            "description": "Session not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Resume Message",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/messages/stop": {
+      "post": {
+        "operationId": "stop_message",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
+                }
+              }
+            },
+            "description": "Session not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Stop Message",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/onboarding-answer": {
+      "post": {
+        "operationId": "submit_onboarding_answer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitOnboardingAnswerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
+                }
+              }
+            },
+            "description": "Session not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidSessionPhaseTransitionProblem"
+                }
+              }
+            },
+            "description": "Invalid session phase transition"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Submit Onboarding Answer",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/onboarding/complete": {
+      "post": {
+        "description": "Complete onboarding and stream the resulting session updates.",
+        "operationId": "complete_onboarding",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteOnboardingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "data": {
+                          "contentMediaType": "application/json",
+                          "contentSchema": {
+                            "$ref": "#/components/schemas/SessionStreamEvent"
+                          },
+                          "type": "string"
+                        },
+                        "event": {
+                          "not": {
+                            "pattern": "^canon\\."
+                          },
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "retry": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "contentMediaType": "application/json",
+                          "contentSchema": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/components/schemas/AuthenticationRequiredProblemEmbedded"
+                              },
+                              {
+                                "$ref": "#/components/schemas/CanonInternalServerErrorEmbedded"
+                              }
+                            ]
+                          },
+                          "type": "string"
+                        },
+                        "event": {
+                          "const": "canon.problem",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "event",
+                        "data"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "contentMediaType": "application/json",
+                          "contentSchema": {
+                            "maxProperties": 0,
+                            "type": "object"
+                          },
+                          "type": "string"
+                        },
+                        "event": {
+                          "const": "canon.complete",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "event",
+                        "data"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Stream of JSON events"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Complete Onboarding",
+        "tags": [
+          "session-streams"
+        ],
+        "x-canon-stream": {
+          "businessItemSchema": {
+            "properties": {
+              "data": {
+                "contentMediaType": "application/json",
+                "contentSchema": {
+                  "$ref": "#/components/schemas/SessionStreamEvent"
+                },
+                "type": "string"
+              },
+              "event": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "retry": {
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "data"
+            ],
+            "type": "object"
+          },
+          "completeEvent": "canon.complete",
+          "problemEvent": "canon.problem",
+          "problems": [
+            {
+              "$ref": "#/components/schemas/AuthenticationRequiredProblemEmbedded"
+            }
+          ],
+          "version": 1
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/playlist/pdf": {
+      "get": {
+        "operationId": "export_session_playlist",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pages",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pages"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Playlist deck PDF.",
+            "headers": {
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionPlaylistEmptyProblem"
+                }
+              }
+            },
+            "description": "Session playlist is empty"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
+                }
+              }
+            },
+            "description": "Session not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Export Session Playlist",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/playlist/spotify-export": {
+      "post": {
+        "description": "Export the session playlist with retry updates and the final playlist.",
+        "operationId": "export_spotify",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "oneOf": [
+                    {
+                      "properties": {
+                        "data": {
+                          "contentMediaType": "application/json",
+                          "contentSchema": {
+                            "$ref": "#/components/schemas/SpotifyExportEvent"
+                          },
+                          "type": "string"
+                        },
+                        "event": {
+                          "not": {
+                            "pattern": "^canon\\."
+                          },
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "retry": {
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "contentMediaType": "application/json",
+                          "contentSchema": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/components/schemas/AuthenticationRequiredProblemEmbedded"
+                              },
+                              {
+                                "$ref": "#/components/schemas/CanonInternalServerErrorEmbedded"
+                              }
+                            ]
+                          },
+                          "type": "string"
+                        },
+                        "event": {
+                          "const": "canon.problem",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "event",
+                        "data"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "contentMediaType": "application/json",
+                          "contentSchema": {
+                            "maxProperties": 0,
+                            "type": "object"
+                          },
+                          "type": "string"
+                        },
+                        "event": {
+                          "const": "canon.complete",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "event",
+                        "data"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Stream of JSON events"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Export Spotify",
+        "tags": [
+          "session-streams"
+        ],
+        "x-canon-stream": {
+          "businessItemSchema": {
+            "properties": {
+              "data": {
+                "contentMediaType": "application/json",
+                "contentSchema": {
+                  "$ref": "#/components/schemas/SpotifyExportEvent"
+                },
+                "type": "string"
+              },
+              "event": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "retry": {
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "data"
+            ],
+            "type": "object"
+          },
+          "completeEvent": "canon.complete",
+          "problemEvent": "canon.problem",
+          "problems": [
+            {
+              "$ref": "#/components/schemas/AuthenticationRequiredProblemEmbedded"
+            }
+          ],
+          "version": 1
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/star": {
+      "post": {
+        "operationId": "star_session",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
+                }
+              }
+            },
+            "description": "Session not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Star Session",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/tracks": {
+      "post": {
+        "operationId": "add_playlist_track",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPlaylistTrackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaylistTrackResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
+                }
+              }
+            },
+            "description": "Session not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaylistTrackLimitExceededProblem"
+                }
+              }
+            },
+            "description": "Playlist track limit exceeded"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Add Session Playlist Track",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/tracks/spotify": {
+      "post": {
+        "operationId": "add_spotify_playlist_track",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddSpotifyPlaylistTrackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaylistTrackResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidSpotifyTrackUriProblem"
+                }
+              }
+            },
+            "description": "Invalid Spotify track URI"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "https://api.prompster.dev/problems/session_not_found": "#/components/schemas/SessionNotFoundProblem",
+                      "https://api.prompster.dev/problems/spotify_track_not_found": "#/components/schemas/SpotifyTrackNotFoundProblem"
+                    },
+                    "propertyName": "type"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/SessionNotFoundProblem"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SpotifyTrackNotFoundProblem"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Possible problems: Session not found, Spotify track not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "https://api.prompster.dev/problems/playlist_track_limit_exceeded": "#/components/schemas/PlaylistTrackLimitExceededProblem",
+                      "https://api.prompster.dev/problems/spotify_track_year_missing": "#/components/schemas/SpotifyTrackYearMissingProblem"
+                    },
+                    "propertyName": "type"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/PlaylistTrackLimitExceededProblem"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SpotifyTrackYearMissingProblem"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Possible problems: Playlist track limit exceeded, Spotify track release year missing"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Add Session Spotify Playlist Track",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/tracks/{track_id}": {
+      "delete": {
+        "operationId": "remove_playlist_track",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "track_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Track Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "https://api.prompster.dev/problems/playlist_track_not_found": "#/components/schemas/PlaylistTrackNotFoundProblem",
+                      "https://api.prompster.dev/problems/session_not_found": "#/components/schemas/SessionNotFoundProblem"
+                    },
+                    "propertyName": "type"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/SessionNotFoundProblem"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PlaylistTrackNotFoundProblem"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Possible problems: Session not found, Playlist track not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Remove Session Playlist Track",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/unstar": {
+      "post": {
+        "operationId": "unstar_session",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAccessDeniedProblem"
+                }
+              }
+            },
+            "description": "Session access denied"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionNotFoundProblem"
+                }
+              }
+            },
+            "description": "Session not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Unstar Session",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/api/v1/spotify/search": {
+      "get": {
+        "operationId": "search_spotify",
+        "parameters": [
+          {
+            "description": "Search query",
+            "in": "query",
+            "name": "query",
+            "required": true,
+            "schema": {
+              "description": "Search query",
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Query",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Search resource types",
+            "in": "query",
+            "name": "types",
+            "required": false,
+            "schema": {
+              "default": [
+                "track",
+                "playlist",
+                "artist"
+              ],
+              "description": "Search resource types",
+              "items": {
+                "$ref": "#/components/schemas/SpotifySearchType"
+              },
+              "title": "Types",
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpotifyUnifiedSearchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestValidationProblem"
+                }
+              }
+            },
+            "description": "Request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Search Spotify",
+        "tags": [
+          "spotify"
+        ]
+      }
+    },
+    "/api/v1/users/me": {
+      "delete": {
+        "operationId": "delete_me",
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Delete Me",
+        "tags": [
+          "users"
+        ]
+      },
+      "get": {
+        "operationId": "get_me",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get Me",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/v1/users/me/delete-information": {
+      "get": {
+        "operationId": "get_delete_information",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeleteInformationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationRequiredProblem"
+                }
+              }
+            },
+            "description": "Authentication required"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get Delete Information",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_check",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Health Check",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/readiness": {
+      "get": {
+        "operationId": "readiness_check",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalServerProblem"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceNotReadyProblem"
+                }
+              }
+            },
+            "description": "Service not ready"
+          }
+        },
+        "summary": "Readiness Check",
+        "tags": [
+          "system"
+        ]
+      }
+    }
+  }
+}

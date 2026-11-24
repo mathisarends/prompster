@@ -12,7 +12,7 @@ if (mode !== "--check" && mode !== "--write") {
 }
 
 async function collect(path) {
-  if (path === join(root, "src", "api", "session-rpc")) {
+  if (path === join(root, "src", "api", "session-streams")) {
     return [];
   }
   const entries = await readdir(path, { withFileTypes: true });
@@ -36,11 +36,7 @@ const paths =
         .concat([join(root, "vite.config.ts"), join(root, "orval.config.mjs")]);
 
 let violations = 0;
-for (const path of paths.filter(
-  (path) =>
-    extensions.has(extname(path)) &&
-    path !== join(root, "src", "shared", "api", "session-rpc-client.ts"),
-)) {
+for (const path of paths.filter((path) => extensions.has(extname(path)))) {
   const source = await readFile(path, "utf8");
   const sourceFile = ts.createSourceFile(
     path,

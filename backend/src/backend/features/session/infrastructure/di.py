@@ -1,4 +1,5 @@
-from dishka import Provider, Scope, provide
+from dishka import AsyncContainer, Provider, Scope, provide
+from fastapi_canon import ServiceScope
 from pydantic_ai.models import Model
 from spotifyify import SpotifyClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -189,6 +190,19 @@ class SessionProvider(Provider):
             playlist_deck_generator=playlist_deck_generator,
             storage_backend=storage_backend,
         )
+
+    @provide(scope=Scope.APP)
+    def provide_session_conversation_scope(
+        self, container: AsyncContainer
+    ) -> ServiceScope[SessionConversationService]:
+        # Streams outlive the HTTP request, so each one opens its own scope.
+        return ServiceScope(container, SessionConversationService)
+
+    @provide(scope=Scope.APP)
+    def provide_session_spotify_export_scope(
+        self, container: AsyncContainer
+    ) -> ServiceScope[SessionSpotifyPlaylistExporter]:
+        return ServiceScope(container, SessionSpotifyPlaylistExporter)
 
     @provide(scope=Scope.APP)
     def provide_playlist_deck_generator(self) -> PlaylistDeckGenerator:

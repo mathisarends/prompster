@@ -67,11 +67,11 @@ Open **[127.0.0.1:5173](http://127.0.0.1:5173)** and sign in with Spotify or you
 
 ## How it works
 
-The Lit frontend talks to FastAPI over HTTP and typed JSON-RPC WebSocket streams. The agent researches Spotify and updates a shared deck draft; the backend persists the session and handles exports.
+The Lit frontend talks to FastAPI over HTTP; agent runs and exports stream back as typed server-sent events. The agent researches Spotify and updates a shared deck draft; the backend persists the session and handles exports.
 
 ```mermaid
 flowchart LR
-    UI[Lit frontend] <-->|HTTP + WebSocket| API[FastAPI backend]
+    UI[Lit frontend] <-->|HTTP + SSE| API[FastAPI backend]
     API <--> Agent[Playlist agent]
     Agent <--> Spotify[Spotify API]
     Agent <--> Models[pydantic_ai · OpenAI / Codex]
@@ -84,7 +84,7 @@ flowchart LR
 | [`frontend/`](frontend/README.md) | Lit 3, TypeScript, Vite, TanStack Lit Query; chat, cards, and playback |
 | [`backend/`](backend/README.md) | FastAPI, OAuth, sessions, Spotify export, and PDF generation |
 | [`libs/agent/`](libs/agent/README.md) | harnessed agent, Spotify research, deck state, and streaming events |
-| [`schema/`](schema/) | Generated OpenRPC contract for the session stream |
+| [`schema/`](schema/) | Generated OpenAPI contract, including the session event streams |
 
 The Python packages share a **uv workspace and lockfile**. [`harnessed`](https://github.com/mathisarends/harnessed) runs the agent, and [`pydantic_ai`](https://github.com/pydantic/pydantic-ai) supplies the model clients.
 
@@ -96,17 +96,17 @@ With **Python 3.14+** and **uv** installed, run these commands from the reposito
 uv sync --all-packages --dev
 uv run pytest backend/tests/ -v
 uv run --package agent pytest libs/agent/tests/
-uv run --package backend fastapi-canon websockets generate --config rpcgen.toml --check
+uv run --package backend fastapi-canon generate --config codegen.toml --check
 
 npm --prefix frontend run lint
 npm --prefix frontend test
 npm --prefix frontend run build
 ```
 
-The Compose stack mounts the backend and agent source for local iteration. To regenerate the RPC contract and TypeScript client after changing a stream:
+The Compose stack mounts the backend and agent source for local iteration. To regenerate the stream contract and TypeScript client after changing a stream:
 
 ```bash
-uv run --package backend fastapi-canon websockets generate --config rpcgen.toml
+uv run --package backend fastapi-canon generate --config codegen.toml
 ```
 
 For HTTP client generation, export the backend schema and regenerate the client:

@@ -7,7 +7,7 @@ test("protected route shows real login and retries a failed session", async ({ p
   await expect(page.getByRole("button", { name: "Mit Spotify fortfahren" })).toBeVisible();
   await expect(page.locator("chat-page")).toHaveCount(0);
 });
-test("welcome, new session and generated RPC streaming", async ({ page }) => {
+test("welcome, new session and generated SSE streaming", async ({ page }) => {
   const fixture = await mockApi(page);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/new");

@@ -89,6 +89,17 @@ function toProblem(value: unknown): ApiProblem | null {
   return candidate as ApiProblem;
 }
 
+/** Renews the access cookie once, however many requests saw it expire. */
+export function refreshAuthentication(): Promise<void> {
+  refreshPromise ??= apiFetch<void>("/api/v1/auth/refresh", {
+    method: "POST",
+    skipAuthRefresh: true,
+  }).finally(() => {
+    refreshPromise = null;
+  });
+  return refreshPromise;
+}
+
 export async function apiFetch<T>(url: string, options?: ApiRequestOptions): Promise<T> {
   const {
     body: requestBody,
@@ -112,13 +123,7 @@ export async function apiFetch<T>(url: string, options?: ApiRequestOptions): Pro
   });
   if (response.status === 401 && !skipAuthRefresh && !url.startsWith("/api/v1/auth/")) {
     await response.body?.cancel();
-    refreshPromise ??= apiFetch<void>("/api/v1/auth/refresh", {
-      method: "POST",
-      skipAuthRefresh: true,
-    }).finally(() => {
-      refreshPromise = null;
-    });
-    await refreshPromise;
+    await refreshAuthentication();
     requestOptions.signal?.throwIfAborted();
     return apiFetch<T>(url, { ...options, skipAuthRefresh: true });
   }

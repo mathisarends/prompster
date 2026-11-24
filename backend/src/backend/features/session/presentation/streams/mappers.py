@@ -27,7 +27,10 @@ from backend.features.session.presentation.mapper import (
     to_tool_call_result_item_response,
     to_tool_call_sequence_response,
 )
-from backend.features.session.presentation.rpc.events import (
+from backend.features.session.presentation.schemas import (
+    AssistantMessageEntryResponse,
+)
+from backend.features.session.presentation.streams.events import (
     AssistantMessageCancelledEvent,
     AssistantMessageChunkEvent,
     AssistantMessageCompletedEvent,
@@ -50,9 +53,6 @@ from backend.features.session.presentation.rpc.events import (
     ToolCallRetryEvent,
     ToolCallSequenceAddedEvent,
     ToolCallSequenceCompletedEvent,
-)
-from backend.features.session.presentation.schemas import (
-    AssistantMessageEntryResponse,
 )
 
 

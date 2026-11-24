@@ -1,5 +1,21 @@
-from backend.features.session.presentation.rpc import contract
+import pytest
+
 from backend.main import app
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/api/v1/sessions/{session_id}/messages",
+        "/api/v1/sessions/{session_id}/onboarding/complete",
+        "/api/v1/sessions/{session_id}/playlist/spotify-export",
+    ],
+    ids=["messages", "onboarding", "spotify-export"],
+)
+def test_session_streams_are_documented_as_server_sent_events(path) -> None:
+    content = app.openapi()["paths"][path]["post"]["responses"]["200"]["content"]
+
+    assert set(content) == {"text/event-stream"}
 
 
 def test_compiles_canonical_success_response_contracts() -> None:
@@ -11,11 +27,6 @@ def test_compiles_canonical_success_response_contracts() -> None:
 
     health = document["components"]["schemas"]["HealthResponse"]
     assert health["properties"]["status"]["const"] == "ok"
-
-    assert "/api/v1/sessions/{session_id}/messages" not in paths
-    servers = contract.to_openrpc()["servers"]
-    assert [server["name"] for server in servers] == ["session"]
-    assert servers[0]["url"].endswith("/api/v1/sessions/{session_id}/stream")
 
     pdf = paths["/api/v1/sessions/{session_id}/playlist/pdf"]["get"]["responses"]["200"]
     assert set(pdf["content"]) == {"application/pdf"}

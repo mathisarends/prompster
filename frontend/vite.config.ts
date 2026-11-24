@@ -12,5 +12,5 @@ export default defineConfig({
       "@chat": fileURLToPath(new URL("./src/shared/ui/chat/index.ts", import.meta.url)),
     },
   },
-  server: { host: "127.0.0.1", proxy: { "/api": { target: "http://127.0.0.1:8000", ws: true } } },
+  server: { host: "127.0.0.1", proxy: { "/api": { target: "http://127.0.0.1:8000" } } },
 });

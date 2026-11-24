@@ -28,7 +28,7 @@ dependencies = [
     "qrcode[pil]>=8.2",
     "tokenary>=0.1.1",
     "python-multipart>=0.0.20",
-    "fastapi-canon[websockets]>=0.24.0",
+    "fastapi-canon[sse]>=0.24.0",
     "pyyaml>=6.0.3",
 ]
 

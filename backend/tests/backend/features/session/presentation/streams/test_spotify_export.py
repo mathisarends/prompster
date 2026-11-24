@@ -12,7 +12,7 @@ from backend.features.session.application.spotify_playlist_exporter import (
     ExportedSpotifyPlaylist,
 )
 from backend.features.session.domain import SessionPlaylistEmptyError
-from backend.features.session.presentation.rpc.spotify_export import (
+from backend.features.session.presentation.streams.spotify_export import (
     SpotifyExportDoneEvent,
     SpotifyExportErrorEvent,
     spotify_export_events,
