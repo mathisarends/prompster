@@ -228,6 +228,7 @@ class SessionSummaryResponse(Schema):
     is_starred: bool
     created_at: datetime
     last_activity_at: datetime
+    cover_urls: list[str] = Field(default_factory=list)
 
 
 class SessionSummaryListResponse(Schema):

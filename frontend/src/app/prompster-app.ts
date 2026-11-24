@@ -95,20 +95,31 @@ export class PrompsterApp extends LitElement {
     }
   };
   static styles = css`
-    ${pageStyles} :host {
+    ${pageStyles}
+    :host {
       display: block;
     }
     .loading {
-      min-height: 100dvh;
       display: grid;
       place-items: center;
+      min-height: 100dvh;
+      color: var(--color-faint);
+      font-size: var(--font-size-label);
     }
     .global-error {
       position: fixed;
-      bottom: 12px;
+      bottom: 16px;
       left: 50%;
-      transform: translateX(-50%);
       z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: calc(100vw - 32px);
+      margin: 0;
+      border: 1px solid var(--color-border);
+      background: var(--color-raised);
+      box-shadow: var(--shadow-panel);
+      transform: translateX(-50%);
     }
   `;
   render() {

@@ -16,15 +16,23 @@ const baseURL = process.env.REVIEW_BASE_URL ?? "http://127.0.0.1:5175";
 const demo = session();
 demo.title = "Unser Spieleabend";
 demo.playlist.name = "Klassiker für den Spieleabend";
+const artwork = (path: string) => `https://is1-ssl.mzstatic.com/image/thumb/${path}/300x300bb.jpg`;
 demo.playlist.tracks = [
-  { ...demo.playlist.tracks[0] },
+  {
+    ...demo.playlist.tracks[0],
+    coverUrl: artwork(
+      "Music115/v4/60/f8/a6/60f8a6bc-e875-238d-f2f8-f34a6034e6d2/14UMGIM07615.rgb.jpg",
+    ),
+  },
   {
     id: "track-2",
     title: "Smells Like Teen Spirit",
     artist: "Nirvana",
     year: 1991,
     spotifyUri: "spotify:track:track-2",
-    coverUrl: null,
+    coverUrl: artwork(
+      "Music115/v4/95/fd/b9/95fdb9b2-6d2b-92a6-97f2-51c1a6d77f1a/00602527874609.rgb.jpg",
+    ),
   },
   {
     id: "track-3",
@@ -32,7 +40,9 @@ demo.playlist.tracks = [
     artist: "Spice Girls",
     year: 1996,
     spotifyUri: "spotify:track:track-3",
-    coverUrl: null,
+    coverUrl: artwork(
+      "Music115/v4/e1/92/8f/e1928fcb-0204-ca19-597a-6edaf8e6ebc8/21UMGIM16233.rgb.jpg",
+    ),
   },
   {
     id: "track-4",
@@ -40,9 +50,9 @@ demo.playlist.tracks = [
     artist: "Daft Punk",
     year: 2000,
     spotifyUri: "spotify:track:track-4",
-    coverUrl: null,
+    coverUrl: artwork("Music221/v4/fd/4a/77/fd4a77db-0ebc-d043-41a2-f32fa1bb0fb4/dj.qrikkdwj.jpg"),
   },
-];
+] as typeof demo.playlist.tracks;
 demo.entries[0].content =
   "Ein gemischtes Deck mit Klassikern aus den 70ern, 90ern und 2000ern für unseren Spieleabend.";
 demo.entries[1].content =
@@ -51,6 +61,28 @@ demo.entries[1].content =
 const pause = (ms = 1300) => new Promise((resolve) => setTimeout(resolve, ms));
 async function shot(page: Page, name: string) {
   await page.evaluate(() => document.fonts.ready);
+  // Album covers load lazily from the network and sit in shadow roots; wait
+  // until every rendered image has finished so the shot shows the artwork.
+  await page
+    .waitForFunction(
+      () => {
+        const roots: (Document | ShadowRoot)[] = [document];
+        while (roots.length) {
+          for (const element of roots.pop()!.querySelectorAll("*")) {
+            if (element.shadowRoot) {
+              roots.push(element.shadowRoot);
+            }
+            if (element instanceof HTMLImageElement && !element.complete) {
+              return false;
+            }
+          }
+        }
+        return true;
+      },
+      undefined,
+      { timeout: 10_000 },
+    )
+    .catch(() => undefined);
   await page.screenshot({ path: `${output}${name}.png`, animations: "disabled" });
 }
 const failures: string[] = [];
@@ -121,7 +153,7 @@ try {
   await expect(desktop.locator("library-page")).toContainText("Unser Spieleabend");
   await shot(desktop, "06-library-desktop");
   await pause(1700);
-  await desktop.getByRole("button", { name: /Mathi Dein Deckstudio/ }).click();
+  await desktop.getByRole("button", { name: /Mathi · Konto und Einstellungen/ }).click();
   await expect(desktop.getByRole("heading", { name: "Einstellungen", exact: true })).toBeVisible();
   await shot(desktop, "07-settings-desktop");
   await pause(1800);
@@ -181,7 +213,7 @@ try {
   await expect(mobile.getByRole("textbox", { name: "Nachricht", exact: true })).toBeVisible();
   await pause(1200);
   await mobile.getByRole("button", { name: "Seitenleiste öffnen" }).click();
-  await mobile.getByRole("button", { name: /Mathi Dein Deckstudio/ }).click();
+  await mobile.getByRole("button", { name: /Mathi · Konto und Einstellungen/ }).click();
   await mobile.getByRole("combobox", { name: "Sprache" }).selectOption("en");
   await pause(1000);
   await mobile.getByRole("button", { name: "Open sidebar" }).click();

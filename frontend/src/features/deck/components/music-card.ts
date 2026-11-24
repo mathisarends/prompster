@@ -27,6 +27,14 @@ const gradients = [
 ];
 const angles = [135, 45, 160, 20, 110, 70, 150, 30, 140, 50];
 
+/** Card background for a deck position, reused as cover art fallback. */
+export function cardGradient(position: number): string {
+  const index = Math.abs(Math.trunc(position));
+  const [start, end] = gradients[(index * 7 + 3) % gradients.length];
+  const angle = 90 + angles[(index * 3 + 1) % angles.length];
+  return `linear-gradient(${angle}deg, ${start}, ${end})`;
+}
+
 @customElement("music-card")
 @localized()
 export class MusicCard extends LitElement {
@@ -164,9 +172,6 @@ export class MusicCard extends LitElement {
     if (!this.card) {
       return html``;
     }
-    const index = Math.abs(Math.trunc(this.index));
-    const [start, end] = gradients[(index * 7 + 3) % gradients.length];
-    const angle = 90 + angles[(index * 3 + 1) % angles.length];
     return this.concealed
       ? html`<article class="front" aria-label=${msg("Verdeckte Musik-Karte")}>
           <svg class="record" viewBox="0 0 100 100" aria-hidden="true">
@@ -178,7 +183,7 @@ export class MusicCard extends LitElement {
         </article>`
       : html`<article
           class="answer"
-          style=${styleMap({ background: `linear-gradient(${angle}deg, ${start}, ${end})` })}
+          style=${styleMap({ background: cardGradient(this.index) })}
           aria-label=${`${this.card.title}, ${this.card.artist}, ${this.card.year}`}
         >
           <div class="details">

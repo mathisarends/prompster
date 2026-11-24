@@ -150,7 +150,7 @@ test("unavailable storage still allows language switching on mobile", async ({ p
   await mockApi(page);
   await page.goto("/new");
   await page.getByRole("button", { name: "Seitenleiste öffnen" }).click();
-  await page.getByRole("button", { name: /Mathi Dein Deckstudio/ }).click();
+  await page.getByRole("button", { name: /Mathi · Konto und Einstellungen/ }).click();
   await page.getByRole("combobox", { name: "Sprache" }).selectOption("en");
   await page.getByRole("button", { name: "Open sidebar" }).click();
   await page.getByRole("button", { name: /New deck/ }).click();

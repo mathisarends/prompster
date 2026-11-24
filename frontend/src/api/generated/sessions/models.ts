@@ -10,6 +10,7 @@ export interface SessionSummaryResponse {
   isStarred: boolean;
   createdAt: string;
   lastActivityAt: string;
+  coverUrls?: string[];
 }
 
 export interface SessionSummaryListResponse {

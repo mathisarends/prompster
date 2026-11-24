@@ -259,6 +259,7 @@ def _to_session_summary_response(session: SessionSummary) -> SessionSummaryRespo
         is_starred=session.is_starred,
         created_at=session.created_at,
         last_activity_at=session.last_activity_at,
+        cover_urls=list(session.cover_urls),
     )
 
 

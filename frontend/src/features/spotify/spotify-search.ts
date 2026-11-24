@@ -9,6 +9,7 @@ import {
 import { pageStyles } from "@shared/styles/page";
 import { emit, errorMessage } from "@shared/events";
 import { icon } from "@shared/ui/icons";
+import "@shared/ui/track-cover";
 
 @customElement("spotify-search")
 @localized()
@@ -57,63 +58,88 @@ export class SpotifySearch extends LitElement {
     }
   };
   static styles = css`
-    ${pageStyles} :host {
+    ${pageStyles}
+    :host {
       display: block;
     }
     form {
       position: relative;
-    }
-    input {
-      padding-left: 36px !important;
+      display: flex;
+      align-items: center;
     }
     form svg {
       position: absolute;
-      top: 13px;
       left: 12px;
-      color: var(--color-muted);
+      color: var(--color-faint);
+      pointer-events: none;
+    }
+    .input {
+      height: 40px;
+      padding-left: 38px;
+      border-radius: var(--radius-pill);
     }
     .results {
-      max-height: 290px;
+      max-height: 300px;
       overflow-y: auto;
-      margin-top: 12px;
+      margin-top: 8px;
     }
     .result {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       width: 100%;
+      height: 52px;
+      padding: 0 8px;
       border: 0;
-      border-radius: 9px;
-      padding: 9px;
+      border-radius: var(--radius-xs);
       background: transparent;
       color: var(--color-text);
       text-align: left;
     }
     .result:hover {
-      background: var(--color-panel);
+      background: var(--color-row-hover);
+    }
+    track-cover {
+      width: 40px;
+      flex-shrink: 0;
     }
     .meta {
       flex: 1;
       min-width: 0;
+      line-height: 1.3;
     }
-    strong {
-      display: block;
-      font-size: 12px;
-    }
+    strong,
     small {
       display: block;
-      color: var(--color-muted);
-      font-size: 10px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
-    img {
-      width: 36px;
-      height: 36px;
-      object-fit: cover;
-      border-radius: 6px;
+    strong {
+      color: var(--color-text-strong);
+      font-weight: var(--font-weight-regular);
+    }
+    small {
+      color: var(--color-muted);
+      font-size: var(--font-size-label);
+    }
+    .result > svg {
+      color: var(--color-muted);
+      opacity: 0;
+    }
+    .result:hover > svg,
+    .result:focus-visible > svg {
+      opacity: 1;
+    }
+    @media (hover: none) {
+      .result > svg {
+        opacity: 1;
+      }
     }
     .hint {
-      font-size: 11px;
+      margin: 10px 4px 0;
       color: var(--color-muted);
+      font-size: var(--font-size-label);
     }
   `;
   render() {
@@ -168,8 +194,8 @@ export class SpotifySearch extends LitElement {
               ?disabled=${this.disabled}
               @click=${() => emit(this, "reference-select", { ...item, spotifyId: item.id })}
             >
-              ${item.imageUrl ? html`<img src=${item.imageUrl} alt="" />` : icon("music")}<span
-                class="meta"
+              <track-cover .src=${item.imageUrl}></track-cover
+              ><span class="meta"
                 ><strong>${item.title}</strong><small>${item.subtitle}</small></span
               >${icon("plus", 16)}
             </button>`,
@@ -182,8 +208,8 @@ export class SpotifySearch extends LitElement {
                     ?disabled=${this.disabled}
                     @click=${() => emit(this, "track-select", track)}
                   >
-                    ${track.coverUrl ? html`<img src=${track.coverUrl} alt="" />` : icon("music")}<span
-                      class="meta"
+                    <track-cover .src=${track.coverUrl}></track-cover
+                    ><span class="meta"
                       ><strong>${track.title}</strong
                       ><small>${track.artist} · ${track.year}</small></span
                     >${icon("plus", 16)}

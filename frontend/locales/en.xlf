@@ -22,10 +22,6 @@
   <source>Musik &amp; Erinnerungen</source>
   <target>Music and memories</target>
 </trans-unit>
-<trans-unit id="s8ee520c374990751">
-  <source>Made for game night</source>
-  <target>Made for game night</target>
-</trans-unit>
 <trans-unit id="s216510f36fe0c4e1">
   <source>Diese Seite gibt es nicht.</source>
   <target>This page does not exist.</target>
@@ -86,10 +82,6 @@
   <source>Dein Deckstudio</source>
   <target>Your deck studio</target>
 </trans-unit>
-<trans-unit id="s30c611b886c3a6f6">
-  <source>DEIN SOUNDTRACK. DEIN SPIEL.</source>
-  <target>YOUR SOUNDTRACK. YOUR GAME.</target>
-</trans-unit>
 <trans-unit id="h5e63b18244971ac4">
   <source>Aus Lieblingssongs<x id="0" equiv-text="&lt;br&gt;"/>werden Spieleabende.</source>
   <target>Turn favorite songs<x id="0" equiv-text="&lt;br&gt;"/>into game nights.</target>
@@ -125,10 +117,6 @@
 <trans-unit id="s7ebb955954e23e3b">
   <source>Beispielkarten</source>
   <target>Example cards</target>
-</trans-unit>
-<trans-unit id="s3313beeba49003f7">
-  <source>JEDER HIT HAT SEINE ZEIT.</source>
-  <target>EVERY HIT HAS ITS MOMENT.</target>
 </trans-unit>
 <trans-unit id="s0b3faa45798445f2">
   <source>Bitte erlaube Pop-ups, um dich anzumelden.</source>
@@ -182,10 +170,6 @@
   <source>Erneut laden</source>
   <target>Reload</target>
 </trans-unit>
-<trans-unit id="sbe192d25b2524afe">
-  <source>GUTE MUSIK. GUTE LEUTE. DEIN DECK.</source>
-  <target>GOOD MUSIC. GOOD COMPANY. YOUR DECK.</target>
-</trans-unit>
 <trans-unit id="s093a3e69b0a5eb97">
   <source>Jeder Hit hat seine Zeit.</source>
   <target>Every hit has its moment.</target>
@@ -198,17 +182,9 @@
   <source>Mach aus deinen Lieblingssongs ein eigenes Kartenspiel.</source>
   <target>Turn your favorite songs into your own card game.</target>
 </trans-unit>
-<trans-unit id="s399d54ffe3f6b97e">
-  <source>Du bringst die Idee. Hier entsteht dein Deck.</source>
-  <target>Bring your idea. Build your deck here.</target>
-</trans-unit>
 <trans-unit id="sd4be4fb5b0791afe">
   <source>Ein bisschen Inspiration für den Anfang</source>
   <target>A little inspiration to get started</target>
-</trans-unit>
-<trans-unit id="sa86ce8620578f4ce">
-  <source>Für deinen nächsten Spieleabend. Mit Musik, die euch verbindet.</source>
-  <target>For your next game night. With music that brings you together.</target>
 </trans-unit>
 <trans-unit id="sb2399d357a01a506">
   <source><x id="0" equiv-text="${item.title}"/> entfernen</source>
@@ -350,10 +326,6 @@
   <source>Spotify verbinden</source>
   <target>Connect Spotify</target>
 </trans-unit>
-<trans-unit id="s89ba69cac8b2457b">
-  <source>Wiedergabe im Browser benötigt Spotify Premium. Suche und Export bleiben verfügbar.</source>
-  <target>Browser playback requires Spotify Premium. Search and export are still available.</target>
-</trans-unit>
 <trans-unit id="s3a6c7c829e0c9607">
   <source><x id="0" equiv-text="${track.title}"/> pausieren</source>
   <target>Pause <x id="0" equiv-text="${track.title}"/></target>
@@ -434,10 +406,6 @@
   <source>Beschreibe dein Wunschdeck im Chat oder füge einen Song über die Suche hinzu.</source>
   <target>Describe your dream deck in the chat or add a song using search.</target>
 </trans-unit>
-<trans-unit id="s21bb472d31933c0a">
-  <source>Wiedergabe fortsetzen</source>
-  <target>Resume playback</target>
-</trans-unit>
 <trans-unit id="s6da5e16d740aafd0">
   <source>Wiedergabe pausieren</source>
   <target>Pause playback</target>
@@ -449,10 +417,6 @@
 <trans-unit id="sc7182fbb9b312082">
   <source>Lautstärke</source>
   <target>Volume</target>
-</trans-unit>
-<trans-unit id="s6f8994b3828a7136">
-  <source>DEINE MUSIK. DEINE ERINNERUNGEN.</source>
-  <target>YOUR MUSIC. YOUR MEMORIES.</target>
 </trans-unit>
 <trans-unit id="s11d9d4af7c38b511">
   <source>Für die nächste Runde ist immer Platz.</source>
@@ -663,7 +627,7 @@
   <target>New deck</target>
 </trans-unit>
 <trans-unit id="s0436c9fc89a54bda">
-  <source>Aktionen für <x id="0" equiv-text="${entry.title || msg(&quot;Neues Deck&quot;)}"/></source>
+  <source>Aktionen für <x id="0" equiv-text="${title}"/></source>
   <target>Actions for <x id="0" equiv-text="${entry.title || msg(&quot;Neues Deck&quot;)}"/></target>
 </trans-unit>
 <trans-unit id="sbd4575edfbf5c84f">
@@ -682,10 +646,6 @@
   <source>Decks durchsuchen</source>
   <target>Search decks</target>
 </trans-unit>
-<trans-unit id="s02144bb1633cc253">
-  <source>Decks durchsuchen …</source>
-  <target>Search decks …</target>
-</trans-unit>
 <trans-unit id="sfa56c2e13275733b">
   <source>Sammlung wird geladen …</source>
   <target>Loading collection …</target>
@@ -693,14 +653,6 @@
 <trans-unit id="s924535ebf58b9d7f">
   <source>Erneut versuchen</source>
   <target>Try again</target>
-</trans-unit>
-<trans-unit id="s7c6a5ccadd31b579">
-  <source>FAVORITEN</source>
-  <target>FAVORITES</target>
-</trans-unit>
-<trans-unit id="sbb79d8d7a8c6caa6">
-  <source>DEINE SAMMLUNG</source>
-  <target>YOUR COLLECTION</target>
 </trans-unit>
 <trans-unit id="sec4820b3eafc13dc">
   <source>Keine passenden Decks.</source>
@@ -773,6 +725,82 @@
 <trans-unit id="s10129aa23a2d7f8b">
   <source>Deck öffnen</source>
   <target>Open deck</target>
+</trans-unit>
+<trans-unit id="sb7231af6cae17dad">
+  <source>Vorheriger Song</source>
+        <target>Previous song</target>
+</trans-unit>
+<trans-unit id="s6b02e0ecfbe79611">
+  <source>Wiedergabe starten</source>
+        <target>Start playback</target>
+</trans-unit>
+<trans-unit id="s0d32b62f3b5ac411">
+  <source>Pausieren</source>
+        <target>Pause</target>
+</trans-unit>
+<trans-unit id="sf633c4575805bae6">
+  <source>Abspielen</source>
+        <target>Play</target>
+</trans-unit>
+<trans-unit id="sb416fe2abc22f9d9">
+  <source>Nächster Song</source>
+        <target>Next song</target>
+</trans-unit>
+<trans-unit id="scfe7f88183ab5278">
+  <source>Verbinde Spotify, um hier reinzuhören.</source>
+        <target>Connect Spotify to listen here.</target>
+</trans-unit>
+<trans-unit id="s086608bff8677798">
+  <source>Wiedergabe im Browser benötigt Spotify Premium.</source>
+        <target>Playback in the browser requires Spotify Premium.</target>
+</trans-unit>
+<trans-unit id="s9a0ff5d27e4b3537">
+  <source>Titel</source>
+        <target>Title</target>
+</trans-unit>
+<trans-unit id="sc30797ea5be14792">
+  <source>Jahr</source>
+        <target>Year</target>
+</trans-unit>
+<trans-unit id="secca66c77af131c5">
+  <source>Songs</source>
+        <target>Songs</target>
+</trans-unit>
+<trans-unit id="s130d5c4b67f2061a">
+  <source>Favorit</source>
+        <target>Favorite</target>
+</trans-unit>
+<trans-unit id="s16c0689f674d5ca5">
+  <source>Allgemein</source>
+        <target>General</target>
+</trans-unit>
+<trans-unit id="s164dfbec64e6b4dc">
+  <source>Sprache der Oberfläche und der Spracheingabe.</source>
+        <target>Language for the interface and voice input.</target>
+</trans-unit>
+<trans-unit id="s6996a49699e9ebbd">
+  <source>Suchen</source>
+        <target>Search</target>
+</trans-unit>
+<trans-unit id="s20a4e5234e835ff9">
+  <source>Favoriten</source>
+        <target>Favorites</target>
+</trans-unit>
+<trans-unit id="sa1d226dc1eedc461">
+  <source>Decks</source>
+        <target>Decks</target>
+</trans-unit>
+<trans-unit id="sd1b4b2f0087817c1">
+  <source><x id="0" equiv-text="${this.userName}"/> · Konto und Einstellungen</source>
+        <target><x id="0" equiv-text="${this.userName}"/> · Account and settings</target>
+</trans-unit>
+<trans-unit id="s1ad189bebf175d85">
+  <source>Zur Spotify-Playlist</source>
+        <target>Open Spotify playlist</target>
+</trans-unit>
+<trans-unit id="sd043187343bfcfe8">
+  <source>Deck</source>
+        <target>Deck</target>
 </trans-unit>
 </body>
 </file>

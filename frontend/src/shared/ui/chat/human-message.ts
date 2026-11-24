@@ -13,11 +13,14 @@ export class HumanMessage extends LitElement {
       justify-content: flex-end;
     }
     p {
-      max-width: 85%;
+      max-width: min(80%, 560px);
       margin: 0;
-      padding: 14px 18px;
-      border-radius: 20px 20px 5px 20px;
-      background: var(--color-panel);
+      padding: 10px 16px;
+      border-radius: var(--radius-bubble);
+      background: var(--color-raised);
+      color: var(--color-text);
+      font-size: var(--font-size-chat);
+      line-height: 1.6;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
     }

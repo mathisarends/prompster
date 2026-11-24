@@ -17,85 +17,78 @@ export class LoginPage extends LitElement {
   static styles = css`
     ${pageStyles}
     :host {
-      display: block;
+      display: flex;
+      flex-direction: column;
       min-height: 100dvh;
+      background: var(--color-background);
     }
     header {
-      height: 90px;
       display: flex;
       align-items: center;
-      padding: 0 5vw;
-      justify-content: space-between;
+      height: 64px;
+      padding: 0 24px;
+    }
+    brand-mark {
+      --brand-mark-size: 24px;
+      font-size: var(--font-size-chat);
     }
     main {
-      min-height: calc(100dvh - 150px);
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: center;
-      max-width: 1100px;
-      margin: auto;
-      padding: 32px;
-      gap: 100px;
+      place-items: center;
+      flex: 1;
+      padding: 24px 24px 64px;
+    }
+    section {
+      width: min(100%, 380px);
+      text-align: center;
+    }
+    .cards {
+      display: flex;
+      justify-content: center;
+      height: 132px;
+      margin-bottom: 36px;
+    }
+    music-card {
+      width: 100px;
+      flex-shrink: 0;
+      border-radius: var(--radius-xs);
+      overflow: hidden;
+      box-shadow: var(--shadow-panel);
+    }
+    music-card:first-child {
+      transform: rotate(-12deg) translate(16px, 12px);
+    }
+    music-card:nth-child(2) {
+      z-index: 1;
+    }
+    music-card:last-child {
+      transform: rotate(12deg) translate(-16px, 12px);
     }
     h1 {
-      font-size: clamp(35px, 4vw, 52px);
-      line-height: 1.07;
-      letter-spacing: -2px;
-      margin: 20px 0;
+      margin: 0;
+      font-size: var(--font-size-display);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.15;
     }
     .intro {
+      margin: 12px 0 28px;
       color: var(--color-muted);
-      line-height: 1.8;
-      margin: 0 0 30px;
+      text-wrap: balance;
     }
     .button {
       width: 100%;
-      margin-top: 10px;
-      min-height: 46px;
+      min-height: 42px;
+      margin-top: 8px;
+      font-size: var(--font-size-body);
+    }
+    .error {
+      margin-top: 16px;
+      text-align: left;
     }
     .small {
-      font-size: 11px;
-      color: var(--color-muted);
-      margin-top: 22px;
-      text-align: center;
-    }
-    .art {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 370px;
-    }
-    music-card {
-      width: 175px;
-      position: absolute;
-    }
-    music-card:first-child {
-      transform: translate(-110px, 10px) rotate(-16deg);
-    }
-    music-card:nth-child(2) {
-      transform: translateY(-20px);
-      z-index: 2;
-    }
-    music-card:last-child {
-      transform: translate(110px, 10px) rotate(16deg);
-    }
-    .caption {
-      text-align: center;
-      color: var(--color-muted);
-      font: 10px var(--font-mono);
-      letter-spacing: 2px;
-    }
-    @media (max-width: 850px) {
-      main {
-        grid-template-columns: 1fr;
-        max-width: 480px;
-        gap: 20px;
-        padding-top: 30px;
-      }
-      .visual {
-        display: none;
-      }
+      margin: 28px 0 0;
+      color: var(--color-faint);
+      font-size: var(--font-size-caption);
     }
   `;
   render() {
@@ -103,7 +96,9 @@ export class LoginPage extends LitElement {
     return html`<header><brand-mark></brand-mark></header>
       <main>
         <section>
-          <p class="eyebrow">${msg("DEIN SOUNDTRACK. DEIN SPIEL.")}</p>
+          <div class="cards" aria-label=${msg("Beispielkarten")}>
+            ${exampleCards.map((card, i) => html`<music-card .card=${card} .index=${i}></music-card>`)}
+          </div>
           <h1>${msg(html`Aus Lieblingssongs<br />werden Spieleabende.`)}</h1>
           <p class="intro">
             ${msg("Beschreibe deine Musikidee. Prompster findet die passenden Songs und macht daraus dein persönliches Musik-Kartendeck.")}
@@ -125,19 +120,15 @@ export class LoginPage extends LitElement {
           ${this.oauth.error ? html`<p class="error" role="alert">${this.oauth.error}</p>` : nothing}
           ${
             this.connectionError
-              ? html`<p class="error" role="alert">${this.connectionError}</p>
+              ? html`<p class="error" role="alert">
+                  ${this.connectionError}
                   <button class="text-button" @click=${() => emit(this, "retry-auth")}>
                     ${msg("Verbindung erneut prüfen")}
-                  </button>`
+                  </button>
+                </p>`
               : nothing
           }
           <p class="small">${msg("Musik entdecken · Karten gestalten · Gemeinsam spielen")}</p>
-        </section>
-        <section class="visual" aria-label=${msg("Beispielkarten")}>
-          <div class="art">
-            ${exampleCards.map((card, i) => html`<music-card .card=${card} .index=${i}></music-card>`)}
-          </div>
-          <p class="caption">${msg("JEDER HIT HAT SEINE ZEIT.")}</p>
         </section>
       </main>`;
   }

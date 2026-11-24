@@ -27,39 +27,34 @@ export class LanguageSelect extends LitElement {
   static styles = css`
     ${pageStyles}
     :host {
-      display: block;
-    }
-    label {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--color-muted);
-      font-size: 12px;
+      display: grid;
+      justify-items: end;
+      gap: 8px;
     }
     select {
       width: auto;
-      min-width: 112px;
-      padding: 8px 12px;
+      min-width: 132px;
+      height: 34px;
+      padding: 0 12px;
     }
     .error {
       max-width: 260px;
-      font-size: 12px;
+      margin: 0;
+      font-size: var(--font-size-caption);
     }
   `;
 
   render() {
-    return html`<label>
-        ${msg("Sprache")}
-        <select
-          class="input"
-          .value=${getLocale()}
-          ?disabled=${this.pending}
-          @change=${this.change}
-        >
-          <option value="de" lang="de">Deutsch</option>
-          <option value="en" lang="en">English</option>
-        </select>
-      </label>
+    return html`<select
+        class="input"
+        aria-label=${msg("Sprache")}
+        .value=${getLocale()}
+        ?disabled=${this.pending}
+        @change=${this.change}
+      >
+        <option value="de" lang="de">Deutsch</option>
+        <option value="en" lang="en">English</option>
+      </select>
       ${this.failed ? html`<p class="error" role="alert">${msg("Die Sprache konnte nicht geladen werden. Bitte erneut versuchen.")}</p>` : nothing}`;
   }
 }

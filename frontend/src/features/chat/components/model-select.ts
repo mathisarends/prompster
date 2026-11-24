@@ -5,6 +5,13 @@ import type { LLMOptionResponse } from "@api/generated/llm-options";
 import { emit } from "@shared/events";
 import { modelProvider, providerIcon } from "@shared/ui/chat/model-provider";
 
+/** "GPT 6 Luna (OpenAI)" → "GPT 6 Luna": the provider is already shown as an icon. */
+const modelName = (label: string) => label.replace(/\s*\([^)]*\)\s*$/, "");
+
+/**
+ * T3-style model chip ("◎ GPT 6 Luna Schnell"). A transparent native select sits on
+ * top, so keyboard, screen reader and mobile pickers keep working unchanged.
+ */
 @customElement("model-select")
 @localized()
 export class ModelSelect extends LitElement {
@@ -16,45 +23,56 @@ export class ModelSelect extends LitElement {
     :host {
       display: block;
       min-width: 0;
-      max-width: 250px;
     }
     label {
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
+      height: 32px;
+      padding: 0 8px;
+      border-radius: var(--radius-control);
       color: var(--color-muted);
-      border-radius: 6px;
-      padding-left: 6px;
+      font-size: var(--font-size-body);
+      white-space: nowrap;
+    }
+    label:hover {
+      background: var(--color-chip);
     }
     label:focus-within {
-      outline: 2px solid var(--color-accent);
-      outline-offset: 2px;
+      outline: 2px solid var(--color-border-strong);
+      outline-offset: 0;
     }
     .provider {
       display: flex;
-      flex: 0 0 18px;
+      color: var(--color-text);
+    }
+    .name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--color-text);
+      font-weight: var(--font-weight-semibold);
+    }
+    .profile {
+      color: var(--color-muted);
     }
     select {
-      min-width: 0;
-      max-width: 100%;
-      min-height: 34px;
-      padding: 5px 2px;
-      border: 0;
-      outline: none;
-      background: transparent;
-      color: inherit;
-      font: inherit;
-      font-size: 12px;
-      text-overflow: ellipsis;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      opacity: 0;
       cursor: pointer;
+      font: inherit;
     }
     select:disabled {
       cursor: default;
+    }
+    label:has(select:disabled) {
       opacity: 0.6;
     }
     option {
       color: var(--color-text);
-      background: var(--color-panel);
+      background: var(--color-surface);
     }
   `;
 
@@ -63,8 +81,8 @@ export class ModelSelect extends LitElement {
       this.options.find((model) => model.id === this.value) ??
       this.options.find((model) => model.isDefault) ??
       this.options[0];
-    return html`<label>
-      ${selected ? html`<span class="provider" role="img" aria-label=${modelProvider(selected.provider).label} title=${modelProvider(selected.provider).name}>${providerIcon(selected.provider, 18)}</span>` : nothing}
+    return html`<label title=${selected?.label ?? msg("KI-Modell")}>
+      ${selected ? html`<span class="provider" role="img" aria-label=${modelProvider(selected.provider).label} title=${modelProvider(selected.provider).name}>${providerIcon(selected.provider, 15)}</span><span class="name">${modelName(selected.label)}</span>${selected.profile ? html`<span class="profile">${selected.profile}</span>` : nothing}` : html`<span>${msg("KI-Modell")}</span>`}
       <select
         aria-label=${msg("KI-Modell")}
         title=${selected?.label ?? msg("KI-Modell")}

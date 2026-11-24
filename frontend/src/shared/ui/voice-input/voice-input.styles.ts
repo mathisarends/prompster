@@ -26,7 +26,7 @@ export const voiceInputStyles = css`
     stroke-width: 1.8;
   }
   .capture .icon-button {
-    background: var(--color-panel-hover);
+    background: var(--color-chip);
     color: var(--color-text);
   }
   .capture .accept {
@@ -35,7 +35,7 @@ export const voiceInputStyles = css`
   .status {
     white-space: nowrap;
     color: var(--color-muted);
-    font-size: 12px;
+    font-size: var(--font-size-caption);
   }
   .visually-hidden {
     position: absolute;
@@ -82,7 +82,7 @@ export const voiceInputStyles = css`
   }
   @media (max-width: 420px) {
     .status {
-      font-size: 11px;
+      font-size: var(--font-size-micro);
     }
     .wave {
       gap: 3px;

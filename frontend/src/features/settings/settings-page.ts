@@ -1,4 +1,5 @@
 import { msg, localized } from "@lit/localize";
+import { getLocale } from "@shared/i18n";
 import { deleteAccountDescription } from "@shared/i18n/messages";
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -54,95 +55,165 @@ export class SettingsPage extends LitElement {
     }
   }
   static styles = css`
-    ${pageStyles} :host {
+    ${pageStyles}
+    :host {
       display: block;
-      max-width: 760px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 48px 28px;
       overflow-y: auto;
     }
+    .page {
+      width: min(100%, var(--content-width));
+      margin: 0 auto;
+      padding: 56px 24px 64px;
+    }
     h1 {
-      font-size: 28px;
       margin: 0 0 32px;
+      font-size: var(--font-size-title);
     }
     section {
-      margin-bottom: 32px;
-      border-top: 1px solid var(--color-border);
+      margin-bottom: 28px;
     }
     h2 {
-      font-size: 13px;
+      margin: 0 0 8px 4px;
       color: var(--color-muted);
-      margin: 22px 0;
+      font-size: var(--font-size-label);
+      font-weight: var(--font-weight-medium);
+    }
+    .card {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      background: var(--color-surface);
     }
     .row {
       display: flex;
-      gap: 20px;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 0;
+      gap: 20px;
+      min-height: 64px;
+      padding: 12px 16px;
     }
-    .row p {
-      margin: 4px 0;
-      font-size: 12px;
-      color: var(--color-muted);
+    .row + .row {
+      border-top: 1px solid var(--color-border);
     }
     .row strong {
-      font-size: 14px;
+      display: block;
+      color: var(--color-text-strong);
+      font-weight: var(--font-weight-medium);
     }
-    pre {
-      white-space: pre-wrap;
-      font-size: 11px;
+    .row p {
+      margin: 2px 0 0;
       color: var(--color-muted);
+      font-size: var(--font-size-label);
     }
-    .danger {
-      color: var(--color-error);
+    .button {
+      flex-shrink: 0;
+    }
+    .account {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--color-control);
+      font-weight: var(--font-weight-medium);
+    }
+    .connected {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .connected::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--color-play);
+    }
+    @media (max-width: 560px) {
+      .page {
+        padding: 32px 16px 48px;
+      }
+      .row {
+        flex-wrap: wrap;
+      }
     }
   `;
   render() {
-    return html`<h1>${msg("Einstellungen")}</h1>
+    const spotify = this.user.spotifyConnected
+      ? this.user.spotifyPremium
+        ? msg("Verbunden · Premium")
+        : msg("Verbunden · Standard")
+      : msg("Verbinde dein Konto für Playlist-Exporte.");
+    return html`<div class="page">
+      <h1>${msg("Einstellungen")}</h1>
       ${this.error || this.oauth.error ? html`<p class="error" role="alert">${this.error || this.oauth.error}</p>` : nothing}
       <section>
-        <div class="row"><language-select></language-select></div>
+        <h2>${msg("Allgemein")}</h2>
+        <div class="card">
+          <div class="row">
+            <div>
+              <strong>${msg("Sprache")}</strong>
+              <p>${msg("Sprache der Oberfläche und der Spracheingabe.")}</p>
+            </div>
+            <language-select></language-select>
+          </div>
+        </div>
       </section>
       <section>
         <h2>${msg("Dein Konto")}</h2>
-        <div class="row">
-          <div>
-            <strong>${this.user.name}</strong>
-            <p>${msg("Deine Decks werden in deinem Konto gespeichert.")}</p>
+        <div class="card">
+          <div class="row">
+            <div class="account">
+              <span class="avatar" aria-hidden="true"
+                >${this.user.name.slice(0, 1).toLocaleUpperCase(getLocale())}</span
+              >
+              <div>
+                <strong>${this.user.name}</strong>
+                <p>${msg("Deine Decks werden in deinem Konto gespeichert.")}</p>
+              </div>
+            </div>
+            <button class="button" @click=${() => emit(this, "sign-out")}>
+              ${msg("Abmelden")}
+            </button>
           </div>
-          <button class="button" @click=${() => emit(this, "sign-out")}>${msg("Abmelden")}</button>
         </div>
       </section>
       <section>
         <h2>${msg("Musik & Wiedergabe")}</h2>
-        <div class="row">
-          <div>
-            <strong>Spotify</strong>
-            <p>
-              ${this.user.spotifyConnected ? (this.user.spotifyPremium ? msg("Verbunden · Premium") : msg("Verbunden · Standard")) : msg("Verbinde dein Konto für Playlist-Exporte.")}
-            </p>
+        <div class="card">
+          <div class="row">
+            <div>
+              <strong>Spotify</strong>
+              <p class=${this.user.spotifyConnected ? "connected" : ""}>${spotify}</p>
+            </div>
+            <button
+              class="button"
+              ?disabled=${this.pending || !!this.oauth.pending}
+              @click=${() => (this.user.spotifyConnected ? this.disconnect() : this.oauth.start("spotify-connect"))}
+            >
+              ${this.user.spotifyConnected ? msg("Trennen") : msg("Verbinden")}
+            </button>
           </div>
-          <button
-            class="button"
-            ?disabled=${this.pending || !!this.oauth.pending}
-            @click=${() => (this.user.spotifyConnected ? this.disconnect() : this.oauth.start("spotify-connect"))}
-          >
-            ${this.user.spotifyConnected ? msg("Trennen") : msg("Verbinden")}
-          </button>
         </div>
       </section>
       <section>
         <h2>${msg("Kontoverwaltung")}</h2>
-        <div class="row">
-          <div>
-            <strong>${msg("Konto löschen")}</strong>
-            <p>${msg("Entfernt dein Konto und die zugehörigen Daten dauerhaft.")}</p>
+        <div class="card">
+          <div class="row">
+            <div>
+              <strong>${msg("Konto löschen")}</strong>
+              <p>${msg("Entfernt dein Konto und die zugehörigen Daten dauerhaft.")}</p>
+            </div>
+            <button class="button danger" ?disabled=${this.pending} @click=${this.prepareDelete}>
+              ${msg("Konto löschen")}
+            </button>
           </div>
-          <button class="button danger" ?disabled=${this.pending} @click=${this.prepareDelete}>
-            ${msg("Konto löschen")}
-          </button>
         </div>
       </section>
       <dialog aria-label=${msg("Konto endgültig löschen")}>
@@ -160,6 +231,7 @@ export class SettingsPage extends LitElement {
             ${msg("Endgültig löschen")}
           </button>
         </div>
-      </dialog>`;
+      </dialog>
+    </div>`;
   }
 }
