@@ -3,9 +3,27 @@ import type { SongCard } from "@features/deck/components/music-card";
 
 /** Static examples for the landing-page illustration, never generated from a prompt. */
 export const exampleCards: SongCard[] = [
-  { id: "example-1976", title: "Dancing Queen", artist: "ABBA", year: 1976 },
-  { id: "example-1991", title: "Smells Like Teen Spirit", artist: "Nirvana", year: 1991 },
-  { id: "example-2000", title: "One More Time", artist: "Daft Punk", year: 2000 },
+  {
+    id: "example-1976",
+    title: "Dancing Queen",
+    artist: "ABBA",
+    year: 1976,
+    coverUrl: "https://i.scdn.co/image/ab67616d00001e0270f7a1b35d5165c85b95a0e0",
+  },
+  {
+    id: "example-1991",
+    title: "Smells Like Teen Spirit",
+    artist: "Nirvana",
+    year: 1991,
+    coverUrl: "https://i.scdn.co/image/ab67616d00001e02e175a19e530c898d167d39bf",
+  },
+  {
+    id: "example-2000",
+    title: "One More Time",
+    artist: "Daft Punk",
+    year: 2000,
+    coverUrl: "https://i.scdn.co/image/ab67616d00001e021e81bff9807a9e629fce5ade",
+  },
 ];
 export const starters = () =>
   [

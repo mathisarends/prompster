@@ -181,11 +181,14 @@ Dialoge, wiederholte Tastenereignisse, AltGr und laufende IME-Eingaben werden be
 | Nachricht senden                 | Enter im Textfeld; Umschalt + Enter für einen Zeilenumbruch |
 | Diktat verwerfen                 | Esc im Composer                                             |
 
-Die quadratischen Karten orientieren sich am bestehenden `deck.typ`: gleiche
-Farbfolge, Verläufe, Innenrahmen und Anordnung von Künstler, Jahr und Titel.
-Die verdeckte Seite enthält einen lokal erzeugten Spotify-QR-Code mit Vinylringen.
-Die Vorschau nutzt eine verfügbare Serifenschrift; die druckfertige Datei mit
-der exakten Druckschrift und Schnittmarken kommt weiterhin vom PDF-Generator.
+Die quadratischen Karten folgen dem „Zeitkapsel“-Design aus `deck.typ`: Das
+Albumcover steckt im Medium seiner Zeit (LP bis 1981, Kassette bis 1991, CD bis
+2007, danach Stream), und die Kartenfarben stammen aus dem Cover selbst. Die
+Regeln dafür stehen in `card-design.ts` und müssen zu `cover_palette.py` und
+`deck.typ` im Backend passen. Die verdeckte Seite ist dieselbe Karte vor der
+Auflösung: Der lokal erzeugte Spotify-QR-Code sitzt an der Stelle des Covers,
+Künstler, Titel und Jahr sind Platzhalter. Die druckfertige Datei mit
+Schnittmarken kommt weiterhin vom PDF-Generator.
 
 Das Mikrofon übernimmt den Ablauf aus der Referenz: Browser-Spracherkennung
 (`SpeechRecognition` / `webkitSpeechRecognition`), Live-Transkription in der

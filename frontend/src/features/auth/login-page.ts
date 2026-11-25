@@ -97,7 +97,7 @@ export class LoginPage extends LitElement {
       <main>
         <section>
           <div class="cards" aria-label=${msg("Beispielkarten")}>
-            ${exampleCards.map((card, i) => html`<music-card .card=${card} .index=${i}></music-card>`)}
+            ${exampleCards.map((card) => html`<music-card .card=${card}></music-card>`)}
           </div>
           <h1>${msg(html`Aus Lieblingssongs<br />werden Spieleabende.`)}</h1>
           <p class="intro">
