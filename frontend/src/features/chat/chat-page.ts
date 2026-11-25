@@ -45,8 +45,21 @@ export class ChatPage extends LitElement {
     window.removeEventListener("keydown", this.keydown);
     super.disconnectedCallback();
   }
+  /** A conversation has begun once a message was sent; until then the page is just the composer. */
+  private get hasConversation(): boolean {
+    const { entries, playlist } = this.chat.state;
+    return this.chat.busy || entries.length > 0 || !!playlist;
+  }
+  /**
+   * The workspace only has something to show once the deck has songs or the
+   * agent is visibly working on it; empty Playlist, Karten and Export tabs
+   * would just be noise.
+   */
+  private get hasDeck(): boolean {
+    return (this.chat.state.playlist?.tracks.length ?? 0) > 0 || this.progress !== null;
+  }
   private keydown = (event: KeyboardEvent): void => {
-    if (!this.active || (!this.chat.id && !this.chat.busy)) {
+    if (!this.active || !this.hasConversation || !this.hasDeck) {
       return;
     }
     if (matchesShortcut(event, "deck")) {
@@ -230,6 +243,10 @@ export class ChatPage extends LitElement {
       width: min(44%, 560px);
       min-width: 380px;
     }
+    /* Mounted while empty so it can follow the agent's first moves, but not shown. */
+    deck-panel[hidden] {
+      display: none;
+    }
     deck-panel.expanded {
       flex: 1;
       width: auto;
@@ -257,10 +274,11 @@ export class ChatPage extends LitElement {
   `;
   render() {
     const state = this.chat.state;
-    const hasConversation = !!this.chat.id || this.chat.busy;
+    const hasConversation = this.hasConversation;
+    const showWorkspace = this.workspaceOpen && hasConversation && this.hasDeck;
     return html`<div class="layout">
         <section
-          class="chat ${this.workspaceOpen && hasConversation ? `panel-open ${this.workspaceExpanded ? "expanded" : ""}` : ""}"
+          class="chat ${showWorkspace ? `panel-open ${this.workspaceExpanded ? "expanded" : ""}` : ""}"
         >
           <header class="toolbar">
             ${!this.sidebarOpen ? html`<button class="icon-button" aria-label=${msg("Seitenleiste öffnen")} title=${shortcutTitle(msg("Seitenleiste öffnen"), "sidebar")} aria-keyshortcuts=${shortcutKeys("sidebar")} @click=${() => emit(this, "open-sidebar")}>${icon("panelLeft", 18)}</button>` : nothing}
@@ -269,7 +287,7 @@ export class ChatPage extends LitElement {
               .items=${[{ label: msg("Deckstudio") }, { label: state.title || msg("Neues Deck") }]}
             ></app-breadcrumb>
             ${
-              hasConversation && !this.workspaceOpen
+              hasConversation && this.hasDeck && !this.workspaceOpen
                 ? html`<button
                     class="icon-button deck-toggle"
                     aria-label=${msg("Deck öffnen")}
@@ -309,6 +327,7 @@ export class ChatPage extends LitElement {
           this.workspaceOpen && hasConversation
             ? html`<deck-panel
                 class=${this.workspaceExpanded ? "expanded" : ""}
+                ?hidden=${!showWorkspace}
                 .expanded=${this.workspaceExpanded}
                 .sessionId=${this.chat.id}
                 .playlist=${state.playlist}
