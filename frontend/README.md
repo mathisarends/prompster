@@ -7,11 +7,12 @@ Musikkarten und ein heller grüner Akzent passen das Design an Prompster an.
 
 ## Starten
 
-Node.js 24 und npm verwenden:
+Node.js 24 und die in `package.json` angegebene pnpm-Version verwenden.
+Die Befehle laufen im Verzeichnis `frontend`.
 
 ```sh
-npm ci
-npm run dev
+pnpm install --frozen-lockfile
+pnpm run dev
 ```
 
 Vite leitet `/api` an `http://127.0.0.1:8000` weiter.
@@ -30,9 +31,9 @@ und `/settings` sowie einen Proxy unter `/api`, der Server-Sent Events nicht puf
 src/
   app/                     # Session-Gate, Routen und Layout
   api/
-    request.ts             # Fetch, Cookies, einmaliger Session-Refresh, PDF, Fehler
+    request.ts             # Fetch-Konfiguration und einmaliger Session-Refresh
     query-client.ts        # gemeinsamer Query-Cache
-    generated/<tag>/       # api.ts, models.ts, queries.ts, mutations.ts, index.ts
+    generated/<tag>/       # HTTP-Client, Modelle, Query Keys und TanStack-Optionen
     session-streams/       # unveränderter, von fastapi-canon erzeugter SSE-Client
   features/
     auth/                  # Login-Seite und OAuth-ReactiveController
@@ -60,32 +61,38 @@ Der bestehende fachliche Chat-Reducer bleibt unabhängig von Lit. Imports nutzen
 
 ## HTTP- und Stream-Generierung
 
-Die echte API-Spec liegt in `openapi.json`. Sie wird direkt aus der vorhandenen
-FastAPI-Anwendung exportiert. Orval erzeugt pro OpenAPI-Tag unabhängige Module.
-Der AST-basierte Nachlauf aus der Vorlage normalisiert Funktionssignaturen,
-URL-Parameter und Query-/Mutation-Optionen. `system` wird ausgelassen.
-OAuth-GETs gelten als Aktionen; im UI starten sie per Popup-Navigation.
+Die API-Spec in `openapi.json` kommt direkt aus FastAPI. `lit-canon-api` erzeugt
+pro OpenAPI-Tag einen typisierten Client, Query Keys und TanStack-Optionen.
+`lit-canon-api.config.ts` lässt `system` aus und behandelt OAuth-GETs als Aktionen.
+Im UI starten diese Aktionen per Popup-Navigation.
+
+`lit-canon-api` und `lit-canon-fetch` werden beim Installieren aus demselben
+gepinnten [GitHub-Commit](https://github.com/mathisarends/lit-canon/commit/02e362ad9684005270f907b97ec4260bf2d9b924)
+gebaut. Für ein Update beide Pins in `package.json` und die zugehörigen
+Build-Freigaben in `pnpm-workspace.yaml` anpassen, dann `pnpm install` und
+`pnpm run api:generate` ausführen. Das Lockfile und den generierten Client
+gemeinsam committen.
 
 ```sh
-npm run api:export          # Backend-Umgebung über uv erforderlich
-npm run api:generate        # Spec -> Fetch-Funktionen + TanStack-Optionen
-npm run api:check-backend   # Backend -> Spec ohne Drift
-npm run api:check           # Spec -> generierter Client ohne Drift
-npm run generate:streams   # Backend -> Stream-Vertrag + SSE-Client
-npm run check:streams
+pnpm run api:export          # Backend-Umgebung über uv erforderlich
+pnpm run api:generate        # Spec -> Fetch-Funktionen + TanStack-Optionen
+pnpm run api:generate --watch # Client bei Änderungen der Spec aktualisieren
+pnpm run api:check-backend   # Backend -> Spec ohne Drift
+pnpm run api:check           # Spec -> generierter Client ohne Drift
+pnpm run generate:streams   # Backend -> Stream-Vertrag + SSE-Client
+pnpm run check:streams
 ```
 
 `generate:api` bleibt als Alias erhalten. `download:openapi` kann alternativ
 von einer laufenden API exportieren; `OPENAPI_URL` überschreibt deren Adresse.
-`OPENAPI_SPEC_PATH` überschreibt den Orval-Eingang. Generierte Dateien werden
-nicht von Hand bearbeitet. Ein zusätzlicher Prüfprozess erkennt fehlgeschlagene
-Orval-Post-Hooks auch dann, wenn Orval selbst Exit-Code 0 liefert.
+`OPENAPI_SPEC_PATH` überschreibt den Eingang des Generators. Generierte Dateien
+werden ausschließlich über den Generator aktualisiert.
 
-`apiFetch` liefert den typisierten Body direkt, `undefined` für leere Antworten
-und einen `Blob` für PDFs. Fehler werfen `ApiError` mit HTTP-Status und
-Problem-Details. Gleichzeitige 401-Antworten teilen sich genau einen Refresh;
-AbortSignals, Multipart-Uploads und wiederholte Query-Parameter bleiben erhalten.
-Fachliche Cache-Invalidierung gehört in die Feature-Controller.
+`lit-canon-fetch` verarbeitet JSON, Multipart-Uploads und PDFs und liefert
+`ApiError` mit HTTP-Status und Problem-Details. Prompsters Fetch-Middleware
+bündelt gleichzeitige 401-Antworten in einem Cookie-Refresh und berücksichtigt
+abgebrochene Requests. Die Feature-Controller nutzen generierte Query Keys für
+die Cache-Invalidierung.
 
 ## Funktionsumfang und Prüfungen
 
@@ -96,16 +103,16 @@ Tracks, Spotify-Premium-Wiedergabe, PDF-Vorschau/-Download und Spotify-Export
 mit Retry-Anzeige sind an die bestehenden Schnittstellen angeschlossen.
 
 ```sh
-npm run build
-npm run lint
-npm test
-npm run test:e2e
-npm run i18n:check
+pnpm run build
+pnpm run lint
+pnpm test
+pnpm run test:e2e
+pnpm run i18n:check
 ```
 
 Die Browser-Tests verwenden kontrollierte HTTP- und SSE-Antworten und
 prüfen Desktop sowie Mobil. Unter Windows nutzen sie installiertes Chrome;
-andernfalls einmal `npx playwright install chromium` ausführen. Echte OAuth-
+andernfalls einmal `pnpm exec playwright install chromium` ausführen. Echte OAuth-
 Provider, Spotify-Premium-Wiedergabe und Modellanbieter benötigen verbundene
 Konten und einen gesonderten Live-Test. CI prüft Formatierung, Typen, Build,
 HTTP-Codegenerierung, vollständige Übersetzungen, Unit- und Browser-Tests; Backend-CI prüft zusätzlich die
@@ -135,10 +142,10 @@ Die UI-Sprache ändert weder den API-Vertrag noch die Sprache bestehender Chats
 oder des serverseitigen PDF-Generators.
 
 ```sh
-npm run i18n:extract   # msg-Aufrufe -> locales/en.xlf; bestehende Übersetzungen bleiben erhalten
+pnpm run i18n:extract   # msg-Aufrufe -> locales/en.xlf; bestehende Übersetzungen bleiben erhalten
 # Alle neuen <target>-Texte in locales/en.xlf übersetzen; <x>-Platzhalter beibehalten.
-npm run i18n:build     # XLIFF -> src/shared/i18n/generated/en.ts + locale-codes.ts
-npm run i18n:check     # Vollständigkeit, Platzhalter und Abweichungen der generierten Dateien
+pnpm run i18n:build     # XLIFF -> src/shared/i18n/generated/en.ts + locale-codes.ts
+pnpm run i18n:check     # Vollständigkeit, Platzhalter und Abweichungen der generierten Dateien
 ```
 
 XLIFF und generierte Module werden gemeinsam eingecheckt. Generierte Dateien
@@ -154,7 +161,7 @@ gesperrten Speicher sowie fehlgeschlagene Sprachdownloads.
 ## Review-Aufnahmen
 
 Die [Review-Galerie](../docs/reviews/lit-frontend/README.md) enthält Desktop- und
-Mobil-Screenshots, MP4-Videos und animierte Vorschauen. `npm run review:capture`
+Mobil-Screenshots, MP4-Videos und animierte Vorschauen. `pnpm run review:capture`
 erstellt die Aufnahmen gegen den laufenden Vite-Server mit den kontrollierten
 Browser-Testdaten neu. Voraussetzungen und Video-Konvertierung stehen in der
 Galerie.

@@ -1,31 +1,7 @@
-/** RFC 9457 problem details returned by the backend. */
-export interface ApiProblem {
-  type: string;
-  title: string;
-  status: number;
-  detail?: string | null;
-  instance?: string | null;
-  code?: string;
-  [key: string]: unknown;
-}
+import { createApiFetch, type ApiRequestOptions } from "lit-canon-fetch";
 
-export class ApiError extends Error {
-  readonly status: number;
-  readonly problem: ApiProblem | null;
-
-  constructor(status: number, problem: ApiProblem | null) {
-    super(problem?.detail || problem?.title || `HTTP ${status}`);
-    this.name = "ApiError";
-    this.status = status;
-    this.problem = problem;
-  }
-}
-
-export type ApiRequestOptions = Omit<RequestInit, "body"> & {
-  body?: unknown;
-  query?: object;
-  skipAuthRefresh?: boolean;
-};
+export { ApiError } from "lit-canon-fetch";
+export type { ApiProblem, ApiRequestOptions } from "lit-canon-fetch";
 
 export function resolveApiBaseUrl(): string {
   return (
@@ -34,120 +10,34 @@ export function resolveApiBaseUrl(): string {
   );
 }
 
+const baseUrl = resolveApiBaseUrl();
 let refreshPromise: Promise<void> | null = null;
 
-function withQuery(url: string, query: object | undefined): string {
-  if (!query) {
-    return url;
-  }
-
-  const params = new URLSearchParams();
-  for (const [key, rawValue] of Object.entries(query)) {
-    const values = Array.isArray(rawValue) ? rawValue : [rawValue];
-    for (const value of values) {
-      if (value !== undefined) {
-        params.append(key, value === null ? "null" : String(value));
+const request = createApiFetch({
+  baseUrl,
+  middleware: [
+    async (request, next) => {
+      const response = await next(request);
+      if (response.status !== 401 || request.url.startsWith(`${baseUrl}/api/v1/auth/`)) {
+        return response;
       }
-    }
-  }
 
-  return params.size ? `${url}${url.includes("?") ? "&" : "?"}${params}` : url;
-}
+      await response.body?.cancel();
+      await refreshAuthentication();
+      request.init.signal?.throwIfAborted();
+      return next(request);
+    },
+  ],
+});
 
-function isJsonBody(body: unknown): boolean {
-  if (body === null || Array.isArray(body)) {
-    return true;
-  }
-  if (typeof body !== "object") {
-    return false;
-  }
-  const prototype: unknown = Object.getPrototypeOf(body);
-  return prototype === Object.prototype || prototype === null;
-}
-
-function isJson(contentType: string | null): boolean {
-  const mediaType = contentType?.split(";", 1)[0].trim().toLowerCase();
-  return mediaType === "application/json" || mediaType?.endsWith("+json") === true;
-}
-
-function toProblem(value: unknown): ApiProblem | null {
-  if (value === null || typeof value !== "object") {
-    return null;
-  }
-
-  const candidate = value as Record<string, unknown>;
-  if (typeof candidate.type !== "string") {
-    return null;
-  }
-  if (typeof candidate.title !== "string") {
-    return null;
-  }
-  if (typeof candidate.status !== "number") {
-    return null;
-  }
-
-  return candidate as ApiProblem;
+export function apiFetch<T>(url: string, options?: ApiRequestOptions): Promise<T> {
+  return request<T>(url, options);
 }
 
 /** Renews the access cookie once, however many requests saw it expire. */
 export function refreshAuthentication(): Promise<void> {
-  refreshPromise ??= apiFetch<void>("/api/v1/auth/refresh", {
-    method: "POST",
-    skipAuthRefresh: true,
-  }).finally(() => {
+  refreshPromise ??= apiFetch<void>("/api/v1/auth/refresh", { method: "POST" }).finally(() => {
     refreshPromise = null;
   });
   return refreshPromise;
-}
-
-export async function apiFetch<T>(url: string, options?: ApiRequestOptions): Promise<T> {
-  const {
-    body: requestBody,
-    query,
-    headers: inputHeaders,
-    skipAuthRefresh,
-    ...requestOptions
-  } = options ?? {};
-  const headers = new Headers(inputHeaders);
-  const jsonBody = requestBody !== undefined && isJsonBody(requestBody);
-  if (jsonBody && !headers.has("content-type")) {
-    headers.set("content-type", "application/json");
-  }
-
-  const baseUrl = resolveApiBaseUrl();
-  const response = await fetch(`${baseUrl}${withQuery(url, query)}`, {
-    ...requestOptions,
-    credentials: requestOptions.credentials ?? "include",
-    headers,
-    body: jsonBody ? JSON.stringify(requestBody) : (requestBody as BodyInit | null | undefined),
-  });
-  if (response.status === 401 && !skipAuthRefresh && !url.startsWith("/api/v1/auth/")) {
-    await response.body?.cancel();
-    await refreshAuthentication();
-    requestOptions.signal?.throwIfAborted();
-    return apiFetch<T>(url, { ...options, skipAuthRefresh: true });
-  }
-  if (response.ok && response.headers.get("content-type")?.split(";", 1)[0] === "application/pdf") {
-    return (await response.blob()) as T;
-  }
-  const responseBody =
-    response.status === 204 || response.status === 205 ? "" : await response.text();
-  const json = isJson(response.headers.get("content-type"));
-
-  if (!response.ok) {
-    let problem: ApiProblem | null = null;
-    if (json && responseBody) {
-      try {
-        problem = toProblem(JSON.parse(responseBody));
-      } catch {
-        // An invalid error body must still surface as an HTTP error.
-      }
-    }
-    throw new ApiError(response.status, problem);
-  }
-
-  if (!responseBody) {
-    return undefined as T;
-  }
-  return (json ? JSON.parse(responseBody) : responseBody) as T;
 }

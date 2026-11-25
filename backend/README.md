@@ -58,8 +58,8 @@ uv run --package backend fastapi-canon generate --config codegen.toml
 uv run --package backend fastapi-canon generate --config codegen.toml --check
 ```
 
-From `frontend/`, the equivalent commands are `npm run generate:streams` and
-`npm run check:streams`. Commit the contract and the generated client in
+From `frontend/`, the equivalent commands are `pnpm run generate:streams` and
+`pnpm run check:streams`. Commit the contract and the generated client in
 `frontend/src/api/session-streams/` together; the CI check rejects stale
 generated files. The frontend consumes each operation as a typed async iterable
 over `fetch`, passing an `AbortSignal` to stop a stream and refreshing the

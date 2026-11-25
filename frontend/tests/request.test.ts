@@ -83,3 +83,19 @@ test("a rejected refresh cannot recurse", async (t) => {
   );
   assert.equal(requests, 2);
 });
+
+test("an aborted request is not retried after the cookie refresh", async (t) => {
+  const controller = new AbortController();
+  const fetch = t.mock.method(globalThis, "fetch", async (url: string) => {
+    if (url.endsWith("/auth/refresh")) {
+      controller.abort();
+      return new Response(null, { status: 204 });
+    }
+    return new Response(null, { status: 401 });
+  });
+
+  await assert.rejects(apiFetch("/protected", { signal: controller.signal }), {
+    name: "AbortError",
+  });
+  assert.equal(fetch.mock.callCount(), 2);
+});

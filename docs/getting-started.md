@@ -42,8 +42,8 @@ The Compose file supplies local database, storage, and JWT defaults. `POSTGRES_*
 
 ```bash
 docker compose up --build -d
-npm --prefix frontend ci
-npm --prefix frontend run dev
+pnpm --dir frontend install --frozen-lockfile
+pnpm --dir frontend run dev
 ```
 
 Compose creates the storage bucket and runs migrations before starting the API. Open [http://127.0.0.1:5173](http://127.0.0.1:5173).

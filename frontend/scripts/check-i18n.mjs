@@ -31,7 +31,7 @@ try {
     );
     if (missing.length || obsolete.length || empty.length || ids.size !== translated.length) {
       throw new Error(
-        `${locale}: ${missing.length} missing, ${obsolete.length} obsolete, ${empty.length} empty translations. Run npm run i18n:extract and translate every target.`,
+        `${locale}: ${missing.length} missing, ${obsolete.length} obsolete, ${empty.length} empty translations. Run pnpm run i18n:extract and translate every target.`,
       );
     }
   }
@@ -40,14 +40,14 @@ try {
   const committed = config.resolve(config.output.outputDir);
   const files = (await readdir(generated)).sort();
   if (JSON.stringify(files) !== JSON.stringify((await readdir(committed)).sort())) {
-    throw new Error("Generated locale file list differs. Run npm run i18n:build.");
+    throw new Error("Generated locale file list differs. Run pnpm run i18n:build.");
   }
   const pairs = files.map((file) => [join(generated, file), join(committed, file)]);
   pairs.push([codes, config.resolve(config.output.localeCodesModule)]);
   for (const [expected, actual] of pairs) {
     const normalize = (text) => text.replaceAll("\r\n", "\n");
     if (normalize(await readFile(expected, "utf8")) !== normalize(await readFile(actual, "utf8"))) {
-      throw new Error(`Stale translations: ${relative(root, actual)}. Run npm run i18n:build.`);
+      throw new Error(`Stale translations: ${relative(root, actual)}. Run pnpm run i18n:build.`);
     }
   }
   process.stdout.write(

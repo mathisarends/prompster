@@ -73,15 +73,15 @@ Spotify Premium, so the player shows its Premium notice.
 
 ## Reproduce
 
-From `frontend`, run `npm ci`, then start Vite in one terminal:
+From `frontend`, run `pnpm install --frozen-lockfile`, then start Vite in one terminal:
 
 ```sh
-npm run dev -- --port 5175 --strictPort
+pnpm run dev --port 5175 --strictPort
 ```
 
-In a second terminal, run `npm run review:capture`. `REVIEW_BASE_URL` can override
+In a second terminal, run `pnpm run review:capture`. `REVIEW_BASE_URL` can override
 the default URL. Windows uses installed Chrome; other platforms need
-`npx playwright install chromium` first. The capture script shares the browser
+`pnpm exec playwright install chromium` first. The capture script shares the browser
 test fixtures, waits for fonts, checks page errors and mobile overflow, and saves
 screenshots here and raw WebM recordings in `frontend/test-results/review-raw`.
 

@@ -72,7 +72,7 @@ document = _rest_document()
 if "--check" in sys.argv:
     if json.loads(target.read_text(encoding="utf-8")) != document:
         raise SystemExit(
-            "OpenAPI drift: run npm run api:export and npm run api:generate"
+            "OpenAPI drift: run pnpm run api:export and pnpm run api:generate"
         )
     print("OpenAPI specification matches the backend.")
 else:
