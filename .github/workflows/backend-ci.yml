@@ -37,6 +37,25 @@ jobs:
     name: Lint & Test
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: prompster
+          POSTGRES_DB: prompster
+          # A throwaway database for migration checks; no password needed.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U prompster"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_URI: postgresql+asyncpg://prompster@localhost:5432/prompster
+
     steps:
       - uses: actions/checkout@v4
 
@@ -56,6 +75,15 @@ jobs:
 
       - name: Run tests
         run: uv run pytest backend/tests/ -v
+
+      - name: Check composition
+        run: uv run --package backend fastapi-canon check composition --app backend.main:app --fail-on warning
+
+      - name: Apply migrations to an empty database
+        run: uv run --package backend fastapi-canon db --config backend/pyproject.toml upgrade head
+
+      - name: Check migrations against the models
+        run: uv run --package backend fastapi-canon db --config backend/pyproject.toml check
 
       - name: Check stream contract and client
         run: uv run --package backend fastapi-canon generate --config codegen.toml --check

@@ -1,13 +1,21 @@
-# Datenbank-Migrationen (Alembic)
+# Datenbank-Migrationen (Alembic über fastapi-canon)
 
 ## Setup
 
-- Docker Desktop / Docker Engine muss laufen.
-- Migrationen liegen in backend/migrations/versions.
-- Alembic-Konfig liegt in backend/alembic.ini.
-- Modelle werden in backend/migrations/env.py geladen und als Metadata für Autogenerate verwendet.
+- Die Datenbank ist eine `fastapi-canon`-Integration (`Database`), erstellt in
+  `backend/src/backend/platform/database/di.py`. Die Tabellen meldet das
+  Plattform-Feature über `Tables(...)` an; daraus setzt Canon die Metadata für
+  Autogenerate und Prüfungen zusammen.
+- Migrationen liegen in `backend/migrations/versions`. `backend/migrations/env.py`
+  ruft nur `run_alembic_environment()` auf.
+- `fastapi-canon db` liest sein Ziel (`backend.main:app`) aus
+  `[tool.fastapi-canon.database]` in `backend/pyproject.toml` und die Verbindung
+  aus `DB_URI`. Außerhalb von Compose `DB_URI` selbst setzen, z. B.
+  `postgresql://<user>:<passwort>@localhost:5432/prompster`.
+- Beim Start prüft die App, dass die Datenbank auf dem Stand der Revisionen ist,
+  und startet sonst nicht. Migrationen laufen deshalb immer vor dem Backend.
 
-## Erste Migration ausführen
+## Migrationen ausführen
 
 Empfohlen (Compose, inkl. Retry/Recovery):
 
@@ -21,12 +29,15 @@ Oder alles zusammen starten (backend wartet auf erfolgreiche Migration):
 
 ## Neue Migration erstellen
 
-1. Modell ändern (z. B. SQLModel-Entity)
+1. Modell ändern (z. B. SQLModel-Entity). Eine neue Tabelle zusätzlich in
+   `DATABASE_TABLES` eintragen.
 2. Revision erzeugen:
-   cd backend && alembic revision --autogenerate -m "describe_change"
-3. Generierte Datei prüfen/aufräumen
+   uv run --package backend fastapi-canon db --config backend/pyproject.toml revision --autogenerate -m "describe_change"
+3. Generierte Datei prüfen/aufräumen. Die Revisions-ID im bisherigen Schema
+   (`0041_describe_change`) im Dateinamen, in `revision` und `down_revision`
+   nachziehen.
 4. Migration anwenden:
-   cd backend && alembic upgrade head
+   uv run --package backend fastapi-canon db --config backend/pyproject.toml upgrade head
 
 ## Recovery bei Fehlern
 
@@ -38,11 +49,12 @@ Oder alles zusammen starten (backend wartet auf erfolgreiche Migration):
 Häufiger Fehler:
 
 - InvalidPasswordError: DB_URI-Credentials passen nicht zu POSTGRES_USER/POSTGRES_PASSWORD.
-- Standardmäßig wird DB*URI im compose.yml bereits aus POSTGRES*\* gebaut. Falls du DB_URI explizit setzt, muss es exakt zu den Postgres-Variablen passen.
+- Standardmäßig wird DB_URI im compose.yml bereits aus POSTGRES_* gebaut. Falls du DB_URI explizit setzt, muss es exakt zu den Postgres-Variablen passen.
 
 ## Nützliche Befehle
 
-- Aktueller Stand: cd backend && alembic current
-- Historie: cd backend && alembic history
-- Auf letzte Version: cd backend && alembic upgrade head
-- Einen Schritt zurück: cd backend && alembic downgrade -1
+Alle mit dem Präfix `uv run --package backend fastapi-canon db --config backend/pyproject.toml`:
+
+- Auf letzte Version: `upgrade head`
+- Auf eine bestimmte Revision zurück: `downgrade <revision>`
+- Stand und Drift prüfen (Revisionen aktuell, Modelle = Schema): `check`

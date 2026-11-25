@@ -58,7 +58,7 @@ services:
       - -c
       - |
         attempts=0
-        until alembic -c /app/backend/alembic.ini upgrade head; do
+        until fastapi-canon db --config /app/backend/pyproject.toml upgrade head; do
           attempts=$$((attempts + 1))
           if [ "$$attempts" -ge 20 ]; then
             echo "Migration failed after $$attempts attempts."

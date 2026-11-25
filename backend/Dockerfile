@@ -31,7 +31,7 @@ COPY --from=builder /app/.venv /app/.venv
 
 COPY libs/agent/src ./libs/agent/src
 COPY backend/src ./backend/src
-COPY backend/alembic.ini ./backend/alembic.ini
+COPY backend/pyproject.toml ./backend/pyproject.toml
 COPY backend/migrations ./backend/migrations
 
 ENV PYTHONPATH=/app/backend/src \

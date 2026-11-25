@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     LargeBinary,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -32,7 +33,7 @@ class UserModel(DatabaseEntity, table=True):
     __tablename__ = "users"
 
     name: str
-    profile_image_url: str | None = None
+    profile_image_url: str | None = Field(default=None, sa_type=Text())
 
 
 class AuthIdentityModel(DatabaseEntity, table=True):
@@ -47,7 +48,7 @@ class AuthIdentityModel(DatabaseEntity, table=True):
         Index("ix_auth_identities_user_provider", "user_id", "provider", unique=True),
     )
 
-    user_id: UUID = Field(foreign_key="users.id", index=True)
+    user_id: UUID = Field(foreign_key="users.id", ondelete="CASCADE", index=True)
     provider: str
     subject: str
 
@@ -58,7 +59,7 @@ class OAuthConnectionModel(DatabaseEntity, table=True):
         Index("ix_oauth_connections_user_provider", "user_id", "provider", unique=True),
     )
 
-    user_id: UUID = Field(foreign_key="users.id", index=True)
+    user_id: UUID = Field(foreign_key="users.id", ondelete="CASCADE")
     provider: str
     provider_user_id: str = Field(index=True)
     refresh_token_encrypted: bytes = Field(sa_type=LargeBinary())
@@ -74,7 +75,13 @@ class OAuthConnectionModel(DatabaseEntity, table=True):
 class SessionModel(DatabaseEntity, table=True):
     __tablename__ = "sessions"
     __table_args__ = (
-        Index("ix_sessions_owner_activity", "owner_id", "last_activity_at"),
+        Index("ix_sessions_owner_id_last_activity_at", "owner_id", "last_activity_at"),
+        Index(
+            "ix_sessions_title_trgm",
+            "title",
+            postgresql_using="gin",
+            postgresql_ops={"title": "gin_trgm_ops"},
+        ),
     )
 
     title: str
@@ -89,7 +96,7 @@ class SessionModel(DatabaseEntity, table=True):
         max_length=32,
         sa_column_kwargs={"server_default": text("'onboarding'")},
     )
-    playlist_pdf_storage_key: str | None = None
+    playlist_pdf_storage_key: str | None = Field(default=None, sa_type=Text())
     playlist_pdf_fingerprint: str | None = Field(default=None, max_length=64)
     last_activity_at: datetime = Field(sa_type=DateTime(timezone=True))
 
@@ -203,9 +210,9 @@ class SessionUserMessageModel(DatabaseEntity, table=True):
         Index("ix_session_user_messages_session_position", "session_id", "position"),
     )
 
-    session_id: UUID = Field(foreign_key="sessions.id")
+    session_id: UUID = Field(foreign_key="sessions.id", ondelete="CASCADE")
     position: int
-    content: str
+    content: str = Field(sa_type=Text())
 
     session: SessionModel = Relationship(back_populates="user_messages")
     attachments: list["SessionUserMessageAttachmentModel"] = Relationship(
@@ -234,13 +241,13 @@ class SessionUserMessageAttachmentModel(DatabaseEntity, table=True):
         ),
     )
 
-    user_message_id: UUID = Field(foreign_key="session_user_messages.id")
+    user_message_id: UUID = Field(foreign_key="session_user_messages.id", ondelete="CASCADE")
     position: int
     kind: str = Field(max_length=64)
     external_id: str = Field(max_length=128)
-    title: str
-    subtitle: str | None = None
-    image_url: str | None = None
+    title: str = Field(sa_type=Text())
+    subtitle: str | None = Field(default=None, sa_type=Text())
+    image_url: str | None = Field(default=None, sa_type=Text())
     spotify_id: str | None = Field(default=None, max_length=128)
 
     user_message: SessionUserMessageModel = Relationship(back_populates="attachments")
@@ -262,9 +269,9 @@ class SessionUserMessageImageAttachmentModel(DatabaseEntity, table=True):
             index=True,
         )
     )
-    storage_key: str
+    storage_key: str = Field(sa_type=Text())
     content_type: str = Field(max_length=128)
-    file_name: str
+    file_name: str = Field(sa_type=Text())
     size_bytes: int
 
     user_message: SessionUserMessageModel = Relationship(
@@ -280,9 +287,9 @@ class SessionAssistantMessageModel(DatabaseEntity, table=True):
         ),
     )
 
-    session_id: UUID = Field(foreign_key="sessions.id")
+    session_id: UUID = Field(foreign_key="sessions.id", ondelete="CASCADE")
     position: int
-    content: str
+    content: str = Field(sa_type=Text())
 
     session: SessionModel = Relationship(back_populates="assistant_messages")
 
@@ -302,15 +309,15 @@ class SessionUserCurationEventModel(DatabaseEntity, table=True):
         ),
     )
 
-    session_id: UUID = Field(foreign_key="sessions.id")
+    session_id: UUID = Field(foreign_key="sessions.id", ondelete="CASCADE")
     position: int
     event_type: str
     track_id: UUID
-    track_title: str
-    track_artist: str
+    track_title: str = Field(sa_type=Text())
+    track_artist: str = Field(sa_type=Text())
     track_year: int | None = None
     track_spotify_uri: str | None = Field(default=None, max_length=128)
-    track_cover_url: str | None = None
+    track_cover_url: str | None = Field(default=None, sa_type=Text())
     consumed: bool = Field(
         default=False,
         sa_type=Boolean(),
@@ -335,7 +342,7 @@ class SessionPlaylistReferenceModel(DatabaseEntity, table=True):
         ),
     )
 
-    session_id: UUID = Field(foreign_key="sessions.id")
+    session_id: UUID = Field(foreign_key="sessions.id", ondelete="CASCADE")
     position: int
     spotify_playlist_id: str = Field(max_length=64)
     name: str
@@ -361,14 +368,14 @@ class SessionArtistReferenceModel(DatabaseEntity, table=True):
         ),
     )
 
-    session_id: UUID = Field(foreign_key="sessions.id")
+    session_id: UUID = Field(foreign_key="sessions.id", ondelete="CASCADE")
     position: int
     spotify_artist_id: str = Field(max_length=64)
     name: str
     image_url: str | None = None
     genres: list[str] = Field(
         default_factory=list,
-        sa_column=Column(JSON, nullable=False),
+        sa_column=Column(JSONB, nullable=False),
     )
     followers: int | None = None
     popularity: int | None = None
@@ -386,9 +393,9 @@ class SessionToolCallSequenceModel(DatabaseEntity, table=True):
         ),
     )
 
-    session_id: UUID = Field(foreign_key="sessions.id")
+    session_id: UUID = Field(foreign_key="sessions.id", ondelete="CASCADE")
     position: int
-    label: str | None = None
+    label: str | None = Field(default=None, sa_type=Text())
 
     session: SessionModel = Relationship(back_populates="tool_call_sequences")
     calls: list["SessionToolCallModel"] = Relationship(
@@ -403,19 +410,19 @@ class SessionToolCallSequenceModel(DatabaseEntity, table=True):
 class SessionToolCallModel(DatabaseEntity, table=True):
     __tablename__ = "session_tool_calls"
 
-    sequence_id: UUID = Field(foreign_key="session_tool_call_sequences.id")
+    sequence_id: UUID = Field(foreign_key="session_tool_call_sequences.id", ondelete="CASCADE")
     position: int
-    call_id: str
-    function_name: str
+    call_id: str = Field(sa_type=Text())
+    function_name: str = Field(sa_type=Text())
     function_arguments: dict[str, object] = Field(
-        sa_column=Column(JSON, nullable=False)
+        sa_column=Column(JSONB, nullable=False)
     )
-    function_status_label: str | None = None
+    function_status_label: str | None = Field(default=None, sa_type=Text())
     function_action_type: str | None = Field(default=None, max_length=32)
     function_is_onboarding_question: bool = False
     state: str
-    result: str | None = None
-    error: str | None = None
+    result: str | None = Field(default=None, sa_type=Text())
+    error: str | None = Field(default=None, sa_type=Text())
     result_items: list[dict] | None = Field(
         default=None,
         sa_column=Column(JSON, nullable=True),
@@ -437,7 +444,7 @@ class SessionOnboardingQuestionModel(DatabaseEntity, table=True):
     session_id: UUID = Field(foreign_key="sessions.id", ondelete="CASCADE")
     sequence_number: int
     question_text: str
-    hint: str | None = None
+    hint: str | None = Field(default=None, sa_type=Text())
     options: list[str] = Field(
         default_factory=list,
         sa_column=Column(JSON, nullable=False),
@@ -471,7 +478,7 @@ class SessionOnboardingQuestionModel(DatabaseEntity, table=True):
 class SessionPlaylistModel(DatabaseEntity, table=True):
     __tablename__ = "session_playlists"
 
-    session_id: UUID = Field(foreign_key="sessions.id", unique=True)
+    session_id: UUID = Field(foreign_key="sessions.id", ondelete="CASCADE", unique=True)
     name: str | None = None
     spotify_playlist_id: str | None = Field(default=None, max_length=64)
 
@@ -487,13 +494,16 @@ class SessionPlaylistModel(DatabaseEntity, table=True):
 
 class PlaylistTrackModel(DatabaseEntity, table=True):
     __tablename__ = "playlist_tracks"
+    __table_args__ = (
+        Index("ix_playlist_tracks_playlist_id_position", "playlist_id", "position"),
+    )
 
-    playlist_id: UUID = Field(foreign_key="session_playlists.id")
+    playlist_id: UUID = Field(foreign_key="session_playlists.id", ondelete="CASCADE")
     position: int
-    title: str
-    artist: str
+    title: str = Field(sa_type=Text())
+    artist: str = Field(sa_type=Text())
     year: int
     spotify_uri: str | None = Field(default=None, max_length=128)
-    cover_url: str | None = None
+    cover_url: str | None = Field(default=None, sa_type=Text())
 
     playlist: SessionPlaylistModel = Relationship(back_populates="tracks")
