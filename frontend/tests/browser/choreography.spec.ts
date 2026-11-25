@@ -37,6 +37,7 @@ test("the chat lists the agent's tool calls and opens what a search found", asyn
   await page.goto("/chat/deck-1");
   await send(page);
 
+  await expect(page.locator("assistant-message").first()).toHaveText(deckBuildRun.opening);
   const research = page.locator("tool-call-chain").first();
   await expect(research).toContainText("Grabe in den 80ern");
   await expect(research.locator("li", { hasText: "new wave essentials" })).toContainText("4");
@@ -50,6 +51,18 @@ test("the chat lists the agent's tool calls and opens what a search found", asyn
   await expect(search.locator(".found li").first()).toHaveText(
     "Sweet Dreams (Are Made of This) · Eurythmics",
   );
+  await expect(search.locator(".found track-cover img")).toHaveCount(6);
+});
+
+test("while the agent works the composer is empty and offers to stop", async ({ page }) => {
+  await mockApi(page);
+  await mockAgentRun(page, deckBuildRun, 6);
+  await page.goto("/chat/deck-1");
+  await send(page);
+
+  await expect(page.getByRole("button", { name: "Antwort stoppen" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Nachricht", exact: true })).toHaveValue("");
+  await expect(page.locator("human-message")).toHaveText("Ein 80er-Deck");
 });
 
 test("with reduced motion the deck changes without the agent's search field", async ({ page }) => {

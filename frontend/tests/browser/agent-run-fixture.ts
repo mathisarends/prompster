@@ -4,41 +4,97 @@ import { session, song } from "./fixtures";
 
 type Track = typeof song;
 type Timed = { at: number; event: SessionStreamEvent };
-/** A turn's events at their offsets in milliseconds, and the deck and reply it ends with. */
-export type AgentRun = { timeline: Timed[]; tracks: Track[]; reply: string };
+/**
+ * A turn's events at their offsets in milliseconds, with what the agent says
+ * before it starts, and the deck and reply the turn ends with.
+ */
+export type AgentRun = { timeline: Timed[]; tracks: Track[]; opening: string; reply: string };
 
-/** A flat two-tone cover, so recordings need no artwork from the network. */
-const cover = (seed: number): string =>
+/** Title, artist, year and the path of the album artwork. */
+const songs = [
+  [
+    "Sweet Dreams (Are Made of This)",
+    "Eurythmics",
+    1983,
+    "Music124/v4/f2/4c/c2/f24cc223-f889-c8a3-ebbc-8ce458438580/mzi.zbvljpxb.jpg",
+  ],
+  [
+    "Blue Monday",
+    "New Order",
+    1983,
+    "Music124/v4/c4/c5/4c/c4c54c3d-5305-edad-dc50-5bb51c2bedca/190295421069.jpg",
+  ],
+  [
+    "Just Can't Get Enough",
+    "Depeche Mode",
+    1981,
+    "Music115/v4/19/b8/13/19b81309-d81c-66f7-25b5-ecf545bc2db7/0094635797954.jpg",
+  ],
+  [
+    "Tainted Love",
+    "Soft Cell",
+    1981,
+    "Music116/v4/bc/9f/41/bc9f4106-5f66-07ba-d577-904e492e5ac9/23UMGIM98408.rgb.jpg",
+  ],
+  [
+    "Take On Me",
+    "a-ha",
+    1985,
+    "Music115/v4/0b/5b/69/0b5b6991-cd46-7222-fca7-680b17318721/603497888191.jpg",
+  ],
+  [
+    "Don't You Want Me",
+    "The Human League",
+    1981,
+    "Music221/v4/a8/92/3b/a8923b58-1db6-6cca-81f7-3fcb575b5a40/13UABIM56815.rgb.jpg",
+  ],
+  [
+    "Just Like Heaven",
+    "The Cure",
+    1987,
+    "Music116/v4/bc/dd/f1/bcddf110-d7d2-0164-ba71-d8dd90e94599/06UMGIM44997.rgb.jpg",
+  ],
+  [
+    "Once in a Lifetime",
+    "Talking Heads",
+    1980,
+    "Music125/v4/48/9c/21/489c217b-d228-59a3-296d-6fa1d90776b7/dj.bpkztuma.jpg",
+  ],
+  [
+    "Come On Eileen",
+    "Dexys Midnight Runners",
+    1982,
+    "Music124/v4/98/a5/7c/98a57c6d-c857-90bb-5835-fdd60699bf05/06UMGIM09147.rgb.jpg",
+  ],
+  [
+    "99 Luftballons",
+    "Nena",
+    1983,
+    "Music128/v4/d8/a2/0b/d8a20b88-4fc1-5f7a-36f3-48bf6cf3519c/0859381160700.jpg",
+  ],
+  [
+    "Video Killed the Radio Star",
+    "The Buggles",
+    1979,
+    "Music115/v4/16/21/ea/1621eaf0-f7c8-c9e9-5eaf-e11a7ec87610/06UMGIM01037.rgb.jpg",
+  ],
+  [
+    "Major Tom (Völlig losgelöst)",
+    "Peter Schilling",
+    1982,
+    "Music125/v4/df/a8/e1/dfa8e123-28cd-b772-c172-1f14845cf959/190295013738.jpg",
+  ],
+] as const;
+
+type Cover = (index: number) => string;
+/** A flat two-tone cover, so tests need no artwork from the network. */
+const flat: Cover = (seed) =>
   `data:image/svg+xml,${encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><rect width="8" height="8" fill="hsl(${(seed * 47) % 360} 55% 42%)"/><circle cx="6" cy="6" r="4" fill="hsl(${(seed * 47 + 140) % 360} 60% 62%)"/></svg>`,
   )}`;
-
-const catalog = (
-  [
-    ["Sweet Dreams (Are Made of This)", "Eurythmics", 1983],
-    ["Blue Monday", "New Order", 1983],
-    ["Just Can't Get Enough", "Depeche Mode", 1981],
-    ["Tainted Love", "Soft Cell", 1981],
-    ["Take On Me", "a-ha", 1985],
-    ["Don't You Want Me", "The Human League", 1981],
-    ["Just Like Heaven", "The Cure", 1987],
-    ["Once in a Lifetime", "Talking Heads", 1980],
-    ["Come On Eileen", "Dexys Midnight Runners", 1982],
-    ["99 Luftballons", "Nena", 1983],
-    ["Video Killed the Radio Star", "The Buggles", 1979],
-    ["Major Tom (Völlig losgelöst)", "Peter Schilling", 1982],
-  ] as const
-).map(([title, artist, year], index): Track => ({
-  id: `track-${index}`,
-  title,
-  artist,
-  year,
-  spotifyUri: `spotify:track:${index}`,
-  coverUrl: cover(index),
-}));
-const [sweetDreams, blueMonday, enough, taintedLove, takeOnMe, humanLeague, heaven, lifetime] =
-  catalog;
-const [, , , , , , , , eileen, luftballons, buggles, majorTom] = catalog;
+/** The song's album artwork, loaded from the network. */
+const artwork: Cover = (index) =>
+  `https://is1-ssl.mzstatic.com/image/thumb/${songs[index][3]}/300x300bb.jpg`;
 
 const hits = (tracks: Track[]) =>
   tracks.map((track) => ({
@@ -86,114 +142,150 @@ const resolved = (
   resultItems: hits(found),
 });
 
-const built = [sweetDreams, takeOnMe, blueMonday, eileen, taintedLove, luftballons, heaven, enough];
-const final = [taintedLove, eileen, majorTom, sweetDreams, blueMonday, luftballons, takeOnMe];
+const opening = "Alles klar, ich grabe mich mal durch die 80er.";
+const reply =
+  "Dein **80er-Deck** steht: Synthpop, New Wave und zwei One-Hit-Wonder, nach Jahren sortiert.";
 const refine = "Schärfe das Deck nach";
 const swap = call("r1", "replace_deck_tracks", {}, "Tausche einen Song für mehr Überraschung");
 
-const reply =
-  "Dein **80er-Deck** steht: Synthpop, New Wave und zwei One-Hit-Wonder, nach Jahren sortiert.";
-
 /**
- * One agent turn on an empty deck, timed like a real one: three searches, a
- * deck of eight tracks, then a swap, a removal and a new order.
+ * One agent turn on an empty deck, timed like a real one: a word that it
+ * starts, three searches, a deck of eight tracks, then a swap, a removal and a
+ * new order.
  */
-export const deckBuildRun: AgentRun = {
-  tracks: final,
-  reply,
-  timeline: [
-    {
-      at: 0,
-      event: { type: "session.title_generated", title: "80er zwischen Synthpop und New Wave" },
-    },
-    {
-      at: 300,
-      event: sequence("research", "Grabe in den 80ern", [search("s1", "synthpop 1983")]),
-    },
-    {
-      at: 340,
-      event: sequence("research", "Grabe in den 80ern", [
-        search("s1", "synthpop 1983"),
-        search("s2", "new wave essentials"),
-        search("s3", "one hit wonder 80s"),
-      ]),
-    },
-    {
-      at: 1200,
-      event: resolved("research", "s1", [
-        sweetDreams,
-        blueMonday,
-        enough,
-        taintedLove,
-        takeOnMe,
-        humanLeague,
-      ]),
-    },
-    { at: 1500, event: resolved("research", "s2", [heaven, lifetime, blueMonday, humanLeague]) },
-    {
-      at: 1800,
-      event: resolved("research", "s3", [eileen, luftballons, buggles, majorTom, taintedLove]),
-    },
-    { at: 1900, event: { type: "tool_call.sequence_completed", sequenceId: "research" } },
-    {
-      at: 6600,
-      event: sequence("build", "Baue das 80er-Deck", [
-        call("a1", "add_deck_tracks", {}, "Baue das 80er-Deck"),
-      ]),
-    },
-    {
-      at: 7000,
-      event: { type: "playlist.set", playlist: { id: "playlist", name: "80er", tracks: built } },
-    },
-    { at: 7050, event: resolved("build", "a1") },
-    { at: 7100, event: { type: "tool_call.sequence_completed", sequenceId: "build" } },
-    { at: 14500, event: sequence("refine", refine, [swap]) },
-    {
-      at: 14900,
-      event: {
-        type: "playlist.track_replaced",
-        playlistId: "playlist",
-        trackId: heaven.id,
-        track: majorTom,
+function deckBuild(cover: Cover): AgentRun {
+  const catalog = songs.map(([title, artist, year], index): Track => ({
+    id: `track-${index}`,
+    title,
+    artist,
+    year,
+    spotifyUri: `spotify:track:${index}`,
+    coverUrl: cover(index),
+  }));
+  const [sweetDreams, blueMonday, enough, taintedLove, takeOnMe, humanLeague, heaven, lifetime] =
+    catalog;
+  const [, , , , , , , , eileen, luftballons, buggles, majorTom] = catalog;
+  const built = [
+    sweetDreams,
+    takeOnMe,
+    blueMonday,
+    eileen,
+    taintedLove,
+    luftballons,
+    heaven,
+    enough,
+  ];
+  const final = [taintedLove, eileen, majorTom, sweetDreams, blueMonday, luftballons, takeOnMe];
+  return {
+    tracks: final,
+    opening,
+    reply,
+    timeline: [
+      {
+        at: 0,
+        event: { type: "session.title_generated", title: "80er zwischen Synthpop und New Wave" },
       },
-    },
-    { at: 14950, event: resolved("refine", "r1") },
-    {
-      at: 17600,
-      event: sequence("refine", refine, [
-        { ...swap, state: "completed" },
-        call("r2", "remove_deck_tracks", {}, "Nehme einen Song heraus"),
-      ]),
-    },
-    {
-      at: 18000,
-      event: { type: "playlist.track_removed", playlistId: "playlist", trackId: enough.id },
-    },
-    { at: 18050, event: resolved("refine", "r2") },
-    { at: 18100, event: { type: "tool_call.sequence_completed", sequenceId: "refine" } },
-    {
-      at: 20500,
-      event: { type: "playlist.set", playlist: { id: "playlist", name: "80er", tracks: final } },
-    },
-    {
-      at: 23500,
-      event: {
-        type: "message.assistant_started",
-        messageId: "reply",
-        createdAt: "2026-10-01T12:00:20Z",
+      {
+        at: 150,
+        event: {
+          type: "message.assistant_started",
+          messageId: "opening",
+          createdAt: "2026-10-01T12:00:01Z",
+        },
       },
-    },
-    {
-      at: 23600,
-      event: {
-        type: "message.assistant_chunk",
-        messageId: "reply",
-        chunk: reply,
+      {
+        at: 200,
+        event: { type: "message.assistant_chunk", messageId: "opening", chunk: opening },
       },
-    },
-    { at: 24200, event: { type: "done" } },
-  ],
-};
+      {
+        at: 900,
+        event: sequence("research", "Grabe in den 80ern", [search("s1", "synthpop 1983")]),
+      },
+      {
+        at: 940,
+        event: sequence("research", "Grabe in den 80ern", [
+          search("s1", "synthpop 1983"),
+          search("s2", "new wave essentials"),
+          search("s3", "one hit wonder 80s"),
+        ]),
+      },
+      {
+        at: 1800,
+        event: resolved("research", "s1", [
+          sweetDreams,
+          blueMonday,
+          enough,
+          taintedLove,
+          takeOnMe,
+          humanLeague,
+        ]),
+      },
+      { at: 2100, event: resolved("research", "s2", [heaven, lifetime, blueMonday, humanLeague]) },
+      {
+        at: 2400,
+        event: resolved("research", "s3", [eileen, luftballons, buggles, majorTom, taintedLove]),
+      },
+      { at: 2500, event: { type: "tool_call.sequence_completed", sequenceId: "research" } },
+      {
+        at: 6600,
+        event: sequence("build", "Baue das 80er-Deck", [
+          call("a1", "add_deck_tracks", {}, "Baue das 80er-Deck"),
+        ]),
+      },
+      {
+        at: 7000,
+        event: { type: "playlist.set", playlist: { id: "playlist", name: "80er", tracks: built } },
+      },
+      { at: 7050, event: resolved("build", "a1") },
+      { at: 7100, event: { type: "tool_call.sequence_completed", sequenceId: "build" } },
+      { at: 14500, event: sequence("refine", refine, [swap]) },
+      {
+        at: 14900,
+        event: {
+          type: "playlist.track_replaced",
+          playlistId: "playlist",
+          trackId: heaven.id,
+          track: majorTom,
+        },
+      },
+      { at: 14950, event: resolved("refine", "r1") },
+      {
+        at: 17600,
+        event: sequence("refine", refine, [
+          { ...swap, state: "completed" },
+          call("r2", "remove_deck_tracks", {}, "Nehme einen Song heraus"),
+        ]),
+      },
+      {
+        at: 18000,
+        event: { type: "playlist.track_removed", playlistId: "playlist", trackId: enough.id },
+      },
+      { at: 18050, event: resolved("refine", "r2") },
+      { at: 18100, event: { type: "tool_call.sequence_completed", sequenceId: "refine" } },
+      {
+        at: 20500,
+        event: { type: "playlist.set", playlist: { id: "playlist", name: "80er", tracks: final } },
+      },
+      {
+        at: 23500,
+        event: {
+          type: "message.assistant_started",
+          messageId: "reply",
+          createdAt: "2026-10-01T12:00:20Z",
+        },
+      },
+      {
+        at: 23600,
+        event: { type: "message.assistant_chunk", messageId: "reply", chunk: reply },
+      },
+      { at: 24200, event: { type: "done" } },
+    ],
+  };
+}
+
+export const deckBuildRun = deckBuild(flat);
+/** The same turn with album artwork from the network, for recordings. */
+export const deckBuildRunWithArtwork = deckBuild(artwork);
 
 /**
  * Answers the page's message stream with `run`, each event at its offset, and
@@ -284,6 +376,7 @@ export async function mockAgentRun(page: Page, run: AgentRun, speed = 1): Promis
             ? []
             : [
                 { id: "human", kind: "user_message", content: message, createdAt },
+                { id: "opening", kind: "assistant_message", content: run.opening, createdAt },
                 ...sequences.values(),
                 { id: "reply", kind: "assistant_message", content: run.reply, createdAt },
               ],

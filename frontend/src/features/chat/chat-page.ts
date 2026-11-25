@@ -87,11 +87,17 @@ export class ChatPage extends LitElement {
     const text = this.draft;
     const attachments = this.attachments;
     const sessionId = this.sessionId;
-    const sent = await this.chat.send(text, attachments);
-    if (sent && this.draft === text && (this.sessionId === sessionId || !sessionId)) {
-      this.draft = "";
-      this.attachments = [];
+    // The message shows in the conversation while the turn runs, so the
+    // composer is free for the next one. A turn that fails hands it back.
+    this.draft = "";
+    this.attachments = [];
+    if (await this.chat.send(text, attachments)) {
       this.drafts.delete("");
+    } else if (this.sessionId !== sessionId && sessionId) {
+      this.drafts.set(sessionId, { text, attachments });
+    } else if (!this.draft && !this.attachments.length) {
+      this.draft = text;
+      this.attachments = attachments;
     }
   };
   private addFiles(event: Event): void {

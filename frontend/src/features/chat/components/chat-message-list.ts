@@ -55,6 +55,13 @@ export class ChatMessageList extends LitElement {
     .entry {
       margin-bottom: 32px;
     }
+    /* The agent's work reads as one block up to its answer. */
+    .entry.work {
+      margin-bottom: 10px;
+    }
+    .entry.work + .entry:not(.work) {
+      margin-top: 24px;
+    }
     .pending {
       display: flex;
       align-items: center;
@@ -123,7 +130,7 @@ export class ChatMessageList extends LitElement {
         this.entries,
         (entry) => entry.id,
         (entry) =>
-          html`<div class="entry">
+          html`<div class=${entry.kind === "tool_call_group" ? "entry work" : "entry"}>
             ${
               entry.kind === "user_message"
                 ? html`<div class="attachments">

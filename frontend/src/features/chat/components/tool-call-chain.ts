@@ -4,6 +4,7 @@ import { customElement, property } from "lit/decorators.js";
 import { retryLabel } from "@shared/i18n/messages";
 import { pageStyles } from "@shared/styles/page";
 import { icon, type IconName } from "@shared/ui/icons";
+import "@shared/ui/track-cover";
 import type { ToolCallItem } from "../types";
 
 const icons: Record<string, IconName> = {
@@ -34,7 +35,7 @@ export class ToolCallChain extends LitElement {
       font-size: var(--font-size-label);
     }
     .label {
-      margin: 0 0 6px;
+      margin: 0 0 2px;
       color: var(--color-faint);
       font-size: var(--font-size-caption);
     }
@@ -120,9 +121,20 @@ export class ToolCallChain extends LitElement {
       border-left: 1px solid var(--color-border);
     }
     .found li {
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 36px;
       color: var(--color-text);
-      line-height: 24px;
+    }
+    .found track-cover {
+      width: 28px;
+      flex-shrink: 0;
+    }
+    .found p {
+      min-width: 0;
+      margin: 0;
+      overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
     }
@@ -186,7 +198,10 @@ export class ToolCallChain extends LitElement {
                       ${found.map(
                         (item) =>
                           html`<li>
-                            ${item.title}${item.artist ? html`<span> · ${item.artist}</span>` : nothing}
+                            <track-cover .src=${item.coverUrl}></track-cover>
+                            <p>
+                              ${item.title}${item.artist ? html`<span> · ${item.artist}</span>` : nothing}
+                            </p>
                           </li>`,
                       )}
                     </ul>
