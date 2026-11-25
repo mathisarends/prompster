@@ -8,6 +8,7 @@ class PlaylistDeckTrack:
     artist_names: str
     release_year: str
     spotify_url: str
+    cover_url: str | None = None
 
 
 class PlaylistDeckGenerator(ABC):

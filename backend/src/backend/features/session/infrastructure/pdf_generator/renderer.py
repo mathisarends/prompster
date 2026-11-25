@@ -13,10 +13,21 @@ from backend.features.session.application.ports import (
     PlaylistDeckGenerator,
     PlaylistDeckTrack,
 )
+from backend.features.session.infrastructure.pdf_generator.cover_art import (
+    CoverArt,
+    SpotifyCoverArtLoader,
+)
+from backend.features.session.infrastructure.pdf_generator.cover_palette import (
+    CoverPalette,
+)
+
+_DECK_TEMPLATE = Path(__file__).parent / "deck.typ"
+_FONT_DIRECTORY = Path(__file__).parent / "fonts"
 
 
 class TypstPlaylistDeckGenerator(PlaylistDeckGenerator):
-    _DECK_TEMPLATE = Path(__file__).parent / "deck.typ"
+    def __init__(self, cover_art_loader: SpotifyCoverArtLoader) -> None:
+        self._cover_art_loader = cover_art_loader
 
     async def generate(
         self,
@@ -24,45 +35,68 @@ class TypstPlaylistDeckGenerator(PlaylistDeckGenerator):
         *,
         page_limit: int | None = None,
     ) -> bytes:
-        loop = asyncio.get_running_loop()
+        cover_urls = [track.cover_url for track in tracks]
+        covers = await self._cover_art_loader.load(cover_urls)
+        return await asyncio.to_thread(_render_deck, tracks, covers, page_limit)
 
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp_path = Path(tmp)
-            output = tmp_path / "deck.pdf"
 
-            songs_data = []
-            for index, track in enumerate(tracks):
-                qr_file = f"qr_{index}.svg"
-                (tmp_path / qr_file).write_bytes(
-                    self._make_qr_svg_bytes(track.spotify_url)
-                )
-                songs_data.append(
-                    {
-                        "title": track.title,
-                        "artist_names": track.artist_names,
-                        "release_year": track.release_year,
-                        "qr_file": qr_file,
-                    }
-                )
+def _render_deck(
+    tracks: list[PlaylistDeckTrack],
+    covers: list[CoverArt | None],
+    page_limit: int | None,
+) -> bytes:
+    with tempfile.TemporaryDirectory() as directory:
+        workspace = Path(directory)
+        songs = []
+        for index, track in enumerate(tracks):
+            song = _write_card_assets(workspace, index, track, covers[index])
+            songs.append(song)
 
-            deck_typ = tmp_path / "deck.typ"
-            shutil.copy(self._DECK_TEMPLATE, deck_typ)
+        deck_typ = workspace / "deck.typ"
+        shutil.copy(_DECK_TEMPLATE, deck_typ)
+        output = workspace / "deck.pdf"
+        songs_json = json.dumps(songs, ensure_ascii=False)
+        max_pages = "" if page_limit is None else str(page_limit)
+        typst.compile(
+            str(deck_typ),
+            output=str(output),
+            font_paths=[str(_FONT_DIRECTORY)],
+            sys_inputs={"songs": songs_json, "max_pages": max_pages},
+        )
+        return output.read_bytes()
 
-            songs_json = json.dumps(songs_data, ensure_ascii=False)
-            max_pages = "" if page_limit is None else str(page_limit)
-            await loop.run_in_executor(
-                None,
-                lambda: typst.compile(
-                    str(deck_typ),
-                    output=str(output),
-                    sys_inputs={"songs": songs_json, "max_pages": max_pages},
-                ),
-            )
 
-            return output.read_bytes()
+def _write_card_assets(
+    workspace: Path,
+    index: int,
+    track: PlaylistDeckTrack,
+    cover: CoverArt | None,
+) -> dict[str, str | float | None]:
+    qr_file = f"qr_{index}.svg"
+    qr_svg = _make_qr_svg_bytes(track.spotify_url)
+    (workspace / qr_file).write_bytes(qr_svg)
 
-    def _make_qr_svg_bytes(self, spotify_url: str) -> bytes:
-        image = qrcode.make(spotify_url, image_factory=qrcode.image.svg.SvgPathImage)
-        buffer = io.BytesIO()
-        image.save(buffer)
-        return buffer.getvalue()
+    cover_file = None
+    year = int(track.release_year) if track.release_year.isdigit() else index
+    palette = CoverPalette.for_year(year)
+    if cover is not None:
+        cover_file = f"cover_{index}.jpg"
+        (workspace / cover_file).write_bytes(cover.jpeg)
+        palette = cover.palette
+
+    return {
+        "title": track.title,
+        "artist_names": track.artist_names,
+        "release_year": track.release_year,
+        "qr_file": qr_file,
+        "cover_file": cover_file,
+        "hue": palette.hue_degrees,
+        "saturation": palette.saturation,
+    }
+
+
+def _make_qr_svg_bytes(spotify_url: str) -> bytes:
+    image = qrcode.make(spotify_url, image_factory=qrcode.image.svg.SvgPathImage)
+    buffer = io.BytesIO()
+    image.save(buffer)
+    return buffer.getvalue()

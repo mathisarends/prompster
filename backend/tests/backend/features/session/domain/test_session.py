@@ -447,6 +447,23 @@ class TestSessionDomainSession:
         assert len(session.playlist.tracks) == 1
         assert session.playlist.tracks[0] is track
 
+    def test_playlist_fingerprint_changes_with_the_track_cover(
+        self, owner_id: UUID
+    ) -> None:
+        without_cover = Session.create(title="Roadtrip", owner_id=owner_id)
+        without_cover.add_track(title="Starlight", artist="Muse", year=2006)
+        with_cover = Session.create(title="Roadtrip", owner_id=owner_id)
+        with_cover.add_track(
+            title="Starlight",
+            artist="Muse",
+            year=2006,
+            cover_url="https://i.scdn.co/image/starlight",
+        )
+
+        assert without_cover.playlist_fingerprint is not None
+        assert with_cover.playlist_fingerprint is not None
+        assert without_cover.playlist_fingerprint != with_cover.playlist_fingerprint
+
     def test_add_track_raises_when_playlist_track_limit_is_reached(
         self, session: Session
     ) -> None:

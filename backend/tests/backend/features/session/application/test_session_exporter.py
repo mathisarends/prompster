@@ -109,7 +109,7 @@ class TestSessionPlaylistExporter:
             artist="Faithless",
             year=1995,
             spotify_uri="spotify:track:7uv632EkfwYhXoqf8rhYrg",
-            cover_url=None,
+            cover_url="https://i.scdn.co/image/insomnia",
         )
         repository = _SessionRepositoryStub(session=session)
         generator = _DeckGeneratorStub(pdf_bytes=b"PDF_BYTES")
@@ -131,6 +131,9 @@ class TestSessionPlaylistExporter:
         assert (
             generator.received_tracks[0].spotify_url
             == "https://open.spotify.com/track/7uv632EkfwYhXoqf8rhYrg"
+        )
+        assert (
+            generator.received_tracks[0].cover_url == "https://i.scdn.co/image/insomnia"
         )
         assert generator.received_page_limit is None
         assert storage.uploaded_content_type == "application/pdf"
