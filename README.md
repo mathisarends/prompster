@@ -1,121 +1,70 @@
 # prompster
 
-**Turn a music prompt into game night.**
+**Turn your favourite music into a card game.**
 
-Describe the music you love. Prompster researches Spotify, builds a playlist with you, and turns it into a printable, Hitster-style card deck. Fine-tune the selection in chat, curate it by hand, then take it to Spotify or the table.
+Describe the songs you want to hear tonight. Prompster puts together the playlist with you and turns it into a printable music-guessing deck: one side a QR code that plays the song, the other side the artist, title and year it came out.
 
-[![Frontend CI](https://github.com/mathisarends/prompster/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/mathisarends/prompster/actions/workflows/frontend-ci.yml)
-[![Backend CI](https://github.com/mathisarends/prompster/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/mathisarends/prompster/actions/workflows/backend-ci.yml)
+<p align="center">
+  <a href="docs/reviews/lit-frontend/desktop-walkthrough.mp4">
+    <img src="docs/reviews/lit-frontend/desktop-preview.gif" width="860" alt="Prompster on desktop: describing a deck, chatting about the songs, flipping through the cards and exporting.">
+  </a>
+  <br>
+  <sub><a href="docs/reviews/lit-frontend/desktop-walkthrough.mp4">Watch the full walkthrough (MP4)</a></sub>
+</p>
 
-[Demos](#demos) · [Run locally](#run-locally) · [How it works](#how-it-works) · [Development](#development)
+## How a deck comes together
 
-![Prompster: a game-night conversation beside colourful music cards with artists, song titles, and release years.](docs/reviews/lit-frontend/16-cards-desktop-en.png)
+**1. Say what you're in the mood for.**
+A decade, a genre, a vibe, a handful of artists you love, or a whole evening in one sentence: *"Disco, pop and a bit of indie from the '70s to the 2000s. Songs everyone can sing along to."* Type it or just say it.
 
-## From a prompt to a deck
+**2. Shape it in conversation.**
+Prompster asks what it needs to know and suggests songs. Ask for more '90s, fewer ballads or a different mix of eras, and the playlist updates as you talk. You can also add or remove songs by hand.
 
-> “Build a deck for our game night: disco, pop and a little indie, from the '70s to the 2000s. Songs everyone can sing along to.”
+**3. Check the cards.**
+Flip between the playlist and the finished cards. Hide the answers to see the deck the way your players will.
 
-1. **Set the direction.** Start with a mood, an era, a genre, or a few favourites. Add artist and playlist references or images for context.
-2. **Build it together.** Answer follow-up questions and watch the agent's research and playlist updates as they arrive.
-3. **Make it yours.** Ask for changes, add or remove tracks, and switch between the playlist and card previews. Hide the answers to reveal the QR side.
-4. **Bring the music.** Export a Spotify playlist or download cards with QR codes, song titles, artists, and release years.
+**4. Bring it to the table.**
+Download a print-ready PDF and cut out the cards, or save the songs as a playlist in your Spotify account.
 
-The studio works on **desktop and mobile**, with **German and English** interfaces and browser-supported voice dictation. Decks currently support **up to 50 tracks**. In-browser Spotify playback requires **Spotify Premium**; Spotify export requires a connected account.
-
-## Demos
-
-Explore the studio, refine a deck, preview both sides of the cards, and switch languages. Click a preview for the full MP4 walkthrough.
-
-| Desktop studio | On your phone |
+| Start with an idea | Get your cards |
 | --- | --- |
-| [<img src="docs/reviews/lit-frontend/desktop-preview.gif" width="720" alt="Desktop walkthrough: dictation, chat, cards, QR preview, export options, and settings.">](docs/reviews/lit-frontend/desktop-walkthrough.mp4) | [<img src="docs/reviews/lit-frontend/mobile-preview.gif" width="220" alt="Mobile walkthrough: dictation, navigation, chat, cards, and language switching.">](docs/reviews/lit-frontend/mobile-walkthrough.mp4) |
-| [Watch desktop demo · MP4](docs/reviews/lit-frontend/desktop-walkthrough.mp4) | [Watch mobile demo · MP4](docs/reviews/lit-frontend/mobile-walkthrough.mp4) |
+| <img src="docs/reviews/lit-frontend/15-studio-desktop-en.png" alt="The start screen with a prompt field and ideas to get going."> | <img src="docs/reviews/lit-frontend/16-cards-desktop-en.png" alt="The deck view with colourful cards showing artist, year and title."> |
+| **Play without spoilers** | **Print it or take it to Spotify** |
+| <img src="docs/reviews/lit-frontend/11-qr-desktop.png" alt="The QR side of the cards, with the answers hidden."> | <img src="docs/reviews/lit-frontend/05-export-desktop.png" alt="Export options: download a PDF or create a Spotify playlist."> |
 
-The recordings use controlled API responses and simulated speech recognition. They demonstrate the interface and interactions; live AI, OAuth, Spotify playback, microphone recognition, and actual exports are not exercised. See the [full gallery and recording instructions](docs/reviews/lit-frontend/README.md).
+## On your phone, too
 
-## Run locally
+<table>
+  <tr>
+    <td width="260">
+      <a href="docs/reviews/lit-frontend/mobile-walkthrough.mp4">
+        <img src="docs/reviews/lit-frontend/mobile-preview.gif" width="240" alt="Prompster on a phone: dictating an idea, chatting, browsing the cards and switching languages.">
+      </a>
+    </td>
+    <td>
+      Start a deck on the couch and finish it on the way to the party. The whole studio works on your phone, from dictating your idea to flipping through the cards.
+      <br><br>
+      All your decks are saved, so you can come back later, change a few songs and print a new round.
+      <br><br>
+      <a href="docs/reviews/lit-frontend/mobile-walkthrough.mp4">Watch the mobile walkthrough (MP4)</a>
+    </td>
+  </tr>
+</table>
 
-You'll need **Docker with Compose v2**, **Node.js 24**, a **Spotify developer app**, and an **OpenAI API key** for the default model configuration. Google sign-in is optional.
+## Made for
 
-```bash
-git clone https://github.com/mathisarends/prompster.git
-cd prompster
-cp .env.example .env
-```
+- **Game nights** with friends who all grew up on different music
+- **Birthdays and family gatherings**, with a deck built around the guest of honour's favourite years
+- **Theme parties**: an '80s night, a summer-hits evening, film soundtracks
+- **Gifts**: a printed deck of songs that mean something to the two of you
 
-Fill in `.env` before starting: Spotify credentials, the token encryption key, and your OpenAI key. Use `http://127.0.0.1:8000/api/v1/auth/spotify/callback` for the Spotify redirect URI. The [setup guide](docs/getting-started.md) walks through key generation, OAuth callbacks, and optional Google sign-in.
+## Good to know
 
-```bash
-# API, database, object storage, and migrations
-docker compose up --build -d
+- Sign in with Spotify or Google.
+- Decks hold up to 50 songs.
+- Playing songs in the browser requires Spotify Premium. Exporting a playlist requires a connected Spotify account.
+- Available in English and German.
 
-# Frontend (runs outside Docker)
-npm --prefix frontend ci
-npm --prefix frontend run dev
-```
+---
 
-Open **[127.0.0.1:5173](http://127.0.0.1:5173)** and sign in with Spotify or your configured Google app. Keep `127.0.0.1` consistent across the frontend and OAuth callbacks.
-
-| Local service | Address |
-| --- | --- |
-| App | [127.0.0.1:5173](http://127.0.0.1:5173) |
-| API docs | [127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) |
-| SeaweedFS admin UI | [127.0.0.1:12535](http://127.0.0.1:12535) |
-| Database browser | [127.0.0.1:8080](http://127.0.0.1:8080) |
-
-**Using a Codex login?** The model selector distinguishes OpenAI API models from Codex models. See [Codex authentication](docs/getting-started.md#codex-authentication) for the local login and read-only Docker credential mount. Background tasks still use the default OpenAI model in the current configuration.
-
-## How it works
-
-The Lit frontend talks to FastAPI over HTTP; agent runs and exports stream back as typed server-sent events. The agent researches Spotify and updates a shared deck draft; the backend persists the session and handles exports.
-
-```mermaid
-flowchart LR
-    UI[Lit frontend] <-->|HTTP + SSE| API[FastAPI backend]
-    API <--> Agent[Playlist agent]
-    Agent <--> Spotify[Spotify API]
-    Agent <--> Models[pydantic_ai · OpenAI / Codex]
-    API --> DB[(PostgreSQL)]
-    API --> Export[Typst PDF + S3 storage]
-```
-
-| Location | Responsibility |
-| --- | --- |
-| [`frontend/`](frontend/README.md) | Lit 3, TypeScript, Vite, TanStack Lit Query; chat, cards, and playback |
-| [`backend/`](backend/README.md) | FastAPI, OAuth, sessions, Spotify export, and PDF generation |
-| [`libs/agent/`](libs/agent/README.md) | harnessed agent, Spotify research, deck state, and streaming events |
-| [`schema/`](schema/) | Generated OpenAPI contract, including the session event streams |
-
-The Python packages share a **uv workspace and lockfile**. [`harnessed`](https://github.com/mathisarends/harnessed) runs the agent, and [`pydantic_ai`](https://github.com/pydantic/pydantic-ai) supplies the model clients.
-
-## Development
-
-With **Python 3.14+** and **uv** installed, run these commands from the repository root:
-
-```bash
-uv sync --all-packages --dev
-uv run pytest backend/tests/ -v
-uv run --package agent pytest libs/agent/tests/
-uv run --package backend fastapi-canon generate --config codegen.toml --check
-
-npm --prefix frontend run lint
-npm --prefix frontend test
-npm --prefix frontend run build
-```
-
-The Compose stack mounts the backend and agent source for local iteration. To regenerate the stream contract and TypeScript client after changing a stream:
-
-```bash
-uv run --package backend fastapi-canon generate --config codegen.toml
-```
-
-For HTTP client generation, export the backend schema and regenerate the client:
-
-```bash
-npm --prefix frontend run api:export
-npm --prefix frontend run api:generate
-```
-
-The [frontend guide](frontend/README.md) also covers browser tests, translation checks, and the recording workflow.
-
-[Setup & troubleshooting](docs/getting-started.md) · [Database migrations](docs/migration.md) · [Backend internals](backend/README.md) · [Agent internals](libs/agent/README.md)
+<sub>Want to run Prompster yourself? The [setup guide](docs/getting-started.md) covers everything you need. More screenshots are in the [gallery](docs/reviews/lit-frontend/README.md).</sub>
