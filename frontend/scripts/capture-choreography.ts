@@ -37,7 +37,9 @@ try {
   await expect(panel.locator(".agent-stage")).not.toHaveAttribute("data-open", "", {
     timeout: 20_000,
   });
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(1200);
+  await page.locator("tool-call-chain summary").first().click();
+  await page.waitForTimeout(2200);
   const video = page.video()!;
   await context.close();
   await rename(await video.path(), `${raw}deck-build.webm`);

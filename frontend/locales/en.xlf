@@ -202,14 +202,6 @@
   <source>Fehlgeschlagen</source>
   <target>Failed</target>
 </trans-unit>
-<trans-unit id="scf22864b74304b94">
-  <source>Abgeschlossen</source>
-  <target>Completed</target>
-</trans-unit>
-<trans-unit id="s3fc9d8a0011655c1">
-  <source>In Arbeit</source>
-  <target>In progress</target>
-</trans-unit>
 <trans-unit id="s7552eabd002ef0a1">
   <source>Prompster arbeitet an deinem Deck …</source>
   <target>Prompster is working on your deck …</target>
@@ -574,14 +566,6 @@
   <source>Etwas ist schiefgelaufen. Bitte versuche es erneut.</source>
   <target>Something went wrong. Please try again.</target>
 </trans-unit>
-<trans-unit id="sd16fd26111986006">
-  <source><x id="0" equiv-text="${value}"/> Recherche-Schritt</source>
-  <target><x id="0" equiv-text="${value}"/> research step</target>
-</trans-unit>
-<trans-unit id="s7962ddf0e5ebc839">
-  <source><x id="0" equiv-text="${value}"/> Recherche-Schritte</source>
-  <target><x id="0" equiv-text="${value}"/> research steps</target>
-</trans-unit>
 <trans-unit id="sdfaf881f85c22420">
   <source><x id="0" equiv-text="${value}"/> Deck mit seiner Unterhaltung wird zusammen mit deinem Konto gelöscht.</source>
   <target><x id="0" equiv-text="${value}"/> deck and its conversation will be deleted along with your account.</target>
@@ -817,10 +801,6 @@
 <trans-unit id="sa13c35c6c127b858">
   <source>Prompster fasst den bisherigen Verlauf zusammen …</source>
         <target>Prompster is summarizing the conversation so far …</target>
-</trans-unit>
-<trans-unit id="s95416925fd51a346">
-  <source>Agent</source>
-        <target>Agent</target>
 </trans-unit>
 <trans-unit id="s7255b2a2c63165e3">
   <source>Keine Treffer</source>

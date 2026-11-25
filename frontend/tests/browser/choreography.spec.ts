@@ -21,14 +21,35 @@ test("the agent's searches and deck edits play in the workspace", async ({ page 
   await expect(stage).toHaveAttribute("data-open", "");
   await expect(stage).toHaveAttribute("aria-hidden", "true");
   await expect(panel.locator("agent-search .query")).toHaveText("synthpop 1983");
-  await expect(panel.locator("agent-search .hit").first()).toContainText("Sweet Dreams");
+  await expect(panel.locator("agent-search .hits.open .hit").first()).toContainText("Sweet Dreams");
   await expect(panel.getByRole("button", { name: "Songs hinzufügen" })).toBeDisabled();
-  await expect(panel.locator(".track").first()).toContainText("Sweet Dreams");
   await expect(panel.locator("agent-search .hit.picked").first()).toBeVisible();
+  await expect(panel.locator(".track").first()).toContainText("Sweet Dreams");
 
   await expect(stage).not.toHaveAttribute("data-open", "", { timeout: 30_000 });
   await expect(panel.locator(".track strong")).toHaveText(titles);
   await expect(panel.getByRole("button", { name: "Songs hinzufügen" })).toBeEnabled();
+});
+
+test("the chat lists the agent's tool calls and opens what a search found", async ({ page }) => {
+  await mockApi(page);
+  await mockAgentRun(page, deckBuildRun, 20);
+  await page.goto("/chat/deck-1");
+  await send(page);
+
+  const research = page.locator("tool-call-chain").first();
+  await expect(research).toContainText("Grabe in den 80ern");
+  await expect(research.locator("li", { hasText: "new wave essentials" })).toContainText("4");
+  await expect(page.locator("tool-call-chain").nth(1)).toContainText("Baue das 80er-Deck");
+  await expect(page.locator("assistant-message").last()).toContainText("80er-Deck");
+
+  const search = research.locator("details", { hasText: "Suche Tracks: synthpop 1983" });
+  await expect(search.locator(".found")).toBeHidden();
+  await search.locator("summary").click();
+  await expect(search.locator(".found li")).toHaveCount(6);
+  await expect(search.locator(".found li").first()).toHaveText(
+    "Sweet Dreams (Are Made of This) · Eurythmics",
+  );
 });
 
 test("with reduced motion the deck changes without the agent's search field", async ({ page }) => {

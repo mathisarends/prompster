@@ -229,24 +229,25 @@ export class DeckPanel extends LitElement {
     }
     /* The agent's search field opens above the deck while it works there. */
     .agent-stage {
-      display: grid;
+      position: relative;
+      z-index: 2;
       flex: none;
-      grid-template-rows: 0fr;
+      height: 0;
       opacity: 0;
+      visibility: hidden;
       transition:
-        grid-template-rows 0.28s ease,
-        opacity 0.2s ease;
+        height 0.28s ease,
+        opacity 0.2s ease,
+        visibility 0s 0.28s;
     }
     .agent-stage[data-open] {
-      grid-template-rows: 1fr;
+      height: 56px;
       opacity: 1;
-    }
-    .agent-stage > div {
-      min-height: 0;
-      overflow: hidden;
+      visibility: visible;
+      transition-delay: 0s;
     }
     agent-search {
-      margin: 4px 16px 12px;
+      margin: 4px 16px 0;
     }
     /* Track table, modelled on Spotify's playlist rows. */
     .list-head,
@@ -682,7 +683,7 @@ export class DeckPanel extends LitElement {
           ?data-open=${!!this.choreography.stage?.search && this.tab === "playlist"}
           aria-hidden="true"
         >
-          <div><agent-search .search=${this.agentSearch}></agent-search></div>
+          <agent-search .search=${this.agentSearch}></agent-search>
         </div>
         <section
           id="deck-content"

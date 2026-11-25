@@ -172,9 +172,12 @@ die Ansicht lässt sich vergrößern und wieder neben den Chat stellen. Auf Mobi
 ersetzt das geöffnete Deck den Chat bis zum Schließen.
 
 Während der Agent arbeitet, zeigt die Playlist-Ansicht seine Arbeit in
-verfolgbarem Tempo: Die Suchanfragen werden in ein Suchfeld getippt, Treffer
-erscheinen darunter, Songs landen einzeln in der Liste, getauschte Titel werden
-neu geschrieben und umsortierte Zeilen gleiten an ihren Platz.
+verfolgbarem Tempo: Die Suchanfragen werden in ein Suchfeld getippt, die Treffer
+klappen als Liste über der Playlist auf, und der Agent hakt dort ab, was er
+übernimmt. Danach schließt sich die Liste, die Songs landen einzeln im Deck,
+getauschte Titel werden neu geschrieben und umsortierte Zeilen gleiten an ihren
+Platz. Im Chat steht dazu jeder Tool-Aufruf als eigene Zeile; Suchen lassen sich
+aufklappen und zeigen, was sie gefunden haben.
 `src/features/deck/choreography/` leitet diese Schritte aus den Ereignissen des
 Session-Streams ab; das Backend sendet dafür nichts Zusätzliches. Staut sich
 Arbeit, steigt das Tempo. Mit „Bewegung reduzieren“ entfällt die Inszenierung

@@ -1,11 +1,12 @@
-import type { SearchCue, SearchHit, StagedCue, StageTrack } from "./cues";
+import type { Cue, SearchCue, SearchHit, StagedCue, StageTrack } from "./cues";
 
 /** The search field as the agent currently drives it. */
 export type StageSearch = {
   callId: string;
   /** The part of the query typed so far. */
   query: string;
-  status: "typing" | "searching" | "results";
+  /** `results` lays the hits over the deck; `idle` leaves only the query in the field. */
+  status: "typing" | "searching" | "results" | "idle";
   hits: SearchHit[];
   /** Keys of the hits the agent took into the deck. */
   picked: string[];
@@ -20,19 +21,26 @@ export type Stage = {
   /** A row whose title is still being typed out. */
   rewrite: { trackId: string; title: string } | null;
   search: StageSearch | null;
+  /** Tracks the agent already marked in the search and that have yet to land. */
+  chosen: string[];
   /** The row the agent touched last, to keep it in view. */
   focus: string | null;
 };
 
-/** One visible change and how long it stays before the next, at normal tempo. */
+/**
+ * One visible change and how long it stays before the next, at normal tempo.
+ * A `steady` step is sped up less, so the search stays readable in a backlog.
+ */
 export type Step =
-  { apply: (stage: Stage) => Stage; hold: number } | { until: () => boolean; timeout: number };
+  | { apply: (stage: Stage) => Stage; hold: number; steady?: boolean }
+  | { until: () => boolean; timeout: number };
 
 export const openStage = (tracks: StageTrack[]): Stage => ({
   tracks,
   marks: {},
   rewrite: null,
   search: null,
+  chosen: [],
   focus: null,
 });
 
@@ -45,9 +53,11 @@ export const pacing = {
   recall: 260,
   searching: 240,
   patience: 6000,
-  results: 700,
-  noResults: 260,
+  results: 900,
+  noResults: 320,
+  fold: 160,
   pick: 170,
+  chosen: 320,
   land: 130,
   leave: 360,
   rewriteKey: 16,
@@ -57,10 +67,20 @@ export const pacing = {
   close: 420,
 } as const;
 
-/** Hits shown under the search field. */
-export const visibleHits = 6;
+/** Hits listed under the search field. */
+export const visibleHits = 5;
 
 type Origin = (track: StageTrack) => SearchCue | undefined;
+
+/** What the director knows besides the cue it stages. */
+export type Scene = {
+  /** The search that showed the agent a track, if any. */
+  origin: Origin;
+  /** The stage as it is when asked. */
+  stage: () => Stage;
+  /** The cues waiting after the one being staged. */
+  ahead: () => readonly Cue[];
+};
 
 /**
  * Splits a whole new deck into the edits that lead there from the staged one:
@@ -80,21 +100,25 @@ export const unfold = (tracks: StageTrack[], staged: StageTrack[]): StagedCue[] 
   ];
 };
 
-/** Stages one cue as the steps that present it. `stage` reads the stage as it is then. */
-export function* direct(cue: StagedCue, origin: Origin, stage: () => Stage): Generator<Step> {
+/** Stages one cue as the steps that present it. */
+export function* direct(cue: StagedCue, { origin, stage, ahead }: Scene): Generator<Step> {
   switch (cue.kind) {
     case "search":
       yield* search(cue);
       return;
     case "add":
-      yield* pick(cue.track, origin, stage);
+      // The agent marks everything it is about to add in the search first, so
+      // the hits never cover the rows while those land.
+      if (!stage().chosen.includes(cue.track.id)) {
+        yield* choose([cue.track, ...comingAdds(ahead())], origin, stage);
+      }
       yield land(cue.track);
       return;
     case "remove":
       yield* leave(cue.trackId, stage);
       return;
     case "replace":
-      yield* pick(cue.track, origin, stage);
+      yield* choose([cue.track], origin, stage);
       yield* rewrite(cue.trackId, cue.track, stage);
       return;
     case "arrange": {
@@ -110,8 +134,21 @@ export function* direct(cue: StagedCue, origin: Origin, stage: () => Stage): Gen
 
 /** Closes the search field once the agent is done. */
 export const rest: Step = {
-  apply: (stage) => ({ ...stage, search: null, focus: null }),
+  apply: (stage) => ({ ...stage, search: null, chosen: [], focus: null }),
   hold: pacing.close,
+};
+
+/** Takes the hits away again; the query stays in the field. */
+const fold: Step = {
+  apply: (stage) => withSearch(stage, { status: "idle" }),
+  hold: pacing.fold,
+};
+
+const comingAdds = (ahead: readonly Cue[]): StageTrack[] => {
+  const end = ahead.findIndex((cue) => cue.kind !== "add");
+  return (end === -1 ? ahead : ahead.slice(0, end)).flatMap((cue) =>
+    cue.kind === "add" ? [cue.track] : [],
+  );
 };
 
 function* search(cue: SearchCue): Generator<Step> {
@@ -122,7 +159,9 @@ function* search(cue: SearchCue): Generator<Step> {
     apply: (stage) =>
       withSearch(stage, { status: "results", hits: cue.hits.slice(0, visibleHits) }),
     hold: cue.hits.length ? pacing.results : pacing.noResults,
+    steady: true,
   };
+  yield fold;
 }
 
 /** Types the cue's query into a cleared search field. */
@@ -140,34 +179,58 @@ function* type(cue: SearchCue, key: number, limit: number, open: number): Genera
   }
 }
 
-/** Marks the track in the search that showed it, bringing that search back if needed. */
-function* pick(track: StageTrack, origin: Origin, stage: () => Stage): Generator<Step> {
-  const source = origin(track);
-  const key = track.spotifyUri;
-  if (!source || !key) {
-    return;
+/**
+ * Marks the tracks in the searches that showed them, one search after the
+ * other, then takes the hits away so the rows are free to change.
+ */
+function* choose(tracks: StageTrack[], origin: Origin, stage: () => Stage): Generator<Step> {
+  let marked = false;
+  for (const source of new Set(tracks.map(origin))) {
+    for (const track of tracks) {
+      if (source && origin(track) === source) {
+        yield* pick(track, source, stage);
+        marked = true;
+      }
+    }
   }
+  const ids = tracks.map((track) => track.id);
+  yield {
+    apply: (current) => ({ ...current, chosen: [...current.chosen, ...ids] }),
+    hold: marked ? pacing.chosen : 0,
+    steady: true,
+  };
+  if (marked) {
+    yield fold;
+  }
+}
+
+/** Marks the track among its search's hits, bringing that search back if needed. */
+function* pick(track: StageTrack, source: SearchCue, stage: () => Stage): Generator<Step> {
+  const key = track.spotifyUri!;
   if (stage().search?.callId !== source.callId) {
     yield* type(source, pacing.recallKey, pacing.recall, 0);
     const onStage = new Set(stage().tracks.map((candidate) => candidate.spotifyUri));
     yield {
       apply: (current) =>
         withSearch(current, {
-          status: "results",
-          hits: hitsAround(source.hits, key),
           picked: source.hits.filter((hit) => onStage.has(hit.key)).map((hit) => hit.key),
         }),
       hold: 0,
     };
-  } else if (!stage().search?.hits.some((hit) => hit.key === key)) {
-    yield {
-      apply: (current) => withSearch(current, { hits: hitsAround(source.hits, key) }),
-      hold: 0,
-    };
   }
+  const listed = stage().search!.hits;
+  yield {
+    apply: (current) =>
+      withSearch(current, {
+        status: "results",
+        hits: listed.some((hit) => hit.key === key) ? listed : hitsAround(source.hits, key),
+      }),
+    hold: 0,
+  };
   yield {
     apply: (current) => withSearch(current, { picked: [...(current.search?.picked ?? []), key] }),
     hold: pacing.pick,
+    steady: true,
   };
 }
 
@@ -178,6 +241,7 @@ const land = (track: StageTrack): Step => ({
       ? stage.tracks.map((candidate) => (candidate.id === track.id ? track : candidate))
       : [...stage.tracks, track],
     marks: { ...stage.marks, [track.id]: "added" },
+    chosen: stage.chosen.filter((id) => id !== track.id),
     focus: track.id,
   }),
   hold: pacing.land,
@@ -219,6 +283,7 @@ function* rewrite(trackId: string, track: StageTrack, stage: () => Stage): Gener
         tracks: current.tracks.map((candidate) => (candidate.id === trackId ? track : candidate)),
         marks: { ...current.marks, [track.id]: "rewritten" },
         rewrite: { trackId: track.id, title: track.title.slice(0, length) },
+        chosen: current.chosen.filter((id) => id !== track.id),
         focus: track.id,
       }),
       hold,
@@ -230,7 +295,7 @@ function* rewrite(trackId: string, track: StageTrack, stage: () => Stage): Gener
 const withSearch = (stage: Stage, patch: Partial<StageSearch>): Stage =>
   stage.search ? { ...stage, search: { ...stage.search, ...patch } } : stage;
 
-/** The hits to show so that the one with `key` is among them. */
+/** The hits to list so that the one with `key` is among them. */
 const hitsAround = (hits: SearchHit[], key: string): SearchHit[] => {
   const index = hits.findIndex((hit) => hit.key === key);
   const start = Math.max(0, Math.min(index - visibleHits + 1, hits.length - visibleHits));

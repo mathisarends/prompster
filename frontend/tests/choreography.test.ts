@@ -98,6 +98,30 @@ test("a search is typed, shows its hits and marks the track the deck takes", asy
   assert.equal(choreography.stage?.marks.b, "added");
 });
 
+test("tracks are marked search by search before any lands, and the hits are gone by then", async () => {
+  const [a, b, c] = ["a", "b", "c"].map(track);
+  const { choreography, shown, play } = staging();
+  await play(
+    searching(searchCall("s1", "abba"), searchCall("s2", "queen")),
+    found("s1", [a, b]),
+    found("s2", [c]),
+  );
+  shown.length = 0;
+  await play(added(a), added(c), added(b));
+
+  const marks = shown.flatMap((stage) =>
+    stage.search?.picked.length ? [`${stage.search.callId}:${stage.search.picked.at(-1)}`] : [],
+  );
+  assert.deepEqual(
+    [...new Set(marks)],
+    [`s1:${a.spotifyUri}`, `s1:${b.spotifyUri}`, `s2:${c.spotifyUri}`],
+  );
+  const landing = shown.filter((stage) => stage.tracks.length);
+  assert.ok(landing.every((stage) => stage.search?.status === "idle"));
+  assert.deepEqual(ids(choreography.stage!), ["a", "c", "b"]);
+  assert.deepEqual(choreography.stage?.chosen, []);
+});
+
 test("a search sent again with its sequence is typed once", () => {
   const script = new CueScript();
   assert.equal(script.read(searching(searchCall("s1", "abba"))).length, 1);

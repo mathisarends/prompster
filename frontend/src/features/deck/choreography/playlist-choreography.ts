@@ -19,6 +19,10 @@ const prefersReducedMotion = () =>
 
 /** With this many cues waiting, the rest is shown at once instead of staged. */
 const overflow = 60;
+/** The fastest that steps play which must stay readable. */
+const steadyTempo = 2;
+/** Milliseconds an idle stage waits for the rest of a burst of events. */
+const gather = 50;
 
 /**
  * Presents the agent's work on the deck at a watchable pace.
@@ -115,6 +119,11 @@ export class PlaylistChoreography implements ReactiveController {
   private async play(): Promise<void> {
     const generation = this.generation;
     this.playing = true;
+    // Events of one burst arrive one by one; staging starts once they are all queued.
+    await this.clock.sleep(gather);
+    if (generation !== this.generation) {
+      return;
+    }
     for (;;) {
       while (this.queue.length) {
         const cue = this.queue[0];
@@ -122,11 +131,11 @@ export class PlaylistChoreography implements ReactiveController {
           this.queue.splice(0, 1, ...unfold(cue.tracks, this.stage!.tracks));
           continue;
         }
-        const steps = direct(
-          cue,
-          (track) => this.script.origin(track),
-          () => this.stage!,
-        );
+        const steps = direct(cue, {
+          origin: (track) => this.script.origin(track),
+          stage: () => this.stage!,
+          ahead: () => this.queue.slice(1),
+        });
         for (const step of steps) {
           await this.perform(step);
           if (generation !== this.generation) {
@@ -166,7 +175,8 @@ export class PlaylistChoreography implements ReactiveController {
     }
     this.stage = step.apply(this.stage!);
     this.host.requestUpdate();
-    const hold = this.queue.length > overflow ? 0 : step.hold / this.tempo;
+    const tempo = step.steady ? Math.min(this.tempo, steadyTempo) : this.tempo;
+    const hold = this.queue.length > overflow ? 0 : step.hold / tempo;
     if (hold > 0) {
       await this.clock.sleep(hold);
     }

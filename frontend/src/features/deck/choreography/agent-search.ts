@@ -8,8 +8,9 @@ import "@shared/ui/track-cover";
 import type { StageSearch } from "./stage";
 
 /**
- * The deck's search field as the agent uses it: its query being typed and the
- * hits it found, with the ones it took marked.
+ * The deck's search as the agent uses it: its query being typed into the
+ * field, and the hits in a list that lies over the deck, with the ones the
+ * agent took marked.
  *
  * Display only. The chat already announces each search, so hosts hide this
  * element from assistive technology.
@@ -21,6 +22,7 @@ export class AgentSearch extends LitElement {
   static styles = css`
     ${pageStyles}
     :host {
+      position: relative;
       display: block;
     }
     .field {
@@ -59,97 +61,107 @@ export class AgentSearch extends LitElement {
     .typing .caret {
       animation: none;
     }
-    .agent {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      flex-shrink: 0;
-      color: var(--color-muted);
-      font-size: var(--font-size-caption);
-    }
-    .agent svg {
-      color: var(--color-accent);
-    }
+    /* The hits float over the deck like a search menu, so the list never jumps. */
     .hits {
-      display: flex;
-      gap: 6px;
-      height: 36px;
-      margin-top: 8px;
-      overflow: hidden;
-      mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      left: 0;
+      padding: 4px;
+      border: 1px solid var(--color-border-strong);
+      border-radius: var(--radius-card);
+      background: var(--color-raised);
+      box-shadow: var(--shadow-panel);
+      opacity: 0;
+      transform: translateY(-4px);
+      visibility: hidden;
+      transition:
+        opacity 0.16s ease,
+        transform 0.16s ease,
+        visibility 0s 0.16s;
+    }
+    .hits.open {
+      opacity: 1;
+      transform: none;
+      visibility: visible;
+      transition-delay: 0s;
     }
     .hit,
     .ghost {
-      flex-shrink: 0;
-      height: 36px;
-      border-radius: var(--radius-control);
-      background: var(--color-active);
-    }
-    .hit {
       display: flex;
       align-items: center;
-      gap: 8px;
-      max-width: 168px;
-      padding: 0 10px 0 4px;
-      border: 1px solid transparent;
-      color: var(--color-muted);
-      font-size: var(--font-size-label);
-      animation: appear 0.22s ease-out both;
-      transition:
-        border-color 0.2s,
-        color 0.2s,
-        background 0.2s;
+      gap: 12px;
+      height: 48px;
+      padding: 0 10px 0 6px;
+      border-radius: var(--radius-sm);
+    }
+    .hit {
+      transition: background 0.2s;
     }
     .hit track-cover {
-      position: relative;
-      width: 28px;
+      width: 36px;
       flex-shrink: 0;
     }
-    .hit span {
+    .meta {
+      flex: 1;
+      min-width: 0;
+      line-height: 1.3;
+    }
+    .meta strong,
+    .meta small {
+      display: block;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
     }
-    .hit.picked {
-      border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
-      background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    .meta strong {
       color: var(--color-text-strong);
+      font-size: var(--font-size-body);
+      font-weight: var(--font-weight-regular);
     }
-    .hit .check {
-      display: none;
+    .meta small {
+      color: var(--color-muted);
+      font-size: var(--font-size-label);
+    }
+    .hit > svg {
       flex-shrink: 0;
-      color: var(--color-accent);
+      color: var(--color-faint);
     }
-    .hit.picked .check {
-      display: block;
+    .hit.picked {
+      background: var(--color-active);
     }
-    .ghost {
-      width: 132px;
+    .hit.picked > svg {
+      color: var(--color-play);
+    }
+    .ghost i {
+      height: 10px;
+      border-radius: var(--radius-pill);
+      background: var(--color-control);
       animation: pulse 1.1s ease-in-out infinite;
     }
-    .ghost:nth-child(2) {
-      width: 156px;
-      animation-delay: 0.12s;
+    .ghost i:first-child {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-xs);
     }
-    .ghost:nth-child(3) {
-      width: 112px;
-      animation-delay: 0.24s;
+    .ghost i:last-child {
+      width: 42%;
+    }
+    .ghost:nth-child(2) i:last-child {
+      width: 58%;
+    }
+    .ghost:nth-child(3) i:last-child {
+      width: 34%;
     }
     .none {
-      align-self: center;
-      padding-left: 4px;
-      color: var(--color-faint);
+      margin: 0;
+      padding: 14px 10px;
+      color: var(--color-muted);
       font-size: var(--font-size-label);
     }
     @keyframes blink {
       50% {
         opacity: 0;
-      }
-    }
-    @keyframes appear {
-      from {
-        opacity: 0;
-        transform: translateY(4px);
       }
     }
     @keyframes pulse {
@@ -163,29 +175,31 @@ export class AgentSearch extends LitElement {
     if (!search) {
       return nothing;
     }
+    const searching = search.status === "searching";
     return html`<div class="field ${search.status}">
         ${icon("search", 16)}
         <span class="query">${search.query}<i class="caret"></i></span>
-        <span class="agent">${icon("sparkles", 13)}${msg("Agent")}</span>
       </div>
-      <div class="hits">
+      <div class="hits ${searching || search.status === "results" ? "open" : ""}">
         ${
-          search.status === "results"
-            ? search.hits.length
+          searching
+            ? [0, 1, 2].map(() => html`<div class="ghost"><i></i><i></i></div>`)
+            : search.hits.length || search.status !== "results"
               ? repeat(
                   search.hits,
                   (hit) => `${search.callId}:${hit.key}`,
-                  (hit) =>
-                    html`<div class="hit ${search.picked.includes(hit.key) ? "picked" : ""}">
+                  (hit) => {
+                    const picked = search.picked.includes(hit.key);
+                    return html`<div class="hit ${picked ? "picked" : ""}">
                       <track-cover .src=${hit.coverUrl}></track-cover>
-                      <span>${hit.title}</span>
-                      <i class="check">${icon("check", 14)}</i>
-                    </div>`,
+                      <span class="meta"
+                        ><strong>${hit.title}</strong
+                        >${hit.artist ? html`<small>${hit.artist}</small>` : nothing}</span
+                      >${icon(picked ? "check" : "plus", 16)}
+                    </div>`;
+                  },
                 )
-              : html`<span class="none">${msg("Keine Treffer")}</span>`
-            : search.status === "searching"
-              ? html`<i class="ghost"></i><i class="ghost"></i><i class="ghost"></i>`
-              : nothing
+              : html`<p class="none">${msg("Keine Treffer")}</p>`
         }
       </div>`;
   }

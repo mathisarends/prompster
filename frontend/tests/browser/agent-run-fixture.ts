@@ -254,13 +254,24 @@ export async function mockAgentRun(page: Page, run: AgentRun, speed = 1): Promis
     }
     const base = session(new URL(route.request().url()).pathname.split("/").pop());
     const createdAt = base.createdAt;
+    const found = new Map(
+      run.timeline.flatMap(({ event }) =>
+        event.type === "tool_call.resolved"
+          ? [[event.toolCallId, event.resultItems ?? []] as const]
+          : [],
+      ),
+    );
     const sequences = new Map<string, unknown>();
     for (const { event } of run.timeline) {
       if (event.type === "tool_call.sequence_added") {
         sequences.set(event.sequence.id, {
           ...event.sequence,
           kind: "tool_call_sequence",
-          calls: event.sequence.calls.map((item) => ({ ...item, state: "completed" })),
+          calls: event.sequence.calls.map((item) => ({
+            ...item,
+            state: "completed",
+            resultItems: found.get(item.id) ?? [],
+          })),
         });
       }
     }
