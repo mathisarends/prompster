@@ -28,10 +28,10 @@ def test_object_operations() -> None:
 
 def test_create_signed_url_signs_with_public_endpoint() -> None:
     backend = S3ObjectStorage(
-        endpoint_url="http://minio:9000",
-        public_endpoint_url="http://127.0.0.1:9000",
-        access_key="minioadmin",
-        secret_key="minioadmin",
+        endpoint_url="http://seaweedfs:8333",
+        public_endpoint_url="http://127.0.0.1:8333",
+        access_key="prompster",
+        secret_key="prompster",
         bucket="prompster",
     )
 
@@ -46,7 +46,7 @@ def test_create_signed_url_signs_with_public_endpoint() -> None:
     query = parse_qs(parsed.query)
 
     assert parsed.scheme == "http"
-    assert parsed.netloc == "127.0.0.1:9000"
+    assert parsed.netloc == "127.0.0.1:8333"
     assert parsed.path == "/prompster/users/u/chat/s/image.png"
     assert query["X-Amz-Expires"] == ["86400"]
     assert "X-Amz-Signature" in query

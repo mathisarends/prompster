@@ -7,7 +7,7 @@ Encapsulates:
 - HTTP API under `/api/v1` with `dishka` DI container
 - Google OAuth 2.0 authentication + JWT session management
 - Persistent chat sessions with tool-call history (PostgreSQL via SQLModel / asyncpg)
-- File storage for generated assets (S3 via aioboto3)
+- File storage for generated assets (S3 via obstore)
 - Spotify integration (OAuth token management, playlist creation)
 - PDF playlist deck generation (Typst + QR codes)
 - Streaming agent runs over typed Canon server-sent events
@@ -68,7 +68,7 @@ session cookie once on `401` before the stream starts.
 ### platform
 
 - **Database** — async PostgreSQL via `asyncpg` + SQLModel ORM + Alembic migrations
-- **Storage** — S3-compatible object storage via `aioboto3`
+- **Storage** — S3-compatible object storage via `obstore` (SeaweedFS locally)
 - **DI** — `dishka` async container with per-request scoping
 
 ### running
