@@ -33,6 +33,22 @@ test("welcome, new session and generated SSE streaming", async ({ page }) => {
   await expect(model).toHaveValue("gpt-6-sol-US");
 });
 
+test("an empty deck keeps the workspace closed until songs arrive", async ({ page }) => {
+  await mockApi(page, true, true);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/new");
+  await page
+    .getByRole("textbox", { name: "Nachricht", exact: true })
+    .fill("Disco für den Spieleabend");
+  await page.getByRole("button", { name: "Nachricht senden", exact: true }).click();
+  await expect(page).toHaveURL(/\/chat\/new-deck/);
+  await expect(page.locator("human-message")).toContainText("Disco für den Spieleabend");
+  await expect(page.locator("deck-panel")).toBeHidden();
+  await expect(page.getByRole("button", { name: "Deck öffnen" })).toHaveCount(0);
+  await page.keyboard.press("Alt+Shift+D");
+  await expect(page.getByRole("tab", { name: "Playlist", exact: true })).toHaveCount(0);
+});
+
 test("model selection stays distinct for Codex and survives mobile settings and locale changes", async ({
   page,
 }) => {
