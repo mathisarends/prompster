@@ -16,10 +16,12 @@ test("workspace spans the viewport and supports keyboard tabs and expansion", as
   await expect(page.getByRole("tab", { name: "Karten", exact: true })).toBeFocused();
   const card = panel.locator("music-card article").first();
   await expect(card).toContainText("1976");
+  await expect(card).toContainText("LP · 33⅓ RPM");
   const cardBox = await card.boundingBox();
   expect(Math.abs(cardBox!.width - cardBox!.height)).toBeLessThan(1);
   await page.getByRole("checkbox", { name: "Auflösung verbergen" }).check();
   await expect(card).not.toContainText("Dancing Queen");
+  await expect(card).not.toContainText("RPM");
   await expect(card.getByRole("img", { name: "Spotify-QR-Code" })).toBeVisible();
   await page.getByRole("button", { name: "Deck vergrößern" }).click();
   await expect(page.getByRole("textbox", { name: "Nachricht", exact: true })).toBeHidden();

@@ -44,7 +44,7 @@ from backend.shared.ddd import Aggregate
 
 MAX_PLAYLIST_TRACKS = 50
 DECIDE_FOR_ME_OPTION = "Entscheide für mich"
-_PLAYLIST_FINGERPRINT_VERSION = 1
+_PLAYLIST_FINGERPRINT_VERSION = 2
 
 
 class Session(Aggregate):
@@ -185,6 +185,7 @@ class Session(Aggregate):
                     "artist": track.artist,
                     "year": track.year,
                     "spotify_uri": track.spotify_uri,
+                    "cover_url": track.cover_url,
                 }
                 for track in self._playlist.tracks
             ],

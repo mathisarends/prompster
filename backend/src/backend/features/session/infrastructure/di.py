@@ -36,6 +36,7 @@ from backend.features.session.infrastructure.message_attachment_store import (
     StorageMessageAttachmentStore,
 )
 from backend.features.session.infrastructure.pdf_generator import (
+    SpotifyCoverArtLoader,
     TypstPlaylistDeckGenerator,
 )
 from backend.features.session.infrastructure.playlist_metadata_generator import (
@@ -206,7 +207,8 @@ class SessionProvider(Provider):
 
     @provide(scope=Scope.APP)
     def provide_playlist_deck_generator(self) -> PlaylistDeckGenerator:
-        return TypstPlaylistDeckGenerator()
+        cover_art_loader = SpotifyCoverArtLoader()
+        return TypstPlaylistDeckGenerator(cover_art_loader=cover_art_loader)
 
     @provide(scope=Scope.APP)
     def provide_playlist_metadata_generator(

@@ -105,6 +105,7 @@ class SessionPlaylistExporter:
             artist_names=track.artist,
             release_year=year,
             spotify_url=_build_spotify_url(track),
+            cover_url=track.cover_url,
         )
 
 
