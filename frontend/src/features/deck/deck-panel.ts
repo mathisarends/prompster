@@ -708,7 +708,15 @@ export class DeckPanel extends LitElement {
                     >
                   </div>
                   <div class="cards">
-                    ${tracks.map((track) => html`<music-card .card=${track} ?concealed=${this.concealed}></music-card>`)}
+                    ${tracks.map(
+                      (track, index) =>
+                        html`<music-card
+                          flippable
+                          style=${`--i: ${index}`}
+                          .card=${track}
+                          ?concealed=${this.concealed}
+                        ></music-card>`,
+                    )}
                   </div>`
               : nothing
           }

@@ -1,6 +1,7 @@
 import { msg, localized } from "@lit/localize";
 import { css, html, LitElement, nothing, svg, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit/directives/style-map.js";
 import QRCode from "qrcode";
 import {
@@ -23,6 +24,8 @@ export type SongCard = {
 
 /** Palettes of covers already seen, so cards keep their colour across renders. */
 const palettes = new Map<string, CoverPalette>();
+
+const stillMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const equaliserLevels = [0.45, 0.8, 0.6, 1, 0.7, 0.35, 0.9, 0.55];
 
@@ -81,19 +84,83 @@ const scenes: Record<Era, (year: number) => unknown> = {
  * One deck card in the "Zeitkapsel" design. The answer side shows the cover in
  * the medium of its era; the concealed side is the same card before the reveal,
  * with the Spotify code where the cover will be.
+ *
+ * A `flippable` card turns over to its other side while the pointer rests on
+ * it, or on a tap. The other side is only rendered while the card turns, so a
+ * concealed card never carries its answer in the page.
  */
 @customElement("music-card")
 @localized()
 export class MusicCard extends LitElement {
   @property({ attribute: false }) card?: SongCard;
   @property({ type: Boolean }) concealed = false;
+  @property({ type: Boolean, reflect: true }) flippable = false;
   @state() private palette: CoverPalette = paletteForYear(0);
   /** Covers load with CORS so their pixels can be read; a refusal retries without. */
   @state() private readable = true;
   @state() private broken = false;
+  /** The other side is rendered behind the front. */
+  @state() private backVisible = false;
+  /** Turned over to show the other side, on hover or tap. */
+  @state() private turned = false;
+  /** Playing the turn that follows a switch between the two sides. */
+  @state() private turning = false;
+  private wantsTurn = false;
   private qr?: { path: string; size: number };
 
+  constructor() {
+    super();
+    this.addEventListener(
+      "pointerenter",
+      (event) => event.pointerType !== "touch" && this.turn(true),
+    );
+    this.addEventListener(
+      "pointerleave",
+      (event) => event.pointerType !== "touch" && this.turn(false),
+    );
+    this.addEventListener("click", (event) => {
+      if ((event as PointerEvent).pointerType === "touch") {
+        this.turn(!this.wantsTurn);
+      }
+    });
+  }
+
+  private turn(over: boolean): void {
+    if (!this.flippable) {
+      return;
+    }
+    this.wantsTurn = over;
+    if (!over) {
+      this.turned = false;
+      if (stillMotion()) {
+        this.backVisible = false;
+      }
+      return;
+    }
+    this.backVisible = true;
+    // Mount the other side first, so the turn starts from the front.
+    void this.updateComplete.then(() =>
+      requestAnimationFrame(() => (this.turned = this.wantsTurn)),
+    );
+  }
+
+  private settled(event: Event): void {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    if (event.type === "animationend") {
+      this.turning = false;
+    }
+    if (!this.turned && !this.turning) {
+      this.backVisible = false;
+    }
+  }
+
   protected willUpdate(changed: PropertyValues): void {
+    if (changed.has("concealed") && this.hasUpdated && this.flippable && !stillMotion()) {
+      this.backVisible = true;
+      this.turning = true;
+    }
     if (!changed.has("card") || !this.card) {
       return;
     }
@@ -158,6 +225,73 @@ export class MusicCard extends LitElement {
     * {
       box-sizing: border-box;
     }
+    /* Turning over: a lift with a slight tilt, a springy turn and a sheen. */
+    .lift {
+      perspective: 1100px;
+      transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .lift.raised {
+      transform: translateY(-1.5cqw) rotate(-1.5deg);
+    }
+    .flipper {
+      display: grid;
+      transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.3, 1.35, 0.45, 1);
+    }
+    .flipper > * {
+      grid-area: 1 / 1;
+      backface-visibility: hidden;
+    }
+    .raised .flipper {
+      transform: rotateY(180deg);
+    }
+    .flipper .back {
+      transform: rotateY(180deg);
+    }
+    .flipper.turning {
+      animation: turn 0.8s cubic-bezier(0.3, 1.35, 0.45, 1) calc(min(var(--i, 0), 12) * 45ms) both;
+    }
+    @keyframes turn {
+      from {
+        transform: rotateY(-180deg);
+      }
+    }
+    .lift article::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(115deg, #0000 35%, #ffffff66 47%, #ffffff1f 53%, #0000 65%) 100%
+        0 / 300% 100% no-repeat;
+      transition: background-position 0.9s ease-out;
+    }
+    .raised article::after,
+    .turning article::after {
+      background-position: 0 0;
+    }
+    .raised article {
+      box-shadow: 0 18px 36px #0005;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .lift.raised,
+      .raised .flipper,
+      .flipper .back {
+        transform: none;
+      }
+      .flipper > * {
+        transition: opacity 0.2s;
+      }
+      .flipper .back,
+      .raised .flipper > :first-child {
+        opacity: 0;
+      }
+      .raised .flipper .back {
+        opacity: 1;
+      }
+      .lift article::after {
+        display: none;
+      }
+    }
     article {
       position: relative;
       width: 100%;
@@ -171,7 +305,9 @@ export class MusicCard extends LitElement {
       --accent: hsl(var(--hue) calc(min(1, var(--sat) * 1.15) * 100%) 60%);
       color: var(--ink);
       background: var(--paper);
-      transition: background 0.3s;
+      transition:
+        background 0.3s,
+        box-shadow 0.45s;
     }
     .concealed {
       --paper: #f4ecdc;
@@ -384,7 +520,31 @@ export class MusicCard extends LitElement {
     if (!this.card) {
       return html``;
     }
-    return this.concealed ? this.concealedSide() : this.answerSide(this.card);
+    const front = this.side(this.card, this.concealed);
+    if (!this.flippable) {
+      return front;
+    }
+    const raised = { lift: true, raised: this.turned };
+    return html`<div class=${classMap(raised)}>
+      <div
+        class=${classMap({ flipper: true, turning: this.turning })}
+        @transitionend=${this.settled}
+        @animationend=${this.settled}
+      >
+        ${front}
+        ${
+          this.backVisible
+            ? html`<div class="back" aria-hidden="true" inert>
+                ${this.side(this.card, !this.concealed)}
+              </div>`
+            : nothing
+        }
+      </div>
+    </div>`;
+  }
+
+  private side(card: SongCard, concealed: boolean) {
+    return concealed ? this.concealedSide() : this.answerSide(card);
   }
 
   private answerSide(card: SongCard) {
