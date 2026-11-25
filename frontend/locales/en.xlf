@@ -818,6 +818,14 @@
   <source>Prompster fasst den bisherigen Verlauf zusammen …</source>
         <target>Prompster is summarizing the conversation so far …</target>
 </trans-unit>
+<trans-unit id="s95416925fd51a346">
+  <source>Agent</source>
+        <target>Agent</target>
+</trans-unit>
+<trans-unit id="s7255b2a2c63165e3">
+  <source>Keine Treffer</source>
+        <target>No results</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

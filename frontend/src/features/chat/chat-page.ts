@@ -299,6 +299,7 @@ export class ChatPage extends LitElement {
                 .expanded=${this.workspaceExpanded}
                 .sessionId=${this.chat.id}
                 .playlist=${state.playlist}
+                .stream=${this.chat.stream}
                 .user=${this.user}
                 .curationEvents=${this.chat.session?.unconsumedUserCurationEvents ?? []}
                 ?busy=${this.chat.busy}
