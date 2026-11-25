@@ -1,4 +1,3 @@
-from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,15 +9,10 @@ class DatabaseSettings(BaseSettings):
         populate_by_name=True,
     )
 
-    db_uri: str
+    # Lets the app be imported without configuration, for tests and codegen.
+    # Deployments and Compose set DB_URI. Canon selects asyncpg for postgresql://.
+    db_uri: str = "postgresql+asyncpg://localhost:5432/prompster"
     db_pool_size: int = 10
     db_max_overflow: int = 20
     db_pool_pre_ping: bool = True
     db_pool_recycle: int = 1800
-
-    @field_validator("db_uri")
-    @classmethod
-    def ensure_async_driver(cls, v: str) -> str:
-        if v.startswith("postgresql://"):
-            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
-        return v

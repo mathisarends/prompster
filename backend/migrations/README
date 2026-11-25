@@ -1,1 +1,2 @@
-Generic single-database configuration with an async dbapi.
+Alembic revisions for the backend. Run them with `fastapi-canon db`;
+see docs/migration.md.

@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_canon import APIRouter, Composition, ErrorOptions, Feature
+from starlette.middleware import Middleware
 
 from backend._logging import setup_logging
 from backend.env import EnvSettings, LoggingLevelSettings
@@ -16,7 +17,8 @@ from backend.features import (
     user,
 )
 from backend.lifespan import lifespan
-from backend.platform.database.di import DatabaseProvider
+from backend.platform.database.di import DATABASE_TABLES, create_database
+from backend.platform.database.settings import DatabaseSettings
 from backend.platform.storage.di import ObjectStorageProvider
 from backend.presentation import LoggingMiddleware
 
@@ -34,12 +36,8 @@ _FEATURES = (
 
 _PLATFORM_FEATURE = Feature(
     name="platform",
-    providers=(DatabaseProvider, ObjectStorageProvider),
-)
-_COMPOSITION = Composition(
-    features=(_PLATFORM_FEATURE, *_FEATURES),
-    errors=ErrorOptions(type_base="https://api.prompster.dev/problems"),
-    router_factory=lambda: APIRouter(prefix="/api/v1"),
+    providers=(ObjectStorageProvider,),
+    integrations=(DATABASE_TABLES,),
 )
 
 
@@ -56,21 +54,28 @@ def create_app() -> FastAPI:
         redoc_url=None if env.is_prod else "/redoc",
     )
 
-    _setup_middleware(app, env)
     app.include_router(health.health_router)
-    _COMPOSITION.build(app)
+    _composition(env).build(app)
 
     logger.info("Application ready!")
     return app
 
 
-def _setup_middleware(app: FastAPI, env: EnvSettings) -> None:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=env.allowed_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+def _composition(env: EnvSettings) -> Composition:
+    return Composition(
+        features=(_PLATFORM_FEATURE, *_FEATURES),
+        integrations=(create_database(DatabaseSettings()),),
+        errors=ErrorOptions(type_base="https://api.prompster.dev/problems"),
+        router_factory=lambda: APIRouter(prefix="/api/v1"),
+        # Outermost first: request logging wraps CORS.
+        middleware=(
+            Middleware(LoggingMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=env.allowed_origins,
+                allow_credentials=True,
+                allow_methods=["*"],
+                allow_headers=["*"],
+            ),
+        ),
     )
-
-    app.add_middleware(LoggingMiddleware)

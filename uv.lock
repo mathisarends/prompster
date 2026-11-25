@@ -140,7 +140,7 @@ dependencies = [
     { name = "cryptography" },
     { name = "dishka" },
     { name = "fastapi" },
-    { name = "fastapi-canon", extra = ["sse"] },
+    { name = "fastapi-canon", extra = ["migrations", "postgres", "sse"] },
     { name = "harnessed", extra = ["openai"] },
     { name = "httpx" },
     { name = "obstore" },
@@ -176,7 +176,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=45.0.7" },
     { name = "dishka", specifier = ">=1.10.1" },
     { name = "fastapi", specifier = ">=0.143.3" },
-    { name = "fastapi-canon", extras = ["sse"], specifier = ">=0.24.0" },
+    { name = "fastapi-canon", extras = ["sse", "postgres", "migrations"], specifier = "==0.28.0" },
     { name = "harnessed", extras = ["openai"], git = "https://github.com/mathisarends/harnessed.git?rev=65d772032aad3e1f4318abd98d12366f323e8aca" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "obstore", specifier = ">=0.11.1" },
@@ -197,7 +197,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "fastapi-canon", extras = ["codegen"], specifier = ">=0.24.0" },
+    { name = "fastapi-canon", extras = ["codegen"], specifier = "==0.28.0" },
     { name = "httpx2", specifier = ">=2.16.0,<3" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
@@ -514,7 +514,7 @@ wheels = [
 
 [[package]]
 name = "fastapi-canon"
-version = "0.24.0"
+version = "0.28.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dishka" },
@@ -522,9 +522,9 @@ dependencies = [
     { name = "pydantic", version = "2.13.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15'" },
     { name = "pydantic", version = "2.14.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/11/ed/82caee6f7266cbd8735544fcd783dcd02ca18b82bbf14396e3a8f939bc25/fastapi_canon-0.24.0.tar.gz", hash = "sha256:b29a432f8ee8d2abad16f13a9b72a288d630d46b7c7c905cd1dadf0dcf70a7b9", size = 442598, upload-time = "2026-11-21T11:22:32.472Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/28/98/c718ede7f42585385b1802e7a7e73b222b85d485ccaaed654f6df46529b1/fastapi_canon-0.28.0.tar.gz", hash = "sha256:9d453b773aa3459a5b01f085a9a05e766dd3d2590bb45a6c050f36cdf9aa4562", size = 458386, upload-time = "2026-11-25T07:28:47.912Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5f/e1/6699a459e8bc113c6d4416fb298f08e487bb3acc742c37c281d5114eb184/fastapi_canon-0.24.0-py3-none-any.whl", hash = "sha256:b2c416690d904ce1c928b7fab7a78573384e95b95237715969b9a1836bfa7173", size = 526579, upload-time = "2026-11-21T11:22:31.169Z" },
+    { url = "https://files.pythonhosted.org/packages/67/b1/c7d1be6aeae59e02b45c69b091a66dd88f5d3163a486f0916eec807aad83/fastapi_canon-0.28.0-py3-none-any.whl", hash = "sha256:50c36cb861fb6578ebdb2f64151a7396f8c34934a503c2b171c9189979465a40", size = 543034, upload-time = "2026-11-25T07:28:46.476Z" },
 ]
 
 [package.optional-dependencies]
@@ -535,6 +535,16 @@ codegen = [
     { name = "pydantic", version = "2.14.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
     { name = "typing-extensions", version = "4.15.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.15'" },
     { name = "typing-extensions", version = "4.16.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.15'" },
+]
+migrations = [
+    { name = "alembic" },
+    { name = "anyio" },
+    { name = "sqlalchemy", extra = ["asyncio"] },
+]
+postgres = [
+    { name = "anyio" },
+    { name = "asyncpg" },
+    { name = "sqlalchemy", extra = ["asyncio"] },
 ]
 sse = [
     { name = "fastapi" },
@@ -1556,6 +1566,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/e5/c3/c80fcdb41905a2df650c2a3e0337198b6848876e63d66fe9188ef9003d24/sqlalchemy-2.0.49-cp314-cp314t-win32.whl", hash = "sha256:6270d717b11c5476b0cbb21eedc8d4dbb7d1a956fd6c15a23e96f197a6193158", size = 2149151, upload-time = "2026-04-03T17:02:07.281Z" },
     { url = "https://files.pythonhosted.org/packages/05/52/9f1a62feab6ed368aff068524ff414f26a6daebc7361861035ae00b05530/sqlalchemy-2.0.49-cp314-cp314t-win_amd64.whl", hash = "sha256:275424295f4256fd301744b8f335cff367825d270f155d522b30c7bf49903ee7", size = 2184178, upload-time = "2026-04-03T17:02:08.623Z" },
     { url = "https://files.pythonhosted.org/packages/e5/30/8519fdde58a7bdf155b714359791ad1dc018b47d60269d5d160d311fdc36/sqlalchemy-2.0.49-py3-none-any.whl", hash = "sha256:ec44cfa7ef1a728e88ad41674de50f6db8cfdb3e2af84af86e0041aaf02d43d0", size = 1942158, upload-time = "2026-04-03T16:53:44.135Z" },
+]
+
+[package.optional-dependencies]
+asyncio = [
+    { name = "greenlet" },
 ]
 
 [[package]]

@@ -29,7 +29,7 @@ dependencies = [
     "pillow>=12.2.0",
     "tokenary>=0.1.1",
     "python-multipart>=0.0.20",
-    "fastapi-canon[sse]>=0.24.0",
+    "fastapi-canon[sse,postgres,migrations]==0.28.0",
     "pyyaml>=6.0.3",
 ]
 
@@ -42,11 +42,15 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "fastapi-canon[codegen]>=0.24.0",
+    "fastapi-canon[codegen]==0.28.0",
     "httpx2>=2.16.0,<3",
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
 ]
+
+[tool.fastapi-canon.database]
+# `fastapi-canon db` reads the Database and the feature Tables from the app.
+target = "backend.main:app"
 
 [tool.pytest.ini_options]
 addopts = [
