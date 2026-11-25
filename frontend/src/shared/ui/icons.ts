@@ -3,6 +3,7 @@ import { unsafeSVG } from "lit/directives/unsafe-svg.js";
 import {
   ArrowUp,
   ArrowRight,
+  ArrowLeftRight,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -44,6 +45,7 @@ import {
 const icons = {
   arrowUp: ArrowUp,
   arrow: ArrowRight,
+  swap: ArrowLeftRight,
   check: Check,
   left: ChevronLeft,
   right: ChevronRight,

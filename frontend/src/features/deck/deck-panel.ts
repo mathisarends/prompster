@@ -3,14 +3,21 @@ import { retryLabel } from "@shared/i18n/messages";
 import { shortcutKeys, shortcutTitle } from "@shared/shortcuts";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { repeat } from "lit/directives/repeat.js";
 import type { UserMeResponse } from "@api/generated/users";
 import type { UserCurationEventResponse } from "@api/generated/sessions";
 import type { SpotifyTrackResponse } from "@api/generated/spotify";
+import type { SessionStreamEvent } from "@/api/session-streams";
 import type { ChatPlaylist } from "@features/chat/state/chat-reducer";
+import type { Feed } from "@shared/feed";
 import { pageStyles } from "@shared/styles/page";
 import { icon } from "@shared/ui/icons";
 import { emit } from "@shared/events";
 import { DeckController } from "./deck-controller";
+import { Flip } from "./choreography/flip";
+import { PlaylistChoreography } from "./choreography/playlist-choreography";
+import type { StageSearch } from "./choreography/stage";
+import "./choreography/agent-search";
 import { PlaybackController } from "@features/spotify/playback-controller";
 import { OAuthController } from "@features/auth/oauth-controller";
 import "@features/spotify/spotify-search";
@@ -33,10 +40,20 @@ export class DeckPanel extends LitElement {
   @property({ attribute: false }) curationEvents: UserCurationEventResponse[] = [];
   @property({ type: Boolean }) busy = false;
   @property({ type: Boolean }) expanded = false;
+  /** The running turn's events; the agent's work on the deck is staged from them. */
+  @property({ attribute: false }) stream?: Feed<SessionStreamEvent>;
   @state() private tab = "playlist";
   @state() private search = false;
   @state() private concealed = false;
   private deck = new DeckController(this);
+  private choreography = new PlaylistChoreography(this, {
+    tracks: () => this.playlist?.tracks ?? [],
+    progress: (progress) => emit(this, "stage-progress", progress),
+  });
+  private flip = new Flip();
+  /** The last search the agent showed, kept while its field closes. */
+  private agentSearch: StageSearch | null = null;
+  private focused: string | null = null;
   private playback = new PlaybackController(this);
   private oauth = new OAuthController(this, async () => {
     emit(this, "user-refresh");
@@ -45,6 +62,39 @@ export class DeckPanel extends LitElement {
     if (changed.has("sessionId") || changed.has("playlist")) {
       this.deck.reset();
     }
+    if (changed.has("sessionId")) {
+      this.choreography.reset();
+    }
+    if (changed.has("stream")) {
+      this.choreography.follow(this.stream);
+    }
+    if (changed.has("busy")) {
+      this.choreography.setRunning(this.busy);
+    }
+    this.agentSearch = this.choreography.stage?.search ?? this.agentSearch;
+    if (this.choreography.stage) {
+      this.flip.capture(this.rows);
+    }
+  }
+  protected updated(): void {
+    this.flip.play(this.rows);
+    const focus = this.choreography.stage?.focus ?? null;
+    if (focus && focus !== this.focused) {
+      this.renderRoot
+        .querySelector(`.track[data-key="${CSS.escape(focus)}"]`)
+        ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+    this.focused = focus;
+  }
+  private get rows(): NodeListOf<HTMLElement> {
+    return this.renderRoot.querySelectorAll<HTMLElement>(".track");
+  }
+  /** The deck on screen: what the agent's choreography presents, else the deck itself. */
+  private get tracks() {
+    return this.choreography.stage?.tracks ?? this.playlist?.tracks ?? [];
+  }
+  private get disabled(): boolean {
+    return this.busy || !!this.deck.pending || !this.sessionId || !!this.choreography.stage;
   }
   private selectTab(event: KeyboardEvent): void {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
@@ -64,13 +114,12 @@ export class DeckPanel extends LitElement {
     );
   }
   private get playable() {
-    return (this.playlist?.tracks ?? []).filter((track) => track.spotifyUri);
+    return this.tracks.filter((track) => track.spotifyUri);
   }
   /** Track shown in the player: the live Spotify track, else the first playable song. */
   private get current() {
-    const tracks = this.playlist?.tracks ?? [];
     return (
-      tracks.find((track) => track.spotifyUri && track.spotifyUri === this.playback.uri) ??
+      this.tracks.find((track) => track.spotifyUri && track.spotifyUri === this.playback.uri) ??
       this.playable[0]
     );
   }
@@ -179,6 +228,28 @@ export class DeckPanel extends LitElement {
     player-bar {
       border-top: 1px solid var(--color-border-subtle);
     }
+    /* The agent's search field opens above the deck while it works there. */
+    .agent-stage {
+      position: relative;
+      z-index: 2;
+      flex: none;
+      height: 0;
+      opacity: 0;
+      visibility: hidden;
+      transition:
+        height 0.28s ease,
+        opacity 0.2s ease,
+        visibility 0s 0.28s;
+    }
+    .agent-stage[data-open] {
+      height: 56px;
+      opacity: 1;
+      visibility: visible;
+      transition-delay: 0s;
+    }
+    agent-search {
+      margin: 4px 16px 0;
+    }
     /* Track table, modelled on Spotify's playlist rows. */
     .list-head,
     .track {
@@ -210,6 +281,46 @@ export class DeckPanel extends LitElement {
     .track:hover,
     .track:focus-within {
       background: var(--color-row-hover);
+    }
+    /* Rows the agent just touched: they land, are rewritten or leave. */
+    .track.added {
+      animation:
+        land 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) backwards,
+        touched 1.6s ease-out backwards;
+    }
+    .track.rewritten {
+      animation: touched 1.6s ease-out backwards;
+    }
+    .track.leaving {
+      overflow: hidden;
+      pointer-events: none;
+      animation: leave 0.34s ease-in forwards;
+    }
+    .caret {
+      display: inline-block;
+      width: 1px;
+      height: 1.1em;
+      margin-left: 1px;
+      vertical-align: text-bottom;
+      background: var(--color-accent);
+    }
+    @keyframes land {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+    }
+    @keyframes touched {
+      from {
+        background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+      }
+    }
+    @keyframes leave {
+      to {
+        height: 0;
+        opacity: 0;
+        transform: translateX(16px);
+      }
     }
     .index {
       display: grid;
@@ -457,13 +568,14 @@ export class DeckPanel extends LitElement {
     }
   `;
   private playlistView() {
-    const tracks = this.playlist?.tracks ?? [];
-    const disabled = this.busy || !!this.deck.pending || !this.sessionId;
+    const tracks = this.tracks;
+    const disabled = this.disabled;
+    const stage = this.choreography.stage;
     const canPlay = this.user.spotifyPremium && !this.playback.busy;
     const live =
       !!this.playback.uri && tracks.some((track) => track.spotifyUri === this.playback.uri);
     return html`${!this.user.spotifyConnected ? html`<div class="notice"><span>${msg("Verbinde Spotify für die Wiedergabe und den Playlist-Export.")}</span><button class="button primary" ?disabled=${!!this.oauth.pending} @click=${() => this.oauth.start("spotify-connect")}>${msg("Spotify verbinden")}</button></div>` : nothing}
-      ${this.search ? html`<spotify-search ?disabled=${disabled} @track-select=${(event: CustomEvent<SpotifyTrackResponse>) => this.deck.add(this.sessionId, event.detail)}></spotify-search>` : nothing}
+      ${this.search && !stage ? html`<spotify-search ?disabled=${disabled} @track-select=${(event: CustomEvent<SpotifyTrackResponse>) => this.deck.add(this.sessionId, event.detail)}></spotify-search>` : nothing}
       ${
         tracks.length
           ? html`<div class="list-head" aria-hidden="true">
@@ -472,48 +584,59 @@ export class DeckPanel extends LitElement {
           : nothing
       }
       <div role="list" aria-label=${msg("Songs")}>
-        ${tracks.map((track, i) => {
-          const active = live && track.spotifyUri === this.playback.uri;
-          const sounding = active && !this.playback.paused;
-          return html`<div class="track ${active ? "active" : ""}" role="listitem">
-            <button
-              class="index"
-              aria-label=${sounding ? msg(str`${track.title} pausieren`) : msg(str`${track.title} abspielen`)}
-              ?disabled=${!canPlay || !track.spotifyUri}
-              @click=${() => this.play(track.spotifyUri)}
+        ${repeat(
+          tracks,
+          (track) => track.id,
+          (track, i) => {
+            const active = live && track.spotifyUri === this.playback.uri;
+            const sounding = active && !this.playback.paused;
+            const typed = stage?.rewrite?.trackId === track.id ? stage.rewrite.title : null;
+            return html`<div
+              class="track ${active ? "active" : ""} ${stage?.marks[track.id] ?? ""}"
+              data-key=${track.id}
+              role="listitem"
             >
-              <span class="rest"
-                >${sounding ? html`<span class="bars"><i></i><i></i><i></i></span>` : i + 1}</span
-              ><span class="hover"
-                >${sounding ? icon("pause", 16, true) : icon("play", 16, true)}</span
+              <button
+                class="index"
+                aria-label=${sounding ? msg(str`${track.title} pausieren`) : msg(str`${track.title} abspielen`)}
+                ?disabled=${!canPlay || !track.spotifyUri}
+                @click=${() => this.play(track.spotifyUri)}
               >
-            </button>
-            <div class="song">
-              <track-cover .src=${track.coverUrl}></track-cover>
-              <div>
-                <strong title=${track.title}>${track.title}</strong><span>${track.artist}</span>
+                <span class="rest"
+                  >${sounding ? html`<span class="bars"><i></i><i></i><i></i></span>` : i + 1}</span
+                ><span class="hover"
+                  >${sounding ? icon("pause", 16, true) : icon("play", 16, true)}</span
+                >
+              </button>
+              <div class="song">
+                <track-cover .src=${track.coverUrl}></track-cover>
+                <div>
+                  <strong title=${track.title}
+                    >${typed ?? track.title}${typed === null ? nothing : html`<i class="caret"></i>`}</strong
+                  ><span>${track.artist}</span>
+                </div>
               </div>
-            </div>
-            <span class="end"
-              ><span class="year">${track.year}</span
-              ><button
-                class="icon-button"
-                title=${msg("Song entfernen")}
-                aria-label=${msg(str`${track.title} entfernen`)}
-                ?disabled=${disabled}
-                @click=${() => this.deck.remove(this.sessionId, track.id)}
+              <span class="end"
+                ><span class="year">${track.year}</span
+                ><button
+                  class="icon-button"
+                  title=${msg("Song entfernen")}
+                  aria-label=${msg(str`${track.title} entfernen`)}
+                  ?disabled=${disabled}
+                  @click=${() => this.deck.remove(this.sessionId, track.id)}
+                >
+                  ${icon("close", 16)}
+                </button></span
               >
-                ${icon("close", 16)}
-              </button></span
-            >
-          </div>`;
-        })}
+            </div>`;
+          },
+        )}
       </div>
       ${this.curationEvents.filter((event) => event.eventType === "track_removed").map((event) => html`<p class="undo">${msg(str`„${event.trackTitle}“ entfernt.`)} <button class="text-button" ?disabled=${disabled} @click=${() => this.deck.restore(this.sessionId, event.id)}>${msg("Rückgängig")}</button></p>`)}`;
   }
   render() {
-    const tracks = this.playlist?.tracks ?? [];
-    const disabled = this.busy || !!this.deck.pending || !this.sessionId;
+    const tracks = this.tracks;
+    const disabled = this.disabled;
     const current = this.current;
     const live = !!current && current.spotifyUri === this.playback.uri;
     const note = this.playerNote();
@@ -536,7 +659,7 @@ export class DeckPanel extends LitElement {
             )}
           </div>
           ${this.deck.exported ? html`<a class="icon-button" href=${this.deck.exported.url} target="_blank" rel="noopener noreferrer" title=${msg("Zur Spotify-Playlist")} aria-label=${msg("Zur Spotify-Playlist")}>${icon("external", 16)}</a>` : nothing}
-          ${this.tab === "playlist" ? html`<button class="icon-button" title=${msg("Songs hinzufügen")} aria-label=${msg("Songs hinzufügen")} aria-expanded=${this.search} ?disabled=${this.busy || !!this.deck.pending || !this.sessionId} @click=${() => (this.search = !this.search)}>${icon("plus", 18)}</button>` : nothing}
+          ${this.tab === "playlist" ? html`<button class="icon-button" title=${msg("Songs hinzufügen")} aria-label=${msg("Songs hinzufügen")} aria-expanded=${this.search} ?disabled=${disabled} @click=${() => (this.search = !this.search)}>${icon("plus", 18)}</button>` : nothing}
           <button
             class="icon-button"
             aria-label=${this.expanded ? msg("Geteilte Ansicht") : msg("Deck vergrößern")}
@@ -556,6 +679,13 @@ export class DeckPanel extends LitElement {
             ${icon("close", 16)}
           </button>
         </header>
+        <div
+          class="agent-stage"
+          ?data-open=${!!this.choreography.stage?.search && this.tab === "playlist"}
+          aria-hidden="true"
+        >
+          <agent-search .search=${this.agentSearch}></agent-search>
+        </div>
         <section
           id="deck-content"
           class="body"

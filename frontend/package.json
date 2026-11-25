@@ -22,6 +22,7 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "test:e2e": "playwright test",
     "review:capture": "tsx scripts/capture-review.ts",
+    "review:choreography": "tsx scripts/capture-choreography.ts",
     "i18n:extract": "lit-localize extract",
     "i18n:build": "lit-localize build",
     "i18n:check": "node scripts/check-i18n.mjs"

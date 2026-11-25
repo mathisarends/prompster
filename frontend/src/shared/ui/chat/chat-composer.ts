@@ -74,13 +74,8 @@ export class ChatComposer extends LitElement {
     }
     form {
       padding: 16px 12px 10px;
-      border: 1px solid var(--color-border);
       border-radius: var(--radius-panel);
       background: var(--color-surface);
-      transition: border-color 0.15s;
-    }
-    form:focus-within {
-      border-color: var(--color-border-strong);
     }
     textarea {
       display: block;
@@ -149,6 +144,19 @@ export class ChatComposer extends LitElement {
       background: var(--color-control);
       color: var(--color-muted);
     }
+    .stop {
+      background: var(--color-stop);
+      color: var(--color-on-stop);
+    }
+    .stop:hover:not(:disabled) {
+      background: var(--color-stop-hover);
+    }
+    .stop i {
+      width: 11px;
+      height: 11px;
+      border-radius: 2px;
+      background: currentColor;
+    }
   `;
   render() {
     return html`<form
@@ -196,7 +204,7 @@ export class ChatComposer extends LitElement {
             @dictation-error=${(event: CustomEvent<string>) => (this.voiceError = event.detail)}
             @transcript=${this.acceptTranscript}
           ></voice-input>
-          ${this.dictating ? nothing : this.pending ? html`<button class="send" type="button" title=${msg("Antwort stoppen")} aria-label=${msg("Antwort stoppen")} ?disabled=${this.stopping} @click=${() => this.dispatchEvent(new CustomEvent("stop-request", { bubbles: true, composed: true }))}>${icon("close", 15)}</button>` : html`<button class="send" type="submit" title=${`${msg("Nachricht senden")} · Enter`} aria-keyshortcuts="Enter" aria-label=${msg("Nachricht senden")} ?disabled=${!this.value.trim() && !this.hasAttachments}>${icon("arrowUp", 16)}</button>`}
+          ${this.dictating ? nothing : this.pending ? html`<button class="send stop" type="button" title=${msg("Antwort stoppen")} aria-label=${msg("Antwort stoppen")} ?disabled=${this.stopping} @click=${() => this.dispatchEvent(new CustomEvent("stop-request", { bubbles: true, composed: true }))}><i></i></button>` : html`<button class="send" type="submit" title=${`${msg("Nachricht senden")} · Enter`} aria-keyshortcuts="Enter" aria-label=${msg("Nachricht senden")} ?disabled=${!this.value.trim() && !this.hasAttachments}>${icon("arrowUp", 16)}</button>`}
         </div>
       </footer>
     </form>`;

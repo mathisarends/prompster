@@ -11,6 +11,7 @@ import { matchesShortcut, shortcutKeys, shortcutTitle } from "@shared/shortcuts"
 import { ChatController } from "./chat-controller";
 import type { ChatAttachment } from "./components/attachments/attachment-types";
 import type { SubmitOnboardingAnswerRequest } from "@api/generated/sessions";
+import type { ToolCallProgress } from "./types";
 import "./chat-welcome";
 import "./components/chat-message-list";
 import "./components/onboarding-panel";
@@ -31,6 +32,8 @@ export class ChatPage extends LitElement {
   @state() private attachments: ChatAttachment[] = [];
   @state() private workspaceOpen = window.innerWidth > 1000;
   @state() private workspaceExpanded = false;
+  /** How far the workspace has shown the agent's work, while it stages it. */
+  @state() private progress: ToolCallProgress | null = null;
   private drafts = new Map<string, { text: string; attachments: ChatAttachment[] }>();
   private chat = new ChatController(this);
   private models = createQueryController(this, listLlmOptionsQuery());
@@ -75,6 +78,10 @@ export class ChatPage extends LitElement {
     this.renderRoot.querySelector<HTMLButtonElement>(".deck-toggle")?.focus();
   };
   protected willUpdate(changed: PropertyValues): void {
+    // A closed workspace shows nothing the conversation could wait for.
+    if (!this.workspaceOpen) {
+      this.progress = null;
+    }
     if (changed.has("sessionId") && this.sessionId !== this.chat.id) {
       this.drafts.set(this.chat.id, { text: this.draft, attachments: this.attachments });
       const draft = this.drafts.get(this.sessionId);
@@ -87,11 +94,17 @@ export class ChatPage extends LitElement {
     const text = this.draft;
     const attachments = this.attachments;
     const sessionId = this.sessionId;
-    const sent = await this.chat.send(text, attachments);
-    if (sent && this.draft === text && (this.sessionId === sessionId || !sessionId)) {
-      this.draft = "";
-      this.attachments = [];
+    // The message shows in the conversation while the turn runs, so the
+    // composer is free for the next one. A turn that fails hands it back.
+    this.draft = "";
+    this.attachments = [];
+    if (await this.chat.send(text, attachments)) {
       this.drafts.delete("");
+    } else if (this.sessionId !== sessionId && sessionId) {
+      this.drafts.set(sessionId, { text, attachments });
+    } else if (!this.draft && !this.attachments.length) {
+      this.draft = text;
+      this.attachments = attachments;
     }
   };
   private addFiles(event: Event): void {
@@ -270,7 +283,7 @@ export class ChatPage extends LitElement {
                 : nothing
             }
           </header>
-          ${this.chat.loading ? html`<div class="status" role="status">${msg("Deck wird geladen …")}</div>` : !hasConversation ? html`<studio-page ?pending=${this.chat.busy} @draft-change=${(event: CustomEvent<string>) => (this.draft = event.detail)}>${this.composer()}</studio-page>` : html`<chat-message-list .entries=${state.entries} .runStatus=${state.runStatus} ?pending=${this.chat.busy}>${state.pendingInput ? html`<onboarding-panel .input=${state.pendingInput} ?pending=${this.chat.busy} @onboarding-submit=${(event: CustomEvent<{ answers: SubmitOnboardingAnswerRequest[]; complete: boolean }>) => this.chat.answer(event.detail.answers, event.detail.complete)}></onboarding-panel>` : nothing}</chat-message-list>`}
+          ${this.chat.loading ? html`<div class="status" role="status">${msg("Deck wird geladen …")}</div>` : !hasConversation ? html`<studio-page ?pending=${this.chat.busy} @draft-change=${(event: CustomEvent<string>) => (this.draft = event.detail)}>${this.composer()}</studio-page>` : html`<chat-message-list .entries=${state.entries} .runStatus=${state.runStatus} .progress=${this.progress} ?pending=${this.chat.busy}>${state.pendingInput ? html`<onboarding-panel .input=${state.pendingInput} ?pending=${this.chat.busy} @onboarding-submit=${(event: CustomEvent<{ answers: SubmitOnboardingAnswerRequest[]; complete: boolean }>) => this.chat.answer(event.detail.answers, event.detail.complete)}></onboarding-panel>` : nothing}</chat-message-list>`}
           ${
             this.chat.error
               ? html`<p class="error inline-error" role="alert">
@@ -299,6 +312,7 @@ export class ChatPage extends LitElement {
                 .expanded=${this.workspaceExpanded}
                 .sessionId=${this.chat.id}
                 .playlist=${state.playlist}
+                .stream=${this.chat.stream}
                 .user=${this.user}
                 .curationEvents=${this.chat.session?.unconsumedUserCurationEvents ?? []}
                 ?busy=${this.chat.busy}
@@ -306,6 +320,8 @@ export class ChatPage extends LitElement {
                   void this.chat.refresh();
                   emit(this, "session-changed");
                 }}
+                @stage-progress=${(event: CustomEvent<ToolCallProgress | null>) =>
+                  (this.progress = event.detail)}
                 @toggle-expand=${() => (this.workspaceExpanded = !this.workspaceExpanded)}
                 @close-panel=${this.closeWorkspace}
               ></deck-panel>`
