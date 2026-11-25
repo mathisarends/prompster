@@ -74,13 +74,8 @@ export class ChatComposer extends LitElement {
     }
     form {
       padding: 16px 12px 10px;
-      border: 1px solid var(--color-border);
       border-radius: var(--radius-panel);
       background: var(--color-surface);
-      transition: border-color 0.15s;
-    }
-    form:focus-within {
-      border-color: var(--color-border-strong);
     }
     textarea {
       display: block;

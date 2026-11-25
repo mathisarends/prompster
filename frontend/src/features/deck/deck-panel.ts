@@ -48,6 +48,7 @@ export class DeckPanel extends LitElement {
   private deck = new DeckController(this);
   private choreography = new PlaylistChoreography(this, {
     tracks: () => this.playlist?.tracks ?? [],
+    progress: (progress) => emit(this, "stage-progress", progress),
   });
   private flip = new Flip();
   /** The last search the agent showed, kept while its field closes. */

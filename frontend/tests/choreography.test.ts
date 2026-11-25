@@ -18,7 +18,14 @@ const searchCall = (id: string, query: string, state: "pending" | "completed" = 
   state,
   function: { name: "search_tracks", arguments: { query } },
 });
-const searching = (...calls: ReturnType<typeof searchCall>[]): SessionStreamEvent => ({
+const editCall = (id: string) => ({
+  id,
+  state: "pending" as const,
+  function: { name: "add_deck_tracks", arguments: {} },
+});
+const searching = (
+  ...calls: (ReturnType<typeof searchCall> | ReturnType<typeof editCall>)[]
+): SessionStreamEvent => ({
   type: "tool_call.sequence_added",
   sequence: { id: "sequence", createdAt: "2026-10-01T12:00:00Z", calls },
 });
@@ -43,6 +50,8 @@ const added = (item: StageTrack): SessionStreamEvent => ({
 function staging(base: StageTrack[] = [], reducedMotion = false) {
   const feed = new Feed<SessionStreamEvent>();
   const shown: Stage[] = [];
+  /** Each progress as `waiting calls|call at work`, with the tracks on stage then. */
+  const progress: string[] = [];
   let elapsed = 0;
   const choreography = new PlaylistChoreography(
     {
@@ -57,6 +66,12 @@ function staging(base: StageTrack[] = [], reducedMotion = false) {
     },
     {
       tracks: () => base,
+      progress: (reached) =>
+        progress.push(
+          reached
+            ? `${[...reached.waiting]}|${reached.working ?? ""}|${choreography.stage?.tracks.length}`
+            : "closed",
+        ),
       reducedMotion: () => reducedMotion,
       clock: {
         sleep: (ms) => {
@@ -71,6 +86,7 @@ function staging(base: StageTrack[] = [], reducedMotion = false) {
   return {
     choreography,
     shown,
+    progress,
     elapsed: () => elapsed,
     async play(...events: SessionStreamEvent[]) {
       events.forEach((event) => feed.publish(event));
@@ -120,6 +136,28 @@ test("tracks are marked search by search before any lands, and the hits are gone
   assert.ok(landing.every((stage) => stage.search?.status === "idle"));
   assert.deepEqual(ids(choreography.stage!), ["a", "c", "b"]);
   assert.deepEqual(choreography.stage?.chosen, []);
+});
+
+test("a search waits until the stage reaches it and is through once its hits show", async () => {
+  const [a, b] = [track("a"), track("b")];
+  const { progress, play } = staging();
+  await play(
+    searching(searchCall("s1", "abba")),
+    searching(searchCall("s1", "abba"), searchCall("s2", "queen")),
+    found("s1", [a]),
+    found("s2", [b]),
+  );
+  assert.deepEqual(progress, ["s1||0", "s1,s2||0", "s2|s1|0", "s2||0", "|s2|0", "||0"]);
+});
+
+test("a call that edits the deck is at work until its tracks have landed", async () => {
+  const { choreography, progress, play } = staging();
+  await play(searching(editCall("a1")), added(track("a")), added(track("b")), found("a1", []));
+  assert.deepEqual(progress, ["a1||0", "|a1|0", "||2"]);
+
+  choreography.setRunning(false);
+  await play();
+  assert.equal(progress.at(-1), "closed");
 });
 
 test("a search sent again with its sequence is typed once", () => {

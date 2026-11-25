@@ -206,6 +206,13 @@ function deckBuild(cover: Cover): AgentRun {
         event: sequence("research", "Grabe in den 80ern", [
           search("s1", "synthpop 1983"),
           search("s2", "new wave essentials"),
+        ]),
+      },
+      {
+        at: 980,
+        event: sequence("research", "Grabe in den 80ern", [
+          search("s1", "synthpop 1983"),
+          search("s2", "new wave essentials"),
           search("s3", "one hit wonder 80s"),
         ]),
       },

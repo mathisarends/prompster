@@ -10,17 +10,24 @@ import "./tool-call-chain";
 import type { RunStatus } from "@/api/session-streams";
 import type { ChatEntry } from "../state/chat-reducer";
 import { toToolCallItems } from "../state/chat-reducer";
+import { followProgress } from "../state/tool-call-progress";
+import type { ToolCallProgress } from "../types";
 
 @customElement("chat-message-list")
 @localized()
 export class ChatMessageList extends LitElement {
   @property({ attribute: false }) entries: ChatEntry[] = [];
   @property({ type: Boolean }) pending = false;
+  /** How far the workspace has shown the agent's work; the list keeps to it. */
+  @property({ attribute: false }) progress: ToolCallProgress | null = null;
   @property({ attribute: false }) runStatus: RunStatus = "running";
   @query(".scroll") private scroller!: HTMLElement;
   private stick = true;
   protected updated(changed: PropertyValues): void {
-    if (this.stick && (changed.has("entries") || changed.has("pending"))) {
+    if (
+      this.stick &&
+      (changed.has("entries") || changed.has("pending") || changed.has("progress"))
+    ) {
       this.scroller.scrollTop = this.scroller.scrollHeight;
     }
   }
@@ -55,12 +62,15 @@ export class ChatMessageList extends LitElement {
     .entry {
       margin-bottom: 32px;
     }
-    /* The agent's work reads as one block up to its answer. */
+    /* The agent's calls keep one rhythm across their sequences, up to its answer. */
     .entry.work {
-      margin-bottom: 10px;
+      margin-bottom: 0;
     }
     .entry.work + .entry:not(.work) {
       margin-top: 24px;
+    }
+    .entry.work + .pending {
+      margin-top: 10px;
     }
     .pending {
       display: flex;
@@ -116,6 +126,7 @@ export class ChatMessageList extends LitElement {
     }
   `;
   render() {
+    const { entries, behind } = followProgress(this.entries, this.progress);
     return html`<div
       class="scroll"
       role="log"
@@ -127,7 +138,7 @@ export class ChatMessageList extends LitElement {
       }}
     >
       ${repeat(
-        this.entries,
+        entries,
         (entry) => entry.id,
         (entry) =>
           html`<div class=${entry.kind === "tool_call_group" ? "entry work" : "entry"}>
@@ -145,7 +156,7 @@ export class ChatMessageList extends LitElement {
                     ></tool-call-chain>`
             }
           </div>`,
-      )}${this.pending ? this.pendingStatus() : nothing}<slot></slot>
+      )}${this.pending || behind ? this.pendingStatus() : nothing}<slot></slot>
     </div>`;
   }
 }

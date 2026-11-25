@@ -21,13 +21,21 @@ test("the agent's searches and deck edits play in the workspace", async ({ page 
   await expect(stage).toHaveAttribute("data-open", "");
   await expect(stage).toHaveAttribute("aria-hidden", "true");
   await expect(panel.locator("agent-search .query")).toHaveText("synthpop 1983");
+  // The chat lists a call when the stage reaches it, and the answer after its work.
+  const listed = (text: string) => page.locator("tool-call-chain li", { hasText: text });
+  await expect(listed("synthpop 1983")).toBeVisible();
+  await expect(listed("one hit wonder 80s")).toHaveCount(0);
+  await expect(listed("Baue das 80er-Deck")).toHaveCount(0);
   await expect(panel.locator("agent-search .hits.open .hit").first()).toContainText("Sweet Dreams");
   await expect(panel.getByRole("button", { name: "Songs hinzufügen" })).toBeDisabled();
   await expect(panel.locator("agent-search .hit.picked").first()).toBeVisible();
   await expect(panel.locator(".track").first()).toContainText("Sweet Dreams");
+  await expect(listed("Baue das 80er-Deck")).toBeVisible();
+  await expect(page.locator("assistant-message")).toHaveCount(1);
 
   await expect(stage).not.toHaveAttribute("data-open", "", { timeout: 30_000 });
   await expect(panel.locator(".track strong")).toHaveText(titles);
+  await expect(page.locator("assistant-message").last()).toContainText("80er-Deck");
   await expect(panel.getByRole("button", { name: "Songs hinzufügen" })).toBeEnabled();
 });
 

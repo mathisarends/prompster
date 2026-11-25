@@ -177,7 +177,9 @@ klappen als Liste über der Playlist auf, und der Agent hakt dort ab, was er
 übernimmt. Danach schließt sich die Liste, die Songs landen einzeln im Deck,
 getauschte Titel werden neu geschrieben und umsortierte Zeilen gleiten an ihren
 Platz. Im Chat steht dazu jeder Tool-Aufruf als eigene Zeile; Suchen lassen sich
-aufklappen und zeigen, was sie gefunden haben.
+aufklappen und zeigen, was sie gefunden haben. Der Chat hält dabei Schritt mit
+der Playlist: Ein Aufruf erscheint erst, wenn rechts seine Arbeit beginnt, und
+die Antwort erst, wenn sie gezeigt ist.
 `src/features/deck/choreography/` leitet diese Schritte aus den Ereignissen des
 Session-Streams ab; das Backend sendet dafür nichts Zusätzliches. Staut sich
 Arbeit, steigt das Tempo. Mit „Bewegung reduzieren“ entfällt die Inszenierung

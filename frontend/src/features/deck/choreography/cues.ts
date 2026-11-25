@@ -25,6 +25,8 @@ export type SearchCue = {
 /** One thing the agent did that the stage can present. */
 export type StagedCue =
   | SearchCue
+  /** A tool call with nothing to type. The deck edits after it are its work. */
+  | { kind: "call"; callId: string }
   | { kind: "add"; track: StageTrack }
   | { kind: "remove"; trackId: string }
   | { kind: "replace"; trackId: string; track: StageTrack }
@@ -47,6 +49,8 @@ const queryArgument: Record<string, string> = {
  * staged as a pick from that search.
  */
 export class CueScript {
+  private calls = new Set<string>();
+  private ended = new Set<string>();
   private searches = new Map<string, SearchCue>();
   private origins = new Map<string, SearchCue>();
 
@@ -54,16 +58,15 @@ export class CueScript {
     switch (event.type) {
       case "tool_call.sequence_added":
         // The sequence is sent again with every call added to it.
-        return event.sequence.calls.flatMap((call) => {
+        return event.sequence.calls.flatMap((call): Cue[] => {
+          if (call.state !== "pending" || this.calls.has(call.id)) {
+            return [];
+          }
+          this.calls.add(call.id);
           const argument = queryArgument[call.function.name];
           const query = argument ? call.function.arguments[argument] : undefined;
-          if (
-            call.state !== "pending" ||
-            this.searches.has(call.id) ||
-            typeof query !== "string" ||
-            !query.trim()
-          ) {
-            return [];
+          if (typeof query !== "string" || !query.trim()) {
+            return [{ kind: "call", callId: call.id }];
           }
           const cue: SearchCue = {
             kind: "search",
@@ -76,6 +79,7 @@ export class CueScript {
           return [cue];
         });
       case "tool_call.resolved":
+        this.ended.add(event.toolCallId);
         this.settle(
           event.toolCallId,
           (event.resultItems ?? []).map((item, index) => ({
@@ -87,6 +91,7 @@ export class CueScript {
         );
         return [];
       case "tool_call.failed":
+        this.ended.add(event.toolCallId);
         this.settle(event.toolCallId, []);
         return [];
       case "playlist.track_added":
@@ -107,6 +112,11 @@ export class CueScript {
   /** The search that showed the agent this track, if it ran in this session. */
   origin(track: StageTrack): SearchCue | undefined {
     return track.spotifyUri ? this.origins.get(track.spotifyUri) : undefined;
+  }
+
+  /** Whether the call has returned, with a result or a failure. */
+  hasEnded(callId: string): boolean {
+    return this.ended.has(callId);
   }
 
   private settle(callId: string, hits: SearchHit[]): void {

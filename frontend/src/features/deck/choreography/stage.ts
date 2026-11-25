@@ -106,6 +106,8 @@ export function* direct(cue: StagedCue, { origin, stage, ahead }: Scene): Genera
     case "search":
       yield* search(cue);
       return;
+    case "call":
+      return;
     case "add":
       // The agent marks everything it is about to add in the search first, so
       // the hits never cover the rows while those land.

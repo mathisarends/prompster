@@ -35,7 +35,10 @@ export class ToolCallChain extends LitElement {
       font-size: var(--font-size-label);
     }
     .label {
-      margin: 0 0 2px;
+      display: flex;
+      align-items: center;
+      min-height: 28px;
+      margin: 0;
       color: var(--color-faint);
       font-size: var(--font-size-caption);
     }
@@ -116,7 +119,7 @@ export class ToolCallChain extends LitElement {
       color: var(--color-faint);
     }
     .found {
-      margin: 2px 0 8px 7px;
+      margin: 0 0 0 7px;
       padding: 2px 0 2px 18px;
       border-left: 1px solid var(--color-border);
     }
