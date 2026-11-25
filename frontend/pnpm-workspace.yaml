@@ -1,0 +1,7 @@
+allowBuilds:
+  esbuild: true
+  "lit-canon-api@https://codeload.github.com/mathisarends/lit-canon/tar.gz/02e362ad9684005270f907b97ec4260bf2d9b924#path:packages/api": true
+  "lit-canon-fetch@https://codeload.github.com/mathisarends/lit-canon/tar.gz/02e362ad9684005270f907b97ec4260bf2d9b924#path:packages/fetch": true
+
+overrides:
+  undici: ^7.29.1

@@ -87,16 +87,19 @@ export class AppLayout extends LitElement {
         if (!this.deckTitle.trim()) {
           return;
         }
-        await this.sessions.rename.mutateAsync([id, { title: this.deckTitle.trim() }]);
+        await this.sessions.rename.mutateAsync({
+          sessionId: id,
+          request: { title: this.deckTitle.trim() },
+        });
       }
       if (operation === "star") {
         const starred = this.sessions
           .list()
           .data?.items.find((session) => session.id === id)?.isStarred;
-        await (starred ? this.sessions.unstar : this.sessions.star).mutateAsync(id);
+        await (starred ? this.sessions.unstar : this.sessions.star).mutateAsync({ sessionId: id });
       }
       if (operation === "delete") {
-        await this.sessions.remove.mutateAsync(id);
+        await this.sessions.remove.mutateAsync({ sessionId: id });
         if (sessionIdFromPath(this.path) === id) {
           emit(this, "navigate", "/new");
         }

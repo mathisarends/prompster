@@ -35,7 +35,7 @@ The recordings use controlled API responses and simulated speech recognition. Th
 
 ## Run locally
 
-You'll need **Docker with Compose v2**, **Node.js 24**, a **Spotify developer app**, and an **OpenAI API key** for the default model configuration. Google sign-in is optional.
+You'll need **Docker with Compose v2**, **Node.js 24**, **pnpm**, a **Spotify developer app**, and an **OpenAI API key** for the default model configuration. Google sign-in is optional.
 
 ```bash
 git clone https://github.com/mathisarends/prompster.git
@@ -50,8 +50,8 @@ Fill in `.env` before starting: Spotify credentials, the token encryption key, a
 docker compose up --build -d
 
 # Frontend (runs outside Docker)
-npm --prefix frontend ci
-npm --prefix frontend run dev
+pnpm --dir frontend install --frozen-lockfile
+pnpm --dir frontend run dev
 ```
 
 Open **[127.0.0.1:5173](http://127.0.0.1:5173)** and sign in with Spotify or your configured Google app. Keep `127.0.0.1` consistent across the frontend and OAuth callbacks.
@@ -98,9 +98,9 @@ uv run pytest backend/tests/ -v
 uv run --package agent pytest libs/agent/tests/
 uv run --package backend fastapi-canon generate --config codegen.toml --check
 
-npm --prefix frontend run lint
-npm --prefix frontend test
-npm --prefix frontend run build
+pnpm --dir frontend run lint
+pnpm --dir frontend test
+pnpm --dir frontend run build
 ```
 
 The Compose stack mounts the backend and agent source for local iteration. To regenerate the stream contract and TypeScript client after changing a stream:
@@ -112,8 +112,8 @@ uv run --package backend fastapi-canon generate --config codegen.toml
 For HTTP client generation, export the backend schema and regenerate the client:
 
 ```bash
-npm --prefix frontend run api:export
-npm --prefix frontend run api:generate
+pnpm --dir frontend run api:export
+pnpm --dir frontend run api:generate
 ```
 
 The [frontend guide](frontend/README.md) also covers browser tests, translation checks, and the recording workflow.

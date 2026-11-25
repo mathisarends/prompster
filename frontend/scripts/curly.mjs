@@ -33,7 +33,7 @@ const paths =
     ? process.argv.slice(3).map((path) => resolve(path))
     : (await Promise.all(["src", "scripts"].map((directory) => collect(join(root, directory)))))
         .flat()
-        .concat([join(root, "vite.config.ts"), join(root, "orval.config.mjs")]);
+        .concat([join(root, "vite.config.ts"), join(root, "lit-canon-api.config.ts")]);
 
 let violations = 0;
 for (const path of paths.filter((path) => extensions.has(extname(path)))) {

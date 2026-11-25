@@ -2,6 +2,7 @@ import { createMutationController, createQueryController } from "@tanstack/lit-q
 import type { ReactiveControllerHost } from "lit";
 import {
   listSessionsQuery,
+  sessionsKeys,
   deleteSessionMutation,
   starSessionMutation,
   unstarSessionMutation,
@@ -32,6 +33,6 @@ export class SessionsController {
     );
   }
   refresh(): Promise<void> {
-    return queryClient.invalidateQueries({ queryKey: ["sessions", "listSessions"] });
+    return queryClient.invalidateQueries({ queryKey: sessionsKeys.all });
   }
 }
