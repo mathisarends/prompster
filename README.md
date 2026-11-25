@@ -60,7 +60,7 @@ Open **[127.0.0.1:5173](http://127.0.0.1:5173)** and sign in with Spotify or you
 | --- | --- |
 | App | [127.0.0.1:5173](http://127.0.0.1:5173) |
 | API docs | [127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) |
-| MinIO console | [127.0.0.1:9001](http://127.0.0.1:9001) |
+| SeaweedFS admin UI | [127.0.0.1:12535](http://127.0.0.1:12535) |
 | Database browser | [127.0.0.1:8080](http://127.0.0.1:8080) |
 
 **Using a Codex login?** The model selector distinguishes OpenAI API models from Codex models. See [Codex authentication](docs/getting-started.md#codex-authentication) for the local login and read-only Docker credential mount. Background tasks still use the default OpenAI model in the current configuration.

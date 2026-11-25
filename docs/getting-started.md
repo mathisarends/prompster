@@ -2,7 +2,7 @@
 
 [Back to the README](../README.md)
 
-The default setup runs the backend, PostgreSQL, and MinIO in Docker. Vite runs separately on the host. Commands below are run from the repository root; on Windows, use Git Bash for the Bash scripts and `cp` examples, or `Copy-Item .env.example .env` in PowerShell.
+The default setup runs the backend, PostgreSQL, and SeaweedFS (S3-compatible object storage) in Docker. Vite runs separately on the host. Commands below are run from the repository root; on Windows, use Git Bash for the Bash scripts and `cp` examples, or `Copy-Item .env.example .env` in PowerShell.
 
 ## Configure the environment
 
@@ -36,7 +36,7 @@ If you already have the Python workspace installed, the equivalent command is:
 uv run --package backend python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 ```
 
-The Compose file supplies local database, storage, and JWT defaults. `POSTGRES_*` and `MINIO_ROOT_*` values in `.env` set the database and object-storage credentials. These defaults are intended for local development.
+The Compose file supplies local database, storage, and JWT defaults. `POSTGRES_*` and `S3_ACCESS_KEY`/`S3_SECRET_KEY` values in `.env` set the database and object-storage credentials; the S3 pair also signs in to the SeaweedFS admin UI. SeaweedFS creates the `STORAGE_BUCKET_NAME` bucket on startup. These defaults are intended for local development.
 
 ## Start the app
 

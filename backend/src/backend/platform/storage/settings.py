@@ -7,7 +7,7 @@ class S3StorageCredentials(BaseSettings):
     secret_key: str
     public_endpoint_url: str | None = None
 
-    model_config = SettingsConfigDict(env_prefix="MINIO_")
+    model_config = SettingsConfigDict(env_prefix="S3_")
 
 
 class StorageSettings(BaseSettings):
