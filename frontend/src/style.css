@@ -41,6 +41,9 @@
   --color-play: #1ed760;
   --color-play-hover: #3be477;
   --color-player-track: #4d4d4d;
+  --color-stop: #e5484d; /* halting a running turn */
+  --color-stop-hover: #f1595e;
+  --color-on-stop: #ffffff;
   --color-error: #f0aaa1;
   --color-error-surface: #f0aaa114;
 

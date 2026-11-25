@@ -30,3 +30,14 @@ export type ToolCallItem = {
 };
 
 export type ToolCallSequenceLabel = string | null | undefined;
+
+/**
+ * How far a presentation of the agent's work has come with its tool calls. The
+ * conversation follows it, so a call shows up there when its work does.
+ */
+export type ToolCallProgress = {
+  /** Calls the presentation has yet to reach. */
+  waiting: ReadonlySet<string>;
+  /** The call whose work it is showing right now. */
+  working: string | null;
+};

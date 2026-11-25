@@ -13,8 +13,13 @@ import {
 } from "@api/generated/sessions";
 import { uploadImageAttachment } from "@api/generated/image-attachments";
 import { emit, errorMessage } from "@shared/events";
+import { Feed } from "@shared/feed";
 import { chatReducer, createInitialChatState, type ChatAction } from "./state/chat-reducer";
-import { streamCompleteOnboarding, streamSendMessage } from "./api/session-stream";
+import {
+  streamCompleteOnboarding,
+  streamSendMessage,
+  type SessionStreamEvent,
+} from "./api/session-stream";
 import type { ChatAttachment } from "./components/attachments/attachment-types";
 
 type Host = ReactiveControllerHost & HTMLElement;
@@ -29,6 +34,8 @@ export class ChatController implements ReactiveController {
   stopping = false;
   error = "";
   modelId?: string;
+  /** Every event of the running turn, published before the state reflects it. */
+  readonly stream = new Feed<SessionStreamEvent>();
   private revision = 0;
   private abort?: AbortController;
   private stopTimer?: number;
@@ -161,11 +168,7 @@ export class ChatController implements ReactiveController {
         {
           signal,
           modelId: this.modelId,
-          onEvent: (event) => {
-            if (!signal.aborted) {
-              this.dispatch({ type: "stream/event", event });
-            }
-          },
+          onEvent: (event) => this.receive(event, signal),
         },
       );
     });
@@ -183,14 +186,17 @@ export class ChatController implements ReactiveController {
         await streamCompleteOnboarding(this.id, {
           signal,
           modelId: this.modelId,
-          onEvent: (event) => {
-            if (!signal.aborted) {
-              this.dispatch({ type: "stream/event", event });
-            }
-          },
+          onEvent: (event) => this.receive(event, signal),
         });
       }
     });
+  }
+  private receive(event: SessionStreamEvent, signal: AbortSignal): void {
+    if (signal.aborted) {
+      return;
+    }
+    this.stream.publish(event);
+    this.dispatch({ type: "stream/event", event });
   }
   private async run(operation: (signal: AbortSignal) => Promise<void>): Promise<boolean> {
     const revision = this.revision;

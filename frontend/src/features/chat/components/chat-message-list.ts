@@ -1,5 +1,4 @@
 import { msg, localized } from "@lit/localize";
-import { researchStepCount, retryLabel } from "@shared/i18n/messages";
 import { css, html, LitElement, nothing, type PropertyValues } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -7,20 +6,28 @@ import { pageStyles } from "@shared/styles/page";
 import { icon } from "@shared/ui/icons";
 import { emit } from "@shared/events";
 import "@chat";
+import "./tool-call-chain";
 import type { RunStatus } from "@/api/session-streams";
 import type { ChatEntry } from "../state/chat-reducer";
 import { toToolCallItems } from "../state/chat-reducer";
+import { followProgress } from "../state/tool-call-progress";
+import type { ToolCallProgress } from "../types";
 
 @customElement("chat-message-list")
 @localized()
 export class ChatMessageList extends LitElement {
   @property({ attribute: false }) entries: ChatEntry[] = [];
   @property({ type: Boolean }) pending = false;
+  /** How far the workspace has shown the agent's work; the list keeps to it. */
+  @property({ attribute: false }) progress: ToolCallProgress | null = null;
   @property({ attribute: false }) runStatus: RunStatus = "running";
   @query(".scroll") private scroller!: HTMLElement;
   private stick = true;
   protected updated(changed: PropertyValues): void {
-    if (this.stick && (changed.has("entries") || changed.has("pending"))) {
+    if (
+      this.stick &&
+      (changed.has("entries") || changed.has("pending") || changed.has("progress"))
+    ) {
       this.scroller.scrollTop = this.scroller.scrollHeight;
     }
   }
@@ -35,8 +42,8 @@ export class ChatMessageList extends LitElement {
           ${icon("layers", 16)} ${msg("Prompster fasst den bisherigen Verlauf zusammen …")}
         </p>`;
       default:
-        return html`<p class="pending" role="status">
-          ${icon("sparkles", 16)} ${msg("Prompster arbeitet an deinem Deck …")}
+        return html`<p class="pending working" role="status">
+          ${icon("disc", 16)} ${msg("Prompster arbeitet an deinem Deck …")}
         </p>`;
     }
   }
@@ -55,43 +62,15 @@ export class ChatMessageList extends LitElement {
     .entry {
       margin-bottom: 32px;
     }
-    /* Research steps collapse into one quiet line, like T3's tool calls. */
-    details {
-      color: var(--color-muted);
-      font-size: var(--font-size-label);
+    /* The agent's calls keep one rhythm across their sequences, up to its answer. */
+    .entry.work {
+      margin-bottom: 0;
     }
-    summary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 8px 4px 0;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      list-style: none;
+    .entry.work + .entry:not(.work) {
+      margin-top: 24px;
     }
-    summary::-webkit-details-marker {
-      display: none;
-    }
-    summary:hover {
-      color: var(--color-text);
-    }
-    summary svg {
-      color: var(--color-faint);
-    }
-    .tool {
-      margin: 8px 0 0 7px;
-      padding: 2px 0 2px 16px;
-      border-left: 1px solid var(--color-border);
-    }
-    .tool strong {
-      color: var(--color-text);
-      font-weight: var(--font-weight-medium);
-    }
-    .tool p {
-      margin: 2px 0 0;
-      color: var(--color-faint);
-      font-size: var(--font-size-caption);
-      white-space: pre-wrap;
+    .entry.work + .pending {
+      margin-top: 10px;
     }
     .pending {
       display: flex;
@@ -104,9 +83,23 @@ export class ChatMessageList extends LitElement {
       color: var(--color-accent);
       animation: glow 1.6s ease-in-out infinite;
     }
+    .pending.working svg {
+      color: var(--color-muted);
+      animation: spin 2.4s linear infinite;
+    }
     @keyframes glow {
       50% {
         opacity: 0.35;
+      }
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .pending svg {
+        animation: none;
       }
     }
     .attachments {
@@ -133,6 +126,7 @@ export class ChatMessageList extends LitElement {
     }
   `;
   render() {
+    const { entries, behind } = followProgress(this.entries, this.progress);
     return html`<div
       class="scroll"
       role="log"
@@ -144,10 +138,10 @@ export class ChatMessageList extends LitElement {
       }}
     >
       ${repeat(
-        this.entries,
+        entries,
         (entry) => entry.id,
         (entry) =>
-          html`<div class="entry">
+          html`<div class=${entry.kind === "tool_call_group" ? "entry work" : "entry"}>
             ${
               entry.kind === "user_message"
                 ? html`<div class="attachments">
@@ -156,24 +150,13 @@ export class ChatMessageList extends LitElement {
                     <human-message .text=${entry.content}></human-message>`
                 : entry.kind === "assistant_message"
                   ? html`<assistant-message .text=${entry.content}></assistant-message>`
-                  : html`<details>
-                      <summary>
-                        ${icon("sparkles", 15)} ${researchStepCount(entry.calls.length)}
-                      </summary>
-                      ${toToolCallItems(entry).map(
-                        (call) =>
-                          html`<div class="tool">
-                            <strong>${call.text}</strong>
-                            <p>
-                              ${call.status === "failed" ? msg("Fehlgeschlagen") : call.status === "completed" ? msg("Abgeschlossen") : msg("In Arbeit")}${call.retry ? ` · ${retryLabel(call.retry.attempt, call.retry.maxAttempts)}` : ""}
-                            </p>
-                            ${call.detail ? html`<p>${call.detail}</p>` : nothing}${call.resultItems?.map((item) => html`<p>${item.title}${item.artist ? ` · ${item.artist}` : ""}</p>`)}
-                          </div>`,
-                      )}
-                    </details>`
+                  : html`<tool-call-chain
+                      .label=${entry.label ?? ""}
+                      .calls=${toToolCallItems(entry)}
+                    ></tool-call-chain>`
             }
           </div>`,
-      )}${this.pending ? this.pendingStatus() : nothing}<slot></slot>
+      )}${this.pending || behind ? this.pendingStatus() : nothing}<slot></slot>
     </div>`;
   }
 }
