@@ -21,7 +21,11 @@ A decade, a genre, a vibe, a handful of artists you love, or a whole evening in 
 Prompster digs through Spotify while you watch: every search shows up in the chat and every find lands in the playlist right away. Ask for more '90s, fewer ballads or a different mix of eras, and the playlist updates as you talk. You can also add or remove songs by hand.
 
 **3. Check the cards.**
-Flip between the playlist and the finished cards. Hide the answers to see the deck the way your players will.
+Every card gets the cover of its song, shown as a record, a cassette, a CD or a stream depending on its era. Hover over a card (or tap it on your phone) to turn it over, and hide the answers to see the deck the way your players will.
+
+<p align="center">
+  <img src="docs/reviews/lit-frontend/cards-flip.gif" width="420" alt="Cards turning over on hover between the answer side with the album cover and year and the QR side, then the whole deck flipping to the QR side.">
+</p>
 
 **4. Bring it to the table.**
 Download a print-ready PDF and cut out the cards, or save the songs as a playlist in your Spotify account.

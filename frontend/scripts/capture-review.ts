@@ -136,10 +136,22 @@ try {
   await pause(2600);
   await desktop.getByRole("tab", { name: "Karten", exact: true }).click();
   await shot(desktop, "04-cards-desktop");
-  await pause(2100);
+  await pause(1500);
+  // Cards turn over while the pointer rests on them.
+  const desktopCards = desktop.locator("deck-panel music-card");
+  await desktopCards.nth(0).hover();
+  await pause(1600);
+  await desktopCards.nth(1).hover();
+  await pause(1600);
+  await desktop.mouse.move(1160, 900);
+  await pause(1000);
   await desktop.getByRole("checkbox", { name: "Auflösung verbergen" }).check();
   await shot(desktop, "11-qr-desktop");
   await pause(1800);
+  await desktopCards.nth(3).hover();
+  await pause(1700);
+  await desktop.mouse.move(1160, 900);
+  await pause(1000);
   await desktop.getByRole("checkbox", { name: "Auflösung verbergen" }).uncheck();
   await desktop.getByRole("button", { name: "Deck vergrößern" }).click();
   await shot(desktop, "12-workspace-expanded");
@@ -206,7 +218,13 @@ try {
   await pause(1700);
   await mobile.getByRole("tab", { name: "Karten", exact: true }).click();
   await shot(mobile, "10-cards-mobile");
-  await pause(2200);
+  await pause(1600);
+  // On touch, a tap turns a card over and the next one turns it back.
+  const mobileCard = mobile.locator("deck-panel music-card").first();
+  await mobileCard.tap();
+  await pause(1700);
+  await mobileCard.tap();
+  await pause(1100);
   await mobile.getByRole("checkbox", { name: "Auflösung verbergen" }).check();
   await pause(1400);
   await mobile.getByRole("button", { name: "Deck schließen", exact: true }).click();

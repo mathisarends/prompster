@@ -1,6 +1,6 @@
 # Lit frontend: review gallery
 
-Recorded on 2026-11-24 from the T3-style redesign (based on `64cb21c`) in Chrome. Desktop:
+Recorded on 2026-11-25 from the Zeitkapsel card design with turning cards (based on `b2b563a`) in Chrome. Desktop:
 1440 × 960; mobile: 390 × 844. The screenshots and videos use controlled HTTP
 and WebSocket fixtures plus a simulated browser speech-recognition service.
 They demonstrate layout, navigation, dictation controls and interactions;
@@ -12,8 +12,8 @@ The production application uses the real backend.
 
 | View    | Video                                      | Covered interactions                                                                                                                |
 | ------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Desktop | [MP4 walkthrough](desktop-walkthrough.mp4) | Studio, dictation preview/accept, prompt starter, chat, workspace, cards, QR side, expansion, export, library, settings, DE/EN language switch |
-| Mobile  | [MP4 walkthrough](mobile-walkthrough.mp4)  | Studio, dictation preview/discard, sidebar, existing session, chat, deck, cards, QR side, return to chat, DE/EN language switch |
+| Desktop | [MP4 walkthrough](desktop-walkthrough.mp4) | Studio, dictation preview/accept, prompt starter, chat, workspace, cards turning on hover, QR side, expansion, export, library, settings, DE/EN language switch |
+| Mobile  | [MP4 walkthrough](mobile-walkthrough.mp4)  | Studio, dictation preview/discard, sidebar, existing session, chat, deck, cards turning on tap, QR side, return to chat, DE/EN language switch |
 
 ### Desktop preview
 
@@ -22,6 +22,15 @@ The production application uses the real backend.
 ### Mobile preview
 
 ![Mobile walkthrough](mobile-preview.gif)
+
+### Turning cards
+
+![Cards turning over on hover and when the answers are hidden](cards-flip.gif)
+
+On desktop a card turns over while the pointer rests on it; on touch screens a
+tap turns it and the next tap turns it back. Hiding or revealing the answers
+turns the whole deck, one card after another. With reduced motion, the sides
+cross-fade instead.
 
 ## Screenshots
 
@@ -61,7 +70,8 @@ distinguishable by their model labels. Language selection is available
 exclusively in settings. Visiting settings preserves the chat draft and selected
 deck tab, while stopping active dictation. The language switch updates the
 interface while preserving the fixture's original German conversation and deck
-name. Card colors and proportions follow the existing PDF template. Album art in
+name. The cards use the Zeitkapsel design of the printed deck: the cover in
+the medium of its era (LP, cassette, CD or stream) and colours read from it. Album art in
 the fixtures is loaded from public catalogue URLs; the fixture account has no
 Spotify Premium, so the player shows its Premium notice.
 

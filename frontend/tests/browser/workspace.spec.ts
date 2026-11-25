@@ -30,6 +30,23 @@ test("workspace spans the viewport and supports keyboard tabs and expansion", as
   await expect(page.getByRole("textbox", { name: "Nachricht", exact: true })).toBeVisible();
 });
 
+test("cards turn over on hover and keep a concealed answer out of the page", async ({ page }) => {
+  await mockApi(page);
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await page.goto("/chat/deck-1");
+  await page.getByRole("tab", { name: "Karten", exact: true }).click();
+  await page.getByRole("checkbox", { name: "Auflösung verbergen" }).check();
+  const card = page.locator("deck-panel music-card").first();
+  await expect(card).not.toContainText("Dancing Queen");
+  await card.hover();
+  await expect(card.locator(".lift")).toHaveClass(/raised/);
+  await expect(card.locator(".back")).toContainText("Dancing Queen");
+  await expect(card.locator(".back")).toHaveAttribute("aria-hidden", "true");
+  await page.mouse.move(0, 0);
+  await expect(card.locator(".back")).toHaveCount(0);
+  await expect(card).not.toContainText("Dancing Queen");
+});
+
 test("icon shortcut hints match actions, restore focus and respect settings and dialogs", async ({
   page,
 }) => {
