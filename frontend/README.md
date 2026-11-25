@@ -159,12 +159,26 @@ erstellt die Aufnahmen gegen den laufenden Vite-Server mit den kontrollierten
 Browser-Testdaten neu. Voraussetzungen und Video-Konvertierung stehen in der
 Galerie.
 
+`npm run review:choreography` nimmt einen zeitlich getakteten Agentenlauf im
+Deck-Arbeitsbereich auf und legt das Video unter `test-results/choreography/` ab;
+die [aktuelle Aufnahme](../docs/reviews/playlist-choreography/deck-build.mp4)
+liegt als MP4 bei den Reviews.
+
 ## Workspace, Karten und Diktieren
 
 Der Deck-Arbeitsbereich reicht über die gesamte Fensterhöhe. Playlist, Karten
 und Export sind per Tabs erreichbar (auch mit Pfeiltasten, Pos1 und Ende);
 die Ansicht lässt sich vergrößern und wieder neben den Chat stellen. Auf Mobil
 ersetzt das geöffnete Deck den Chat bis zum Schließen.
+
+Während der Agent arbeitet, zeigt die Playlist-Ansicht seine Arbeit in
+verfolgbarem Tempo: Die Suchanfragen werden in ein Suchfeld getippt, Treffer
+erscheinen darunter, Songs landen einzeln in der Liste, getauschte Titel werden
+neu geschrieben und umsortierte Zeilen gleiten an ihren Platz.
+`src/features/deck/choreography/` leitet diese Schritte aus den Ereignissen des
+Session-Streams ab; das Backend sendet dafür nichts Zusätzliches. Staut sich
+Arbeit, steigt das Tempo. Mit „Bewegung reduzieren“ entfällt die Inszenierung
+und das Deck ändert sich direkt.
 
 Die Icon-Aktionen zeigen beim Hover ihren Namen und vorhandene Tastenkürzel.
 Dieselben Kürzel sind über `aria-keyshortcuts` für assistive Technik verfügbar.
