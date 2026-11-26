@@ -54,6 +54,8 @@ from backend.features.session.presentation.streams.router import (
     send_message,
 )
 
+_TEST_TIME = datetime(2024, 1, 1, tzinfo=UTC)
+
 
 def _scope(service: object) -> ServiceScope[SessionConversationService]:
     @asynccontextmanager
@@ -148,7 +150,7 @@ class _SessionConversationServiceStub:
             entries=[],
             owner_id=user_id,
             id=session_id,
-            created_at=datetime.now(UTC),
+            created_at=_TEST_TIME,
         )
 
     async def complete_onboarding(
@@ -264,7 +266,7 @@ class TestGetSessionByIdRoute:
 
         session = Session.restore(
             id=session_id,
-            created_at=datetime.now(UTC),
+            created_at=_TEST_TIME,
             title="Session",
             entries=[],
             owner_id=user_id,
@@ -298,7 +300,7 @@ class TestGetSessionByIdRoute:
         storage_key = f"users/{user_id}/chat/{session_id}/image.png"
         session = Session.restore(
             id=session_id,
-            created_at=datetime.now(UTC),
+            created_at=_TEST_TIME,
             title="Session",
             entries=[],
             owner_id=user_id,
@@ -362,7 +364,7 @@ class TestRestoreUserCurationEventRoute:
         user_id = UUID(int=10)
         session = Session.restore(
             id=session_id,
-            created_at=datetime.now(UTC),
+            created_at=_TEST_TIME,
             title="Session",
             entries=[],
             owner_id=user_id,

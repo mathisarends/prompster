@@ -2,8 +2,8 @@
 # backend/smelt.yml and libs/agent/smelt.yml.
 #
 # Smelt is pinned in .pre-commit-config.yaml and .github/workflows/backend-ci.yml.
-# It runs isolated because its pydantic requirement would otherwise move the
-# locked runtime version. Update both pins together.
+# Smelt runs in an isolated tool environment to keep lint dependencies outside
+# the application lockfile. Update both pins together.
 version: 2
 
 project:
@@ -27,9 +27,6 @@ ignore:
   - rule: imports/prefer-package-import
     paths: [backend/tests/**, libs/agent/tests/**]
     reason: Tests import the module they verify directly, matching the mirrored layout.
-  - rule: architecture/non-public-module-import
-    paths: [backend/tests/**, libs/agent/tests/**]
-    reason: White-box tests may import the internals of the package they verify.
 
 style:
   imports: {style: absolute}
@@ -74,6 +71,7 @@ rules:
   layout/forbidden-private-module: error
   layout/file-name-convention: error
   layout/reexport-only-module: error
+  layout/redundant-comment: on
 
   # Visibility.
   visibility/misplaced-dunder-all: error
@@ -137,6 +135,10 @@ rules:
   tests/missing-await-assertion: error
   tests/independent-case-loop: error
   tests/nondeterministic-data: error
+  tests/missing-skip-reason: on
+
+  # Type-checker and linter suppressions need a local reason.
+  meta/missing-tool-suppression-reason: on
 
   # Rejected on purpose. Each of these would need filler code or mass exceptions.
   # Builtin errors need an error-to-status design first, so they get their own change.

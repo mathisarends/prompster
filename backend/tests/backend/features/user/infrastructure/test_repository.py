@@ -12,6 +12,7 @@ def test_create_with_auth_identity_flushes_user_before_identity_insert() -> None
     session.flush = AsyncMock()
     session.refresh = AsyncMock()
 
+    # The fake session records persistence calls without a database.
     repository = SqlUserRepository(session=session)  # type: ignore[arg-type]
     user = User.create(
         name="Mathis",

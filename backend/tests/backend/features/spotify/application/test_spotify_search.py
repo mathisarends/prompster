@@ -557,6 +557,7 @@ class TestSpotifySearch:
             )
             return SpotifyUnifiedSearchResult(tracks=(), playlists=(), artists=())
 
+        # Replace the search coroutine to test coalescing without an HTTP request.
         service._execute_unified_search = _execute_unified_search  # type: ignore[method-assign]
 
         with caplog.at_level(

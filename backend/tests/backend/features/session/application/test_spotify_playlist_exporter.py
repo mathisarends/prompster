@@ -24,6 +24,8 @@ from backend.features.session.domain import (
 )
 from backend.features.user.domain import SpotifyAccount, User, UserRepository
 
+_TEST_TIME = datetime(2024, 1, 1, tzinfo=UTC)
+
 
 class _SessionRepositoryStub(SessionRepository):
     def __init__(self, session: Session) -> None:
@@ -162,7 +164,7 @@ class TestSessionSpotifyPlaylistExporter:
         user_repository = _UserRepositoryStub(
             user=User.restore(
                 id=owner_id,
-                created_at=datetime.now(UTC),
+                created_at=_TEST_TIME,
                 name="Mathis",
                 spotify=SpotifyAccount.connected_with(is_premium=True),
             )
@@ -176,6 +178,7 @@ class TestSessionSpotifyPlaylistExporter:
             user_repository=user_repository,
             metadata_generator=metadata_generator,
             spotify_playlist_creator=spotify_playlist_creator,
+            # The fake implements the exporter's async token lookup.
             spotify_token_service=token_service,  # type: ignore[arg-type]
         )
 
@@ -216,7 +219,7 @@ class TestSessionSpotifyPlaylistExporter:
         user_repository = _UserRepositoryStub(
             user=User.restore(
                 id=owner_id,
-                created_at=datetime.now(UTC),
+                created_at=_TEST_TIME,
                 name="Mathis",
                 spotify=SpotifyAccount.connected_with(is_premium=True),
             )
@@ -228,6 +231,7 @@ class TestSessionSpotifyPlaylistExporter:
             user_repository=user_repository,
             metadata_generator=_MetadataGeneratorStub(),
             spotify_playlist_creator=spotify_playlist_creator,
+            # The fake implements the exporter's async token lookup.
             spotify_token_service=_TokenServiceStub(),  # type: ignore[arg-type]
         )
 
@@ -263,7 +267,7 @@ class TestSessionSpotifyPlaylistExporter:
             user_repository=_UserRepositoryStub(
                 user=User.restore(
                     id=owner_id,
-                    created_at=datetime.now(UTC),
+                    created_at=_TEST_TIME,
                     name="Mathis",
                     spotify=SpotifyAccount.connected_with(is_premium=True),
                 )
@@ -272,7 +276,7 @@ class TestSessionSpotifyPlaylistExporter:
             spotify_playlist_creator=_SpotifyPlaylistCreatorStub(),
             spotify_token_service=_TokenServiceStub(
                 error=SpotifyTokenRevokedException()
-            ),  # type: ignore[arg-type]
+            ),  # type: ignore[arg-type] -- The fake raises the token error for the export scenario.
         )
 
         with pytest.raises(
@@ -286,7 +290,7 @@ class TestSessionSpotifyPlaylistExporter:
             user_repository=_UserRepositoryStub(
                 user=User.restore(
                     id=owner_id,
-                    created_at=datetime.now(UTC),
+                    created_at=_TEST_TIME,
                     name="Mathis",
                     spotify=SpotifyAccount.connected_with(is_premium=True),
                 )
@@ -295,7 +299,7 @@ class TestSessionSpotifyPlaylistExporter:
             spotify_playlist_creator=_SpotifyPlaylistCreatorStub(),
             spotify_token_service=_TokenServiceStub(
                 error=SpotifyConnectionNotFoundException()
-            ),  # type: ignore[arg-type]
+            ),  # type: ignore[arg-type] -- The fake raises the token error for the export scenario.
         )
 
         with pytest.raises(

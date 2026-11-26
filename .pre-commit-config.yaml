@@ -11,7 +11,7 @@ repos:
         entry: smelt check --staged --strict-coverage --fail-on warning
         language: python
         language_version: "3.14"
-        additional_dependencies: [smelt-cli==0.16.1]
+        additional_dependencies: [smelt-cli==0.18.0]
         pass_filenames: false
         always_run: true
         require_serial: true

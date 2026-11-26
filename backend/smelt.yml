@@ -17,13 +17,7 @@ architecture:
     - backend.lifespan
     - backend.app
   wiring:
-    - backend.features.auth
-    - backend.features.health
-    - backend.features.llm
-    - backend.features.oauth_connections
-    - backend.features.session
-    - backend.features.spotify
-    - backend.features.user
+    - backend.features.*.compose
     - backend.features.*.infrastructure.di
     - backend.platform.*.di
   layers:

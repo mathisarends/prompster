@@ -20,6 +20,8 @@ from backend.features.oauth_connections.domain import (
 )
 from backend.shared.oauth_provider import OAuthProvider
 
+_TEST_TIME = datetime(2024, 1, 1, tzinfo=UTC)
+
 
 class _OAuthConnectionRepositoryStub(OAuthConnectionRepository):
     def __init__(self, *, connection: OAuthConnection | None) -> None:
@@ -87,13 +89,13 @@ class _SpotifyOAuthProviderStub(SpotifyOAuthProvider):
 def _make_connection(*, refresh_token: str) -> OAuthConnection:
     return OAuthConnection.restore(
         id=UUID(int=1),
-        created_at=datetime.now(UTC),
+        created_at=_TEST_TIME,
         user_id=UUID(int=2),
         provider=OAuthProvider.SPOTIFY,
         provider_user_id="spotify-user-1",
         refresh_token=refresh_token,
         scope="scope-1",
-        connected_at=datetime.now(UTC),
+        connected_at=_TEST_TIME,
     )
 
 

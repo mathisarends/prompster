@@ -50,6 +50,8 @@ from backend.features.session.infrastructure.session_runner import (
     AgentSessionRunner,
 )
 
+_TEST_TIME = datetime(2024, 1, 1, tzinfo=UTC)
+
 
 class _SessionRepositoryStub(SessionRepository):
     def __init__(self, session: Session) -> None:
@@ -205,7 +207,7 @@ class TestSendMessageConsumesCurationEvents:
         )
         session = Session.restore(
             id=UUID(int=11),
-            created_at=datetime.now(UTC),
+            created_at=_TEST_TIME,
             title="Deck",
             entries=[],
             owner_id=user_id,
@@ -243,7 +245,7 @@ class TestSendMessageConsumesCurationEvents:
         )
         session = Session.restore(
             id=UUID(int=14),
-            created_at=datetime.now(UTC),
+            created_at=_TEST_TIME,
             title="Deck",
             entries=[],
             owner_id=user_id,

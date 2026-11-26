@@ -19,6 +19,8 @@ from backend.features.session.infrastructure.agent_input import (
     AgentInputBuilder,
 )
 
+_TEST_TIME = datetime(2024, 1, 1, tzinfo=UTC)
+
 
 class _AttachmentStore:
     async def load_bytes(self, *, storage_key: str) -> bytes:
@@ -58,7 +60,7 @@ def test_unbound_deck_changes_are_sent_without_a_message() -> None:
     )
     session = Session.restore(
         id=UUID(int=4),
-        created_at=datetime.now(UTC),
+        created_at=_TEST_TIME,
         title="Deck",
         entries=[],
         owner_id=UUID(int=5),
@@ -85,7 +87,7 @@ def test_image_attachments_are_loaded_for_the_agent() -> None:
         image_attachments=[
             ImageAttachment.restore(
                 id=UUID(int=7),
-                created_at=datetime.now(UTC),
+                created_at=_TEST_TIME,
                 storage_key="photo",
                 content_type="image/jpeg",
                 file_name="photo.jpg",
