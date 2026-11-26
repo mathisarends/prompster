@@ -7,7 +7,7 @@ from agent.research.events import (
     TracksFoundEvent,
 )
 from agent.research.plugin import ResearchPlugin
-from agent.research.spotify import Spotify
+from agent.research.spotify import Spotify, TrackResults
 
 __all__ = [
     "FoundPlaylist",
@@ -17,5 +17,6 @@ __all__ = [
     "ResearchPlugin",
     "Spotify",
     "SpotifyRetryEvent",
+    "TrackResults",
     "TracksFoundEvent",
 ]

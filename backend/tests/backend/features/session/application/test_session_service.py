@@ -79,6 +79,8 @@ from backend.features.session.domain import (
     UserMessage,
 )
 
+_TEST_TIME = datetime(2024, 1, 1, tzinfo=UTC)
+
 
 class _SessionRepositoryStub(SessionRepository):
     def __init__(
@@ -361,7 +363,7 @@ class TestSessionServiceUpdate:
             entries=[],
             owner_id=owner_id,
             id=session.id,
-            created_at=datetime.now(UTC),
+            created_at=_TEST_TIME,
         )
         repository = _SessionRepositoryStub(
             session_by_id=session, updated_session=updated
@@ -843,7 +845,7 @@ class TestSessionServiceSendMessage:
                         id=playlist_id,
                         name="80er Party",
                         tracks=[track],
-                        created_at=datetime.now(UTC),
+                        created_at=_TEST_TIME,
                     )
                 )
             ]
@@ -925,12 +927,12 @@ class TestSessionServiceSendMessage:
         )
         session = Session.restore(
             id=UUID(int=40),
-            created_at=datetime.now(UTC),
+            created_at=_TEST_TIME,
             title="Roadtrip",
             entries=[],
             owner_id=owner_id,
             playlist=Playlist.restore(
-                id=playlist_id, tracks=[removed_track], created_at=datetime.now(UTC)
+                id=playlist_id, tracks=[removed_track], created_at=_TEST_TIME
             ),
         )
         runner = _SessionRunnerStub(

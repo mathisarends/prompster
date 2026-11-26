@@ -28,7 +28,7 @@ def make_retry() -> RetryEvent:
         retry_number=1,
         max_retries=3,
         retry_in_seconds=0.5,
-        retry_at=datetime.now(UTC),
+        retry_at=datetime(2024, 1, 1, tzinfo=UTC),
     )
 
 

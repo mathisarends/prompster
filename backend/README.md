@@ -21,6 +21,20 @@ Encapsulates:
 | `spotify` | Spotify account connection, playlist write-back |
 | `user` | User profile read / update |
 
+Each feature registers its routers and providers in `compose.py`.
+The app assembles these registrations without making subpackage imports load the HTTP layer.
+
+### architecture checks
+
+Run the workspace policy from the repository root:
+
+```bash
+uvx --python 3.14 --from smelt-cli==0.18.0 smelt check --strict-coverage --fail-on warning
+```
+
+The commit hook checks staged changes and CI checks the full workspace.
+The matching agent skill lives in [`.agents/skills/smelt`](../.agents/skills/smelt).
+
 ### session event streams
 
 Agent runs and Spotify exports stream as server-sent events. Each stream is a

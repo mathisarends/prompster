@@ -36,6 +36,8 @@ from backend.features.session.domain.exceptions import (
     UserCurationEventNotFoundError,
 )
 
+_TEST_TIME = datetime(2024, 1, 1, tzinfo=UTC)
+
 
 @pytest.fixture
 def owner_id() -> UUID:
@@ -113,7 +115,7 @@ class TestSessionDomainSession:
     ) -> None:
         session = Session.restore(
             id=UUID(int=3),
-            created_at=datetime.now(UTC),
+            created_at=_TEST_TIME,
             title="Roadtrip",
             entries=[],
             owner_id=owner_id,
@@ -129,7 +131,7 @@ class TestSessionDomainSession:
     ) -> None:
         session = Session.restore(
             id=UUID(int=4),
-            created_at=datetime.now(UTC),
+            created_at=_TEST_TIME,
             title="Roadtrip",
             entries=[],
             owner_id=owner_id,
@@ -308,6 +310,7 @@ class TestSessionDomainSession:
         assert isinstance(session.entries, tuple)
 
         with pytest.raises(AttributeError, match="append"):
+            # Intentionally attempt to mutate the read-only entries API.
             session.entries.append(object())  # type: ignore[attr-defined]
 
     def test_add_user_message_appends_entry(self, session: Session) -> None:
@@ -527,7 +530,7 @@ class TestSessionDomainSession:
 
         Session.restore(
             id=UUID(int=8),
-            created_at=datetime.now(UTC),
+            created_at=_TEST_TIME,
             title="Roadtrip",
             entries=[message],
             owner_id=owner_id,
@@ -769,7 +772,7 @@ class TestSessionDomainSession:
         )
         session = Session.restore(
             id=UUID(int=14),
-            created_at=datetime.now(UTC),
+            created_at=_TEST_TIME,
             title="Roadtrip",
             entries=[],
             owner_id=session.owner_id,

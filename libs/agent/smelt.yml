@@ -20,6 +20,7 @@ architecture:
       match: agent
       public: ['.', activity, conversation, deck, onboarding, research, review]
       min_importers_to_export: 3
+      test_access: mirrored
 rules:
   architecture/missing-facade-export: error
 debt: .smelt/debt.json

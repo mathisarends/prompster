@@ -4,8 +4,7 @@ from collections.abc import AsyncIterator, Callable, Mapping, Sequence
 from typing import Any
 
 import pytest
-from agent.research import FoundTrack, Spotify
-from agent.research.spotify import TrackResults
+from agent.research import FoundTrack, Spotify, TrackResults
 from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart, ToolCallPart
 from pydantic_ai.models.function import (
     AgentInfo,

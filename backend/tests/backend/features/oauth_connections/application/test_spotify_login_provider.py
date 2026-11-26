@@ -60,6 +60,7 @@ class _ConnectionService:
 def _provider(connections: _ConnectionService) -> SpotifyAccountLoginProvider:
     return SpotifyAccountLoginProvider(
         spotify_oauth_provider=_SpotifyProvider(),
+        # The fake implements the connection methods used by login.
         connection_service=connections,  # type: ignore[arg-type]
     )
 

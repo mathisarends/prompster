@@ -28,6 +28,8 @@ from backend.platform.database.orm import (
     SessionUserMessageModel,
 )
 
+_TEST_TIME = datetime(2024, 1, 1, tzinfo=UTC)
+
 
 def _session_model(session: Session, **relationships: object) -> SessionModel:
     return SessionModel(
@@ -61,7 +63,7 @@ def test_sync_entries_reuses_existing_user_message_row_by_id() -> None:
         entries=[],
         owner_id=owner_id,
         id=session_id,
-        created_at=datetime.now(UTC),
+        created_at=_TEST_TIME,
     )
     session.add_user_message("hello")
     message = session.entries[0]
@@ -112,7 +114,7 @@ def test_user_message_attachment_mapping_roundtrip() -> None:
         entries=[],
         owner_id=owner_id,
         id=session_id,
-        created_at=datetime.now(UTC),
+        created_at=_TEST_TIME,
     )
     session.add_user_message("nutze diese playlist", attachments=[attachment])
     message = session.entries[0]
@@ -167,14 +169,14 @@ def test_user_message_image_attachment_mapping_roundtrip() -> None:
         entries=[],
         owner_id=owner_id,
         id=session_id,
-        created_at=datetime.now(UTC),
+        created_at=_TEST_TIME,
     )
     session.add_user_message(
         "analysiere den screenshot",
         image_attachments=[
             ImageAttachment.restore(
                 id=image_attachment_id,
-                created_at=datetime.now(UTC),
+                created_at=_TEST_TIME,
                 storage_key=(
                     f"sessions/abc/messages/def/attachments/{image_attachment_id}.png"
                 ),
@@ -236,7 +238,7 @@ def test_session_phase_mapping_roundtrip() -> None:
         entries=[],
         owner_id=owner_id,
         id=session_id,
-        created_at=datetime.now(UTC),
+        created_at=_TEST_TIME,
         phase=Phase.BUILD,
     )
 
@@ -272,7 +274,7 @@ def test_sync_user_curation_events_reuses_existing_row_by_id() -> None:
         entries=[],
         owner_id=owner_id,
         id=session_id,
-        created_at=datetime.now(UTC),
+        created_at=_TEST_TIME,
         user_curation_events=[event],
     )
 
@@ -321,7 +323,7 @@ def test_reference_mapping_roundtrip() -> None:
         entries=[],
         owner_id=owner_id,
         id=session_id,
-        created_at=datetime.now(UTC),
+        created_at=_TEST_TIME,
     )
     playlist_reference = session.add_playlist_reference(
         spotify_playlist_id="37i9dQZF1DX4dyzvuaRJ0n",
@@ -595,7 +597,7 @@ def test_onboarding_question_mapping_roundtrip() -> None:
         entries=[],
         owner_id=owner_id,
         id=session_id,
-        created_at=datetime.now(UTC),
+        created_at=_TEST_TIME,
     )
     question = session.add_onboarding_question(
         question_text="Fuer wen ist die Playlist?",

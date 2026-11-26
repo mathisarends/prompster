@@ -12,6 +12,8 @@ from backend.shared.authentication import (
     TokenType,
 )
 
+_TEST_TIME = datetime(2024, 1, 1, tzinfo=UTC)
+
 
 class TestJwtTokenIssuer:
     @staticmethod
@@ -55,8 +57,8 @@ class TestJwtTokenIssuer:
         expired_token = jwt.encode(
             {
                 "sub": str(UUID(int=3)),
-                "iat": datetime.now(UTC),
-                "exp": datetime.now(UTC) - timedelta(seconds=1),
+                "iat": _TEST_TIME,
+                "exp": _TEST_TIME - timedelta(seconds=1),
                 "type": TokenType.ACCESS.value,
             },
             "test-signing-secret-with-at-least-32-bytes",

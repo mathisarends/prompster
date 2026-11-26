@@ -9,6 +9,7 @@ on:
       - "pyproject.toml"
       - "uv.lock"
       - "smelt.yml"
+      - ".pre-commit-config.yaml"
       - ".smelt/**"
       - "codegen.toml"
       - "schema/**"
@@ -24,6 +25,7 @@ on:
       - "pyproject.toml"
       - "uv.lock"
       - "smelt.yml"
+      - ".pre-commit-config.yaml"
       - ".smelt/**"
       - "codegen.toml"
       - "schema/**"
@@ -68,13 +70,16 @@ jobs:
         run: uv python install
 
       - name: Check architecture and conventions
-        run: uvx --python 3.14 --from smelt-cli==0.16.1 smelt check --strict-coverage --fail-on warning --format github
+        run: uvx --python 3.14 --from smelt-cli==0.18.0 smelt check --strict-coverage --fail-on warning --format github
 
       - name: Install dependencies
         run: uv sync --all-packages --dev
 
-      - name: Run tests
+      - name: Run backend tests
         run: uv run pytest backend/tests/ -v
+
+      - name: Run agent tests
+        run: uv run --package agent pytest libs/agent/tests/ -v
 
       - name: Check composition
         run: uv run --package backend fastapi-canon check composition --app backend.main:app --fail-on warning

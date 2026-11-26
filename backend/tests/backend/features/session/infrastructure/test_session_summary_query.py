@@ -36,6 +36,7 @@ class _AsyncAdapter:
 def orm() -> OrmSession:
     engine = create_engine("sqlite://")
     tables = [UserModel, SessionModel, SessionPlaylistModel, PlaylistTrackModel]
+    # SQLModel adds __table__ to concrete mapped classes.
     table_objects = [model.__table__ for model in tables]  # type: ignore[attr-defined]
     SQLModel.metadata.create_all(engine, tables=table_objects)
     session = OrmSession(engine)
@@ -86,6 +87,7 @@ def test_summaries_collect_up_to_four_distinct_covers_in_playlist_order(
     mosaic = _deck(orm, number=1, covers=covers)
     single = _deck(orm, number=2, covers=["https://img/9"])
     empty = _deck(orm, number=3, covers=[])
+    # The in-memory SQLite adapter implements async execute for this query.
     query = SqlSessionSummaryQuery(_AsyncAdapter(orm))  # type: ignore[arg-type]
 
     summaries = asyncio.run(
