@@ -18,8 +18,3 @@ SPOTIFY_TOKEN_REVOKED_ERROR = Error(
     code="spotify_token_revoked",
     title="Spotify access revoked",
 )
-
-OAUTH_CONNECTION_ERRORS = (
-    SPOTIFY_CONNECTION_NOT_FOUND_ERROR,
-    SPOTIFY_TOKEN_REVOKED_ERROR,
-)
