@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from backend.features.oauth_connections.application.exceptions import (
-    SpotifyConnectionNotFoundException,
-    SpotifyTokenRevokedException,
+from backend.features.oauth_connections.application.errors import (
+    SpotifyConnectionNotFoundError,
+    SpotifyTokenRevokedError,
 )
 from backend.features.oauth_connections.application.ports import (
     SpotifyOAuthProvider,
@@ -27,7 +27,7 @@ class SpotifyTokenService:
             provider=OAuthProvider.SPOTIFY,
         )
         if connection is None:
-            raise SpotifyConnectionNotFoundException()
+            raise SpotifyConnectionNotFoundError()
 
         refresh_token = connection.refresh_token
         try:
@@ -39,7 +39,7 @@ class SpotifyTokenService:
                 user_id=user_id,
                 provider=OAuthProvider.SPOTIFY,
             )
-            raise SpotifyTokenRevokedException() from exc
+            raise SpotifyTokenRevokedError() from exc
 
         if tokens.refresh_token is not None and tokens.refresh_token != refresh_token:
             connection.rotate_refresh_token(new_refresh_token=tokens.refresh_token)

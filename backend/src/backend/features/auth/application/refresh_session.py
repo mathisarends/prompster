@@ -3,7 +3,7 @@ from uuid import UUID
 from backend.features.user.domain import UserRepository
 from backend.shared.authentication import (
     AuthSession,
-    SessionInvalidException,
+    SessionInvalidError,
     TokenIssuer,
 )
 
@@ -20,6 +20,6 @@ class SessionRefresher:
     async def refresh(self, *, user_id: UUID) -> AuthSession:
         user = await self._user_repository.get_by_id(user_id=user_id)
         if user is None:
-            raise SessionInvalidException("Invalid user")
+            raise SessionInvalidError("Invalid user")
 
         return self._token_issuer.create_session(user_id=user.id)

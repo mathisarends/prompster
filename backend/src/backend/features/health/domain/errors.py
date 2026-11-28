@@ -1,2 +1,2 @@
-class ServiceNotReadyException(Exception):
+class ServiceNotReadyError(Exception):
     """Raised when a dependency required to serve traffic is unavailable."""

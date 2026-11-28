@@ -141,35 +141,37 @@ def to_entry_response(
     *,
     image_urls_by_storage_key: Mapping[str, str] | None = None,
 ) -> SessionEntryResponse:
-    if isinstance(entry, UserMessage):
-        attachments = [
-            _to_user_message_attachment_response(attachment)
-            for attachment in entry.attachments
-        ]
-        user_curation_events = [
-            _to_user_curation_event_response(event)
-            for event in entry.user_curation_events
-        ]
-        return UserMessageEntryResponse(
-            id=entry.id,
-            content=entry.content,
-            attachments=attachments,
-            image_attachments=_to_image_attachment_urls(
-                entry.image_attachments,
-                image_urls_by_storage_key=image_urls_by_storage_key,
-            ),
-            user_curation_events=user_curation_events,
-            created_at=entry.created_at,
-        )
-    if isinstance(entry, AssistantMessage):
-        return AssistantMessageEntryResponse(
-            id=entry.id,
-            content=entry.content,
-            created_at=entry.created_at,
-        )
-    if isinstance(entry, ToolCallSequence):
-        return to_tool_call_sequence_response(entry)
-    raise TypeError(f"Unsupported session entry: {type(entry).__name__}")
+    match entry:
+        case UserMessage():
+            attachments = [
+                _to_user_message_attachment_response(attachment)
+                for attachment in entry.attachments
+            ]
+            user_curation_events = [
+                _to_user_curation_event_response(event)
+                for event in entry.user_curation_events
+            ]
+            return UserMessageEntryResponse(
+                id=entry.id,
+                content=entry.content,
+                attachments=attachments,
+                image_attachments=_to_image_attachment_urls(
+                    entry.image_attachments,
+                    image_urls_by_storage_key=image_urls_by_storage_key,
+                ),
+                user_curation_events=user_curation_events,
+                created_at=entry.created_at,
+            )
+        case AssistantMessage():
+            return AssistantMessageEntryResponse(
+                id=entry.id,
+                content=entry.content,
+                created_at=entry.created_at,
+            )
+        case ToolCallSequence():
+            return to_tool_call_sequence_response(entry)
+        case _:
+            raise TypeError(f"Unsupported session entry: {type(entry).__name__}")
 
 
 def to_tool_call_sequence_response(

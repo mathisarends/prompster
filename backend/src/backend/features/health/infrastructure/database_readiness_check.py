@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.features.health.application import ReadinessCheck
-from backend.features.health.domain import ServiceNotReadyException
+from backend.features.health.domain import ServiceNotReadyError
 
 logger = logging.getLogger(__name__)
 
@@ -18,4 +18,4 @@ class DatabaseReadinessCheck(ReadinessCheck):
             await self._session.execute(text("SELECT 1"))
         except Exception as error:
             logger.warning("Readiness check failed", exc_info=True)
-            raise ServiceNotReadyException from error
+            raise ServiceNotReadyError from error

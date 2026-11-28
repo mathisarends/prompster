@@ -14,7 +14,7 @@ from backend.features.user.domain import (
 )
 from backend.shared.authentication import (
     AuthSession,
-    SessionInvalidException,
+    SessionInvalidError,
     TokenIssuer,
     TokenPayload,
     TokenType,
@@ -82,7 +82,7 @@ class TestSessionRefresher:
         issuer = _TokenIssuerStub(AuthSession(access_token="a", refresh_token="r"))
         handler = SessionRefresher(user_repository=repository, token_issuer=issuer)
 
-        with pytest.raises(SessionInvalidException, match="Invalid user"):
+        with pytest.raises(SessionInvalidError, match="Invalid user"):
             asyncio.run(handler.refresh(user_id=UUID(int=1)))
 
     def test_handle_returns_new_auth_session_for_existing_user(self) -> None:

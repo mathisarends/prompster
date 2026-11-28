@@ -1,3 +1,3 @@
-from backend.features.health.domain.exceptions import ServiceNotReadyException
+from backend.features.health.domain.errors import ServiceNotReadyError
 
-__all__ = ["ServiceNotReadyException"]
+__all__ = ["ServiceNotReadyError"]

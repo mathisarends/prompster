@@ -29,7 +29,7 @@ The app assembles these registrations without making subpackage imports load the
 Run the workspace policy from the repository root:
 
 ```bash
-uvx --python 3.14 --from smelt-cli==0.18.0 smelt check --strict-coverage --fail-on warning
+uvx --python 3.14 --from smelt-cli==0.20.0 smelt check --strict-coverage --fail-on warning
 ```
 
 The commit hook checks staged changes and CI checks the full workspace.

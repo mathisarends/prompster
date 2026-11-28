@@ -8,7 +8,7 @@ from backend.features.session.application import (
     SessionImageAttachmentUpload,
 )
 from backend.features.session.application.ports import MessageAttachmentStore
-from backend.features.session.presentation.exceptions import (
+from backend.features.session.presentation.errors import (
     INVALID_IMAGE_ATTACHMENT_ERROR,
 )
 from backend.features.session.presentation.schemas import (

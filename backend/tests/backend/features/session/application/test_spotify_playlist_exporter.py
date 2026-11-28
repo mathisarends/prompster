@@ -5,8 +5,8 @@ from uuid import UUID
 import pytest
 
 from backend.features.oauth_connections.application import (
-    SpotifyConnectionNotFoundException,
-    SpotifyTokenRevokedException,
+    SpotifyConnectionNotFoundError,
+    SpotifyTokenRevokedError,
 )
 from backend.features.oauth_connections.application.schemas import SpotifyAccessToken
 from backend.features.session.application.ports import (
@@ -274,9 +274,7 @@ class TestSessionSpotifyPlaylistExporter:
             ),
             metadata_generator=_MetadataGeneratorStub(),
             spotify_playlist_creator=_SpotifyPlaylistCreatorStub(),
-            spotify_token_service=_TokenServiceStub(
-                error=SpotifyTokenRevokedException()
-            ),  # type: ignore[arg-type] -- The fake raises the token error for the export scenario.
+            spotify_token_service=_TokenServiceStub(error=SpotifyTokenRevokedError()),  # type: ignore[arg-type] -- The fake raises the token error for the export scenario.
         )
 
         with pytest.raises(
@@ -298,7 +296,7 @@ class TestSessionSpotifyPlaylistExporter:
             metadata_generator=_MetadataGeneratorStub(),
             spotify_playlist_creator=_SpotifyPlaylistCreatorStub(),
             spotify_token_service=_TokenServiceStub(
-                error=SpotifyConnectionNotFoundException()
+                error=SpotifyConnectionNotFoundError()
             ),  # type: ignore[arg-type] -- The fake raises the token error for the export scenario.
         )
 

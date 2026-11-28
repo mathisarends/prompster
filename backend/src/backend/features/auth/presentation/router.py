@@ -9,7 +9,7 @@ from backend.features.auth.application import (
     SpotifyOAuthFlow,
 )
 from backend.features.auth.presentation.cookies import AuthCookies
-from backend.features.auth.presentation.exceptions import (
+from backend.features.auth.presentation.errors import (
     SESSION_EXPIRED_ERROR,
     SESSION_INVALID_ERROR,
 )

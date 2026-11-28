@@ -7,8 +7,8 @@ import pytest
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.features.auth.infrastructure.jwt_token_issuer import JwtTokenIssuer
 from backend.shared.authentication import (
-    SessionExpiredException,
-    SessionInvalidException,
+    SessionExpiredError,
+    SessionInvalidError,
     TokenType,
 )
 
@@ -47,9 +47,7 @@ class TestJwtTokenIssuer:
 
         access_token = issuer.create_session(UUID(int=2)).access_token
 
-        with pytest.raises(
-            SessionInvalidException, match="Expected token type 'refresh'"
-        ):
+        with pytest.raises(SessionInvalidError, match="Expected token type 'refresh'"):
             issuer.validate(access_token, expected_type=TokenType.REFRESH)
 
     def test_translates_expired_and_malformed_jwt_errors(self) -> None:
@@ -65,10 +63,10 @@ class TestJwtTokenIssuer:
             algorithm="HS256",
         )
 
-        with pytest.raises(SessionExpiredException, match="expired"):
+        with pytest.raises(SessionExpiredError, match="expired"):
             issuer.validate(expired_token)
 
-        with pytest.raises(SessionInvalidException, match="Invalid token"):
+        with pytest.raises(SessionInvalidError, match="Invalid token"):
             issuer.validate("not-a-jwt")
 
     @pytest.mark.parametrize(
@@ -94,5 +92,5 @@ class TestJwtTokenIssuer:
         issuer = self._issuer()
         monkeypatch.setattr(issuer, "_jwt_decode", lambda _token: payload)
 
-        with pytest.raises(SessionInvalidException, match=message):
+        with pytest.raises(SessionInvalidError, match=message):
             issuer.validate("decoded-by-stub")

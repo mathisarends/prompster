@@ -6,11 +6,11 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-class SessionExpiredException(Exception):
+class SessionExpiredError(Exception):
     pass
 
 
-class SessionInvalidException(Exception):
+class SessionInvalidError(Exception):
     pass
 
 

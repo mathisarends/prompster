@@ -12,7 +12,7 @@ from backend.features.session.domain.entities.tool_call import (
     is_pending,
     is_resolved,
 )
-from backend.features.session.domain.exceptions import (
+from backend.features.session.domain.errors import (
     ToolCallAlreadyResolvedError,
     ToolCallNotFoundError,
 )

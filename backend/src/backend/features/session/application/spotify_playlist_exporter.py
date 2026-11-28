@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from backend.features.oauth_connections.application import (
-    SpotifyConnectionNotFoundException,
-    SpotifyTokenRevokedException,
+    SpotifyConnectionNotFoundError,
+    SpotifyTokenRevokedError,
     SpotifyTokenService,
 )
 from backend.features.session.application.ports import (
@@ -147,8 +147,8 @@ class SessionSpotifyPlaylistExporter:
                 user_id=user_id,
             )
         except (
-            SpotifyConnectionNotFoundException,
-            SpotifyTokenRevokedException,
+            SpotifyConnectionNotFoundError,
+            SpotifyTokenRevokedError,
         ) as exc:
             raise SessionExportRequiresSpotifyConnectionError(
                 f"User {user_id} has no connected Spotify account."

@@ -5,7 +5,7 @@ from backend.features.auth.application.schemas import (
     GoogleAuthorizationRequest,
     GoogleCallbackResult,
 )
-from backend.features.auth.domain import InvalidCredentialsException
+from backend.features.auth.domain import InvalidCredentialsError
 from backend.features.user.domain import (
     AuthIdentity,
     AuthProvider,
@@ -57,7 +57,7 @@ class GoogleOAuthFlow:
                 oauth_state=state,
                 expected_oauth_state=expected_oauth_state,
             )
-        except InvalidCredentialsException:
+        except InvalidCredentialsError:
             return GoogleCallbackResult.error(reason="invalid_credentials")
 
         return GoogleCallbackResult.success(session=auth_session)
@@ -73,16 +73,14 @@ class GoogleOAuthFlow:
             expected_oauth_state,
             oauth_state,
         ):
-            raise InvalidCredentialsException("Invalid or missing OAuth state")
+            raise InvalidCredentialsError("Invalid or missing OAuth state")
 
         try:
             identity = await self._google_oauth_provider.exchange_code_for_identity(
                 authorization_code=authorization_code,
             )
         except ValueError as exc:
-            raise InvalidCredentialsException(
-                "Invalid Google authorization code"
-            ) from exc
+            raise InvalidCredentialsError("Invalid Google authorization code") from exc
 
         existing_user = await self._user_repository.get_by_auth_identity(
             provider=AuthProvider.GOOGLE,

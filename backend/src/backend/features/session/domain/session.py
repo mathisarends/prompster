@@ -25,7 +25,7 @@ from backend.features.session.domain.entities import (
     UserMessage,
     UserMessageAttachment,
 )
-from backend.features.session.domain.exceptions import (
+from backend.features.session.domain.errors import (
     ArtistReferenceNotFoundError,
     InvalidSessionPhaseTransitionError,
     NoCurrentAssistantMessageError,

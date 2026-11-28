@@ -1,6 +1,6 @@
-from backend.features.oauth_connections.application.exceptions import (
-    SpotifyConnectionNotFoundException,
-    SpotifyTokenRevokedException,
+from backend.features.oauth_connections.application.errors import (
+    SpotifyConnectionNotFoundError,
+    SpotifyTokenRevokedError,
 )
 from backend.features.oauth_connections.application.ports import SpotifyOAuthProvider
 from backend.features.oauth_connections.application.spotify_login_provider import (
@@ -15,9 +15,9 @@ from backend.features.oauth_connections.application.spotify_token_service import
 
 __all__ = [
     "SpotifyAccountLoginProvider",
-    "SpotifyConnectionNotFoundException",
+    "SpotifyConnectionNotFoundError",
     "SpotifyOAuthConnectionService",
     "SpotifyOAuthProvider",
-    "SpotifyTokenRevokedException",
+    "SpotifyTokenRevokedError",
     "SpotifyTokenService",
 ]

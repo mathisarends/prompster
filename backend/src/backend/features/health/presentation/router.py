@@ -2,7 +2,7 @@ from fastapi import status
 from fastapi_canon import APIRouter, Inject
 
 from backend.features.health.application import ReadinessCheck
-from backend.features.health.presentation.exceptions import (
+from backend.features.health.presentation.errors import (
     SERVICE_NOT_READY_ERROR,
 )
 from backend.features.health.presentation.schemas import (
