@@ -24,6 +24,7 @@
 | [CPX006](CPX006.md) | complexity/excess-comprehension-loops | complexity | explicit | hint |
 | [CPX007](CPX007.md) | complexity/excess-constructor-decisions | complexity | explicit | hint |
 | [CPX008](CPX008.md) | complexity/inline-constructor-receiver | complexity | explicit | hint |
+| [CPX009](CPX009.md) | complexity/duplicate-parameter-group | complexity | explicit | hint |
 | [FWK001](FWK001.md) | frameworks/prefer-secret-type | frameworks | explicit | warning |
 | [FWK002](FWK002.md) | frameworks/redundant-dishka-provider | frameworks | explicit | hint |
 | [IDM001](IDM001.md) | idioms/bundled-instance-assignment | idioms | explicit | error |
@@ -34,6 +35,7 @@
 | [IDM006](IDM006.md) | idioms/missing-broad-except-reason | idioms | explicit | hint |
 | [IDM007](IDM007.md) | idioms/duplicate-narrowing-assert | idioms | explicit | warning |
 | [IDM008](IDM008.md) | idioms/loop-invariant-collection | idioms | explicit | hint |
+| [IDM009](IDM009.md) | idioms/redundant-getattr | idioms | explicit | hint |
 | [IMP001](IMP001.md) | imports/excess-package-imports | imports | explicit | hint |
 | [IMP002](IMP002.md) | imports/excess-module-imports | imports | explicit | hint |
 | [IMP003](IMP003.md) | imports/forbidden-import-style | imports | explicit | error |
@@ -50,6 +52,7 @@
 | [LAY010](LAY010.md) | layout/reexport-only-module | layout | explicit | hint |
 | [LAY011](LAY011.md) | layout/misplaced-module-logger | layout | explicit | warning |
 | [LAY012](LAY012.md) | layout/redundant-comment | layout | explicit | hint |
+| [LAY013](LAY013.md) | layout/workspace-layout-convention | layout | explicit | error |
 | [MET001](MET001.md) | meta/unused-suppression | meta | default | warning |
 | [MET002](MET002.md) | meta/missing-suppression-reason | meta | default | error |
 | [MET003](MET003.md) | meta/resolved-debt | meta | default | warning |
@@ -68,6 +71,7 @@
 | [MOD010](MOD010.md) | modeling/implicit-duration-unit | modeling | explicit | warning |
 | [MOD011](MOD011.md) | modeling/mutable-field-in-frozen-dataclass | modeling | explicit | warning |
 | [MOD012](MOD012.md) | modeling/parallel-record-fields | modeling | explicit | hint |
+| [MOD013](MOD013.md) | modeling/prefer-error-name | modeling | explicit | error |
 | [TST001](TST001.md) | tests/misplaced-test | tests | explicit | error |
 | [TST002](TST002.md) | tests/private-access | tests | explicit | error |
 | [TST003](TST003.md) | tests/forbidden-mock | tests | explicit | error |
@@ -99,5 +103,6 @@
 | [VIS008](VIS008.md) | visibility/reexport-convention | visibility | explicit | warning |
 | [VIS009](VIS009.md) | visibility/test-only-public-function | visibility | explicit | warning |
 | [VIS010](VIS010.md) | visibility/test-only-public-attribute | visibility | explicit | warning |
+| [VIS011](VIS011.md) | visibility/deep-package-reexport | visibility | explicit | warning |
 
 `smelt rules` prints the same catalog in the terminal.

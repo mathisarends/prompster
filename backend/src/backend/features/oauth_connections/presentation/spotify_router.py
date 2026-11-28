@@ -6,7 +6,7 @@ from backend.features.oauth_connections.application import (
     SpotifyOAuthConnectionService,
     SpotifyTokenService,
 )
-from backend.features.oauth_connections.presentation.exceptions import (
+from backend.features.oauth_connections.presentation.errors import (
     SPOTIFY_CONNECTION_NOT_FOUND_ERROR,
     SPOTIFY_TOKEN_REVOKED_ERROR,
 )

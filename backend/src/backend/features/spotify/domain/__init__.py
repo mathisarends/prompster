@@ -1,4 +1,4 @@
-from backend.features.spotify.domain.exceptions import (
+from backend.features.spotify.domain.errors import (
     InvalidSpotifyTrackUriError,
     SpotifyTrackNotFoundError,
     SpotifyTrackYearMissingError,

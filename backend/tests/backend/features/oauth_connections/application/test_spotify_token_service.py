@@ -5,9 +5,9 @@ from uuid import UUID
 import pytest
 
 from backend.features.oauth_connections.application import (
-    SpotifyConnectionNotFoundException,
+    SpotifyConnectionNotFoundError,
     SpotifyOAuthProvider,
-    SpotifyTokenRevokedException,
+    SpotifyTokenRevokedError,
     SpotifyTokenService,
 )
 from backend.features.oauth_connections.application.schemas import (
@@ -116,7 +116,7 @@ class TestSpotifyTokenService:
             spotify_oauth_provider=provider,
         )
 
-        with pytest.raises(SpotifyConnectionNotFoundException):
+        with pytest.raises(SpotifyConnectionNotFoundError):
             asyncio.run(service.get_valid_access_token(user_id=UUID(int=3)))
 
     def test_get_valid_access_token_deletes_connection_when_refresh_revoked(
@@ -130,7 +130,7 @@ class TestSpotifyTokenService:
             spotify_oauth_provider=provider,
         )
 
-        with pytest.raises(SpotifyTokenRevokedException):
+        with pytest.raises(SpotifyTokenRevokedError):
             asyncio.run(service.get_valid_access_token(user_id=connection.user_id))
 
         assert repository.deleted is True

@@ -7,8 +7,8 @@ from fastapi_canon import Error, Inject
 from starlette.requests import HTTPConnection
 
 from backend.shared.authentication import (
-    SessionExpiredException,
-    SessionInvalidException,
+    SessionExpiredError,
+    SessionInvalidError,
     TokenIssuer,
     TokenPayload,
     TokenType,
@@ -58,7 +58,7 @@ def _get_cookie_token_payload(
 
     try:
         return token_issuer.validate(token, expected_type=expected_type)
-    except (SessionExpiredException, SessionInvalidException) as exc:
+    except (SessionExpiredError, SessionInvalidError) as exc:
         _raise(conn, "Invalid or expired token", exc)
 
 

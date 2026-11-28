@@ -11,7 +11,7 @@ from backend.features.session.domain import (
     ToolFunction,
     is_pending,
 )
-from backend.features.session.domain.exceptions import (
+from backend.features.session.domain.errors import (
     ToolCallAlreadyResolvedError,
     ToolCallNotFoundError,
 )

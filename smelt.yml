@@ -8,6 +8,7 @@ version: 2
 
 project:
   workspace: uv
+  workspace_layout: src
   test_roots: [tests]
   exclude:
     - path: frontend/scripts/**
@@ -72,6 +73,7 @@ rules:
   layout/file-name-convention: error
   layout/reexport-only-module: error
   layout/redundant-comment: on
+  layout/workspace-layout-convention: on
 
   # Visibility.
   visibility/misplaced-dunder-all: error
@@ -84,6 +86,7 @@ rules:
   visibility/redundant-private-delegate: error
   visibility/excess-private-definitions: error
   visibility/reexport-convention: error
+  visibility/deep-package-reexport: on
 
   # Modeling.
   modeling/mutable-field-in-frozen-dataclass: error
@@ -96,6 +99,7 @@ rules:
   modeling/str-enum-value-convention: error
   modeling/dataclass-field-mutation: error
   modeling/parallel-record-fields: error
+  modeling/prefer-error-name: on
 
   # Typing and security.
   frameworks/prefer-secret-type: error
@@ -114,6 +118,7 @@ rules:
   complexity/excess-constructor-decisions: {severity: error, max: 5}
   complexity/inline-constructor-receiver: error
   complexity/inline-call-argument: error
+  complexity/duplicate-parameter-group: on
 
   # Idioms.
   idioms/missing-broad-except-reason: error
@@ -122,6 +127,7 @@ rules:
   idioms/prefer-match-type-dispatch: error
   idioms/redundant-name-alias: error
   idioms/loop-invariant-collection: error
+  idioms/redundant-getattr: on
 
   # Test quality.
   tests/misplaced-test: error

@@ -1,4 +1,4 @@
-from backend.features.session.presentation.exceptions import SESSION_ERRORS
+from backend.features.session.presentation.errors import SESSION_ERRORS
 from backend.features.session.presentation.image_attachment_router import (
     image_attachment_router,
 )

@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from fastapi_canon import Composition, ErrorOptions, Feature
 
 from backend.features.health.application import ReadinessCheck
-from backend.features.health.domain import ServiceNotReadyException
+from backend.features.health.domain import ServiceNotReadyError
 from backend.features.health.presentation import HEALTH_ERRORS, health_router
 
 
@@ -14,7 +14,7 @@ class _ReadinessCheckStub(ReadinessCheck):
 
     async def check(self) -> None:
         if not self._ready:
-            raise ServiceNotReadyException
+            raise ServiceNotReadyError
 
 
 class _StubProvider(Provider):

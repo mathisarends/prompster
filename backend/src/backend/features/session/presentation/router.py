@@ -9,7 +9,7 @@ from backend.features.session.application import (
     SessionPlaylistExporter,
     SessionService,
 )
-from backend.features.session.presentation.exceptions import (
+from backend.features.session.presentation.errors import (
     INVALID_SESSION_PHASE_TRANSITION_ERROR,
     INVALID_SPOTIFY_TRACK_URI_ERROR,
     PLAYLIST_TRACK_LIMIT_EXCEEDED_ERROR,

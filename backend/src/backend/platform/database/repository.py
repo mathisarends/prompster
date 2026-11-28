@@ -13,12 +13,6 @@ class Repository[ORM: DatabaseEntity, Domain](ABC):
         self.session = session
         self.model = model
 
-    @abstractmethod
-    def _to_domain(self, orm: ORM) -> Domain: ...
-
-    @abstractmethod
-    def _to_orm(self, domain: Domain) -> ORM: ...
-
     async def find_by_id(self, id: UUID) -> Domain | None:
         orm = await self.session.get(self.model, id)
         return self._to_domain(orm) if orm is not None else None
@@ -53,3 +47,9 @@ class Repository[ORM: DatabaseEntity, Domain](ABC):
     async def exists(self, **filters: Any) -> bool:
         stmt = select(self.model.id).filter_by(**filters).limit(1)
         return await self.session.scalar(stmt) is not None
+
+    @abstractmethod
+    def _to_domain(self, orm: ORM) -> Domain: ...
+
+    @abstractmethod
+    def _to_orm(self, domain: Domain) -> ORM: ...

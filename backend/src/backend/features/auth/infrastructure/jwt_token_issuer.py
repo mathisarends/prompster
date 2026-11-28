@@ -7,8 +7,8 @@ import jwt
 from backend.features.auth.infrastructure.auth_settings import AuthSettings
 from backend.shared.authentication import (
     AuthSession,
-    SessionExpiredException,
-    SessionInvalidException,
+    SessionExpiredError,
+    SessionInvalidError,
     TokenIssuer,
     TokenPayload,
     TokenType,
@@ -50,9 +50,7 @@ class JwtTokenIssuer(TokenIssuer):
     ) -> TokenPayload:
         raw = self._jwt_decode(token)
         if raw.get("type") != expected_type.value:
-            raise SessionInvalidException(
-                f"Expected token type '{expected_type.value}'"
-            )
+            raise SessionInvalidError(f"Expected token type '{expected_type.value}'")
         return self._parse_payload(raw)
 
     def _encode(
@@ -81,24 +79,24 @@ class JwtTokenIssuer(TokenIssuer):
                 algorithms=[self._config.jwt_algorithm],
             )
         except jwt.ExpiredSignatureError as exc:
-            raise SessionExpiredException("Token has expired") from exc
+            raise SessionExpiredError("Token has expired") from exc
         except jwt.InvalidTokenError as exc:
-            raise SessionInvalidException(f"Invalid token: {exc}") from exc
+            raise SessionInvalidError(f"Invalid token: {exc}") from exc
 
     def _parse_payload(self, payload: _JwtPayload) -> TokenPayload:
         user_id_str = payload.get("sub")
 
         if not user_id_str:
-            raise SessionInvalidException("Token is missing subject claim")
+            raise SessionInvalidError("Token is missing subject claim")
 
         try:
             user_id = UUID(user_id_str)
         except ValueError as exc:
-            raise SessionInvalidException("Token subject is not a valid UUID") from exc
+            raise SessionInvalidError("Token subject is not a valid UUID") from exc
 
         exp_raw = payload.get("exp")
         if not isinstance(exp_raw, (int, float)):
-            raise SessionInvalidException("Token expiration claim is invalid")
+            raise SessionInvalidError("Token expiration claim is invalid")
 
         return TokenPayload(
             user_id=user_id,

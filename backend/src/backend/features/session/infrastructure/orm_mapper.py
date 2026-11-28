@@ -459,27 +459,18 @@ class SessionOrmMapper:
     def _resolve_last_activity_at(self, session: Session) -> datetime:
         latest = session.created_at
         for entry in session.entries:
-            created_at = getattr(entry, "created_at", None)
-            if isinstance(created_at, datetime) and created_at > latest:
-                latest = created_at
+            latest = max(latest, entry.created_at)
         for event in session.user_curation_events:
-            created_at = getattr(event, "created_at", None)
-            if isinstance(created_at, datetime) and created_at > latest:
-                latest = created_at
+            latest = max(latest, event.created_at)
         for reference in (
             *session.playlist_references,
             *session.artist_references,
         ):
-            created_at = getattr(reference, "created_at", None)
-            if isinstance(created_at, datetime) and created_at > latest:
-                latest = created_at
+            latest = max(latest, reference.created_at)
         for question in session.onboarding_questions:
-            created_at = getattr(question, "created_at", None)
-            if isinstance(created_at, datetime) and created_at > latest:
-                latest = created_at
-            answered_at = getattr(question, "answered_at", None)
-            if isinstance(answered_at, datetime) and answered_at > latest:
-                latest = answered_at
+            latest = max(latest, question.created_at)
+            if question.answered_at is not None:
+                latest = max(latest, question.answered_at)
         return latest
 
     def _to_domain_user_curation_event(

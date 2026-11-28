@@ -4,7 +4,7 @@ from typing import cast
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.features.health.domain import ServiceNotReadyException
+from backend.features.health.domain import ServiceNotReadyError
 from backend.features.health.infrastructure.database_readiness_check import (
     DatabaseReadinessCheck,
 )
@@ -35,5 +35,5 @@ class TestDatabaseReadinessCheck:
     def test_check_raises_when_database_is_unreachable(self) -> None:
         readiness = DatabaseReadinessCheck(cast(AsyncSession, _FailingSessionStub()))
 
-        with pytest.raises(ServiceNotReadyException):
+        with pytest.raises(ServiceNotReadyError):
             asyncio.run(readiness.check())

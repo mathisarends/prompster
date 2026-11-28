@@ -7,6 +7,73 @@ current configuration and complete rule contracts, see the [README](README.md),
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-11-27
+
+See [upgrading from 0.19.0](docs/upgrading.md#0190-to-0200) for hook pins and
+changes to the CLI and ordering rule.
+
+- `smelt check --select <one rule>` now prints a rule view in text output: the
+  rule's instruction, when a finding is a smell and when it is not, the repair
+  once, and the findings grouped by shared decision and file. It lists hints,
+  names hidden debt and ends with the `rules` entry that enables the rule. See
+  [adopting one rule](docs/cli.md#adopting-one-rule). Twelve rules carry the
+  new brief so far; the others show their summary and each finding's message.
+  **Compatibility:** scripts that read the text report of a single selected
+  rule should add `--verbose` or use `--format concise` or `json`, which are
+  unchanged. This view is written by the Python CLI, so it starts slower than
+  other checks.
+- `smelt check --verbose` prints the evidence of every finding and lists hints.
+- `smelt explain` shows `Smell`, `No smell` and `Fix` for rules that define
+  them and the command that lists the rule's findings. `--format json` adds
+  `smell`, `no_smell` and `repair`.
+- [LAY004](docs/rules/LAY004.md) checks method order across methods decorated
+  with `abc.abstractmethod`, `functools.cached_property`, and `final` or
+  `override` from `typing` or `typing_extensions`. For example, it can now
+  report a private abstract method above a public method.
+- Changed and staged checks reuse the baseline file inventory across the
+  comparison.
+- Checks with a YAML naming policy reuse one file listing per project snapshot.
+  Checking repeated and overlapping function signatures with CPX009 is faster.
+
+## [0.19.0] - 2026-11-27
+
+See [upgrading from 0.18.0](docs/upgrading.md#0180-to-0190) for hook pins and
+changes to existing rules.
+
+- Opt in to [`idioms/redundant-getattr` (IDM009)](docs/rules/IDM009.md) to
+  report literal `getattr(obj, "name")`, `getattr(obj, "name", default)` and
+  `hasattr(obj, "name")` calls in production code when every project class of
+  the receiver's declared type declares the attribute. Receiver types come from
+  annotations, method receivers, constructors, loop targets and type aliases.
+  The hint skips `Any`, `object`, type parameters, outside classes, optional
+  receivers and union members without the attribute. It also skips name-mangled
+  private names and annotations in `__init__` that assign no value.
+- Enable [`modeling/prefer-error-name` (MOD013)](docs/rules/MOD013.md) to
+  name exception classes with an Error suffix and their modules `errors` instead
+  of `exceptions`.
+- Opt in to [`complexity/duplicate-parameter-group` (CPX009)](docs/rules/CPX009.md)
+  to report a group of at least 5 parameter names that at least 3 production
+  functions from 2 or more override families share. Each group is reported
+  once, with every location. Overrides, same-name methods, forwarding wrappers
+  and DI providers or classmethod factories that mirror a constructor count as
+  one family.
+- Define [project rules](docs/project-rules.md) with `Rule` and `calls.to(...)`,
+  load their module with `plugins`, and select them by name under `rules`.
+  Smelt runs each listed module as Python, so helpers, loops and dataclasses
+  with deferred annotations can build rules.
+- [`idioms/prefer-match-type-dispatch` (IDM002)](docs/rules/IDM002.md) also
+  reports a run of adjacent `if isinstance(...)` guards on one subject when each
+  guard body ends in `return` or `raise`. A `return` or `raise` right after the
+  run is reported as the `case _:` fallback. Guards that can fall through, are
+  separated by other statements, test another subject, use `not` or exit with
+  `continue`/`break` stay quiet. The finding's `expected.form` is `elif` or
+  `guard`.
+- Enable [`visibility/deep-package-reexport` (VIS011)](docs/rules/VIS011.md) to
+  report initializer re-exports that bypass the immediate subpackage's API.
+- Opt in to [LAY013](docs/rules/LAY013.md) to enforce one uv workspace package
+  layout. Set `project.workspace_layout` to `flat` for `member/member` or `src`
+  for `member/src/member`, and enable `layout/workspace-layout-convention`.
+
 ## [0.18.0] - 2026-11-25
 
 See [upgrading from 0.17.0](docs/upgrading.md#0170-to-0180) for hook pins and
@@ -1751,7 +1818,9 @@ smelt explain SMT313 --format json
 - Import fanout, match suggestions and missing-assertion checks are review aids;
   their default severities differ. Configure policy and severity deliberately.
 
-[Unreleased]: https://github.com/mathisarends/smelt/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/mathisarends/smelt/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/mathisarends/smelt/compare/v0.19.0...v0.20.0
+[0.19.0]: https://github.com/mathisarends/smelt/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/mathisarends/smelt/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/mathisarends/smelt/compare/v0.16.1...v0.17.0
 [0.16.1]: https://github.com/mathisarends/smelt/compare/v0.16.0...v0.16.1

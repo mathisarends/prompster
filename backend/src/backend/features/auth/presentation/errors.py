@@ -1,25 +1,25 @@
 from fastapi import status
 from fastapi_canon import Error
 
-from backend.features.auth.domain import InvalidCredentialsException
+from backend.features.auth.domain import InvalidCredentialsError
 from backend.presentation import AUTHENTICATION_REQUIRED_ERROR
 from backend.shared.authentication import (
-    SessionExpiredException,
-    SessionInvalidException,
+    SessionExpiredError,
+    SessionInvalidError,
 )
 
 _INVALID_CREDENTIALS_ERROR = Error(
-    InvalidCredentialsException,
+    InvalidCredentialsError,
     status=status.HTTP_401_UNAUTHORIZED,
     code="invalid_credentials",
 )
 SESSION_EXPIRED_ERROR = Error(
-    SessionExpiredException,
+    SessionExpiredError,
     status=status.HTTP_401_UNAUTHORIZED,
     code="session_expired",
 )
 SESSION_INVALID_ERROR = Error(
-    SessionInvalidException,
+    SessionInvalidError,
     status=status.HTTP_401_UNAUTHORIZED,
     code="session_invalid",
     title="Invalid session",
